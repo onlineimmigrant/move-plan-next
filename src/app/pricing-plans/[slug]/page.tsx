@@ -47,6 +47,7 @@ export default async function PricingPlanPage({ params }: PricingPlanPageProps) 
     .select(`
       *,
       product:product_id (
+        id,
         product_name,
         slug,
         links_to_image

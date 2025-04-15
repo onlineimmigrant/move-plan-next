@@ -167,7 +167,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               </div>
             )}
           </aside>
-          <main className="mt-24 lg:col-span-4 text-base leading-7 text-gray-900">
+          <main className="my-24 lg:col-span-4 text-base leading-7 text-gray-900">
             {shouldShowMainContent ? (
               <>
                 <div

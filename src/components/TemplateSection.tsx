@@ -62,7 +62,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
 
   return (
     <section
-      className={`px-4 py-32 text-xl ${section.font_family || ''} bg-${section.background_color}`}
+      className={`px-4 py-32 text-xl bg-${section.background_color}`}
     >
       <div
         className={`${section.is_full_width ? '' : 'max-w-7xl'} mx-auto space-y-12 p-4 sm:p-8 sm:rounded-xl`}
@@ -93,7 +93,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
           {section.website_metric.map((metric) => (
             <div
               key={metric.id}
-              className={`space-y-4 flex flex-col mx-auto ${metric.is_card_type ? `bg-${metric.background_color || 'white'} p-8 sm:p-16 rounded-lg text-center gap-y-8 max-w-xl` : ''}`}
+              className={`space-y-4 flex flex-col mx-auto ${metric.is_card_type ? `bg-${metric.background_color || 'transparent'} p-8 sm:p-16 rounded-lg text-center gap-y-8 max-w-xl` : ''}`}
             >
               {metric.image && (
                 <div className={`${section.is_image_bottom ? 'order-3' : ''} mt-8`}>

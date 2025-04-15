@@ -1,22 +1,19 @@
-// src/app/layout.tsx
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
 import { BasketProvider } from '@/context/BasketContext';
 import { SettingsProvider } from '@/context/SettingsContext';
+import { CookieSettingsProvider } from '@/context/CookieSettingsContext'; // Import the new provider
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
-import Header from '../components/Header';
+import Header from '@/components/Header';
+import CookieBanner from '@/components/CookieBanner';
 import { Settings } from '@/types/settings';
-import TemplateSections from '../components/TemplateSections';
-import Breadcrumbs from '@/components/Breadcrumbs';'../components/Breadcrumbs';
-import TemplateHeadingSections from '@/components/TemplateHeadingSections'; '../components/TemplateHeadingSections';
+import TemplateSections from '@/components/TemplateSections';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import TemplateHeadingSections from '@/components/TemplateHeadingSections';
 import { supabaseServer } from '@/lib/supabaseServerClient';
 import './globals.css';
 
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800'],
-  display: 'swap',
-});
+
 
 export const metadata = {
   title: 'My Next.js App',
@@ -43,133 +40,7 @@ async function getSettings(): Promise<Settings> {
     .limit(1)
     .maybeSingle();
 
-  if (error) {
-    console.error('Supabase error:', error);
-    return {
-      id: 0,
-      primary_color: {
-        id: 1,
-        name: 'sky-600',
-        hex: '#0284C7',
-        img_color: null,
-        created_at: '',
-      },
-      secondary_color: {
-        id: 2,
-        name: 'red-500',
-        hex: '#EF4444',
-        img_color: null,
-        created_at: '',
-      },
-      footer_color: {
-        id: 2,
-        name: 'red-500',
-        hex: '#EF4444',
-        img_color: null,
-        created_at: '',
-      },
-      primary_font: {
-        id: 1,
-        name: 'Inter',
-        description: null,
-        default_type: true,
-        created_at: '',
-      },
-      secondary_font: {
-        id: 2,
-        name: 'Roboto',
-        description: null,
-        default_type: true,
-        created_at: '',
-      },
-      font_size_base: {
-        id: 1,
-        name: 'base',
-        value: 16.0,
-        description: null,
-        created_at: '',
-      },
-      font_size_small: {
-        id: 2,
-        name: 'sm',
-        value: 14.0,
-        description: null,
-        created_at: '',
-      },
-      font_size_large: {
-        id: 3,
-        name: 'xl',
-        value: 20.0,
-        description: null,
-        created_at: '',
-      },
-      updated_at: new Date().toISOString(),
-    };
-  }
 
-  if (!data) {
-    console.warn('No settings data found in Supabase. Using fallback settings.');
-    return {
-      id: 0,
-      primary_color: {
-        id: 1,
-        name: 'sky-600',
-        hex: '#0284C7',
-        img_color: null,
-        created_at: '',
-      },
-      secondary_color: {
-        id: 2,
-        name: 'red-500',
-        hex: '#EF4444',
-        img_color: null,
-        created_at: '',
-      },
-      footer_color: {
-        id: 2,
-        name: 'red-500',
-        hex: '#EF4444',
-        img_color: null,
-        created_at: '',
-      },
-      primary_font: {
-        id: 1,
-        name: 'Inter',
-        description: null,
-        default_type: true,
-        created_at: '',
-      },
-      secondary_font: {
-        id: 2,
-        name: 'Roboto',
-        description: null,
-        default_type: true,
-        created_at: '',
-      },
-      font_size_base: {
-        id: 1,
-        name: 'base',
-        value: 16.0,
-        description: null,
-        created_at: '',
-      },
-      font_size_small: {
-        id: 2,
-        name: 'sm',
-        value: 14.0,
-        description: null,
-        created_at: '',
-      },
-      font_size_large: {
-        id: 3,
-        name: 'xl',
-        value: 20.0,
-        description: null,
-        created_at: '',
-      },
-      updated_at: new Date().toISOString(),
-    };
-  }
 
   console.log('Fetched settings:', data);
   return data as Settings;
@@ -179,20 +50,34 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const settings = await getSettings();
   console.log('Settings passed to SettingsProvider:', settings);
 
+  const headerData = {
+    text_color: settings.primary_color.name || 'gray-800',
+    text_color_hover: settings.secondary_color.name || 'sky-500',
+    font_family: settings.primary_font.name.toLowerCase() ,
+    image_for_privacy_settings: '/images/logo.svg',
+    site: settings.site,
+    disclaimer: `© ${new Date().getFullYear()} ${settings.site || 'Company'}. All rights reserved.`,
+  };
+
+  const activeLanguages = ['en', 'es', 'fr'];
+
   return (
-    <html className={inter.className} lang="en">
-      <body>
+    <html lang="en">
+      <body className="!bg-transparent">
         <AuthProvider>
           <BasketProvider>
             <SettingsProvider settings={settings}>
-              <NavbarFooterWrapper>
-                <div className="">
-                  {children}
-                  <TemplateHeadingSections />
-                  <TemplateSections />
-                  <Breadcrumbs />
-                </div>
-              </NavbarFooterWrapper>
+              <CookieSettingsProvider>
+                <NavbarFooterWrapper>
+                  <div>
+                    {children}
+                    <TemplateHeadingSections />
+                    <TemplateSections />
+                    <Breadcrumbs />
+                  </div>
+                </NavbarFooterWrapper>
+                <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+              </CookieSettingsProvider>
             </SettingsProvider>
           </BasketProvider>
         </AuthProvider>

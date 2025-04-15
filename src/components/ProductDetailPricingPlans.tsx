@@ -94,7 +94,7 @@ export default function ProductDetailPricingPlans({
                     <span className="block text-xs uppercase text-gray-400">
                       {plan.package === 'one_time'
                         ? 'One-Time Payment'
-                        : `${plan.package || 'Subscription'} Payment`}
+                        : `${plan.package || 'Subscription'}`}
                     </span>
                   </div>
                   {(() => {

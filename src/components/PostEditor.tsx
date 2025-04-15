@@ -140,7 +140,7 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
         },
       }),
       CharacterCount.configure({
-        limit: 20000,
+        limit: 50000,
       }),
       Mention.configure({
         HTMLAttributes: { class: 'mention' },
@@ -379,7 +379,7 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
       </div>
       <EditorContent editor={editor} className="border border-gray-200 p-4 rounded-md min-h-[300px] bg-white" />
       <div className="mt-2 text-sm text-gray-500">
-        {editor?.storage.characterCount.characters()} / 20000 characters
+        {editor?.storage.characterCount.characters()} / 50000 characters
       </div>
     </div>
   );

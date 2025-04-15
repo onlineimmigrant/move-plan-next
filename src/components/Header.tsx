@@ -138,7 +138,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
       <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
         {/* Logo */}
         <button onClick={handleMainPage} className="flex items-center text-gray-900 hover:text-green-600 transition-colors duration-200">
-          <Image src={companyLogo} alt="Logo" width={40} height={40} className="h-10 w-auto" />
+          <Image src={companyLogo} alt="Logo" width={40} height={40} className="h-8 w-auto" />
           <span className="ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-green-400 via-green-500 to-green-600 bg-clip-text text-transparent">
               {settings?.site}
           </span>

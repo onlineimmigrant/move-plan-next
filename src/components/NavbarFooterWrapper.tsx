@@ -16,7 +16,7 @@ export default function NavbarFooterWrapper({ children }: { children: React.Reac
       {!isAdminRoute && <Header  />}
       
       {children}
-      
+      {/**/}
       {!isAdminRoute && <Footer />}
     
     </>

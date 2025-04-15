@@ -1,40 +1,6 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --font-inter: "Inter", sans-serif; /* Define Inter as a CSS variable */
-  --primary-color: #0284C7; /* Fallback for sky-600 */
-  --font-family: "Inter"; /* Fallback */
-  --font-size-base: 16px; /* Fallback */
-}
-
-.text-primary {
-  color: var(--primary-color); /* Optional: Use for non-Tailwind elements */
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter); /* Use Inter for font-sans */
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary-color: #0284C7; /* Keep consistent in dark mode */
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter); /* Apply Inter globally */
-}
-
 
 
 /* src/styles/globals.css */

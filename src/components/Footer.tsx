@@ -1,10 +1,12 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../context/AuthContext';
-import { useSettings } from "@/context/SettingsContext";
-import { cn } from "@/lib/utils";
+import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
+import { useCookieSettings } from '@/context/CookieSettingsContext'; // Import the context
+import { cn } from '@/lib/utils';
 
 interface MenuItem {
   id: number;
@@ -35,8 +37,20 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const { session, logout } = useAuth();
   const router = useRouter();
   const isLoggedIn = !!session;
-  const CONNECTED_APP_URL = 'https://app.letspring.com';
   const { settings } = useSettings();
+  const { setShowSettings } = useCookieSettings(); // Use the context
+  const CONNECTED_APP_URL = 'https://app.letspring.com';
+
+  // Mock translation function (replace with useTranslation if using next-i18next)
+  const t = (key: string) => {
+    const translations: Record<string, string> = {
+      'Privacy Settings': 'Privacy Settings',
+      'Login': 'Login',
+      'Register': 'Register',
+      'Logout': 'Logout',
+    };
+    return translations[key] || key;
+  };
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -77,7 +91,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
   };
 
   const itemsWithSubitems = menuItems.filter(
-    item =>
+    (item) =>
       item.is_displayed_on_footer &&
       item.display_name !== 'Profile' &&
       item.website_submenuitem &&
@@ -85,13 +99,13 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
   );
 
   const itemsWithoutSubitems = menuItems.filter(
-    item =>
+    (item) =>
       item.is_displayed_on_footer &&
       item.display_name !== 'Profile' &&
       (!item.website_submenuitem || item.website_submenuitem.length === 0)
   );
 
-  const maxItemsPerColumn = 6;
+  const maxItemsPerColumn = 8;
   const groupedItemsWithoutSubitems: MenuItem[][] = [];
   for (let i = 0; i < itemsWithoutSubitems.length; i += maxItemsPerColumn) {
     groupedItemsWithoutSubitems.push(itemsWithoutSubitems.slice(i, i + maxItemsPerColumn));
@@ -99,67 +113,99 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
 
   const totalColumns = itemsWithSubitems.length + groupedItemsWithoutSubitems.length + 1;
 
+  // Map settings to headerData for CookieSettings
+  const headerData = {
+    text_color: settings?.primary_color?.name || 'gray-800',
+    text_color_hover: settings?.secondary_color?.name || 'sky-500',
+    font_family: settings?.primary_font?.name.toLowerCase() || 'inter',
+    image_for_privacy_settings: companyLogo,
+  };
+
+  const activeLanguages = ['en', 'es', 'fr'];
+
   return (
-    <footer className={cn(
-      "tracking-tight text-sm sm:text-sm font-medium text-white py-12",
-      settings?.footer_color?.name
-        ? `bg-${settings.footer_color.name}`
-        : "text-sky-600",
-    )}>
+    <footer
+      className={cn(
+        'text-sm sm:text-sm font-medium text-white py-12',
+        settings?.footer_color?.name
+          ? `bg-${settings.footer_color.name}`
+          : 'bg-sky-600'
+      )}
+    >
       <div className="max-w-7xl mx-auto px-8 sm:px-6 lg:px-8">
-        <div className={`grid grid-cols-2 md:grid-cols-2 lg:grid-cols-${Math.min(totalColumns, 4)} gap-8`}>
+        <div className="mb-8">
+          {/* Privacy Settings Button */}
+          <button
+            onClick={() => setShowSettings(true)}
+            className={cn(
+              'text-white font-medium text-sm hover:text-gray-300 transition-colors duration-200',
+              settings?.secondary_color?.name
+                ? `hover:text-${settings.secondary_color.name.replace('-500', '-300')}`
+                : 'hover:text-sky-300'
+            )}
+            aria-label={t('Privacy Settings')}
+          >
+            <strong>{t('Privacy Settings')}</strong>
+          </button>
+        </div>
+
+        <div
+          className={`grid grid-cols-2 md:grid-cols-2 lg:grid-cols-${Math.min(totalColumns, 4)} gap-8`}
+        >
           {/* Menu Items with Subitems */}
-          {itemsWithSubitems.length > 0 && itemsWithSubitems.map(item => (
-            <div key={item.id}>
-              <h3 className="text-sm font-semibold mb-4">
-                <Link 
-                  href={item.url_name}
-                  className="text-white hover:text-gray-300 transition-colors duration-200"
-                >
-                  {item.display_name}
-                </Link>
-              </h3>
-              <ul className="space-y-2">
-                {item.website_submenuitem?.map(subItem => (
-                  <li key={subItem.id}>
-                    <Link
-                      href={subItem.url_name}
-                      className="text-sm text-gray-300 hover:text-white transition-colors duration-200"
-                    >
-                      {subItem.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {itemsWithSubitems.length > 0 &&
+            itemsWithSubitems.map((item) => (
+              <div key={item.id}>
+                <h3 className="text-sm font-semibold mb-4">
+                  <Link
+                    href={item.url_name}
+                    className="text-white hover:text-gray-300 transition-colors duration-200"
+                  >
+                    {item.display_name}
+                  </Link>
+                </h3>
+                <ul className="space-y-2">
+                  {item.website_submenuitem?.map((subItem) => (
+                    <li key={subItem.id}>
+                      <Link
+                        href={subItem.url_name}
+                        className="text-sm text-gray-300 hover:text-white transition-colors duration-200"
+                      >
+                        {subItem.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
 
           {/* Grouped Menu Items without Subitems */}
-          {groupedItemsWithoutSubitems.length > 0 && groupedItemsWithoutSubitems.map((group, index) => (
-            <div key={`group-${index}`}>
-              <h3 className="text-sm font-semibold mb-0">
-                <Link
-                  href={group[0]?.url_name || '#'} // Use first item's url_name as fallback
-                  className="text-white hover:text-gray-300 transition-colors duration-200"
-                >
-                  {itemsWithSubitems.length > 0 ? '' : 'Links'}
-                  {groupedItemsWithoutSubitems.length > 1 ? ` ` : ''}
-                </Link>
-              </h3>
-              <ul className="space-y-2">
-                {group.map(item => (
-                  <li key={item.id}>
-                    <Link
-                      href={item.url_name}
-                      className="text-gray-300 hover:text-white transition-colors duration-200"
-                    >
-                      {item.display_name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {groupedItemsWithoutSubitems.length > 0 &&
+            groupedItemsWithoutSubitems.map((group, index) => (
+              <div key={`group-${index}`}>
+                <h3 className="text-sm font-semibold mb-0">
+                  <Link
+                    href={group[0]?.url_name || '#'}
+                    className="text-white hover:text-gray-300 transition-colors duration-200"
+                  >
+                    {itemsWithSubitems.length > 0 ? '' : 'Links'}
+                    {groupedItemsWithoutSubitems.length > 1 ? ` ` : ''}
+                  </Link>
+                </h3>
+                <ul className="space-y-2">
+                  {group.map((item) => (
+                    <li key={item.id}>
+                      <Link
+                        href={item.url_name}
+                        className="text-gray-300 hover:text-white transition-colors duration-200"
+                      >
+                        {item.display_name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
 
           {/* Profile Column */}
           <div>
@@ -171,7 +217,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
                     onClick={handleLogoutAction}
                     className="text-gray-300 hover:text-white transition-colors duration-200"
                   >
-                    Logout
+                    {t('Logout')}
                   </button>
                 </li>
               ) : (
@@ -181,7 +227,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
                       onClick={handleShowLogin}
                       className="text-gray-300 hover:text-white transition-colors duration-200"
                     >
-                      Login
+                      {t('Login')}
                     </button>
                   </li>
                   <li>
@@ -189,7 +235,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
                       onClick={handleShowRegister}
                       className="text-gray-300 hover:text-white transition-colors duration-200"
                     >
-                      Register
+                      {t('Register')}
                     </button>
                   </li>
                 </>
@@ -201,7 +247,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
         {/* Footer Bottom */}
         <div className="mt-12 border-t border-gray-100 pt-8 text-center">
           <p className="text-gray-300 text-xs font-medium tracking-widest">
-            © {new Date().getFullYear()} {settings?.site}. All rights reserved.
+            © {new Date().getFullYear()} {settings?.site || 'Company'}. All rights reserved.
           </p>
         </div>
       </div>

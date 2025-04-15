@@ -25,10 +25,10 @@ interface SubMenuItem {
   id: number;
   name: string;
   url_name: string;
+  order: number; // Added to reflect sorting field
   description?: string;
 }
 
-// GET handler to fetch menu items
 export async function GET() {
   try {
     const { data, error } = await supabase
@@ -46,11 +46,13 @@ export async function GET() {
         website_submenuitem (
           id,
           name,
+          order,
           url_name,
           description
         )
       `)
-      .order('order', { ascending: true });
+      .order('order', { ascending: true }) // Order top-level menu items
+      .order('order', { ascending: true, referencedTable: 'website_submenuitem' }); // Order submenu items
 
     if (error) {
       console.error('Supabase error:', error);

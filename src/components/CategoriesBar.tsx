@@ -1,9 +1,10 @@
-// Define the ProductSubType type
+// app/components/CategoriesBar.tsx
 type ProductSubType = {
   id: number;
   name: string;
+  display_for_products: boolean;
   title_english?: string;
-  [key: string]: any; // For any additional fields
+  [key: string]: any;
 };
 
 interface CategoriesBarProps {
@@ -17,29 +18,31 @@ export default function CategoriesBar({
   onCategoryChange,
   activeSubTypeName,
 }: CategoriesBarProps) {
+  // Filter sub-types to only show those with display_for_products === true
+  const visibleSubTypes = productSubTypes.filter((subType) => subType.display_for_products);
+
   return (
-    // Make horizontally scrollable
     <div className="flex space-x-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent py-2">
       {/* "All" button */}
       <button
         onClick={() => onCategoryChange(null)}
-        className={`px-3 py-1 text-xs font-semibold rounded transition-colors
-          ${activeSubTypeName === null ? 'bg-green-100 text-green-800' : 'bg-gray-50 text-gray-800'}
-          hover:bg-green-200`}
+        className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${
+          activeSubTypeName === null ? 'bg-sky-100 text-sky-500' : 'bg-gray-50 text-gray-800'
+        } hover:bg-sky-200`}
       >
         All
       </button>
 
-      {/* Buttons for each sub-type */}
-      {productSubTypes.map((subType) => {
+      {/* Buttons for each filtered sub-type */}
+      {visibleSubTypes.map((subType) => {
         const isActive = subType.name === activeSubTypeName;
         return (
           <button
-            key={subType.name}
+            key={subType.id}
             onClick={() => onCategoryChange(subType)}
-            className={`px-3 py-1 text-xs font-medium rounded transition-colors
-              ${isActive ? 'bg-green-100 text-green-800' : 'bg-gray-50 text-green-800'}
-              hover:bg-green-200`}
+            className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+              isActive ? 'bg-sky-100 text-sky-500' : 'bg-gray-50 text-gray-800'
+            } hover:bg-sky-200`}
           >
             {subType.title_english || subType.name}
           </button>

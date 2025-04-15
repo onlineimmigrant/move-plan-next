@@ -39,15 +39,16 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
 
   return (
     <div className="post-header relative">
+
       {/* Section and Subsection */}
       <div className={`flex justify-between items-center text-${textColorHover} ${textSizeHeadings} font-light tracking-tight`}>
         <a href={post.subsection === 'SQE2' ? '/sqe-2/specification/' : '#'}>
           <p>{post.section}</p>
         </a>
       </div>
-
+    <span className='mt-2 font-medium text-xs text-sky-500 tracking-widest'>{post.subsection}</span>
       {/* Title */}
-      <h1 className="mt-2 mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl font-nunito">
+      <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl font-nunito">
         {post.title}
       </h1>
 
