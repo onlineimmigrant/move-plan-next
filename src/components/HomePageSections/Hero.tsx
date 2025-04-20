@@ -57,14 +57,14 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
 
   return (
     <div className={`pt-16 min-h-screen relative isolate px-6 lg:px-8 bg-transparent hover:bg-sky-50`}>
-      {hero.is_bg_gradient && (
+      
         <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80 text-sky-500" aria-hidden="true">
           <div
             className={`relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg]
               bg-gradient-to-tr
-              from-${hero.h1_title_color_id || 'sky-700'}
-              via-${hero.h1_via_gradient_color_id || 'transparent'}
-              to-${hero.h1_to_gradient_color_id || 'sky-500'}
+              from-sky-700
+              via-transparent
+              to-sky-500
               opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]`}
             style={{
               clipPath:
@@ -72,7 +72,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
             }}
           />
         </div>
-      )}
+     
 
       {hero.image_url && hero.is_image_full_page && (
         <img src={hero.image_url} alt={`Image of ${hero.h1_title}`} className="absolute inset-0 -z-10 h-full w-full object-cover" />
@@ -101,7 +101,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
             <h1
               className={`${hero.h1_text_size_mobile || 'text-4xl'} sm:${hero.h1_text_size || 'text-5xl'} font-bold tracking-tight inline text-${hero.h1_title_color_id || 'gray-900'} hover:text-gray-700 
               
-                  bg-gradient-to-r from-${hero.h1_title_color_id} via-${hero.h1_via_gradient_color_id} to-indigo-200 bg-clip-text text-transparent`}
+                  bg-gradient-to-r from-gray-700 via-sky-400 to-indigo-200 bg-clip-text text-transparent`}
                  
             
             >
