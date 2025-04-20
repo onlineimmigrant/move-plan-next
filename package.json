@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "20": "^3.1.9",
     "@headlessui/react": "^2.2.1",
     "@heroicons/react": "^2.2.0",
     "@stripe/react-stripe-js": "^3.5.1",
@@ -42,8 +43,9 @@
     "i18next": "^24.2.3",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.1",
-    "next": "15.2.3",
+    "next": "^15.2.3",
     "next-i18next": "^15.4.2",
+    "nvm": "^0.0.4",
     "papaparse": "^5.5.2",
     "react": "^19.0.0",
     "react-chartjs-2": "^5.3.0",
@@ -58,6 +60,7 @@
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^3.4.0",
     "tiptap-extension-resize-image": "^1.2.1",
+    "update": "^0.4.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
