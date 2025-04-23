@@ -38,7 +38,7 @@ export default async function FAQ() {
 
   return (
     <div className="mt-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
+      <div className="mx-auto max-w-7xl  mt-8">
         {error ? (
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : (

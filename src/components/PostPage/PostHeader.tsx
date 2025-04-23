@@ -85,7 +85,7 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
 
       {/* Hover Menu for Admins */}
       {isAdmin && showMenu && (
-        <div className="absolute -top-8 left-0 flex space-x-2">
+        <div className="absolute top-0 right-0 flex space-x-2 z-51">
           <Link href={createHref}>
             <IconButton
               onClick={() => {}} // No-op since Link handles navigation

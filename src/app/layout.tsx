@@ -63,17 +63,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en">
-      <body className="!bg-transparent">
+      <body>
         <AuthProvider>
           <BasketProvider>
             <SettingsProvider settings={settings}>
               <CookieSettingsProvider>
+              
                 <NavbarFooterWrapper>
+                <Breadcrumbs />
                   <div>
                     {children}
                     <TemplateHeadingSections />
                     <TemplateSections />
-                    <Breadcrumbs />
+                   
                   </div>
                 </NavbarFooterWrapper>
                 <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />

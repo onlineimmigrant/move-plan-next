@@ -91,11 +91,11 @@ const TemplateSections: React.FC = () => {
   }, [pathname]);
 
   if (isLoading) {
-    return <div className="py-32 text-center text-gray-500">Loading sections...</div>;
+    return <div className="text-center text-gray-500">Loading sections...</div>;
   }
 
   if (error) {
-    return <div className="py-32 text-center text-red-500">Error: {error}</div>;
+    return <div className="text-center text-red-500">Error: {error}</div>;
   }
 
   if (!sections || sections.length === 0) {

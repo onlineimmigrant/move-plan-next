@@ -58,8 +58,8 @@ const FAQSection = ({ slug, faqs }: FAQSectionProps) => {
   }
 
   return (
-    <section className="w-full py-20 bg-transparent">
-      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
+    <section className="w-full py-20">
+      <div className="mx-auto w-full max-w-4xl px-4">
         {/* FAQ Title */}
         <h2 className="text-center text-3xl sm:text-4xl font-extrabold text-gray-900 mb-12 tracking-tight">
           Frequently Asked Questions

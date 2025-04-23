@@ -44,7 +44,7 @@ export default function ClientFAQPage({ initialFAQs }: ClientFAQPageProps) {
     <div>
       {/* Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-12">
-        <h1 className="text-2xl font-bold text-gray-700 tracking-wide mb-6 sm:mb-0">
+        <h1 className="px-4 text-2xl font-bold text-gray-700 tracking-wide mb-6 sm:mb-0">
           FAQ
         </h1>
         <div className="relative w-full sm:w-80 px-4 sm:px-0">

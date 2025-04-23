@@ -157,7 +157,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   const path = `/${post.slug}`;
 
   return (
-    <div className="post-page-container px-4 sm:pt-4 sm:pb-16">
+    <div className=" px-4 sm:pt-4 sm:pb-16">
       {post.section !== 'Landing' ? (
         <div className="grid lg:grid-cols-8 gap-x-4">
           <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
@@ -167,7 +167,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               </div>
             )}
           </aside>
-          <main className="my-24 lg:col-span-4 text-base leading-7 text-gray-900">
+          <main className="my-8 lg:col-span-4 text-base leading-7 text-gray-900">
             {shouldShowMainContent ? (
               <>
                 <div

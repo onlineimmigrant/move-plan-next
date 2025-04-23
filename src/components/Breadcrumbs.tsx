@@ -18,20 +18,7 @@ interface BreadcrumbsProps {
   extraCrumbs?: { label: string; url?: string }[];
 }
 
-// Utility function to map color values (same as in TemplateSection)
-const getColorClass = (color?: string): string => {
-  if (!color) return 'gray';
-  const colorMap: { [key: string]: string } = {
-    black: 'black',
-    white: 'white',
-    gray: 'gray-600',
-    green: 'green-600',
-    sky: 'sky-600',
-    red: 'red-500',
-    // Add more mappings as needed
-  };
-  return colorMap[color.toLowerCase()] || 'gray-600';
-};
+
 
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs = [] }) => {
   const pathname = usePathname();
@@ -90,19 +77,14 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
     return newBreadcrumbs;
   }, [pathname, memoizedOverrides, memoizedExtraCrumbs]);
 
-  // Use settings for text size, font weight, and colors with default values
-  const textSizeHeadings = settings?.font_size_base?.name || 'text-base';
-  const fontWeight = settings?.primary_font?.default_type ? 'font-normal' : 'font-medium';
-  const textColor = settings?.primary_color?.name ? getColorClass(settings.primary_color.name) : 'gray-900';
-  const textColorHover = settings?.secondary_color?.name ? getColorClass(settings.secondary_color.name) : 'sky-500';
-
+ 
   if (!breadcrumbs || breadcrumbs.length === 0) {
     return null;
   }
 
   return (
     <div>
-      <nav className="max-w-7xl mx-auto mb-0 md:mb-0 p-2 sm:p-2" aria-label="Breadcrumb">
+      <nav className="fixed text-xs mt-12 max-w-7xl mx-auto mb-0 p-2 px-4 z-51" aria-label="Breadcrumb">
         <ol className="flex flex-wrap justify-start gap-4 items-center">
           {breadcrumbs.map((crumb, index) => (
             <li key={index} className="flex items-center">
@@ -118,10 +100,10 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
                 <>
                   <a
                     href={crumb.url}
-                    className={`sm:mx-4 pr-2 ${textSizeHeadings} ${fontWeight} ${
+                    className={`sm:mx-4 pr-2  ${
                       index === breadcrumbs.length - 1
                         ? 'text-gray-300'
-                        : `text-${textColor} hover:text-${textColorHover}`
+                        : `text-gray-700 hover:text-gray-400`
                     }`}
                   >
                     {crumb.label && ( // Check if the label exists

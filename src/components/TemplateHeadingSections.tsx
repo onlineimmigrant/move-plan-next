@@ -77,12 +77,12 @@ const TemplateHeadingSections: React.FC = () => {
   }, [pathname]);
 
   if (isLoading) {
-    return <div className="py-32 text-center text-gray-500">Loading heading sections...</div>;
+    return <div className=" text-center text-gray-500">Loading heading sections...</div>;
   }
 
   if (error) {
     return (
-      <div className="py-32 text-center text-red-500">
+      <div className=" text-center text-red-500">
         <p>Error: {error}</p>
         <p>Please try refreshing the page or contact support if the issue persists.</p>
       </div>

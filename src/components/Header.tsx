@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-green-50 to-transparent border-gray-200">
+    <nav className="fixed top-0 left-0 right-0 z-51  border-gray-200">
       <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
         {/* Logo */}
         <button onClick={handleMainPage} className="flex items-center text-gray-900 hover:text-green-600 transition-colors duration-200">

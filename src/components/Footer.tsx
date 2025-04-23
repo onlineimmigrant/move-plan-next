@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
-import { useCookieSettings } from '@/context/CookieSettingsContext'; // Import the context
+import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { cn } from '@/lib/utils';
 
 interface MenuItem {
@@ -33,209 +33,145 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
   const { session, logout } = useAuth();
+  const { settings } = useSettings();
+  const { setShowSettings } = useCookieSettings();
   const router = useRouter();
   const isLoggedIn = !!session;
-  const { settings } = useSettings();
-  const { setShowSettings } = useCookieSettings(); // Use the context
+  const maxItemsPerColumn = 8;
   const CONNECTED_APP_URL = 'https://app.letspring.com';
 
-  // Mock translation function (replace with useTranslation if using next-i18next)
-  const t = (key: string) => {
-    const translations: Record<string, string> = {
-      'Privacy Settings': 'Privacy Settings',
-      'Login': 'Login',
-      'Register': 'Register',
-      'Logout': 'Logout',
-    };
-    return translations[key] || key;
-  };
-
   useEffect(() => {
+    let mounted = true;
+    
     const fetchMenuItems = async () => {
       try {
-        const response = await fetch('/api/menu');
-        if (!response.ok) {
-          throw new Error('Failed to fetch menu items');
-        }
-        const data: MenuItem[] = await response.json();
-        console.log('Fetched menu items:', data);
-        setMenuItems(data);
+        const response = await fetch('/api/menu', { cache: 'force-cache' });
+        if (!response.ok) throw new Error('Failed to fetch menu items');
+        const data = await response.json();
+        if (mounted) setMenuItems(data);
       } catch (error) {
         console.error('Error fetching menu items:', error);
-      } finally {
-        setIsMounted(true);
       }
     };
+
     fetchMenuItems();
+    
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  useEffect(() => {
-    console.log('isLoggedIn:', isLoggedIn);
-    console.log('session:', session);
-    console.log('menuItems:', menuItems);
-  }, [isLoggedIn, session, menuItems]);
+  const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
+    const withSubitems = menuItems.filter(
+      item => item.is_displayed_on_footer &&
+        item.display_name !== 'Profile' &&
+        item.website_submenuitem?.length
+    );
 
-  const handleLogoutAction = () => {
+    const withoutSubitems = menuItems.filter(
+      item => item.is_displayed_on_footer &&
+        item.display_name !== 'Profile' &&
+        !item.website_submenuitem?.length
+    );
+
+    const grouped = [];
+    for (let i = 0; i < withoutSubitems.length; i += maxItemsPerColumn) {
+      grouped.push(withoutSubitems.slice(i, i + maxItemsPerColumn));
+    }
+
+    return { itemsWithSubitems: withSubitems, groupedItemsWithoutSubitems: grouped };
+  }, [menuItems]);
+
+  const totalColumns = itemsWithSubitems.length + groupedItemsWithoutSubitems.length + 1;
+
+  const handleLogout = () => {
     logout();
     router.push('/login');
   };
 
-  const handleShowLogin = () => {
-    router.push('/login');
-  };
-
-  const handleShowRegister = () => {
-    router.push('/register');
-  };
-
-  const itemsWithSubitems = menuItems.filter(
-    (item) =>
-      item.is_displayed_on_footer &&
-      item.display_name !== 'Profile' &&
-      item.website_submenuitem &&
-      item.website_submenuitem.length > 0
-  );
-
-  const itemsWithoutSubitems = menuItems.filter(
-    (item) =>
-      item.is_displayed_on_footer &&
-      item.display_name !== 'Profile' &&
-      (!item.website_submenuitem || item.website_submenuitem.length === 0)
-  );
-
-  const maxItemsPerColumn = 8;
-  const groupedItemsWithoutSubitems: MenuItem[][] = [];
-  for (let i = 0; i < itemsWithoutSubitems.length; i += maxItemsPerColumn) {
-    groupedItemsWithoutSubitems.push(itemsWithoutSubitems.slice(i, i + maxItemsPerColumn));
-  }
-
-  const totalColumns = itemsWithSubitems.length + groupedItemsWithoutSubitems.length + 1;
-
-  // Map settings to headerData for CookieSettings
-  const headerData = {
-    text_color: settings?.primary_color?.name || 'gray-800',
-    text_color_hover: settings?.secondary_color?.name || 'sky-500',
-    font_family: settings?.primary_font?.name.toLowerCase() || 'inter',
-    image_for_privacy_settings: companyLogo,
-  };
-
-  const activeLanguages = ['en', 'es', 'fr'];
+  const handleNavigation = (path: string) => () => router.push(path);
 
   return (
-    <footer
-      className={cn(
-        'text-sm sm:text-sm font-medium text-white py-12',
-        settings?.footer_color?.name
-          ? `bg-${settings.footer_color.name}`
-          : 'bg-sky-600'
-      )}
-    >
-      <div className="max-w-7xl mx-auto px-8 sm:px-6 lg:px-8">
+    <footer className={cn('bg-gray-700 py-12 text-sm text-white')}>
+      <div className="mx-auto max-w-7xl px-8">
         <div className="mb-8">
-          {/* Privacy Settings Button */}
           <button
             onClick={() => setShowSettings(true)}
-            className={cn(
-              'text-white font-medium text-sm hover:text-gray-300 transition-colors duration-200',
-              settings?.secondary_color?.name
-                ? `hover:text-${settings.secondary_color.name.replace('-500', '-300')}`
-                : 'hover:text-sky-300'
-            )}
-            aria-label={t('Privacy Settings')}
+            className="hover:text-gray-300"
+            aria-label="Privacy Settings"
           >
-            <strong>{t('Privacy Settings')}</strong>
+            <strong>Privacy Settings</strong>
           </button>
         </div>
 
-        <div
-          className={`grid grid-cols-2 md:grid-cols-2 lg:grid-cols-${Math.min(totalColumns, 4)} gap-8`}
-        >
-          {/* Menu Items with Subitems */}
-          {itemsWithSubitems.length > 0 &&
-            itemsWithSubitems.map((item) => (
-              <div key={item.id}>
-                <h3 className="text-sm font-semibold mb-4">
-                  <Link
-                    href={item.url_name}
-                    className="text-white hover:text-gray-300 transition-colors duration-200"
-                  >
-                    {item.display_name}
-                  </Link>
-                </h3>
-                <ul className="space-y-2">
-                  {item.website_submenuitem?.map((subItem) => (
-                    <li key={subItem.id}>
-                      <Link
-                        href={subItem.url_name}
-                        className="text-sm text-gray-300 hover:text-white transition-colors duration-200"
-                      >
-                        {subItem.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+        <div className={`grid grid-cols-2 gap-8 md:grid-cols-2 lg:grid-cols-${Math.min(totalColumns, 4)}`}>
+          {itemsWithSubitems.map(item => (
+            <div key={item.id}>
+              <h3 className="mb-4 font-semibold">
+                <Link href={item.url_name} className="hover:text-gray-300">
+                  {item.display_name}
+                </Link>
+              </h3>
+              <ul className="space-y-2">
+                {item.website_submenuitem?.map(subItem => (
+                  <li key={subItem.id}>
+                    <Link href={subItem.url_name} className="text-gray-300 hover:text-white">
+                      {subItem.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
-          {/* Grouped Menu Items without Subitems */}
-          {groupedItemsWithoutSubitems.length > 0 &&
-            groupedItemsWithoutSubitems.map((group, index) => (
-              <div key={`group-${index}`}>
-                <h3 className="text-sm font-semibold mb-0">
-                  <Link
-                    href={group[0]?.url_name || '#'}
-                    className="text-white hover:text-gray-300 transition-colors duration-200"
-                  >
-                    {itemsWithSubitems.length > 0 ? '' : 'Links'}
-                    {groupedItemsWithoutSubitems.length > 1 ? ` ` : ''}
-                  </Link>
-                </h3>
-                <ul className="space-y-2">
-                  {group.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        href={item.url_name}
-                        className="text-gray-300 hover:text-white transition-colors duration-200"
-                      >
-                        {item.display_name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          {groupedItemsWithoutSubitems.map((group, index) => (
+            <div key={`group-${index}`}>
+              <h3 className="mb-0 text-sm font-semibold">
+                <Link
+                  href={group[0]?.url_name || '#'}
+                  className="text-white hover:text-gray-300"
+                >
+                  {itemsWithSubitems.length ? '' : 'Links'}
+                </Link>
+              </h3>
+              <ul className="space-y-2">
+                {group.map(item => (
+                  <li key={item.id}>
+                    <Link href={item.url_name} className="text-gray-300 hover:text-white">
+                      {item.display_name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
-          {/* Profile Column */}
           <div>
-            <h3 className="text-sm font-semibold mb-4">Profile</h3>
+            <h3 className="mb-4 text-sm font-semibold">Profile</h3>
             <ul className="space-y-2">
               {isLoggedIn ? (
                 <li>
-                  <button
-                    onClick={handleLogoutAction}
-                    className="text-gray-300 hover:text-white transition-colors duration-200"
-                  >
-                    {t('Logout')}
+                  <button onClick={handleLogout} className="text-gray-300 hover:text-white">
+                    Logout
                   </button>
                 </li>
               ) : (
                 <>
                   <li>
                     <button
-                      onClick={handleShowLogin}
-                      className="text-gray-300 hover:text-white transition-colors duration-200"
+                      onClick={handleNavigation('/login')}
+                      className="text-gray-300 hover:text-white"
                     >
-                      {t('Login')}
+                      Login
                     </button>
                   </li>
                   <li>
                     <button
-                      onClick={handleShowRegister}
-                      className="text-gray-300 hover:text-white transition-colors duration-200"
+                      onClick={handleNavigation('/register')}
+                      className="text-gray-300 hover:text-white"
                     >
-                      {t('Register')}
+                      Register
                     </button>
                   </li>
                 </>
@@ -244,10 +180,9 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
           </div>
         </div>
 
-        {/* Footer Bottom */}
         <div className="mt-12 border-t border-gray-100 pt-8 text-center">
-          <p className="text-gray-300 text-xs font-medium tracking-widest">
-            © {new Date().getFullYear()} {settings?.site || 'Company'}. All rights reserved.
+          <p className="text-xs font-medium tracking-widest text-gray-300">
+            © 2025 {settings?.site || 'Company'}. All rights reserved.
           </p>
         </div>
       </div>
