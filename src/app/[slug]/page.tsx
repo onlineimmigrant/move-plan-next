@@ -1,14 +1,11 @@
-// app/[slug]/page.tsx
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-//import { useSettings } from '@/context/SettingsContext';
 import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
-
-//import Breadcrumbs from '@/components/Breadcrumbs';
 import { notFound, redirect } from 'next/navigation';
+import '@/components/PostEditor.css'; // Import PostEditor styles
 
 interface TOCItem {
   tag_name: string;
@@ -18,12 +15,44 @@ interface TOCItem {
 
 const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
   const { slug } = React.use(params);
- // const { settings } = useSettings();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(true); // Replace with real admin check later
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Touch handler for table scrolling
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      const wrapper = (e.target as HTMLElement).closest('.table-wrapper') as HTMLElement;
+      if (!wrapper) return;
+
+      const startX = e.touches[0].clientX;
+      const scrollStart = wrapper.scrollLeft;
+
+      const handleTouchMove = (moveEvent: TouchEvent) => {
+        moveEvent.preventDefault();
+        moveEvent.stopPropagation();
+        const currentX = moveEvent.touches[0].clientX;
+        const deltaX = startX - currentX;
+        wrapper.scrollLeft = scrollStart + deltaX;
+      };
+
+      const handleTouchEnd = () => {
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -31,14 +60,13 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
         const response = await fetch(`/api/posts/${slug}`);
         if (response.ok) {
           const data = await response.json();
-          // Redirect to /sqe-2/topic/[slug] if section_id is 38
           if (data.section_id === 38) {
             redirect(`/sqe-2/topic/${slug}`);
           } else if (data.section_id === 39) {
             redirect(`/sqe-2/practice-area/${slug}`);
-          }else if (data.section_id === 40) {
+          } else if (data.section_id === 40) {
             redirect(`/sqe-2/legal-skills-assessments/${slug}`);
-          }else if (data.section_id === 3) {
+          } else if (data.section_id === 3) {
             redirect(`/sqe-2/${slug}`);
           }
           setPost(data);
@@ -155,10 +183,9 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   if (!post) notFound();
 
   const shouldShowMainContent = post.section !== 'Landing' && post.content?.length > 0;
- // const path = `/${post.slug}`;
 
   return (
-    <div className=" px-4 sm:pt-4 sm:pb-16">
+    <div className="px-4 sm:pt-4 sm:pb-16">
       {post.section !== 'Landing' ? (
         <div className="grid lg:grid-cols-8 gap-x-4">
           <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
@@ -183,11 +210,10 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                     editHref={`/admin/edit/${slug}`}
                     createHref="/admin/create-post"
                   />
-      
                 </div>
                 <div
                   ref={contentRef}
-                  className="prose prose-sm sm:prose lg:prose-xl font-light text-gray-600"
+                  className="prose prose-sm sm:prose lg:prose-xl font-light text-gray-600 table-scroll-container"
                   onDoubleClick={makeEditable}
                   dangerouslySetInnerHTML={{ __html: post.content }}
                 />
@@ -196,7 +222,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               <span></span>
             )}
           </main>
-          <aside className="lg:col-span-2"></aside> {/* Empty right column */}
+          <aside className="lg:col-span-2"></aside>
         </div>
       ) : (
         <LandingPostContent post={post} />

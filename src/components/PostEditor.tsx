@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -21,6 +21,7 @@ import { mergeAttributes } from '@tiptap/core';
 import { Button } from '@/components/ui/button';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { Node } from 'prosemirror-model';
 import './PostEditor.css';
 
 // Define props interface explicitly
@@ -29,7 +30,7 @@ interface PostEditorProps {
   initialContent?: string;
 }
 
-// Custom Image extension (unchanged)
+// Custom Image extension
 const CustomImage = ImageResize.extend({
   name: 'image',
   group: 'block',
@@ -150,8 +151,12 @@ const CustomTable = Table.extend({
         'table',
         mergeAttributes(
           {
-            class: 'tiptap-table',
+            class: 'tiptap-table editing',
             style: `border-collapse: collapse;`,
+            'data-border-style': HTMLAttributes['data-border-style'] || 'solid',
+            'data-border-color': HTMLAttributes['data-border-color'] || '#e5e7eb',
+            'data-border-width': HTMLAttributes['data-border-width'] || '1px',
+            'data-background-color': HTMLAttributes['data-background-color'] || 'transparent',
           },
           HTMLAttributes
         ),
@@ -162,18 +167,43 @@ const CustomTable = Table.extend({
 
   addProseMirrorPlugins() {
     const plugins = this.parent?.() || [];
-    return [...plugins, createResizePlugin()];
+    return [...plugins, createResizePlugin(), createEditingStylePlugin()];
   },
 });
+
+// Helper function to get table attributes (for plugins)
+function getTableAttributes(node: Node, pos: number, view: EditorView): Record<string, any> {
+  const resolved = view.state.doc.resolve(pos);
+  let currentNode = node;
+  let currentPos = pos;
+
+  for (let depth = resolved.depth; depth >= 0; depth--) {
+    const parent = resolved.node(depth);
+    if (parent.type.name === 'table') {
+      return parent.attrs;
+    }
+    currentPos = resolved.before(depth);
+    currentNode = resolved.node(depth);
+  }
+
+  return {
+    borderStyle: 'solid',
+    borderWidth: '1px',
+    borderColor: '#e5e7eb',
+    backgroundColor: 'transparent',
+  };
+}
 
 // Custom TableCell with centered text
 const CustomTableCell = TableCell.extend({
   renderHTML({ HTMLAttributes }) {
+    // Use default attributes; dynamic styles applied by createEditingStylePlugin and handleSave
+    const border = 'solid 1px #e5e7eb';
     return [
       'td',
       mergeAttributes(HTMLAttributes, {
         class: 'tiptap-table-cell',
-        style: `padding: 0.5rem; text-align: center;`,
+        style: `padding: 0.5rem; text-align: center; border: ${border};`,
       }),
       0,
     ];
@@ -183,17 +213,51 @@ const CustomTableCell = TableCell.extend({
 // Custom TableHeader with transparent background and centered text
 const CustomTableHeader = TableHeader.extend({
   renderHTML({ HTMLAttributes }) {
+    // Use default attributes; dynamic styles applied by createEditingStylePlugin and handleSave
+    const border = 'solid 1px #e5e7eb';
+    const backgroundColor = 'transparent';
     return [
       'th',
       mergeAttributes(HTMLAttributes, {
         class: 'tiptap-table-header',
-        style: `padding: 0.5rem; text-align: center; font-weight: bold;`,
-        'data-background-color': HTMLAttributes['data-background-color'] || 'transparent',
+        style: `padding: 0.5rem; text-align: center; font-weight: bold; background-color: ${backgroundColor}; border: ${border};`,
       }),
       0,
     ];
   },
 });
+
+// Plugin to apply inline border styles during editing
+function createEditingStylePlugin() {
+  return new Plugin({
+    key: new PluginKey('tableEditingStyle'),
+    view(editorView: EditorView) {
+      return {
+        update: () => {
+          const tables = editorView.dom.querySelectorAll('.tiptap-table') as NodeListOf<HTMLElement>;
+          tables.forEach((table) => {
+            table.classList.add('editing');
+            const attrs = table.dataset;
+            const borderStyle = attrs.borderStyle || 'solid';
+            const borderWidth = attrs.borderWidth || '1px';
+            const borderColor = attrs.borderColor || '#e5e7eb';
+            const border = borderStyle === 'none' ? 'none' : `${borderStyle} ${borderWidth} ${borderColor}`;
+            const backgroundColor = attrs.backgroundColor || 'transparent';
+            const cells = table.querySelectorAll('.tiptap-table-cell');
+            const headers = table.querySelectorAll('.tiptap-table-header');
+            cells.forEach((cell) => {
+              (cell as HTMLElement).style.border = border;
+            });
+            headers.forEach((header) => {
+              (header as HTMLElement).style.border = border;
+              (header as HTMLElement).style.backgroundColor = backgroundColor;
+            });
+          });
+        },
+      };
+    },
+  });
+}
 
 // Resize plugin for draggable borders
 function createResizePlugin() {
@@ -202,10 +266,10 @@ function createResizePlugin() {
     view(editorView: EditorView) {
       return {
         update: () => {
-          const tables = editorView.dom.querySelectorAll('.tiptap-table');
+          const tables = editorView.dom.querySelectorAll('.tiptap-table') as NodeListOf<HTMLElement>;
           tables.forEach((table) => {
-            table.classList.add('editing'); // Always editing in editor
-            addResizeHandles(table as HTMLElement, editorView);
+            table.classList.add('editing');
+            addResizeHandles(table, editorView);
           });
         },
         destroy: () => {
@@ -290,7 +354,7 @@ function startColumnResize(e: MouseEvent | TouchEvent, table: HTMLElement, colIn
     const newWidth = Math.max(50, startWidth + delta);
     cells.forEach((cell) => {
       cell.style.width = `${newWidth}px`;
-      cell.style.minWidth = `${newWidth}px`; // Ensure width persists
+      cell.style.minWidth = `${newWidth}px`;
     });
   };
 
@@ -320,7 +384,7 @@ function startRowResize(e: MouseEvent | TouchEvent, table: HTMLElement, rowIndex
     const delta = currentY - startY;
     const newHeight = Math.max(20, startHeight + delta);
     row.style.height = `${newHeight}px`;
-    row.style.minHeight = `${newHeight}px`; // Ensure height persists
+    row.style.minHeight = `${newHeight}px`;
   };
 
   const onEnd = () => {
@@ -380,32 +444,34 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
               .slice(0, 5);
           },
           render: () => {
-            let component: HTMLDivElement | null = null;
-            let popup: HTMLDivElement | null = null;
+            const state: { component: HTMLDivElement | null; popup: HTMLDivElement | null } = {
+              component: null,
+              popup: null,
+            };
 
             return {
               onStart: (props) => {
-                component = document.createElement('div');
-                component.className = 'mention-suggestions';
-                component.style.position = 'absolute';
-                component.style.background = 'white';
-                component.style.border = '1px solid #ccc';
-                component.style.padding = '5px';
-                component.innerHTML = props.items
+                state.component = document.createElement('div');
+                state.component.className = 'mention-suggestions';
+                state.component.style.position = 'absolute';
+                state.component.style.background = 'white';
+                state.component.style.border = '1px solid #ccc';
+                state.component.style.padding = '5px';
+                state.component.innerHTML = props.items
                   .map(
                     (item) =>
                       `<div class="suggestion-item" style="padding: 5px; cursor: pointer;">@${item}</div>`
                   )
                   .join('');
 
-                popup = document.body.appendChild(component);
+                state.popup = document.body.appendChild(state.component);
                 const rect = props.clientRect?.();
-                if (rect) {
-                  popup.style.left = `${rect.left}px`;
-                  popup.style.top = `${rect.bottom}px`;
+                if (rect && state.popup) {
+                  state.popup.style.left = `${rect.left}px`;
+                  state.popup.style.top = `${rect.bottom}px`;
                 }
 
-                component.addEventListener('click', (e) => {
+                state.component.addEventListener('click', (e) => {
                   const target = e.target as HTMLElement;
                   const item = target.textContent?.slice(1);
                   if (item) {
@@ -414,8 +480,8 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
                 });
               },
               onUpdate: (props) => {
-                if (component) {
-                  component.innerHTML = props.items
+                if (state.component) {
+                  state.component.innerHTML = props.items
                     .map(
                       (item) =>
                         `<div class="suggestion-item" style="padding: 5px; cursor: pointer;">@${item}</div>`
@@ -424,10 +490,10 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
                 }
               },
               onExit: () => {
-                if (popup) {
-                  popup.remove();
-                  popup = null;
-                  component = null;
+                if (state.popup) {
+                  state.popup.remove();
+                  state.popup = null;
+                  state.component = null;
                 }
               },
             };
@@ -444,7 +510,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
     content: initialContent || '<p>Start writing your post here...</p>',
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl m-5 focus:outline-none',
+        class: 'prose prose-sm sm:prose lg:prose-xl m-5 focus:outline-none',
       },
       handleDrop: (view, event, slice, moved) => {
         if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length) {
@@ -478,6 +544,42 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
   });
 
   const [showTableSubmenu, setShowTableSubmenu] = useState(false);
+
+  // Touch scrolling handler for edit mode
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const wrapper = (e.target as HTMLElement).closest('.table-wrapper') as HTMLElement;
+      if (!wrapper) return;
+
+      const startX = e.touches[0].clientX;
+      const scrollStart = wrapper.scrollLeft;
+
+      const handleTouchMove = (moveEvent: TouchEvent) => {
+        moveEvent.preventDefault();
+        moveEvent.stopPropagation();
+        const currentX = moveEvent.touches[0].clientX;
+        const deltaX = startX - currentX;
+        wrapper.scrollLeft = scrollStart + deltaX;
+      };
+
+      const handleTouchEnd = () => {
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+    };
+
+    const editorDom = editor.view.dom;
+    editorDom.addEventListener('touchstart', handleTouchStart, { passive: false });
+
+    return () => {
+      editorDom.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, [editor]);
 
   if (!editor) return null;
 
@@ -553,18 +655,67 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
         editor.chain().focus().updateAttributes('table', { borderStyle: 'dashed', borderWidth: '1px' }).run();
         break;
       case 'borderBold':
-        editor.chain().focus().updateAttributes('table', { borderStyle: 'solid', borderWidth: '3px' }).run();
+        editor.chain().focus().updateAttributes('table', { borderStyle: 'special', borderWidth: '3px' }).run();
         break;
       case 'borderColor':
         const borderColor = window.prompt('Enter border color (hex or Tailwind class)', '#e5e7eb');
         if (borderColor) {
-          editor.chain().focus().updateAttributes('table', { borderColor }).run();
+          const { state, dispatch } = editor.view;
+          const { tr } = state;
+          let tableFound = false;
+          state.doc.descendants((node, pos) => {
+            if (node.type.name === 'table') {
+              tableFound = true;
+              tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                borderColor,
+                borderStyle: node.attrs.borderStyle === 'none' ? 'solid' : node.attrs.borderStyle,
+              });
+              const tableNode = editor.view.dom.querySelector(`.tiptap-table[data-border-color="${node.attrs.borderColor}"]`) as HTMLElement | null;
+              if (tableNode) {
+                const cells = tableNode.querySelectorAll('.tiptap-table-cell, .tiptap-table-header');
+                cells.forEach((cell) => {
+                  (cell as HTMLElement).style.borderColor = borderColor;
+                });
+              }
+            }
+          });
+          if (tableFound) {
+            dispatch(tr);
+            console.log('Applied borderColor:', borderColor);
+          } else {
+            console.warn('No table found to apply borderColor');
+          }
         }
         break;
       case 'headerBackground':
         const backgroundColor = window.prompt('Enter header background color (hex or Tailwind class)', 'transparent');
         if (backgroundColor) {
-          editor.chain().focus().updateAttributes('table', { backgroundColor }).run();
+          const { state, dispatch } = editor.view;
+          const { tr } = state;
+          let tableFound = false;
+          state.doc.descendants((node, pos) => {
+            if (node.type.name === 'table') {
+              tableFound = true;
+              tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                backgroundColor,
+              });
+              const tableNode = editor.view.dom.querySelector(`.tiptap-table[data-background-color="${node.attrs.backgroundColor}"]`) as HTMLElement | null;
+              if (tableNode) {
+                const headers = tableNode.querySelectorAll('.tiptap-table-header');
+                headers.forEach((header) => {
+                  (header as HTMLElement).style.backgroundColor = backgroundColor;
+                });
+              }
+            }
+          });
+          if (tableFound) {
+            dispatch(tr);
+            console.log('Applied backgroundColor:', backgroundColor);
+          } else {
+            console.warn('No table found to apply backgroundColor');
+          }
         }
         break;
       default:
@@ -608,10 +759,22 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
   };
 
   const handleSave = () => {
-    // Remove 'editing' class before saving
-    const tables = editor.view.dom.querySelectorAll('.tiptap-table');
+    const tables = editor.view.dom.querySelectorAll('.tiptap-table') as NodeListOf<HTMLElement>;
     tables.forEach((table) => {
       table.classList.remove('editing');
+      const attrs = table.dataset;
+      const borderStyle = attrs.borderStyle || 'solid';
+      const borderWidth = attrs.borderWidth || '1px';
+      const borderColor = attrs.borderColor || '#e5e7eb';
+      const border = borderStyle === 'none' ? 'none' : `${borderStyle} ${borderWidth} ${borderColor}`;
+      const cells = table.querySelectorAll('.tiptap-table-cell, .tiptap-table-header');
+      cells.forEach((cell) => {
+        (cell as HTMLElement).style.border = border;
+      });
+      const headers = table.querySelectorAll('.tiptap-table-header');
+      headers.forEach((header) => {
+        (header as HTMLElement).style.backgroundColor = attrs.backgroundColor || 'transparent';
+      });
     });
     const htmlContent = editor.getHTML();
     console.log('Saved HTML:', htmlContent);
@@ -619,270 +782,272 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
   };
 
   return (
-    <div className="post-editor text-gray-600">
-      <div className="toolbar mb-4 flex gap-0.5 flex-wrap">
-        <Button
-          size="sm"
-          onClick={() => applyStyle('h1')}
-          variant={editor.isActive('heading', { level: 1 }) ? 'secondary' : 'outline'}
-        >
-          H1
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('h2')}
-          variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'outline'}
-        >
-          H2
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('h3')}
-          variant={editor.isActive('heading', { level: 3 }) ? 'secondary' : 'outline'}
-        >
-          H3
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('h4')}
-          variant={editor.isActive('heading', { level: 4 }) ? 'secondary' : 'outline'}
-        >
-          H4
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('h5')}
-          variant={editor.isActive('heading', { level: 5 }) ? 'secondary' : 'outline'}
-        >
-          H5
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('p')}
-          variant={editor.isActive('paragraph') ? 'secondary' : 'outline'}
-        >
-          P
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('ul')}
-          variant={editor.isActive('bulletList') ? 'secondary' : 'outline'}
-        >
-          UL
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('ol')}
-          variant={editor.isActive('orderedList') ? 'secondary' : 'outline'}
-        >
-          OL
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('blockquote')}
-          variant={editor.isActive('blockquote') ? 'secondary' : 'outline'}
-        >
-          Quote
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('codeBlock')}
-          variant={editor.isActive('codeBlock') ? 'secondary' : 'outline'}
-        >
-          Code
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('bold')}
-          variant={editor.isActive('bold') ? 'secondary' : 'outline'}
-        >
-          B
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => applyStyle('italic')}
-          variant={editor.isActive('italic') ? 'secondary' : 'outline'}
-        >
-          I
-        </Button>
-        <Button
-          size="sm"
-          onClick={setLink}
-          variant={editor.isActive('link') ? 'secondary' : 'outline'}
-        >
-          Link
-        </Button>
-        <Button size="sm" onClick={addImage} variant="outline">
-          Image
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => setImageAlignment('left')}
-          variant={editor.isActive('image', { align: 'left' }) ? 'secondary' : 'outline'}
-        >
-          Left
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => setImageAlignment('center')}
-          variant={editor.isActive('image', { align: 'center' }) ? 'secondary' : 'outline'}
-        >
-          Center
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => setImageAlignment('right')}
-          variant={editor.isActive('image', { align: 'right' }) ? 'secondary' : 'outline'}
-        >
-          Right
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => setShowTableSubmenu(!showTableSubmenu)}
-          variant={showTableSubmenu ? 'secondary' : 'outline'}
-        >
-          Table Menu
-        </Button>
-        <Button
-          size="sm"
-          onClick={toggleHighlight}
-          variant={editor.isActive('highlight') ? 'secondary' : 'outline'}
-        >
-          Highlight
-        </Button>
-        <Button size="sm" onClick={handleSave} variant="primary">
-          Save
-        </Button>
-      </div>
-      {showTableSubmenu && (
-        <div className="table-submenu">
+    <div className="post-editor-container">
+      <div className="post-editor text-gray-600">
+        <div className="toolbar mb-4 flex gap-0.5 flex-wrap">
           <Button
             size="sm"
-            onClick={() => applyStyle('table')}
-            variant={editor.isActive('table') ? 'secondary' : 'outline'}
+            onClick={() => applyStyle('h1')}
+            variant={editor.isActive('heading', { level: 1 }) ? 'secondary' : 'outline'}
           >
-            Table
+            H1
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('addRowAfter')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('h2')}
+            variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'outline'}
           >
-            Add Row
+            H2
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('addColumnAfter')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('h3')}
+            variant={editor.isActive('heading', { level: 3 }) ? 'secondary' : 'outline'}
           >
-            Add Column
+            H3
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('deleteRow')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('h4')}
+            variant={editor.isActive('heading', { level: 4 }) ? 'secondary' : 'outline'}
           >
-            Delete Row
+            H4
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('deleteColumn')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('h5')}
+            variant={editor.isActive('heading', { level: 5 }) ? 'secondary' : 'outline'}
           >
-            Delete Column
+            H5
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('mergeCells')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('p')}
+            variant={editor.isActive('paragraph') ? 'secondary' : 'outline'}
           >
-            Merge Cells
+            P
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('splitCell')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('ul')}
+            variant={editor.isActive('bulletList') ? 'secondary' : 'outline'}
           >
-            Split Cell
+            UL
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('deleteTable')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('ol')}
+            variant={editor.isActive('orderedList') ? 'secondary' : 'outline'}
           >
-            Delete Table
+            OL
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('borderNone')}
-            variant={editor.isActive('table', { borderStyle: 'none' }) ? 'secondary' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('blockquote')}
+            variant={editor.isActive('blockquote') ? 'secondary' : 'outline'}
           >
-            No Border
+            Quote
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('borderSolid')}
-            variant={
-              editor.isActive('table', { borderStyle: 'solid', borderWidth: '1px' })
-                ? 'secondary'
-                : 'outline'
-            }
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('codeBlock')}
+            variant={editor.isActive('codeBlock') ? 'secondary' : 'outline'}
           >
-            Solid Border
+            Code
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('borderDashed')}
-            variant={editor.isActive('table', { borderStyle: 'dashed' }) ? 'secondary' : 'outline'}
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('bold')}
+            variant={editor.isActive('bold') ? 'secondary' : 'outline'}
           >
-            Dashed Border
+            B
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('borderBold')}
-            variant={
-              editor.isActive('table', { borderStyle: 'solid', borderWidth: '3px' })
-                ? 'secondary'
-                : 'outline'
-            }
-            disabled={!editor.isActive('table')}
+            onClick={() => applyStyle('italic')}
+            variant={editor.isActive('italic') ? 'secondary' : 'outline'}
           >
-            Bold Border
+            I
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('borderColor')}
-            variant="outline"
-            disabled={!editor.isActive('table')}
+            onClick={setLink}
+            variant={editor.isActive('link') ? 'secondary' : 'outline'}
           >
-            Border Color
+            Link
+          </Button>
+          <Button size="sm" onClick={addImage} variant="outline">
+            Image
           </Button>
           <Button
             size="sm"
-            onClick={() => applyStyle('headerBackground')}
-            variant="outline"
-            disabled={!editor.isActive('table')}
+            onClick={() => setImageAlignment('left')}
+            variant={editor.isActive('image', { align: 'left' }) ? 'secondary' : 'outline'}
           >
-            Header Bg
+            Left
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setImageAlignment('center')}
+            variant={editor.isActive('image', { align: 'center' }) ? 'secondary' : 'outline'}
+          >
+            Center
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setImageAlignment('right')}
+            variant={editor.isActive('image', { align: 'right' }) ? 'secondary' : 'outline'}
+          >
+            Right
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setShowTableSubmenu(!showTableSubmenu)}
+            variant={showTableSubmenu ? 'secondary' : 'outline'}
+          >
+            Table Menu
+          </Button>
+          <Button
+            size="sm"
+            onClick={toggleHighlight}
+            variant={editor.isActive('highlight') ? 'secondary' : 'outline'}
+          >
+            Highlight
+          </Button>
+          <Button size="sm" onClick={handleSave} variant="primary">
+            Save
           </Button>
         </div>
-      )}
-      <EditorContent
-        editor={editor}
-        className="border border-gray-200 p-4 rounded-md min-h-[300px] bg-white"
-      />
-      <div className="mt-2 text-sm text-gray-500">
-        {editor?.storage.characterCount.characters()} / 50000 characters
+        {showTableSubmenu && (
+          <div className="table-submenu">
+            <Button
+              size="sm"
+              onClick={() => applyStyle('table')}
+              variant={editor.isActive('table') ? 'secondary' : 'outline'}
+            >
+              Table
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('addRowAfter')}
+              variant={editor.isActive('table') ? 'outline' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              Add Row
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('addColumnAfter')}
+              variant={editor.isActive('table') ? 'outline' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              Add Column
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('deleteRow')}
+              variant={editor.isActive('table') ? 'outline' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              Delete Row
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('deleteColumn')}
+              variant={editor.isActive('table') ? 'outline' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              Delete Column
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('mergeCells')}
+              variant={editor.isActive('table') ? 'outline' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              Merge Cells
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('splitCell')}
+              variant={editor.isActive('table') ? 'outline' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              Split Cell
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('deleteTable')}
+              variant={editor.isActive('table') ? 'outline' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              Delete Table
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('borderNone')}
+              variant={editor.isActive('table', { borderStyle: 'none' }) ? 'secondary' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              No Border
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('borderSolid')}
+              variant={
+                editor.isActive('table', { borderStyle: 'solid', borderWidth: '1px' })
+                  ? 'secondary'
+                  : 'outline'
+              }
+              disabled={!editor.isActive('table')}
+            >
+              Solid Border
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('borderDashed')}
+              variant={editor.isActive('table', { borderStyle: 'dashed' }) ? 'secondary' : 'outline'}
+              disabled={!editor.isActive('table')}
+            >
+              Dashed Border
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('borderBold')}
+              variant={
+                editor.isActive('table', { borderStyle: 'special', borderWidth: '3px' })
+                  ? 'secondary'
+                  : 'outline'
+              }
+              disabled={!editor.isActive('table')}
+            >
+              Bold Border
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('borderColor')}
+              variant="outline"
+              disabled={!editor.isActive('table')}
+            >
+              Border Color
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => applyStyle('headerBackground')}
+              variant="outline"
+              disabled={!editor.isActive('table')}
+            >
+              Header Bg
+            </Button>
+          </div>
+        )}
+        <EditorContent
+          editor={editor}
+          className="border border-gray-200 p-4 rounded-md min-h-[300px] bg-white"
+        />
+        <div className="mt-2 text-sm text-gray-500">
+          {editor?.storage.characterCount.characters()} / 50000 characters
+        </div>
       </div>
     </div>
   );
