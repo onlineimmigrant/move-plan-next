@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -21,7 +21,6 @@ import { mergeAttributes } from '@tiptap/core';
 import { Button } from '@/components/ui/button';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import './PostEditor.css';
 
 // Define props interface explicitly
 interface PostEditorProps {
@@ -113,7 +112,7 @@ const CustomImage = ImageResize.extend({
   },
 });
 
-// Custom Table extension with border attributes and background color
+// Custom Table extension with border attributes and scrollable wrapper
 const CustomTable = Table.extend({
   name: 'table',
 
@@ -125,7 +124,7 @@ const CustomTable = Table.extend({
         renderHTML: (attributes) => ({ 'data-border-style': attributes.borderStyle }),
       },
       borderColor: {
-        default: '#e5e7eb',
+        default: '#e5e7eb', // Tailwind gray-100
         parseHTML: (element) => element.getAttribute('data-border-color') || '#e5e7eb',
         renderHTML: (attributes) => ({ 'data-border-color': attributes.borderColor }),
       },
@@ -134,24 +133,19 @@ const CustomTable = Table.extend({
         parseHTML: (element) => element.getAttribute('data-border-width') || '1px',
         renderHTML: (attributes) => ({ 'data-border-width': attributes.borderWidth }),
       },
-      backgroundColor: {
-        default: 'transparent',
-        parseHTML: (element) => element.getAttribute('data-background-color') || 'transparent',
-        renderHTML: (attributes) => ({ 'data-background-color': attributes.backgroundColor }),
-      },
     };
   },
 
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
-      { class: 'table-wrapper' },
+      { class: 'table-wrapper', style: 'overflow-x: auto; max-width: 100%;' },
       [
         'table',
         mergeAttributes(
           {
             class: 'tiptap-table',
-            style: `border-collapse: collapse;`,
+            style: `border-collapse: collapse; width: 100%;`,
           },
           HTMLAttributes
         ),
@@ -166,29 +160,28 @@ const CustomTable = Table.extend({
   },
 });
 
-// Custom TableCell with centered text
+// Custom TableCell with CSS-based border styling
 const CustomTableCell = TableCell.extend({
   renderHTML({ HTMLAttributes }) {
     return [
       'td',
       mergeAttributes(HTMLAttributes, {
         class: 'tiptap-table-cell',
-        style: `padding: 0.5rem; text-align: center;`,
+        style: `padding: 0.5rem;`,
       }),
       0,
     ];
   },
 });
 
-// Custom TableHeader with transparent background and centered text
+// Custom TableHeader with CSS-based border styling
 const CustomTableHeader = TableHeader.extend({
   renderHTML({ HTMLAttributes }) {
     return [
       'th',
       mergeAttributes(HTMLAttributes, {
         class: 'tiptap-table-header',
-        style: `padding: 0.5rem; text-align: center; font-weight: bold;`,
-        'data-background-color': HTMLAttributes['data-background-color'] || 'transparent',
+        style: `padding: 0.5rem; background-color: #f4f4f4; font-weight: bold;`,
       }),
       0,
     ];
@@ -204,7 +197,6 @@ function createResizePlugin() {
         update: () => {
           const tables = editorView.dom.querySelectorAll('.tiptap-table');
           tables.forEach((table) => {
-            table.classList.add('editing'); // Always editing in editor
             addResizeHandles(table as HTMLElement, editorView);
           });
         },
@@ -219,10 +211,10 @@ function createResizePlugin() {
 function addResizeHandles(table: HTMLElement, editorView: EditorView) {
   table.querySelectorAll('.resize-handle').forEach((handle) => handle.remove());
 
-  const rows = table.querySelectorAll('tr') as NodeListOf<HTMLElement>;
+  const rows = table.querySelectorAll('tr');
   const headerRow = table.querySelector('tr');
   if (headerRow) {
-    const cells = headerRow.querySelectorAll('th, td') as NodeListOf<HTMLElement>;
+    const cells = headerRow.querySelectorAll('th, td');
     cells.forEach((cell, index) => {
       const handle = document.createElement('div');
       handle.className = 'resize-handle column-resize';
@@ -240,10 +232,6 @@ function addResizeHandles(table: HTMLElement, editorView: EditorView) {
       cell.appendChild(handle);
 
       handle.addEventListener('mousedown', (e: MouseEvent) => {
-        e.preventDefault();
-        startColumnResize(e, table, index, editorView);
-      });
-      handle.addEventListener('touchstart', (e: TouchEvent) => {
         e.preventDefault();
         startColumnResize(e, table, index, editorView);
       });
@@ -270,71 +258,51 @@ function addResizeHandles(table: HTMLElement, editorView: EditorView) {
       e.preventDefault();
       startRowResize(e, table, index, editorView);
     });
-    handle.addEventListener('touchstart', (e: TouchEvent) => {
-      e.preventDefault();
-      startRowResize(e, table, index, editorView);
-    });
   });
 }
 
-function startColumnResize(e: MouseEvent | TouchEvent, table: HTMLElement, colIndex: number, editorView: EditorView) {
-  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-  const startX = clientX;
-  const cells = Array.from(table.querySelectorAll(`tr > *:nth-child(${colIndex + 1})`)) as HTMLElement[];
+function startColumnResize(e: MouseEvent, table: HTMLElement, colIndex: number, editorView: EditorView) {
+  const startX = e.clientX;
+  const cells = Array.from(table.querySelectorAll(`tr > *:nth-child(${colIndex + 1})`));
   const startWidth = cells[0].getBoundingClientRect().width;
 
-  const onMove = (moveEvent: MouseEvent | TouchEvent) => {
-    moveEvent.preventDefault();
-    const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-    const delta = currentX - startX;
+  const onMouseMove = (moveEvent: MouseEvent) => {
+    const delta = moveEvent.clientX - startX;
     const newWidth = Math.max(50, startWidth + delta);
     cells.forEach((cell) => {
-      cell.style.width = `${newWidth}px`;
-      cell.style.minWidth = `${newWidth}px`; // Ensure width persists
+      (cell as HTMLElement).style.width = `${newWidth}px`;
     });
   };
 
-  const onEnd = () => {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('mouseup', onEnd);
-    document.removeEventListener('touchend', onEnd);
+  const onMouseUp = () => {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
     editorView.focus();
   };
 
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('touchmove', onMove, { passive: false });
-  document.addEventListener('mouseup', onEnd);
-  document.addEventListener('touchend', onEnd);
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
 }
 
-function startRowResize(e: MouseEvent | TouchEvent, table: HTMLElement, rowIndex: number, editorView: EditorView) {
-  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-  const startY = clientY;
-  const row = table.querySelectorAll('tr')[rowIndex] as HTMLElement;
+function startRowResize(e: MouseEvent, table: HTMLElement, rowIndex: number, editorView: EditorView) {
+  const startY = e.clientY;
+  const row = table.querySelectorAll('tr')[rowIndex];
   const startHeight = row.getBoundingClientRect().height;
 
-  const onMove = (moveEvent: MouseEvent | TouchEvent) => {
-    moveEvent.preventDefault();
-    const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
-    const delta = currentY - startY;
+  const onMouseMove = (moveEvent: MouseEvent) => {
+    const delta = moveEvent.clientY - startY;
     const newHeight = Math.max(20, startHeight + delta);
-    row.style.height = `${newHeight}px`;
-    row.style.minHeight = `${newHeight}px`; // Ensure height persists
+    (row as HTMLElement).style.height = `${newHeight}px`;
   };
 
-  const onEnd = () => {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('mouseup', onEnd);
-    document.removeEventListener('touchend', onEnd);
+  const onMouseUp = () => {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
     editorView.focus();
   };
 
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('touchmove', onMove, { passive: false });
-  document.addEventListener('mouseup', onEnd);
-  document.addEventListener('touchend', onEnd);
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
 }
 
 const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
@@ -477,8 +445,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
     },
   });
 
-  const [showTableSubmenu, setShowTableSubmenu] = useState(false);
-
   if (!editor) return null;
 
   const applyStyle = (tag: string) => {
@@ -556,15 +522,9 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
         editor.chain().focus().updateAttributes('table', { borderStyle: 'solid', borderWidth: '3px' }).run();
         break;
       case 'borderColor':
-        const borderColor = window.prompt('Enter border color (hex or Tailwind class)', '#e5e7eb');
-        if (borderColor) {
-          editor.chain().focus().updateAttributes('table', { borderColor }).run();
-        }
-        break;
-      case 'headerBackground':
-        const backgroundColor = window.prompt('Enter header background color (hex or Tailwind class)', 'transparent');
-        if (backgroundColor) {
-          editor.chain().focus().updateAttributes('table', { backgroundColor }).run();
+        const color = window.prompt('Enter border color (hex or Tailwind class)', '#e5e7eb');
+        if (color) {
+          editor.chain().focus().updateAttributes('table', { borderColor: color }).run();
         }
         break;
       default:
@@ -608,11 +568,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
   };
 
   const handleSave = () => {
-    // Remove 'editing' class before saving
-    const tables = editor.view.dom.querySelectorAll('.tiptap-table');
-    tables.forEach((table) => {
-      table.classList.remove('editing');
-    });
     const htmlContent = editor.getHTML();
     console.log('Saved HTML:', htmlContent);
     onSave(htmlContent);
@@ -620,6 +575,63 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
 
   return (
     <div className="post-editor text-gray-600">
+      <style jsx>{`
+        .table-wrapper {
+          overflow-x: auto;
+          max-width: 100%;
+          margin: 1rem 0;
+        }
+        .tiptap-table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        .tiptap-table[data-border-style='none'] .tiptap-table-cell,
+        .tiptap-table[data-border-style='none'] .tiptap-table-header {
+          border: none;
+        }
+        .tiptap-table[data-border-style='solid'] .tiptap-table-cell,
+        .tiptap-table[data-border-style='solid'] .tiptap-table-header {
+          border: solid var(--border-width, 1px) var(--border-color, #e5e7eb);
+        }
+        .tiptap-table[data-border-style='dashed'] .tiptap-table-cell,
+        .tiptap-table[data-border-style='dashed'] .tiptap-table-header {
+          border: dashed var(--border-width, 1px) var(--border-color, #e5e7eb);
+        }
+        .tiptap-table[data-border-width='3px'] .tiptap-table-cell,
+        .tiptap-table[data-border-width='3px'] .tiptap-table-header {
+          --border-width: 3px;
+        }
+        .tiptap-table .tiptap-table-cell,
+        .tiptap-table .tiptap-table-header {
+          --border-color: var(--border-color, #e5e7eb);
+          position: relative;
+          padding: 0.5rem;
+          text-align: left;
+          min-width: 50px;
+        }
+        .tiptap-table-header {
+          background-color: #f4f4f4;
+          font-weight: bold;
+        }
+        .resize-handle:hover {
+          background: rgba(0, 0, 0, 0.2);
+        }
+        .image-align-left {
+          display: block;
+          margin-left: 0;
+          margin-right: auto;
+        }
+        .image-align-center {
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .image-align-right {
+          display: block;
+          margin-left: auto;
+          margin-right: 0;
+        }
+      `}</style>
       <div className="toolbar mb-4 flex gap-0.5 flex-wrap">
         <Button
           size="sm"
@@ -738,10 +750,114 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
         </Button>
         <Button
           size="sm"
-          onClick={() => setShowTableSubmenu(!showTableSubmenu)}
-          variant={showTableSubmenu ? 'secondary' : 'outline'}
+          onClick={() => applyStyle('table')}
+          variant={editor.isActive('table') ? 'secondary' : 'outline'}
         >
-          Table Menu
+          Table
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('addRowAfter')}
+          variant={editor.isActive('table') ? 'outline' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          Add Row
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('addColumnAfter')}
+          variant={editor.isActive('table') ? 'outline' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          Add Column
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('deleteRow')}
+          variant={editor.isActive('table') ? 'outline' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          Delete Row
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('deleteColumn')}
+          variant={editor.isActive('table') ? 'outline' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          Delete Column
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('mergeCells')}
+          variant={editor.isActive('table') ? 'outline' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          Merge Cells
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('splitCell')}
+          variant={editor.isActive('table') ? 'outline' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          Split Cell
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('deleteTable')}
+          variant={editor.isActive('table') ? 'outline' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          Delete Table
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('borderNone')}
+          variant={editor.isActive('table', { borderStyle: 'none' }) ? 'secondary' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          No Border
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('borderSolid')}
+          variant={
+            editor.isActive('table', { borderStyle: 'solid', borderWidth: '1px' })
+              ? 'secondary'
+              : 'outline'
+          }
+          disabled={!editor.isActive('table')}
+        >
+          Solid Border
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('borderDashed')}
+          variant={editor.isActive('table', { borderStyle: 'dashed' }) ? 'secondary' : 'outline'}
+          disabled={!editor.isActive('table')}
+        >
+          Dashed Border
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('borderBold')}
+          variant={
+            editor.isActive('table', { borderStyle: 'solid', borderWidth: '3px' })
+              ? 'secondary'
+              : 'outline'
+          }
+          disabled={!editor.isActive('table')}
+        >
+          Bold Border
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('borderColor')}
+          variant="outline"
+          disabled={!editor.isActive('table')}
+        >
+          Border Color
         </Button>
         <Button
           size="sm"
@@ -754,129 +870,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
           Save
         </Button>
       </div>
-      {showTableSubmenu && (
-        <div className="table-submenu">
-          <Button
-            size="sm"
-            onClick={() => applyStyle('table')}
-            variant={editor.isActive('table') ? 'secondary' : 'outline'}
-          >
-            Table
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('addRowAfter')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            Add Row
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('addColumnAfter')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            Add Column
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('deleteRow')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            Delete Row
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('deleteColumn')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            Delete Column
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('mergeCells')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            Merge Cells
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('splitCell')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            Split Cell
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('deleteTable')}
-            variant={editor.isActive('table') ? 'outline' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            Delete Table
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('borderNone')}
-            variant={editor.isActive('table', { borderStyle: 'none' }) ? 'secondary' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            No Border
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('borderSolid')}
-            variant={
-              editor.isActive('table', { borderStyle: 'solid', borderWidth: '1px' })
-                ? 'secondary'
-                : 'outline'
-            }
-            disabled={!editor.isActive('table')}
-          >
-            Solid Border
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('borderDashed')}
-            variant={editor.isActive('table', { borderStyle: 'dashed' }) ? 'secondary' : 'outline'}
-            disabled={!editor.isActive('table')}
-          >
-            Dashed Border
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('borderBold')}
-            variant={
-              editor.isActive('table', { borderStyle: 'solid', borderWidth: '3px' })
-                ? 'secondary'
-                : 'outline'
-            }
-            disabled={!editor.isActive('table')}
-          >
-            Bold Border
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('borderColor')}
-            variant="outline"
-            disabled={!editor.isActive('table')}
-          >
-            Border Color
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('headerBackground')}
-            variant="outline"
-            disabled={!editor.isActive('table')}
-          >
-            Header Bg
-          </Button>
-        </div>
-      )}
       <EditorContent
         editor={editor}
         className="border border-gray-200 p-4 rounded-md min-h-[300px] bg-white"

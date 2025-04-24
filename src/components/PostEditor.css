@@ -1,0 +1,101 @@
+.table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+    margin: 1rem 0;
+    display: block;
+    -webkit-overflow-scrolling: touch; /* Enable smooth touch scrolling on mobile */
+    touch-action: pan-x; /* Allow horizontal touch scrolling */
+  }
+  
+  .tiptap-table {
+    border-collapse: collapse;
+    width: auto;
+    min-width: 100%;
+    table-layout: auto;
+  }
+  
+  /* Always show borders during editing */
+  .tiptap-table.editing .tiptap-table-cell,
+  .tiptap-table.editing .tiptap-table-header {
+    border: solid 1px #e5e7eb !important;
+  }
+  
+  /* Border styles in final view */
+  .tiptap-table[data-border-style='none'] .tiptap-table-cell,
+  .tiptap-table[data-border-style='none'] .tiptap-table-header {
+    border: none;
+  }
+  
+  .tiptap-table[data-border-style='solid'] .tiptap-table-cell,
+  .tiptap-table[data-border-style='solid'] .tiptap-table-header {
+    border: solid var(--border-width, 1px) var(--border-color, #e5e7eb);
+  }
+  
+  .tiptap-table[data-border-style='dashed'] .tiptap-table-cell,
+  .tiptap-table[data-border-style='dashed'] .tiptap-table-header {
+    border: dashed var(--border-width, 1px) var(--border-color, #e5e7eb);
+  }
+  
+  .tiptap-table[data-border-width='3px'] .tiptap-table-cell,
+  .tiptap-table[data-border-width='3px'] .tiptap-table-header {
+    --border-width: 3px;
+  }
+  
+  .tiptap-table .tiptap-table-cell,
+  .tiptap-table .tiptap-table-header {
+    --border-color: var(--border-color, #e5e7eb);
+    position: relative;
+    padding: 0.5rem;
+    text-align: center;
+    min-width: 50px;
+    box-sizing: border-box;
+  }
+  
+  .tiptap-table-header {
+    font-weight: bold;
+    background-color: transparent;
+  }
+  
+  .tiptap-table-header[data-background-color] {
+    background-color: var(--background-color, transparent);
+  }
+  
+  .resize-handle:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  .image-align-left {
+    display: block;
+    margin-left: 0;
+    margin-right: auto;
+  }
+  
+  .image-align-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .image-align-right {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
+  }
+  
+  .post-editor .ProseMirror {
+    overflow-x: visible;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Submenu styles */
+  .table-submenu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.25rem;
+    margin-top: 0.5rem;
+  }
