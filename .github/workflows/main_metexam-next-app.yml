@@ -1,4 +1,7 @@
-name: Build and deploy Next.js app to Azure Web App
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js app to Azure Web App - metexam-next-app
 
 on:
   push:
@@ -6,61 +9,34 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  AZURE_WEBAPP_NAME: metexam-next-app-hagaefargkf6eqh8
-  NODE_VERSION: '20.x'
-  AZURE_RESOURCE_GROUP: <your-resource-group>  # Replace with your resource group name
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-      - name: Fetch Azure App Service environment variables
+          node-version: '20.x'
+
+      - name: npm install, build, and test
         run: |
-          # Fetch app settings and export as environment variables
-          az webapp config appsettings list \
-            --name ${{ env.AZURE_WEBAPP_NAME }} \
-            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --query "[].{name:name, value:value}" -o json | \
-          jq -r '.[] | "export \(.name)=\(.value)"' >> $GITHUB_ENV
-      - name: Debug environment variables
-        run: |
-          echo "SUPABASE_URL=$SUPABASE_URL"
-          echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL"
-          echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY"
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY"
-          echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
-          echo "NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL"
-      - name: Install dependencies
-        run: npm install
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}
-      - name: Build Next.js app
-        run: npm run build
-      - name: Prepare standalone folder
-        run: |
-          mv .next/static .next/standalone/.next/static
-          cp -R public .next/standalone/public
-      - name: Upload artifact
+          npm install
+          npm run build --if-present
+          npm run test --if-present
+
+      - name: Zip artifact for deployment
+        run: zip release.zip ./* -r
+
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: next-app
-          path: .next/standalone
+          name: node-app
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -68,16 +44,31 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
     steps:
-      - name: Download artifact
+      - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: next-app
-      - name: Deploy to Azure Web App
+          name: node-app
+
+      - name: Unzip artifact for deployment
+        run: unzip release.zip
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1287D2EC5A5C4DFD8CCAEF0ABA240E8C }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7BD85A785A0144F580B5D61E5E93E504 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1A59C40C6F1E435A9D15A571005CF4B1 }}
+
+      - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: 'metexam-next-app'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
           package: .
+          
