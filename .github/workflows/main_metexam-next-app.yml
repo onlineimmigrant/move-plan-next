@@ -9,6 +9,7 @@ on:
 env:
   AZURE_WEBAPP_NAME: metexam-next-app-hagaefargkf6eqh8
   NODE_VERSION: '20.x'
+  AZURE_RESOURCE_GROUP: <your-resource-group>  # Replace with your resource group name
 
 jobs:
   build:
@@ -20,8 +21,20 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - name: Install dependencies
-        run: npm install
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      - name: Fetch Azure App Service environment variables
+        run: |
+          # Fetch app settings and export as environment variables
+          az webapp config appsettings list \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "[].{name:name, value:value}" -o json | \
+          jq -r '.[] | "export \(.name)=\(.value)"' >> $GITHUB_ENV
       - name: Debug environment variables
         run: |
           echo "SUPABASE_URL=$SUPABASE_URL"
@@ -30,26 +43,14 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY"
           echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
           echo "NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL"
+      - name: Install dependencies
+        run: npm install
       - name: Cache Next.js build
         uses: actions/cache@v4
         with:
           path: .next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}
       - name: Build Next.js app
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME }}
-          NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY }}
-          NEXT_PUBLIC_AZURE_CONTAINER_NAME: ${{ secrets.NEXT_PUBLIC_AZURE_CONTAINER_NAME }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-          NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED: false
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
         run: npm run build
       - name: Prepare standalone folder
         run: |
