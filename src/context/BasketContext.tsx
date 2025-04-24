@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useState } from 'react';
 
-type PricingPlan = {
-  id?: number;
+export type PricingPlan = {
+  id: number;
   slug?: string;
   package?: string;
   measure?: string;
@@ -18,7 +18,7 @@ type PricingPlan = {
   [key: string]: any;
 };
 
-type BasketItem = {
+export type BasketItem = {
   plan: PricingPlan;
   quantity: number;
 };

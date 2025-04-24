@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { FilterCriteria } from "./types";
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { FilterCriteria } from './types';
 
 interface FilterMenuProps {
   isFilterOpen: boolean;
@@ -60,12 +62,12 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener("mousemove", handleDrag);
-      window.addEventListener("mouseup", handleDragEnd);
+      window.addEventListener('mousemove', handleDrag);
+      window.addEventListener('mouseup', handleDragEnd);
     }
     return () => {
-      window.removeEventListener("mousemove", handleDrag);
-      window.removeEventListener("mouseup", handleDragEnd);
+      window.removeEventListener('mousemove', handleDrag);
+      window.removeEventListener('mouseup', handleDragEnd);
     };
   }, [isDragging, dragStart]);
 
@@ -76,10 +78,10 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       ref={modalRef}
       className="fixed z-10 bg-white border border-gray-200 rounded-md shadow-lg p-6 w-96"
       style={{
-        top: "50%",
-        left: "50%",
+        top: '50%',
+        left: '50%',
         transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px)`,
-        cursor: isDragging ? "grabbing" : "grab",
+        cursor: isDragging ? 'grabbing' : 'grab',
       }}
     >
       <div
@@ -109,13 +111,12 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       </div>
       <select
         className="border border-gray-300 p-2 text-xs rounded-md w-full mb-2"
-        value={filterCriteria?.field || ""}
+        value={filterCriteria?.field || ''}
         onChange={(e) =>
-          setFilterCriteria((prev) => ({
-            ...prev,
+          setFilterCriteria({
             field: e.target.value,
-            value: prev?.value || "",
-          }))
+            value: filterCriteria?.value || '',
+          })
         }
       >
         <option value="">Select Field</option>
@@ -128,19 +129,23 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       <input
         type="text"
         placeholder="Value"
-        value={filterCriteria?.value || ""}
+        value={filterCriteria?.value || ''}
         onChange={(e) =>
-          setFilterCriteria((prev) => ({
-            ...prev,
-            field: prev?.field || fields[0],
+          setFilterCriteria({
+            field: filterCriteria?.field || fields[0] || '',
             value: e.target.value,
-          }))
+          })
         }
         className="border border-gray-300 p-2 text-xs rounded-md w-full mb-4"
       />
       <div className="flex gap-3 justify-end">
         <button
-          onClick={() => applyFilter(filterCriteria?.field || fields[0], filterCriteria?.value || "")}
+          onClick={() =>
+            applyFilter(
+              filterCriteria?.field || fields[0] || '',
+              filterCriteria?.value || ''
+            )
+          }
           className={primaryButtonClass}
         >
           Apply

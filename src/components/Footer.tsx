@@ -31,7 +31,7 @@ interface FooterProps {
   companyLogo?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => {
+const Footer: React.FC<FooterProps> = ({}) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const { session, logout } = useAuth();
   const { settings } = useSettings();
@@ -39,11 +39,10 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const router = useRouter();
   const isLoggedIn = !!session;
   const maxItemsPerColumn = 8;
-  const CONNECTED_APP_URL = 'https://app.letspring.com';
 
   useEffect(() => {
     let mounted = true;
-    
+
     const fetchMenuItems = async () => {
       try {
         const response = await fetch('/api/menu', { cache: 'force-cache' });
@@ -56,7 +55,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
     };
 
     fetchMenuItems();
-    
+
     return () => {
       mounted = false;
     };
@@ -64,13 +63,15 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
 
   const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
     const withSubitems = menuItems.filter(
-      item => item.is_displayed_on_footer &&
+      (item) =>
+        item.is_displayed_on_footer &&
         item.display_name !== 'Profile' &&
         item.website_submenuitem?.length
     );
 
     const withoutSubitems = menuItems.filter(
-      item => item.is_displayed_on_footer &&
+      (item) =>
+        item.is_displayed_on_footer &&
         item.display_name !== 'Profile' &&
         !item.website_submenuitem?.length
     );
@@ -105,8 +106,10 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
           </button>
         </div>
 
-        <div className={`grid grid-cols-2 gap-8 md:grid-cols-2 lg:grid-cols-${Math.min(totalColumns, 4)}`}>
-          {itemsWithSubitems.map(item => (
+        <div
+          className={`grid grid-cols-2 gap-8 md:grid-cols-2 lg:grid-cols-${Math.min(totalColumns, 4)}`}
+        >
+          {itemsWithSubitems.map((item) => (
             <div key={item.id}>
               <h3 className="mb-4 font-semibold">
                 <Link href={item.url_name} className="hover:text-gray-300">
@@ -114,7 +117,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
                 </Link>
               </h3>
               <ul className="space-y-2">
-                {item.website_submenuitem?.map(subItem => (
+                {item.website_submenuitem?.map((subItem) => (
                   <li key={subItem.id}>
                     <Link href={subItem.url_name} className="text-gray-300 hover:text-white">
                       {subItem.name}
@@ -136,7 +139,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
                 </Link>
               </h3>
               <ul className="space-y-2">
-                {group.map(item => (
+                {group.map((item) => (
                   <li key={item.id}>
                     <Link href={item.url_name} className="text-gray-300 hover:text-white">
                       {item.display_name}

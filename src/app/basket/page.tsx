@@ -1,19 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { useBasket } from '../../context/BasketContext';
+import { useBasket, BasketItem, PricingPlan } from '../../context/BasketContext';
 import ProgressBar from '../../components/ProgressBar';
-import BasketItem from '../../components/BasketItem';
+import BasketItemComponent from '../../components/BasketItem';
 import { HiTrash } from 'react-icons/hi';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
+// Interface for a feature (aligned with BasketItemComponent)
 interface Feature {
   id: number;
   name: string;
-  feature_image?: string;
+  feature_image?: string | undefined;
   content: string;
   slug: string;
+}
+
+// Interface for the Supabase query result
+interface FeatureData {
+  feature_id: number;
+  feature: Feature[];
 }
 
 export default function BasketPage() {
@@ -21,8 +28,8 @@ export default function BasketPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [featuresMap, setFeaturesMap] = useState<{ [key: number]: Feature[] }>({});
 
-  const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = basket.reduce((sum, item) => {
+  const totalItems = basket.reduce((sum, item: BasketItem) => sum + item.quantity, 0);
+  const totalPrice = basket.reduce((sum, item: BasketItem) => {
     const price =
       item.plan.is_promotion && item.plan.promotion_price
         ? item.plan.promotion_price
@@ -42,6 +49,10 @@ export default function BasketPage() {
     const fetchFeatures = async () => {
       const newFeaturesMap: { [key: number]: Feature[] } = {};
       for (const item of basket) {
+        if (!item.plan.id) {
+          console.warn('Skipping item with undefined plan ID', item);
+          continue;
+        }
         const { data: featuresData, error: featuresError } = await supabase
           .from('pricingplan_features')
           .select(`
@@ -60,9 +71,10 @@ export default function BasketPage() {
           console.error('Error fetching features for plan', item.plan.id, featuresError);
           newFeaturesMap[item.plan.id] = [];
         } else {
-          newFeaturesMap[item.plan.id] = featuresData
-            ? featuresData.map((item) => item.feature).filter((feature) => feature !== null)
-            : [];
+          newFeaturesMap[item.plan.id] =
+            featuresData
+              ?.flatMap((data: FeatureData) => data.feature)
+              .filter((feature): feature is Feature => feature !== null && feature.id !== null) || [];
         }
       }
       setFeaturesMap(newFeaturesMap);
@@ -105,15 +117,17 @@ export default function BasketPage() {
         ) : (
           <>
             <div className="space-y-6 mb-8">
-              {basket.map((item) => (
-                <BasketItem
-                  key={item.plan.id}
-                  item={item}
-                  updateQuantity={updateQuantity}
-                  removeFromBasket={removeFromBasket}
-                  associatedFeatures={featuresMap[item.plan.id] || []}
-                />
-              ))}
+              {basket
+                .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
+                .map((item) => (
+                  <BasketItemComponent
+                    key={item.plan.id}
+                    item={item}
+                    updateQuantity={updateQuantity}
+                    removeFromBasket={removeFromBasket}
+                    associatedFeatures={featuresMap[item.plan.id] || []}
+                  />
+                ))}
             </div>
 
             <div className="bg-gray-100 rounded-lg p-6">

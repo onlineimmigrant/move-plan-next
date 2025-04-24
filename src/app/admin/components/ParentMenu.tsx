@@ -1,4 +1,3 @@
-// src/admin/components/ParentMenu.tsx
 "use client";
 
 import Link from "next/link";
@@ -72,8 +71,8 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
     {
       label: "Reports",
       icon: <ChartBarIcon className="h-4 w-4" />,
-      href: "/admin/reports/custom", // Default report page, but clicking triggers child menu
-      onClick: () => setActiveSection("reports"), // Updated to trigger ReportsChildMenu
+      href: "/admin/reports/custom",
+      onClick: () => setActiveSection("reports"),
     },
     ...(pathname === "/admin/settings"
       ? [
@@ -141,7 +140,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
                     : "text-sky-600",
                 )}
               >
-                {settings?.site}
+                {settings?.site || ''}
               </Link>
             )}
           </div>
@@ -210,7 +209,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
                 href={item.href}
                 onClick={(e) => {
                   if (item.onClick) {
-                    e.preventDefault(); // Prevent navigation if there's an onClick
+                    e.preventDefault();
                     item.onClick();
                   } else {
                     setActiveSection("");

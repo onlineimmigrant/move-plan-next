@@ -7,7 +7,7 @@ import { useBasket } from '../context/BasketContext';
 
 // Define types for pricing plans and props
 type PricingPlan = {
-  id?: number;
+  id: number; // Required to match page.tsx and BasketContext
   slug?: string;
   package?: string;
   measure?: string;
@@ -16,21 +16,21 @@ type PricingPlan = {
   promotion_price?: number;
   promotion_percent?: number;
   is_promotion?: boolean;
-  inventory?: any[] | any;
+  inventory?: { status: string }[];
   buy_url?: string;
   product_id?: number;
+  product_name?: string;
+  links_to_image?: string;
   [key: string]: any;
 };
 
 interface ProductDetailPricingPlansProps {
   pricingPlans: PricingPlan[];
-  productId: number;
   amazonBooksUrl?: string;
 }
 
 export default function ProductDetailPricingPlans({
   pricingPlans = [],
-  productId,
   amazonBooksUrl,
 }: ProductDetailPricingPlansProps) {
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(pricingPlans[0] || null);
@@ -48,6 +48,8 @@ export default function ProductDetailPricingPlans({
   const handleAddToBasket = () => {
     if (selectedPlan) {
       addToBasket(selectedPlan);
+    } else {
+      console.warn('Cannot add to basket: no plan selected');
     }
   };
 
@@ -59,7 +61,6 @@ export default function ProductDetailPricingPlans({
 
   const selectedPlanStatus = getStatus(selectedPlan).toLowerCase();
   const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
-  const canCheckout = totalItems > 0 && selectedPlanStatus !== 'out of stock';
 
   return (
     <div className="mt-6">
@@ -120,7 +121,7 @@ export default function ProductDetailPricingPlans({
                       );
                     }
                     return (
-                      <span className="inline-block px-1 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
+                      <span className="inline-block px-1 py-0.5 text-xs font-medium text-gray-600 bg-green-100 rounded-full">
                         Unknown
                       </span>
                     );
@@ -140,10 +141,10 @@ export default function ProductDetailPricingPlans({
 
                 {/* Pricing */}
                 <div>
-                  {plan.is_promotion && plan.promotion_price ? (
+                  {plan.is_promotion && plan.promotion_price !== undefined ? (
                     <div className="flex items-baseline justify-between space-x-2">
                       <span className="text-sm font-medium text-gray-900 bg-green-50 p-1">
-                        -{plan.promotion_percent}% off
+                        {plan.promotion_percent !== undefined ? `-${plan.promotion_percent}% off` : 'Promotion'}
                       </span>
                       <div>
                         <span className="text-xl text-gray-900 font-medium line-through mr-2">
@@ -210,14 +211,14 @@ export default function ProductDetailPricingPlans({
         {totalItems > 0 && (
           <Link
             href={
-              totalItems === 1
+              totalItems === 1 && basket[0].plan?.slug
                 ? `/pricing-plans/${basket[0].plan.slug}`
                 : '/pricing-plans/combined-checkout'
             }
           >
             <button
               className="group relative flex items-center justify-center w-full py-3 px-4 text-base font-semibold rounded-full transition-all duration-300 focus:outline-none 
-              focus:ring-4 focus:ring-gray-200 focus:ring-opacity-50 shadow-md bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800 hover:scale-105 "
+              focus:ring-4 focus:ring-gray-200 focus:ring-opacity-50 shadow-md bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800 hover:scale-105"
             >
               <span>Proceed to Checkout</span>
             </button>

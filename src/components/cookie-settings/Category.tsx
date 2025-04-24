@@ -8,7 +8,7 @@ interface CategoryProps {
     id: number;
     name: string;
     description: string;
-    services: { id: number; name: string; description: string; active: boolean }[];
+    cookie_service: { id: number; name: string; description: string; active: boolean }[];
   };
   consent: { services: number[] };
   setConsent: React.Dispatch<React.SetStateAction<{ services: number[] }>>;
@@ -23,12 +23,12 @@ const Category: React.FC<CategoryProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const isEssential = isEssentialCategory(category.name);
-  const isChecked = category.services.every((service) => consent.services.includes(service.id));
+  const isChecked = category.cookie_service.every((service) => consent.services.includes(service.id));
 
   const handleToggle = () => {
     if (isEssential) return;
 
-    const serviceIds = category.services.map((service) => service.id);
+    const serviceIds = category.cookie_service.map((service) => service.id);
     if (isChecked) {
       setConsent((prev) => ({
         ...prev,
@@ -89,7 +89,7 @@ const Category: React.FC<CategoryProps> = ({
           </p>
           <p className="mt-2">
             <span className="font-medium text-gray-700">Services:</span>{' '}
-            {category.services.map((service) => service.name).join(', ') || 'None'}
+            {category.cookie_service.map((service) => service.name).join(', ') || 'None'}
           </p>
         </div>
       )}

@@ -18,7 +18,6 @@ interface ImportCSVModalProps {
 const ImportCSVModal: React.FC<ImportCSVModalProps> = ({
   isOpen,
   setIsOpen,
-  tableName,
   fields,
   unchangeableFields,
   hiddenFields,

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useBasket } from '../../context/BasketContext';
+import { useBasket, BasketItem } from '../../context/BasketContext';
 import ProgressBar from '../../components/ProgressBar';
-import BasketItem from '../../components/BasketItem';
+import BasketItemComponent from '../../components/BasketItem';
 import Link from 'next/link';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -26,11 +26,12 @@ export default function CheckoutPage() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const hasFetchedIntentRef = useRef(false); // Use useRef to track fetch status
 
-  const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = basket.reduce((sum, item) => {
-    const price = item.plan.is_promotion && item.plan.promotion_price
-      ? item.plan.promotion_price
-      : item.plan.price;
+  const totalItems = basket.reduce((sum, item: BasketItem) => sum + item.quantity, 0);
+  const totalPrice = basket.reduce((sum, item: BasketItem) => {
+    const price =
+      item.plan.is_promotion && item.plan.promotion_price
+        ? item.plan.promotion_price
+        : item.plan.price;
     return sum + price * item.quantity;
   }, 0);
 
@@ -39,7 +40,7 @@ export default function CheckoutPage() {
 
   // Memoize the fetchPaymentIntent function with minimal dependencies
   const fetchPaymentIntent = useCallback(
-    async (amount: number, currency: string, totalItems: number, basket: any[]) => {
+    async (amount: number, currency: string, totalItems: number, basket: BasketItem[]) => {
       try {
         console.log('Fetching Payment Intent...');
         const res = await fetch('/api/create-payment-intent', {
@@ -50,14 +51,19 @@ export default function CheckoutPage() {
             currency: currency.toLowerCase(),
             metadata: {
               item_count: totalItems,
-              item_ids: basket.map((item) => item.plan.id).join(','),
+              item_ids: basket
+                .filter((item) => item.plan.id !== undefined)
+                .map((item) => item.plan.id)
+                .join(','),
               items: JSON.stringify(
-                basket.map((item) => ({
-                  id: item.plan.id,
-                  product_name: item.plan.product_name || 'Unknown Product',
-                  package: item.plan.package || 'Standard',
-                  measure: item.plan.measure || 'One-time',
-                }))
+                basket
+                  .filter((item) => item.plan.id !== undefined)
+                  .map((item) => ({
+                    id: item.plan.id,
+                    product_name: item.plan.product_name || 'Unknown Product',
+                    package: item.plan.package || 'Standard',
+                    measure: item.plan.measure || 'One-time',
+                  }))
               ),
             },
           }),
@@ -89,7 +95,7 @@ export default function CheckoutPage() {
 
     console.log('useEffect triggered:', { basketLength: basket.length });
     fetchPaymentIntent(discountedPrice, currency, totalItems, basket);
-  }, [basket, fetchPaymentIntent]); // Simplified dependencies
+  }, [basket, fetchPaymentIntent, discountedPrice, currency, totalItems]);
 
   const handlePromoCodeApply = () => {
     // Mock promo code logic (replace with actual API call to validate promo code)
@@ -159,15 +165,17 @@ export default function CheckoutPage() {
         <>
           {showOrderSummary && (
             <div className="space-y-6 mb-8">
-              {basket.map((item) => (
-                <BasketItem
-                  key={item.plan.id}
-                  item={item}
-                  updateQuantity={updateQuantity}
-                  removeFromBasket={removeFromBasket}
-                  associatedFeatures={[]}
-                />
-              ))}
+              {basket
+                .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
+                .map((item) => (
+                  <BasketItemComponent
+                    key={item.plan.id}
+                    item={item}
+                    updateQuantity={updateQuantity}
+                    removeFromBasket={removeFromBasket}
+                    associatedFeatures={[]}
+                  />
+                ))}
             </div>
           )}
 

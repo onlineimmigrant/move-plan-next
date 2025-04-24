@@ -1,11 +1,10 @@
-// src/admin/components/ColorsModal.tsx
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { useSettings } from "@/context/SettingsContext";
-import { cn } from "@/lib/utils";
-import { XMarkIcon, MinusIcon, ArrowsPointingInIcon } from "@heroicons/react/24/outline";
-import { tailwindColors, shades } from "@/lib/colorsPalette";
+import { useState, useRef, useEffect } from 'react';
+import { useSettings } from '@/context/SettingsContext';
+import { cn } from '@/lib/utils';
+import { XMarkIcon, MinusIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
+import { tailwindColors, shades } from '@/lib/colorsPalette';
 
 interface ColorsModalProps {
   isOpen: boolean;
@@ -17,7 +16,10 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
   const { settings, setSettings } = useSettings();
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 1024, height: 600 }); // Default size for SSR
+  const [size, setSize] = useState<{ width: number | string; height: number | string }>({
+    width: 1024,
+    height: 600,
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -28,16 +30,25 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
     const isMobile = window.innerWidth <= 768;
     setSize(
       isMobile
-        ? { width: "95vw", height: "95vh" } // 95% of viewport width and height on mobile
-        : { width: 1024, height: 600 } // Default size for desktop
+        ? { width: '95vw', height: '95vh' }
+        : { width: 1024, height: 600 }
     );
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   const handleColorSelect = (color: string, shade: string) => {
+    const hex = tailwindColors[color][shade];
     setSettings((prev) => ({
       ...prev,
-      primary_color: { name: `${color.toLowerCase()}-${shade}` },
-      secondary_color: { name: `${color.toLowerCase()}-${shade}` },
+      primary_color: {
+        ...prev.primary_color,
+        name: `${color.toLowerCase()}-${shade}`,
+        hex,
+      },
+      secondary_color: {
+        ...prev.secondary_color,
+        name: `${color.toLowerCase()}-${shade}`,
+        hex,
+      },
     }));
   };
 
@@ -59,7 +70,7 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
     const isMobile = window.innerWidth <= 768;
     setSize(
       isMobile
-        ? { width: "95vw", height: "95vh" }
+        ? { width: '95vw', height: '95vh' }
         : { width: 1024, height: 600 }
     );
     setPosition({ x: 0, y: 0 });
@@ -92,25 +103,22 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
   const handleMouseMoveResize = (e: MouseEvent) => {
     if (isResizing) {
       const isMobile = window.innerWidth <= 768;
-      const newWidth = size.width + (e.clientX - dragStart.x);
-      const newHeight = size.height + (e.clientY - dragStart.y);
 
-      // Convert "95vw" and "95vh" to pixels for calculation if necessary
       const currentWidth =
-        typeof size.width === "string" && size.width.includes("vw")
-          ? (window.innerWidth * 95) / 100
-          : size.width;
+        typeof size.width === 'string' && size.width.includes('vw')
+          ? (window.innerWidth * parseFloat(size.width)) / 100
+          : Number(size.width);
       const currentHeight =
-        typeof size.height === "string" && size.height.includes("vh")
-          ? (window.innerHeight * 95) / 100
-          : size.height;
+        typeof size.height === 'string' && size.height.includes('vh')
+          ? (window.innerHeight * parseFloat(size.height)) / 100
+          : Number(size.height);
 
       const updatedWidth = currentWidth + (e.clientX - dragStart.x);
       const updatedHeight = currentHeight + (e.clientY - dragStart.y);
 
       setSize({
-        width: isMobile ? `${Math.max(50, updatedWidth)}px` : Math.max(50, newWidth),
-        height: isMobile ? `${Math.max(50, updatedHeight)}px` : Math.max(50, newHeight),
+        width: isMobile ? `${Math.max(50, updatedWidth)}px` : Math.max(50, updatedWidth),
+        height: isMobile ? `${Math.max(50, updatedHeight)}px` : Math.max(50, updatedHeight),
       });
       setDragStart({ x: e.clientX, y: e.clientY });
     }
@@ -122,14 +130,14 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
 
   useEffect(() => {
     if (isDragging || isResizing) {
-      window.addEventListener("mousemove", isDragging ? handleMouseMoveDrag : handleMouseMoveResize);
-      window.addEventListener("mouseup", isDragging ? handleMouseUpDrag : handleMouseUpResize);
+      window.addEventListener('mousemove', isDragging ? handleMouseMoveDrag : handleMouseMoveResize);
+      window.addEventListener('mouseup', isDragging ? handleMouseUpDrag : handleMouseUpResize);
     }
     return () => {
-      window.removeEventListener("mousemove", handleMouseMoveDrag);
-      window.removeEventListener("mousemove", handleMouseMoveResize);
-      window.removeEventListener("mouseup", handleMouseUpDrag);
-      window.removeEventListener("mouseup", handleMouseUpResize);
+      window.removeEventListener('mousemove', handleMouseMoveDrag);
+      window.removeEventListener('mousemove', handleMouseMoveResize);
+      window.removeEventListener('mouseup', handleMouseUpDrag);
+      window.removeEventListener('mouseup', handleMouseUpResize);
     };
   }, [isDragging, isResizing, dragStart]);
 
@@ -141,11 +149,11 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
         ref={modalRef}
         className="bg-white border-2 border-gray-300 rounded-lg shadow-xl absolute pointer-events-auto flex flex-col"
         style={{
-          width: typeof size.width === "string" ? size.width : `${size.width}px`,
-          height: typeof size.height === "string" ? size.height : `${size.height}px`,
+          width: typeof size.width === 'string' ? size.width : `${size.width}px`,
+          height: typeof size.height === 'string' ? size.height : `${size.height}px`,
           left: `calc(50% + ${position.x}px)`,
           top: `calc(50% + ${position.y}px)`,
-          transform: "translate(-50%, -50%)",
+          transform: 'translate(-50%, -50%)',
         }}
       >
         {/* Fixed Header */}
@@ -198,16 +206,17 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
                 {shades.map((shade) => {
                   const hex = shadesObj[shade];
                   const isSelected =
-                    settings?.primary_color?.name === `${colorName.toLowerCase()}-${shade}` || settings?.secondary_color?.name === `${colorName.toLowerCase()}-${shade}`;
+                    settings?.primary_color?.name === `${colorName.toLowerCase()}-${shade}` ||
+                    settings?.secondary_color?.name === `${colorName.toLowerCase()}-${shade}`;
                   return (
                     <div key={`${colorName}-${shade}`} className="relative group">
                       <button
                         onClick={() => handleColorSelect(colorName, shade)}
                         className={cn(
-                          "h-10 w-10 rounded-sm flex items-center justify-center transition-all",
+                          'h-10 w-10 rounded-sm flex items-center justify-center transition-all',
                           isSelected
-                            ? "ring-2 ring-offset-1 ring-gray-600"
-                            : "hover:ring-1 hover:ring-offset-1 hover:ring-gray-300"
+                            ? 'ring-2 ring-offset-1 ring-gray-600'
+                            : 'hover:ring-1 hover:ring-offset-1 hover:ring-gray-300'
                         )}
                         style={{ backgroundColor: hex }}
                       />

@@ -105,7 +105,7 @@ const BlogListPage: React.FC = () => {
           </div>
         ) : filteredPosts.length === 0 && searchQuery ? (
           <div className="text-center py-16 text-gray-500">
-            No posts found matching "{searchQuery}"
+            No posts found matching - {searchQuery}
           </div>
         ) : (
           <div className="px-4 sm:px-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

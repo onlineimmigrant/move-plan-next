@@ -2,11 +2,21 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { Session } from '@supabase/supabase-js';
 
-const AuthContext = createContext();
+// Define the AuthContext interface
+interface AuthContextType {
+  session: Session | null;
+  setSession: React.Dispatch<React.SetStateAction<Session | null>>;
+  login: (email: string, password: string) => Promise<any>;
+  logout: () => Promise<void>;
+}
+
+// Create the context with the defined type (default value is undefined to enforce provider usage)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     // 1) Check current session

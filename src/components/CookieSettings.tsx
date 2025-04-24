@@ -6,6 +6,7 @@ import Tabs from './cookie-settings/Tabs';
 import FooterButtons from './cookie-settings/FooterButtons';
 import { setCookie, sendConsentToBackend } from '@/utils/cookieUtils';
 import { useAuth } from '../context/AuthContext';
+import Link from 'next/link';
 
 interface CookieSettingsProps {
   activeLanguages: string[];
@@ -53,12 +54,19 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
         }
         const data = await response.json();
         console.log('Fetched categories:', data);
-        const validData = Array.isArray(data)
+        const validData: Category[] = Array.isArray(data)
           ? data.map((category) => ({
               id: category.id,
               name: category.name,
               description: category.description || '',
-              services: Array.isArray(category.cookie_service) ? category.cookie_service : [],
+              cookie_service: Array.isArray(category.cookie_service)
+                ? category.cookie_service.map((service: any) => ({
+                    id: service.id,
+                    name: service.name || '',
+                    description: service.description || '',
+                    active: service.active ?? false,
+                  }))
+                : [],
             }))
           : [];
         setCategories(validData);
@@ -66,7 +74,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
         // Set essential service IDs
         const essentialServiceIds = validData
           .filter((category) => isEssentialCategory(category.name))
-          .flatMap((category) => category.services.map((service) => service.id));
+          .flatMap((category) => category.cookie_service.map((service) => service.id));
         console.log('Essential service IDs:', essentialServiceIds);
         if (essentialServiceIds.length === 0) {
           console.warn('No essential services found. Check cookie_category table.');
@@ -81,8 +89,8 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
 
     const fetchUserConsent = async () => {
       try {
-        const accessToken = session?.access_token || '';
-        const headers = accessToken
+        const accessToken = session?.access_token;
+        const headers: Record<string, string> = accessToken
           ? { Authorization: `Bearer ${accessToken}` }
           : {};
         const response = await fetch('/api/cookies/consent', {
@@ -97,7 +105,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
         // Merge with essential services
         const essentialServiceIds = categories
           .filter((category) => isEssentialCategory(category.name))
-          .flatMap((category) => category.services.map((service) => service.id));
+          .flatMap((category) => category.cookie_service.map((service) => service.id));
         const mergedServices = [
           ...new Set([
             ...(Array.isArray(consentData.services) ? consentData.services : []),
@@ -134,12 +142,12 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
   const handleConsent = async (consentGiven: boolean) => {
     const essentialServiceIds = categories
       .filter((category) => isEssentialCategory(category.name))
-      .flatMap((category) => category.services.map((service) => service.id));
+      .flatMap((category) => category.cookie_service.map((service) => service.id));
 
     let updatedServices: number[];
     if (consentGiven) {
       updatedServices = categories.flatMap((category) =>
-        category.services.map((service) => service.id)
+        category.cookie_service.map((service) => service.id)
       );
     } else {
       updatedServices = essentialServiceIds;
@@ -162,7 +170,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
   const saveConsentSettings = async () => {
     try {
       const accessToken = session?.access_token || '';
-      const headers = accessToken
+      const headers: Record<string, string> = accessToken
         ? {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
@@ -334,12 +342,12 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
         <div className="px-6 py-2">
           <h2 className="text-xl font-extrabold text-gray-800 tracking-widest">Privacy Settings</h2>
           <div className="flex space-x-4 mb-3">
-            <a
+            <Link
               href="/privacy-policy"
               className="font-medium text-teal-600 hover:text-teal-700 text-sm tracking-wide transition-colors duration-300 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
             >
               Privacy Policy
-            </a>
+            </Link>
             <a
               href="/cookie-policy"
               className="font-medium text-teal-600 hover:text-teal-700 text-sm tracking-wide transition-colors duration-300 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"

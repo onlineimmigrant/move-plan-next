@@ -1,18 +1,9 @@
-"use client";
+'use client';
 
-import { useCallback, useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import parse from 'html-react-parser';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
-
-// Simple debounce implementation
-const debounce = (func: Function, wait: number) => {
-  let timeout: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-};
 
 // Define types for FAQ items
 type FAQ = {
@@ -31,7 +22,7 @@ interface FAQSectionProps {
   faqs: FAQ[];
 }
 
-const FAQSection = ({ slug, faqs }: FAQSectionProps) => {
+const FAQSection = ({ faqs }: FAQSectionProps) => {
   if (!faqs || faqs.length === 0) {
     return null;
   }
@@ -101,15 +92,11 @@ const FAQItem = ({ item }: { item: FAQ }) => {
     }
   }, [item.answer]);
 
-  // Debounce toggle function
-  const debouncedToggle = useCallback(debounce(() => {}, 100), []);
-
   return (
     <Disclosure as="div" className="p-6">
-      {({ open, toggle }) => (
+      {({ open }) => (
         <>
           <DisclosureButton
-            onClick={() => debouncedToggle(toggle)}
             className={`group flex w-full items-center justify-between text-left py-5 transition-colors duration-200 ${
               open ? ' border-gray-100' : ''
             }`}

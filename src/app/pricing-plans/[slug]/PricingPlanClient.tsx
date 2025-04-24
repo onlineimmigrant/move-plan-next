@@ -1,13 +1,9 @@
 'use client';
 
-import parse from 'html-react-parser';
-import Link from 'next/link';
-import Image from 'next/image';
 import { useBasket } from '../../../context/BasketContext';
-import { HiDotsHorizontal } from 'react-icons/hi';
 import { useState } from 'react';
 import BasketItem from '../../../components/BasketItem';
-import { useRouter } from 'next/navigation'; // Add useRouter for redirection
+import { useRouter } from 'next/navigation';
 
 interface PricingPlan {
   id: number;
@@ -51,21 +47,18 @@ export default function PricingPlanClient({
   const { basket, updateQuantity, removeFromBasket } = useBasket();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter(); // Add router for redirection
+  const router = useRouter();
 
   // Find the current plan in the basket to retrieve quantity
   const basketItem = basket.find((item) => item.plan.id === pricingPlan.id);
   const quantity = basketItem ? basketItem.quantity : 0;
-
-  // Example short description (replace with actual field if available)
-  const subheading = 'Something very special';
 
   // Redirect to custom checkout page
   const handleCheckout = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      router.push('/checkout'); // Redirect to custom checkout page
+      router.push('/checkout');
     } catch (err: any) {
       console.error('Checkout error:', err);
       setError(err.message || 'Error redirecting to checkout');
@@ -85,16 +78,22 @@ export default function PricingPlanClient({
       </div>
 
       {/* If in basket, show the item card */}
-      {quantity > 0 && (
+      {quantity > 0 && basketItem && basketItem.plan.id !== undefined ? (
         <div className="mb-6">
           <BasketItem
-            item={basketItem!}
+            item={{
+              ...basketItem,
+              plan: {
+                ...basketItem.plan,
+                id: basketItem.plan.id!, // Assert non-undefined after check
+              },
+            }}
             updateQuantity={updateQuantity}
             removeFromBasket={removeFromBasket}
             associatedFeatures={associatedFeatures}
           />
         </div>
-      )}
+      ) : null}
 
       {/* Action Button */}
       <div>

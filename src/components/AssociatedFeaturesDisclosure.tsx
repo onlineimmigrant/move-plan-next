@@ -1,9 +1,9 @@
 'use client';
 
 import { Disclosure } from '@headlessui/react';
-import { HiMinus, HiPlus, HiCheck } from 'react-icons/hi';
+import { HiMinus,  HiCheck } from 'react-icons/hi';
 import Link from 'next/link';
-import parse from 'html-react-parser';
+
 
 interface Feature {
   id: number;

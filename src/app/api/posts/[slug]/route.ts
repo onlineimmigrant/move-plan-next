@@ -1,6 +1,5 @@
-// app/api/posts/[slug]/route.ts
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
 // Define a type for the blog post body (all fields from blog_post table with defaults)
 type BlogPostBody = {
@@ -23,9 +22,7 @@ type BlogPostBody = {
   cta_card_four_id?: number | null;
   product_1_id?: number | null;
   product_2_id?: number | null;
-  // Add any other fields from blog_post table if missing
   created_on?: string; // Optional, set by server in POST
-
 };
 
 // Single Supabase client instance
@@ -45,10 +42,10 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export async function GET(request: Request, { params }: { params: { slug: string } }) {
+export async function GET(_request: NextRequest, context: any) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const { slug } = params;
+  const { slug } = context.params;
   console.log('Received GET request for /api/posts/[slug]:', slug);
 
   try {
@@ -91,7 +88,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
   console.log('Received POST request for /api/posts/[slug]');
@@ -189,10 +186,10 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { slug: string } }) {
+export async function PATCH(request: NextRequest, context: any) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const { slug } = params;
+  const { slug } = context.params;
   console.log('Received PATCH request for /api/posts/[slug]:', slug);
 
   try {
@@ -254,7 +251,7 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
     if (newSlug !== undefined) updateData.slug = newSlug;
     if (description !== undefined) updateData.description = description;
     if (display_this_post !== undefined) updateData.display_this_post = display_this_post;
-    if (display_as_blog_post !== undefined) updateData.display_this_post = display_as_blog_post;
+    if (display_as_blog_post !== undefined) updateData.display_as_blog_post = display_as_blog_post;
     if (content !== undefined) updateData.content = content;
     if (main_photo !== undefined) updateData.main_photo = main_photo;
     if (section_id !== undefined) updateData.section_id = section_id;

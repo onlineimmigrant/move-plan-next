@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from "react";
 
 interface ForeignKeyOption {
@@ -23,6 +25,7 @@ interface SchemaModalProps {
   primaryButtonClass: string;
   grayButtonClass: string;
   selectedForeignKeyItem: Item | null;
+  onSaveEdit: (id: string, field: string, originalValue: string) => Promise<void>;
 }
 
 export const SchemaModal: React.FC<SchemaModalProps> = ({
@@ -33,16 +36,18 @@ export const SchemaModal: React.FC<SchemaModalProps> = ({
   columnTypes,
   foreignKeys,
   foreignKeyOptions,
-  modalPosition,
   handleDragStart: _externalDragStart,
+  selectedForeignKeyItem,
   primaryButtonClass,
   grayButtonClass,
-  selectedForeignKeyItem,
+  onSaveEdit,
 }) => {
   const [scale, setScale] = useState(1);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [mainTablePosition, setMainTablePosition] = useState({ x: 0, y: 0 }); // Position for draggable main table
+  const [mainTablePosition, setMainTablePosition] = useState({ x: 0, y: 0 });
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
 
   useEffect(() => {
     const updateSizeAndPosition = () => {
@@ -100,8 +105,8 @@ export const SchemaModal: React.FC<SchemaModalProps> = ({
     const startY = e.clientY - mainTablePosition.y;
 
     const handleDrag = (e: MouseEvent) => {
-      const newX = Math.max(0, Math.min(size.width - 200, e.clientX - startX)); // 200px as min width assumption
-      const newY = Math.max(0, Math.min(size.height - 100, e.clientY - startY)); // 100px as min height assumption
+      const newX = Math.max(0, Math.min(size.width - 200, e.clientX - startX));
+      const newY = Math.max(0, Math.min(size.height - 100, e.clientY - startY));
       setMainTablePosition({ x: newX, y: newY });
     };
 
@@ -163,6 +168,26 @@ export const SchemaModal: React.FC<SchemaModalProps> = ({
     document.addEventListener("mouseup", handleResizeEnd);
   };
 
+  const startEditing = (field: string, currentValue: string) => {
+    setEditingField(field);
+    setEditValue(currentValue);
+  };
+
+  const saveEdit = async (field: string, originalValue: string) => {
+    try {
+      await onSaveEdit("schema", field, originalValue); // Use "schema" as a placeholder ID
+      setEditingField(null);
+      setEditValue("");
+    } catch (error) {
+      console.error('Error saving edit:', error);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditValue("");
+  };
+
   const selectedField = selectedForeignKeyItem?.field || "";
   const foreignKeyFields = selectedField
     ? [selectedField]
@@ -193,10 +218,10 @@ export const SchemaModal: React.FC<SchemaModalProps> = ({
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="text-gray-600 hover:text-gray-800 text-lg font-bold"
+            className={grayButtonClass}
             aria-label="Close"
           >
-            ×
+            Close
           </button>
         </div>
 
@@ -282,10 +307,41 @@ export const SchemaModal: React.FC<SchemaModalProps> = ({
                   {fields.map((field) => (
                     <tr key={field} className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-2 py-1 text-xs text-gray-800">
-                        <div>
-                          <div>{field}</div>
-                          <div className="text-[10px] text-gray-500">
-                            {columnTypes[field] || "unknown"}
+                        <div className="flex items-center space-x-2">
+                          <div>
+                            <div>{field}</div>
+                            {editingField === field ? (
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="text"
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  className="border border-gray-300 p-1 text-xs rounded-md w-32"
+                                />
+                                <button
+                                  onClick={() => saveEdit(field, columnTypes[field] || "")}
+                                  className={primaryButtonClass}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className={grayButtonClass}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="text-[10px] text-gray-500">
+                                {columnTypes[field] || "unknown"}
+                                <button
+                                  onClick={() => startEditing(field, columnTypes[field] || "")}
+                                  className={`${primaryButtonClass} ml-2 text-xs`}
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>

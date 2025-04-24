@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import CookieSettings from './CookieSettings';
 import { setCookie, getCookie, sendConsentToBackend } from '@/utils/cookieUtils';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
-import { useAuth } from '@/context/AuthContext'; // Import useAuth for session
+import { useAuth } from '@/context/AuthContext'; 
+import Link from 'next/link';
+
 
 interface CookieBannerProps {
   headerData: {
@@ -94,9 +96,10 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:flex-grow mr-5 text-center md:text-left">
               For your best experience, we use Cookies. See{' '}
-              <a href="/terms" className="text-gray-800 hover:text-gray-500">
+              
+              <Link href="/terms" className="text-gray-800 hover:text-gray-500">
                 <strong>Terms and Policies</strong>
-              </a>{' '}
+              </Link>{' '}
               and{' '}
               <button
                 onClick={() => setShowSettings(true)}

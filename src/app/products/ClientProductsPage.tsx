@@ -40,7 +40,7 @@ export default function ClientProductsPage({
   initialError: string | null;
   isAdmin?: boolean;
 }) {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+//  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubType, setActiveSubType] = useState<ProductSubType | null>(null);

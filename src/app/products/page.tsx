@@ -44,7 +44,7 @@ export default async function ProductsPage() {
   let allProducts: Product[] = [];
   let productSubTypes: ProductSubType[] = [];
   let error: string | null = null;
-  let isAdmin = false; // Replace with auth logic
+  const isAdmin = false; // Replace with auth logic
 
   try {
     allProducts = await fetchProducts();

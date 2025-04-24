@@ -30,6 +30,17 @@ interface Feature {
   slug: string;
 }
 
+interface FeatureResponse {
+  feature_id: number;
+  feature: {
+    id: number;
+    name: string;
+    feature_image?: string;
+    content: string;
+    slug: string;
+  }[];
+}
+
 interface PricingPlanPageProps {
   params: Promise<{ slug: string }>;
 }
@@ -80,11 +91,25 @@ export default async function PricingPlanPage({ params }: PricingPlanPageProps) 
   }
 
   const associatedFeatures: Feature[] = featuresData
-    ? featuresData.map((item) => item.feature).filter((feature) => feature !== null)
+    ? featuresData
+        .flatMap((item: FeatureResponse) =>
+          item.feature.map((feature): Feature | null =>
+            feature && feature.id
+              ? {
+                  id: feature.id,
+                  name: feature.name,
+                  feature_image: feature.feature_image,
+                  content: feature.content,
+                  slug: feature.slug,
+                }
+              : null
+          )
+        )
+        .filter((feature): feature is Feature => feature !== null)
     : [];
 
   // Fetch the basket on the server side
-  const basket = await getBasket(); // Already using await
+  const basket = await getBasket();
 
   return (
     <div>

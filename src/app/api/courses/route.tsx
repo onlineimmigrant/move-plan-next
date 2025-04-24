@@ -1,6 +1,29 @@
-// app/api/courses/route.ts
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+
+// Define a type for the course body (all fields from edu_pro_course table with defaults)
+type CourseBody = {
+  title: string;
+  slug: string;
+  content: string;
+  description?: string;
+  display_this_course?: boolean;
+  display_as_blog_course?: boolean;
+  main_photo?: string | null;
+  section_id?: number | null;
+  subsection?: string | null;
+  is_with_author?: boolean;
+  is_company_author?: boolean;
+  faq_section_is_title?: boolean;
+  author_id?: number | null;
+  cta_card_one_id?: number | null;
+  cta_card_two_id?: number | null;
+  cta_card_three_id?: number | null;
+  cta_card_four_id?: number | null;
+  product_1_id?: number | null;
+  product_2_id?: number | null;
+  created_on?: string; // Optional, set by server
+};
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
@@ -17,7 +40,7 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export async function GET(request: Request) {
+export async function GET(_request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
   console.log('Received GET request for /api/courses');
@@ -64,14 +87,13 @@ export async function GET(request: Request) {
   }
 }
 
-// POST handler unchanged exactly as you provided
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
   console.log('Received POST request for /api/courses');
 
   try {
-    const body = await request.json();
+    const body: CourseBody = await request.json();
     const {
       title,
       slug,
@@ -103,7 +125,7 @@ export async function POST(request: Request) {
 
     console.log('Checking if slug exists:', slug);
     const { data: existingCourse, error: slugCheckError } = await supabase
-      .from('edu_pro_ourse')
+      .from('edu_pro_course') // Fixed typo: was 'edu_pro_ourse'
       .select('slug')
       .eq('slug', slug)
       .single();
@@ -119,7 +141,28 @@ export async function POST(request: Request) {
     console.log('Inserting new course into Supabase...');
     const { data: newCourse, error: insertError } = await supabase
       .from('edu_pro_course')
-      .insert('*')
+      .insert({
+        title,
+        slug,
+        content,
+        description,
+        display_this_course,
+        display_as_blog_course,
+        main_photo,
+        section_id,
+        subsection,
+        is_with_author,
+        is_company_author,
+        faq_section_is_title,
+        author_id,
+        cta_card_one_id,
+        cta_card_two_id,
+        cta_card_three_id,
+        cta_card_four_id,
+        product_1_id,
+        product_2_id,
+        created_on: new Date().toISOString(),
+      })
       .select('*')
       .single();
 

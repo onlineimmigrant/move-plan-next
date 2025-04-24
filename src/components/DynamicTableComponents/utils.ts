@@ -5,7 +5,7 @@ export const generateSlug = (productName: string, name: string, existingSlugs: s
       .join(" "); // Join with a space
   
     // Generate the base slug
-    let baseSlug = combinedName
+    const baseSlug = combinedName
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with hyphens

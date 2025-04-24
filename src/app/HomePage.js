@@ -9,11 +9,11 @@ const Brands = React.lazy(() => import('@/components/HomePageSections/Brands'));
 
 
 const HomePage = (headerData) => {
-    const [brands, setBrands] = useState([]);
+  //  const [brands, setBrands] = useState([]);
     const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
+ //   const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [homePageId, setHomePageId] = useState(null);
+ //   const [homePageId, setHomePageId] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {

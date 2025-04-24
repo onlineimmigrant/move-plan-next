@@ -7,7 +7,7 @@ import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import Link from 'next/link';
 import IconButton from '@/components/IconButton'; // Adjust path as needed
-import { cn } from '@/lib/utils';
+
 
 interface PostHeaderProps {
   post: {
@@ -31,11 +31,10 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
 
   // Use settings for text size, font weight, and colors with default values
   const textSizeHeadings = settings?.font_size_small?.name || 'text-sm';
-  const fontWeight = settings?.primary_font?.default_type ? 'font-normal' : 'font-medium';
-  const textColor = settings?.primary_color?.name ? settings.primary_color.name : 'gray-900';
+
   const textColorHover = settings?.secondary_color?.name ? settings.secondary_color.name : 'gray-400';
 
-  const brandName = settings?.site?.name || 'My Brand'; // Adjust based on your settings schema
+  const brandName = settings?.site || ''; 
 
   return (
     <div className="post-header relative">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import IconButton from "./IconButton";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 

@@ -8,18 +8,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Define types for the response
-interface MenuItem {
-  id: number;
-  display_name: string;
-  url_name: string;
-  is_displayed: boolean;
-  order: number;
-  image?: string;
-  react_icon_id?: number;
-  react_icons?: { icon_name: string };
-  website_submenuitem?: SubMenuItem[];
-}
+
 
 interface SubMenuItem {
   id: number;

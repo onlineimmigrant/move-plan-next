@@ -1,5 +1,10 @@
-// lib/reportSidebarLinks.ts
 export type DisclosureKey = "tables" | "custom";
+
+// Define the LinkItem type
+export type LinkItem = {
+  href: string;
+  label: string;
+};
 
 export const reportSidebarLinks: Record<DisclosureKey, LinkItem[]> = {
   tables: [

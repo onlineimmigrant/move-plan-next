@@ -76,22 +76,7 @@ export async function POST(request: Request) {
       name,
       slug,
       content,
-      description = '',
-      display_this_resource = true,
-      display_as_blog_resource = false,
-      main_photo = null,
-      section_id = null,
-      subsection = null,
-      is_with_author = false,
-      is_company_author = false,
-      faq_section_is_name = false,
-      author_id = null,
-      cta_card_one_id = null,
-      cta_card_two_id = null,
-      cta_card_three_id = null,
-      cta_card_four_id = null,
-      product_1_id = null,
-      product_2_id = null,
+
     } = body;
 
     if (!name || !slug || !content) {

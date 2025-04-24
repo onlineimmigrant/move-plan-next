@@ -1,6 +1,5 @@
-// app/api/sqe-2/legal-skills-assessments/[slug]/route.ts
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
 type BlogPostBody = {
   title: string;
@@ -40,10 +39,10 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export async function GET(request: Request, { params }: { params: { slug: string } }) {
+export async function GET(_request: NextRequest, context: any) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const { slug } = params;
+  const { slug } = context.params;
   console.log('Received GET request for /api/sqe-2/legal-skills-assessments/[slug]:', slug);
 
   try {
@@ -93,7 +92,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
   console.log('Received POST request for /api/sqe-2/legal-skills-assessments/[slug]');
@@ -199,10 +198,10 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { slug: string } }) {
+export async function PATCH(request: NextRequest, context: any) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const { slug } = params;
+  const { slug } = context.params;
   console.log('Received PATCH request for /api/sqe-2/legal-skills-assessments/[slug]:', slug);
 
   try {

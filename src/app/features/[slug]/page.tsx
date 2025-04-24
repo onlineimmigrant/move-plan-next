@@ -1,4 +1,3 @@
-// src/app/features/[slug]/page.tsx
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../../lib/supabaseClient';
@@ -25,10 +24,25 @@ interface PricingPlan {
   id: string;
   slug?: string;
   product_name: string;
-  package: string;
-  measure: string;
+  package?: string;
+  measure?: string;
   price: number;
   currency: string;
+}
+
+interface PricingPlanResponse {
+  pricingplan_id: string;
+  pricingplan: {
+    id: string;
+    slug?: string;
+    package?: string;
+    measure?: string;
+    price: number;
+    currency: string;
+    product: {
+      product_name: string;
+    }[]; // Changed to array
+  }[];
 }
 
 interface FeaturePageProps {
@@ -55,7 +69,6 @@ function FeatureContent({ content, description }: { content: string; description
 function PricingPlanCard({ plan, color }: { plan: PricingPlan; color: string }) {
   return (
     <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
-      {/* Icon Section */}
       <div className="w-full h-auto p-8 flex-shrink-0 flex justify-center">
         <div className={`w-36 h-36 ${color} rounded-full flex items-center justify-center`}>
           <span className="text-white font-bold text-3xl">
@@ -63,7 +76,6 @@ function PricingPlanCard({ plan, color }: { plan: PricingPlan; color: string }) 
           </span>
         </div>
       </div>
-      {/* Content Section */}
       <div className="p-6 flex flex-col flex-grow">
         <h2 className="tracking-tight text-lg line-clamp-2 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
           {plan.product_name}
@@ -72,7 +84,6 @@ function PricingPlanCard({ plan, color }: { plan: PricingPlan; color: string }) 
           {plan.package && `${plan.package} - `}{plan.currency} {plan.price}
         </p>
       </div>
-      {/* Bottom Section */}
       <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end relative">
         {plan.measure && plan.measure.trim() !== '' ? (
           <>
@@ -131,22 +142,25 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
     console.error('Error fetching pricing plans:', pricingPlansError);
   }
 
-  const associatedPricingPlans: PricingPlan[] = pricingPlansData
-    ? pricingPlansData
-        .map((item) => {
-          if (!item.pricingplan) return null;
+  const associatedPricingPlans: PricingPlan[] = (pricingPlansData ?? [])
+    .flatMap((item: PricingPlanResponse): PricingPlan[] =>
+      item.pricingplan
+        .map((plan): PricingPlan | null => {
+          if (!plan || !plan.id) return null;
+          // Use the first product in the array or fallback to 'Unknown Product'
+          const product_name = plan.product?.[0]?.product_name ?? 'Unknown Product';
           return {
-            id: item.pricingplan.id,
-            slug: item.pricingplan.slug || item.pricingplan.id, // Fallback to id if slug is missing
-            product_name: item.pricingplan.product?.product_name || 'Unknown Product',
-            package: item.pricingplan.package,
-            measure: item.pricingplan.measure,
-            price: item.pricingplan.price,
-            currency: item.pricingplan.currency,
+            id: plan.id.toString(),
+            slug: plan.slug ?? plan.id.toString(),
+            product_name,
+            package: plan.package ?? undefined,
+            measure: plan.measure ?? undefined,
+            price: plan.price,
+            currency: plan.currency,
           };
         })
         .filter((plan): plan is PricingPlan => plan !== null)
-    : [];
+    );
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-24">
@@ -155,16 +169,13 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
 
       {associatedPricingPlans.length > 0 && (
         <section className="mt-24">
-          <h2 className="text-base font-semibold text-gray-700  mb-4">
+          <h2 className="text-base font-semibold text-gray-700 mb-4">
             Available with purchase
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
             {associatedPricingPlans.map((plan, index) => (
               <Link key={plan.id} href={`/pricing/${plan.slug}`} className="group">
-                <PricingPlanCard
-                  plan={plan}
-                  color={colors[index % colors.length]}
-                />
+                <PricingPlanCard plan={plan} color={colors[index % colors.length]} />
               </Link>
             ))}
           </div>

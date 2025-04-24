@@ -113,7 +113,7 @@ const CoursesListPage: React.FC = () => {
           <div className="text-center py-16 text-gray-500">No courses available</div>
         ) : filteredCourses.length === 0 && searchQuery ? (
           <div className="text-center py-16 text-gray-500">
-            No courses found matching "{searchQuery}"
+            No courses found matching - {searchQuery}
           </div>
         ) : (
           <div className="px-4 sm:px-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

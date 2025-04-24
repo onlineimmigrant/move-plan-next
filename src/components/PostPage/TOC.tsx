@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { useSettings } from '@/context/SettingsContext';
+
 
 interface TOCItem {
     tag_name: string;
@@ -16,7 +16,7 @@ interface TOCProps {
 }
 
 const TOC: React.FC<TOCProps> = ({ toc, handleScrollTo }) => {
-    const { settings } = useSettings();
+ //   const { settings } = useSettings();
     
     if (!toc || toc.length === 0) return null;
 

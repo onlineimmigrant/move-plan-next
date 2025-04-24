@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import parse from 'html-react-parser';
+import Link from 'next/link'
 
 interface HeroProps {
   hero: {
@@ -86,13 +87,13 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
             <div className="hidden sm:mb-8 sm:flex sm:justify-center">
               <div className="flex items-center relative rounded-full px-3 py-1 text-sm leading-6 text-gray-600 hover:text-gray-500 ring-2 ring-gray-900/10 hover:ring-sky-700/20">
                 {hero.seo_title}
-                <a
+                <Link
                   href="/education-hub"
-                  alt={`Explore ${hero.seo_title}`}
+                  aria-label={`Explore ${hero.seo_title}`}
                   className="ml-2 flex items-center font-semibold text-gray-700 hover:text-gray-300"
                 >
                   Explore <span className="ml-1">→</span>
-                </a>
+                </Link>
               </div>
             </div>
           )}

@@ -11,9 +11,10 @@ const FAQSection = dynamic(() => import('@/components/FAQSection'), { ssr: false
 interface HeroData {
   h1_title: string;
   p_description: string;
+  p_description_color: string; // Added required field
   background_color_home_page?: string;
   is_bg_gradient?: boolean;
-  h1_title_color?: string;
+  h1_title_color_id?: string; // Changed to match Hero component
   h1_via_gradient_color?: string;
   h1_to_gradient_color?: string;
   image_url?: string;
@@ -87,7 +88,11 @@ const HomePage: React.FC = () => {
         }
 
         setData({
-          hero: heroData,
+          hero: {
+            ...heroData,
+            p_description_color: heroData.p_description_color || '#000000', // Default value
+            h1_title_color_id: heroData.h1_title_color_id || '', // Default value
+          },
           brands: brandsData,
           faqs: faqsData,
           brands_heading: '',
@@ -96,9 +101,10 @@ const HomePage: React.FC = () => {
             button_explore: 'Explore',
           },
         });
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching data:', err);
-        setError(err.message || 'Failed to fetch data. Please try again later.');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data. Please try again later.';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -115,17 +121,21 @@ const HomePage: React.FC = () => {
     return <div className="text-red-500 text-center py-12">{error}</div>;
   }
 
+  if (!data || !data.hero) {
+    return <div className="text-red-500 text-center py-12">Error: Hero data is missing.</div>;
+  }
+
   return (
     <div>
       <Suspense fallback={<div>Loading Hero...</div>}>
-        <Hero hero={data?.hero} labelsDefault={data?.labels_default} />
+        <Hero hero={data.hero} labelsDefault={data.labels_default} />
       </Suspense>
       <Suspense fallback={<div>Loading Brands...</div>}>
-        <Brands brands={data?.brands || []} textContent={{ brands_heading: data?.brands_heading || '' }} />
+        <Brands brands={data.brands || []} textContent={{ brands_heading: data.brands_heading || '' }} />
       </Suspense>
       <Suspense fallback={<div>Loading FAQs...</div>}>
-      <div className="">
-        <FAQSection  faqs={data?.faqs || []} />
+        <div className="">
+          <FAQSection faqs={data.faqs || []} />
         </div>
       </Suspense>
     </div>

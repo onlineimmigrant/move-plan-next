@@ -24,12 +24,23 @@ interface Feature {
   slug: string;
 }
 
+interface FeatureResponse {
+  feature_id: number;
+  feature: {
+    id: number;
+    name: string;
+    feature_image?: string;
+    content: string;
+    slug: string;
+  }[];
+}
+
 export default function CombinedCheckoutPage() {
   const { basket, updateQuantity, removeFromBasket, clearBasket } = useBasket();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [featuresMap, setFeaturesMap] = useState<{ [key: number]: Feature[] }>({}); // Map of pricing plan ID to features
+  const [featuresMap, setFeaturesMap] = useState<{ [key: number]: Feature[] }>({});
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
@@ -64,6 +75,10 @@ export default function CombinedCheckoutPage() {
     const fetchFeatures = async () => {
       const newFeaturesMap: { [key: number]: Feature[] } = {};
       for (const item of basket) {
+        if (item.plan.id === undefined) {
+          console.warn('Skipping item with undefined plan.id:', item);
+          continue;
+        }
         const { data: featuresData, error: featuresError } = await supabase
           .from('pricingplan_features')
           .select(`
@@ -83,7 +98,21 @@ export default function CombinedCheckoutPage() {
           newFeaturesMap[item.plan.id] = [];
         } else {
           newFeaturesMap[item.plan.id] = featuresData
-            ? featuresData.map((item) => item.feature).filter((feature) => feature !== null)
+            ? featuresData
+                .flatMap((dataItem: FeatureResponse) =>
+                  dataItem.feature.map((feature): Feature | null =>
+                    feature && feature.id
+                      ? {
+                          id: feature.id,
+                          name: feature.name,
+                          feature_image: feature.feature_image,
+                          content: feature.content,
+                          slug: feature.slug,
+                        }
+                      : null
+                  )
+                )
+                .filter((feature): feature is Feature => feature !== null)
             : [];
         }
       }
@@ -108,15 +137,20 @@ export default function CombinedCheckoutPage() {
             currency: currency.toLowerCase(),
             metadata: {
               item_count: totalItems,
-              item_ids: basket.map((item) => item.plan.id).join(','),
+              item_ids: basket
+                .filter((item) => item.plan.id !== undefined)
+                .map((item) => item.plan.id)
+                .join(','),
               items: JSON.stringify(
-                basket.map((item) => ({
-                  id: item.plan.id,
-                  product_name: item.plan.product_name || 'Unknown Product',
-                  package: item.plan.package || 'Standard',
-                  measure: item.plan.measure || 'One-time',
-                  quantity: item.quantity,
-                }))
+                basket
+                  .filter((item) => item.plan.id !== undefined)
+                  .map((item) => ({
+                    id: item.plan.id,
+                    product_name: item.plan.product_name || 'Unknown Product',
+                    package: item.plan.package || 'Standard',
+                    measure: item.plan.measure || 'One-time',
+                    quantity: item.quantity,
+                  }))
               ),
               checkout_session_id: sessionId,
             },
@@ -142,9 +176,8 @@ export default function CombinedCheckoutPage() {
   );
 
   useEffect(() => {
-    if (!checkoutSessionId) return; // Wait until checkoutSessionId is set
+    if (!checkoutSessionId) return;
 
-    // Check if a Payment Intent already exists for this session
     const existingPaymentIntentId = window.localStorage.getItem('paymentIntentId');
     const existingClientSecret = window.localStorage.getItem('clientSecret');
     const storedSessionId = window.localStorage.getItem('checkoutSessionId');
@@ -165,14 +198,11 @@ export default function CombinedCheckoutPage() {
   }, [basket, fetchPaymentIntent, checkoutSessionId, totalPrice]);
 
   const handleSuccess = () => {
-    // Clear the basket
     clearBasket();
-    // Clear Payment Intent data and session ID from localStorage
     window.localStorage.removeItem('clientSecret');
     window.localStorage.removeItem('paymentIntentId');
     window.localStorage.removeItem('checkoutSessionId');
     hasFetchedIntentRef.current = false;
-    // Redirect to the success page
     router.push(`/success?payment_intent=${paymentIntentId}`);
   };
 
@@ -184,7 +214,7 @@ export default function CombinedCheckoutPage() {
   return (
     <div>
       <div className="md:hidden">
-        <ProgressBar stage={3} /> {/* Update stage to 3 to match single-item checkout */}
+        <ProgressBar stage={3} />
       </div>
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="flex items-center justify-between mb-8">

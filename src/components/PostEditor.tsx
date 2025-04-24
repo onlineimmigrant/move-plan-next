@@ -26,28 +26,34 @@ const CustomImage = ImageResize.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
+      src: {
+        default: null,
+      },
+      alt: {
+        default: null,
+      },
+      title: {
+        default: null,
+      },
       align: {
         default: 'left',
-        parseHTML: (element) => {
-          const parentStyle = element.parentElement?.style.textAlign;
-          return parentStyle === 'center' || parentStyle === 'right' ? parentStyle : 'left';
-        },
+        parseHTML: (element) => element.getAttribute('data-align') || 'left',
         renderHTML: (attributes) => ({
           'data-align': attributes.align,
         }),
       },
       width: {
         default: null,
-        parseHTML: (element) => element.style.width || null,
+        parseHTML: (element) => element.getAttribute('width') || element.style.width || null,
         renderHTML: (attributes) => ({
-          style: attributes.width ? `width: ${attributes.width};` : '',
+          width: attributes.width || null,
         }),
       },
       height: {
         default: null,
-        parseHTML: (element) => element.style.height || null,
+        parseHTML: (element) => element.getAttribute('height') || element.style.height || null,
         renderHTML: (attributes) => ({
-          style: attributes.height ? `height: ${attributes.height};` : '',
+          height: attributes.height || null,
         }),
       },
     };
@@ -55,64 +61,67 @@ const CustomImage = ImageResize.extend({
 
   renderHTML({ HTMLAttributes }) {
     const { align, width, height, ...rest } = HTMLAttributes;
-    const imgStyles = [width, height].filter(Boolean).join(' ');
+    const imgStyles = [width ? `width: ${width}` : '', height ? `height: ${height}` : '']
+      .filter(Boolean)
+      .join('; ');
     return [
-      'div',
-      { class: 'image-wrapper', style: `text-align: ${align};` },
-      [
-        'img',
-        mergeAttributes(
-          { class: 'max-w-full h-auto my-2 rounded resize-handle', style: imgStyles },
-          rest
-        ),
-      ],
+      'img',
+      mergeAttributes(
+        {
+          class: `image-align-${align} max-w-full h-auto my-2 rounded`,
+          style: imgStyles,
+          'data-align': align,
+        },
+        rest
+      ),
     ];
   },
 
   parseHTML() {
     return [
       {
+        tag: 'img',
+        getAttrs: (dom: HTMLElement) => {
+          if (!(dom instanceof HTMLImageElement)) return false;
+          return {
+            src: dom.getAttribute('src'),
+            alt: dom.getAttribute('alt'),
+            title: dom.getAttribute('title'),
+            width: dom.getAttribute('width') || dom.style.width || null,
+            height: dom.getAttribute('height') || dom.style.height || null,
+            align: dom.getAttribute('data-align') || 'left',
+          };
+        },
+      },
+      // Fallback for legacy div-wrapped images
+      {
         tag: 'div[class="image-wrapper"]',
-        getAttrs: (dom: any) => {
+        getAttrs: (dom: HTMLElement) => {
           const img = dom.querySelector('img');
           if (!img) return false;
-          const align = dom.style.textAlign || 'left';
-          const width = img.style.width || null;
-          const height = img.style.height || null;
           return {
             src: img.getAttribute('src'),
             alt: img.getAttribute('alt'),
             title: img.getAttribute('title'),
-            width,
-            height,
-            align,
+            width: img.getAttribute('width') || img.style.width || null,
+            height: img.getAttribute('height') || img.style.height || null,
+            align: img.getAttribute('data-align') || dom.style.textAlign || 'left',
           };
         },
-      },
-      {
-        tag: 'img',
-        getAttrs: (dom: any) => ({
-          src: dom.getAttribute('src'),
-          alt: dom.getAttribute('alt'),
-          title: dom.getAttribute('title'),
-          width: dom.style.width || null,
-          height: dom.style.height || null,
-          align: 'left',
-        }),
       },
     ];
   },
 });
 
-const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?: string }> = ({ onSave, initialContent }) => {
+const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?: string }> = ({
+  onSave,
+  initialContent,
+}) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // Ensure StarterKit includes bold and italic explicitly
-        bold: true,
-        italic: true,
-        blockquote: false, // Disable to use custom Blockquote
-        codeBlock: false, // Disable to use custom CodeBlock
+        blockquote: false,
+        codeBlock: false,
       }),
       Link.configure({
         openOnClick: false,
@@ -125,8 +134,8 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
       }),
       CustomImage,
       OrderedList,
-      Blockquote, // Custom Blockquote extension
-      CodeBlock, // Custom CodeBlock extension
+      Blockquote,
+      CodeBlock,
       TextAlign.configure({
         types: ['heading', 'paragraph', 'image'],
       }),
@@ -145,18 +154,23 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
       Mention.configure({
         HTMLAttributes: { class: 'mention' },
         suggestion: {
-          items: ({ query }) => {
+          items: ({ query }: { query: string }) => {
             const suggestions = ['alice', 'bob', 'charlie', 'david', 'emma'];
             return suggestions
               .filter((item) => item.toLowerCase().startsWith(query.toLowerCase()))
               .slice(0, 5);
           },
           render: () => {
-            let component: any;
-            let popup: any;
+            let component: HTMLDivElement | null = null;
+            let popup: HTMLDivElement | null = null;
 
             return {
-              onStart: (props: any) => {
+              onStart: (props: {
+                query: string;
+                clientRect?: (() => DOMRect | null) | null | undefined;
+                items: string[];
+                command: (attrs: { id: string }) => void;
+              }) => {
                 component = document.createElement('div');
                 component.className = 'mention-suggestions';
                 component.style.position = 'absolute';
@@ -164,26 +178,43 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
                 component.style.border = '1px solid #ccc';
                 component.style.padding = '5px';
                 component.innerHTML = props.items
-                  .map((item: string) => `<div class="suggestion-item" style="padding: 5px; cursor: pointer;">@${item}</div>`)
+                  .map(
+                    (item: string) =>
+                      `<div class="suggestion-item" style="padding: 5px; cursor: pointer;">@${item}</div>`
+                  )
                   .join('');
 
                 popup = document.body.appendChild(component);
-                const rect = props.clientRect();
-                popup.style.left = `${rect.left}px`;
-                popup.style.top = `${rect.bottom}px`;
+                const rect = props.clientRect?.();
+                if (rect) {
+                  popup.style.left = `${rect.left}px`;
+                  popup.style.top = `${rect.bottom}px`;
+                }
 
-                component.addEventListener('click', (e: any) => {
-                  const item = e.target.textContent.slice(1); // Remove '@'
-                  props.command({ id: item });
+                component.addEventListener('click', (e: MouseEvent) => {
+                  const target = e.target as HTMLElement;
+                  const item = target.textContent?.slice(1);
+                  if (item) {
+                    props.command({ id: item });
+                  }
                 });
               },
-              onUpdate: (props: any) => {
-                component.innerHTML = props.items
-                  .map((item: string) => `<div class="suggestion-item" style="padding: 5px; cursor: pointer;">@${item}</div>`)
-                  .join('');
+              onUpdate: (props: { items: string[] }) => {
+                if (component) {
+                  component.innerHTML = props.items
+                    .map(
+                      (item: string) =>
+                        `<div class="suggestion-item" style="padding: 5px; cursor: pointer;">@${item}</div>`
+                    )
+                    .join('');
+                }
               },
               onExit: () => {
-                if (popup) popup.remove();
+                if (popup) {
+                  popup.remove();
+                  popup = null;
+                  component = null;
+                }
               },
             };
           },
@@ -202,12 +233,19 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
             const reader = new FileReader();
             reader.onload = (e) => {
               const src = e.target?.result as string;
-              const { schema } = view.state;
               const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
               if (coordinates) {
-                const node = schema.nodes.image.create({ src, align: 'left' });
-                const transaction = view.state.tr.insert(coordinates.pos, node);
-                view.dispatch(transaction);
+                view.dispatch(
+                  view.state.tr.insert(
+                    coordinates.pos,
+                    view.state.schema.nodes.image.create({
+                      src,
+                      align: 'left',
+                      width: '200px',
+                      height: 'auto',
+                    })
+                  )
+                );
               }
             };
             reader.readAsDataURL(file);
@@ -248,10 +286,10 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
         editor.chain().focus().toggleOrderedList().run();
         break;
       case 'blockquote':
-        editor.chain().focus().setParagraph().toggleBlockquote().run(); // Ensure paragraph context
+        editor.chain().focus().setParagraph().toggleBlockquote().run();
         break;
       case 'codeBlock':
-        editor.chain().focus().setParagraph().toggleCodeBlock().run(); // Ensure paragraph context
+        editor.chain().focus().setParagraph().toggleCodeBlock().run();
         break;
       case 'bold':
         editor.chain().focus().toggleBold().run();
@@ -274,13 +312,22 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
   const addImage = () => {
     const url = window.prompt('Enter the image URL');
     if (url) {
-      editor.chain().focus().setImage({ src: url, align: 'left', width: '200px', height: 'auto' }).run();
+      editor.chain().focus().setNode('image', { src: url, align: 'left', width: '200px', height: 'auto' }).run();
     }
   };
 
   const setImageAlignment = (align: 'left' | 'center' | 'right') => {
-    if (editor.isActive('image')) {
-      editor.chain().focus().setNode('image', { align }).run();
+    const { state } = editor;
+    const { selection } = state;
+    const pos = selection.$anchor.pos;
+    const node = state.doc.nodeAt(pos);
+
+    if (node && node.type.name === 'image') {
+      const transaction = state.tr.setNodeMarkup(pos, undefined, {
+        ...node.attrs,
+        align,
+      });
+      editor.view.dispatch(transaction);
     } else {
       console.log('No image selected');
     }
@@ -292,92 +339,160 @@ const PostEditor: React.FC<{ onSave: (content: string) => void; initialContent?:
 
   const handleSave = () => {
     const htmlContent = editor.getHTML();
-    console.log('Saved HTML:', htmlContent); // Debug output
+    console.log('Saved HTML:', htmlContent);
     onSave(htmlContent);
   };
 
   return (
     <div className="post-editor text-gray-600">
       <style jsx>{`
-        .image-wrapper {
-          position: relative;
-          margin: 0.5rem 0; /* Spacing around image */
+        .image-align-left {
+          display: block;
+          margin-left: 0;
+          margin-right: auto;
         }
-        .resize-handle {
-          cursor: se-resize; /* Ensure resize cursor is visible */
+        .image-align-center {
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .image-align-right {
+          display: block;
+          margin-left: auto;
+          margin-right: 0;
         }
       `}</style>
-      <div className="toolbar mb-4 flex gap-0.5 flex-wrap ">
-        <Button size={"sm"} onClick={() => applyStyle('h1')} variant={editor.isActive('heading', { level: 1 }) ? 'secondary' : 'outline'}>
+      <div className="toolbar mb-4 flex gap-0.5 flex-wrap">
+        <Button
+          size="sm"
+          onClick={() => applyStyle('h1')}
+          variant={editor.isActive('heading', { level: 1 }) ? 'secondary' : 'outline'}
+        >
           H1
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('h2')} variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('h2')}
+          variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'outline'}
+        >
           H2
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('h3')} variant={editor.isActive('heading', { level: 3 }) ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('h3')}
+          variant={editor.isActive('heading', { level: 3 }) ? 'secondary' : 'outline'}
+        >
           H3
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('h4')} variant={editor.isActive('heading', { level: 4 }) ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('h4')}
+          variant={editor.isActive('heading', { level: 4 }) ? 'secondary' : 'outline'}
+        >
           H4
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('h5')} variant={editor.isActive('heading', { level: 5 }) ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('h5')}
+          variant={editor.isActive('heading', { level: 5 }) ? 'secondary' : 'outline'}
+        >
           H5
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('p')} variant={editor.isActive('paragraph') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('p')}
+          variant={editor.isActive('paragraph') ? 'secondary' : 'outline'}
+        >
           P
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('ul')} variant={editor.isActive('bulletList') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('ul')}
+          variant={editor.isActive('bulletList') ? 'secondary' : 'outline'}
+        >
           UL
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('ol')} variant={editor.isActive('orderedList') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('ol')}
+          variant={editor.isActive('orderedList') ? 'secondary' : 'outline'}
+        >
           OL
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('blockquote')} variant={editor.isActive('blockquote') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('blockquote')}
+          variant={editor.isActive('blockquote') ? 'secondary' : 'outline'}
+        >
           Quote
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('codeBlock')} variant={editor.isActive('codeBlock') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('codeBlock')}
+          variant={editor.isActive('codeBlock') ? 'secondary' : 'outline'}
+        >
           Code
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('bold')} variant={editor.isActive('bold') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('bold')}
+          variant={editor.isActive('bold') ? 'secondary' : 'outline'}
+        >
           B
         </Button>
-        <Button size={"sm"} onClick={() => applyStyle('italic')} variant={editor.isActive('italic') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={() => applyStyle('italic')}
+          variant={editor.isActive('italic') ? 'secondary' : 'outline'}
+        >
           I
         </Button>
-        <Button size={"sm"} onClick={setLink} variant={editor.isActive('link') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={setLink}
+          variant={editor.isActive('link') ? 'secondary' : 'outline'}
+        >
           Link
         </Button>
-        <Button size={"sm"} onClick={addImage} variant="outline">
+        <Button size="sm" onClick={addImage} variant="outline">
           Image
         </Button>
-        <Button size={"sm"} 
+        <Button
+          size="sm"
           onClick={() => setImageAlignment('left')}
           variant={editor.isActive('image', { align: 'left' }) ? 'secondary' : 'outline'}
         >
           Left
         </Button>
-        <Button size={"sm"} 
+        <Button
+          size="sm"
           onClick={() => setImageAlignment('center')}
           variant={editor.isActive('image', { align: 'center' }) ? 'secondary' : 'outline'}
         >
           Center
         </Button>
-        <Button size={"sm"} 
+        <Button
+          size="sm"
           onClick={() => setImageAlignment('right')}
           variant={editor.isActive('image', { align: 'right' }) ? 'secondary' : 'outline'}
         >
           Right
         </Button>
-        <Button size={"sm"} 
-        onClick={toggleHighlight} variant={editor.isActive('highlight') ? 'secondary' : 'outline'}>
+        <Button
+          size="sm"
+          onClick={toggleHighlight}
+          variant={editor.isActive('highlight') ? 'secondary' : 'outline'}
+        >
           Highlight
         </Button>
-        <Button size={"sm"} 
-        onClick={handleSave} variant="primary">
+        <Button size="sm" onClick={handleSave} variant="primary">
           Save
         </Button>
       </div>
-      <EditorContent editor={editor} className="border border-gray-200 p-4 rounded-md min-h-[300px] bg-white" />
+      <EditorContent
+        editor={editor}
+        className="border border-gray-200 p-4 rounded-md min-h-[300px] bg-white"
+      />
       <div className="mt-2 text-sm text-gray-500">
         {editor?.storage.characterCount.characters()} / 50000 characters
       </div>

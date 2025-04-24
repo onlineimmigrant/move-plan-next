@@ -1,8 +1,7 @@
-// admin/layout.tsx
 "use client";
 
 import { ReactNode, useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+
 import { AuthProvider } from "@/context/AuthContext";
 import { BasketProvider } from "@/context/BasketContext";
 import { ModalProvider } from "@/context/ModalContext";
@@ -21,10 +20,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [openTablesSections, setOpenTablesSections] = useState<Record<TablesDisclosureKey, boolean>>({
     users: false,
     sell: false,
+    booking: false,
     app: false,
     consent_management: false,
     blog: false,
-    eduPro: false,
+    edupro: false,
+    quiz: false,
+    feedback: false,
+    ai: false,
+    datacollection: false,
+    website: false,
+    email: false,
     settings: false,
   });
   const [openReportsSections, setOpenReportsSections] = useState<Record<ReportsDisclosureKey, boolean>>({
@@ -44,7 +50,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       setActiveSection(""); // For non-admin routes (unlikely in this context)
     }
     console.log("pathname:", pathname, "activeSection:", activeSection); // Debug log
-  }, [pathname]);
+  }, [pathname, activeSection]);
 
   return (
     <AuthProvider>

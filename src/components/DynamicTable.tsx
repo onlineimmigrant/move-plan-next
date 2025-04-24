@@ -58,7 +58,7 @@ export default function DynamicTable({ tableName, apiEndpoint }: { tableName: st
 
   useEffect(() => {
     setColumnWidths((prev) => {
-      const newWidths = { ...prev, checkbox: 40 };
+      const newWidths: { [key: string]: number } = { ...prev, checkbox: 40 };
       fields.forEach((field) => {
         if (!(field in newWidths)) {
           newWidths[field] = 150;
@@ -257,10 +257,7 @@ export default function DynamicTable({ tableName, apiEndpoint }: { tableName: st
     h1_via_gradient_color_id: "color.name",
     react_icon_id: "react_icons.icon_name",
     footer_color_id: "color.name"
-
   };
-
-
 
   const fetchForeignKeyOptions = async (field: string) => {
     const [relatedTable, displayColumn] = (foreignKeyTableMap[field] || field.replace("_id", ".name")).split(".");
@@ -615,8 +612,7 @@ export default function DynamicTable({ tableName, apiEndpoint }: { tableName: st
         handleDragStart={handleDragStart}
         primaryButtonClass={primaryButtonClass}
         grayButtonClass={grayButtonClass}
-        onSaveEdit={saveEdit}
-      />
+        onSaveEdit={saveEdit} selectedForeignKeyItem={null}      />
       <div className="relative">
         <TableNavbar
           setIsFilterOpen={setIsFilterOpen}
@@ -642,30 +638,60 @@ export default function DynamicTable({ tableName, apiEndpoint }: { tableName: st
         />
         <FilterMenu {...{ isFilterOpen, setIsFilterOpen, filterCriteria, setFilterCriteria, fields, applyFilter, clearFilter, primaryButtonClass, grayButtonClass }} />
         <SortMenu {...{ isSortOpen, setIsSortOpen, sortCriteria, setSortCriteria, fields, applySort, clearSort, primaryButtonClass, grayButtonClass }} />
-        <ColumnsMenu {...{ isColumnsMenuOpen, setIsColumnsMenuOpen, fields, hiddenFields, toggleColumnVisibility: (field) => setHiddenFields(prev => prev.includes(field) ? prev.filter(f => f !== field) : [...prev, field], localStorage.setItem(`${tableName}_hiddenFields`, JSON.stringify(hiddenFields))) }} />
-        <SelectedRowsNavbar {...{ selectedRows, confirmDeleteSelected: () => selectedRows.length && setIsDeleteModalOpen(true), grayButtonClass }} />
+        <ColumnsMenu
+            {...{
+              isColumnsMenuOpen,
+              setIsColumnsMenuOpen,
+              fields,
+              hiddenFields,
+              toggleColumnVisibility: (field: string) => {
+                setHiddenFields((prev) =>
+                  prev.includes(field)
+                    ? prev.filter((f) => f !== field)
+                    : [...prev, field]
+                );
+                localStorage.setItem(
+                  `${tableName}_hiddenFields`,
+                  JSON.stringify(hiddenFields)
+                );
+              },
+            }}
+          />
+   <SelectedRowsNavbar {...{ selectedRows, confirmDeleteSelected: () => selectedRows.length && setIsDeleteModalOpen(true), grayButtonClass }} />
         <div className="overflow-x-auto bg-white rounded-md border border-gray-200">
           <table className="min-w-full table-auto border-collapse">
-            <TableHeader
-              {...{
-                fields,
-                hiddenFields,
-                columnTypes,
-                handleColumnDragStart: (e, f) => setDraggedColumn(f),
-                handleColumnDragOver: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; },
-                handleColumnDrop,
-                hideColumn: (f) => setHiddenFields(prev => [...prev, f], localStorage.setItem(`${tableName}_hiddenFields`, JSON.stringify([...hiddenFields, f]))),
-                selectedRows,
-                items: displayedItems,
-                setSelectedRows,
-                setIsAddColumnModalOpen,
-                setIsEditColumnModalOpen,
-                setIsDeleteColumnModalOpen,
-                setSelectedColumn,
-                columnWidths,
-                setColumnWidths,
-              }}
-            />
+          <TableHeader
+            {...{
+              fields,
+              hiddenFields,
+              columnTypes,
+              handleColumnDragStart: (e, f) => setDraggedColumn(f),
+              handleColumnDragOver: (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+              },
+              handleColumnDrop,
+              hideColumn: (f: string) => {
+                setHiddenFields((prev) => {
+                  const newHiddenFields = [...prev, f];
+                  localStorage.setItem(
+                    `${tableName}_hiddenFields`,
+                    JSON.stringify(newHiddenFields)
+                  );
+                  return newHiddenFields;
+                });
+              },
+              selectedRows,
+              items: displayedItems,
+              setSelectedRows,
+              setIsAddColumnModalOpen,
+              setIsEditColumnModalOpen,
+              setIsDeleteColumnModalOpen,
+              setSelectedColumn,
+              columnWidths,
+              setColumnWidths,
+            }}
+          />
             <TableBody
               {...{
                 items: displayedItems,

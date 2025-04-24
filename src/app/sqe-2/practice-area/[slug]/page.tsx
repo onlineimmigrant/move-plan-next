@@ -2,11 +2,11 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { useSettings } from '@/context/SettingsContext';
+
 import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
-import Breadcrumbs from '@/components/Breadcrumbs';
+
 import { notFound } from 'next/navigation';
 
 interface TOCItem {
@@ -17,7 +17,7 @@ interface TOCItem {
 
 const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
   const { slug } = React.use(params);
-  const { settings } = useSettings();
+ // const { settings } = useSettings();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(true); // Replace with real admin check later
@@ -144,7 +144,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   if (!post) notFound();
 
   const shouldShowMainContent = post.section !== 'Landing' && post.content?.length > 0;
-  const path = `/sqe-2/practice-area/${post.slug}`;
+//  const path = `/sqe-2/practice-area/${post.slug}`;
 
   return (
     <div className="post-page-container px-4 sm:pt-4 sm:pb-16">
@@ -157,12 +157,12 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               </div>
             )}
           </aside>
-          <main className="mt-24 lg:col-span-4 text-base leading-7 text-gray-900">
+          <main className="my-8 lg:col-span-4 text-base leading-7 text-gray-900">
             {shouldShowMainContent ? (
               <>
                 <div
                   onMouseEnter={() => setIsHeaderHovered(true)}
-                  onMouseEnter={() => setIsHeaderHovered(true)}
+                 
                   onMouseLeave={() => setIsHeaderHovered(false)}
                   className="relative"
                 >

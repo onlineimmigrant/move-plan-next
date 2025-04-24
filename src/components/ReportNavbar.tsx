@@ -7,10 +7,10 @@ import {
   ChartBarIcon,
   DocumentCheckIcon,
   DocumentArrowDownIcon,
-  ChevronDownIcon,
+
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
-import { useSettings } from "@/context/SettingsContext";
+
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import SelectReportTable from "./DynamicReportComponent/SelectReportTable";
@@ -53,10 +53,9 @@ const ReportNavbar: React.FC<ReportNavbarProps> = ({
   reportName,
   setReportName,
   handleSave,
-  reportData,
-  chartData,
+
 }) => {
-  const { settings } = useSettings();
+  //const { settings } = useSettings();
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
   const [isFieldsModalOpen, setIsFieldsModalOpen] = useState(false);
   const [isDiagramMenuOpen, setIsDiagramMenuOpen] = useState(false);
@@ -178,11 +177,7 @@ const ReportNavbar: React.FC<ReportNavbarProps> = ({
           tooltip={button.tooltip}
           isActive={button.isActive}
           className={button.className || defaultButtonClass}
-          style={
-            button.className === secondaryButtonClass
-              ? { color: "#4B5563" } // gray-600
-              : { color: "#000000" } // black
-          }
+
         />
       ))}
     </div>

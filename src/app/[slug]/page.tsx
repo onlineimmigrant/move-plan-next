@@ -2,11 +2,12 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { useSettings } from '@/context/SettingsContext';
+//import { useSettings } from '@/context/SettingsContext';
 import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
-import Breadcrumbs from '@/components/Breadcrumbs';
+
+//import Breadcrumbs from '@/components/Breadcrumbs';
 import { notFound, redirect } from 'next/navigation';
 
 interface TOCItem {
@@ -17,7 +18,7 @@ interface TOCItem {
 
 const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
   const { slug } = React.use(params);
-  const { settings } = useSettings();
+ // const { settings } = useSettings();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(true); // Replace with real admin check later
@@ -154,7 +155,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   if (!post) notFound();
 
   const shouldShowMainContent = post.section !== 'Landing' && post.content?.length > 0;
-  const path = `/${post.slug}`;
+ // const path = `/${post.slug}`;
 
   return (
     <div className=" px-4 sm:pt-4 sm:pb-16">
@@ -182,11 +183,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                     editHref={`/admin/edit/${slug}`}
                     createHref="/admin/create-post"
                   />
-                  {post.main_photo && (
-                    <div className="max-w-xl mx-auto mt-16 lg:mt-16">
-                      <img className="w-full" src={post.main_photo} alt={post.title} />
-                    </div>
-                  )}
+      
                 </div>
                 <div
                   ref={contentRef}

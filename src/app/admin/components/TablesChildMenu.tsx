@@ -10,7 +10,7 @@ import {
   DevicePhoneMobileIcon,
   ShieldCheckIcon,
   Cog6ToothIcon,
-  AcademicCapIcon, 
+  AcademicCapIcon,
   NewspaperIcon,
   RssIcon,
   QuestionMarkCircleIcon,
@@ -18,7 +18,7 @@ import {
   ShoppingBagIcon,
   ServerIcon,
   GlobeAltIcon,
-  AtSymbolIcon
+  AtSymbolIcon,
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -30,15 +30,29 @@ interface LinkItem {
   children?: LinkItem[];
   isOpen?: boolean;
 }
-type DisclosureKey = "users" | "sell" | "booking" | "app" | "consent_management" 
-| "blog" | "edupro" | "quiz" | "feedback" | "ai" | "datacollection" | "website" | "email" |  "settings";
+
+type DisclosureKey =
+  | "users"
+  | "sell"
+  | "booking"
+  | "app"
+  | "consent_management"
+  | "blog"
+  | "edupro"
+  | "quiz"
+  | "feedback"
+  | "ai"
+  | "datacollection"
+  | "website"
+  | "email"
+  | "settings";
 
 interface TablesChildMenuProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean) => void;
   sidebarLinks: Record<DisclosureKey, LinkItem[]>;
   openSections: Record<DisclosureKey, boolean>;
-  setOpenSections: (sections: Record<DisclosureKey, boolean>) => void;
+  setOpenSections: React.Dispatch<React.SetStateAction<Record<DisclosureKey, boolean>>>;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
 }
@@ -84,7 +98,7 @@ const MenuItem = ({
 }) => {
   const pathname = usePathname();
   const { settings } = useSettings();
-  const [isChildOpen, setIsChildOpen] = useState(isTopLevel ? link.isOpen || false : propIsOpen || false); // Open second level if first level is open
+  const [isChildOpen, setIsChildOpen] = useState(isTopLevel ? link.isOpen || false : propIsOpen || false);
   const isActive = isTopLevel
     ? link.children && isSectionActive(pathname, link.children)
     : link.href
@@ -103,10 +117,10 @@ const MenuItem = ({
   const iconClasses = cn(
     "w-4 h-4",
     isActive && settings?.primary_color?.name
-      ? `text-${settings.primary_color.name}` // Use primary_color when active
+      ? `text-${settings.primary_color.name}`
       : isActive
-      ? "text-sky-600" // Fallback when active and no primary_color
-      : "text-gray-400" // Default inactive color
+      ? "text-sky-600"
+      : "text-gray-400"
   );
 
   const effectiveIsOpen = isTopLevel ? propIsOpen : isChildOpen;
@@ -120,7 +134,7 @@ const MenuItem = ({
           effectiveIsOpen ? "bg-gray-50" : "text-gray-600",
           isTopLevel
             ? "text-gray-900 font-semibold py-1 focus:outline-none focus:ring-1 focus:ring-gray-300"
-            : "text-gray-500 mt-1" // Second-level text color and margin
+            : "text-gray-500 mt-1"
         )}
         onClick={effectiveToggle}
       >
@@ -150,7 +164,7 @@ const MenuItem = ({
           "space-y-1 overflow-hidden transition-all duration-200 ease-in-out",
           effectiveIsOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0",
           isTopLevel && "mt-1 border-l-1 border-gray-100 pl-1",
-          !isTopLevel && "mt-1 pl-7" // Margin and padding for second level content
+          !isTopLevel && "mt-1 pl-7"
         )}
       >
         {link.children.map((child) => (
@@ -168,14 +182,29 @@ const MenuItem = ({
   ) : null;
 };
 
-// Filter function remains unchanged
+// Filter function
 const filterSidebarLinks = (
   links: Record<DisclosureKey, LinkItem[]>,
   query: string
 ): { filtered: Record<DisclosureKey, LinkItem[]>; sectionsToOpen: DisclosureKey[] } => {
   if (!query) return { filtered: links, sectionsToOpen: [] };
 
-  const filtered: Record<DisclosureKey, LinkItem[]> = {};
+  const filtered: Record<DisclosureKey, LinkItem[]> = {
+    users: [],
+    sell: [],
+    booking: [],
+    app: [],
+    consent_management: [],
+    blog: [],
+    edupro: [],
+    quiz: [],
+    feedback: [],
+    ai: [],
+    datacollection: [],
+    website: [],
+    email: [],
+    settings: [],
+  };
   const sectionsToOpen: DisclosureKey[] = [];
   const lowerQuery = query.toLowerCase();
 
@@ -256,16 +285,19 @@ export default function TablesChildMenu({
   }, [searchQuery, sectionsToOpen, setOpenSections]);
 
   const toggleSection = (section: DisclosureKey) =>
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+    setOpenSections((prev: Record<DisclosureKey, boolean>) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
 
   const mobileIconClasses = (key: DisclosureKey) =>
     cn(
       "h-4 w-4",
       isSectionActive(pathname, sidebarLinks[key]) && settings?.primary_color?.name
-        ? `text-${settings.primary_color.name}` // Use primary_color when active
+        ? `text-${settings.primary_color.name}`
         : isSectionActive(pathname, sidebarLinks[key])
-        ? "text-sky-600" // Fallback when active and no primary_color
-        : "text-gray-400" // Default inactive color
+        ? "text-sky-600"
+        : "text-gray-400"
     );
 
   return (

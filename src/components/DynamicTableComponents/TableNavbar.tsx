@@ -1,6 +1,7 @@
-// admin/components/DynamicTableComponents/TableNavbar.tsx
-import React from "react";
-import IconButton from "./IconButton";
+'use client';
+
+import React from 'react';
+import IconButton from './IconButton';
 import {
   PlusIcon,
   ViewColumnsIcon,
@@ -10,8 +11,8 @@ import {
   Bars3BottomLeftIcon,
   AdjustmentsVerticalIcon,
   CubeTransparentIcon,
-  ChartBarIcon, // Added for reports
-} from "@heroicons/react/24/outline";
+  ChartBarIcon,
+} from '@heroicons/react/24/outline';
 
 interface TableNavbarProps {
   setIsFilterOpen: (open: boolean) => void;
@@ -31,7 +32,9 @@ interface TableNavbarProps {
   isAddColumnModalOpen: boolean;
   grayButtonClass: string;
   primaryButtonClass: string;
-  tableName: string; // Added to pass the current table name
+  tableName: string;
+  isLoading: boolean;
+  pageSortingComponent: React.ReactElement;
 }
 
 interface ButtonConfig {
@@ -61,9 +64,12 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
   isAddColumnModalOpen,
   grayButtonClass,
   primaryButtonClass,
-  tableName, // Destructure the new prop
+  tableName,
+  isLoading,
+  pageSortingComponent,
 }) => {
-  const defaultButtonClass = "p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200";
+  const defaultButtonClass =
+    'p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200';
 
   const closeAllOthers = (exclude: string) => {
     const setters = {
@@ -73,7 +79,7 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
       add: setIsModalOpen,
       import: setIsImportModalOpen,
       export: setIsExportModalOpen,
-      "add-column": setIsAddColumnModalOpen,
+      'add-column': setIsAddColumnModalOpen,
     };
     Object.entries(setters).forEach(([key, setter]) => {
       if (key !== exclude) setter(false);
@@ -82,42 +88,43 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
 
   const actionButtons: ButtonConfig[] = [
     {
-      key: "add",
+      key: 'add',
       icon: PlusIcon,
-      tooltip: "Add Row",
+      tooltip: 'Add Row',
       isActive: isModalOpen,
       onClick: () => {
-        closeAllOthers("add");
+        closeAllOthers('add');
         setIsModalOpen(true);
       },
+      className: primaryButtonClass,
     },
     {
-      key: "add-column",
+      key: 'add-column',
       icon: ViewColumnsIcon,
-      tooltip: "Add Column",
+      tooltip: 'Add Column',
       isActive: isAddColumnModalOpen,
       onClick: () => {
-        closeAllOthers("add-column");
+        closeAllOthers('add-column');
         setIsAddColumnModalOpen(true);
       },
     },
     {
-      key: "import",
+      key: 'import',
       icon: ArrowUpTrayIcon,
-      tooltip: "CSV Import",
+      tooltip: 'CSV Import',
       isActive: isImportModalOpen,
       onClick: () => {
-        closeAllOthers("import");
+        closeAllOthers('import');
         setIsImportModalOpen(true);
       },
     },
     {
-      key: "export",
+      key: 'export',
       icon: ArrowDownTrayIcon,
-      tooltip: "CSV Export",
+      tooltip: 'CSV Export',
       isActive: isExportModalOpen,
       onClick: () => {
-        closeAllOthers("export");
+        closeAllOthers('export');
         setIsExportModalOpen(true);
       },
     },
@@ -125,50 +132,50 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
 
   const controlButtons: ButtonConfig[] = [
     {
-      key: "filter",
+      key: 'filter',
       icon: FunnelIcon,
-      tooltip: "Filter",
+      tooltip: 'Filter',
       isActive: isFilterOpen,
       onClick: () => {
-        closeAllOthers("filter");
+        closeAllOthers('filter');
         setIsFilterOpen(!isFilterOpen);
       },
     },
     {
-      key: "sort",
+      key: 'sort',
       icon: Bars3BottomLeftIcon,
-      tooltip: "Sort",
+      tooltip: 'Sort',
       isActive: isSortOpen,
       onClick: () => {
-        closeAllOthers("sort");
+        closeAllOthers('sort');
         setIsSortOpen(!isSortOpen);
       },
     },
     {
-      key: "columns",
+      key: 'columns',
       icon: AdjustmentsVerticalIcon,
-      tooltip: "Columns",
+      tooltip: 'Columns',
       isActive: isColumnsMenuOpen,
       onClick: () => {
-        closeAllOthers("columns");
+        closeAllOthers('columns');
         setIsColumnsMenuOpen(!isColumnsMenuOpen);
       },
     },
     {
-      key: "schema",
+      key: 'schema',
       icon: CubeTransparentIcon,
-      tooltip: "View Schema",
+      tooltip: 'View Schema',
       isActive: false,
       onClick: () => setIsSchemaModalOpen(true),
       className: grayButtonClass,
     },
     {
-      key: "report",
-      icon: ChartBarIcon, // New icon for reports
-      tooltip: "View Report",
+      key: 'report',
+      icon: ChartBarIcon,
+      tooltip: 'View Report',
       isActive: false,
       onClick: () => {
-        window.open(`/admin/reports/${tableName}`, "_blank"); // Open in new window
+        window.open(`/admin/reports/${tableName}`, '_blank');
       },
       className: grayButtonClass,
     },
@@ -184,6 +191,7 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
           tooltip={button.tooltip}
           isActive={button.isActive}
           className={button.className || defaultButtonClass}
+          disabled={isLoading}
         />
       ))}
     </div>
@@ -191,8 +199,38 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
 
   return (
     <div className="flex justify-between items-center mb-2">
-      {renderButtonGroup(actionButtons)}
-      {renderButtonGroup(controlButtons)}
+      <div className="flex items-center space-x-4">
+        {renderButtonGroup(actionButtons)}
+        {isLoading && (
+          <div className="flex items-center space-x-2">
+            <svg
+              className="animate-spin h-5 w-5 text-gray-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"
+              ></path>
+            </svg>
+            <span className="text-sm text-gray-600">Loading...</span>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center space-x-4">
+        {renderButtonGroup(controlButtons)}
+        {pageSortingComponent}
+      </div>
     </div>
   );
 };

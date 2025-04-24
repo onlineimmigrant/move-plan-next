@@ -5,8 +5,8 @@ import ProductDetailPricingPlans from '../../../components/ProductDetailPricingP
 import CategoryBarProductDetailPage from '../../../components/CategoryBarProductDetailPage';
 import FAQSection from '../../../components/FAQSection';
 import parse from 'html-react-parser';
-import ProgressBar from '../../../components/ProgressBar'; // Add ProgressBar import
-import { getBasket } from '../../../lib/basketUtils'; // Add utility to get basket on server
+import ProgressBar from '../../../components/ProgressBar';
+import { getBasket } from '../../../lib/basketUtils';
 
 // Define types for the product, pricing plans, and FAQs
 type Product = {
@@ -17,7 +17,7 @@ type Product = {
   product_description?: string;
   price_manual?: number;
   currency_manual?: string;
-  product_sub_type_id?: number;
+  product_sub_type_id: number;
   product_sub_type?: { name: string };
   pricing_plans?: PricingPlan[];
   amazon_books_url?: string;
@@ -61,24 +61,22 @@ async function fetchProduct(slug: string): Promise<Product> {
     .eq('slug', slug)
     .single();
 
-  if (productError || !productData) {
+  if (productError || !productData || !productData.product_sub_type_id) {
     console.error('Error fetching product:', productError);
     throw new Error('Failed to load product: ' + (productError?.message || 'Product not found'));
   }
 
   let productSubType = null;
-  if (productData.product_sub_type_id) {
-    const { data: subTypeData, error: subTypeError } = await supabase
-      .from('product_sub_type')
-      .select('name')
-      .eq('id', productData.product_sub_type_id)
-      .single();
+  const { data: subTypeData, error: subTypeError } = await supabase
+    .from('product_sub_type')
+    .select('name')
+    .eq('id', productData.product_sub_type_id)
+    .single();
 
-    if (subTypeError) {
-      console.error('Error fetching product sub-type:', subTypeError);
-    } else {
-      productSubType = subTypeData;
-    }
+  if (subTypeError) {
+    console.error('Error fetching product sub-type:', subTypeError);
+  } else {
+    productSubType = subTypeData;
   }
 
   let pricingPlans: PricingPlan[] = [];
@@ -109,6 +107,7 @@ async function fetchProduct(slug: string): Promise<Product> {
 
   const product: Product = {
     ...productData,
+    product_sub_type_id: productData.product_sub_type_id,
     product_sub_type: productSubType,
     pricing_plans: pricingPlans,
   };
@@ -162,18 +161,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
-  // Get the basket on the server side (e.g., from cookies or session)
-  const basket = await getBasket(); // Implement this utility to fetch basket
+  // Get the basket on the server side
+  const basket = await getBasket();
   const totalItems = basket.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
-  const { product_name, links_to_image, product_description, price_manual, currency_manual } = product;
+  const { product_name, links_to_image, product_description } = product;
 
   console.log('Product slug:', product.slug);
   console.log('Fetched FAQs:', faqs);
 
   return (
     <div className="min-h-screen">
-      {/* Show ProgressBar only if there are items in the basket */}
       <div className="md:hidden">
         {totalItems > 0 && <ProgressBar stage={1} />}
       </div>
@@ -209,7 +207,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             {product.pricing_plans && product.pricing_plans.length > 0 && (
               <ProductDetailPricingPlans
                 pricingPlans={product.pricing_plans}
-                productId={product.id}
                 amazonBooksUrl={product.amazon_books_url}
               />
             )}
@@ -217,7 +214,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
-          <FAQSection slug={product.slug} faqs={faqs} />
+          <FAQSection slug={product.slug || ''} faqs={faqs} />
         </div>
       </div>
     </div>

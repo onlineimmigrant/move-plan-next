@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+// Interface for foreign key structure
+interface ForeignKey {
+  relatedTable: string;
+  relatedColumn: string;
+}
+
 // Mapping of URL table names to actual Supabase table names
 const tableNameMapping: { [key: string]: string } = {
   products: "product",
@@ -18,7 +24,8 @@ const tableNameMapping: { [key: string]: string } = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { tableName, foreignKeys } = await req.json();
+    const { tableName, foreignKeys }: { tableName: string; foreignKeys: Record<string, ForeignKey> } =
+      await req.json();
 
     if (!tableName || !foreignKeys) {
       console.error("Missing tableName or foreignKeys in request body", { tableName, foreignKeys });
@@ -48,10 +55,13 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      options[column] = fkData.map((item: any) => ({
-        id: item.id.toString(),
-        name: item[fk.relatedColumn]?.toString() || item.id.toString(),
-      }));
+      // Type the fkData safely by casting to unknown first
+      options[column] = (fkData as unknown as { id: string | number; [key: string]: string | number | null }[]).map(
+        (item) => ({
+          id: item.id.toString(),
+          name: item[fk.relatedColumn]?.toString() || item.id.toString(),
+        })
+      );
     }
 
     console.log(`Fetched foreign key options for ${mappedTableName}:`, options);

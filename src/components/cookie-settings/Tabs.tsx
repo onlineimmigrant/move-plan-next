@@ -10,7 +10,7 @@ interface TabsProps {
     id: number;
     name: string;
     description: string;
-    services: { id: number; name: string; description: string; active: boolean }[];
+    cookie_service: { id: number; name: string; description: string; active: boolean }[];
   }[];
   consent: { services: number[] };
   setConsent: React.Dispatch<React.SetStateAction<{ services: number[] }>>;
@@ -64,7 +64,7 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
         <TabPanel>
           {categories
             .flatMap((category) =>
-              category.services.map((service) => ({
+              category.cookie_service.map((service) => ({
                 ...service,
                 categoryName: category.name,
               }))

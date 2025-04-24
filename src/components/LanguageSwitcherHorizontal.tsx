@@ -15,7 +15,7 @@ const LanguageSwitcherHorizontal: React.FC<LanguageSwitcherHorizontalProps> = ({
   const { i18n } = useTranslation();
   const [languages, setLanguages] = useState<Language[]>(activeLanguages || []);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
-  const [isLanguageSwitcherEnabled, setIsLanguageSwitcherEnabled] = useState(true);
+  const [isLanguageSwitcherEnabled] = useState(true);
 
   useEffect(() => {
     if (activeLanguages && activeLanguages.length > 0) {

@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { SortCriteria } from "./types";
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { SortCriteria } from './types';
 
 interface SortMenuProps {
   isSortOpen: boolean;
@@ -7,7 +9,7 @@ interface SortMenuProps {
   sortCriteria: SortCriteria | null;
   setSortCriteria: (criteria: SortCriteria | null) => void;
   fields: string[];
-  applySort: (field: string, direction: "asc" | "desc") => void;
+  applySort: (field: string, direction: 'asc' | 'desc') => void;
   clearSort: () => void;
   primaryButtonClass: string;
   grayButtonClass: string;
@@ -60,12 +62,12 @@ const SortMenu: React.FC<SortMenuProps> = ({
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener("mousemove", handleDrag);
-      window.addEventListener("mouseup", handleDragEnd);
+      window.addEventListener('mousemove', handleDrag);
+      window.addEventListener('mouseup', handleDragEnd);
     }
     return () => {
-      window.removeEventListener("mousemove", handleDrag);
-      window.removeEventListener("mouseup", handleDragEnd);
+      window.removeEventListener('mousemove', handleDrag);
+      window.removeEventListener('mouseup', handleDragEnd);
     };
   }, [isDragging, dragStart]);
 
@@ -76,10 +78,10 @@ const SortMenu: React.FC<SortMenuProps> = ({
       ref={modalRef}
       className="fixed z-10 bg-white border border-gray-200 rounded-md shadow-lg p-6 w-96"
       style={{
-        top: "50%",
-        left: "50%",
+        top: '50%',
+        left: '50%',
         transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px)`,
-        cursor: isDragging ? "grabbing" : "grab",
+        cursor: isDragging ? 'grabbing' : 'grab',
       }}
     >
       <div
@@ -109,13 +111,12 @@ const SortMenu: React.FC<SortMenuProps> = ({
       </div>
       <select
         className="border border-gray-300 p-2 text-xs rounded-md w-full mb-2"
-        value={sortCriteria?.field || ""}
+        value={sortCriteria?.field || ''}
         onChange={(e) =>
-          setSortCriteria((prev) => ({
-            ...prev,
+          setSortCriteria({
             field: e.target.value,
-            direction: prev?.direction || "asc",
-          }))
+            direction: sortCriteria?.direction || 'asc',
+          })
         }
       >
         <option value="">Select Field</option>
@@ -127,13 +128,12 @@ const SortMenu: React.FC<SortMenuProps> = ({
       </select>
       <select
         className="border border-gray-300 p-2 text-xs rounded-md w-full mb-4"
-        value={sortCriteria?.direction || "asc"}
+        value={sortCriteria?.direction || 'asc'}
         onChange={(e) =>
-          setSortCriteria((prev) => ({
-            ...prev,
-            field: prev?.field || fields[0],
-            direction: e.target.value as "asc" | "desc",
-          }))
+          setSortCriteria({
+            field: sortCriteria?.field || fields[0] || '',
+            direction: e.target.value as 'asc' | 'desc',
+          })
         }
       >
         <option value="asc">Ascending</option>
@@ -141,7 +141,12 @@ const SortMenu: React.FC<SortMenuProps> = ({
       </select>
       <div className="flex gap-3 justify-end">
         <button
-          onClick={() => applySort(sortCriteria?.field || fields[0], sortCriteria?.direction || "asc")}
+          onClick={() =>
+            applySort(
+              sortCriteria?.field || fields[0] || '',
+              sortCriteria?.direction || 'asc'
+            )
+          }
           className={primaryButtonClass}
         >
           Apply

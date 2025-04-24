@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { PaymentElement, useStripe, useElements, Stripe, Elements } from '@stripe/react-stripe-js';
+import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Stripe, StripeElements } from '@stripe/stripe-js';
 
 interface PaymentFormProps {
   onSuccess: () => void;
@@ -12,7 +13,7 @@ interface PaymentFormProps {
 
 export default function PaymentForm({ onSuccess, onError, isLoading, setIsLoading }: PaymentFormProps) {
   const stripe = useStripe() as Stripe | null;
-  const elements = useElements() as Elements | null;
+  const elements = useElements() as StripeElements | null;
   const [message, setMessage] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {

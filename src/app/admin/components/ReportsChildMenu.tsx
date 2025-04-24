@@ -1,4 +1,3 @@
-// admin/components/ReportsChildMenu.tsx
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import {
@@ -7,7 +6,6 @@ import {
   ChartBarIcon,
   DocumentChartBarIcon,
   MagnifyingGlassIcon,
-  TableCellsIcon,
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -27,7 +25,7 @@ interface ReportsChildMenuProps {
   setIsSidebarOpen: (open: boolean) => void;
   sidebarLinks: Record<DisclosureKey, LinkItem[]>;
   openSections: Record<DisclosureKey, boolean>;
-  setOpenSections: (sections: Record<DisclosureKey, boolean>) => void;
+  setOpenSections: React.Dispatch<React.SetStateAction<Record<DisclosureKey, boolean>>>;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
 }
@@ -145,14 +143,17 @@ const MenuItem = ({
   ) : null;
 };
 
-// Filter function (unchanged from TablesChildMenu)
+// Filter function
 const filterSidebarLinks = (
   links: Record<DisclosureKey, LinkItem[]>,
   query: string
 ): { filtered: Record<DisclosureKey, LinkItem[]>; sectionsToOpen: DisclosureKey[] } => {
   if (!query) return { filtered: links, sectionsToOpen: [] };
 
-  const filtered: Record<DisclosureKey, LinkItem[]> = {};
+  const filtered: Record<DisclosureKey, LinkItem[]> = {
+    tables: [],
+    custom: [],
+  };
   const sectionsToOpen: DisclosureKey[] = [];
   const lowerQuery = query.toLowerCase();
 
@@ -233,7 +234,10 @@ export default function ReportsChildMenu({
   }, [searchQuery, sectionsToOpen, setOpenSections]);
 
   const toggleSection = (section: DisclosureKey) =>
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+    setOpenSections((prev: Record<DisclosureKey, boolean>) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
 
   const mobileIconClasses = (key: DisclosureKey) =>
     cn(

@@ -8,6 +8,7 @@ interface IconButtonProps {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   tooltip: string;
   isActive?: boolean;
+  className?: string;
 }
 
 const IconButton: React.FC<IconButtonProps> = ({ onClick, disabled, icon: Icon, tooltip, isActive }) => {

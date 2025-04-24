@@ -85,10 +85,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   // Use settings for text size, font weight, and colors with default values
-  const textSizeHeadings = settings?.font_size_base?.name || 'text-base';
-  const fontWeight = settings?.primary_font?.default_type ? 'font-normal' : 'font-medium';
+
   const fontTextWeight = settings?.primary_font?.default_type ? 'font-normal' : 'font-medium';
-  const textColor = settings?.primary_color?.name ? settings.primary_color.name : 'gray-900';
+
   const textColorHover = settings?.secondary_color?.name ? settings.secondary_color.name : 'gray-400';
 
   return (
