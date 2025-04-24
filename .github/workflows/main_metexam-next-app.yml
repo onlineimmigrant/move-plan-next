@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: my-nextjs-app  # Replace with your Azure Web App name
-  NODE_VERSION: '18.x'
+  AZURE_WEBAPP_NAME: metexam-next-app-hagaefargkf6eqh8  # Updated to your Azure Web App name
+  NODE_VERSION: '20.x'
 
 jobs:
   build:
@@ -22,6 +22,16 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install
+      - name: Debug environment variables
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY"
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}
       - name: Build Next.js app
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
