@@ -20,12 +20,43 @@ jobs:
         with:
           node-version: '20.x'
 
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Clean npm cache
+        run: npm cache clean --force
+
+      - name: Debug environment variables
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          echo "SUPABASE_URL is set: ${SUPABASE_URL:+true}"
+          echo "SUPABASE_SERVICE_ROLE_KEY is set: ${SUPABASE_SERVICE_ROLE_KEY:+true}"
+          echo "NEXT_PUBLIC_SUPABASE_URL is set: ${NEXT_PUBLIC_SUPABASE_URL:+true}"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY is set: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:+true}"
+
+      - name: Install Tailwind CSS and Oxide binary
+        run: |
+          npm install tailwindcss@^4.0.0
+          npm install @tailwindcss/oxide-linux-x64-gnu@^4.1.4
+          ls -la node_modules/@tailwindcss/oxide-linux-x64-gnu || echo "Tailwind Oxide binary not found"
+          npm list tailwindcss @tailwindcss/oxide-linux-x64-gnu
+
       - name: npm install, build, and test
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_TELEMETRY_DISABLED: 1
         run: |
           npm install
           npm run build --if-present
