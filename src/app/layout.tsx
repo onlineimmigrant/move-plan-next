@@ -19,89 +19,125 @@ export const metadata = {
 };
 
 async function getSettings(): Promise<Settings> {
-  const { data, error } = await supabaseServer
-    .from('settings')
-    .select(`
-      id,
-      site,
-      primary_color:primary_color_id (id, name, hex, img_color, created_at),
-      secondary_color:secondary_color_id (id, name, hex, img_color, created_at),
-      footer_color:footer_color_id (id, name, hex, img_color, created_at),
-      primary_font:primary_font_id (id, name, description, default_type, created_at),
-      secondary_font:secondary_font_id (id, name, description, default_type, created_at),
-      font_size_base:font_size_base_id (id, name, value, description, created_at),
-      font_size_small:font_size_small_id (id, name, value, description, created_at),
-      font_size_large:font_size_large_id (id, name, value, description, created_at),
-      updated_at
-    `)
-    .order('updated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabaseServer
+      .from('settings')
+      .select(`
+        id,
+        site,
+        primary_color:primary_color_id (id, name, hex, img_color, created_at),
+        secondary_color:secondary_color_id (id, name, hex, img_color, created_at),
+        footer_color:footer_color_id (id, name, hex, img_color, created_at),
+        primary_font:primary_font_id (id, name, description, default_type, created_at),
+        secondary_font:secondary_font_id (id, name, description, default_type, created_at),
+        font_size_base:font_size_base_id (id, name, value, description, created_at),
+        font_size_small:font_size_small_id (id, name, value, description, created_at),
+        font_size_large:font_size_large_id (id, name, value, description, created_at),
+        updated_at
+      `)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (error || !data) {
-    console.error('Error fetching settings:', error);
-    throw new Error('Failed to fetch settings');
+    if (error || !data) {
+      console.error('Error fetching settings:', error);
+      // Return default settings instead of throwing
+      return {
+        id: '',
+        site: 'Default Site',
+        primary_color: { id: '', name: 'default', hex: '#000000', img_color: '', created_at: '' },
+        secondary_color: { id: '', name: 'default', hex: '#000000', img_color: '', created_at: '' },
+        footer_color: { id: '', name: 'default', hex: '#000000', img_color: '', created_at: '' },
+        primary_font: { id: '', name: 'default', description: '', default_type: '', created_at: '' },
+        secondary_font: { id: '', name: 'default', description: '', default_type: '', created_at: '' },
+        font_size_base: { id: '', name: 'default', value: '16px', description: '', created_at: '' },
+        font_size_small: { id: '', name: 'default', value: '14px', description: '', created_at: '' },
+        font_size_large: { id: '', name: 'default', value: '18px', description: '', created_at: '' },
+        updated_at: '',
+      };
+    }
+
+    console.log('Fetched settings:', data);
+
+    const settings: Settings = {
+      id: data.id,
+      site: data.site,
+      primary_color: data.primary_color?.[0] ?? {
+        id: '',
+        name: 'default',
+        hex: '#000000',
+        img_color: '',
+        created_at: '',
+      },
+      secondary_color: data.secondary_color?.[0] ?? {
+        id: '',
+        name: 'default',
+        hex: '#000000',
+        img_color: '',
+        created_at: '',
+      },
+      footer_color: data.footer_color?.[0] ?? {
+        id: '',
+        name: 'default',
+        hex: '#000000',
+        img_color: '',
+        created_at: '',
+      },
+      primary_font: data.primary_font?.[0] ?? {
+        id: '',
+        name: 'default',
+        description: '',
+        default_type: '',
+        created_at: '',
+      },
+      secondary_font: data.secondary_font?.[0] ?? {
+        id: '',
+        name: 'default',
+        description: '',
+        default_type: '',
+        created_at: '',
+      },
+      font_size_base: data.font_size_base?.[0] ?? {
+        id: '',
+        name: 'default',
+        value: '16px',
+        description: '',
+        created_at: '',
+      },
+      font_size_small: data.font_size_small?.[0] ?? {
+        id: '',
+        name: 'default',
+        value: '14px',
+        description: '',
+        created_at: '',
+      },
+      font_size_large: data.font_size_large?.[0] ?? {
+        id: '',
+        name: 'default',
+        value: '18px',
+        description: '',
+        created_at: '',
+      },
+      updated_at: data.updated_at,
+    };
+
+    return settings;
+  } catch (error) {
+    console.error('getSettings error:', error);
+    return {
+      id: '',
+      site: 'Default Site',
+      primary_color: { id: '', name: 'default', hex: '#000000', img_color: '', created_at: '' },
+      secondary_color: { id: '', name: 'default', hex: '#000000', img_color: '', created_at: '' },
+      footer_color: { id: '', name: 'default', hex: '#000000', img_color: '', created_at: '' },
+      primary_font: { id: '', name: 'default', description: '', default_type: '', created_at: '' },
+      secondary_font: { id: '', name: 'default', description: '', default_type: '', created_at: '' },
+      font_size_base: { id: '', name: 'default', value: '16px', description: '', created_at: '' },
+      font_size_small: { id: '', name: 'default', value: '14px', description: '', created_at: '' },
+      font_size_large: { id: '', name: 'default', value: '18px', description: '', created_at: '' },
+      updated_at: '',
+    };
   }
-
-  console.log('Fetched settings:', data);
-
-  // Transform the response to match the Settings interface
-  const settings: Settings = {
-    id: data.id,
-    site: data.site,
-    primary_color: data.primary_color?.[0] ?? {
-      id: '',
-      name: 'default',
-      hex: '#000000',
-      img_color: '',
-      created_at: '',
-    },
-    secondary_color: data.secondary_color?.[0] ?? {
-      id: '',
-      name: 'default',
-      hex: '#000000',
-      img_color: '',
-      created_at: '',
-    },
-    primary_font: data.primary_font?.[0] ?? {
-      id: '',
-      name: 'default',
-      description: '',
-      default_type: '',
-      created_at: '',
-    },
-    secondary_font: data.secondary_font?.[0] ?? {
-      id: '',
-      name: 'default',
-      description: '',
-      default_type: '',
-      created_at: '',
-    },
-    font_size_base: data.font_size_base?.[0] ?? {
-      id: '',
-      name: 'default',
-      value: '16px',
-      description: '',
-      created_at: '',
-    },
-    font_size_small: data.font_size_small?.[0] ?? {
-      id: '',
-      name: 'default',
-      value: '14px',
-      description: '',
-      created_at: '',
-    },
-    font_size_large: data.font_size_large?.[0] ?? {
-      id: '',
-      name: 'default',
-      value: '18px',
-      description: '',
-      created_at: '',
-    },
-    updated_at: data.updated_at,
-  };
-
-  return settings;
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

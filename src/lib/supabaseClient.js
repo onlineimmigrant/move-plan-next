@@ -1,3 +1,7 @@
+//lib/supabaseClient.js
+
+
+
 import { createClient } from '@supabase/supabase-js';
 
 // In Next.js, environment variables are accessed via process.env
