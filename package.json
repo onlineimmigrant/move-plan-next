@@ -88,6 +88,7 @@
     "postcss": "^8.4.47",
     "tailwindcss": "^4.0.0",
     "typescript": "^5"
+
   },
   "optionalDependencies": {
     "fsevents": "^2.3.3"
