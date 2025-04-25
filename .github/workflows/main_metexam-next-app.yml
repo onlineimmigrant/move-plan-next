@@ -43,13 +43,6 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_URL is set: ${NEXT_PUBLIC_SUPABASE_URL:+true}"
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY is set: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:+true}"
 
-      - name: Install Tailwind CSS and Oxide binary
-        run: |
-          npm install tailwindcss@^4.0.0
-          npm install @tailwindcss/oxide-linux-x64-gnu@^4.1.4
-          ls -la node_modules/@tailwindcss/oxide-linux-x64-gnu || echo "Tailwind Oxide binary not found"
-          npm list tailwindcss @tailwindcss/oxide-linux-x64-gnu
-
       - name: npm install, build, and test
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
