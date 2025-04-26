@@ -108,24 +108,6 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      - name: Debug OIDC token
-        continue-on-error: true
-        run: |
-          TOKEN_RESPONSE=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange")
-          echo "Full token response: $TOKEN_RESPONSE"
-          OIDC_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.value' || echo "Failed to extract token")
-          echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
-          if [ "$OIDC_TOKEN" != "Failed to extract token" ]; then
-            echo "Decoded OIDC token payload:"
-            PAYLOAD=$(echo "$OIDC_TOKEN" | jq -R 'split(".") | .[1] | @base64d | fromjson' || echo "Failed to decode token payload")
-            echo "$PAYLOAD"
-            echo "Issuer (iss): $(echo "$PAYLOAD" | jq -r '.iss' || echo 'Unknown')"
-            echo "Subject (sub): $(echo "$PAYLOAD" | jq -r '.sub' || echo 'Unknown')"
-            echo "Audience (aud): $(echo "$PAYLOAD" | jq -r '.aud' || echo 'Unknown')"
-          else
-            echo "Skipping token decode due to extraction failure"
-          fi
-
       - name: Login to Azure
         uses: azure/login@v2
         with:
