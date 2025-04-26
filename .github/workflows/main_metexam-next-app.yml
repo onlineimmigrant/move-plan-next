@@ -122,7 +122,7 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          auth-type: OIDC # Explicitly set to OIDC
+          auth-type: IDENTITY # Use IDENTITY for OIDC
           audience: api://AzureADTokenExchange # Matches federated credential audience
 
       - name: Deploy to Azure Web App
