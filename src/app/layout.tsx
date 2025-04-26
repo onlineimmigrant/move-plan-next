@@ -172,10 +172,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <SettingsProvider initialSettings={settings}>
               <CookieSettingsProvider>
                 <NavbarFooterWrapper>
-                  <Breadcrumbs />
+                  
                   <div>{children}
   <TemplateHeadingSections />
                   <TemplateSections />
+                  <Breadcrumbs />
 
 </div>
                 </NavbarFooterWrapper>

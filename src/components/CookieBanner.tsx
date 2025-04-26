@@ -92,7 +92,7 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
   return (
     <>
       {isVisible && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 px-8 sm:px-16 z-50 flex justify-between items-center bg-white text-gray-800 opacity-90">
+        <div className="fixed bottom-0 left-0 right-0 p-4 px-8 sm:px-16 z-52 flex justify-between items-center bg-white text-gray-800 opacity-90">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:flex-grow mr-5 text-center md:text-left">
               For your best experience, we use Cookies. See{' '}
