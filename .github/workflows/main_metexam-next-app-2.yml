@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read # Required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,58 @@ jobs:
         with:
           node-version: '20.x'
 
+      - name: Debug environment variables
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_API_URL: ${{ secrets.NEXT_API_URL }}
+          NEXT_PUBLIC_DOMAIN_CUSTOM: ${{ secrets.NEXT_PUBLIC_DOMAIN_CUSTOM }}
+          NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME }}
+          NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY }}
+          NEXT_PUBLIC_AZURE_CONTAINER_NAME: ${{ secrets.NEXT_PUBLIC_AZURE_CONTAINER_NAME }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+          NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED: ${{ secrets.NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          echo "SUPABASE_URL is set: ${SUPABASE_URL:+true}"
+          echo "SUPABASE_SERVICE_ROLE_KEY is set: ${SUPABASE_SERVICE_ROLE_KEY:+true}"
+          echo "NEXT_PUBLIC_SUPABASE_URL is set: ${NEXT_PUBLIC_SUPABASE_URL:+true}"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY is set: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:+true}"
+          echo "NEXT_API_URL is set: ${NEXT_API_URL:+true}"
+          echo "NEXT_PUBLIC_DOMAIN_CUSTOM is set: ${NEXT_PUBLIC_DOMAIN_CUSTOM:+true}"
+          echo "NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME is set: ${NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME:+true}"
+          echo "NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY is set: ${NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY:+true}"
+          echo "NEXT_PUBLIC_AZURE_CONTAINER_NAME is set: ${NEXT_PUBLIC_AZURE_CONTAINER_NAME:+true}"
+          echo "STRIPE_SECRET_KEY is set: ${STRIPE_SECRET_KEY:+true}"
+          echo "STRIPE_PRICE_ID is set: ${STRIPE_PRICE_ID:+true}"
+          echo "NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED is set: ${NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED:+true}"
+          echo "NEXT_PUBLIC_API_URL is set: ${NEXT_PUBLIC_API_URL:+true}"
+          echo "NEXT_PUBLIC_BASE_URL is set: ${NEXT_PUBLIC_BASE_URL:+true}"
+          echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is set: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:+true}"
+
       - name: npm install, build, and test
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_API_URL: ${{ secrets.NEXT_API_URL }}
+          NEXT_PUBLIC_DOMAIN_CUSTOM: ${{ secrets.NEXT_PUBLIC_DOMAIN_CUSTOM }}
+          NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME }}
+          NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY }}
+          NEXT_PUBLIC_AZURE_CONTAINER_NAME: ${{ secrets.NEXT_PUBLIC_AZURE_CONTAINER_NAME }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+          NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED: ${{ secrets.NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          NEXT_TELEMETRY_DISABLED: 1
         run: |
           npm install
           npm run build --if-present
@@ -45,8 +96,8 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write # Required for OIDC authentication
+      contents: read # Required for actions/checkout
 
     steps:
       - name: Download artifact from build job
@@ -56,19 +107,25 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1CA4F9577C374F65B1FA635426EA960B }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_283306DB00574D1FA6E06497DE89EAF8 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0DF05582F1B343228E890998E91B73C8 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_80B74F9A27134949BD239F137C210738 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_50F3C29154DC428B9794B02F5B97D138 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Check App Service deployment status
+        continue-on-error: true
+        run: |
+          az webapp deployment list --name metexam-next-app-2 --resource-group <resource-group-name> --query "[].{id:id, status:status, message:message, startTime:startTime}" --output table
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
+
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'metexam-next-app-2'
           slot-name: 'Production'
           package: .
-          
