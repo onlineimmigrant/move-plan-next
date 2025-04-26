@@ -159,7 +159,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     font_family: settings.primary_font.name.toLowerCase(),
     image_for_privacy_settings: '/images/logo.svg',
     site: settings.site,
-    disclaimer: `© ${new Date().getFullYear()} ${settings.site || 'Company'}. All rights reserved.`,
+    disclaimer: `© ${new Date().getFullYear()} ${settings.site || ''}. All rights reserved.`,
   };
 
   const activeLanguages = ['en', 'es', 'fr'];
@@ -173,7 +173,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <CookieSettingsProvider>
                 <NavbarFooterWrapper>
                   
-                  <div>{children}
+                  <div className="mt-4">{children}
   <TemplateHeadingSections />
                   <TemplateSections />
                   <Breadcrumbs />
