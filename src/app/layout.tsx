@@ -5,6 +5,9 @@ import { CookieSettingsProvider } from '@/context/CookieSettingsContext';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import TemplateSections from '@/components/TemplateSections';
+import TemplateHeadingSections from '@/components/TemplateHeadingSections';
+
 import { Settings } from '@/types/settings';
 import { supabaseServer } from '@/lib/supabaseServerClient';
 import './globals.css';
@@ -170,7 +173,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <CookieSettingsProvider>
                 <NavbarFooterWrapper>
                   <Breadcrumbs />
-                  <div>{children}</div>
+                  <div>{children}
+  <TemplateHeadingSections />
+                  <TemplateSections />
+
+</div>
                 </NavbarFooterWrapper>
                 <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
               </CookieSettingsProvider>
