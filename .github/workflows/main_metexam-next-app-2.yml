@@ -118,14 +118,12 @@ jobs:
       - name: Check App Service deployment status
         continue-on-error: true
         run: |
-          az webapp deployment list --name metexam-next-app-2 --resource-group metexam-apps --query "[].{id:id, status:status, message:message, startTime:startTime}" --output table
+          az webapp log deployment show --name metexam-next-app-2 --resource-group metexam-apps --output table
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+      - name: Deploy to Azure Web App via CLI
+        uses: azure/CLI@v2
         with:
-          app-name: 'metexam-next-app-2'
-          slot-name: 'Production'
-          package: .
+          inlineScript: |
+            az webapp deploy --name metexam-next-app-2 --resource-group metexam-apps --src-path release.zip --type zip --slot Production
