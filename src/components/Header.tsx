@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           .map((item) => (
             <div key={item.id} className="relative group">
               <button
-                className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+                className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 title={item.display_name}
               >
                 {item.image ? (
@@ -155,7 +155,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                     <Link
                       key={subItem.id}
                       href={subItem.url_name}
-                      className="block px-4 py-2 text-gray-700 hover:bg-green-50 rounded-md text-sm font-medium transition-colors duration-200"
+                      className="block px-4 py-2 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                     >
                       {subItem.name}
                     </Link>
@@ -180,7 +180,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             <Disclosure key={item.id}>
               {({ open }) => (
                 <div>
-                  <Disclosure.Button className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
+                  <Disclosure.Button className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200">
                     <span className="text-base font-medium text-gray-700">{item.display_name}</span>
                     {item.website_submenuitem && item.website_submenuitem.length > 0 && (
                       open ? <MinusIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />
@@ -193,7 +193,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                           key={subItem.id}
                           href={subItem.url_name}
                           onClick={() => setIsOpen(false)}
-                          className="block px-6 py-2 text-gray-700 hover:bg-green-50 rounded-md text-sm font-medium transition-colors duration-200"
+                          className="block px-6 py-2 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                         >
                           {subItem.name}
                         </Link>
@@ -209,15 +209,15 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-51 border-gray-200">
+    <nav className="fixed top-0 left-0 right-0 z-51 border-gray-200 bg-white ">
       <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
         {/* Logo */}
         <button
           onClick={handleMainPage}
-          className="flex items-center text-gray-900 hover:text-green-600 transition-colors duration-200"
+          className="flex items-center text-gray-900 hover:text-sky-600 transition-colors duration-200"
         >
           <Image src={companyLogo} alt="Logo" width={40} height={40} className="h-8 w-auto" />
-          <span className="ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-green-400 via-green-500 to-green-600 bg-clip-text text-transparent">
+          <span className="ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
             {settings?.site || ''}
           </span>
         </button>
@@ -236,7 +236,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           {isLoggedIn ? (
             <div className="relative group">
               <button
-                className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+                className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 title="Profile"
               >
                 <UserIcon className="h-6 w-6 text-gray-600" />
@@ -244,7 +244,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
               <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50 py-2">
                 <button
                   onClick={handleLogoutAction}
-                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-green-50 rounded-md text-sm font-medium transition-colors duration-200"
+                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Logout
                 </button>
@@ -253,7 +253,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           ) : (
             <button
               onClick={handleShowLogin}
-              className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+              className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
               title="Login"
             >
               <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600" />
@@ -273,7 +273,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           )}
           <button
             onClick={handleToggle}
-            className="text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 rounded-md p-1 transition-all duration-200"
+            className="text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-md p-1 transition-all duration-200"
           >
             {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3BottomRightIcon className="h-6 w-6" />}
           </button>
@@ -288,7 +288,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             <Disclosure>
               {({ open }) => (
                 <div>
-                  <Disclosure.Button className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
+                  <Disclosure.Button className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200">
                     <span className="text-base font-medium text-gray-700">Profile</span>
                     {open ? <MinusIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />}
                   </Disclosure.Button>
@@ -298,7 +298,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                         setIsOpen(false);
                         handleLogoutAction();
                       }}
-                      className="block w-full text-left px-6 py-2 text-gray-700 hover:bg-green-50 rounded-md text-sm font-medium transition-colors duration-200"
+                      className="block w-full text-left px-6 py-2 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                     >
                       Logout
                     </button>
@@ -309,7 +309,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           ) : (
             <button
               onClick={handleShowLogin}
-              className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+              className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
             >
               <span className="text-base font-medium text-gray-700">Login</span>
               <ArrowLeftOnRectangleIcon className="h-5 w-5 text-gray-600" />

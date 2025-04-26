@@ -23,7 +23,7 @@ const Brands: React.FC<BrandsProps> = ({ brands, textContent }) => {
           {textContent.brands_heading}
         </h2>
         <div className="mx-auto max-w-lg sm:max-w-xl lg:mx-0 lg:max-w-none">
-          <div className="flex justify-center items-center flex-wrap gap-x-8 gap-y-10 sm:gap-x-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 sm:gap-12 justify-items-center">
             {brands.map((logo) => (
               <img
                 key={logo.id}
