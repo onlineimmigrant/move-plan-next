@@ -118,7 +118,7 @@ jobs:
       - name: Check App Service deployment status
         continue-on-error: true
         run: |
-          az webapp deployment list --name metexam-next-app-2 --resource-group <resource-group-name> --query "[].{id:id, status:status, message:message, startTime:startTime}" --output table
+          az webapp deployment list --name metexam-next-app-2 --resource-group metexam-apps --query "[].{id:id, status:status, message:message, startTime:startTime}" --output table
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
 
