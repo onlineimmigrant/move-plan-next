@@ -115,15 +115,21 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
-      
+
+      - name: Debug OIDC token
+        run: |
+          echo "OIDC_TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" | jq -r '.value')" >> $GITHUB_ENV
+          echo "Decoded OIDC token payload:"
+          echo "$OIDC_TOKEN" | jq -R 'split(".") | .[1] | @base64d | fromjson'
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          auth-type: IDENTITY # Use IDENTITY for OIDC
-          audience: api://AzureADTokenExchange # Matches federated credential audience
+          auth-type: IDENTITY
+          audience: api://AzureADTokenExchange
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
