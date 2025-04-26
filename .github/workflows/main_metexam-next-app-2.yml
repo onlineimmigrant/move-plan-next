@@ -128,6 +128,11 @@ jobs:
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
 
+      - name: Wait for App Service settings to apply
+        run: |
+          echo "Waiting 60 seconds for App Service settings to apply..."
+          sleep 60
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
