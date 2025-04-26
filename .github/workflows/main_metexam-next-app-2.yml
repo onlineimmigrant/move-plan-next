@@ -126,4 +126,4 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            az webapp deploy --name metexam-next-app-2 --resource-group metexam-apps --src-path release.zip --type zip --slot Production
+            az webapp deploy --name metexam-next-app-2 --resource-group metexam-apps --src-path release.zip --type zip
