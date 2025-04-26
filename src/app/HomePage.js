@@ -2,7 +2,6 @@ import React, { useEffect, useState, Suspense } from 'react';
 import axios from 'axios';
 
 
-
 // Lazy load components
 const Hero = React.lazy(() => import('@/components/HomePageSections/Hero'));
 const Brands = React.lazy(() => import('@/components/HomePageSections/Brands'));
@@ -34,7 +33,7 @@ const HomePage = (headerData) => {
         fetchData();
     }, []);
 
- 
+
 
     if (error) {
         return <div className="text-red-500">{error}</div>;
