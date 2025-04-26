@@ -83,8 +83,8 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
   }
 
   return (
-    <div>
-      <nav className="fixed bottom-2 text-xs mt-12 max-w-7xl mx-auto mb-0 p-2 px-4 z-51" aria-label="Breadcrumb">
+    <div className=''>
+      <nav className="bg-white sm:bg-transparent w-full fixed bottom-0 text-xs mt-12 max-w-7xl mx-auto mb-0 p-2 px-4 z-51" aria-label="Breadcrumb">
         <ol className="flex flex-wrap justify-start gap-4 items-center">
           {breadcrumbs.map((crumb, index) => (
             <li key={index} className="flex items-center">

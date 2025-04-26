@@ -60,7 +60,7 @@ async function getSettings(): Promise<Settings> {
       console.error('Error fetching settings:', error);
       return {
         id: 0,
-        site: 'Default Site',
+        site: '',
         primary_color: { id: 0, name: 'gray-800', hex: '#000000', img_color: '', created_at: '' },
         secondary_color: { id: 0, name: 'sky-500', hex: '#0EA5E9', img_color: '', created_at: '' },
        
@@ -136,7 +136,7 @@ async function getSettings(): Promise<Settings> {
     console.error('getSettings error:', error);
     return {
       id: 0,
-      site: 'Default Site',
+      site: '',
       primary_color: { id: 0, name: 'gray-800', hex: '#000000', img_color: '', created_at: '' },
       secondary_color: { id: 0, name: 'sky-500', hex: '#0EA5E9', img_color: '', created_at: '' },
      
