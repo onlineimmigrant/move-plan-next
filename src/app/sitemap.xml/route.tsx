@@ -1,6 +1,7 @@
 // app/sitemap.xml/route.tsx
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { getPostUrl } from '@/lib/postUtils'; // Import getPostUrl
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -16,7 +17,7 @@ export async function GET() {
   // Fetch dynamic pages from Supabase (blog_post table)
   const { data: posts, error } = await supabase
     .from('blog_post')
-    .select('slug, last_modified, display_this_post')
+    .select('slug, last_modified, display_this_post, section_id')
     .eq('display_this_post', true); // Only fetch posts where display_this_post is true
 
   if (error) {
@@ -28,10 +29,21 @@ export async function GET() {
     });
   }
 
+  const { data: features} = await supabase
+    .from('feature')
+    .select('slug, created_at')
+  
+  const { data: product} = await supabase
+    .from('product')
+    .select('slug, updated')
+  
+
+
   // Define static pages with priority 1.0
   const staticPages = [
     { url: `${baseUrl}/`, lastmod: new Date().toISOString(), priority: 1.0 },
     { url: `${baseUrl}/about-us`, lastmod: new Date().toISOString(), priority: 1.0 },
+    { url: `${baseUrl}/products`, lastmod: new Date().toISOString(), priority: 1.0 },
     {
       url: `${baseUrl}/become-affiliate-partner`,
       lastmod: new Date().toISOString(),
@@ -49,17 +61,33 @@ export async function GET() {
     },
     { url: `${baseUrl}/support`, lastmod: new Date().toISOString(), priority: 1.0 },
     { url: `${baseUrl}/terms`, lastmod: new Date().toISOString(), priority: 1.0 },
+    { url: `${baseUrl}/education-hub/study-resources`, lastmod: new Date().toISOString(), priority: 1.0 },
+    { url: `${baseUrl}/education-hub/courses`, lastmod: new Date().toISOString(), priority: 1.0 },
+    { url: `${baseUrl}/education-hub/quizzes`, lastmod: new Date().toISOString(), priority: 1.0 },
   ];
 
   // Map dynamic pages from blog_post with priority 0.8
   const dynamicPages = posts?.map((post) => ({
-    url: `${baseUrl}/${post.slug}`,
+    url: `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
     lastmod: post.last_modified || new Date().toISOString(),
     priority: 0.8,
   })) || [];
 
+   
+  const dynamicFeaturePages = features?.map((feature) => ({
+      url: `${baseUrl}/features/${ feature.slug }`,
+      lastmod: feature.created_at || new Date().toISOString(),
+      priority: 0.8,
+    })) || [];
+
+  const dynamicProductsPages = product?.map((product) => ({
+      url: `${baseUrl}/products/${ product.slug }`,
+      lastmod: product.updated || new Date().toISOString(),
+      priority: 0.8,
+    })) || [];
+
   // Combine static and dynamic pages
-  const pages = [...staticPages, ...dynamicPages];
+  const pages = [...staticPages, ...dynamicPages, ...dynamicFeaturePages, ...dynamicProductsPages];
 
   // Generate and return the sitemap
   return new Response(generateSitemap(pages), {

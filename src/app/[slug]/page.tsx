@@ -5,7 +5,8 @@ import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
 import { notFound, redirect } from 'next/navigation';
-import '@/components/PostEditor.css'; // Import PostEditor styles
+import '@/components/PostEditor.css';
+import { getPostUrl } from '@/lib/postUtils'; // Import the utility
 
 interface TOCItem {
   tag_name: string;
@@ -60,14 +61,11 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
         const response = await fetch(`/api/posts/${slug}`);
         if (response.ok) {
           const data = await response.json();
-          if (data.section_id === 38) {
-            redirect(`/sqe-2/topic/${slug}`);
-          } else if (data.section_id === 39) {
-            redirect(`/sqe-2/practice-area/${slug}`);
-          } else if (data.section_id === 40) {
-            redirect(`/sqe-2/legal-skills-assessments/${slug}`);
-          } else if (data.section_id === 3) {
-            redirect(`/sqe-2/${slug}`);
+          // Use getPostUrl to determine the correct URL
+          const postUrl = getPostUrl({ section_id: data.section_id, slug });
+          // Redirect if the computed URL differs from the default
+          if (postUrl !== `/${slug}`) {
+            redirect(postUrl);
           }
           setPost(data);
         } else if (response.status === 404) {
