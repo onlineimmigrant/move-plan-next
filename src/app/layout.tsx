@@ -173,7 +173,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <CookieSettingsProvider>
                 <NavbarFooterWrapper>
                   
-                  <div className="mt-4">{children}
+                  <div className="">{children}
   <TemplateHeadingSections />
                   <TemplateSections />
                   <Breadcrumbs />

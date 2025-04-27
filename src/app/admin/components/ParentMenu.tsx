@@ -123,7 +123,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
               )}
             >
               <Image
-                src="/images/logo.svg"
+                 src={isCollapsed ? "/images/logo_collapsed.svg" : "/images/logo.svg"}
                 alt="Logo"
                 width={20}
                 height={20}
@@ -200,7 +200,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
 
         <div className="flex-1"></div>
 
-        <div className="flex flex-col gap-2 pb-4">
+        <div className="flex flex-col gap-2 pb-16">
           {menuItemsBottom.map((item) => {
             const isActive = pathname === item.href;
             return (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { Disclosure } from '@headlessui/react';
 import * as HeroIcons from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
+import { debounce } from 'lodash';
 
 // Explicitly import the required icons
 import {
@@ -49,6 +50,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { basket } = useBasket();
   const { session, logout } = useAuth();
   const router = useRouter();
@@ -56,22 +58,18 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const isLoggedIn = !!session;
   const { settings } = useSettings();
 
-  // Fetch menu items from the API route on mount
+  // Fetch menu items
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
         const response = await fetch('/api/menu');
-        if (!response.ok) {
-          throw new Error('Failed to fetch menu items');
-        }
+        if (!response.ok) throw new Error('Failed to fetch menu items');
         const data: MenuItem[] = await response.json();
-        console.log('Fetched menu items:', data);
-        data.forEach((item) => {
-          console.log(`Menu item: ${item.display_name}, icon_name: ${item.react_icons?.icon_name}`);
-        });
         setMenuItems(data);
-      } catch (error) {
-        console.error('Error fetching menu items:', error);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching menu items:', err);
+        setError('Failed to load menu. Please try again.');
       } finally {
         setIsMounted(true);
       }
@@ -80,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     fetchMenuItems();
   }, []);
 
-  // Debug: Log the state of isLoggedIn, menuItems, and isOpen
+  // Debug: Log state
   useEffect(() => {
     console.log('isLoggedIn:', isLoggedIn);
     console.log('session:', session);
@@ -88,10 +86,14 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     console.log('isOpen:', isOpen);
   }, [isLoggedIn, session, menuItems, isOpen]);
 
-  const handleToggle = () => {
-    console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
-    setIsOpen(!isOpen);
-  };
+  // Debounced toggle handler
+  const debouncedToggle = useCallback(
+    debounce(() => {
+      console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
+      setIsOpen((prev) => !prev);
+    }, 200),
+    [isOpen]
+  );
 
   const handleMainPage = () => {
     setIsOpen(false);
@@ -109,25 +111,27 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     router.push('/login');
   };
 
-  // Function to dynamically render the icon based on icon_name
+  // Simplified icon rendering
   const renderIcon = (iconName: string | undefined) => {
-    if (!iconName) {
-      console.log('No icon name provided, defaulting to MapIcon');
-      return <MapIcon className="h-6 w-6 text-gray-600" />;
-    }
-    const IconComponent = (HeroIcons as any)[iconName];
-    if (!IconComponent) {
-      console.log(`Icon not found for iconName: ${iconName}, defaulting to MapIcon`);
-      return <MapIcon className="h-6 w-6 text-gray-600" />;
-    }
+    const IconComponent = iconName ? (HeroIcons as any)[iconName] : MapIcon;
     return <IconComponent className="h-6 w-6 text-gray-600" />;
   };
 
-  // Common menu items rendering for desktop
-  const renderMenuItems = () => (
+  // Memoized desktop menu items
+  const renderMenuItems = useMemo(() => (
     <>
-      {menuItems.length === 0 ? (
+      {menuItems.length === 0 && !error ? (
         <span className="text-gray-500">No menu items available</span>
+      ) : error ? (
+        <div className="text-red-600 text-sm">
+          {error}
+          <button
+            onClick={() => setError(null)}
+            className="ml-2 text-sky-600 hover:underline"
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         menuItems
           .filter((item) => item.is_displayed && item.display_name !== 'Profile')
@@ -136,6 +140,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
               <button
                 className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 title={item.display_name}
+                aria-label={item.display_name}
               >
                 {item.image ? (
                   <Image
@@ -150,12 +155,12 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                 )}
               </button>
               {item.website_submenuitem && item.website_submenuitem.length > 0 && (
-                <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50 py-2">
+                <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50">
                   {item.website_submenuitem.map((subItem) => (
                     <Link
                       key={subItem.id}
                       href={subItem.url_name}
-                      className="block px-4 py-2 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
+                      className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                     >
                       {subItem.name}
                     </Link>
@@ -166,21 +171,34 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           ))
       )}
     </>
-  );
+  ), [menuItems, error]);
 
-  // Common menu items rendering for mobile
-  const renderMobileMenuItems = () => (
+  // Memoized mobile menu items
+  const renderMobileMenuItems = useMemo(() => (
     <>
-      {menuItems.length === 0 ? (
-        <span className="block px-6 py-3 text-gray-500">No menu items available</span>
+      {menuItems.length === 0 && !error ? (
+        <span className="block px-6 py-6 text-gray-500">No menu items available</span>
+      ) : error ? (
+        <div className="px-6 py-6 text-red-600 text-sm">
+          {error}
+          <button
+            onClick={() => setError(null)}
+            className="ml-2 text-sky-600 hover:underline"
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         menuItems
-          .filter((item) => item.is_displayed && item.display_name !== 'Profile')
+          .filter((item) => item.is_displayed)
           .map((item) => (
             <Disclosure key={item.id}>
               {({ open }) => (
                 <div>
-                  <Disclosure.Button className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200">
+                  <Disclosure.Button
+                    className="flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                    aria-expanded={open}
+                  >
                     <span className="text-base font-medium text-gray-700">{item.display_name}</span>
                     {item.website_submenuitem && item.website_submenuitem.length > 0 && (
                       open ? <MinusIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />
@@ -193,7 +211,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                           key={subItem.id}
                           href={subItem.url_name}
                           onClick={() => setIsOpen(false)}
-                          className="block px-6 py-2 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
+                          className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                         >
                           {subItem.name}
                         </Link>
@@ -205,16 +223,43 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             </Disclosure>
           ))
       )}
+      {isLoggedIn && (
+        <Disclosure>
+          {({ open }) => (
+            <div>
+              <Disclosure.Button
+                className="flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                aria-expanded={open}
+              >
+                <span className="text-base font-medium text-gray-700">Profile</span>
+                {open ? <MinusIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />}
+              </Disclosure.Button>
+              <Disclosure.Panel className="pl-8">
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    handleLogoutAction();
+                  }}
+                  className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-sky-50 rounded-md font-medium transition-colors duration-200"
+                >
+                  Logout
+                </button>
+              </Disclosure.Panel>
+            </div>
+          )}
+        </Disclosure>
+      )}
     </>
-  );
+  ), [menuItems, isLoggedIn, error]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-51 border-gray-200 bg-white ">
-      <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-gray-200 bg-white">
+      <div className="p-4 sm:px-6 flex justify-between items-center">
         {/* Logo */}
         <button
           onClick={handleMainPage}
           className="flex items-center text-gray-900 hover:text-sky-600 transition-colors duration-200"
+          aria-label="Go to homepage"
         >
           <Image src={companyLogo} alt="Logo" width={40} height={40} className="h-8 w-auto" />
           <span className="ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
@@ -223,8 +268,8 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         </button>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-6 text-sm">
-          {renderMenuItems()}
+        <div className="hidden md:flex items-center space-x-16 text-sm">
+          {renderMenuItems}
           {isMounted && totalItems > 0 && (
             <Link href="/basket" className="relative">
               <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
@@ -238,13 +283,14 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
               <button
                 className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 title="Profile"
+                aria-label="Profile"
               >
                 <UserIcon className="h-6 w-6 text-gray-600" />
               </button>
-              <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50 py-2">
+              <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50">
                 <button
                   onClick={handleLogoutAction}
-                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
+                  className="block w-full text-left px-4 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Logout
                 </button>
@@ -255,6 +301,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
               onClick={handleShowLogin}
               className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
               title="Login"
+              aria-label="Login"
             >
               <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600" />
             </button>
@@ -272,8 +319,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             </Link>
           )}
           <button
-            onClick={handleToggle}
+            onClick={debouncedToggle}
             className="text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-md p-1 transition-all duration-200"
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isOpen}
           >
             {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3BottomRightIcon className="h-6 w-6" />}
           </button>
@@ -282,34 +331,13 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white shadow-lg">
-          {renderMobileMenuItems()}
-          {isLoggedIn ? (
-            <Disclosure>
-              {({ open }) => (
-                <div>
-                  <Disclosure.Button className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200">
-                    <span className="text-base font-medium text-gray-700">Profile</span>
-                    {open ? <MinusIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />}
-                  </Disclosure.Button>
-                  <Disclosure.Panel className="pl-8">
-                    <button
-                      onClick={() => {
-                        setIsOpen(false);
-                        handleLogoutAction();
-                      }}
-                      className="block w-full text-left px-6 py-2 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
-                    >
-                      Logout
-                    </button>
-                  </Disclosure.Panel>
-                </div>
-              )}
-            </Disclosure>
-          ) : (
+        <div className="md:hidden border-t border-gray-200 bg-white shadow-lg max—for mobile scrolling">
+          {renderMobileMenuItems}
+          {!isLoggedIn && (
             <button
               onClick={handleShowLogin}
-              className="flex items-center justify-between w-full px-6 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+              className="flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+              aria-label="Login"
             >
               <span className="text-base font-medium text-gray-700">Login</span>
               <ArrowLeftOnRectangleIcon className="h-5 w-5 text-gray-600" />

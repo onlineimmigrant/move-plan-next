@@ -68,7 +68,7 @@ export default function CombinedCheckoutPage() {
     return sum + price * item.quantity;
   }, 0);
 
-  const currency = basket.length > 0 ? basket[0].plan.currency || 'USD' : 'USD';
+  const currency = basket.length > 0 ? basket[0].plan.currency_symbol || 'USD' : 'USD';
 
   // Fetch associated features for each pricing plan in the basket
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function CombinedCheckoutPage() {
 
   // Fetch the Payment Intent client secret when the page loads
   const fetchPaymentIntent = useCallback(
-    async (amount: number, currency: string, totalItems: number, basket: any[], sessionId: string) => {
+    async (amount: number, currency: string,  totalItems: number, basket: any[], sessionId: string) => {
       try {
         console.log('Fetching Payment Intent for session:', sessionId);
         const res = await fetch('/api/create-payment-intent', {
