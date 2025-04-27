@@ -84,14 +84,14 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
 
   return (
     <div className=''>
-      <nav className="bg-white sm:bg-white w-full fixed bottom-0 text-xs mt-12  mb-0 p-2 px-4 z-51" aria-label="Breadcrumb">
-        <ol className="flex flex-wrap justify-start gap-4 items-center">
+      <nav className="bg-white sm:bg-white w-full fixed bottom-0 text-xs mt-12  mb-0 p-2 ml-1 px-4 z-51" aria-label="Breadcrumb">
+        <ol className="flex flex-wrap justify-start gap-2 items-center font-semibold">
           {breadcrumbs.map((crumb, index) => (
             <li key={index} className="flex items-center">
               {crumb.label === 'Home' ? (
                 <a
                   href={crumb.url}
-                  className="sm:pl-2 text-gray-400 hover:text-gray-600"
+                  className=" text-gray-400 hover:text-gray-600"
                   title="Navigate to Main Page"
                 >
                   <RiHomeFill />
@@ -100,7 +100,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
                 <>
                   <a
                     href={crumb.url}
-                    className={`sm:mx-4 pr-2  ${
+                    className={`sm:mx-2 pr-2  ${
                       index === breadcrumbs.length - 1
                         ? 'text-gray-300'
                         : `text-gray-600 hover:text-gray-400`

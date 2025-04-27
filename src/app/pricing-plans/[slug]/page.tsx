@@ -11,6 +11,7 @@ interface PricingPlan {
   package?: string;
   measure?: string;
   currency: string;
+  currency_symbol:string;
   price: number;
   promotion_price?: number;
   promotion_percent?: number;
