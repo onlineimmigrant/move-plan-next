@@ -175,7 +175,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <div className="md:hidden">
         {totalItems > 0 && <ProgressBar stage={1} />}
       </div>
-      <div className="px-4 mx-auto max-w-7xl py-8">
+      <div className="px-4 mx-auto max-w-7xl py-16">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start">
           <div className="lg:col-span-1 pb-8 flex justify-center items-center">
             {links_to_image ? (
