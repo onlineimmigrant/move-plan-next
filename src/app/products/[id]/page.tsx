@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabaseClient';
 import ProductDetailPricingPlans from '../../../components/ProductDetailPricingPlans';
 import CategoryBarProductDetailPage from '../../../components/CategoryBarProductDetailPage';
 import FAQSection from '../../../components/FAQSection';
+import FeedbackAccordion from '../../../components/FeedbackAccordion';
 import parse from 'html-react-parser';
 import ProgressBar from '../../../components/ProgressBar';
 import { getBasket } from '../../../lib/basketUtils';
@@ -214,7 +215,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
+        <FeedbackAccordion type="product" slug={slug} />
           <FAQSection slug={product.slug || ''} faqs={faqs} />
+         
         </div>
       </div>
     </div>
