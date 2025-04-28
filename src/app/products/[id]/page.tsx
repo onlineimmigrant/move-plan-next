@@ -196,7 +196,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
           <div className="lg:col-span-1 text-gray-900 text-base mt-2 sm:mt-0 mb-2 lg:max-w-lg">
             <CategoryBarProductDetailPage currentProduct={product} />
-            <span className="px-3 py-1 text-xs font-medium rounded transition-colors bg-green-200 text-green-800 hover:bg-gray-1000">
+            <span className="px-3 py-1 text-xs font-medium rounded transition-colors bg-teal-50 text-teal-800 hover:bg-gray-1000">
               {product.product_sub_type?.name || 'Unknown Sub-Type'}
             </span>
             <h1 className="text-lg font-semibold tracking-tight">{product_name}</h1>
@@ -214,8 +214,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
-        <FeedbackAccordion type="product" slug={slug} />
+        <div className="mx-auto max-w-7xl  mt-8">
+          <FeedbackAccordion type="product" slug={slug} />
           <FAQSection slug={product.slug || ''} faqs={faqs} />
          
         </div>

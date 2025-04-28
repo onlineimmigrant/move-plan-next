@@ -76,7 +76,7 @@ export default function CategoryBarProductDetailPage({
           <Link
             href={`/products/${product.slug}`}
             onClick={() => handleProductSelect(product)}
-            className="px-3 py-1 text-xs font-medium rounded transition-colors bg-gray-50 text-green-800 hover:bg-green-200 focus:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-300"
+            className="px-3 py-1 text-xs font-medium rounded transition-colors bg-gray-50 text-teal-700 hover:bg-teal-50 focus:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-300"
             aria-describedby={`tooltip-${product.id}`}
           >
             {product.product_name}
