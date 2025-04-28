@@ -347,7 +347,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               </div>
             )}
           </aside>
-          <main className="my-8 lg:col-span-4 text-base leading-7 text-gray-900">
+          <main className="py-16 lg:col-span-4 text-base leading-7 text-gray-900">
             {shouldShowMainContent ? (
               <>
                 <div
@@ -357,7 +357,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                 >
                   <PostHeader
                     post={{
-                      section: post.section || 'Section', // Fallback for PostHeader
+                      section: post.section || '', // Fallback for PostHeader
                       subsection: post.subsection || 'Subsection',
                       title: post.title,
                       created_on: post.created_on,
