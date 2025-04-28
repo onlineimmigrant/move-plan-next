@@ -1,11 +1,11 @@
-// app/products/ClientProductsPage.tsx
 'use client';
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
-import CategoriesBar from '../../components/CategoriesBar';
-import IconButton from '../../components/IconButton';
+import CategoriesBar from '@/components/CategoriesBar';
+import IconButton from '@/components/IconButton';
+import FeedbackAccordion from '@/components/FeedbackAccordion';
 
 // Define types for products and sub-types
 type Product = {
@@ -40,7 +40,6 @@ export default function ClientProductsPage({
   initialError: string | null;
   isAdmin?: boolean;
 }) {
-//  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubType, setActiveSubType] = useState<ProductSubType | null>(null);
@@ -62,9 +61,10 @@ export default function ClientProductsPage({
 
     // Apply sub-type filter, checking both product_sub_type_id and product_sub_type_additional_id
     if (activeSubType) {
-      result = result.filter((p) =>
-        p.product_sub_type_id === activeSubType.id ||
-        p.product_sub_type_additional_id === activeSubType.id
+      result = result.filter(
+        (p) =>
+          p.product_sub_type_id === activeSubType.id ||
+          p.product_sub_type_additional_id === activeSubType.id
       );
     }
 
@@ -198,6 +198,9 @@ export default function ClientProductsPage({
             </button>
           </div>
         )}
+
+        {/* Add FeedbackAccordion for all products */}
+        <FeedbackAccordion type="all_products" />
       </div>
     </div>
   );

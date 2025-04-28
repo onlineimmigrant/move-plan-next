@@ -22,7 +22,7 @@ interface Post {
   description: string;
   content: string;
   section?: string; // Made optional to handle undefined/null
-  subsection: string;
+  subsection?: string;
   created_on: string;
   is_with_author: boolean;
   is_company_author: boolean;
@@ -193,7 +193,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               item:
                 post.subsection === 'SQE2'
                   ? `${baseUrl}/sqe-2/specification`
-                  : `${baseUrl}/${post.subsection.toLowerCase()}`,
+                  : `${baseUrl}/${post.subsection?.toLowerCase()}`,
             },
             {
               '@type': 'ListItem',
@@ -358,7 +358,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                   <PostHeader
                     post={{
                       section: post.section || 'Section', // Fallback for PostHeader
-                      subsection: post.subsection,
+                      subsection: post.subsection || 'Subsection',
                       title: post.title,
                       created_on: post.created_on,
                       is_with_author: post.is_with_author,
