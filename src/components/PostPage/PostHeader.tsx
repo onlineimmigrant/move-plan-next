@@ -1,4 +1,3 @@
-// src/components/PostPage/PostHeader.tsx
 'use client';
 
 import React from 'react';
@@ -6,8 +5,26 @@ import { FiCalendar, FiUser } from 'react-icons/fi';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import Link from 'next/link';
-import IconButton from '@/components/IconButton'; // Adjust path as needed
+import IconButton from '@/components/IconButton';
 
+// Utility function to convert subsection to slug
+const generateSlug = (subsection: string): string => {
+  // Lowercase and replace spaces with hyphens
+  let slug = subsection.toLowerCase().replace(/\s+/g, '-');
+
+  // Insert hyphens around numbers and between letters and numbers
+  slug = slug.replace(/([a-z])(\d)/g, '$1-$2'); // e.g., 'subsection1' → 'subsection-1'
+  slug = slug.replace(/(\d)([a-z])/g, '$1-$2'); // e.g., '1989other' → '1989-other'
+
+  // Remove any non-alphanumeric or non-hyphen characters
+  slug = slug.replace(/[^a-z0-9-]/g, '');
+
+  // Ensure no multiple consecutive hyphens
+  slug = slug.replace(/-+/g, '-');
+
+  // Trim leading/trailing hyphens
+  return slug.replace(/^-+|-+$/g, '');
+};
 
 interface PostHeaderProps {
   post: {
@@ -31,21 +48,27 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
 
   // Use settings for text size, font weight, and colors with default values
   const textSizeHeadings = settings?.font_size_small?.name || 'text-sm';
-
   const textColorHover = settings?.secondary_color?.name ? settings.secondary_color.name : 'gray-400';
+  const brandName = settings?.site || '';
 
-  const brandName = settings?.site || ''; 
+  // Generate subsection slug and URL
+  const subsectionSlug = generateSlug(post.subsection); // e.g., 'subsection1' → 'subsection-1'
+  const subsectionUrl = `/${subsectionSlug}/`; // Placeholder prefix; adjust if section_id available
 
   return (
     <div className="post-header relative">
-
       {/* Section and Subsection */}
       <div className={`flex justify-between items-center text-${textColorHover} ${textSizeHeadings} font-light tracking-tight`}>
-        <a href={post.subsection === 'SQE2' ? '/sqe-2/specification/' : '#'}>
+        <Link href="#">
           <p>{post.section}</p>
-        </a>
+        </Link>
       </div>
-    <span className='mt-2 font-medium text-xs text-sky-500 tracking-widest'>{post.subsection}</span>
+      <Link href={subsectionUrl}>
+        <span className="mt-2 font-medium text-xs text-sky-500 tracking-widest hover:underline">
+          {post.subsection}
+        </span>
+      </Link>
+
       {/* Title */}
       <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl font-nunito">
         {post.title}
