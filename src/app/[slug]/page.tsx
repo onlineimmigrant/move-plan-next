@@ -6,7 +6,8 @@ import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
 import { notFound, redirect } from 'next/navigation';
 import '@/components/PostEditor.css';
-import { getPostUrl } from '@/lib/postUtils'; // Import the utility
+import { getPostUrl } from '@/lib/postUtils';
+import { useSEO } from '@/context/SEOContext';
 
 interface TOCItem {
   tag_name: string;
@@ -14,13 +15,38 @@ interface TOCItem {
   tag_id: string;
 }
 
+interface Post {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  content: string;
+  section?: string; // Made optional to handle undefined/null
+  subsection: string;
+  created_on: string;
+  is_with_author: boolean;
+  is_company_author: boolean;
+  author?: { first_name: string; last_name: string };
+  excerpt?: string;
+  featured_image?: string;
+  keywords?: string;
+  section_id?: number | null;
+  last_modified: string;
+  display_this_post: boolean;
+  reviews?: { rating: number; author: string; comment: string }[];
+  faqs?: { question: string; answer: string }[];
+}
+
 const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
   const { slug } = React.use(params);
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(true); // Replace with real admin check later
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const { setSEOData } = useSEO();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const activeLanguages = ['en', 'es', 'fr'];
 
   // Touch handler for table scrolling
   useEffect(() => {
@@ -55,15 +81,15 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     };
   }, []);
 
+  // Fetch post data
   useEffect(() => {
     const fetchPost = async () => {
       try {
         const response = await fetch(`/api/posts/${slug}`);
         if (response.ok) {
           const data = await response.json();
-          // Use getPostUrl to determine the correct URL
+          console.log('Fetched post:', data); // Debug log
           const postUrl = getPostUrl({ section_id: data.section_id, slug });
-          // Redirect if the computed URL differs from the default
           if (postUrl !== `/${slug}`) {
             redirect(postUrl);
           }
@@ -83,6 +109,132 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     fetchPost();
   }, [slug]);
 
+  // Set SEO data
+  useEffect(() => {
+    if (!post) return;
+
+    const postUrl = `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`;
+    setSEOData({
+      title: post.title || 'Default Title',
+      description: post.description || post.excerpt || 'Default description for the post.',
+      keywords: post.keywords || 'default, keywords',
+      image: post.featured_image || undefined,
+      canonicalUrl: postUrl,
+      noindex: !post.display_this_post,
+      faqs: post.faqs || [],
+      hreflang: activeLanguages.map((lang) => ({
+        href: `${baseUrl}/${lang}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
+        hreflang: lang,
+      })),
+      structuredData: [
+        // Article Schema
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: post.title || 'Default Title',
+          description: post.description || post.excerpt || 'Default description',
+          image: post.featured_image || '/default-og-image.jpg',
+          datePublished: post.created_on || post.last_modified || new Date().toISOString(),
+          dateModified: post.last_modified || new Date().toISOString(),
+          author: post.is_with_author
+            ? post.is_company_author
+              ? {
+                  '@type': 'Organization',
+                  name: 'Your Site Name',
+                }
+              : {
+                  '@type': 'Person',
+                  name: post.author
+                    ? `${post.author.first_name} ${post.author.last_name}`
+                    : 'Unknown Author',
+                }
+            : {
+                '@type': 'Organization',
+                name: 'Your Site Name',
+              },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Your Site Name',
+            logo: {
+              '@type': 'ImageObject',
+              url: `${baseUrl}/images/logo.svg`,
+            },
+          },
+          url: postUrl,
+        },
+        // BreadcrumbList Schema
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: `${baseUrl}/`,
+            },
+            ...(post.section
+              ? [
+                  {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: post.section,
+                    item:
+                      post.subsection === 'SQE2'
+                        ? `${baseUrl}/sqe-2/specification`
+                        : `${baseUrl}/${post.section.toLowerCase()}`,
+                  },
+                ]
+              : []),
+            {
+              '@type': 'ListItem',
+              position: post.section ? 3 : 2,
+              name: post.subsection,
+              item:
+                post.subsection === 'SQE2'
+                  ? `${baseUrl}/sqe-2/specification`
+                  : `${baseUrl}/${post.subsection.toLowerCase()}`,
+            },
+            {
+              '@type': 'ListItem',
+              position: post.section ? 4 : 3,
+              name: post.title,
+              item: postUrl,
+            },
+          ],
+        },
+        // Review Schema (if reviews exist)
+        ...(post.reviews?.length
+          ? [
+              {
+                '@context': 'https://schema.org',
+                '@type': 'Review',
+                reviewRating: {
+                  '@type': 'Rating',
+                  ratingValue: post.reviews[0].rating,
+                  bestRating: 5,
+                },
+                author: {
+                  '@type': 'Person',
+                  name: post.reviews[0].author,
+                },
+                reviewBody: post.reviews[0].comment,
+                itemReviewed: {
+                  '@type': 'Article',
+                  headline: post.title,
+                  url: postUrl,
+                },
+              },
+            ]
+          : []),
+      ],
+    });
+
+    // Cleanup on unmount
+    return () => setSEOData(null);
+  }, [post, setSEOData, baseUrl, slug]);
+
+  // Generate TOC
   const toc: TOCItem[] = useMemo(() => {
     if (!post || !post.content) return [];
     const tocItems: TOCItem[] = [];
@@ -108,7 +260,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
 
     const updatedContent = doc.body.innerHTML;
     if (updatedContent !== post?.content) {
-      setPost((prev: any) => (prev ? { ...prev, content: updatedContent } : prev));
+      setPost((prev: Post | null) => (prev ? { ...prev, content: updatedContent } : prev));
     }
 
     console.log('Generated TOC:', tocItems);
@@ -131,8 +283,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     if (!contentRef.current || !post) return;
 
     const updatedContent = contentRef.current.innerHTML;
-    console.log('Original content:', post.content);
-    console.log('Updated content:', updatedContent);
 
     try {
       const response = await fetch(`/api/posts/${slug}`, {
@@ -149,6 +299,10 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     } catch (error) {
       console.error('Error updating content:', error);
     }
+  };
+
+  const handlePostHeaderClick = (href: string) => {
+    window.location.href = href;
   };
 
   const makeEditable = (e: React.MouseEvent) => {
@@ -178,13 +332,13 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   };
 
   if (loading) return <div className="py-32 text-center text-gray-500">Loading...</div>;
-  if (!post) notFound();
+  if (!post || !post.display_this_post) notFound();
 
-  const shouldShowMainContent = post.section !== 'Landing' && post.content?.length > 0;
+  const shouldShowMainContent = (!post.section || post.section !== 'Landing') && post.content?.length > 0;
 
   return (
     <div className="px-4 sm:pt-4 sm:pb-16">
-      {post.section !== 'Landing' ? (
+      {(!post.section || post.section !== 'Landing') ? (
         <div className="grid lg:grid-cols-8 gap-x-4">
           <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
             {toc.length > 0 && (
@@ -202,7 +356,16 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                   className="relative"
                 >
                   <PostHeader
-                    post={post}
+                    post={{
+                      section: post.section || 'Section', // Fallback for PostHeader
+                      subsection: post.subsection,
+                      title: post.title,
+                      created_on: post.created_on,
+                      is_with_author: post.is_with_author,
+                      is_company_author: post.is_company_author,
+                      author: post.author,
+                      description: post.description,
+                    }}
                     isAdmin={isAdmin}
                     showMenu={isHeaderHovered}
                     editHref={`/admin/edit/${slug}`}
