@@ -1,3 +1,4 @@
+//pricing-plans/combined-checkout/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -13,7 +14,6 @@ import PaymentForm from '../../../components/PaymentForm';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 
-// Load Stripe with your publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface Feature {
@@ -32,7 +32,7 @@ interface FeatureResponse {
     feature_image?: string;
     content: string;
     slug: string;
-  }; // Single object, not an array
+  };
 }
 
 export default function CombinedCheckoutPage() {
@@ -46,7 +46,6 @@ export default function CombinedCheckoutPage() {
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
   const hasFetchedIntentRef = useRef(false);
 
-  // Generate or retrieve a unique checkout session ID
   const [checkoutSessionId, setCheckoutSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -70,7 +69,6 @@ export default function CombinedCheckoutPage() {
 
   const currency = basket.length > 0 ? basket[0].plan.currency_symbol || 'USD' : 'USD';
 
-  // Fetch associated features for each pricing plan in the basket
   useEffect(() => {
     const fetchFeatures = async () => {
       const newFeaturesMap: { [key: number]: Feature[] } = {};
@@ -100,8 +98,7 @@ export default function CombinedCheckoutPage() {
           newFeaturesMap[item.plan.id] = featuresData
             ? (featuresData as unknown as FeatureResponse[])
                 .map((dataItem: FeatureResponse): Feature | null => {
-                  const feature = dataItem.feature; // Now a single object
-                  // Additional runtime validation to ensure feature matches expected shape
+                  const feature = dataItem.feature;
                   if (
                     !feature ||
                     typeof feature !== 'object' ||
@@ -135,16 +132,15 @@ export default function CombinedCheckoutPage() {
     }
   }, [basket]);
 
-  // Fetch the Payment Intent client secret when the page loads
   const fetchPaymentIntent = useCallback(
-    async (amount: number, currency: string, totalItems: number, basket: any[], sessionId: string) => {
+    async (amount: number, currency: string,  totalItems: number, basket: any[], sessionId: string) => {
       try {
         console.log('Fetching Payment Intent for session:', sessionId);
         const res = await fetch('/api/create-payment-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            amount: Math.round(amount * 100), // Convert to cents
+            amount: Math.round(amount * 100),
             currency: currency.toLowerCase(),
             metadata: {
               item_count: totalItems,
@@ -204,7 +200,6 @@ export default function CombinedCheckoutPage() {
     if (basket.length === 0) return;
     if (hasFetchedIntentRef.current) return;
 
-    console.log('useEffect triggered:', { basketLength: basket.length, sessionId: checkoutSessionId });
     fetchPaymentIntent(totalPrice, currency, totalItems, basket, checkoutSessionId);
   }, [basket, fetchPaymentIntent, checkoutSessionId, totalPrice]);
 
@@ -224,9 +219,9 @@ export default function CombinedCheckoutPage() {
 
   return (
     <div>
-      <div className="md:hidden">
-        <ProgressBar stage={3} />
-      </div>
+      
+        <ProgressBar stage={2} />
+   
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
@@ -275,7 +270,7 @@ export default function CombinedCheckoutPage() {
                   Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
                 </h2>
                 <div className="flex items-center space-x-2">
-                  <span className="text-base font-semibold text-gray-900">
+                  <span className="text-base font-semibold text-gray-900 uppercase">
                     {currency}
                   </span>
                   <span className="text-base font-bold text-gray-900">

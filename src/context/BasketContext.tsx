@@ -1,72 +1,91 @@
 'use client';
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
-export type PricingPlan = {
+export interface PricingPlan {
   id: number;
   slug?: string;
   package?: string;
   measure?: string;
   currency: string;
+  currency_symbol: string; // Make this required to match BasketItemComponent
   price: number;
   promotion_price?: number;
   promotion_percent?: number;
   is_promotion?: boolean;
-  inventory?: any[] | any;
+  inventory?: { status: string }[];
   buy_url?: string;
   product_id?: number;
+  product_name?: string;
+  links_to_image?: string;
   [key: string]: any;
-};
+}
 
-export type BasketItem = {
+export interface BasketItem {
   plan: PricingPlan;
   quantity: number;
-};
+}
 
-type BasketContextType = {
+interface BasketContextType {
   basket: BasketItem[];
-  addToBasket: (plan: PricingPlan) => void;
+  addToBasket: (plan: PricingPlan) => Promise<void>;
   updateQuantity: (planId: number, quantity: number) => void;
   removeFromBasket: (planId: number) => void;
   clearBasket: () => void;
-};
+}
 
 const BasketContext = createContext<BasketContextType | undefined>(undefined);
 
-export function BasketProvider({ children }: { children: React.ReactNode }) {
+export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
   const [basket, setBasket] = useState<BasketItem[]>([]);
 
-  const addToBasket = (plan: PricingPlan) => {
-    setBasket((prevBasket) => {
-      const existingItem = prevBasket.find((item) => item.plan.id === plan.id);
+  useEffect(() => {
+    console.log('Basket updated:', basket);
+  }, [basket]);
+
+  const addToBasket = async (plan: PricingPlan) => {
+    console.log('Adding to basket:', plan);
+    // Ensure the plan has a currency_symbol, provide a fallback if missing
+    const planWithFallback: PricingPlan = {
+      ...plan,
+      currency_symbol: plan.currency_symbol || 'USD', // Fallback to 'USD'
+    };
+    setBasket((prev) => {
+      const existingItem = prev.find((item) => item.plan.id === plan.id);
       if (existingItem) {
-        return prevBasket.map((item) =>
+        return prev.map((item) =>
           item.plan.id === plan.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prevBasket, { plan, quantity: 1 }];
+      return [...prev, { plan: planWithFallback, quantity: 1 }];
     });
   };
 
   const updateQuantity = (planId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromBasket(planId);
-      return;
-    }
-    setBasket((prevBasket) =>
-      prevBasket.map((item) =>
-        item.plan.id === planId ? { ...item, quantity } : item
-      )
-    );
+    console.log('Updating quantity for plan:', planId, 'to:', quantity);
+    setBasket((prev) => {
+      if (quantity <= 0) {
+        return prev.filter((item) => item.plan.id !== planId);
+      }
+      const existingItem = prev.find((item) => item.plan.id === planId);
+      if (existingItem) {
+        return prev.map((item) =>
+          item.plan.id === planId ? { ...item, quantity } : item
+        );
+      }
+      return prev;
+    });
   };
 
   const removeFromBasket = (planId: number) => {
-    setBasket((prevBasket) => prevBasket.filter((item) => item.plan.id !== planId));
+    console.log('Removing from basket:', planId);
+    setBasket((prev) => prev.filter((item) => item.plan.id !== planId));
   };
 
   const clearBasket = () => {
+    console.log('Clearing basket');
     setBasket([]);
   };
 
@@ -77,12 +96,12 @@ export function BasketProvider({ children }: { children: React.ReactNode }) {
       {children}
     </BasketContext.Provider>
   );
-}
+};
 
-export function useBasket() {
+export const useBasket = () => {
   const context = useContext(BasketContext);
   if (!context) {
     throw new Error('useBasket must be used within a BasketProvider');
   }
   return context;
-}
+};

@@ -12,7 +12,7 @@ export default function ProgressBar({ stage }: ProgressBarProps) {
   ];
 
   return (
-    <div className="flex items-center justify-center py-2 bg-transparent border-gray-200">
+    <div className="pt-8 flex items-center justify-center py-2 bg-transparent border-gray-200">
       <div className="flex items-center space-x-2">
         {stages.map((s, index) => (
           <div key={s.id} className="flex items-center">
@@ -24,7 +24,7 @@ export default function ProgressBar({ stage }: ProgressBarProps) {
                   ${
                     s.id === stage
                       ? // Active stage: outlined sky
-                        'border-sky-500 text-sky-500'
+                        'bg-white border-sky-500 text-sky-500'
                       : s.id < stage
                       ? // Completed stage: filled sky
                         'bg-sky-500 text-white border-sky-500'
