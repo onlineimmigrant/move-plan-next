@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 import ProductDetailPricingPlans from '../../../components/ProductDetailPricingPlans';
@@ -31,6 +32,7 @@ type PricingPlan = {
   package?: string;
   measure?: string;
   currency: string;
+  currency_symbol: string;
   price: number;
   promotion_price?: number;
   promotion_percent?: number;
@@ -193,12 +195,18 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <div className="mx-auto max-w-7xl px-2 md:px-4 py-2 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
           {/* Text Section (Moved above image on mobile) */}
           <div className="order-1 md:order-2 lg:col-span-1 text-gray-900 text-sm md:text-base mt-1 md:mt-2 sm:mt-0 mb-1 md:mb-2 lg:max-w-lg">
-            <CategoryBarProductDetailPage currentProduct={product} />
-            <span className="px-2 py-0.5 text-[10px] md:text-xs font-medium rounded transition-colors bg-teal-50 text-teal-800 hover:bg-gray-1000">
+            
+          <div className='flex flex-col'>
+            <Link
+              href="/products"
+              className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
+            >
               {product.product_sub_type?.name || 'Unknown Sub-Type'}
-            </span>
-            <h1 className="text-base md:text-lg font-semibold tracking-tight">{product_name}</h1>
-
+            </Link>
+            <h1 className="text-base md:text-lg font-semibold tracking-tight leading-tight">
+              {product_name}
+            </h1>
+          </div>
             <div className="text-gray-500 text-sm md:text-base font-light border-t border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-2">
               {product_description ? (
                 parse(product_description)
@@ -234,7 +242,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
         </div>
-
+        <CategoryBarProductDetailPage  currentProduct={product} />
         <div className="mx-auto max-w-7xl mt-8">
           <FeedbackAccordion type="product" slug={slug} />
           <FAQSection slug={product.slug || ''} faqs={faqs} />
