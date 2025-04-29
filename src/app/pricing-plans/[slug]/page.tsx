@@ -11,7 +11,7 @@ interface PricingPlan {
   package?: string;
   measure?: string;
   currency: string;
-  currency_symbol:string;
+  currency_symbol: string;
   price: number;
   promotion_price?: number;
   promotion_percent?: number;
@@ -39,7 +39,7 @@ interface FeatureResponse {
     feature_image?: string;
     content: string;
     slug: string;
-  }[];
+  };
 }
 
 interface PricingPlanPageProps {
@@ -91,21 +91,33 @@ export default async function PricingPlanPage({ params }: PricingPlanPageProps) 
     console.error('Error fetching features:', featuresError);
   }
 
+  // Safely cast featuresData to FeatureResponse[] by first casting to unknown
   const associatedFeatures: Feature[] = featuresData
-    ? featuresData
-        .flatMap((item: FeatureResponse) =>
-          item.feature.map((feature): Feature | null =>
-            feature && feature.id
-              ? {
-                  id: feature.id,
-                  name: feature.name,
-                  feature_image: feature.feature_image,
-                  content: feature.content,
-                  slug: feature.slug,
-                }
-              : null
-          )
-        )
+    ? (featuresData as unknown as FeatureResponse[])
+        .map((item: FeatureResponse): Feature | null => {
+          const feature = item.feature;
+          // Additional runtime validation to ensure feature matches expected shape
+          if (
+            !feature ||
+            typeof feature !== 'object' ||
+            !('id' in feature) ||
+            !('name' in feature) ||
+            !('content' in feature) ||
+            !('slug' in feature)
+          ) {
+            console.warn('Invalid feature data:', feature);
+            return null;
+          }
+          return feature.id
+            ? {
+                id: feature.id,
+                name: feature.name,
+                feature_image: feature.feature_image,
+                content: feature.content,
+                slug: feature.slug,
+              }
+            : null;
+        })
         .filter((feature): feature is Feature => feature !== null)
     : [];
 

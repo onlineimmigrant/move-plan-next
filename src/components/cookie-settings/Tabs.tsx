@@ -26,10 +26,10 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
       <TabList className="flex space-x-2 rounded-lg bg-gray-50 p-2 shadow-sm">
         <Tab
           className={({ selected }) =>
-            `w-full py-3 px-6 text-base font-bold rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
+            `w-full py-3 px-6 text-base font-bold rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
               selected
-                ? 'bg-white text-sky-600 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-sky-700'
+                ? 'bg-white text-teal-600 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-teal-700'
             }`
           }
         >
@@ -37,10 +37,10 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
         </Tab>
         <Tab
           className={({ selected }) =>
-            `w-full py-3 px-6 text-base font-bold rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
+            `w-full py-3 px-6 text-base font-bold rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
               selected
-                ? 'bg-white text-sky-600 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-sky-700'
+                ? 'bg-white text-teal-600 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-teal-700'
             }`
           }
         >

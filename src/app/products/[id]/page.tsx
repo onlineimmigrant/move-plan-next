@@ -158,8 +158,21 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     error = err.message;
   }
 
+  // User-facing error handling with retry option
   if (error || !product) {
-    notFound();
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Error: {error || 'Product not found'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-sky-500 text-white rounded-full"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Get the basket on the server side
@@ -176,48 +189,55 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <div className="md:hidden">
         {totalItems > 0 && <ProgressBar stage={1} />}
       </div>
-      <div className="px-4 mx-auto max-w-7xl py-16">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start">
-          <div className="lg:col-span-1 pb-8 flex justify-center items-center">
-            {links_to_image ? (
-              <Image
-                src={links_to_image}
-                alt={product_name}
-                width={384}
-                height={384}
-                className="max-h-96 object-contain"
-              />
-            ) : (
-              <div className="w-full h-96 bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400">No image</span>
+      <div className="px-4 mx-auto max-w-7xl py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-2 md:px-4 py-2 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
+          {/* Text Section (Moved above image on mobile) */}
+          <div className="order-1 md:order-2 lg:col-span-1 text-gray-900 text-sm md:text-base mt-1 md:mt-2 sm:mt-0 mb-1 md:mb-2 lg:max-w-lg">
+            <CategoryBarProductDetailPage currentProduct={product} />
+            <span className="px-2 py-0.5 text-[10px] md:text-xs font-medium rounded transition-colors bg-teal-50 text-teal-800 hover:bg-gray-1000">
+              {product.product_sub_type?.name || 'Unknown Sub-Type'}
+            </span>
+            <h1 className="text-base md:text-lg font-semibold tracking-tight">{product_name}</h1>
+
+            <div className="text-gray-500 text-sm md:text-base font-light border-t border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-2">
+              {product_description ? (
+                parse(product_description)
+              ) : (
+                <span className="text-gray-400 italic">Description coming soon</span>
+              )}
+            </div>
+
+            {product.pricing_plans && product.pricing_plans.length > 0 && (
+              <div className="mt-4 md:mt-8">
+                <ProductDetailPricingPlans
+                  pricingPlans={product.pricing_plans}
+                  amazonBooksUrl={product.amazon_books_url}
+                />
               </div>
             )}
           </div>
 
-          <div className="lg:col-span-1 text-gray-900 text-base mt-2 sm:mt-0 mb-2 lg:max-w-lg">
-            <CategoryBarProductDetailPage currentProduct={product} />
-            <span className="px-3 py-1 text-xs font-medium rounded transition-colors bg-teal-50 text-teal-800 hover:bg-gray-1000">
-              {product.product_sub_type?.name || 'Unknown Sub-Type'}
-            </span>
-            <h1 className="text-lg font-semibold tracking-tight">{product_name}</h1>
-
-            <div className="text-gray-500 text-base font-light">
-              {product_description ? parse(product_description) : 'No description'}
-            </div>
-
-            {product.pricing_plans && product.pricing_plans.length > 0 && (
-              <ProductDetailPricingPlans
-                pricingPlans={product.pricing_plans}
-                amazonBooksUrl={product.amazon_books_url}
+          {/* Image Section (Moved below text on mobile, smaller size) */}
+          <div className="order-2 md:order-1 lg:col-span-1 pb-4 md:pb-8 flex justify-center items-center">
+            {links_to_image ? (
+              <Image
+                src={links_to_image}
+                alt={product_name || 'Product image'}
+                width={384}
+                height={384}
+                className="max-h-56 md:max-h-96 object-contain w-full"
               />
+            ) : (
+              <div className="w-full h-56 md:h-96 bg-gray-100 flex items-center justify-center">
+                <span className="text-gray-400">No image</span>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="mx-auto max-w-7xl  mt-8">
+        <div className="mx-auto max-w-7xl mt-8">
           <FeedbackAccordion type="product" slug={slug} />
           <FAQSection slug={product.slug || ''} faqs={faqs} />
-         
         </div>
       </div>
     </div>
