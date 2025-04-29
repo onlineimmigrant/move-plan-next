@@ -32,7 +32,7 @@ interface FeatureResponse {
     feature_image?: string;
     content: string;
     slug: string;
-  }[];
+  }; // Single object, not an array
 }
 
 export default function CombinedCheckoutPage() {
@@ -98,20 +98,31 @@ export default function CombinedCheckoutPage() {
           newFeaturesMap[item.plan.id] = [];
         } else {
           newFeaturesMap[item.plan.id] = featuresData
-            ? featuresData
-                .flatMap((dataItem: FeatureResponse) =>
-                  dataItem.feature.map((feature): Feature | null =>
-                    feature && feature.id
-                      ? {
-                          id: feature.id,
-                          name: feature.name,
-                          feature_image: feature.feature_image,
-                          content: feature.content,
-                          slug: feature.slug,
-                        }
-                      : null
-                  )
-                )
+            ? (featuresData as unknown as FeatureResponse[])
+                .map((dataItem: FeatureResponse): Feature | null => {
+                  const feature = dataItem.feature; // Now a single object
+                  // Additional runtime validation to ensure feature matches expected shape
+                  if (
+                    !feature ||
+                    typeof feature !== 'object' ||
+                    !('id' in feature) ||
+                    !('name' in feature) ||
+                    !('content' in feature) ||
+                    !('slug' in feature)
+                  ) {
+                    console.warn('Invalid feature data:', feature);
+                    return null;
+                  }
+                  return feature.id
+                    ? {
+                        id: feature.id,
+                        name: feature.name,
+                        feature_image: feature.feature_image,
+                        content: feature.content,
+                        slug: feature.slug,
+                      }
+                    : null;
+                })
                 .filter((feature): feature is Feature => feature !== null)
             : [];
         }
@@ -126,7 +137,7 @@ export default function CombinedCheckoutPage() {
 
   // Fetch the Payment Intent client secret when the page loads
   const fetchPaymentIntent = useCallback(
-    async (amount: number, currency: string,  totalItems: number, basket: any[], sessionId: string) => {
+    async (amount: number, currency: string, totalItems: number, basket: any[], sessionId: string) => {
       try {
         console.log('Fetching Payment Intent for session:', sessionId);
         const res = await fetch('/api/create-payment-intent', {

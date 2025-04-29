@@ -109,7 +109,7 @@ const renderStars = (rating: number, isHeader = false) => {
 
 // FeedbackAccordion Component
 const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageSize = 10 }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [overallAvgRating, setOverallAvgRating] = useState<number | null>(null);
   const [totalApprovedFeedbacks, setTotalApprovedFeedbacks] = useState(0);

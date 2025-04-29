@@ -7,7 +7,7 @@ import { useBasket } from '../context/BasketContext';
 
 // Define types for pricing plans and props
 type PricingPlan = {
-  id: number; // Required to match page.tsx and BasketContext
+  id: number;
   slug?: string;
   package?: string;
   measure?: string;
@@ -34,6 +34,7 @@ export default function ProductDetailPricingPlans({
   amazonBooksUrl,
 }: ProductDetailPricingPlansProps) {
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(pricingPlans[0] || null);
+  const [isLoading, setIsLoading] = useState(false);
   const { basket, addToBasket } = useBasket();
 
   useEffect(() => {
@@ -45,9 +46,19 @@ export default function ProductDetailPricingPlans({
     console.log('Selected plan:', plan);
   };
 
-  const handleAddToBasket = () => {
+  const handleAddToBasket = async () => {
     if (selectedPlan) {
-      addToBasket(selectedPlan);
+      setIsLoading(true);
+      try {
+        await addToBasket(selectedPlan);
+        // Assuming a toast library like react-toastify is used
+        // toast.success('Added to cart!');
+      } catch (error) {
+        console.error('Error adding to basket:', error);
+        // toast.error('Failed to add to cart');
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       console.warn('Cannot add to basket: no plan selected');
     }
@@ -63,9 +74,9 @@ export default function ProductDetailPricingPlans({
   const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="mt-6">
+    <div className="mt-2 md:mt-6">
       {/* Pricing Plans Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6">
+      <div className="grid grid-cols-2 gap-1 md:gap-2 pb-2 md:pb-4">
         {pricingPlans.map((plan, idx) => {
           const isActive = plan.slug === selectedPlan?.slug;
           const status = getStatus(plan);
@@ -74,7 +85,7 @@ export default function ProductDetailPricingPlans({
           return (
             <div key={idx} className="pricing-wrapper">
               <div
-                className={`p-8 sm:p-4 border rounded-lg cursor-pointer transition-shadow duration-200 
+                className={`p-2 md:p-3 border rounded-lg cursor-pointer transition-shadow duration-200 focus:ring-2 focus:ring-sky-500 focus:outline-none
                   ${
                     isActive
                       ? 'border-sky-500 shadow-md shadow-sky-100'
@@ -87,79 +98,63 @@ export default function ProductDetailPricingPlans({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handlePlanSelect(plan);
                 }}
-                aria-label={`Select plan: ${plan.package || 'Unknown'}`}
+                aria-label={`Select plan: ${plan.measure || 'Unknown'}`}
               >
-                {/* Status Badge and Plan Info */}
-                <div className="flex justify-between mb-2 -mx-1.5">
-                  <div>
-                    <span className="block text-xs uppercase text-gray-400">
-                      {plan.package === 'one_time'
-                        ? 'One-Time Payment'
-                        : `${plan.package || 'Subscription'}`}
-                    </span>
-                  </div>
+                {/* Measure and Status Badge in a Single Row */}
+                <div className="flex justify-between items-center mb-0.5">
+                  <h2
+                    className={`text-xs md:text-sm font-semibold ${
+                      isActive ? 'text-sky-600' : 'text-gray-900'
+                    }`}
+                  >
+                    {plan.measure || 'Product'}
+                  </h2>
                   {(() => {
                     if (normalizedStatus === 'in stock') {
                       return (
-                        <span className="inline-block px-1 py-0.5 text-xs font-medium text-green-800 bg-green-50 rounded-full">
+                        <span className="inline-block px-1 py-0.5 text-[7px] md:text-[8px] font-medium text-green-800 bg-green-50 rounded-full">
                           In Stock
                         </span>
                       );
                     }
                     if (normalizedStatus === 'low stock') {
                       return (
-                        <span className="inline-block px-1 py-0.5 text-xs font-medium text-yellow-800 bg-yellow-50 rounded-full">
+                        <span className="inline-block px-1 py-0.5 text-[7px] md:text-[8px] font-medium text-yellow-800 bg-yellow-50 rounded-full">
                           Low Stock
                         </span>
                       );
                     }
                     if (normalizedStatus === 'out of stock') {
                       return (
-                        <span className="inline-block px-1 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
+                        <span className="inline-block px-1 py-0.5 text-[7px] md:text-[8px] font-medium text-gray-600 bg-gray-100 rounded-full">
                           Out of Stock
                         </span>
                       );
                     }
                     return (
-                      <span className="inline-block px-1 py-0.5 text-xs font-medium text-gray-600 bg-green-100 rounded-full">
+                      <span className="inline-block px-1 py-0.5 text-[7px] md:text-[8px] font-medium text-gray-600 bg-green-100 rounded-full">
                         Unknown
                       </span>
                     );
                   })()}
                 </div>
 
-                {/* Plan Measure */}
-                <div className="mb-2">
-                  <h2
-                    className={`text-xl font-semibold ${
-                      isActive ? 'text-sky-600' : 'text-gray-900'
-                    }`}
-                  >
-                    {plan.measure || 'Product'}
-                  </h2>
-                </div>
-
                 {/* Pricing */}
                 <div>
                   {plan.is_promotion && plan.promotion_price !== undefined ? (
-                    <div className="flex items-baseline justify-between space-x-2">
-                      <span className="text-sm font-medium text-gray-900 bg-green-50 p-1">
-                        {plan.promotion_percent !== undefined ? `-${plan.promotion_percent}% off` : 'Promotion'}
+                    <div className="flex items-baseline justify-end space-x-1">
+                      <span className="text-[10px] md:text-xs text-gray-900 font-medium line-through">
+                        {plan.currency}
+                        {plan.price}
                       </span>
-                      <div>
-                        <span className="text-xl text-gray-900 font-medium line-through mr-2">
-                          {plan.currency}
-                          {plan.price}
-                        </span>
-                        <span className="text-xl font-bold text-gray-900">
-                          {plan.currency}
-                          {plan.promotion_price}
-                        </span>
-                      </div>
+                      <span className="text-[10px] md:text-xs font-bold text-gray-900">
+                        {plan.currency}
+                        {plan.promotion_price}
+                      </span>
                     </div>
                   ) : (
-                    <div className="flex items-baseline justify-end space-x-2">
-                      <span className="text-xl font-bold text-gray-900">
+                    <div className="flex items-baseline justify-end space-x-1">
+                      <span className="text-[10px] md:text-xs font-bold text-gray-900">
                         {plan.currency}
                         {plan.price}
                       </span>
@@ -172,40 +167,29 @@ export default function ProductDetailPricingPlans({
         })}
       </div>
 
-      {/* Amazon Link (optional) */}
-      {amazonBooksUrl && (
-        <div className="border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
-          <div className="flex justify-center">
-            <a
-              href={amazonBooksUrl}
-              title="Get it on Amazon Kindle"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sky-600 hover:text-sky-700 text-sm font-medium transition-colors duration-200"
-            >
-              Buy on Amazon
-            </a>
-          </div>
-        </div>
-      )}
-
       {/* Add to Cart and Checkout Buttons */}
-      <div className="mt-4 space-y-3">
+      <div className="mt-1 md:mt-2 space-y-2 md:space-y-4">
         <button
           onClick={handleAddToBasket}
-          disabled={selectedPlanStatus === 'out of stock'}
-          className={`group relative flex items-center justify-center w-full py-3 px-4 text-base font-semibold rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-sky-200 focus:ring-opacity-50 shadow-md ${
-            selectedPlanStatus !== 'out of stock'
+          disabled={selectedPlanStatus === 'out of stock' || isLoading}
+          className={`group relative flex items-center justify-center w-full py-1.5 md:py-2 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-sky-200 focus:ring-opacity-50 shadow-md ${
+            selectedPlanStatus !== 'out of stock' && !isLoading
               ? 'bg-gradient-to-r from-sky-500 to-sky-600 text-white hover:from-sky-600 hover:to-sky-700 hover:scale-105'
               : 'bg-gray-200 text-gray-700 cursor-not-allowed'
           }`}
-          aria-disabled={selectedPlanStatus === 'out of stock'}
+          aria-disabled={selectedPlanStatus === 'out of stock' || isLoading}
         >
-          <ShoppingCartIcon
-            className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110"
-            aria-hidden="true"
-          />
-          <span>Add to Cart</span>
+          {isLoading ? (
+            <span>Loading...</span>
+          ) : (
+            <>
+              <ShoppingCartIcon
+                className="w-3 md:w-4 h-3 md:h-4 mr-1 md:mr-2 transition-transform duration-300 group-hover:scale-110"
+                aria-hidden="true"
+              />
+              <span>Add to Cart</span>
+            </>
+          )}
         </button>
 
         {totalItems > 0 && (
@@ -217,12 +201,27 @@ export default function ProductDetailPricingPlans({
             }
           >
             <button
-              className="group relative flex items-center justify-center w-full py-3 px-4 text-base font-semibold rounded-full transition-all duration-300 focus:outline-none 
+              className="group relative flex items-center justify-center w-full py-1.5 md:py-2 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-full transition-all duration-300 focus:outline-none 
               focus:ring-4 focus:ring-gray-200 focus:ring-opacity-50 shadow-md bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800 hover:scale-105"
             >
               <span>Proceed to Checkout</span>
             </button>
           </Link>
+        )}
+
+        {/* Amazon Link with Amazon Colors */}
+        {amazonBooksUrl && (
+          <div className="mt-2 md:mt-4">
+            <a
+              href={amazonBooksUrl}
+              title="Get it on Amazon Kindle"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative flex items-center justify-center w-full py-1.5 md:py-2 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-200 focus:ring-opacity-50 shadow-md bg-gradient-to-r from-[#FF9900] to-[#F5C146] text-[#111] hover:from-[#F5C146] hover:to-[#FF9900] hover:scale-105"
+            >
+              <span>Buy on Amazon</span>
+            </a>
+          </div>
         )}
       </div>
     </div>

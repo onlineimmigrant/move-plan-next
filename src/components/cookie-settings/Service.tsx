@@ -56,18 +56,18 @@ const Service: React.FC<ServiceProps> = ({
         onKeyDown={handleKeyDown}
         role="button"
         tabIndex={0}
-        className="flex items-center justify-between px-6 py-3 text-sky-600 hover:text-sky-700 hover:bg-gray-50 w-full rounded-md transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+        className="flex items-center justify-between px-6 py-3 text-teal-600 hover:text-teal-700 hover:bg-gray-50 w-full rounded-md transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
       >
         <div className="flex items-center space-x-4">
           <Switch
             checked={isChecked}
             onChange={handleToggle}
             disabled={isEssential}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
               isEssential
                 ? 'bg-gray-300 cursor-not-allowed'
                 : isChecked
-                ? 'bg-sky-500'
+                ? 'bg-teal-500'
                 : 'bg-gray-300'
             }`}
           >
