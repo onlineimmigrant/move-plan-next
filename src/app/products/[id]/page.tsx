@@ -191,32 +191,41 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <div className="md:hidden">
         {totalItems > 0 && <ProgressBar stage={1} />}
       </div>
-      <div className="px-4 mx-auto max-w-7xl py-12 md:py-16">
+      <div className="px-4 mx-auto max-w-7xl py-16 md:py-16">
         <div className="mx-auto max-w-7xl px-2 md:px-4 py-2 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
           {/* Text Section (Moved above image on mobile) */}
           <div className="order-1 md:order-2 lg:col-span-1 text-gray-900 text-sm md:text-base mt-1 md:mt-2 sm:mt-0 mb-1 md:mb-2 lg:max-w-lg">
-            
-          <div className='flex flex-col'>
-            <Link
-              href="/products"
-              className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
+            {/* Skip link for accessibility */}
+            <a
+              href="#pricing-plans"
+              className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:bg-sky-500 focus:text-white focus:p-2 focus:rounded focus:z-50"
             >
-              {product.product_sub_type?.name || 'Unknown Sub-Type'}
-            </Link>
-            <h1 className="text-base md:text-lg font-semibold tracking-tight leading-tight">
-              {product_name}
-            </h1>
-          </div>
-            <div className="text-gray-500 text-sm md:text-base font-light border-t border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-2">
-              {product_description ? (
-                parse(product_description)
-              ) : (
-                <span className="text-gray-400 italic">Description coming soon</span>
-              )}
+              Skip to pricing plans
+            </a>
+
+            <div className="flex flex-col">
+              <Link
+                href="/products"
+                className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
+              >
+                {product.product_sub_type?.name || 'Unknown Sub-Type'}
+              </Link>
+              <h1 className="text-base md:text-lg font-semibold tracking-tight leading-tight">
+                {product_name}
+              </h1>
             </div>
+            {/* Conditionally render description section only if product_description exists */}
+            {product_description && (
+              <div className="text-gray-500 text-sm md:text-base font-light border-t border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-2">
+                {parse(product_description)}
+              </div>
+            )}
 
             {product.pricing_plans && product.pricing_plans.length > 0 && (
-              <div className="mt-4 md:mt-8">
+              <div
+                id="pricing-plans"
+                className={product_description ? "mt-4 md:mt-8" : "mt-2 md:mt-4"}
+              >
                 <ProductDetailPricingPlans
                   pricingPlans={product.pricing_plans}
                   amazonBooksUrl={product.amazon_books_url}
@@ -242,7 +251,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
         </div>
-        <CategoryBarProductDetailPage  currentProduct={product} />
+        <CategoryBarProductDetailPage currentProduct={product} />
         <div className="mx-auto max-w-7xl mt-8">
           <FeedbackAccordion type="product" slug={slug} />
           <FAQSection slug={product.slug || ''} faqs={faqs} />
