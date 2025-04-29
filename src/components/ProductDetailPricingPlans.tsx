@@ -103,8 +103,8 @@ const planCardStyles = (isOutOfStock: boolean, isActive: boolean) =>
     isOutOfStock
       ? 'border-gray-300 bg-gray-50 cursor-not-allowed opacity-70'
       : isActive
-      ? 'border-sky-500 shadow-md shadow-sky-100 bg-sky-50 cursor-pointer'
-      : 'border-gray-200 hover:shadow-sm hover:bg-gray-50 cursor-pointer'
+      ? 'border-sky-500 shadow-md shadow-sky-100 bg-sky-100 cursor-pointer'
+      : 'bg-sky-50 border-sky-200 hover:shadow-sm hover:bg-gray-50 cursor-pointer'
   }`;
 
 export default function ProductDetailPricingPlans({
@@ -221,7 +221,7 @@ export default function ProductDetailPricingPlans({
           const isOutOfStock = normalizedStatus === 'out of stock';
 
           return (
-            <div key={idx} className="pricing-wrapper">
+            <div key={idx} className="pricing-wrapper bg">
               <div
                 className={planCardStyles(isOutOfStock, isActive)}
                 role="button"

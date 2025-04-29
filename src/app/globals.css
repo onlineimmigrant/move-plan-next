@@ -121,3 +121,85 @@
   background-color: #fef08a; /* Tailwind's yellow-200 */
   padding: 0.1em 0.2em;
 }
+
+
+
+/* /src/app/globals.css */
+.slick-prev,
+.slick-next {
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+}
+
+.slick-prev:before,
+.slick-next:before {
+  font-size: 24px;
+  color: white;
+}
+
+.play-button {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* /src/app/globals.css */
+
+/* Override slick-dots positioning and styling */
+.slick-dots {
+  position: absolute;
+  bottom: -3rem; /* Default for tablet */
+  display: flex !important;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+@media (min-width: 1024px) {
+  .slick-dots {
+    bottom: -5rem; /* Lower on desktop */
+  }
+}
+
+.slick-dots li {
+  margin: 0 4px; /* Matches Tailwind mx-1 */
+}
+
+.slick-dots li button {
+  width: 8px; /* Matches Tailwind w-2 */
+  height: 8px; /* Matches Tailwind h-2 */
+  background: #d1d5db; /* Tailwind bg-gray-400 */
+  border-radius: 9999px; /* Tailwind rounded-full */
+  transition: background-color 0.3s; /* Matches Tailwind transition-colors duration-300 */
+}
+
+.slick-dots li button:hover {
+  background: #e2e8f2; /* Tailwind hover:bg-blue-500 */
+}
+
+.slick-dots li.slick-active button {
+  background: #e2e8f2; /* Tailwind data-[slick-active]:bg-blue-500 */
+}
+
+/* Style the play button for ReactPlayer */
+.play-button {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
