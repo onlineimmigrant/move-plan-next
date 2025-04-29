@@ -34,7 +34,7 @@ interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error' | 'warn';
-  onRetry?: () => void; // Optional retry callback for error toasts
+  onRetry?: () => void;
 }
 
 // Custom Toast Component styled with Tailwind CSS, memoized to prevent unnecessary re-renders
@@ -86,7 +86,7 @@ const CustomToast = memo(
             className="text-teal-600 hover:text-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-300"
             aria-label="Close notification"
           >
-            <XMarkIcon className="w-4 h-4" />
+            <XMarkIcon className="ml-4 w-3 h-3" />
           </button>
         </div>
       </div>
@@ -94,7 +94,6 @@ const CustomToast = memo(
   }
 );
 
-// Add displayName to satisfy ESLint react/display-name rule
 CustomToast.displayName = 'CustomToast';
 
 // Utility function for plan card styles to reduce clutter
@@ -112,13 +111,12 @@ export default function ProductDetailPricingPlans({
   pricingPlans = [],
   amazonBooksUrl,
 }: ProductDetailPricingPlansProps) {
-  const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null); // Default to null for better validation
+  const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
-  const { basket, addToBasket } = useBasket(); // Context for managing the shopping basket (provides basket state and addToBasket function)
-  const [toasts, setToasts] = useState<Toast[]>([]); // Array to manage multiple toasts with retry option
+  const { basket, addToBasket } = useBasket();
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Initialize the selected plan to the first in-stock plan
   useEffect(() => {
     const firstInStockPlan = pricingPlans.find(
       (plan) => getStatus(plan).toLowerCase() !== 'out of stock'
@@ -126,17 +124,15 @@ export default function ProductDetailPricingPlans({
     setSelectedPlan(firstInStockPlan);
   }, [pricingPlans]);
 
-  // Custom toast handler to show notifications
   const showToast = (
     message: string,
     type: 'success' | 'error' | 'warn',
     onRetry?: () => void
   ) => {
-    const id = Date.now(); // Unique ID for each toast
+    const id = Date.now();
     setToasts((prevToasts) => [...prevToasts, { id, message, type, onRetry }]);
   };
 
-  // Remove toast by ID
   const removeToast = (id: number) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
   };
@@ -180,7 +176,7 @@ export default function ProductDetailPricingPlans({
       setTimeout(() => setIsAdded(false), 2000);
     } catch (error) {
       console.error('Error adding to basket:', error);
-      showToast('Failed to add to cart', 'error', () => handleAddToBasket()); // Retry option
+      showToast('Failed to add to cart', 'error', () => handleAddToBasket());
     } finally {
       setIsLoading(false);
     }
@@ -312,16 +308,16 @@ export default function ProductDetailPricingPlans({
       </div>
 
       {/* Add to Cart and Proceed to Checkout Buttons */}
-      <div className="mt-2 md:mt-4 grid sm:grid-cols-2 gap-3 md:gap-4">
+      <div className="mt-8 grid sm:grid-cols-2 gap-3 md:gap-4 px-4 sm:px-8">
         <button
           onClick={handleAddToBasket}
           disabled={selectedPlanStatus === 'out of stock' || isLoading}
-          className={`group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-200 focus:ring-opacity-50 shadow-md transform transition-transform
+          className={`group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-200 focus:ring-opacity-50 shadow-md transform transition-transform
             ${
               selectedPlanStatus !== 'out of stock' && !isLoading
                 ? isSelectedPlanActive
                   ? isAdded
-                    ? 'bg-sky-500 text-white scale-105' // Scale animation for "Added" state
+                    ? 'bg-sky-500 text-white scale-105'
                     : 'bg-sky-500 text-white hover:bg-sky-600 hover:scale-105'
                   : 'bg-gray-100 text-gray-900 hover:bg-gray-200 hover:scale-105'
                 : 'bg-gray-200 text-gray-700 cursor-not-allowed'
@@ -345,7 +341,7 @@ export default function ProductDetailPricingPlans({
         {totalItems > 0 && (
           <Link href="/checkout">
             <button
-              className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-opacity-50 shadow-md bg-gray-700 text-white hover:bg-gray-800 hover:scale-105"
+              className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-200 focus:ring-opacity-50 shadow-md bg-gray-600 text-white hover:bg-gray-700 hover:scale-105"
               aria-label="Proceed to checkout"
             >
               <span>Proceed to Checkout</span>
@@ -354,25 +350,32 @@ export default function ProductDetailPricingPlans({
         )}
       </div>
 
-      {/* Amazon Link with Logo */}
+      {/* Amazon Link with Provided SVG Icon */}
       {amazonBooksUrl && (
-        <div className="mt-3 md:mt-4">
+        <div className="mt-3 md:mt-4 px-4 sm:px-8">
           <a
             href={amazonBooksUrl}
             title="Get it on Amazon Kindle"
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-200 focus:ring-opacity-50 shadow-md bg-[#FF9900] text-[#111] hover:bg-[#F5C146] hover:scale-105"
+            className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-200 focus:ring-opacity-50 shadow-md bg-[#FF9900] text-[#111] hover:bg-[#F5C146] hover:scale-105"
             aria-label="Buy on Amazon"
           >
-            {/* Placeholder for Amazon logo (replace with actual SVG or image asset) */}
+            {/* Provided Amazon SVG Icon */}
             <svg
-              className="w-5 h-5 mr-2"
               viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
               fill="currentColor"
+              className="w-5 h-5 mr-2"
               aria-hidden="true"
             >
-              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 2c5.514 0 10 4.486 10 10s-4.486 10-10 10S2 17.514 2 12 6.486 2 12 2zm0 16.5c-2.485 0-4.5-2.015-4.5-4.5S9.515 9.5 12 9.5s4.5 2.015 4.5 4.5-2.015 4.5-4.5 4.5z" />
+              <g id="SVGRepo_bgCarrier" ></g>
+              <g id="SVGRepo_tracerCarrier" ></g>
+              <g id="SVGRepo_iconCarrier">
+                <title>amazon</title>
+                <rect width="24" height="24" fill="none"></rect>
+                <path d="M15.93,17.09a.54.54,0,0,1-.63.06,6.55,6.55,0,0,1-1.54-1.79,5.31,5.31,0,0,1-4.42,1.95,3.8,3.8,0,0,1-4-4.17A4.55,4.55,0,0,1,8.19,8.76a18.39,18.39,0,0,1,5-.93V7.5a3.42,3.42,0,0,0-.33-2,1.79,1.79,0,0,0-1.5-.7A2,2,0,0,0,9.25,6.45a.6.6,0,0,1-.47.49l-2.6-.28a.47.47,0,0,1-.40-.56C6.38,3,9.23,2,11.78,2a6.1,6.1,0,0,1,4,1.33C17.11,4.55,17,6.18,17,8v4.17a3.6,3.6,0,0,0,1,2.48c.17.25.21.54,0,.71l-2.06,1.78h0m-2.7-6.53V10c-1.94,0-4,.39-4,2.67,0,1.16.61,1.95,1.63,1.95a2.19,2.19,0,0,0,1.86-1.22,5.32,5.32,0,0,0,.5-2.84m6.93,9A14.29,14.29,0,0,1,12.1,22a14.59,14.59,0,0,1-9.85-3.76c-.20-.18,0-.43.25-.29a19.68,19.68,0,0,0,9.83,2.61A19.69,19.69,0,0,0,19.84,19c.37-.16.66.24.32.51m.91-1c-.28-.36-1.85-.17-2.57-.08-.19,0-.22-.16,0-.30A3.92,3.92,0,0,1,22,17.79a3.86,3.86,0,0,1-1.24,3.32c-.18.16-.35.07-.26-.11C20.76,20.33,21.35,18.86,21.07,18.5Z"></path>
+              </g>
             </svg>
             <span>Buy on Amazon</span>
           </a>
