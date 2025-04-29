@@ -308,7 +308,7 @@ export default function ProductDetailPricingPlans({
       </div>
 
       {/* Add to Cart and Proceed to Checkout Buttons */}
-      <div className="mt-8 grid sm:grid-cols-2 gap-3 md:gap-4 px-4 sm:px-8">
+      <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
         <button
           onClick={handleAddToBasket}
           disabled={selectedPlanStatus === 'out of stock' || isLoading}
@@ -358,7 +358,7 @@ export default function ProductDetailPricingPlans({
             title="Get it on Amazon Kindle"
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-200 focus:ring-opacity-50 shadow-md bg-[#FF9900] text-[#111] hover:bg-[#F5C146] hover:scale-105"
+            className="group relative flex items-center justify-center w-full py-2 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-200 focus:ring-opacity-50 shadow-md bg-[#FF9900] text-[#111] hover:bg-[#F5C146] hover:scale-105"
             aria-label="Buy on Amazon"
           >
             {/* Provided Amazon SVG Icon */}

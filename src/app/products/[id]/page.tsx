@@ -221,9 +221,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         {totalItems > 0 && <ProgressBar stage={1} />}
       </div>
       <div className="px-4 mx-auto max-w-7xl py-16 md:py-16">
-        <div className="mx-auto max-w-7xl px-2 md:px-4 py-2 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
+        <div className=" -mx-4 max-w-7xl  md:px-4 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
           {/* Text Section (Moved above media on mobile) */}
-          <div className="order-1 md:order-2 lg:col-span-1 text-gray-900 text-sm md:text-base mt-1 md:mt-2 sm:mt-0 mb-1 md:mb-2 lg:max-w-lg">
+          <div className="order-1 md:order-2 lg:col-span-1 text-gray-900 text-sm md:text-base md:mt-2 sm:mt-0 mb-1 md:mb-2 lg:max-w-lg">
             {/* Skip link for accessibility */}
             <a
               href="#pricing-plans"
@@ -232,7 +232,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               Skip to pricing plans
             </a>
 
-            <div className="flex flex-col bg-sky-50 sm:bg-transparent p-2">
+            <div className="flex flex-col bg-sky-50 sm:bg-transparent p-2 px-8">
               <Link
                 href="/products"
                 className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
@@ -245,7 +245,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
             {/* Conditionally render description section only if product_description exists */}
             {product_description && (
-              <div className="text-gray-500 text-sm md:text-base font-light border-t border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-2">
+              <div className="text-gray-500 text-xs sm:border-t md:text-base font-light px-8 border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-2">
                 {parse(product_description)}
               </div>
             )}
@@ -253,7 +253,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             {product.pricing_plans && product.pricing_plans.length > 0 && (
               <div
                 id="pricing-plans"
-                className={product_description ? 'mt-4 md:mt-8' : 'mt-2 md:mt-4'}
+                className={product_description ? 'px-4 mt-4 md:mt-8' : 'px-4 mt-2 md:mt-4'}
               >
                 <ProductDetailPricingPlans
                   pricingPlans={product.pricing_plans}
@@ -264,7 +264,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
 
           {/* Media Section (Moved below text on mobile) */}
-          <div className="order-2 md:order-1 lg:col-span-1 pb-4 pt-8 sm:pt-0 md:pb-8 flex justify-center items-center">
+          <div className="order-2 md:order-1 lg:col-span-1 py-4 sm:pt-0 md:pb-8 flex justify-center items-center">
             {product_media && product_media.length > 0 ? (
               <ProductDetailMediaDisplay mediaItems={product_media} />
             ) : (

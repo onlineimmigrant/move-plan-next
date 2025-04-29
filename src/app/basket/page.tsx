@@ -141,19 +141,7 @@ export default function BasketPage() {
           </div>
 
           <div className="bg-transparent rounded-lg mb-6">
-            <div className="flex justify-between items-center mb-0">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
-              </h2>
-              <div className="flex items-center space-x-2">
-                <span className="text-base font-semibold text-gray-900 uppercase">
-                  {currency}
-                </span>
-                <span className="text-3xl font-bold text-gray-900">
-                  {totalPrice.toFixed(2)}
-                </span>
-              </div>
-            </div>
+
             <Link href="/checkout">
               <button className="w-full py-3 px-4 mt-8 text-sm font-semibold rounded-lg text-white bg-sky-600 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-sky-200 focus:ring-opacity-50 shadow-sm hover:bg-sky-700 hover:scale-105">
                 Proceed to Checkout
