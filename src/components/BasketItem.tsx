@@ -20,6 +20,7 @@ interface BasketItemProps {
       package?: string;
       measure?: string;
       currency: string;
+      currency_symbol: string;
       price: number;
       promotion_price?: number;
       is_promotion?: boolean;
@@ -39,7 +40,7 @@ export default function BasketItem({
   associatedFeatures = [],
 }: BasketItemProps) {
   const { plan, quantity } = item;
-  const { product_name, package: planPackage, measure, currency, price, promotion_price, is_promotion, links_to_image } =
+  const { product_name, package: planPackage, measure, currency, currency_symbol, price, promotion_price, is_promotion, links_to_image } =
     plan;
 
   const finalPrice = (is_promotion && promotion_price ? promotion_price : price) * quantity;
@@ -94,7 +95,7 @@ export default function BasketItem({
       {/* Price and Remove Button */}
       <div className="text-right">
         <p className="text-sm font-semibold text-gray-900">
-          {currency} {finalPrice}
+          {currency_symbol} {finalPrice}
         </p>
         <button
           onClick={() => removeFromBasket(plan.id)}

@@ -69,7 +69,7 @@ export default function CategoryBarProductDetailPage({
   }
 
   return (
-    <div className="flex space-x-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent py-2">
+    <div className="flex space-x-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent py-8">
       {relatedProducts.map((product) => (
         <div key={product.id} className="relative group inline-block">
           {/* Link to the related product */}

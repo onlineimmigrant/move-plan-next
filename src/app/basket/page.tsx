@@ -37,7 +37,7 @@ export default function BasketPage() {
     return sum + price * item.quantity;
   }, 0);
 
-  const currency = basket.length > 0 ? basket[0].plan.currency || 'USD' : 'USD';
+  const currency = basket.length > 0 ? basket[0].plan.currency_symbol || 'USD' : 'USD';
 
   // Set isMounted to true after the component mounts on the client
   useEffect(() => {
@@ -86,10 +86,10 @@ export default function BasketPage() {
   }, [basket]);
 
   return (
-    <div>
-      <div className="md:hidden">
+    <div className='mt-16'>
+      
         <ProgressBar stage={1} />
-      </div>
+    
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Your Basket</h1>

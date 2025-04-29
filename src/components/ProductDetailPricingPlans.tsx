@@ -343,13 +343,7 @@ export default function ProductDetailPricingPlans({
         </button>
 
         {totalItems > 0 && (
-          <Link
-            href={
-              totalItems === 1 && basket[0].plan?.slug
-                ? `/pricing-plans/${basket[0].plan.slug}`
-                : '/pricing-plans/combined-checkout'
-            }
-          >
+          <Link href="/checkout">
             <button
               className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-300 focus:ring-opacity-50 shadow-md bg-gray-700 text-white hover:bg-gray-800 hover:scale-105"
               aria-label="Proceed to checkout"
