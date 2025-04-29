@@ -178,17 +178,17 @@
 .slick-dots li button {
   width: 8px; /* Matches Tailwind w-2 */
   height: 8px; /* Matches Tailwind h-2 */
-  background: #d1d5db; /* Tailwind bg-gray-400 */
+  background: #ffffff; /* Tailwind bg-gray-400 */
   border-radius: 9999px; /* Tailwind rounded-full */
   transition: background-color 0.3s; /* Matches Tailwind transition-colors duration-300 */
 }
 
 .slick-dots li button:hover {
-  background: #e2e8f2; /* Tailwind hover:bg-blue-500 */
+  background: #ffffff; /* Tailwind hover:bg-blue-500 */
 }
 
 .slick-dots li.slick-active button {
-  background: #e2e8f2; /* Tailwind data-[slick-active]:bg-blue-500 */
+  background: #ffffff; /* Tailwind data-[slick-active]:bg-blue-500 */
 }
 
 /* Style the play button for ReactPlayer */

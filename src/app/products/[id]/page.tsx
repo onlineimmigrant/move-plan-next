@@ -287,7 +287,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
         <CategoryBarProductDetailPage currentProduct={product} />
-        <div className="mx-auto max-w-7xl mt-8">
+        <div className="mx-auto max-w-7xl ">
           <FeedbackAccordion type="product" slug={slug} />
           <FAQSection slug={product.slug || ''} faqs={faqs} />
         </div>
