@@ -1,3 +1,4 @@
+// /src/app/products/[id]/page.tsx
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -9,9 +10,20 @@ import FeedbackAccordion from '../../../components/FeedbackAccordion';
 import parse from 'html-react-parser';
 import ProgressBar from '../../../components/ProgressBar';
 import { getBasket } from '../../../lib/basketUtils';
+import ProductDetailMediaDisplay from '../../../components/ProductDetailMediaDisplay';
 
-// Define types for the product, pricing plans, and FAQs
-type Product = {
+// Define types for the product, pricing plans, FAQs, and media items
+interface MediaItem {
+  id: number;
+  product_id: number;
+  is_video: boolean;
+  video_url?: string;
+  video_player?: 'youtube' | 'vimeo';
+  image_url?: string;
+  thumbnail_url?: string;
+}
+
+interface Product {
   id: number;
   slug?: string;
   product_name: string;
@@ -23,10 +35,11 @@ type Product = {
   product_sub_type?: { name: string };
   pricing_plans?: PricingPlan[];
   amazon_books_url?: string;
+  product_media?: MediaItem[];
   [key: string]: any;
-};
+}
 
-type PricingPlan = {
+interface PricingPlan {
   id: number;
   product_id: number;
   package?: string;
@@ -43,9 +56,9 @@ type PricingPlan = {
   product_name?: string;
   links_to_image?: string;
   [key: string]: any;
-};
+}
 
-type FAQ = {
+interface FAQ {
   id: number;
   question: string;
   answer: string;
@@ -54,7 +67,7 @@ type FAQ = {
   order?: number;
   product_sub_type_id?: number;
   [key: string]: any;
-};
+}
 
 // Fetch product data on the server side
 async function fetchProduct(slug: string): Promise<Product> {
@@ -69,6 +82,7 @@ async function fetchProduct(slug: string): Promise<Product> {
     throw new Error('Failed to load product: ' + (productError?.message || 'Product not found'));
   }
 
+  // Fetch product sub-type
   let productSubType = null;
   const { data: subTypeData, error: subTypeError } = await supabase
     .from('product_sub_type')
@@ -82,6 +96,7 @@ async function fetchProduct(slug: string): Promise<Product> {
     productSubType = subTypeData;
   }
 
+  // Fetch pricing plans
   let pricingPlans: PricingPlan[] = [];
   const { data: plansData, error: plansError } = await supabase
     .from('pricingplan')
@@ -104,8 +119,21 @@ async function fetchProduct(slug: string): Promise<Product> {
       ...plan,
       product_name: plan.product?.product_name || productData.product_name,
       links_to_image: plan.product?.links_to_image || productData.links_to_image,
-      currency: plan.currency || productData.currency_manual || 'USD',
+      currency: plan.currency || productData.currency_manual || 'USD'
     }));
+  }
+
+  // Fetch product media
+  let productMedia: MediaItem[] = [];
+  const { data: mediaData, error: mediaError } = await supabase
+    .from('product_media')
+    .select('id, product_id, is_video, video_url, video_player, image_url, thumbnail_url')
+    .eq('product_id', productData.id);
+
+  if (mediaError) {
+    console.error('Error fetching product media:', mediaError);
+  } else {
+    productMedia = mediaData || [];
   }
 
   const product: Product = {
@@ -113,6 +141,7 @@ async function fetchProduct(slug: string): Promise<Product> {
     product_sub_type_id: productData.product_sub_type_id,
     product_sub_type: productSubType,
     pricing_plans: pricingPlans,
+    product_media: productMedia,
   };
 
   console.log('Fetched product data:', product);
@@ -181,7 +210,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const basket = await getBasket();
   const totalItems = basket.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
-  const { product_name, links_to_image, product_description } = product;
+  const { product_name, product_description, product_media, links_to_image } = product;
 
   console.log('Product slug:', product.slug);
   console.log('Fetched FAQs:', faqs);
@@ -193,7 +222,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </div>
       <div className="px-4 mx-auto max-w-7xl py-16 md:py-16">
         <div className="mx-auto max-w-7xl px-2 md:px-4 py-2 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
-          {/* Text Section (Moved above image on mobile) */}
+          {/* Text Section (Moved above media on mobile) */}
           <div className="order-1 md:order-2 lg:col-span-1 text-gray-900 text-sm md:text-base mt-1 md:mt-2 sm:mt-0 mb-1 md:mb-2 lg:max-w-lg">
             {/* Skip link for accessibility */}
             <a
@@ -203,7 +232,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               Skip to pricing plans
             </a>
 
-            <div className="flex flex-col  bg-sky-50 sm:bg-transparent  p-2">
+            <div className="flex flex-col bg-sky-50 sm:bg-transparent p-2">
               <Link
                 href="/products"
                 className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
@@ -224,7 +253,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             {product.pricing_plans && product.pricing_plans.length > 0 && (
               <div
                 id="pricing-plans"
-                className={product_description ? "mt-4 md:mt-8" : "mt-2 md:mt-4"}
+                className={product_description ? 'mt-4 md:mt-8' : 'mt-2 md:mt-4'}
               >
                 <ProductDetailPricingPlans
                   pricingPlans={product.pricing_plans}
@@ -234,20 +263,26 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
 
-          {/* Image Section (Moved below text on mobile, smaller size) */}
+          {/* Media Section (Moved below text on mobile) */}
           <div className="order-2 md:order-1 lg:col-span-1 pb-4 pt-8 sm:pt-0 md:pb-8 flex justify-center items-center">
-            {links_to_image ? (
-              <Image
-                src={links_to_image}
-                alt={product_name || 'Product image'}
-                width={384}
-                height={384}
-                className="max-h-56 md:max-h-96 object-contain w-full"
-              />
+            {product_media && product_media.length > 0 ? (
+              <ProductDetailMediaDisplay mediaItems={product_media} />
             ) : (
-              <div className="w-full h-56 md:h-96 bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400">No image</span>
-              </div>
+              <>
+                {links_to_image ? (
+                  <Image
+                    src={links_to_image}
+                    alt={product_name || 'Product image'}
+                    width={384}
+                    height={384}
+                    className="max-h-56 md:max-h-96 object-contain w-full"
+                  />
+                ) : (
+                  <div className="w-full h-56 md:h-96 bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400">No image</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
