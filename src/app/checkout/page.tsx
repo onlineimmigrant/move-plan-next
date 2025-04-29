@@ -19,12 +19,9 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
-  const [showOrderSummary, setShowOrderSummary] = useState(true);
+  const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [promoDiscount, setPromoDiscount] = useState(0); // Discount percentage
-  const [promoCode, setPromoCode] = useState('');
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [promoError, setPromoError] = useState<string | null>(null);
-  const hasFetchedIntentRef = useRef(false); // Use useRef to track fetch status
+  const hasFetchedIntentRef = useRef(false);
 
   const totalItems = basket.reduce((sum, item: BasketItem) => sum + item.quantity, 0);
   const totalPrice = basket.reduce((sum, item: BasketItem) => {
@@ -32,7 +29,7 @@ export default function CheckoutPage() {
       item.plan.is_promotion && item.plan.promotion_price
         ? item.plan.promotion_price
         : item.plan.price;
-    return sum + price * item.quantity;
+    return sum + (price || 0) * item.quantity;
   }, 0);
 
   const discountedPrice = totalPrice * (1 - promoDiscount / 100);
@@ -42,7 +39,7 @@ export default function CheckoutPage() {
   const fetchPaymentIntent = useCallback(
     async (amount: number, currency: string, totalItems: number, basket: BasketItem[]) => {
       try {
-        console.log('Fetching Payment Intent...');
+        console.log('Fetching Payment Intent...', { amount, currency, totalItems });
         const res = await fetch('/api/create-payment-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -70,16 +67,16 @@ export default function CheckoutPage() {
         });
 
         if (!res.ok) {
-          throw new Error('Failed to create Payment Intent');
+          const errorText = await res.text();
+          throw new Error(`Failed to create Payment Intent: ${res.status} ${errorText}`);
         }
 
         const data = await res.json();
         setClientSecret(data.client_secret);
         setPaymentIntentId(data.id);
-        // Store clientSecret and paymentIntentId in localStorage for PaymentForm to access
         window.localStorage.setItem('clientSecret', data.client_secret);
         window.localStorage.setItem('paymentIntentId', data.id);
-        hasFetchedIntentRef.current = true; // Mark as fetched
+        hasFetchedIntentRef.current = true;
       } catch (err: any) {
         console.error('Error creating Payment Intent:', err);
         setError(err.message || 'Failed to initialize payment');
@@ -91,37 +88,22 @@ export default function CheckoutPage() {
   // Fetch the Payment Intent client secret when the page loads
   useEffect(() => {
     if (basket.length === 0) return;
-    if (hasFetchedIntentRef.current) return; // Prevent re-fetching if already fetched
+    if (hasFetchedIntentRef.current) return;
 
     console.log('useEffect triggered:', { basketLength: basket.length });
     fetchPaymentIntent(discountedPrice, currency, totalItems, basket);
   }, [basket, fetchPaymentIntent, discountedPrice, currency, totalItems]);
 
-  const handlePromoCodeApply = () => {
-    // Mock promo code logic (replace with actual API call to validate promo code)
-    if (promoCode.toLowerCase() === 'discount10') {
-      setPromoApplied(true);
-      setPromoDiscount(10); // 10% discount
-      setPromoError(null);
-      // Reset the Payment Intent to reflect the new discounted price
-      hasFetchedIntentRef.current = false;
-      setClientSecret(null);
-      setPaymentIntentId(null);
-    } else {
-      setPromoApplied(false);
-      setPromoDiscount(0);
-      setPromoError('Invalid promo code');
-      // Reset the Payment Intent to reflect the original price
-      hasFetchedIntentRef.current = false;
-      setClientSecret(null);
-      setPaymentIntentId(null);
-    }
+  const resetPaymentIntent = () => {
+    hasFetchedIntentRef.current = false;
+    setClientSecret(null);
+    setPaymentIntentId(null);
   };
 
   if (paymentSucceeded) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center">
-        <ProgressBar stage={3} />
+        <ProgressBar stage={2} />
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
           Payment Successful!
         </h1>
@@ -138,9 +120,8 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-      <ProgressBar stage={3} />
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-2xl mx-auto p-8 ">
+      <div className="py-8 flex items-center justify-between">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
           Checkout
         </h1>
@@ -164,7 +145,7 @@ export default function CheckoutPage() {
       ) : (
         <>
           {showOrderSummary && (
-            <div className="space-y-6 mb-8">
+            <div className="space-y-2 ">
               {basket
                 .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
                 .map((item) => (
@@ -179,23 +160,23 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <div className="bg-gray-100 rounded-lg p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-base font-semibold text-gray-900">
+          <div className="bg-transparent rounded-lg  mb-6">
+            <div className="flex justify-between items-center mb-0">
+              <h2 className="text-sm font-semibold text-gray-900">
                 Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
               </h2>
               <div className="flex items-center space-x-2">
-                <span className="text-base font-semibold text-gray-900">
+                <span className="text-base font-semibold text-gray-900 uppercase">
                   {currency}
                 </span>
-                <span className="text-base font-bold text-gray-900">
+                <span className="text-3xl font-bold text-gray-900">
                   {discountedPrice.toFixed(2)}
                 </span>
               </div>
             </div>
 
             {promoDiscount > 0 && (
-              <p className="text-green-500 text-sm mb-2">
+              <p className="text-right font-medium text-sky-600 text-sm mb-2">
                 Discount Applied: {promoDiscount}% off
               </p>
             )}
@@ -205,36 +186,7 @@ export default function CheckoutPage() {
                 {error}
               </div>
             )}
-
-            {/* Promo Code */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Promo Code</h3>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:border-sky-600 focus:ring-1 focus:ring-sky-600"
-                  placeholder="Enter promo code (e.g., DISCOUNT10)"
-                />
-                <button
-                  type="button"
-                  onClick={handlePromoCodeApply}
-                  className="py-2 px-4 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors duration-200"
-                >
-                  Apply
-                </button>
-              </div>
-              {promoError && (
-                <div className="mt-2 text-red-500 text-sm font-medium">{promoError}</div>
-              )}
-              {promoApplied && (
-                <div className="mt-2 text-green-500 text-sm font-medium">
-                  Promo code applied! 10% discount.
-                </div>
-              )}
-            </div>
-
+            <div className="mt-8">
             {clientSecret && (
               <Elements stripe={stripePromise} options={{ clientSecret }}>
                 <PaymentForm
@@ -245,12 +197,17 @@ export default function CheckoutPage() {
                   onError={setError}
                   isLoading={isLoading}
                   setIsLoading={setIsLoading}
+                  totalPrice={totalPrice}
+                  setPromoDiscount={setPromoDiscount}
+                  resetPaymentIntent={resetPaymentIntent}
                 />
               </Elements>
             )}
           </div>
+          </div>
         </>
       )}
+      <ProgressBar stage={2} />
     </div>
   );
 }

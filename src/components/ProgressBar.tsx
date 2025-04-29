@@ -24,10 +24,10 @@ export default function ProgressBar({ stage }: ProgressBarProps) {
                   ${
                     s.id === stage
                       ? // Active stage: outlined sky
-                        'bg-white border-sky-500 text-sky-500'
+                        'bg-white border-sky-600 text-sky-600'
                       : s.id < stage
                       ? // Completed stage: filled sky
-                        'bg-sky-500 text-white border-sky-500'
+                        'bg-sky-600 text-white border-sky-600'
                       : // Future stage: outlined gray
                         'border-gray-300 text-gray-400'
                   }
@@ -51,7 +51,7 @@ export default function ProgressBar({ stage }: ProgressBarProps) {
               <div
                 className={`
                   h-0.5 w-6 sm:w-24 mx-2 transition-colors
-                  ${s.id < stage ? 'bg-sky-300' : 'bg-gray-200'}
+                  ${s.id < stage ? 'bg-sky-600' : 'bg-gray-200'}
                 `}
               />
             )}

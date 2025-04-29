@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useBasket, BasketItem, PricingPlan } from '../../context/BasketContext';
+import { useBasket, BasketItem } from '../../context/BasketContext';
 import ProgressBar from '../../components/ProgressBar';
 import BasketItemComponent from '../../components/BasketItem';
 import { HiTrash } from 'react-icons/hi';
@@ -86,73 +86,83 @@ export default function BasketPage() {
   }, [basket]);
 
   return (
-    <div className='mt-16'>
-      
-        <ProgressBar stage={1} />
-    
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Your Basket</h1>
-          {/* Render the button only after the component has mounted on the client */}
-          {isMounted && basket.length > 0 && (
-            <button
-              onClick={clearBasket}
-              className="flex items-center gap-2 text-red-700 hover:text-red-800 text-sm font-medium transition-colors duration-200"
-            >
-              <HiTrash className="w-5 h-5" />
-              Clear Basket
-            </button>
-          )}
-        </div>
-
-        {basket.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-base">Your basket is empty.</p>
-            <Link href="/products">
-              <span className="inline-block mt-4 text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors duration-200">
-                Continue Shopping
-              </span>
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-6 mb-8">
-              {basket
-                .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
-                .map((item) => (
-                  <BasketItemComponent
-                    key={item.plan.id}
-                    item={item}
-                    updateQuantity={updateQuantity}
-                    removeFromBasket={removeFromBasket}
-                    associatedFeatures={featuresMap[item.plan.id] || []}
-                  />
-                ))}
-            </div>
-
-            <div className="bg-gray-100 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-gray-900">
-                  Total: {totalItems} {totalItems === 1 ? 'item' : 'items'}
-                </h2>
-                <div className="flex items-center space-x-2">
-                  <span className="text-base font-semibold text-gray-900">
-                    {currency}
-                  </span>
-                  <span className="text-base font-bold text-gray-900">
-                    {totalPrice}
-                  </span>
-                </div>
-              </div>
-              <Link href="/checkout">
-                <button className="w-full py-3 px-4 text-sm font-semibold rounded-full transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-200 focus:ring-opacity-50 shadow-md bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-gray-800 hover:scale-105">
-                  Proceed to Checkout
-                </button>
-              </Link>
-            </div>
-          </>
+    <div className="max-w-2xl mx-auto p-8">
+      <div className="py-8 flex items-center justify-between">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+          Your Basket
+        </h1>
+        {isMounted && basket.length > 0 && (
+          <button
+            onClick={clearBasket}
+            className="flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium transition-colors duration-200"
+          >
+            <HiTrash className="w-5 h-5" />
+            Clear Basket
+          </button>
         )}
       </div>
+      <div className="flex justify-between items-center mb-16">
+              <h2 className="text-sm font-semibold text-gray-900">
+                Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+              </h2>
+              <div className="flex items-center space-x-2">
+                <span className="text-base font-semibold text-gray-900 uppercase">
+                  {currency}
+                </span>
+                <span className="text-3xl font-bold text-gray-900">
+                  {totalPrice.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+      {basket.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600 text-base">Your basket is empty.</p>
+          <Link href="/products">
+            <span className="inline-block mt-4 text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors duration-200">
+              Continue Shopping
+            </span>
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2 mb-6">
+            {basket
+              .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
+              .map((item) => (
+                <BasketItemComponent
+                  key={item.plan.id}
+                  item={item}
+                  updateQuantity={updateQuantity}
+                  removeFromBasket={removeFromBasket}
+                  associatedFeatures={featuresMap[item.plan.id] || []}
+                />
+              ))}
+          </div>
+
+          <div className="bg-transparent rounded-lg mb-6">
+            <div className="flex justify-between items-center mb-0">
+              <h2 className="text-sm font-semibold text-gray-900">
+                Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+              </h2>
+              <div className="flex items-center space-x-2">
+                <span className="text-base font-semibold text-gray-900 uppercase">
+                  {currency}
+                </span>
+                <span className="text-3xl font-bold text-gray-900">
+                  {totalPrice.toFixed(2)}
+                </span>
+              </div>
+            </div>
+            <Link href="/checkout">
+              <button className="w-full py-3 px-4 mt-8 text-sm font-semibold rounded-lg text-white bg-sky-600 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-sky-200 focus:ring-opacity-50 shadow-sm hover:bg-sky-700 hover:scale-105">
+                Proceed to Checkout
+              </button>
+            </Link>
+          </div>
+        </>
+      )}
+      <ProgressBar stage={1} />
     </div>
   );
 }

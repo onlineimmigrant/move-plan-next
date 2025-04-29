@@ -203,7 +203,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               Skip to pricing plans
             </a>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col  bg-sky-50 sm:bg-transparent  p-2">
               <Link
                 href="/products"
                 className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
@@ -235,7 +235,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
 
           {/* Image Section (Moved below text on mobile, smaller size) */}
-          <div className="order-2 md:order-1 lg:col-span-1 pb-4 md:pb-8 flex justify-center items-center">
+          <div className="order-2 md:order-1 lg:col-span-1 pb-4 pt-8 sm:pt-0 md:pb-8 flex justify-center items-center">
             {links_to_image ? (
               <Image
                 src={links_to_image}
