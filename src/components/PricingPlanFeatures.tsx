@@ -67,7 +67,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
       <div className="relative">
         <div
           ref={scrollContainerRef}
-          className="max-h-[4.5rem] overflow-y-auto scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-100 pr-2"
+          className="max-h-[5.0rem] overflow-y-auto scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-100 pr-2"
           style={{ scrollbarWidth: 'thin' }}
         >
           <ul className="space-y-4">
