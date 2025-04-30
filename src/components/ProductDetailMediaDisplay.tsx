@@ -1,4 +1,4 @@
-// /src/components/ProductDetailMediaDisplay.tsx
+// src/components/ProductDetailMediaDisplay.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -12,6 +12,7 @@ const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 interface MediaItem {
   id: number;
   product_id: number;
+  order: number;
   is_video: boolean;
   video_url?: string;
   video_player?: 'youtube' | 'vimeo';
@@ -24,8 +25,14 @@ interface ProductDetailMediaDisplayProps {
 }
 
 const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ mediaItems }) => {
+  // Sort mediaItems by 'order' field
+  const sortedMediaItems = useMemo(
+    () => [...mediaItems].sort((a, b) => a.order - b.order),
+    [mediaItems]
+  );
+
   const [activeMedia, setActiveMedia] = useState<MediaItem | null>(
-    mediaItems.length > 0 ? mediaItems[0] : null
+    sortedMediaItems.length > 0 ? sortedMediaItems[0] : null
   );
 
   const renderMedia = (media: MediaItem) => {
@@ -70,26 +77,26 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   // Slider settings for main media (mobile only)
   const mainSliderSettings = useMemo(
     () => ({
-      dots: mediaItems.length > 1,
-      infinite: mediaItems.length > 1,
+      dots: sortedMediaItems.length > 1,
+      infinite: sortedMediaItems.length > 1,
       slidesToShow: 1,
       slidesToScroll: 1,
       arrows: false,
       speed: 300,
       swipeToSlide: true,
-      afterChange: (index: number) => setActiveMedia(mediaItems[index]),
+      afterChange: (index: number) => setActiveMedia(sortedMediaItems[index]),
     }),
-    [mediaItems]
+    [sortedMediaItems]
   );
 
   // Slider settings for thumbnails (desktop/tablet only)
   const thumbnailSliderSettings = useMemo(
     () => ({
-      dots: mediaItems.length > 1,
+      dots: sortedMediaItems.length > 1,
       focusOnSelect: true,
-      infinite: mediaItems.length > 2,
+      infinite: sortedMediaItems.length > 2,
       centerMode: false,
-      slidesToShow: Math.min(2, mediaItems.length),
+      slidesToShow: Math.min(2, sortedMediaItems.length),
       slidesToScroll: 1,
       arrows: false,
       speed: 300,
@@ -97,27 +104,27 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
         {
           breakpoint: 1024,
           settings: {
-            slidesToShow: Math.min(2, mediaItems.length),
+            slidesToShow: Math.min(2, sortedMediaItems.length),
             slidesToScroll: 1,
             arrows: false,
-            dots: mediaItems.length > 1,
+            dots: sortedMediaItems.length > 1,
           },
         },
         {
           breakpoint: 768,
           settings: {
-            slidesToShow: Math.min(2, mediaItems.length),
+            slidesToShow: Math.min(2, sortedMediaItems.length),
             slidesToScroll: 1,
             arrows: false,
-            dots: mediaItems.length > 1,
+            dots: sortedMediaItems.length > 1,
           },
         },
       ],
     }),
-    [mediaItems.length]
+    [sortedMediaItems.length]
   );
 
-  if (!mediaItems.length || !activeMedia) {
+  if (!sortedMediaItems.length || !activeMedia) {
     return null; // Trigger fallback in parent
   }
 
@@ -126,7 +133,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
       {/* Mobile: Main media slider with touch navigation */}
       <div className="md:hidden">
         <Slider {...mainSliderSettings} className="w-full">
-          {mediaItems.map((media) => (
+          {sortedMediaItems.map((media) => (
             <div key={media.id} className="px-1">
               {renderMedia(media)}
             </div>
@@ -137,7 +144,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
       {/* Desktop/Tablet: Main media with thumbnail carousel */}
       <div className="hidden md:block">
         <div className="w-full">{renderMedia(activeMedia)}</div>
-        {mediaItems.length > 1 && (
+        {sortedMediaItems.length > 1 && (
           <div className="mt-12 relative">
             <Slider
               {...thumbnailSliderSettings}
@@ -146,7 +153,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                 <div className="w-2 h-2 bg-gray-400 rounded-full mx-1 transition-colors duration-300 hover:bg-blue-500 data-[slick-active]:bg-blue-500" />
               )}
             >
-              {mediaItems.map((media) => (
+              {sortedMediaItems.map((media) => (
                 <div
                   key={media.id}
                   onMouseEnter={() => setActiveMedia(media)}

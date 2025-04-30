@@ -16,6 +16,7 @@ import ProductDetailMediaDisplay from '../../../components/ProductDetailMediaDis
 interface MediaItem {
   id: number;
   product_id: number;
+  order: number;
   is_video: boolean;
   video_url?: string;
   video_player?: 'youtube' | 'vimeo';
@@ -127,7 +128,7 @@ async function fetchProduct(slug: string): Promise<Product> {
   let productMedia: MediaItem[] = [];
   const { data: mediaData, error: mediaError } = await supabase
     .from('product_media')
-    .select('id, product_id, is_video, video_url, video_player, image_url, thumbnail_url')
+    .select('id, product_id, order, is_video, video_url, video_player, image_url, thumbnail_url')
     .eq('product_id', productData.id);
 
   if (mediaError) {
@@ -245,7 +246,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
             {/* Conditionally render description section only if product_description exists */}
             {product_description && (
-              <div className="text-gray-500 text-xs sm:border-t md:text-base font-light px-8 border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-2">
+              <div className="text-gray-500 text-xs sm:border-t md:text-base font-light px-8 border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-10">
                 {parse(product_description)}
               </div>
             )}
