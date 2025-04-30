@@ -246,7 +246,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
             {/* Conditionally render description section only if product_description exists */}
             {product_description && (
-              <div className="text-gray-500 text-xs sm:border-t md:text-base font-light px-8 border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-10">
+              <div className="text-gray-500 text-xs sm:border-t md:text-sm font-light px-8 border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-10">
                 {parse(product_description)}
               </div>
             )}

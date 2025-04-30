@@ -36,7 +36,7 @@ export default function AssociatedFeaturesDisclosure({
               </span>
             </Disclosure.Button>
             <Disclosure.Panel className="pt-2">
-              <div className="grid grid-cols-2 gap-1">
+              <div className="grid grid-cols-1 gap-1">
                 {associatedFeatures.map((feature) => (
                   <Link href={`/features/${feature.slug}`} key={feature.id}>
                     <div className="flex items-center bg-gray-100 border-gray-200 rounded-lg p-1 duration-200 cursor-pointer">
