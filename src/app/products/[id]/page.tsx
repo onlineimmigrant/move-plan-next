@@ -268,7 +268,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <div className="md:hidden">
         {totalItems > 0 && <ProgressBar stage={1} />}
       </div>
-      <div className="px-4 mx-auto max-w-7xl py-16 md:py-16">
+      <div className="px-4 mx-auto max-w-7xl py-16 md:py-10">
         <div className=" -mx-4 max-w-7xl  md:px-4 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
           {/* Text Section (Moved above media on mobile) */}
           <div className="order-1 md:order-2 lg:col-span-1 text-gray-900 text-sm md:text-base md:mt-2 sm:mt-0 mb-1 md:mb-2 lg:max-w-lg">
