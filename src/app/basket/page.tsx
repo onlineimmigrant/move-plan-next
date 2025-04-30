@@ -37,7 +37,7 @@ export default function BasketPage() {
     return sum + price * item.quantity;
   }, 0);
 
-  const currency = basket.length > 0 ? basket[0].plan.currency_symbol || 'USD' : 'USD';
+  const currency = basket.length > 0 ? basket[0].plan.currency_symbol || 'GBP' : 'GBP';
 
   // Set isMounted to true after the component mounts on the client
   useEffect(() => {
@@ -86,22 +86,26 @@ export default function BasketPage() {
   }, [basket]);
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
-      <div className="py-8 flex items-center justify-between">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
-          Your Basket
+    <div className="max-w-2xl mx-auto p-8 min-h-screen">
+      <div className="-mx-8 mt-8 mb-2 sm:mt-10 bg-gray-50  py-4 flex items-center justify-between">
+      <h1 className="px-8 text-base md:text-xl font-semibold tracking-tight leading-tight">
+          Basket
         </h1>
         {isMounted && basket.length > 0 && (
           <button
             onClick={clearBasket}
-            className="flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium transition-colors duration-200"
+            className="px-8 flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium transition-colors duration-200"
           >
             <HiTrash className="w-5 h-5" />
             Clear Basket
           </button>
         )}
       </div>
-      <div className="flex justify-between items-center mb-16">
+
+
+
+
+      <div className="flex justify-between items-center mb-8">
               <h2 className="text-sm font-semibold text-gray-900">
                 Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
               </h2>
@@ -115,13 +119,20 @@ export default function BasketPage() {
               </div>
             </div>
 
+          <Link href="/products">
+            <span className="mb-4 inline-block text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors duration-200">
+              Continue Shopping
+            </span>
+        </Link>
+
       {basket.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-600 text-base">Your basket is empty.</p>
           <Link href="/products">
+          {/*
             <span className="inline-block mt-4 text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors duration-200">
               Continue Shopping
-            </span>
+            </span>*/}
           </Link>
         </div>
       ) : (
@@ -150,6 +161,7 @@ export default function BasketPage() {
           </div>
         </>
       )}
+
       <ProgressBar stage={1} />
     </div>
   );
