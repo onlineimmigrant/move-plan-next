@@ -144,16 +144,16 @@ export default function ClientProductsPage({
             {searchQuery ? `No products found matching "${searchQuery}"` : 'No products available'}
           </div>
         ) : (
-          <div className="px-4 sm:px-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="px-4 sm:px-0 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredProducts.slice(0, visibleItemsCount).map((product) => (
               <Link
                 key={product.id}
                 href={product.slug ? `/products/${product.slug}` : '#'}
                 className="group"
               >
-                <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                <div className=" bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                   {product.links_to_image && product.links_to_image.trim() !== '' && (
-                    <div className="w-full h-auto flex-shrink-0">
+                    <div className="sm:w-full sm:h-auto flex-shrink-0">
                       <img
                         src={product.links_to_image}
                         alt={product.product_name ?? 'Product image'}
@@ -166,13 +166,13 @@ export default function ClientProductsPage({
                     </div>
                   )}
                   <div className="p-6 flex flex-col flex-grow">
-                    <h2 className="tracking-tight text-lg line-clamp-1 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
+                    <h2 className="tracking-tight text-sm sm:text-lg line-clamp-1 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
                       {product.product_name ?? 'Untitled'}
                     </h2>
                   </div>
                   <div className="px-6 py-2 flex justify-between">
-                    <span className="text-gray-500">from</span>
-                    <div className="font-bold tracking-wider text-xl text-gray-700">
+                    <span className="text-gray-500 text-sm sm:text-base">from</span>
+                    <div className="font-bold tracking-wider text-base sm:text-xl text-gray-700">
                       <span>{product.currency_manual_symbol}</span>
                       <span>{product.price_manual ?? ''}</span>
                     </div>

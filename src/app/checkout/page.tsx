@@ -120,14 +120,14 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-8 ">
-      <div className="py-8 flex items-center justify-between">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+    <div className="max-w-2xl mx-auto p-8 min-h-screen">
+      <div className="-mx-8 mt-8 mb-2 sm:mt-10 bg-gray-50  py-4 flex items-center justify-between">
+        <h1 className="px-8 text-base md:text-xl font-semibold tracking-tight leading-tight">
           Checkout
         </h1>
         <button
           onClick={() => setShowOrderSummary(!showOrderSummary)}
-          className="text-sky-600 hover:text-sky-700 text-sm font-medium"
+          className="px-8 text-sky-600 hover:text-sky-700 text-sm font-medium"
         >
           {showOrderSummary ? 'Hide Order Summary' : 'Show Order Summary'}
         </button>
@@ -160,7 +160,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <div className="bg-transparent rounded-lg  mb-6">
+          <div className="bg-transparent rounded-lg mt-2  mb-6">
             <div className="flex justify-between items-center mb-0">
               <h2 className="text-sm font-semibold text-gray-900">
                 Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
@@ -186,7 +186,7 @@ export default function CheckoutPage() {
                 {error}
               </div>
             )}
-            <div className="mt-8">
+            <div className="mt-4">
             {clientSecret && (
               <Elements stripe={stripePromise} options={{ clientSecret }}>
                 <PaymentForm
