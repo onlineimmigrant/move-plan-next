@@ -3,7 +3,7 @@
 
 import parse from 'html-react-parser';
 import Link from 'next/link';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronDoubleUpIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect, useRef } from 'react';
 
 interface Feature {
@@ -30,14 +30,30 @@ interface PricingPlanFeaturesProps {
 
 export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeaturesProps) {
   const [isScrollable, setIsScrollable] = useState(false);
+  const [canBeScrollable, setCanBeScrollable] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Check if the content is scrollable
+  // Check if the content is scrollable or can be scrollable when collapsed
   useEffect(() => {
     const checkScrollable = () => {
       if (scrollContainerRef.current) {
         const { scrollHeight, clientHeight } = scrollContainerRef.current;
-        setIsScrollable(scrollHeight > clientHeight);
+        // Check if content overflows in the current state
+        const isCurrentlyScrollable = scrollHeight > clientHeight;
+        setIsScrollable(isCurrentlyScrollable);
+
+        // Check if content would overflow when collapsed (max-h-[5.0rem])
+        // 5.0rem is approximately 80px (assuming 1rem = 16px)
+        const collapsedHeightPx = 80;
+        const wouldBeScrollable = scrollHeight > collapsedHeightPx;
+        setCanBeScrollable(wouldBeScrollable);
+
+        console.log('Scroll height:', scrollHeight);
+        console.log('Client height:', clientHeight);
+        console.log('Is currently scrollable:', isCurrentlyScrollable);
+        console.log('Can be scrollable (when collapsed):', wouldBeScrollable);
+        console.log('Is expanded:', isExpanded);
       }
     };
 
@@ -46,7 +62,21 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
     // Recheck on window resize or content change
     window.addEventListener('resize', checkScrollable);
     return () => window.removeEventListener('resize', checkScrollable);
-  }, [selectedPlan?.features]);
+  }, [selectedPlan?.features, isExpanded]);
+
+  // Toggle expand/collapse state
+  const toggleExpand = () => {
+    setIsExpanded((prev) => {
+      console.log('Toggling isExpanded to:', !prev);
+      return !prev;
+    });
+  };
+
+  // Collapse the expanded area
+  const collapseFeatures = () => {
+    console.log('Collapsing features');
+    setIsExpanded(false);
+  };
 
   if (!selectedPlan) {
     return null;
@@ -67,7 +97,9 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
       <div className="relative">
         <div
           ref={scrollContainerRef}
-          className="max-h-[5.0rem] overflow-y-auto scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-100 pr-2"
+          className={`${
+            isExpanded ? 'max-h-none' : 'max-h-[5.0rem] overflow-y-auto'
+          } scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-100 pr-2 pb-6 transition-all duration-300 ease-in-out`}
           style={{ scrollbarWidth: 'thin' }}
         >
           <ul className="space-y-4">
@@ -94,12 +126,25 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
             ))}
           </ul>
         </div>
-        {isScrollable && (
+        {canBeScrollable && (
           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex justify-center w-full">
-            <ChevronDownIcon
-              className="h-5 w-5 text-sky-500 animate-bounce"
-              aria-hidden="true"
-            />
+            {isExpanded ? (
+              <button
+                onClick={collapseFeatures}
+                className="p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
+                aria-label="Collapse features list"
+              >
+                <ChevronDoubleUpIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
+              </button>
+            ) : (
+              <button
+                onClick={toggleExpand}
+                className="p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
+                aria-label="Expand features list"
+              >
+                <ChevronDownIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
+              </button>
+            )}
           </div>
         )}
       </div>
