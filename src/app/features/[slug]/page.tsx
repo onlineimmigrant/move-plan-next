@@ -24,6 +24,7 @@ interface PricingPlan {
   id: string;
   slug?: string;
   product_name: string;
+  product_slug: string;
   package?: string;
   measure?: string;
   price: number;
@@ -32,17 +33,26 @@ interface PricingPlan {
 
 interface PricingPlanResponse {
   pricingplan_id: string;
-  pricingplan: {
-    id: string;
-    slug?: string;
-    package?: string;
-    measure?: string;
-    price: number;
-    currency: string;
-    product: {
-      product_name: string;
-    }[]; // Changed to array
-  }[];
+  pricingplan:
+    | {
+        id: string;
+        slug?: string;
+        package?: string;
+        measure?: string;
+        price: number;
+        currency: string;
+        product: { product_name: string; slug: string } | { product_name: string; slug: string }[];
+      }
+    | {
+        id: string;
+        slug?: string;
+        package?: string;
+        measure?: string;
+        price: number;
+        currency: string;
+        product: { product_name: string; slug: string } | { product_name: string; slug: string }[];
+      }[]
+    | null;
 }
 
 interface FeaturePageProps {
@@ -76,12 +86,19 @@ function PricingPlanCard({ plan, color }: { plan: PricingPlan; color: string }) 
           </span>
         </div>
       </div>
-      <div className="p-6 flex flex-col flex-grow">
-        <h2 className="tracking-tight text-lg line-clamp-2 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
+      <div className="p-6 flex flex-col flex-grow gap-1">
+        <span
+          className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-1 cursor-pointer"
+        >
+          {plan.measure || 'View Plan'}
+        </span>
+        <h2 className="tracking-tight text-lg line-clamp-2 font-semibold text-gray-900 group-hover:text-sky-400">
           {plan.product_name}
         </h2>
-        <p className="tracking-widest text-base text-gray-600 font-light line-clamp-2 flex-grow">
-          {plan.package && `${plan.package} - `}{plan.currency} {plan.price}
+        <p className="flex justify-end tracking-widest text-base text-gray-600 font-light line-clamp-2 flex-grow leading-tight uppercase">
+         
+          <span>{plan.currency} </span>
+          <span className='text-xl'>{plan.price}</span>
         </p>
       </div>
       <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end relative">
@@ -119,7 +136,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
     notFound();
   }
 
-  // Fetch associated pricing plans with slug
+  // Fetch associated pricing plans with product data, including product slug
   const { data: pricingPlansData, error: pricingPlansError } = await supabase
     .from('pricingplan_features')
     .select(`
@@ -132,7 +149,8 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
         price,
         currency,
         product:product_id (
-          product_name
+          product_name,
+          slug
         )
       )
     `)
@@ -142,25 +160,42 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
     console.error('Error fetching pricing plans:', pricingPlansError);
   }
 
-  const associatedPricingPlans: PricingPlan[] = (pricingPlansData ?? [])
-    .flatMap((item: PricingPlanResponse): PricingPlan[] =>
-      item.pricingplan
-        .map((plan): PricingPlan | null => {
-          if (!plan || !plan.id) return null;
-          // Use the first product in the array or fallback to 'Unknown Product'
-          const product_name = plan.product?.[0]?.product_name ?? 'Unknown Product';
-          return {
-            id: plan.id.toString(),
-            slug: plan.slug ?? plan.id.toString(),
-            product_name,
-            package: plan.package ?? undefined,
-            measure: plan.measure ?? undefined,
-            price: plan.price,
-            currency: plan.currency,
-          };
-        })
-        .filter((plan): plan is PricingPlan => plan !== null)
-    );
+  // Log pricingPlansData for debugging
+  console.log('pricingPlansData:', JSON.stringify(pricingPlansData, null, 2));
+
+  const associatedPricingPlans: PricingPlan[] = (pricingPlansData ?? []).flatMap(
+    (item: PricingPlanResponse): PricingPlan[] => {
+      // Handle pricingplan as single object or array
+      const plans = Array.isArray(item.pricingplan)
+        ? item.pricingplan
+        : item.pricingplan
+        ? [item.pricingplan]
+        : [];
+
+      return plans.map((plan): PricingPlan | null => {
+        if (!plan || !plan.id) return null;
+
+        // Handle product as single object or array (take first if array)
+        const product = Array.isArray(plan.product)
+          ? plan.product[0]
+          : plan.product;
+
+        const product_name = product?.product_name ?? 'Unknown Product';
+        const product_slug = product?.slug ?? 'unknown';
+
+        return {
+          id: plan.id.toString(),
+          slug: plan.slug ?? plan.id.toString(),
+          product_name,
+          product_slug,
+          package: plan.package ?? undefined,
+          measure: plan.measure ?? undefined,
+          price: plan.price,
+          currency: plan.currency,
+        };
+      }).filter((plan): plan is PricingPlan => plan !== null);
+    }
+  );
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-24">
@@ -174,7 +209,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
             {associatedPricingPlans.map((plan, index) => (
-              <Link key={plan.id} href={`/pricing/${plan.slug}`} className="group">
+              <Link key={plan.id} href={`/products/${plan.product_slug}`} className="group">
                 <PricingPlanCard plan={plan} color={colors[index % colors.length]} />
               </Link>
             ))}

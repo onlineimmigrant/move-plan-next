@@ -66,8 +66,9 @@ export default function BasketItem({
 
       {/* Item Details */}
       <div className="flex-1">
+        
         <h3 className="text-sm font-semibold text-gray-900">
-          {product_name} – {planPackage || 'Standard'}
+          {product_name} 
         </h3>
         <p className="text-xs text-gray-500 font-light">{measure || 'Product'}</p>
         <div className="mt-2 flex items-center space-x-2">
