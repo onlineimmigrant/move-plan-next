@@ -12,7 +12,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import { getBasket } from '../../../lib/basketUtils';
 import ProductDetailMediaDisplay from '../../../components/ProductDetailMediaDisplay';
 
-// Define types for the product, pricing plans, FAQs, and media items
+// Define types for the product, pricing plans, FAQs, features, and media items
 interface MediaItem {
   id: number;
   product_id: number;
@@ -22,6 +22,13 @@ interface MediaItem {
   video_player?: 'youtube' | 'vimeo';
   image_url?: string;
   thumbnail_url?: string;
+}
+
+interface Feature {
+  id: string;
+  name: string;
+  content: string;
+  slug: string;
 }
 
 interface Product {
@@ -56,6 +63,7 @@ interface PricingPlan {
   slug?: string;
   product_name?: string;
   links_to_image?: string;
+  features?: Feature[];
   [key: string]: any;
 }
 
@@ -97,7 +105,7 @@ async function fetchProduct(slug: string): Promise<Product> {
     productSubType = subTypeData;
   }
 
-  // Fetch pricing plans
+  // Fetch pricing plans with associated features
   let pricingPlans: PricingPlan[] = [];
   const { data: plansData, error: plansError } = await supabase
     .from('pricingplan')
@@ -109,18 +117,57 @@ async function fetchProduct(slug: string): Promise<Product> {
       product:product_id (
         product_name,
         links_to_image
+      ),
+      pricingplan_features (
+        feature:feature_id (
+          id,
+          name,
+          content,
+          slug
+        )
       )
     `)
     .eq('product_id', productData.id);
 
   if (plansError) {
     console.error('Error fetching pricing plans:', plansError);
+    // Fallback to fetch pricing plans without features to ensure they still display
+    const { data: fallbackPlansData, error: fallbackPlansError } = await supabase
+      .from('pricingplan')
+      .select(`
+        *,
+        inventory!fk_pricing_plan_id (
+          status
+        ),
+        product:product_id (
+          product_name,
+          links_to_image
+        )
+      `)
+      .eq('product_id', productData.id);
+
+    if (fallbackPlansError) {
+      console.error('Fallback error fetching pricing plans:', fallbackPlansError);
+    } else {
+      pricingPlans = (fallbackPlansData || []).map((plan) => ({
+        ...plan,
+        product_name: plan.product?.product_name || productData.product_name,
+        links_to_image: plan.product?.links_to_image || productData.links_to_image,
+        currency: plan.currency || productData.currency_manual || 'USD',
+        features: [], // No features in fallback
+      }));
+    }
   } else {
     pricingPlans = (plansData || []).map((plan) => ({
       ...plan,
       product_name: plan.product?.product_name || productData.product_name,
       links_to_image: plan.product?.links_to_image || productData.links_to_image,
-      currency: plan.currency || productData.currency_manual || 'USD'
+      currency: plan.currency || productData.currency_manual || 'USD',
+      features: plan.pricingplan_features
+        ? plan.pricingplan_features
+            .map((pf: any) => pf.feature)
+            .filter((feature: any) => feature != null)
+        : [],
     }));
   }
 
@@ -145,7 +192,7 @@ async function fetchProduct(slug: string): Promise<Product> {
     product_media: productMedia,
   };
 
-  console.log('Fetched product data:', product);
+  console.log('Fetched product data:', JSON.stringify(product, null, 2));
   return product;
 }
 

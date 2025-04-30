@@ -1,11 +1,21 @@
+// /src/components/ProductDetailPricingPlans.tsx
 'use client';
 
 import { useState, useEffect, useCallback, memo } from 'react';
 import { ShoppingCartIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useBasket } from '../context/BasketContext';
+import PricingPlanFeatures from './PricingPlanFeatures';
 
 // Define types for pricing plans and props
+interface Feature {
+  id: string;
+  name: string;
+  content: string;
+  slug: string;
+  description?: string;
+}
+
 type PricingPlan = {
   id: number;
   slug?: string;
@@ -22,6 +32,7 @@ type PricingPlan = {
   product_id?: number;
   product_name?: string;
   links_to_image?: string;
+  features?: Feature[];
   [key: string]: any;
 };
 
@@ -37,7 +48,7 @@ interface Toast {
   onRetry?: () => void;
 }
 
-// Custom Toast Component styled with Tailwind CSS, memoized to prevent unnecessary re-renders
+// Custom Toast Component
 const CustomToast = memo(
   ({
     message,
@@ -96,7 +107,7 @@ const CustomToast = memo(
 
 CustomToast.displayName = 'CustomToast';
 
-// Utility function for plan card styles to reduce clutter
+// Utility function for plan card styles
 const planCardStyles = (isOutOfStock: boolean, isActive: boolean) =>
   `p-3 md:p-4 border rounded-xl transition-all duration-200 focus:ring-4 focus:ring-sky-500 focus:ring-opacity-50 focus:bg-sky-100 outline-none
   ${
@@ -117,11 +128,16 @@ export default function ProductDetailPricingPlans({
   const { basket, addToBasket } = useBasket();
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  console.log('Pricing plans with features:', JSON.stringify(pricingPlans, null, 2));
+  console.log('Selected plan:', JSON.stringify(selectedPlan, null, 2));
+
   useEffect(() => {
-    const firstInStockPlan = pricingPlans.find(
-      (plan) => getStatus(plan).toLowerCase() !== 'out of stock'
-    ) || pricingPlans[0] || null;
+    const firstInStockPlan =
+      pricingPlans.find((plan) => getStatus(plan).toLowerCase() !== 'out of stock') ||
+      pricingPlans[0] ||
+      null;
     setSelectedPlan(firstInStockPlan);
+    console.log('Selected initial plan:', firstInStockPlan);
   }, [pricingPlans]);
 
   const showToast = (
@@ -195,9 +211,12 @@ export default function ProductDetailPricingPlans({
     (plan) => plan.slug === selectedPlan?.slug && getStatus(plan).toLowerCase() !== 'out of stock'
   );
 
+  if (!pricingPlans || pricingPlans.length === 0) {
+    return <div className="text-gray-500 px-4 sm:px-8">No pricing plans available.</div>;
+  }
+
   return (
     <div className="mt-2 md:mt-6 relative pt-4 sm:pt-2">
-      {/* Toast Container with configurable position */}
       <div className="absolute top-0 right-0 z-50 space-y-2">
         {toasts.map((toast) => (
           <CustomToast
@@ -212,7 +231,6 @@ export default function ProductDetailPricingPlans({
         ))}
       </div>
 
-      {/* Pricing Plans Grid */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 px-4 sm:px-8 pb-2 md:pb-4">
         {pricingPlans.map((plan, idx) => {
           const isActive = plan.slug === selectedPlan?.slug;
@@ -221,7 +239,7 @@ export default function ProductDetailPricingPlans({
           const isOutOfStock = normalizedStatus === 'out of stock';
 
           return (
-            <div key={idx} className="pricing-wrapper bg">
+            <div key={plan.id} className="pricing-wrapper">
               <div
                 className={planCardStyles(isOutOfStock, isActive)}
                 role="button"
@@ -307,7 +325,6 @@ export default function ProductDetailPricingPlans({
         })}
       </div>
 
-      {/* Add to Cart and Proceed to Checkout Buttons */}
       <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
         <button
           onClick={handleAddToBasket}
@@ -350,7 +367,6 @@ export default function ProductDetailPricingPlans({
         )}
       </div>
 
-      {/* Amazon Link with Provided SVG Icon */}
       {amazonBooksUrl && (
         <div className="mt-3 md:mt-4 px-4 sm:px-8">
           <a
@@ -361,7 +377,6 @@ export default function ProductDetailPricingPlans({
             className="group relative flex items-center justify-center w-full py-2 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-200 focus:ring-opacity-50 shadow-md bg-[#FF9900] text-[#111] hover:bg-[#F5C146] hover:scale-105"
             aria-label="Buy on Amazon"
           >
-            {/* Provided Amazon SVG Icon */}
             <svg
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
@@ -369,8 +384,8 @@ export default function ProductDetailPricingPlans({
               className="w-5 h-5 mr-2"
               aria-hidden="true"
             >
-              <g id="SVGRepo_bgCarrier" ></g>
-              <g id="SVGRepo_tracerCarrier" ></g>
+              <g id="SVGRepo_bgCarrier"></g>
+              <g id="SVGRepo_tracerCarrier"></g>
               <g id="SVGRepo_iconCarrier">
                 <title>amazon</title>
                 <rect width="24" height="24" fill="none"></rect>
@@ -381,6 +396,8 @@ export default function ProductDetailPricingPlans({
           </a>
         </div>
       )}
+
+      {selectedPlan && <PricingPlanFeatures selectedPlan={selectedPlan} />}
     </div>
   );
 }
