@@ -127,7 +127,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
           </ul>
         </div>
         {canBeScrollable && (
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex justify-center w-full">
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex justify-center w-full">
             {isExpanded ? (
               <button
                 onClick={collapseFeatures}
