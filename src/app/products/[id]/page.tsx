@@ -1,6 +1,5 @@
 // /src/app/products/[id]/page.tsx
 import Image from 'next/image';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 import ProductDetailPricingPlans from '../../../components/ProductDetailPricingPlans';
@@ -11,6 +10,7 @@ import parse from 'html-react-parser';
 import ProgressBar from '../../../components/ProgressBar';
 import { getBasket } from '../../../lib/basketUtils';
 import ProductDetailMediaDisplay from '../../../components/ProductDetailMediaDisplay';
+import ProductHeader from '../../../components/ProductHeader';
 
 // Define types for the product, pricing plans, FAQs, features, and media items
 interface MediaItem {
@@ -40,7 +40,7 @@ interface Product {
   price_manual?: number;
   currency_manual?: string;
   product_sub_type_id: number;
-  product_sub_type?: { name: string };
+  product_sub_type: { name: string } | null; // Changed to null to match Supabase query result
   pricing_plans?: PricingPlan[];
   amazon_books_url?: string;
   product_media?: MediaItem[];
@@ -92,7 +92,7 @@ async function fetchProduct(slug: string): Promise<Product> {
   }
 
   // Fetch product sub-type
-  let productSubType = null;
+  let productSubType: { name: string } | null = null; // Explicitly type as null
   const { data: subTypeData, error: subTypeError } = await supabase
     .from('product_sub_type')
     .select('name')
@@ -187,7 +187,7 @@ async function fetchProduct(slug: string): Promise<Product> {
   const product: Product = {
     ...productData,
     product_sub_type_id: productData.product_sub_type_id,
-    product_sub_type: productSubType,
+    product_sub_type: productSubType, // Now correctly typed as { name: string } | null
     pricing_plans: pricingPlans,
     product_media: productMedia,
   };
@@ -280,17 +280,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               Skip to pricing plans
             </a>
 
-            <div className="flex flex-col bg-sky-50 sm:bg-transparent p-2 px-8">
-              <Link
-                href="/products"
-                className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
-              >
-                {product.product_sub_type?.name || 'Unknown Sub-Type'}
-              </Link>
-              <h1 className="text-base md:text-lg font-semibold tracking-tight leading-tight">
-                {product_name}
-              </h1>
-            </div>
+            <ProductHeader
+              productSubType={product.product_sub_type}
+              productName={product_name}
+            />
+
             {/* Conditionally render description section only if product_description exists */}
             {product_description && (
               <div className="text-gray-500 text-xs sm:border-t md:text-sm font-light px-8 border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-10">
@@ -335,7 +329,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
         <CategoryBarProductDetailPage currentProduct={product} />
-        <div className="mx-auto max-w-7xl ">
+        <div className="mx-auto max-w-7xl">
           <FeedbackAccordion type="product" slug={slug} />
           <FAQSection slug={product.slug || ''} faqs={faqs} />
         </div>
