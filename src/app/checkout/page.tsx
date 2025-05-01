@@ -1,7 +1,6 @@
-// /src/app/checkout/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { useBasket, BasketItem } from '../../context/BasketContext';
 import ProgressBar from '../../components/ProgressBar';
 import BasketItemComponent from '../../components/BasketItem';
@@ -9,9 +8,91 @@ import Link from 'next/link';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import PaymentForm from '../../components/PaymentForm';
+import { createClient } from '@supabase/supabase-js';
 
-// Load Stripe with your publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// Isolate Elements in a separate component to prevent re-renders
+const PaymentFormWrapper = memo(
+  ({
+    clientSecret,
+    onSuccess,
+    onError,
+    isLoading,
+    setIsLoading,
+    totalPrice,
+    setPromoDiscount,
+    setPromoCodeId,
+    resetPaymentIntent,
+    setDiscountedAmount,
+    customerEmail,
+    setCustomerEmail,
+    updatePaymentIntentWithEmail,
+  }: {
+    clientSecret: string;
+    onSuccess: () => void;
+    onError: (error: string) => void;
+    isLoading: boolean;
+    setIsLoading: (loading: boolean) => void;
+    totalPrice: number;
+    setPromoDiscount: (discount: number) => void;
+    setPromoCodeId: (id: string | null) => void;
+    resetPaymentIntent: () => void;
+    setDiscountedAmount: (amount: number) => void;
+    customerEmail: string | null;
+    setCustomerEmail: (email: string | null) => void;
+    updatePaymentIntentWithEmail: (email?: string, isCustomerUpdateOnly?: boolean) => Promise<void>;
+  }) => {
+    console.log('PaymentFormWrapper rendered with clientSecret:', clientSecret);
+    return (
+      <Elements
+        stripe={stripePromise}
+        options={{
+          clientSecret,
+        }}
+      >
+        <PaymentForm
+          onSuccess={onSuccess}
+          onError={onError}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+          totalPrice={totalPrice}
+          setPromoDiscount={setPromoDiscount}
+          setPromoCodeId={setPromoCodeId}
+          resetPaymentIntent={resetPaymentIntent}
+          setDiscountedAmount={setDiscountedAmount}
+          customerEmail={customerEmail}
+          setCustomerEmail={setCustomerEmail}
+          updatePaymentIntentWithEmail={updatePaymentIntentWithEmail}
+        />
+      </Elements>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.clientSecret === nextProps.clientSecret &&
+      prevProps.isLoading === nextProps.isLoading &&
+      prevProps.totalPrice === nextProps.totalPrice &&
+      prevProps.customerEmail === nextProps.customerEmail &&
+      prevProps.onSuccess === nextProps.onSuccess &&
+      prevProps.onError === nextProps.onError &&
+      prevProps.setIsLoading === nextProps.setIsLoading &&
+      prevProps.setPromoDiscount === nextProps.setPromoDiscount &&
+      prevProps.setPromoCodeId === nextProps.setPromoCodeId &&
+      prevProps.resetPaymentIntent === nextProps.resetPaymentIntent &&
+      prevProps.setDiscountedAmount === nextProps.setDiscountedAmount &&
+      prevProps.setCustomerEmail === nextProps.setCustomerEmail &&
+      prevProps.updatePaymentIntentWithEmail === nextProps.updatePaymentIntentWithEmail
+    );
+  }
+);
+
+// Add displayName to the memoized component
+PaymentFormWrapper.displayName = 'PaymentFormWrapper';
 
 export default function CheckoutPage() {
   const { basket, updateQuantity, removeFromBasket, clearBasket } = useBasket();
@@ -19,16 +100,52 @@ export default function CheckoutPage() {
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [paymentIntentLoading, setPaymentIntentLoading] = useState(false);
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoCodeId, setPromoCodeId] = useState<string | null>(null);
+  const [discountedAmount, setDiscountedAmount] = useState<number>(0);
   const [finalAmount, setFinalAmount] = useState<number>(0);
-  const [finalCurrency, setFinalCurrency] = useState<string>('GBP'); // Default to GBP
-  const hasFetchedIntentRef = useRef(false);
+  const [finalCurrency, setFinalCurrency] = useState<string>('GBP');
   const [isMounted, setIsMounted] = useState(false);
+  const [customerEmail, setCustomerEmail] = useState<string | null>(null);
+  const hasFetchedIntentRef = useRef(false);
+  const isProcessingRef = useRef(false);
+  const initialClientSecretRef = useRef<string | null>(null);
+  const isSubmittingRef = useRef(false); // Track submission state to prevent re-renders
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Log clientSecret changes
+  useEffect(() => {
+    console.log('clientSecret updated:', clientSecret);
+    if (clientSecret && !initialClientSecretRef.current) {
+      initialClientSecretRef.current = clientSecret;
+    }
+  }, [clientSecret]);
+
+  // Fetch user email if authenticated
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', user.id)
+          .single();
+        if (error) {
+          console.error('Error fetching user email:', error);
+        } else if (data && data.email && !isSubmittingRef.current) {
+          setCustomerEmail(data.email);
+        }
+      }
+    };
+
+    fetchUserEmail();
   }, []);
 
   const totalItems = isMounted
@@ -44,18 +161,39 @@ export default function CheckoutPage() {
       }, 0)
     : 0;
 
-  const discountedPrice = totalPrice * (1 - promoDiscount / 100);
-  const currency = isMounted && basket.length > 0 ? basket[0].plan.currency || 'GBP' : 'GBP'; // Default to GBP
+  useEffect(() => {
+    if (isMounted && !isSubmittingRef.current) {
+      setDiscountedAmount(totalPrice);
+    }
+  }, [isMounted, totalPrice]);
 
-  const fetchPaymentIntent = useCallback(
-    async (amount: number, currency: string, totalItems: number, basket: BasketItem[]) => {
+  const currency = isMounted && basket.length > 0 ? basket[0].plan.currency || 'GBP' : 'GBP';
+
+  const managePaymentIntent = useCallback(
+    async (email?: string, isCustomerUpdateOnly: boolean = false) => {
+      if (!isMounted || basket.length === 0 || isProcessingRef.current) return;
+
+      isProcessingRef.current = true;
+      if (!isCustomerUpdateOnly) {
+        setPaymentIntentLoading(true);
+      }
+
       try {
-        console.log('Fetching Payment Intent...', { amount, currency, totalItems });
+        console.log('Managing Payment Intent...', {
+          amount: totalPrice,
+          currency,
+          totalItems,
+          promoCodeId,
+          paymentIntentId,
+          customerEmail: email,
+          isCustomerUpdateOnly,
+        });
+
         const res = await fetch('/api/create-payment-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            amount: Math.round(amount * 100),
+            amount: Math.round(totalPrice * 100),
             currency: currency.toLowerCase(),
             metadata: {
               item_count: totalItems,
@@ -74,55 +212,105 @@ export default function CheckoutPage() {
                   }))
               ),
             },
+            promoCodeId: promoCodeId || undefined,
+            paymentIntentId: paymentIntentId || undefined,
+            customerEmail: email || undefined,
+            isCustomerUpdateOnly,
           }),
         });
 
         if (!res.ok) {
           const errorText = await res.text();
-          throw new Error(`Failed to create Payment Intent: ${res.status} ${errorText}`);
+          throw new Error(`Failed to process Payment Intent: ${res.status} ${errorText}`);
         }
 
         const data = await res.json();
-        setClientSecret(data.client_secret);
-        setPaymentIntentId(data.id);
-        window.localStorage.setItem('clientSecret', data.client_secret);
-        window.localStorage.setItem('paymentIntentId', data.id);
-        hasFetchedIntentRef.current = true;
+        console.log('Payment Intent response:', data);
+
+        if (!isCustomerUpdateOnly) {
+          // Only update clientSecret if it's the initial setup or a significant change
+          if (!initialClientSecretRef.current || promoCodeId) {
+            setClientSecret(data.client_secret);
+            setPaymentIntentId(data.id);
+            initialClientSecretRef.current = data.client_secret;
+          }
+          setDiscountedAmount(data.discountedAmount || totalPrice);
+          setPromoDiscount(data.discountPercent || 0);
+          window.localStorage.setItem('clientSecret', data.client_secret);
+          window.localStorage.setItem('paymentIntentId', data.id);
+        }
       } catch (err: any) {
-        console.error('Error creating Payment Intent:', err);
+        console.error('Error processing Payment Intent:', err);
         setError(err.message || 'Failed to initialize payment');
+      } finally {
+        if (!isCustomerUpdateOnly) {
+          setPaymentIntentLoading(false);
+        }
+        isProcessingRef.current = false;
       }
     },
-    []
+    [isMounted, basket, totalItems, totalPrice, currency, promoCodeId, paymentIntentId]
   );
 
+  // Initial payment intent creation (without customer email)
   useEffect(() => {
-    if (!isMounted) return;
-    if (basket.length === 0) return;
-    if (hasFetchedIntentRef.current) return;
+    if (!isMounted || basket.length === 0 || hasFetchedIntentRef.current) return;
 
-    console.log('useEffect triggered:', { basketLength: basket.length });
-    fetchPaymentIntent(discountedPrice, currency, totalItems, basket);
-  }, [isMounted, basket, fetchPaymentIntent, discountedPrice, currency, totalItems]);
+    hasFetchedIntentRef.current = true;
+    managePaymentIntent();
+  }, [isMounted, basket, managePaymentIntent]);
 
-  const resetPaymentIntent = () => {
+  // Update payment intent when promoCodeId changes
+  useEffect(() => {
+    if (!isMounted || basket.length === 0 || !paymentIntentId) return;
+
+    managePaymentIntent();
+  }, [promoCodeId, paymentIntentId, managePaymentIntent, isMounted, basket]);
+
+  useEffect(() => {
+    console.log('PromoCodeId state changed:', promoCodeId);
+  }, [promoCodeId]);
+
+  const resetPaymentIntent = useCallback(() => {
     console.log('Resetting payment intent');
-    hasFetchedIntentRef.current = false;
     setClientSecret(null);
     setPaymentIntentId(null);
+    setDiscountedAmount(totalPrice);
     setPromoDiscount(0);
+    setPromoCodeId(null);
+    initialClientSecretRef.current = null;
+    hasFetchedIntentRef.current = false;
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('clientSecret');
       window.localStorage.removeItem('paymentIntentId');
       console.log('Cleared payment data from localStorage');
     }
-  };
+  }, [totalPrice]);
 
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(async () => {
     console.log('Payment succeeded, clearing basket and payment data');
-    // Store the final amount and currency before clearing the basket
-    setFinalAmount(discountedPrice);
-    setFinalCurrency(currency);
+    if (paymentIntentId) {
+      try {
+        const response = await fetch(`/api/verify-payment-intent?session_id=${paymentIntentId}`);
+        const result = await response.json();
+        console.log('Payment intent verification result:', result);
+        if (response.ok) {
+          setFinalAmount(result.amount / 100);
+          setFinalCurrency(result.currency.toUpperCase());
+        } else {
+          console.error('Failed to verify payment intent:', result.error);
+          setFinalAmount(discountedAmount);
+          setFinalCurrency(currency);
+        }
+      } catch (err) {
+        console.error('Error fetching payment intent:', err);
+        setFinalAmount(discountedAmount);
+        setFinalCurrency(currency);
+      }
+    } else {
+      setFinalAmount(discountedAmount);
+      setFinalCurrency(currency);
+    }
     setPaymentSucceeded(true);
     clearBasket();
     resetPaymentIntent();
@@ -133,12 +321,54 @@ export default function CheckoutPage() {
         paymentIntentId: localStorage.getItem('paymentIntentId'),
       });
     }
-  };
+  }, [paymentIntentId, discountedAmount, currency, clearBasket, resetPaymentIntent]);
+
+  const setErrorCallback = useCallback((error: string | null) => {
+    if (!isSubmittingRef.current) {
+      setError(error);
+    }
+  }, []);
+
+  const setIsLoadingCallback = useCallback((loading: boolean) => {
+    setIsLoading(loading);
+  }, []);
+
+  const setDiscountedAmountCallback = useCallback((amount: number) => {
+    if (!isSubmittingRef.current) {
+      setDiscountedAmount(amount);
+    }
+  }, []);
+
+  const setPromoDiscountCallback = useCallback((discount: number) => {
+    setPromoDiscount(discount);
+  }, []);
+
+  const setPromoCodeIdCallback = useCallback((id: string | null) => {
+    setPromoCodeId(id);
+  }, []);
+
+  const setCustomerEmailCallback = useCallback((email: string | null) => {
+    if (!isSubmittingRef.current) {
+      setCustomerEmail(email);
+    }
+  }, []);
+
+  const updatePaymentIntentWithEmailCallback = useCallback(
+    async (email?: string, isCustomerUpdateOnly: boolean = false) => {
+      isSubmittingRef.current = true;
+      try {
+        await managePaymentIntent(email, isCustomerUpdateOnly);
+      } finally {
+        isSubmittingRef.current = false;
+      }
+    },
+    [managePaymentIntent]
+  );
 
   if (paymentSucceeded) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center min-h-screen">
-        <div className="-mx-8 mt-8 px-4 mb-2 sm:mt-10 bg-gray-50 py-4 flex items-center justify-between">
+        <div className="-mx-8 mt-8 mb-2 sm:mt-10 bg-gray-50 py-4 flex items-center justify-between">
           <h1 className="px-8 text-base md:text-xl font-semibold tracking-tight leading-tight">
             Payment
           </h1>
@@ -149,8 +379,8 @@ export default function CheckoutPage() {
         <p className="text-gray-600 text-base mb-2">
           Thank you for your purchase. Your payment has been successfully processed.
         </p>
-        <p className="text-gray-900 font-bold text-3xl mb-6 uppercase">
-          {finalCurrency} {finalAmount.toFixed(2)}
+        <p className="text-gray-600 text-base mb-6">
+          Amount Paid: {finalCurrency} {finalAmount.toFixed(2)}
         </p>
         <Link href="/products">
           <span className="text-sky-600 hover:text-sky-700 text-sm font-medium inline-block transition-colors duration-200">
@@ -237,7 +467,7 @@ export default function CheckoutPage() {
                   {currency}
                 </span>
                 <span className="text-3xl font-bold text-gray-900">
-                  {discountedPrice.toFixed(2)}
+                  {discountedAmount.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -254,18 +484,26 @@ export default function CheckoutPage() {
               </div>
             )}
             <div className="mt-4">
-              {clientSecret && (
-                <Elements stripe={stripePromise} options={{ clientSecret }}>
-                  <PaymentForm
-                    onSuccess={handleSuccess}
-                    onError={setError}
-                    isLoading={isLoading}
-                    setIsLoading={setIsLoading}
-                    totalPrice={totalPrice}
-                    setPromoDiscount={setPromoDiscount}
-                    resetPaymentIntent={resetPaymentIntent}
-                  />
-                </Elements>
+              {paymentIntentLoading ? (
+                <div className="text-center text-gray-600">Loading payment details...</div>
+              ) : clientSecret ? (
+                <PaymentFormWrapper
+                  clientSecret={clientSecret}
+                  onSuccess={handleSuccess}
+                  onError={setErrorCallback}
+                  isLoading={isLoading}
+                  setIsLoading={setIsLoadingCallback}
+                  totalPrice={totalPrice}
+                  setPromoDiscount={setPromoDiscountCallback}
+                  setPromoCodeId={setPromoCodeIdCallback}
+                  resetPaymentIntent={resetPaymentIntent}
+                  setDiscountedAmount={setDiscountedAmountCallback}
+                  customerEmail={customerEmail}
+                  setCustomerEmail={setCustomerEmailCallback}
+                  updatePaymentIntentWithEmail={updatePaymentIntentWithEmailCallback}
+                />
+              ) : (
+                <div className="text-center text-red-500">Failed to load payment details</div>
               )}
             </div>
           </div>

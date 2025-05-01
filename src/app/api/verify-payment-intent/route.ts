@@ -1,26 +1,28 @@
+// /src/app/api/verify-payment-intent/route.ts
 import { NextResponse } from 'next/server';
-import { stripe } from '../../../lib/stripe';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const paymentIntentId = searchParams.get('session_id');
-
-  if (!paymentIntentId) {
-    return NextResponse.json({ error: 'Missing payment_intent_id' }, { status: 400 });
-  }
-
   try {
-    // Retrieve the Payment Intent with expanded payment method
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-      expand: ['payment_method'],
-    });
+    const { searchParams } = new URL(request.url);
+    const paymentIntentId = searchParams.get('session_id');
 
-    return NextResponse.json(paymentIntent);
+    if (!paymentIntentId) {
+      return NextResponse.json({ error: 'Payment intent ID is required' }, { status: 400 });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    console.log('Retrieved payment intent:', paymentIntent);
+
+    return NextResponse.json({
+      status: paymentIntent.status,
+      amount: paymentIntent.amount, // Amount in cents
+      currency: paymentIntent.currency,
+    });
   } catch (error: any) {
-    console.error('Error verifying Payment Intent:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to verify Payment Intent' },
-      { status: 500 }
-    );
+    console.error('Error verifying payment intent:', error);
+    return NextResponse.json({ error: error.message || 'Failed to verify payment' }, { status: 500 });
   }
 }
