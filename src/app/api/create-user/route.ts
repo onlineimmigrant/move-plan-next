@@ -1,3 +1,4 @@
+// /src/app/api/create-user/route.ts
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 
@@ -57,11 +58,11 @@ export async function POST(request: Request) {
       userId = userData.user.id;
     }
 
-    // Check if user already exists in profiles
+    // Check if a profile already exists in profiles by id (not email)
     const { data: existingProfile, error: fetchError } = await supabaseAdmin
       .from('profiles')
       .select('*')
-      .eq('email', email)
+      .eq('id', userId) // Check by id, not email
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
@@ -69,7 +70,27 @@ export async function POST(request: Request) {
     }
 
     if (existingProfile) {
-      return NextResponse.json({ exists: true, message: 'User already exists' });
+      // Profile exists, update it instead of inserting
+      const { data: updatedProfile, error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          username: name || email,
+          full_name: name || email,
+          email: email,
+          city: city || existingProfile.city,
+          postal_code: postal_code || existingProfile.postal_code,
+          country: country || existingProfile.country,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      return NextResponse.json({ exists: true, updated: true, profile: updatedProfile });
     }
 
     // Create a new profile in Supabase
@@ -77,7 +98,7 @@ export async function POST(request: Request) {
       .from('profiles')
       .insert([
         {
-          id: userId, // Use the ID from auth.users
+          id: userId,
           username: name || email,
           full_name: name || email,
           email: email,

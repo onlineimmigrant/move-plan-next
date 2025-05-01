@@ -38,13 +38,18 @@ export default function ProductHeader({ productSubType, productName }: ProductHe
 
   return (
     <div
-      className={`${
-        isFixed
-          ? 'fixed top-0 left-0 right-0 z-[51] bg-sky-50 shadow-md'
-          : 'relative'
-      } transition-all duration-300 md:static md:bg-transparent md:shadow-none px-4  -mx-4 max-w-7xl`}
-    >
-      <div className="flex flex-col bg-sky-50 sm:bg-transparent p-4 px-8">
+    className={`
+        w-full
+        px-4 mx-auto max-w-7xl
+        will-change-transform
+        transition-all duration-800 ease-in-out
+        md:static md:bg-transparent md:shadow-none
+        ${isFixed
+          ? 'fixed top-0 left-0 right-0 z-[51] bg-sky-50 shadow-md translate-y-0 opacity-100'
+          : 'relative translate-y-0 opacity-100'
+        }
+      `}    >
+      <div className="flex flex-col bg-sky-50 sm:bg-transparent p-4 -mx-4 px-8">
         <Link
           href="/products"
           className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
