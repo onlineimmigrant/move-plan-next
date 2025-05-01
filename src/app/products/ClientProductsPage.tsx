@@ -144,16 +144,16 @@ export default function ClientProductsPage({
             {searchQuery ? `No products found matching "${searchQuery}"` : 'No products available'}
           </div>
         ) : (
-          <div className="px-4 sm:px-0 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className=" sm:px-0 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4">
             {filteredProducts.slice(0, visibleItemsCount).map((product) => (
               <Link
                 key={product.id}
                 href={product.slug ? `/products/${product.slug}` : '#'}
                 className="group"
               >
-                <div className=" bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                <div className=" bg-white rounded-xl shadow-sm overflow-hidden flex  flex-col">
                   {product.links_to_image && product.links_to_image.trim() !== '' && (
-                    <div className="sm:w-full sm:h-auto flex-shrink-0">
+                    <div className="p-2 sm:p-0 w-1/2 h-1/2 sm:w-full sm:h-auto flex-shrink-0">
                       <img
                         src={product.links_to_image}
                         alt={product.product_name ?? 'Product image'}

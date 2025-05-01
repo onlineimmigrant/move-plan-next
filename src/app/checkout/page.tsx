@@ -138,7 +138,7 @@ export default function CheckoutPage() {
   if (paymentSucceeded) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center min-h-screen">
-        <div className="-mx-8 mt-8 mb-2 sm:mt-10 bg-gray-50 py-4 flex items-center justify-between">
+        <div className="-mx-8 mt-8 px-4 mb-2 sm:mt-10 bg-gray-50 py-4 flex items-center justify-between">
           <h1 className="px-8 text-base md:text-xl font-semibold tracking-tight leading-tight">
             Payment
           </h1>
