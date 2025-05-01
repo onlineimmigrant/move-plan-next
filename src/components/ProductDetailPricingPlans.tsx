@@ -127,9 +127,15 @@ export default function ProductDetailPricingPlans({
   const [isAdded, setIsAdded] = useState(false);
   const { basket, addToBasket } = useBasket();
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isMounted, setIsMounted] = useState(false); // Add state to track hydration
 
   console.log('Pricing plans with features:', JSON.stringify(pricingPlans, null, 2));
   console.log('Selected plan:', JSON.stringify(selectedPlan, null, 2));
+
+  // Track hydration state
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const firstInStockPlan =
@@ -205,7 +211,9 @@ export default function ProductDetailPricingPlans({
   }, []);
 
   const selectedPlanStatus = getStatus(selectedPlan).toLowerCase();
-  const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = isMounted
+    ? basket.reduce((sum, item) => sum + item.quantity, 0)
+    : 0; // Default to 0 during SSR
 
   const isSelectedPlanActive = pricingPlans.some(
     (plan) => plan.slug === selectedPlan?.slug && getStatus(plan).toLowerCase() !== 'out of stock'
@@ -355,15 +363,20 @@ export default function ProductDetailPricingPlans({
           )}
         </button>
 
-        {totalItems > 0 && (
-          <Link href="/checkout">
-            <button
-              className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-200 focus:ring-opacity-50 shadow-md bg-gray-600 text-white hover:bg-gray-700 hover:scale-105"
-              aria-label="Proceed to checkout"
-            >
-              <span>Proceed to Checkout</span>
-            </button>
-          </Link>
+        {/* Delay rendering of the "Proceed to Checkout" button until after hydration */}
+        {isMounted ? (
+          totalItems > 0 ? (
+            <Link href="/checkout">
+              <button
+                className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-200 focus:ring-opacity-50 shadow-md bg-gray-600 text-white hover:bg-gray-700 hover:scale-105"
+                aria-label="Proceed to checkout"
+              >
+                <span>Proceed to Checkout</span>
+              </button>
+            </Link>
+          ) : null
+        ) : (
+          <div className="h-14 w-full" /> // Placeholder to match button height
         )}
       </div>
 

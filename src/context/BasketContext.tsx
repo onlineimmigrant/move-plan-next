@@ -1,3 +1,4 @@
+// /src/context/BasketContext.tsx
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
@@ -8,7 +9,7 @@ export interface PricingPlan {
   package?: string;
   measure?: string;
   currency: string;
-  currency_symbol: string; // Make this required to match BasketItemComponent
+  currency_symbol: string;
   price: number;
   promotion_price?: number;
   promotion_percent?: number;
@@ -37,7 +38,36 @@ interface BasketContextType {
 const BasketContext = createContext<BasketContextType | undefined>(undefined);
 
 export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
-  const [basket, setBasket] = useState<BasketItem[]>([]);
+  const [basket, setBasket] = useState<BasketItem[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    try {
+      const savedBasket = localStorage.getItem('basket');
+      if (savedBasket) {
+        const parsedBasket = JSON.parse(savedBasket);
+        if (Array.isArray(parsedBasket) && parsedBasket.every(item => 
+          item && typeof item === 'object' && 'plan' in item && 'quantity' in item
+        )) {
+          return parsedBasket as BasketItem[];
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing basket from localStorage:', error);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('basket', JSON.stringify(basket));
+        console.log('Basket saved to localStorage:', basket);
+      } catch (error) {
+        console.error('Error saving basket to localStorage:', error);
+      }
+    }
+  }, [basket]);
 
   useEffect(() => {
     console.log('Basket updated:', basket);
@@ -45,10 +75,9 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const addToBasket = async (plan: PricingPlan) => {
     console.log('Adding to basket:', plan);
-    // Ensure the plan has a currency_symbol, provide a fallback if missing
     const planWithFallback: PricingPlan = {
       ...plan,
-      currency_symbol: plan.currency_symbol || 'USD', // Fallback to 'USD'
+      currency_symbol: plan.currency_symbol || 'USD',
     };
     setBasket((prev) => {
       const existingItem = prev.find((item) => item.plan.id === plan.id);
@@ -87,6 +116,9 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
   const clearBasket = () => {
     console.log('Clearing basket');
     setBasket([]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('basket');
+    }
   };
 
   return (

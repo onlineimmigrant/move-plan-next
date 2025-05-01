@@ -306,7 +306,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
 
           {/* Media Section (Moved below text on mobile) */}
-          <div className="order-2 md:order-1 lg:col-span-1 py-4 sm:pt-0 md:pb-8 flex justify-center items-center">
+          <div className="order-2 md:order-1 lg:col-span-1 py-4 sm:pt-6 md:pb-8 flex justify-center items-center">
             {product_media && product_media.length > 0 ? (
               <ProductDetailMediaDisplay mediaItems={product_media} />
             ) : (

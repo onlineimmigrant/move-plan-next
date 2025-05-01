@@ -1,3 +1,4 @@
+// /src/components/PaymentForm.tsx
 'use client';
 
 import { useState } from 'react';
@@ -55,11 +56,12 @@ export default function PaymentForm({
     setIsLoading(true);
 
     try {
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         },
+        redirect: 'if_required', // Only redirect if absolutely necessary
       });
 
       if (error) {
@@ -70,8 +72,12 @@ export default function PaymentForm({
           setMessage('An unexpected error occurred.');
           onError('An unexpected error occurred.');
         }
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        console.log('Payment succeeded inline:', paymentIntent);
+        onSuccess(); // Call onSuccess for inline success
       } else {
-        onSuccess();
+        console.log('Payment intent status:', paymentIntent?.status);
+        // If redirect occurred, onSuccess will be handled on the /success page
       }
     } catch (err: any) {
       console.error('Payment error:', err);
@@ -120,7 +126,7 @@ export default function PaymentForm({
         )}
         {promoApplied && (
           <div className="mt-1 mb-1 text-teal-500 text-sm font-medium">
-            Promo code applied! 
+            Promo code applied!
           </div>
         )}
       </div>
