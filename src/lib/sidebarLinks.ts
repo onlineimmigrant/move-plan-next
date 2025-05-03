@@ -23,6 +23,7 @@ export interface LinkItem {
           { href: "/admin/product_sub_types", label: "Product Sub Types" },
         ],
       },
+      
 
 
       {
@@ -33,6 +34,16 @@ export interface LinkItem {
           { href: "/admin/features", label: "Features" },
           { href: "/admin/pricingplan_features", label: "Pricing Features" },
           { href: "/admin/inventory", label: "Inventory" },
+        ],
+      },
+      {
+        label: "Stripe",
+        children: [
+          { href: "/admin/customers", label: "Customers" },
+          { href: "/admin/transactions", label: "Transactions" },
+          { href: "/admin/subscriptions", label: "Subscriptions" },
+          { href: "/admin/stripe_products", label: "Stripe Products" },
+          { href: "/admin/stripe_prices", label: "Stripe Prices" },
         ],
       },
       {
