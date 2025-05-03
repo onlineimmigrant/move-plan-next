@@ -1,49 +1,59 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
 
-// Define the AuthContext interface
+// Log environment variables to debug
+console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+const supabase: SupabaseClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+console.log('Supabase client initialized:', supabase);
+
 interface AuthContextType {
   session: Session | null;
   setSession: React.Dispatch<React.SetStateAction<Session | null>>;
   login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
+  supabase: SupabaseClient;
 }
 
-// Create the context with the defined type (default value is undefined to enforce provider usage)
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
-    // 1) Check current session
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       console.log('Initial session:', data.session);
-      // Log cookies after fetching session
       console.log('Cookies after fetching session:', document.cookie);
     });
 
-    // 2) Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, newSession) => {
-      setSession(newSession);
-      console.log('Auth state changed:', event, newSession);
-      // Log cookies after auth state change
-      console.log('Cookies after auth state change:', document.cookie);
+      const hasChanged =
+        newSession?.access_token !== session?.access_token ||
+        newSession?.user?.id !== session?.user?.id;
+
+      if (hasChanged) {
+        setSession(newSession);
+        console.log('Auth state changed:', event, newSession);
+        console.log('Cookies after auth state change:', document.cookie);
+      } else {
+        console.log('Auth state unchanged, skipping session update.');
+      }
     });
 
-    // 3) Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
   }, []);
 
-  // Add a login helper
   async function login(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -55,12 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     console.log('Login successful:', data);
     setSession(data.session);
-    // Log cookies after login
     console.log('Cookies after login:', document.cookie);
     return data;
   }
 
-  // Logout helper
   async function logout() {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -71,15 +79,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Cookies after logout:', document.cookie);
   }
 
-  // Provide session, setSession, login, and logout
+  const contextValue = useMemo(
+    () => ({
+      session,
+      setSession,
+      login,
+      logout,
+      supabase,
+    }),
+    [session]
+  );
+
   return (
-    <AuthContext.Provider value={{ session, setSession, login, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');

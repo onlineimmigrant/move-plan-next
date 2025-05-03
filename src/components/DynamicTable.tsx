@@ -256,7 +256,8 @@ export default function DynamicTable({ tableName, apiEndpoint }: { tableName: st
     h1_title_color_id: "color.name",
     h1_via_gradient_color_id: "color.name",
     react_icon_id: "react_icons.icon_name",
-    footer_color_id: "color.name"
+    footer_color_id: "color.name",
+    stripe_customer_id: 'stripe_customer'
   };
 
   const fetchForeignKeyOptions = async (field: string) => {

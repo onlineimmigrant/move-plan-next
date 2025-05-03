@@ -5,7 +5,7 @@ import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Stripe, StripeElements } from '@stripe/stripe-js';
 
 interface PaymentFormProps {
-  onSuccess: () => void;
+  onSuccess: (email?: string) => void; // Update to accept email parameter
   onError: (error: string) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
@@ -150,7 +150,7 @@ export default function PaymentForm({
       console.error(errorMsg);
       setMessage(errorMsg);
       onError(errorMsg);
-      resetPaymentIntent(); // Reset payment intent to allow a fresh start
+      resetPaymentIntent();
       return;
     }
 
@@ -168,6 +168,7 @@ export default function PaymentForm({
       }
 
       // Update customerEmail state just before submission
+      console.log('Setting customerEmail:', email);
       setCustomerEmail(email);
 
       // Update payment intent with customer email, without updating clientSecret
@@ -196,7 +197,7 @@ export default function PaymentForm({
         console.error(errorMsg);
         setMessage(errorMsg);
         onError(errorMsg);
-        resetPaymentIntent(); // Reset payment intent to allow a fresh start
+        resetPaymentIntent();
         setIsLoading(false);
         return;
       }
@@ -232,7 +233,8 @@ export default function PaymentForm({
         }
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('Payment succeeded inline:', paymentIntent);
-        onSuccess();
+        // Pass the email directly to onSuccess
+        onSuccess(email);
       } else {
         console.log('Payment intent status:', paymentIntent?.status);
         const errorMsg = 'Payment did not succeed. Status: ' + paymentIntent?.status;

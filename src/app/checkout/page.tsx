@@ -1,3 +1,4 @@
+// app/checkout/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
@@ -9,6 +10,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import PaymentForm from '../../components/PaymentForm';
 import { createClient } from '@supabase/supabase-js';
+import { useAuth } from '@/context/AuthContext';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const supabase = createClient(
@@ -91,11 +93,11 @@ const PaymentFormWrapper = memo(
   }
 );
 
-// Add displayName to the memoized component
 PaymentFormWrapper.displayName = 'PaymentFormWrapper';
 
 export default function CheckoutPage() {
   const { basket, updateQuantity, removeFromBasket, clearBasket } = useBasket();
+  const { session } = useAuth();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +115,7 @@ export default function CheckoutPage() {
   const hasFetchedIntentRef = useRef(false);
   const isProcessingRef = useRef(false);
   const initialClientSecretRef = useRef<string | null>(null);
-  const isSubmittingRef = useRef(false); // Track submission state to prevent re-renders
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -130,12 +132,11 @@ export default function CheckoutPage() {
   // Fetch user email if authenticated
   useEffect(() => {
     const fetchUserEmail = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      if (session?.user?.id) {
         const { data, error } = await supabase
           .from('profiles')
           .select('email')
-          .eq('id', user.id)
+          .eq('id', session.user.id)
           .single();
         if (error) {
           console.error('Error fetching user email:', error);
@@ -146,7 +147,7 @@ export default function CheckoutPage() {
     };
 
     fetchUserEmail();
-  }, []);
+  }, [session]);
 
   const totalItems = isMounted
     ? basket.reduce((sum, item: BasketItem) => sum + item.quantity, 0)
@@ -228,7 +229,6 @@ export default function CheckoutPage() {
         console.log('Payment Intent response:', data);
 
         if (!isCustomerUpdateOnly) {
-          // Only update clientSecret if it's the initial setup or a significant change
           if (!initialClientSecretRef.current || promoCodeId) {
             setClientSecret(data.client_secret);
             setPaymentIntentId(data.id);
@@ -252,20 +252,35 @@ export default function CheckoutPage() {
     [isMounted, basket, totalItems, totalPrice, currency, promoCodeId, paymentIntentId]
   );
 
-  // Initial payment intent creation (without customer email)
+  // Initial payment intent creation (remove session.user.id dependency)
   useEffect(() => {
-    if (!isMounted || basket.length === 0 || hasFetchedIntentRef.current) return;
+    if (!isMounted || basket.length === 0 || hasFetchedIntentRef.current) {
+      console.log('Skipping initial payment intent creation due to conditions:', {
+        isMounted,
+        basketLength: basket.length,
+        hasFetchedIntent: hasFetchedIntentRef.current,
+      });
+      return;
+    }
 
     hasFetchedIntentRef.current = true;
-    managePaymentIntent();
+    managePaymentIntent(); // Create payment intent without customerEmail initially
   }, [isMounted, basket, managePaymentIntent]);
 
-  // Update payment intent when promoCodeId changes
+  // Update payment intent when promoCodeId or customerEmail changes
   useEffect(() => {
-    if (!isMounted || basket.length === 0 || !paymentIntentId) return;
+    if (!isMounted || basket.length === 0 || !paymentIntentId || !customerEmail) {
+      console.log('Skipping payment intent update due to conditions:', {
+        isMounted,
+        basketLength: basket.length,
+        paymentIntentId,
+        customerEmail,
+      });
+      return;
+    }
 
-    managePaymentIntent();
-  }, [promoCodeId, paymentIntentId, managePaymentIntent, isMounted, basket]);
+    managePaymentIntent(customerEmail, true);
+  }, [promoCodeId, paymentIntentId, customerEmail, managePaymentIntent, isMounted, basket]);
 
   useEffect(() => {
     console.log('PromoCodeId state changed:', promoCodeId);
