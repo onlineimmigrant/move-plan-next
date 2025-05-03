@@ -440,11 +440,11 @@ export async function POST(request: Request) {
         stripe_transaction_id: paymentIntent.id,
         stripe_customer_id: customerId,
         user_id: userId,
-        amount: paymentIntent.amount / 100.0, // Convert cents to dollars
-        currency: paymentIntent.currency.toUpperCase(), // Uppercase currency
+        amount: paymentIntent.amount / 100.0,
+        currency: paymentIntent.currency.toUpperCase(),
         status: paymentIntent.status,
-        customer: customerName, // Store the customer's name
-        email: customerEmail, // Store the customer's email
+        customer: customerName,
+        email: customerEmail,
       });
 
       const { error: insertError } = await supabase
@@ -453,14 +453,14 @@ export async function POST(request: Request) {
           stripe_transaction_id: paymentIntent.id,
           stripe_customer_id: customerId,
           user_id: userId,
-          amount: paymentIntent.amount / 100.0, // Convert cents to dollars
-          currency: paymentIntent.currency.toUpperCase(), // Uppercase currency
+          amount: paymentIntent.amount / 100.0,
+          currency: paymentIntent.currency.toUpperCase(),
           status: paymentIntent.status,
           created_at: new Date(paymentIntent.created * 1000).toISOString(),
           updated_at: new Date().toISOString(),
           description: paymentIntent.description || null,
-          customer: customerName, // Store the customer's name
-          email: customerEmail, // Store the customer's email
+          customer: customerName,
+          email: customerEmail,
         });
 
       if (insertError) {
@@ -469,6 +469,112 @@ export async function POST(request: Request) {
       }
 
       console.log(`Successfully stored transaction ${paymentIntent.id} in Supabase`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Handle product.created and product.updated events
+    if (event.type === 'product.created' || event.type === 'product.updated') {
+      console.log(`Processing ${event.type} event:`, event.data.object);
+      const product = event.data.object as Stripe.Product;
+
+      const productData = {
+        id: product.id,
+        name: product.name,
+        active: product.active,
+        description: product.description || null,
+        created: new Date(product.created * 1000).toISOString(),
+        updated: product.updated ? new Date(product.updated * 1000).toISOString() : new Date().toISOString(),
+        default_price: product.default_price as string | null,
+        attrs: product.metadata ? JSON.parse(JSON.stringify(product.metadata)) : {},
+      };
+
+      console.log('Upserting product into stripe_products:', productData);
+
+      const { error: upsertError } = await supabase
+        .from('stripe_products')
+        .upsert(productData, { onConflict: 'id' });
+
+      if (upsertError) {
+        console.error(`Failed to upsert product ${product.id}:`, upsertError);
+        throw new Error(`Failed to upsert product: ${upsertError.message}`);
+      }
+
+      console.log(`Successfully upserted product ${product.id} into stripe_products`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Handle price.created and price.updated events
+    if (event.type === 'price.created' || event.type === 'price.updated') {
+      console.log(`Processing ${event.type} event:`, event.data.object);
+      const price = event.data.object as Stripe.Price;
+
+      const priceData = {
+        id: price.id,
+        product_id: price.product as string,
+        active: price.active,
+        currency: price.currency,
+        unit_amount: price.unit_amount || null,
+        type: price.type,
+        recurring_interval: price.recurring?.interval || null,
+        recurring_interval_count: price.recurring?.interval_count || null,
+        created: new Date(price.created * 1000).toISOString(),
+        attrs: price.metadata ? JSON.parse(JSON.stringify(price.metadata)) : {},
+      };
+
+      console.log('Upserting price into stripe_prices:', priceData);
+
+      const { error: upsertError } = await supabase
+        .from('stripe_prices')
+        .upsert(priceData, { onConflict: 'id' });
+
+      if (upsertError) {
+        console.error(`Failed to upsert price ${price.id}:`, upsertError);
+        throw new Error(`Failed to upsert price: ${upsertError.message}`);
+      }
+
+      console.log(`Successfully upserted price ${price.id} into stripe_prices`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Handle product.deleted event
+    if (event.type === 'product.deleted') {
+      console.log(`Processing product.deleted event:`, event.data.object);
+      const product = event.data.object as Stripe.Product;
+
+      console.log(`Deleting product ${product.id} from stripe_products`);
+
+      const { error: deleteError } = await supabase
+        .from('stripe_products')
+        .delete()
+        .eq('id', product.id);
+
+      if (deleteError) {
+        console.error(`Failed to delete product ${product.id}:`, deleteError);
+        throw new Error(`Failed to delete product: ${deleteError.message}`);
+      }
+
+      console.log(`Successfully deleted product ${product.id} from stripe_products`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Handle price.deleted event
+    if (event.type === 'price.deleted') {
+      console.log(`Processing price.deleted event:`, event.data.object);
+      const price = event.data.object as Stripe.Price;
+
+      console.log(`Deleting price ${price.id} from stripe_prices`);
+
+      const { error: deleteError } = await supabase
+        .from('stripe_prices')
+        .delete()
+        .eq('id', price.id);
+
+      if (deleteError) {
+        console.error(`Failed to delete price ${price.id}:`, deleteError);
+        throw new Error(`Failed to delete price: ${deleteError.message}`);
+      }
+
+      console.log(`Successfully deleted price ${price.id} from stripe_prices`);
       return NextResponse.json({ received: true });
     }
 
