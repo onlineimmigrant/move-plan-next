@@ -27,159 +27,101 @@ const getOrCreateUser = async (email: string, name?: string) => {
     if (rpcError) {
       console.error('Error calling get_user_by_email RPC:', rpcError);
       console.log('Falling back to user creation with duplicate email check');
-    } else if (existingUser) {
-      console.log('User already exists in auth.users with ID:', existingUser.id);
-      const { data: existingProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', existingUser.id)
-        .single();
-
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Error checking profiles entry:', profileError);
-        throw new Error(`Failed to check profiles entry: ${profileError.message}`);
-      }
-
-      if (!existingProfile) {
-        console.log('Creating profiles entry for existing user ID:', existingUser.id);
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: existingUser.id,
-            email,
-            full_name: name || email,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            role: 'user',
-          });
-
-        if (insertError) {
-          console.error('Error creating profiles entry for existing user:', insertError);
-          throw new Error(`Failed to create profiles entry: ${insertError.message}`);
-        }
-        console.log('Successfully created profiles entry for existing user ID:', existingUser.id);
-      } else {
-        console.log('Profiles entry already exists for user ID:', existingUser.id);
-      }
-
-      return { userId: existingUser.id, temporaryPassword: null };
     }
 
-    const temporaryPassword = generateTemporaryPassword();
-    console.log('Generated temporary password for new user:', temporaryPassword);
-
-    console.log('Creating new user in auth.users with email:', email);
     let userId: string;
-    try {
-      const { data: newUser, error: userCreateError } = await supabaseAdmin.createUser({
-        email,
-        password: temporaryPassword,
-        email_confirm: true,
-        user_metadata: {
-          name: name || email,
-          created_via: 'stripe_customer',
-        },
-      });
+    let temporaryPassword: string | null = null;
 
-      if (userCreateError) {
-        console.error('Error creating user with admin API:', userCreateError);
-        console.log('Falling back to public auth.signUp');
-        const { data: publicUser, error: publicError } = await supabase.auth.signUp({
+    if (existingUser) {
+      console.log('User already exists in auth.users with ID:', existingUser.id);
+      userId = existingUser.id;
+    } else {
+      temporaryPassword = generateTemporaryPassword();
+      console.log('Generated temporary password for new user:', temporaryPassword);
+
+      console.log('Creating new user in auth.users with email:', email);
+      try {
+        const { data: newUser, error: userCreateError } = await supabaseAdmin.createUser({
           email,
           password: temporaryPassword,
-          options: {
-            data: {
-              name: name || email,
-              created_via: 'stripe_customer',
-            },
+          email_confirm: true,
+          user_metadata: {
+            name: name || email,
+            created_via: 'stripe_customer',
           },
         });
 
-        if (publicError) {
-          console.error('Error creating user with public API:', publicError);
-          if (publicError.message.toLowerCase().includes('duplicate') || publicError.message.toLowerCase().includes('already registered')) {
-            console.log('Duplicate email detected, attempting to fetch existing user');
-            const { data: retryUser, error: retryError } = await supabase
-              .rpc('get_user_by_email', { email_input: email })
-              .single() as { data: UserByEmail | null; error: any };
+        if (userCreateError) {
+          console.error('Error creating user with admin API:', userCreateError);
+          console.log('Falling back to public auth.signUp');
+          const { data: publicUser, error: publicError } = await supabase.auth.signUp({
+            email,
+            password: temporaryPassword,
+            options: {
+              data: {
+                name: name || email,
+                created_via: 'stripe_customer',
+              },
+            },
+          });
 
-            if (retryError || !retryUser) {
-              throw new Error(`Failed to fetch existing user after duplicate error: ${retryError?.message || 'No user found'}`);
-            }
+          if (publicError) {
+            console.error('Error creating user with public API:', publicError);
+            if (publicError.message.toLowerCase().includes('duplicate') || publicError.message.toLowerCase().includes('already registered')) {
+              console.log('Duplicate email detected, attempting to fetch existing user');
+              const { data: retryUser, error: retryError } = await supabase
+                .rpc('get_user_by_email', { email_input: email })
+                .single() as { data: UserByEmail | null; error: any };
 
-            userId = retryUser.id;
-            console.log('Found existing user after duplicate error, ID:', userId);
-
-            const { data: existingProfile, error: profileError } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('id', userId)
-              .single();
-
-            if (profileError && profileError.code !== 'PGRST116') {
-              console.error('Error checking profiles entry:', profileError);
-              throw new Error(`Failed to check profiles entry: ${profileError.message}`);
-            }
-
-            if (!existingProfile) {
-              console.log('Creating profiles entry for existing user ID:', userId);
-              const { error: insertError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: userId,
-                  email,
-                  full_name: name || email,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                  role: 'user',
-                });
-
-              if (insertError) {
-                console.error('Error creating profiles entry for existing user:', insertError);
-                throw new Error(`Failed to create profiles entry: ${insertError.message}`);
+              if (retryError || !retryUser) {
+                throw new Error(`Failed to fetch existing user after duplicate error: ${retryError?.message || 'No user found'}`);
               }
-              console.log('Successfully created profiles entry for existing user ID:', userId);
+
+              userId = retryUser.id;
+              console.log('Found existing user after duplicate error, ID:', userId);
+              temporaryPassword = null; // Since the user already exists, no temporary password
+            } else {
+              throw new Error(`Failed to create user: ${publicError.message}`);
             }
-
-            return { userId, temporaryPassword: null };
+          } else {
+            if (!publicUser.user) {
+              console.error('Public API returned no user');
+              throw new Error('Failed to create user: No user data returned');
+            }
+            userId = publicUser.user.id;
+            console.log('Successfully created user with public API, ID:', userId);
           }
-          throw new Error(`Failed to create user: ${publicError.message}`);
+        } else {
+          userId = newUser.user.id;
+          console.log('Successfully created user with admin API, ID:', userId);
         }
-
-        if (!publicUser.user) {
-          console.error('Public API returned no user');
-          throw new Error('Failed to create user: No user data returned');
-        }
-
-        userId = publicUser.user.id;
-        console.log('Successfully created user with public API, ID:', userId);
-      } else {
-        userId = newUser.user.id;
-        console.log('Successfully created user with admin API, ID:', userId);
+      } catch (err: any) {
+        console.error('Error creating user:', err.message, 'Stack:', err.stack);
+        throw new Error(`Failed to create user: ${err.message}`);
       }
-    } catch (err: any) {
-      console.error('Error creating user:', err.message, 'Stack:', err.stack);
-      throw new Error(`Failed to create user: ${err.message}`);
     }
 
-    console.log('Creating profiles entry for new user ID:', userId);
-    const { error: profileError } = await supabase
+    // Use upsert to create or update the profiles entry
+    console.log('Upserting profiles entry for user ID:', userId);
+    const profileData = {
+      id: userId,
+      email,
+      full_name: name || email,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      role: 'user',
+    };
+
+    const { error: upsertError } = await supabase
       .from('profiles')
-      .insert({
-        id: userId,
-        email,
-        full_name: name || email,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        role: 'user',
-      });
+      .upsert(profileData, { onConflict: 'id' });
 
-    if (profileError) {
-      console.error('Error creating profiles entry:', profileError);
-      throw new Error(`Failed to create profiles entry: ${profileError.message}`);
+    if (upsertError) {
+      console.error('Error upserting profiles entry:', upsertError);
+      throw new Error(`Failed to upsert profiles entry: ${upsertError.message}`);
     }
 
-    console.log('Successfully created profiles entry for user ID:', userId);
+    console.log('Successfully upserted profiles entry for user ID:', userId);
     return { userId, temporaryPassword };
   } catch (err: any) {
     console.error('Error in getOrCreateUser:', err.message, 'Stack:', err.stack);
@@ -193,7 +135,7 @@ export async function POST(request: Request) {
     const rawBody = await request.text();
     const signature = request.headers.get('stripe-signature')!;
 
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_CUSTOMER!;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_CUSTOMER;
     console.log('Webhook Secret:', webhookSecret ? '[REDACTED]' : 'MISSING');
 
     if (!webhookSecret) {
