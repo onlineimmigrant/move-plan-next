@@ -8,11 +8,11 @@ export async function POST(request: Request) {
     const rawBody = await request.text();
     const signature = request.headers.get('stripe-signature')!;
 
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_PAYMENT!;
     console.log('Webhook Secret:', webhookSecret ? '[REDACTED]' : 'MISSING');
 
     if (!webhookSecret) {
-      console.error('Missing STRIPE_WEBHOOK_SECRET');
+      console.error('Missing STRIPE_WEBHOOK_SECRET_PAYMENT');
       return NextResponse.json({ error: 'Missing webhook secret' }, { status: 400 });
     }
 
