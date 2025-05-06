@@ -1,7 +1,7 @@
 // lib/stripe-supabase.ts
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { initializeRealtime } from './supabase-realtime';
+//import { initializeRealtime } from './supabase-realtime';
 
 // Initialize Stripe
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -22,7 +22,7 @@ export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
   },
 });
 
-initializeRealtime();
+
 
 // Access the Supabase Auth admin API
 export const supabaseAdmin = supabase.auth.admin;
