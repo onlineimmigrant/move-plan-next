@@ -27,20 +27,20 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
     }
   }, []);
 
-  const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
-  const icon = type === 'success' ? <FaCheckCircle className="h-5 w-5" /> : <FaExclamationCircle className="h-5 w-5" />;
+  const bgColor = type === 'success' ? 'teal-600' : 'red-600';
+  const icon = type === 'success' ? <FaCheckCircle className="h-8 w-8" /> : <FaExclamationCircle className="h-8 w-8" />;
 
   return (
     <div
       ref={toastRef}
-      className={`fixed top-4 right-4 z-50 flex items-center p-4 rounded-md shadow-lg text-white ${bgColor} max-w-sm animate-slide-in`}
+      className={`fixed top-4 right-4 z-50 flex items-center p-4 rounded-md shadow-lg border-2 bg-white text-gray-700 border-${bgColor} max-w-sm animate-slide-in`}
       role="alert"
       aria-live="assertive"
       tabIndex={-1}
     >
-      <div className="flex items-center space-x-2">
-        {icon}
-        <p className="text-sm">{message}</p>
+      <div className={`flex items-center space-x-4 text-${bgColor}`}>
+        <span className={`text-${bgColor}`}>{icon}</span>
+        <p className="text-sm font-semibold">{message}</p>
       </div>
       <button
         onClick={onClose}
