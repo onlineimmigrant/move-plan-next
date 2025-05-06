@@ -34,7 +34,7 @@ export default function BasketPage() {
       item.plan.is_promotion && item.plan.promotion_price
         ? item.plan.promotion_price
         : item.plan.price;
-    return sum + price * item.quantity;
+    return sum + price * item.quantity / 100;
   }, 0);
 
   const currency = basket.length > 0 ? basket[0].plan.currency_symbol || 'GBP' : 'GBP';

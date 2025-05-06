@@ -158,7 +158,7 @@ export default function CheckoutPage() {
           item.plan.is_promotion && item.plan.promotion_price
             ? item.plan.promotion_price
             : item.plan.price;
-        return sum + (price || 0) * item.quantity;
+        return sum + (price || 0) * item.quantity / 100;
       }, 0)
     : 0;
 
