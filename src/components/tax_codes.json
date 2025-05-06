@@ -1,0 +1,824 @@
+[
+    {
+      "product_tax_code": "txcd_10000000",
+      "description": "General - Tangible Goods",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10001000",
+      "description": "General - Electronically Supplied Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_10002000",
+      "description": "General - Digital Goods",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_10101000",
+      "description": "Clothing & Footwear - General",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10102000",
+      "description": "Protective Clothing",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10103000",
+      "description": "School Uniforms",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10104000",
+      "description": "Children’s Clothing",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10201000",
+      "description": "Food for Human Consumption - General",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_10202000",
+      "description": "Food - Prepared",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_10203000",
+      "description": "Dietary Supplements",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_10204000",
+      "description": "Beverages - Non-Alcoholic",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_10205000",
+      "description": "Beverages - Alcoholic",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_10301000",
+      "description": "Books - Physical",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10302000",
+      "description": "Books - Digital (e-books)",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_10303000",
+      "description": "Newspapers",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10304000",
+      "description": "Magazines & Periodicals",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10305000",
+      "description": "Digital Newspapers & Magazines",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_10401000",
+      "description": "Software - General",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_10402000",
+      "description": "Software - Downloadable",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_10403000",
+      "description": "Software - SaaS",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_10404000",
+      "description": "Software - Enterprise",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_10501000",
+      "description": "Medical Devices",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10502000",
+      "description": "Prescription Drugs",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10503000",
+      "description": "Over-the-Counter Drugs",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10504000",
+      "description": "Medical Supplies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10601000",
+      "description": "Furniture - General",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10602000",
+      "description": "Furniture - Office",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10603000",
+      "description": "Furniture - Home",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10701000",
+      "description": "Electronics - General",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10702000",
+      "description": "Electronics - Consumer",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10703000",
+      "description": "Electronics - Components",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10801000",
+      "description": "Sporting Goods",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10802000",
+      "description": "Exercise Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10901000",
+      "description": "Toys & Games",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10902000",
+      "description": "Board Games",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10903000",
+      "description": "Video Games - Physical",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_10904000",
+      "description": "Video Games - Digital",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_11001000",
+      "description": "Jewelry",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11002000",
+      "description": "Watches",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11101000",
+      "description": "Automotive Parts",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11102000",
+      "description": "Tires",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11201000",
+      "description": "Tools & Hardware",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11202000",
+      "description": "Power Tools",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11301000",
+      "description": "Musical Instruments",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11302000",
+      "description": "Music - Digital",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_11401000",
+      "description": "Art & Collectibles",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11402000",
+      "description": "Antiques",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_11501000",
+      "description": "Digital Audio Visual Works - Streamed",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_11502000",
+      "description": "Digital Audio Visual Works - Downloaded",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_11601000",
+      "description": "Telecommunications Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_11602000",
+      "description": "Internet Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_11701000",
+      "description": "Professional Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_11702000",
+      "description": "Consulting Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_11703000",
+      "description": "Legal Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_11801000",
+      "description": "Educational Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_11802000",
+      "description": "Online Courses",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_11901000",
+      "description": "Event Tickets",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_11902000",
+      "description": "Digital Event Tickets",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_12001000",
+      "description": "Transportation Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_12002000",
+      "description": "Public Transit Passes",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_12101000",
+      "description": "Rental - Tangible Goods",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_12102000",
+      "description": "Equipment Rental",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_12201000",
+      "description": "Rental - Real Estate",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_12202000",
+      "description": "Short-Term Lodging",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_12301000",
+      "description": "Cosmetics",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12302000",
+      "description": "Personal Care Products",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12401000",
+      "description": "Household Appliances",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12402000",
+      "description": "Kitchen Appliances",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12501000",
+      "description": "Pet Supplies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12502000",
+      "description": "Pet Food",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_12601000",
+      "description": "Office Supplies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12602000",
+      "description": "Stationery",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12701000",
+      "description": "Agricultural Products",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12702000",
+      "description": "Seeds & Plants",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12801000",
+      "description": "Construction Materials",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_12901000",
+      "description": "Firearms & Ammunition",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13001000",
+      "description": "Tobacco Products",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13101000",
+      "description": "Fuel - Gasoline",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13102000",
+      "description": "Fuel - Diesel",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13201000",
+      "description": "Bicycles",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13301000",
+      "description": "Camping Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13401000",
+      "description": "Craft Supplies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13501000",
+      "description": "Party Supplies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13601000",
+      "description": "Gift Cards - Physical",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13602000",
+      "description": "Gift Cards - Digital",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_13701000",
+      "description": "Luggage & Bags",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13801000",
+      "description": "Baby Products",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_13901000",
+      "description": "Home Decor",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_14001000",
+      "description": "Gardening Supplies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_14101000",
+      "description": "Cleaning Supplies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_14201000",
+      "description": "Safety Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_14301000",
+      "description": "Packaging Materials",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_20010000",
+      "description": "Non-taxable",
+      "tax_category": "Non-taxable"
+    },
+    {
+      "product_tax_code": "txcd_30010000",
+      "description": "Shipping",
+      "tax_category": "Shipping"
+    },
+    {
+      "product_tax_code": "txcd_92010001",
+      "description": "Shipping - Ground",
+      "tax_category": "Shipping"
+    },
+    {
+      "product_tax_code": "txcd_99999999",
+      "description": "General - Non-specific",
+      "tax_category": "General"
+    },
+
+    {
+      "product_tax_code": "txcd_14401000",
+      "description": "Telecom Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_14402000",
+      "description": "Mobile Phones",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_14501000",
+      "description": "Educational Materials - Physical",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_14502000",
+      "description": "Educational Materials - Digital",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_14601000",
+      "description": "Textbooks - Physical",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_14602000",
+      "description": "Textbooks - Digital",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_14701000",
+      "description": "Streaming Services - Subscription",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_14702000",
+      "description": "Streaming Services - Non-subscription",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_14801000",
+      "description": "Webinars - Live",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_14802000",
+      "description": "Webinars - Prerecorded",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_14901000",
+      "description": "Cloud Computing Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_14902000",
+      "description": "Hosting Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_15001000",
+      "description": "Digital Advertising Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_15101000",
+      "description": "Printed Advertising Materials",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15201000",
+      "description": "Vaping Products",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15301000",
+      "description": "Cannabis Products",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15401000",
+      "description": "Batteries",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15501000",
+      "description": "Chemicals",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15601000",
+      "description": "Pharmaceuticals - Non-prescription",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15701000",
+      "description": "Eyewear - Prescription",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15702000",
+      "description": "Eyewear - Non-prescription",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15801000",
+      "description": "Hearing Aids",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_15901000",
+      "description": "Orthopedic Devices",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_16001000",
+      "description": "Dental Products",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_16101000",
+      "description": "Veterinary Supplies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_16201000",
+      "description": "Livestock",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_16301000",
+      "description": "Fishing Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_16401000",
+      "description": "Hunting Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_16501000",
+      "description": "Photography Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_16601000",
+      "description": "Musical Recordings - Physical",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_16701000",
+      "description": "Fitness Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_16801000",
+      "description": "Membership Fees",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_16901000",
+      "description": "Parking Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_17001000",
+      "description": "Toll Fees",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_17101000",
+      "description": "Insurance Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_17201000",
+      "description": "Financial Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_17301000",
+      "description": "Gambling Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_17401000",
+      "description": "Lottery Tickets",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_17501000",
+      "description": "Charitable Donations",
+      "tax_category": "Non-taxable"
+    },
+    {
+      "product_tax_code": "txcd_17601000",
+      "description": "Government Fees",
+      "tax_category": "Non-taxable"
+    },
+    {
+      "product_tax_code": "txcd_17701000",
+      "description": "Recreational Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_17801000",
+      "description": "Cleaning Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_17901000",
+      "description": "Landscaping Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_18001000",
+      "description": "Pest Control Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_18101000",
+      "description": "Waste Management Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_18201000",
+      "description": "Security Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_18301000",
+      "description": "Courier Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_18401000",
+      "description": "Freight Services",
+      "tax_category": "Services"
+    },
+
+    {
+      "product_tax_code": "txcd_35010000",
+      "description": "Books - General (Custom)",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_18501000",
+      "description": "Virtual Reality Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_18601000",
+      "description": "Augmented Reality Software",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_18701000",
+      "description": "Drone Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_18801000",
+      "description": "3D Printing Materials",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_18901000",
+      "description": "AI Software Subscriptions",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_19001000",
+      "description": "Blockchain Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_19101000",
+      "description": "Cryptocurrency Transactions",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_19201000",
+      "description": "NFTs (Non-Fungible Tokens)",
+      "tax_category": "Digital Goods"
+    },
+    {
+      "product_tax_code": "txcd_19301000",
+      "description": "Energy-Efficient Appliances",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_19401000",
+      "description": "Solar Panels",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_19501000",
+      "description": "Electric Vehicle Charging Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_19601000",
+      "description": "Recyclable Materials",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_19701000",
+      "description": "Organic Food Products",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_19801000",
+      "description": "Gluten-Free Food Products",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_19901000",
+      "description": "Vegan Food Products",
+      "tax_category": "Food & Beverage"
+    },
+    {
+      "product_tax_code": "txcd_20001000",
+      "description": "Homeopathic Remedies",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_20101000",
+      "description": "Physical Therapy Equipment",
+      "tax_category": "Tangible Goods"
+    },
+    {
+      "product_tax_code": "txcd_20201000",
+      "description": "Mental Health Services",
+      "tax_category": "Services"
+    },
+    {
+      "product_tax_code": "txcd_20301000",
+      "description": "Telemedicine Services",
+      "tax_category": "Services"
+    }
+  ]

@@ -43,7 +43,7 @@ export default function BasketItem({
   const { product_name, package: planPackage, measure, currency, currency_symbol, price, promotion_price, is_promotion, links_to_image } =
     plan;
 
-  const finalPrice = (is_promotion && promotion_price ? promotion_price : price) * quantity;
+  const finalPrice = (is_promotion && promotion_price ? promotion_price : price) * quantity / 100;
 
   return (
     <div className="flex items-center p-4 border border-gray-300 rounded-lg bg-white hover:shadow-md transition-shadow duration-200">

@@ -48,6 +48,7 @@ interface Toast {
   onRetry?: () => void;
 }
 
+
 // Custom Toast Component
 const CustomToast = memo(
   ({
@@ -254,7 +255,7 @@ export default function ProductDetailPricingPlans({
                 tabIndex={isOutOfStock ? -1 : 0}
                 onClick={() => handlePlanSelect(plan)}
                 onKeyDown={(e) => handleKeyDown(e, plan, idx)}
-                aria-label={`Select ${plan.measure || 'Unknown'} plan, priced at ${
+                aria-label={`Select ${plan.package || 'Unknown'} plan, priced at ${
                   plan.currency_symbol
                 }${plan.is_promotion && plan.promotion_price ? plan.promotion_price : plan.price}, ${
                   normalizedStatus === 'in stock'
@@ -270,7 +271,7 @@ export default function ProductDetailPricingPlans({
                       isActive ? 'text-sky-600' : 'text-gray-900'
                     } ${isOutOfStock ? 'text-gray-500' : ''}`}
                   >
-                    {plan.measure || 'Product'}
+                    {plan.package || 'Product'}
                   </h2>
                   {(() => {
                     if (normalizedStatus === 'in stock') {
@@ -307,11 +308,11 @@ export default function ProductDetailPricingPlans({
                     <div className="flex items-baseline justify-end space-x-1.5">
                       <span className="text-lg md:text-xl text-gray-500 font-medium line-through">
                         {plan.currency_symbol}
-                        {plan.price}
+                        {(plan.price / 100).toFixed(2)}
                       </span>
                       <span className="text-xl md:text-2xl font-bold text-gray-900">
                         {plan.currency_symbol}
-                        {plan.promotion_price}
+                        {(plan.promotion_price / 100).toFixed(2)}
                       </span>
                     </div>
                   ) : (
@@ -322,7 +323,7 @@ export default function ProductDetailPricingPlans({
                         }`}
                       >
                         {plan.currency_symbol}
-                        {plan.price}
+                        {(plan.price / 100).toFixed(2)}
                       </span>
                     </div>
                   )}

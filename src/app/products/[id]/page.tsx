@@ -51,6 +51,7 @@ interface PricingPlan {
   id: number;
   product_id: number;
   package?: string;
+  type: string;
   measure?: string;
   currency: string;
   currency_symbol: string;
@@ -153,7 +154,7 @@ async function fetchProduct(slug: string): Promise<Product> {
         ...plan,
         product_name: plan.product?.product_name || productData.product_name,
         links_to_image: plan.product?.links_to_image || productData.links_to_image,
-        currency: plan.currency || productData.currency_manual || 'USD',
+        currency: plan.currency || productData.currency_manual || 'GBP',
         features: [], // No features in fallback
       }));
     }
@@ -162,7 +163,7 @@ async function fetchProduct(slug: string): Promise<Product> {
       ...plan,
       product_name: plan.product?.product_name || productData.product_name,
       links_to_image: plan.product?.links_to_image || productData.links_to_image,
-      currency: plan.currency || productData.currency_manual || 'USD',
+      currency: plan.currency || productData.currency_manual || 'GBP',
       features: plan.pricingplan_features
         ? plan.pricingplan_features
             .map((pf: any) => pf.feature)
