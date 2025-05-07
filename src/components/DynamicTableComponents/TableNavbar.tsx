@@ -229,7 +229,7 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
       </div>
       <div className="flex items-center space-x-4">
         {renderButtonGroup(controlButtons)}
-        {pageSortingComponent}
+     
       </div>
     </div>
   );

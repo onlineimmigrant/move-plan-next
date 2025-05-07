@@ -1,4 +1,3 @@
-// app/admin/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,7 +6,8 @@ import Link from "next/link";
 import {
   UsersIcon,
   DevicePhoneMobileIcon,
-  ShoppingCartIcon,
+  ArchiveBoxIcon,
+  CurrencyDollarIcon,
   ShieldCheckIcon,
   ChartBarIcon,
   Cog6ToothIcon,
@@ -21,7 +21,6 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     async function checkAdmin() {
-      // 1) Check if user is logged in
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -31,7 +30,6 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      // 2) Fetch the user's role from "profiles"
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("role")
@@ -43,13 +41,11 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      // 3) If not admin, redirect
       if (profile.role !== "admin") {
         router.push("/");
         return;
       }
 
-      // If admin, show the page
       setIsAdmin(true);
       setLoading(false);
     }
@@ -58,7 +54,11 @@ export default function AdminDashboardPage() {
   }, [router]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-lg font-semibold text-gray-600 animate-pulse">Loading...</div>
+      </div>
+    );
   }
 
   if (!isAdmin) {
@@ -66,59 +66,60 @@ export default function AdminDashboardPage() {
   }
 
   const dashboardLinks = [
-    {
-      label: "Users",
-      icon: <UsersIcon className="h-8 w-8 text-gray-600" />,
-      href: "/admin/profiles",
-    },
+
     {
       label: "App",
-      icon: <DevicePhoneMobileIcon className="h-8 w-8 text-gray-600" />,
+      icon: <DevicePhoneMobileIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: "/admin/relocation_plans",
     },
     {
-      label: "Sell",
-      icon: <ShoppingCartIcon className="h-8 w-8 text-gray-600" />,
-      href: "/admin/products",
+      label: "Products",
+      icon: <ArchiveBoxIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: "/admin/products/management",
+    },
+    {
+      label: "Pricing Plans",
+      icon: <CurrencyDollarIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: "/admin/pricingplans/management",
     },
     {
       label: "Consent Management",
-      icon: <ShieldCheckIcon className="h-8 w-8 text-gray-600" />,
+      icon: <ShieldCheckIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: "/admin/cookie_category",
     },
     {
       label: "Reports",
-      icon: <ChartBarIcon className="h-8 w-8 text-gray-600" />,
+      icon: <ChartBarIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: "/admin/reports/custom",
     },
     {
       label: "Settings",
-      icon: <Cog6ToothIcon className="h-8 w-8 text-gray-600" />,
+      icon: <Cog6ToothIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: "/admin/settings",
     },
   ];
 
   return (
-    <div className="p-4">
-      <h1 className="text-base text-center tracking-tightest font-bold mb-4 bg-gradient-to-r from-gray-300 via-gray-600 to-gray-900 bg-clip-text text-transparent">
-        Admin Dashboard
-      </h1>
-      <p className="mb-6"></p>
-      {/* Grid of Dashboard Links */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {dashboardLinks.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="group flex flex-col items-center justify-center p-4 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
-            title={item.label} // Tooltip for all devices; visible on mobile hover/focus
-          >
-            {item.icon}
-            <span className="mt-2 text-sm text-gray-700 text-center md:block hidden">
-              {item.label}
-            </span>
-          </Link>
-        ))}
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-2xl sm:text-3xl text-center font-bold mb-8 bg-gradient-to-r from-sky-400 to-sky-600 bg-clip-text text-transparent">
+          Admin Dashboard
+        </h1>
+        <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3">
+          {dashboardLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300"
+              title={item.label}
+            >
+              <div className="transform group-hover:scale-110 transition-transform">{item.icon}</div>
+              <span className="mt-3 text-sm font-medium text-gray-800 group-hover:text-sky-600 text-center sm:text-base">
+                {item.label}
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

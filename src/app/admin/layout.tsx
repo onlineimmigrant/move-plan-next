@@ -17,6 +17,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isParentMenuCollapsed, setIsParentMenuCollapsed] = useState(true);
   const [activeSection, setActiveSection] = useState("");
+  const [isDesktop, setIsDesktop] = useState(false);
   const [openTablesSections, setOpenTablesSections] = useState<Record<TablesDisclosureKey, boolean>>({
     users: false,
     sell: false,
@@ -39,18 +40,35 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   });
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Detect desktop devices
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)"); // Tailwind's 'md' breakpoint
+    setIsDesktop(mediaQuery.matches);
+
+    const handleResize = (e: MediaQueryListEvent) => {
+      setIsDesktop(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleResize);
+    return () => mediaQuery.removeEventListener("change", handleResize);
+  }, []);
+
   // Sync activeSection with pathname
   useEffect(() => {
     if (pathname.startsWith("/admin/reports")) {
       setActiveSection("reports");
-    } else if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/reports")) {
-      // Any /admin/* path not under /admin/reports is considered a table
+    } else if (pathname.startsWith("/admin/tables")) {
       setActiveSection("tables");
     } else {
-      setActiveSection(""); // For non-admin routes (unlikely in this context)
+      setActiveSection("");
     }
     console.log("pathname:", pathname, "activeSection:", activeSection); // Debug log
   }, [pathname, activeSection]);
+
+  // Determine if TablesChildMenu should be displayed
+  const shouldShowTablesChildMenu =
+    (isDesktop && !pathname.startsWith("/admin/reports") && pathname !== "/admin") ||
+    (!isDesktop && activeSection === "tables");
 
   return (
     <AuthProvider>
@@ -63,7 +81,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               setActiveSection={setActiveSection}
             />
 
-            {activeSection === "tables" && (
+            {shouldShowTablesChildMenu && (
               <TablesChildMenu
                 isSidebarOpen={isSidebarOpen}
                 setIsSidebarOpen={setIsSidebarOpen}
