@@ -399,7 +399,7 @@ export default function ProductsManagement() {
           <p className="text-gray-600 text-xs">No products found.</p>
         ) : (
           <div className="relative overflow-hidden bg-white rounded-lg border border-gray-200">
-            <div className="max-h-[600px] overflow-y-auto">
+            <div className="max-h-[400px] sm:max-h-[600px] overflow-y-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
