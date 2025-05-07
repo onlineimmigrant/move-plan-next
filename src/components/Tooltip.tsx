@@ -51,7 +51,7 @@ export default function Tooltip({ content, children }: TooltipProps) {
           ref={tooltipRef}
           id="tooltip"
           role="tooltip"
-          className="fixed z-50 bg-gray-800 text-white text-xs rounded-md py-1 px-2 shadow-lg max-w-xs break-words animate-fade-in"
+          className="fixed z-50 bg-gray-600 text-white text-sm font-light rounded-md py-1 px-2 shadow-lg max-w-xs break-words animate-fade-in"
         >
           {content}
           <style jsx>{`

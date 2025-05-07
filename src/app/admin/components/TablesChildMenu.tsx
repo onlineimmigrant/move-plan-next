@@ -303,7 +303,7 @@ export default function TablesChildMenu({
   return (
     <>
       {/* Mobile narrow bar */}
-      <div className="pt-6 z-48 md:hidden inset-y-0 left-14 w-12 bg-white border-gray-200 flex flex-col items-center py-4 gap-6">
+      <div className="pt-6 z-48 md:hidden inset-y-0 left-14 w-12 bg-white border-gray-200 flex flex-col items-center py-4 gap-6 border-r">
         <button onClick={() => setIsSidebarOpen(true)} className="p-1 rounded-md hover:bg-gray-50">
           <MagnifyingGlassIcon className="h-3 w-3 text-gray-600" />
         </button>
@@ -327,7 +327,7 @@ export default function TablesChildMenu({
       {/* Main sidebar */}
       <aside
         className={cn(
-          "z-50 fixed inset-y-0 left-0 w-54 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-300 ease-in-out",
+          "z-50 fixed inset-y-0 left-0 w-full px-8 sm:px-0 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-300 ease-in-out",
           isSidebarOpen ? "translate-x-0 sm:ml-8" : "-translate-x-full",
           "md:static md:w-56 md:min-h-screen md:ml-0 md:translate-x-0 md:transition-none"
         )}

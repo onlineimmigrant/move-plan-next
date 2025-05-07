@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { FaSearch, FaTrash, FaTimes } from 'react-icons/fa';
-import { MdAddCircle } from 'react-icons/md'; // New elegant icon for creating a product
+import { FaPlus, FaSearch, FaTrash, FaTimes } from 'react-icons/fa';
+import { MdAddCircle } from 'react-icons/md';
 import taxCodesData from '@/components/tax_codes.json';
 import { debounce } from 'lodash';
 import Toast from '@/components/Toast';
@@ -78,7 +78,7 @@ export default function ProductsManagement() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-  const [isTaxCodeDropdownOpen, setIsTaxCodeDropdownOpen] = useState<boolean>(false); // New state for tax code dropdown
+  const [isTaxCodeDropdownOpen, setIsTaxCodeDropdownOpen] = useState<boolean>(false);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setSearchQuery(value), 300), []);
 
@@ -164,7 +164,7 @@ export default function ProductsManagement() {
           const selectedTaxCode = taxCodes.find((tc) => tc.product_tax_code === value);
           setSelectedTaxCodeDescription(selectedTaxCode ? selectedTaxCode.description : '');
           setTaxCodeSearch(value);
-          setIsTaxCodeDropdownOpen(true); // Open dropdown on typing
+          setIsTaxCodeDropdownOpen(true);
         }
         return newFormData;
       });
@@ -256,7 +256,7 @@ export default function ProductsManagement() {
     setTaxCodeSearch(product.product_tax_code || '');
     setSelectedTaxCodeDescription(selectedTaxCode ? selectedTaxCode.description : '');
     setIsModalOpen(true);
-    setIsTaxCodeDropdownOpen(false); // Ensure tax code dropdown is closed when editing
+    setIsTaxCodeDropdownOpen(false);
   };
 
   const handleDelete = async (productId: string) => {
@@ -296,7 +296,7 @@ export default function ProductsManagement() {
     setTaxCodeSearch('');
     setSelectedTaxCodeDescription('');
     setIsProductDropdownOpen(false);
-    setIsTaxCodeDropdownOpen(false); // Ensure tax code dropdown is closed
+    setIsTaxCodeDropdownOpen(false);
     setIsModalOpen(true);
   };
 
@@ -314,7 +314,7 @@ export default function ProductsManagement() {
     setTaxCodeSearch('');
     setSelectedTaxCodeDescription('');
     setIsProductDropdownOpen(false);
-    setIsTaxCodeDropdownOpen(false); // Close tax code dropdown
+    setIsTaxCodeDropdownOpen(false);
     setError(null);
   };
 
@@ -344,14 +344,13 @@ export default function ProductsManagement() {
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Products</h2>
-          <Button
+          <button
             onClick={openCreateModal}
-            title="Add New Product"
-            className="bg-gray-600 text-white w-8 h-8 rounded-full hover:bg-gray-700 focus:ring-blue-500 flex items-center justify-center"
             aria-label="Add new product"
+            className="flex items-center justify-center bg-gray-300 text-white w-6 h-6 rounded-full hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out"
           >
-            <MdAddCircle className="h-5 w-5" /> {/* Updated icon */}
-          </Button>
+            <FaPlus className="h-3 w-3" />
+          </button>
         </div>
         <div className="flex space-x-4 mb-4 border-b border-gray-200">
           {['all', 'active', 'archived'].map((tab) => (
@@ -407,16 +406,16 @@ export default function ProductsManagement() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Name
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                       Displayed
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                       Description
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                       Tax Code
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                       Actions
                     </th>
                   </tr>
@@ -429,41 +428,43 @@ export default function ProductsManagement() {
                         index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                       } hover:bg-gray-100`}
                     >
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 flex items-center">
-                        {product.links_to_image ? (
-                          <img
-                            src={product.links_to_image}
-                            alt={`Image for ${product.product_name}`}
-                            className="h-10 mr-4 rounded-sm"
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                          />
-                        ) : (
-                          <div className="h-10 w-10 mr-2 bg-gray-200 rounded-sm" />
-                        )}
-                        <span
-                          onClick={() => handleEdit(product)}
-                          className="cursor-pointer text-gray-700 hover:text-blue-700 font-medium"
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && handleEdit(product)}
-                        >
-                          {product.product_name}
-                        </span>
+                      <td className="px-4 py-2 text-sm text-gray-900">
+                        <div className="flex items-center">
+                          {product.links_to_image ? (
+                            <img
+                              src={product.links_to_image}
+                              alt={`Image for ${product.product_name}`}
+                              className="h-8 w-auto mr-4 rounded-sm sm:h-10 sm:mr-4"
+                              onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
+                          ) : (
+                            <div className="h-8 w-auto mr-4 bg-gray-200 rounded-sm sm:h-10 sm:w-10 sm:mr-4" />
+                          )}
+                          <span
+                            onClick={() => handleEdit(product)}
+                            className="cursor-pointer text-gray-700 hover:text-blue-700 font-medium truncate overflow-hidden whitespace-nowrap max-w-[150px] sm:max-w-[200px]"
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => e.key === 'Enter' && handleEdit(product)}
+                          >
+                            {product.product_name}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
                         {product.is_displayed ? 'Yes' : 'No'}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 hidden sm:table-cell">
                         <Tooltip content={product.product_description || 'N/A'}>
                           <span className="truncate max-w-24 inline-block">
                             {product.product_description || 'N/A'}
                           </span>
                         </Tooltip>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
                         {product.product_tax_code || 'N/A'}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap font-medium">
+                      <td className="px-4 py-3 whitespace-nowrap font-medium hidden sm:table-cell">
                         <button
                           onClick={() => handleDelete(product.id)}
                           className="text-red-600 hover:text-red-700 transition duration-150 ease-in-out"
@@ -493,7 +494,6 @@ export default function ProductsManagement() {
           aria-labelledby="modal-title"
           aria-modal="true"
         >
-          {/* Transparent Backdrop */}
           <div
             className="fixed inset-0 bg-transparent"
             onClick={closeModal}
@@ -703,7 +703,7 @@ export default function ProductsManagement() {
                                 }));
                                 setTaxCodeSearch('');
                                 setSelectedTaxCodeDescription(tc.description);
-                                setIsTaxCodeDropdownOpen(false); // Close dropdown after selection
+                                setIsTaxCodeDropdownOpen(false);
                               }}
                               className="px-4 py-2 text-gray-900 hover:bg-gray-100 cursor-pointer transition duration-150 ease-in-out text-xs"
                               role="option"

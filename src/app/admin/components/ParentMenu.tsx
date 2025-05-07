@@ -38,7 +38,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
     {
       label: "Tables",
       icon: <TableCellsIcon className="h-4 w-4" />,
-      href: "/admin/products",
+      href: "/admin/tables",
       onClick: () => setActiveSection("tables"),
     },
     {
@@ -97,7 +97,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
   return (
     <div
       className={cn(
-        "z-50 bg-gray-50 border-r border-gray-100 h-screen flex flex-col transition-all duration-300",
+        "z-50 bg-gray-50 border-r border-gray-200 h-screen flex flex-col transition-all duration-300",
         settings?.primary_font?.name && settings?.font_size_base?.name
           ? `font-${settings.primary_font.name.toLowerCase()} text-${settings.font_size_base.name}`
           : "font-inter text-base",
@@ -106,8 +106,8 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
     >
-      <nav className="flex-1 flex flex-col px-2 pt-4">
-        <div className="flex flex-col gap-2">
+      <nav className="flex-1 flex flex-col px-2 pt-4 ">
+        <div className="flex flex-col gap-8">
           <div
             className={cn(
               "grid grid-cols-[auto_1fr] items-center p-2 rounded-md transition-all duration-200",
