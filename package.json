@@ -39,6 +39,7 @@
     "culori": "^4.0.1",
     "dompurify": "^3.2.5",
     "focus-trap-react": "^11.0.3",
+    "framer-motion": "^12.10.1",
     "glob": "^11.0.2",
     "heroicons": "^2.2.0",
     "html-react-parser": "^5.2.3",

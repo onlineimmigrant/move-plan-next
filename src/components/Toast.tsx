@@ -39,7 +39,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
       tabIndex={-1}
     >
       <div className={`flex items-center space-x-4 text-${bgColor}`}>
-        <span className={`text-${bgColor}`}>{icon}</span>
+        <span>{icon}</span>
         <p className="text-sm font-semibold">{message}</p>
       </div>
       <button
