@@ -310,15 +310,17 @@ export default function ProductDetailPricingPlans({
                         {plan.currency_symbol}
                         {(plan.price / 100).toFixed(2)}
                       </span>
-                      <span className="text-xl md:text-2xl font-bold text-gray-900">
+                      <span className='text-xs font-light text-gray-500'>{plan.measure}</span>
+                      <span className="text-sm md:text-xl font-bold">
                         {plan.currency_symbol}
                         {(plan.promotion_price / 100).toFixed(2)}
                       </span>
                     </div>
                   ) : (
-                    <div className="flex items-baseline justify-end space-x-1.5">
+                    <div className="flex justify-between items-baseline ">
+                       <span className='text-xs font-light text-gray-500'>{plan.measure}</span>
                       <span
-                        className={`text-xl md:text-2xl font-bold ${
+                        className={`text-sm md:text-xl font-bold ${
                           isOutOfStock ? 'text-gray-500' : 'text-gray-900'
                         }`}
                       >
