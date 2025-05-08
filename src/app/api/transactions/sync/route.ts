@@ -28,11 +28,14 @@ export async function POST() {
     // Step 1: Fetch PaymentIntents from Stripe
     console.log('Fetching PaymentIntents from Stripe...');
     const paymentIntents = await stripe.paymentIntents.list({
-      limit: 100, // Adjust based on your needs (max 100 per page)
-      expand: ['data.charges'],
+      limit: 100,
+      expand: ['data.payment_method'],
     });
 
     console.log(`Fetched ${paymentIntents.data.length} PaymentIntents from Stripe`);
+    if (paymentIntents.data.length === 0) {
+      console.log('No PaymentIntents found in Stripe. Ensure you have test data or live transactions.');
+    }
 
     // Step 2: Process PaymentIntents in batches
     const batchSize = 10;
@@ -56,17 +59,15 @@ export async function POST() {
 
             // Fetch the customer details separately
             const customer = await stripe.customers.retrieve(stripeCustomerId);
-            // Check if the customer is deleted
             if ('deleted' in customer && customer.deleted) {
               console.log(`Customer ${stripeCustomerId} is deleted, skipping...`);
               return 0;
             }
 
-            // Now TypeScript knows customer is Stripe.Customer
             const customerName = customer.name && customer.name.trim() !== '' ? customer.name : 'Unknown Customer';
             const customerEmail = customer.email && customer.email.trim() !== '' ? customer.email : 'Unknown Email';
 
-            // Step 3: Look up the user_id from the customers table using stripe_customer_id
+            // Step 3: Look up the user_id from the customers table
             const { data: customerRecord, error: customerError } = await supabase
               .from('customers')
               .select('user_id')
@@ -84,7 +85,7 @@ export async function POST() {
             // Step 4: Check if the transaction already exists
             const { data: existingTransaction, error: fetchError } = await supabase
               .from('transactions')
-              .select('id')
+              .select('id, payment_method, refunded_date, metadata')
               .eq('stripe_transaction_id', paymentIntent.id)
               .single();
 
@@ -93,35 +94,107 @@ export async function POST() {
               return 0;
             }
 
-            if (existingTransaction) {
-              console.log(`Transaction ${paymentIntent.id} already exists, skipping...`);
-              return 0;
+            // Step 5: Extract payment method
+            let paymentMethod = 'unknown';
+            if (paymentIntent.payment_method) {
+              console.log(`PaymentIntent ${paymentIntent.id} has payment_method ID: ${paymentIntent.payment_method}`);
+              const pm = paymentIntent.payment_method as Stripe.PaymentMethod;
+              paymentMethod = pm.type || 'unknown';
+              console.log(`PaymentIntent ${paymentIntent.id} payment_method type: ${paymentMethod}`);
+            } else {
+              console.log(`PaymentIntent ${paymentIntent.id} has no payment_method`);
             }
 
-            // Step 5: Insert the transaction into the transactions table
-            const { error: insertError } = await supabase
-              .from('transactions')
-              .insert({
-                stripe_transaction_id: paymentIntent.id,
-                stripe_customer_id: stripeCustomerId,
-                user_id: userId,
-                amount: paymentIntent.amount / 100.0, // Convert cents to dollars
-                currency: paymentIntent.currency.toUpperCase(), // Uppercase the currency
-                status: paymentIntent.status,
-                created_at: new Date(paymentIntent.created * 1000).toISOString(),
-                updated_at: new Date().toISOString(),
-                description: paymentIntent.description || null,
-                customer: customerName,
-                email: customerEmail,
+            // Step 6: Fetch the latest charge and check for refunds
+            let refundedDate: string | null = null;
+            if (paymentIntent.latest_charge) {
+              const chargeId = paymentIntent.latest_charge as string;
+              console.log(`Fetching charge ${chargeId} for PaymentIntent ${paymentIntent.id}...`);
+              const charge = await stripe.charges.retrieve(chargeId);
+
+              // Fetch refunds associated with the charge
+              const refunds = await stripe.refunds.list({
+                charge: chargeId,
+                limit: 1, // Get the most recent refund
               });
 
-            if (insertError) {
-              console.error(`Failed to insert transaction ${paymentIntent.id}:`, insertError);
-              return 0;
+              if (refunds.data.length > 0) {
+                const latestRefund = refunds.data[0];
+                refundedDate = new Date(latestRefund.created * 1000).toISOString();
+                console.log(`PaymentIntent ${paymentIntent.id} has a refund - refunded_date: ${refundedDate}`);
+              } else {
+                console.log(`PaymentIntent ${paymentIntent.id} has no refunds`);
+              }
+            } else {
+              console.log(`PaymentIntent ${paymentIntent.id} has no latest_charge`);
             }
 
-            console.log(`Successfully inserted transaction ${paymentIntent.id}`);
-            return 1;
+            // Step 7: Extract metadata
+            const metadata = paymentIntent.metadata || {};
+            console.log(`PaymentIntent ${paymentIntent.id} metadata:`, metadata);
+
+            // Step 8: Prepare transaction data
+            const transactionData = {
+              stripe_transaction_id: paymentIntent.id,
+              stripe_customer_id: stripeCustomerId,
+              user_id: userId,
+              amount: paymentIntent.amount / 100.0,
+              currency: paymentIntent.currency.toUpperCase(),
+              status: paymentIntent.status,
+              created_at: new Date(paymentIntent.created * 1000).toISOString(),
+              updated_at: new Date().toISOString(),
+              description: paymentIntent.description || null,
+              customer: customerName,
+              email: customerEmail,
+              payment_method: paymentMethod,
+              refunded_date: refundedDate,
+              metadata: metadata,
+            };
+
+            // Step 9: Insert or update the transaction
+            if (existingTransaction) {
+              const needsUpdate =
+                existingTransaction.payment_method !== paymentMethod ||
+                existingTransaction.refunded_date !== refundedDate ||
+                JSON.stringify(existingTransaction.metadata) !== JSON.stringify(metadata);
+
+              if (needsUpdate) {
+                console.log(`Transaction ${paymentIntent.id} exists, updating fields...`);
+                const { error: updateError } = await supabase
+                  .from('transactions')
+                  .update({
+                    payment_method: paymentMethod,
+                    refunded_date: refundedDate,
+                    metadata: metadata,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('stripe_transaction_id', paymentIntent.id);
+
+                if (updateError) {
+                  console.error(`Failed to update transaction ${paymentIntent.id}:`, updateError);
+                  return 0;
+                }
+
+                console.log(`Successfully updated transaction ${paymentIntent.id}`);
+                return 1;
+              } else {
+                console.log(`Transaction ${paymentIntent.id} exists, no updates needed.`);
+                return 0;
+              }
+            } else {
+              console.log(`Inserting new transaction ${paymentIntent.id} with data:`, transactionData);
+              const { error: insertError } = await supabase
+                .from('transactions')
+                .insert(transactionData);
+
+              if (insertError) {
+                console.error(`Failed to insert transaction ${paymentIntent.id}:`, insertError);
+                return 0;
+              }
+
+              console.log(`Successfully inserted transaction ${paymentIntent.id}`);
+              return 1;
+            }
           } catch (error) {
             console.error(`Error processing PaymentIntent ${paymentIntent.id}:`, error);
             return 0;
