@@ -4,6 +4,7 @@ export const SECTION_ROUTES: { [key: number]: string } = {
     38: '/sqe-2/topic',
     39: '/sqe-2/practice-area',
     40: '/sqe-2/legal-skills-assessments',
+   // 41: '/partner-hub',
     
     // Add more as needed
   };
