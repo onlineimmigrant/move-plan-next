@@ -76,7 +76,7 @@ export default function BecomeAffiliatePartner() {
               controls
               autoPlay
               loop
-              className="max-w-1/2"
+              className="max-w-full"
             />
           </li>
           <li>
