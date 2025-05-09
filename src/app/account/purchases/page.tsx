@@ -398,14 +398,14 @@ export default function PurchasesPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {groupedPurchases.map((group, index) => (
                     <tr key={group.transaction_id} className="hover:bg-gray-50 transition duration-150">
-                      <td className="border-r border-gray-200 sm:min-w-xs min-w-48 px-6 py-4 text-sm text-gray-900 sticky left-0 z-10 bg-white">
+                      <td className="border-r border-gray-200 sm:min-w-xs min-w-48 px-6 py-8 text-sm text-gray-900 sticky left-0 z-10 bg-white">
                         <div className="space-y-4">
                           {group.items.map((item, itemIndex) => (
                             <div key={item.id} className="flex items-center space-x-4">
                               <img
                                 src={item.product_image}
                                 alt={item.product_name}
-                                className="hidden sm:block w-auto h-12 object-cover rounded-md"
+                                className="hidden sm:block w-auto h-24 object-cover rounded-md"
                                 onError={(e) => {
                                   e.currentTarget.src = '/placeholder-image.jpg';
                                 }}
@@ -445,7 +445,7 @@ export default function PurchasesPage() {
                                 <a
                                   href={item.epub_file}
                                   download
-                                  className="text-gray-800 hover:text-sky-500 hover:underline flex items-center"
+                                  className="text-sky-600 hover:text-sky-500 hover:underline flex items-center"
                                 >
                                   <FiDownload className="mr-4 h-4 w-4" />
                                   <span className="text-xs font-medium">EPUB</span>
@@ -455,7 +455,7 @@ export default function PurchasesPage() {
                                 <a
                                   href={item.pdf_file}
                                   download
-                                  className="text-gray-800 hover:text-sky-500 hover:underline flex items-center"
+                                  className="text-sky-600 hover:text-sky-500 hover:underline flex items-center"
                                 >
                                   <FiDownload className="mr-4 h-4 w-4" />
                                   <span className="text-xs font-medium">PDF</span>
@@ -464,7 +464,7 @@ export default function PurchasesPage() {
                               {item.digital_asset_access && (
                                 <a
                                   href={item.digital_asset_access}
-                                  className="text-gray-800 hover:text-sky-500 hover:underline flex items-center"
+                                  className="text-sky-600 hover:text-sky-500 hover:underline flex items-center"
                                 >
                                   <FiArrowRightCircle className="mr-4 h-4 w-4" />
                                   <span className="text-xs font-medium">Access</span>
@@ -473,7 +473,7 @@ export default function PurchasesPage() {
                               {!item.epub_file && !item.pdf_file && !item.digital_asset_access && (
                                 <a
                                   href={item.digital_asset_access}
-                                  className="text-gray-800 hover:text-sky-500 hover:underline flex items-center"
+                                  className="text-sky-600 hover:text-sky-500 hover:underline flex items-center"
                                 >
                                   <MdOutlineLocalShipping className="mr-4 h-4 w-4" />
                                   <span className="text-xs font-medium">Info</span>

@@ -226,7 +226,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         <div className="hidden md:flex items-center space-x-16 text-sm">
           {renderMenuItems()}
           {isMounted && totalItems > 0 && (
-            <Link href="/basket" className="relative">
+            <Link href="/ ouvir" className="relative">
               <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
@@ -242,9 +242,15 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                 <UserIcon className="h-6 w-6 text-gray-600" />
               </button>
               <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50">
+                <Link
+                  href="/account"
+                  className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+                >
+                  Account
+                </Link>
                 <button
                   onClick={handleLogoutAction}
-                  className="block w-full text-left px-4 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
+                  className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Logout
                 </button>
@@ -293,6 +299,13 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                     {open ? <MinusIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />}
                   </Disclosure.Button>
                   <Disclosure.Panel className="pl-8">
+                    <Link
+                      href="/account"
+                      onClick={() => setIsOpen(false)}
+                      className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                    >
+                      Account
+                    </Link>
                     <button
                       onClick={() => {
                         setIsOpen(false);
