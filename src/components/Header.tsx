@@ -226,7 +226,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         <div className="hidden md:flex items-center space-x-16 text-sm">
           {renderMenuItems()}
           {isMounted && totalItems > 0 && (
-            <Link href="/ ouvir" className="relative">
+            <Link href="/basket" className="relative">
               <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
