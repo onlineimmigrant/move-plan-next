@@ -19,8 +19,9 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
   const { isStudent, isLoading } = useStudentStatus();
 
   const tabs: Tab[] = [
-    { label: 'Profile', href: '/account/profile' },
     ...(isStudent ? [{ label: 'Student', href: '/account/edupro' }] : []),
+    { label: 'Profile', href: '/account/profile' },
+    
     { label: 'Purchases', href: '/account/purchases' },
     { label: 'Payments', href: '/account/payments' },
   ];
