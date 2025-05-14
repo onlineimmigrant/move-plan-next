@@ -101,8 +101,9 @@ export default function AccountPage() {
   const error = authError || nameError;
 
   const dashboardLinks = [
+        ...(isStudent ? [{ label: 'Student', icon: <AcademicCapIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/edupro' }] : []),
     { label: 'Profile', icon: <UserIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/profile' },
-    ...(isStudent ? [{ label: 'Student', icon: <AcademicCapIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/edupro' }] : []),
+
     { label: 'Purchases', icon: <ShoppingBagIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/purchases' },
     { label: 'Payments', icon: <CreditCardIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/payments' },
   ];

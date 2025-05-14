@@ -1,19 +1,8 @@
 // app/layout.tsx
-import { AuthProvider } from '@/context/AuthContext';
-import { BasketProvider } from '@/context/BasketContext';
-import { SettingsProvider } from '@/context/SettingsContext';
-import { CookieSettingsProvider } from '@/context/CookieSettingsContext';
-import { SEOProvider } from '@/context/SEOContext';
-import SEOWrapper from '@/components/SEOWrapper';
-import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
-import CookieBanner from '@/components/CookieBanner';
-import Breadcrumbs from '@/components/Breadcrumbs';
-import TemplateSections from '@/components/TemplateSections';
-import TemplateHeadingSections from '@/components/TemplateHeadingSections';
 import { getSettings } from '@/lib/getSettings';
 import { createClient } from '@supabase/supabase-js';
 import './globals.css';
-import { ReactNode } from 'react';
+import ClientProviders from './ClientProviders';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSettings();
@@ -54,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       href: `${baseUrl}/${lang}`,
       hreflang: lang,
     })),
-    faqs: siteFaqs, // Include site-wide FAQs
+    faqs: siteFaqs,
     structuredData: [
       {
         '@context': 'https://schema.org',
@@ -89,26 +78,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <SEOProvider>
-          <AuthProvider>
-            <BasketProvider>
-              <SettingsProvider initialSettings={settings}>
-                <CookieSettingsProvider>
-                  <SEOWrapper defaultSEOData={defaultSEOData} />
-                  <NavbarFooterWrapper>
-                    <div className="">
-                      {children}
-                      <TemplateHeadingSections />
-                      <TemplateSections />
-                      <Breadcrumbs />
-                    </div>
-                  </NavbarFooterWrapper>
-                  <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
-                </CookieSettingsProvider>
-              </SettingsProvider>
-            </BasketProvider>
-          </AuthProvider>
-        </SEOProvider>
+        <ClientProviders
+          defaultSEOData={defaultSEOData}
+          settings={settings}
+          headerData={headerData}
+          activeLanguages={activeLanguages}
+        >
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );

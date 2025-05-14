@@ -2,6 +2,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 
 interface StudentContextType {
@@ -17,6 +18,7 @@ const StudentContext = createContext<StudentContextType>({
 export function StudentProvider({ children }: { children: React.ReactNode }) {
   const [isStudent, setIsStudent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { session } = useAuth(); // Use useAuth to get the session
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -26,22 +28,17 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
 
     const fetchProfile = async () => {
       try {
-        console.log('StudentProvider: Fetching session');
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error('StudentProvider: Session error:', sessionError.message);
-          return;
-        }
         if (!session) {
           console.warn('StudentProvider: No session found');
           return;
         }
 
-        console.log('StudentProvider: Fetching profile for user:', session.user.id);
+        const userId = session.user.id;
+        console.log('StudentProvider: Fetching profile for user:', userId);
         const { data, error } = await supabase
           .from('profiles')
           .select('is_student')
-          .eq('id', session.user.id)
+          .eq('id', userId)
           .single();
 
         if (error) {
@@ -62,7 +59,7 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
 
     fetchProfile();
     return () => clearTimeout(timeout);
-  }, []);
+  }, [session]); // Depend on session
 
   return (
     <StudentContext.Provider value={{ isStudent, isLoading }}>
