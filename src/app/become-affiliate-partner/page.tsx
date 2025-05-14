@@ -68,10 +68,11 @@ export default function BecomeAffiliatePartner() {
               className="max-w-full"
             />
           </li>
+         
           <li>
             <h3 className="text-lg font-medium">Mobile (9:16)</h3>
             <AdvancedVideoPlayer
-              publicId="drudssthgn5ytnviajp0"
+              publicId="qtb7tp6be8ieejtyvzqq"
               mode="cropped-mobile"
               controls
               autoPlay
