@@ -1,9 +1,11 @@
+// src/components/PracticeSettings.tsx (adjust path as needed)
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import Link from 'next/link';
 import { styles } from '@/lib/styles';
+import { useAuth } from '@/context/AuthContext';
 
 interface EduProTopic {
   id: number;
@@ -11,10 +13,6 @@ interface EduProTopic {
   description: string;
   order: number;
   slug: string;
-}
-
-interface CourseTopicResponse {
-  edu_pro_topic: EduProTopic[]; // Changed to an array of EduProTopic
 }
 
 interface PracticeSettingsProps {
@@ -31,6 +29,8 @@ const getInitialExamMode = () => {
 };
 
 export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlug }: PracticeSettingsProps) {
+  const { session } = useAuth();
+  const router = useRouter();
   const [topics, setTopics] = useState<EduProTopic[]>([]);
   const [selectedTopics, setSelectedTopics] = useState<number[]>([]);
   const [quantity, setQuantity] = useState(10);
@@ -47,19 +47,34 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
     const fetchTopics = async () => {
       setIsLoading(true);
       try {
-        const { data: courseTopics, error } = await supabase
-          .from('edu_pro_coursetopic')
-          .select('edu_pro_topic (id, title, description, order, slug)')
+        const { data: quizTopics, error } = await supabase
+          .from('quiz_quizcommon')
+          .select(`
+            id,
+            course_id,
+            edu_pro_topics_to_quizzes!edu_pro_topics_to_quizzes_quizcommon_id_fkey (
+              edu_pro_quiz_topic (
+                id,
+                title,
+                description,
+                order,
+                slug
+              )
+            )
+          `)
           .eq('course_id', courseId)
-          .order('order', { ascending: true });
+          .eq('id', quizId)
+          .order('order', { foreignTable: 'edu_pro_topics_to_quizzes.edu_pro_quiz_topic', ascending: true });
 
-        if (error) throw new Error(`Error fetching course topics: ${error.message}`);
+        if (error) throw new Error(`Error fetching quiz topics: ${error.message}`);
 
-        // Flatten the array of arrays into a single array of topics
-        const topicsData = courseTopics?.flatMap((ct: CourseTopicResponse) => ct.edu_pro_topic).filter(Boolean) ?? [];
+        const topicsData = quizTopics?.flatMap((quiz: any) =>
+          quiz.edu_pro_topics_to_quizzes?.map((topicRelation: any) => topicRelation.edu_pro_quiz_topic).filter(Boolean)
+        ) ?? [];
+
         setTopics(topicsData);
       } catch (err) {
-        console.error(`PracticeSettings: Error for courseId ${courseId}:`, err);
+        console.error(`PracticeSettings: Error for courseId ${courseId}, quizId ${quizId}:`, err);
         setError((err as Error).message);
       } finally {
         setIsLoading(false);
@@ -67,7 +82,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
     };
 
     fetchTopics();
-  }, [courseId]);
+  }, [courseId, quizId]);
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuantity(Number(e.target.value));
@@ -101,9 +116,79 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
     return `/account/edupro/${courseSlug}/quiz/${quizSlug}${params.toString() ? `?${params}` : ''}`;
   };
 
-  const handleQuizStart = () => {
+  const handleQuizStart = async () => {
     if (isQuizStartDisabled) {
       setValidationError('Please select at least one topic to start the quiz.');
+      return;
+    }
+
+    if (!session?.user?.id) {
+      setValidationError('You must be logged in to start the quiz.');
+      return;
+    }
+
+    if (quantity < 5 || quantity > 120) {
+      setValidationError('Number of questions must be between 5 and 120.');
+      return;
+    }
+
+    try {
+      if (examMode) {
+        // Fetch topic IDs associated with the quiz
+        const { data: topicRelations, error: topicError } = await supabase
+          .from('edu_pro_topics_to_quizzes')
+          .select('topic_id')
+          .eq('quizcommon_id', quizId);
+
+        if (topicError) throw new Error(`Error fetching topic relations: ${topicError.message}`);
+        if (!topicRelations || topicRelations.length === 0) {
+          setValidationError('No topics available for this quiz.');
+          return;
+        }
+
+        const quizTopicIds: number[] = topicRelations.map((relation: { topic_id: number }) => relation.topic_id);
+
+        // Fetch question IDs for the associated topics
+        let query = supabase
+          .from('edu_pro_quiz_question')
+          .select('id')
+          .in('topic_id', quizTopicIds);
+
+        if (selectedTopics.length > 0) {
+          query = query.in('topic_id', selectedTopics.filter((id) => quizTopicIds.includes(id)));
+        }
+
+        const { data: questionsData, error: questionsError } = await query;
+        if (questionsError) throw new Error(`Error fetching questions: ${questionsError.message}`);
+        if (!questionsData || questionsData.length === 0) {
+          setValidationError('No questions available for the selected topics.');
+          return;
+        }
+
+        const questionIds: number[] = questionsData.map((q: { id: number }) => q.id);
+
+        // Clear previous user answers for these questions
+        const { error: deleteError } = await supabase
+          .from('quiz_useranswer')
+          .delete()
+          .eq('user_id', session.user.id)
+          .in('question_id', questionIds)
+          .eq('exam_mode', true);
+
+        if (deleteError) {
+          console.error('Error clearing previous answers:', deleteError);
+          setValidationError('Failed to start a new quiz session. Please try again.');
+          return;
+        }
+      }
+
+      const quizUrl = getQuizUrl();
+      if (quizUrl !== '#') {
+        router.push(quizUrl);
+      }
+    } catch (err) {
+      console.error('Error starting quiz:', err);
+      setValidationError('An error occurred while starting the quiz. Please try again.');
     }
   };
 
@@ -136,7 +221,6 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
 
   return (
     <div className="space-y-8 text-left">
-      {/* Mode Toggle Section */}
       <div>
         <div className="mb-2 text-sm font-semibold text-gray-700">Mode</div>
         <div className="flex w-full space-x-3">
@@ -161,12 +245,11 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
         </div>
       </div>
 
-      {/* Quantity Slider Section */}
       <div>
         <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
           Number of Questions
         </label>
-        <div id="quantity-value" className="float-right pr-4 font-semibold text-gray-600" aria-live="polite">
+        <div id="quantity-value" className="float-right pr-4 font-bold text-sky-600" aria-live="polite">
           {quantity}
         </div>
         <div className="relative mt-2">
@@ -185,20 +268,19 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
             aria-valuemax={120}
           />
           <div className="mt-1 flex justify-between text-xs text-gray-500">
-            <span>5</span>
-            <span>120</span>
+            <span className="hidden">5</span>
+            <span className="hidden">120</span>
           </div>
         </div>
       </div>
 
-      {/* Topics Section */}
       <div>
         <label className="text-sm font-semibold text-gray-700" id="topics-label">
           Topics
         </label>
         {topics.length === 0 ? (
           <p className="mt-2 text-sm text-gray-600" role="alert">
-            No topics available for this course.
+            No topics available for this quiz.
           </p>
         ) : (
           <div
@@ -250,27 +332,23 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
         )}
       </div>
 
-      {/* Validation Error */}
       {validationError && (
         <div className="text-center text-sm text-red-600" role="alert">
           {validationError}
         </div>
       )}
 
-      {/* Start Quiz Button */}
       <div>
-        <Link href={getQuizUrl()}>
-          <button
-            type="button"
-            className={`${styles.buttonPrimary} ${isQuizStartDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={handleQuizStart}
-            disabled={isQuizStartDisabled}
-            aria-label="Start quiz"
-            aria-disabled={isQuizStartDisabled}
-          >
-            Start Quiz
-          </button>
-        </Link>
+        <button
+          type="button"
+          className={`${styles.buttonPrimary} ${isQuizStartDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={handleQuizStart}
+          disabled={isQuizStartDisabled}
+          aria-label="Start quiz"
+          aria-disabled={isQuizStartDisabled}
+        >
+          Start Quiz
+        </button>
       </div>
     </div>
   );

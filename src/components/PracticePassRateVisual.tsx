@@ -38,7 +38,7 @@ export default function PracticePassRateVisual({ quiz }: PracticePassRateVisualP
           />
           {/* Foreground Circle (Pass Rate) */}
           <circle
-            className="fill-none stroke-gray-700"
+            className="fill-none stroke-yellow-200"
             cx="50"
             cy="50"
             r="30"

@@ -112,14 +112,14 @@ export default function Practice({ courseId, courseSlug }: PracticeProps) {
           </div>
         ) : (
           // Render the grid layout when showFullStats is false
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 gap-x-8">
             <div className="col-span-1">
               <PracticePassRateVisual quiz={quizzes[0]} />
             </div>
 
-            <div className="col-span-1 sm:col-span-3">
-              <div className="sticky top-0 z-10 bg-white p-4 rounded-lg shadow-md border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">{quizzes[0].title} Settings</h3>
+            <div className="col-span-1 sm:col-span-2">
+              <div className="sticky top-0 z-10 bg-white sm:p-4 ">
+                <h3 className="hidden text-lg font-semibold text-gray-900 mb-4">{quizzes[0].title} Settings</h3>
                 <PracticeSettings
                   courseId={courseId}
                   quizId={quizzes[0].id}
