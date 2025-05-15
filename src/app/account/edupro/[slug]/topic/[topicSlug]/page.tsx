@@ -336,11 +336,11 @@ export default function EduProTopicDetail() {
                 </span>
               </div>
               <div className="relative border-l-8 border-sky-600 pl-4 py-4 bg-white rounded-lg shadow-sm">
-                <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
+                <span className="absolute top-4 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
                   {topic.order}
                 </span>
                 <h3 className="text-lg font-medium text-gray-900 pr-8">{topic.title}</h3>
-                <p className="text-sm text-gray-600 mt-2">{topic.description || 'No description available.'}</p>
+               
               </div>
 
               {/* Lessons Section with responsive styling */}

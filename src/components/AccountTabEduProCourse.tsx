@@ -136,8 +136,8 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   }, [slug, session]);
 
   const tabs: Tab[] = [
-    { label: 'Content', href: `/account/edupro/${slug}` },
-    { label: 'Study Plan', href: `/account/edupro/${slug}/study-plan` },
+    { label: 'Study', href: `/account/edupro/${slug}` },
+    { label: 'Plan', href: `/account/edupro/${slug}/study-plan` },
    // { label: 'Progress', href: `/account/edupro/${slug}/progress` },
   //  { label: 'Info', href: `/account/edupro/${slug}/info` },
 
@@ -166,7 +166,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   return (
     <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
       <Link href="/account">
-        <div className="mt-6 sm:mt-8 mb-4 sm:mb-6 text-center text-base">
+        <div className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-center text-base">
           <span className="text-gray-500 font-light">{duration}</span>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 relative">
             {courseTitle}

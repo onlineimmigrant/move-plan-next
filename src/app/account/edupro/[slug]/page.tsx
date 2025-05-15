@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
 import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
 import StudyBooks from '@/components/StudyBooks';
-import Practice from '@/components/Practice'; // Import the Practice component
+import Practice from '@/components/Practice';
 import Toast from '@/components/Toast';
 
 // Initialize Supabase client
@@ -217,83 +217,113 @@ export default function EduProCourseDetail() {
           {course ? (
             <div>
               <div>
-                {/* Tab buttons: "Topics", "Study Books", and "Practice" */}
-                <div className="flex sm:justify-center mb-4">
-                  {/* Topics Button */}
+                {/* Tabbed navigation with proper ARIA roles */}
+                <div className="flex sm:justify-center mb-4" role="tablist" aria-label="Course Sections">
+                  {/* Topics Tab */}
                   <button
+                    id="topics-tab"
+                    role="tab"
+                    aria-selected={activeTab === 'topics'}
+                    aria-controls="topics-panel"
                     onClick={() => setActiveTab('topics')}
-                    className={`flex-1 text-center p-3 border-sky-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
+                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
                       ${
                         activeTab === 'topics'
-                          ? 'bg-sky-100 sm:bg-sky-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-sky-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
+                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
+                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
                       }`}
-                    aria-label="View Topics"
-                    aria-selected={activeTab === 'topics'}
                   >
                     Topics
                   </button>
-                  {/* Study Books Button */}
+                  {/* Practice Tab */}
                   <button
-                    onClick={() => setActiveTab('studyBooks')}
-                    className={`flex-1 text-center p-3 border-sky-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
-                      ${
-                        activeTab === 'studyBooks'
-                          ? 'bg-sky-100 sm:bg-sky-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-sky-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
-                      }`}
-                    aria-label="View Study Books"
-                    aria-selected={activeTab === 'studyBooks'}
-                  >
-                    Study Books
-                  </button>
-                  {/* Practice Button */}
-                  <button
+                    id="practice-tab"
+                    role="tab"
+                    aria-selected={activeTab === 'practice'}
+                    aria-controls="practice-panel"
                     onClick={() => setActiveTab('practice')}
-                    className={`flex-1 text-center p-3 border-sky-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
+                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
                       ${
                         activeTab === 'practice'
-                          ? 'bg-sky-100 sm:bg-sky-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-sky-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
+                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
+                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
                       }`}
-                    aria-label="View Practice Quiz"
-                    aria-selected={activeTab === 'practice'}
                   >
                     Practice
                   </button>
+                  {/* Books Tab */}
+                  <button
+                    id="studyBooks-tab"
+                    role="tab"
+                    aria-selected={activeTab === 'studyBooks'}
+                    aria-controls="studyBooks-panel"
+                    onClick={() => setActiveTab('studyBooks')}
+                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
+                      ${
+                        activeTab === 'studyBooks'
+                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
+                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
+                      }`}
+                  >
+                    Books
+                  </button>
                 </div>
 
-                {/* Conditionally render content based on active tab */}
-                {activeTab === 'topics' ? (
-                  topics.length > 0 ? (
-                    <ul className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {topics.map((topic) => (
-                        <li
-                          key={topic.id}
-                          className="relative border-l-8 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
-                            {topic.order}
-                          </span>
-                          <Link href={`/account/edupro/${course.slug}/topic/${topic.slug}`}>
-                            <h3 className="text-sm font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
-                              {topic.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {topic.description || 'No description available.'}
-                            </p>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-2 text-gray-600 text-center">No topics available for this course.</p>
-                  )
-                ) : activeTab === 'studyBooks' ? (
-                  <StudyBooks courseId={course.id} />
-                ) : (
-                  <Practice courseId={course.id} />
-                )}
+                {/* Tab panels */}
+                <div>
+                  {/* Topics Panel */}
+                  <div
+                    id="topics-panel"
+                    role="tabpanel"
+                    aria-labelledby="topics-tab"
+                    hidden={activeTab !== 'topics'}
+                  >
+                    {topics.length > 0 ? (
+                      <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {topics.map((topic) => (
+                          <li
+                            key={topic.id}
+                            className="relative border-l-8 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                          >
+                            <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
+                              {topic.order}
+                            </span>
+                            <Link href={`/account/edupro/${course.slug}/topic/${topic.slug}`}>
+                              <h3 className="text-sm font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
+                                {topic.title}
+                              </h3>
+                              <p className="pr-8 text-sm text-gray-600 mt-1">
+                                {topic.description || 'No description available.'}
+                              </p>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-gray-600 text-center">No topics available for this course.</p>
+                    )}
+                  </div>
+
+                  {/* Practice Panel */}
+                  <div
+                    id="practice-panel"
+                    role="tabpanel"
+                    aria-labelledby="practice-tab"
+                    hidden={activeTab !== 'practice'}
+                  >
+                    <Practice courseId={course.id} courseSlug={course.slug} />
+                  </div>
+
+                  {/* StudyBooks Panel */}
+                  <div
+                    id="studyBooks-panel"
+                    role="tabpanel"
+                    aria-labelledby="studyBooks-tab"
+                    hidden={activeTab !== 'studyBooks'}
+                  >
+                    <StudyBooks courseId={course.id} />
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
