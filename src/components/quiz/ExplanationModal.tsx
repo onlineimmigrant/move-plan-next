@@ -9,7 +9,7 @@ interface ExplanationModalProps {
   examMode?: boolean;
   randomizeChoices?: boolean;
   closeModal: (modalId: string, videoId?: string) => void;
-  isOpen?: boolean; // New prop from QuizResults
+  isOpen?: boolean;
 }
 
 const ExplanationModal: React.FC<ExplanationModalProps> = ({
@@ -24,13 +24,13 @@ const ExplanationModal: React.FC<ExplanationModalProps> = ({
   const dragHandleRef = useRef<HTMLDivElement>(null);
   const [isExplanationOpen, setIsExplanationOpen] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const [isOpen, setIsOpen] = useState(externalIsOpen); // Sync with external prop
+  const [isOpen, setIsOpen] = useState(externalIsOpen);
   const position = useRef({ x: 0, y: 0 });
   const dragStart = useRef({ x: 0, y: 0 });
 
-  // Center modal
+  // Center modal for non-mobile devices
   const centerModal = () => {
-    if (modalContentRef.current) {
+    if (modalContentRef.current && window.innerWidth >= 768) { // Only center on md and above
       const rect = modalContentRef.current.getBoundingClientRect();
       const x = (window.innerWidth - rect.width) / 2;
       const y = (window.innerHeight - rect.height) / 2;
@@ -52,9 +52,10 @@ const ExplanationModal: React.FC<ExplanationModalProps> = ({
     const focusable = modal.querySelectorAll('button');
     const first = focusable[0] as HTMLElement;
 
-    // Dragging functionality
+    // Dragging functionality (disabled on mobile)
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.target === dragHandleRef.current || dragHandleRef.current?.contains(e.target as Node)) {
+      if (window.innerWidth >= 768 && // Disable on mobile
+          (e.target === dragHandleRef.current || dragHandleRef.current?.contains(e.target as Node))) {
         e.preventDefault();
         setIsDragging(true);
         dragStart.current = {
@@ -88,9 +89,10 @@ const ExplanationModal: React.FC<ExplanationModalProps> = ({
       setIsDragging(false);
     };
 
-    // Touch support
+    // Touch support (disabled on mobile)
     const handleTouchStart = (e: TouchEvent) => {
-      if (e.target === dragHandleRef.current || dragHandleRef.current?.contains(e.target as Node)) {
+      if (window.innerWidth >= 768 && // Disable on mobile
+          (e.target === dragHandleRef.current || dragHandleRef.current?.contains(e.target as Node))) {
         e.preventDefault();
         setIsDragging(true);
         const touch = e.touches[0];
@@ -172,7 +174,7 @@ const ExplanationModal: React.FC<ExplanationModalProps> = ({
     if (modal) {
       if (isOpen) {
         modal.classList.remove('hidden');
-        centerModal(); // Center when opening
+        centerModal(); // Center when opening (only for non-mobile)
       } else {
         modal.classList.add('hidden');
       }
@@ -191,13 +193,13 @@ const ExplanationModal: React.FC<ExplanationModalProps> = ({
       <div
         id={`modal-content-${question.id}`}
         ref={modalContentRef}
-        className="absolute bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[85vh]"
+        className="absolute bg-white sm:rounded-xl shadow-lg w-full h-full md:max-w-lg md:max-h-[85vh] md:w-full"
         style={{ position: 'absolute' }}
       >
-        {/* Drag Handle */}
+        {/* Header (visible on all devices, non-draggable on mobile) */}
         <div
           ref={dragHandleRef}
-          className="w-full p-4 bg-gray-700 rounded-t-xl cursor-move"
+          className="w-full p-4 bg-gray-700 sm:rounded-t-xl md:cursor-move cursor-default"
         >
           <span className="text-base font-medium pl-4 text-white">Response</span>
         </div>
@@ -217,7 +219,7 @@ const ExplanationModal: React.FC<ExplanationModalProps> = ({
         </button>
 
         {/* Scrollable Content */}
-        <div className="p-8 sm:py-4 overflow-y-auto max-h-[70vh]">
+        <div className="p-4 sm:p-4 overflow-y-auto max-h-[calc(100vh-80px)] md:max-h-[70vh]">
           <h2 id={`modal-title-${question.id}`} className="text-sm font-semibold text-gray-900 mb-4">
             <span dangerouslySetInnerHTML={{ __html: question.question_text }} />
           </h2>
@@ -259,7 +261,7 @@ const ExplanationModal: React.FC<ExplanationModalProps> = ({
                 className={`w-5 h-5 transform ${isExplanationOpen ? 'rotate-180' : ''}`}
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 24"
+                viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
