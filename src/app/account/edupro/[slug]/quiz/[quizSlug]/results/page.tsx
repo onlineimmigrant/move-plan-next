@@ -1,3 +1,4 @@
+// src/app/account/edupro/[slug]/quiz/[quizSlug]/results/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,8 +7,10 @@ import React from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import FixedNavbarMenu from '@/components/FixedNavbarMenu';
 import InfoQuizElement from '@/components/quiz/InfoQuizElement';
+import ExplanationModal from '@/components/quiz/ExplanationModal';
 import { useAuth } from '@/context/AuthContext';
 import NavbarEduPro from '@/components/NavbarEduPro';
+import { UserSession, Question as TypesQuestion } from '@/components/quiz/Types'; // Import Question as TypesQuestion
 
 interface Choice {
   id: number;
@@ -20,13 +23,11 @@ interface Question {
   question_text: string;
   explanation?: string | null;
   choices: Choice[];
-}
-
-interface UserSession {
-  user: {
-    id: string;
-    role: 'student' | 'staff' | string;
-  };
+  video_player?: string | null;
+  links_to_video?: string | null;
+  topic_id?: number;
+  topic?: { id: number; title: string };
+  correct_answer_count?: number;
 }
 
 interface QuizResultsProps {
@@ -45,6 +46,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
   const [correctAnswersCount, setCorrectAnswersCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalOpenStates, setModalOpenStates] = useState<{ [questionId: number]: boolean }>({}); // Track modal state per question
 
   const topicIds = searchParams.get('topics')?.split(',').map(Number) || [];
   const quantity = Number(searchParams.get('quantity')) || 10;
@@ -62,7 +64,6 @@ export default function QuizResults({ params }: QuizResultsProps) {
 
       setIsLoading(true);
       try {
-        // Fetch the quiz
         const { data: quizData, error: quizError } = await supabase
           .from('quiz_quizcommon')
           .select('id')
@@ -73,7 +74,6 @@ export default function QuizResults({ params }: QuizResultsProps) {
         if (quizError) throw new Error(`Error fetching quiz: ${quizError.message}`);
         if (!quizData) throw new Error('Quiz not found');
 
-        // Fetch the most recent quiz_statistic record for this user and quiz
         const { data: statisticData, error: statisticError } = await supabase
           .from('quiz_quizstatistic')
           .select('id')
@@ -88,7 +88,6 @@ export default function QuizResults({ params }: QuizResultsProps) {
 
         const quizStatisticId = statisticData.id;
 
-        // Fetch topic IDs associated with the quiz
         const { data: topicRelations, error: topicError } = await supabase
           .from('edu_pro_topics_to_quizzes')
           .select('topic_id')
@@ -103,13 +102,14 @@ export default function QuizResults({ params }: QuizResultsProps) {
 
         const quizTopicIds: number[] = topicRelations.map((relation: { topic_id: number }) => relation.topic_id);
 
-        // Fetch questions for the associated topics
         let query = supabase
           .from('edu_pro_quiz_question')
           .select(`
             id,
             question_text,
             explanation,
+            video_player,
+            links_to_video,
             edu_pro_quiz_choice (id, choice_text, is_correct)
           `)
           .in('topic_id', quizTopicIds);
@@ -128,12 +128,16 @@ export default function QuizResults({ params }: QuizResultsProps) {
           id: q.id,
           question_text: q.question_text,
           explanation: q.explanation || 'No explanation available.',
+          video_player: q.video_player || null,
+          links_to_video: q.links_to_video || null,
           choices: q.edu_pro_quiz_choice as Choice[],
+          topic_id: undefined,
+          topic: undefined,
+          correct_answer_count: undefined,
         }));
 
         setQuestions(formattedQuestions);
 
-        // Fetch user answers using quiz_statistic_id
         if (examMode) {
           const { data: answersData, error: answersError } = await supabase
             .from('quiz_useranswer')
@@ -150,7 +154,6 @@ export default function QuizResults({ params }: QuizResultsProps) {
           });
           setUserAnswers(answersMap);
 
-          // Calculate correct answers
           let correctCount = 0;
           formattedQuestions.forEach((question) => {
             const userChoiceId = answersMap[question.id];
@@ -161,7 +164,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
           });
           setCorrectAnswersCount(correctCount);
         } else {
-          setCorrectAnswersCount(0); // Train mode: no scoring
+          setCorrectAnswersCount(0);
         }
       } catch (err) {
         console.error('QuizResults: Error:', err);
@@ -183,91 +186,14 @@ export default function QuizResults({ params }: QuizResultsProps) {
     router.push(`/account/edupro/${courseSlug}/quiz/${quizSlug}?${params.toString()}`);
   };
 
-  const openModal = (modalId: string) => {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.remove('hidden');
-    }
+  const openModal = (questionId: number) => {
+    setModalOpenStates((prev) => ({ ...prev, [questionId]: true }));
   };
 
-  const closeModal = (modalId: string) => {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.add('hidden');
-    }
+  const closeModal = (modalId: string, videoId?: string) => {
+    const questionId = parseInt(modalId.replace('modal-', ''), 10);
+    setModalOpenStates((prev) => ({ ...prev, [questionId]: false }));
   };
-
-  // Draggable Modal Logic
-  useEffect(() => {
-    const makeModalDraggable = (modalId: string, contentId: string) => {
-      const modal = document.getElementById(contentId);
-      if (!modal) return;
-
-      let isDragging = false;
-      let currentX: number;
-      let currentY: number;
-      let initialX: number;
-      let initialY: number;
-      let xOffset = 0;
-      let yOffset = 0;
-
-      const startDragging = (e: MouseEvent | TouchEvent) => {
-        e.preventDefault();
-        initialX = e.type === 'touchstart' ? (e as TouchEvent).touches[0].clientX - xOffset : (e as MouseEvent).clientX - xOffset;
-        initialY = e.type === 'touchstart' ? (e as TouchEvent).touches[0].clientY - yOffset : (e as MouseEvent).clientY - yOffset;
-
-        isDragging = true;
-
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('touchmove', drag, { passive: false });
-        document.addEventListener('mouseup', stopDragging);
-        document.addEventListener('touchend', stopDragging);
-      };
-
-      const drag = (e: MouseEvent | TouchEvent) => {
-        if (isDragging) {
-          e.preventDefault();
-          currentX = e.type === 'touchmove' ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
-          currentY = e.type === 'touchmove' ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
-
-          xOffset = currentX - initialX;
-          yOffset = currentY - initialY;
-
-          modal.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
-        }
-      };
-
-      const stopDragging = () => {
-        isDragging = false;
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('touchmove', drag);
-        document.removeEventListener('mouseup', stopDragging);
-        document.removeEventListener('touchend', stopDragging);
-      };
-
-      modal.addEventListener('mousedown', startDragging);
-      modal.addEventListener('touchstart', startDragging, { passive: false });
-
-      return () => {
-        modal.removeEventListener('mousedown', startDragging);
-        modal.removeEventListener('touchstart', startDragging);
-      };
-    };
-
-    questions.forEach((question) => {
-      makeModalDraggable(`modal-${question.id}`, `modal-content-${question.id}`);
-    });
-
-    return () => {
-      questions.forEach((question) => {
-        const modal = document.getElementById(`modal-content-${question.id}`);
-        if (modal) {
-          modal.removeEventListener('mousedown', () => {});
-          modal.removeEventListener('touchstart', () => {});
-        }
-      });
-    };
-  }, [questions]);
 
   if (isLoading) {
     return (
@@ -294,171 +220,94 @@ export default function QuizResults({ params }: QuizResultsProps) {
   }
 
   return (
-    <main className="flex-1 space-y-6 py-20  px-2 bg-gray-50 min-h-screen">
-        <NavbarEduPro />
-      <div className=" max-w-3xl mx-auto">
-
+    <main className="flex-1 space-y-6 py-20 px-2 bg-gray-50 min-h-screen">
+      <NavbarEduPro />
+      <div className="max-w-3xl mx-auto">
         <div className="mt-8 bg-white rounded-xl sm:shadow-sm sm:p-6 p-4 py-2 space-y-6">
-                    <div className='my-6  flex justify-between items-center text-lg font-semibold text-gray-900'>
-            <div className='text-gray-700'>Practice Results</div>
+          <div className="my-6 flex justify-between items-center text-lg font-semibold text-gray-900">
+            <div className="text-gray-700">Practice Results</div>
             {examMode && Object.keys(userAnswers).length > 0 ? (
-            <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500">
                 Correct Answers: {correctAnswersCount} / {questions.length}
-            </div>
+              </div>
             ) : (
-            <div className="text-xs text-gray-500">
-                Train Mode
-            </div>
+              <div className="text-xs text-gray-500">Train Mode</div>
             )}
-        </div>
+          </div>
           {questions.length === 0 ? (
             <p className="text-gray-600 font-medium text-center">
               No questions available for this quiz.
             </p>
           ) : (
-            questions.map((question) => {
-              const correctChoice = question.choices.find((choice) => choice.is_correct);
-              return (
-                <div key={question.id} className="border-b border-gray-200 pb-4 last:border-b-0">
-                    <button
-                      onClick={() => openModal(`modal-${question.id}`)}
-                      title="View explanation"
-                      className="text-gray-600 hover:text-sky-600 transition-colors"
-                    >
-                      <InfoQuizElement />
-                    </button>
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-sm font-semibold text-gray-800 leading-relaxed">
-                      {question.question_text}
-                    </h2>
-
-                  </div>
-                  {question.choices.map((choice) => {
-                    const isSelected = examMode && userAnswers[question.id] === choice.id;
-                    return (
-                      <div
-                        key={choice.id}
-                        className="flex items-center pl-4 text-sm py-3 bg-gray-50 rounded-lg my-1 hover:bg-sky-50 transition-colors"
-                      >
-                        <input
-                          type="radio"
-                          name={`question_${question.id}`}
-                          value={choice.id}
-                          checked={isSelected}
-                          disabled
-                          className={`w-5 h-5 mr-4 ${
-                            isSelected
-                              ? choice.is_correct
-                                ? 'text-teal-500'
-                                : 'text-red-500'
-                              : choice.is_correct
-                              ? 'text-teal-500'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                        <label
-                          className={`font-medium ${
-                            isSelected
-                              ? choice.is_correct
-                                ? 'text-teal-500'
-                                : 'text-red-500'
-                              : choice.is_correct
-                              ? 'text-teal-500'
-                              : 'text-gray-700'
-                          }`}
-                        >
-                          {choice.choice_text}
-                        </label>
-                      </div>
-                    );
-                  })}
-
-                  <div
-                    id={`modal-${question.id}`}
-                    className="hidden fixed inset-0 flex items-center justify-center z-50 overflow-auto"
-                    style={{ background: 'rgba(0, 0, 0, 0.4)' }}
-                  >
-                    <div
-                      id={`modal-content-${question.id}`}
-                      className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-6 sm:p-8 m-4 relative text-sm max-h-[85vh] overflow-y-auto transform transition-all"
-                      style={{ cursor: 'move' }}
-                    >
-                      <button
-                        onClick={() => closeModal(`modal-${question.id}`)}
-                        className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 transition-colors z-10"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-7 w-7 bg-gray-100 rounded-full p-1.5 hover:bg-gray-200"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-
-                      <h2 className="text-lg font-semibold text-gray-800 mb-6">
-                        <span dangerouslySetInnerHTML={{ __html: question.question_text }} />
-                      </h2>
-
-                      <div className="mb-6">
-                        {question.choices
-                          .filter((choice) => choice.is_correct)
-                          .map((choice) => (
-                            <p
-                              key={choice.id}
-                              className="text-base p-4 rounded-lg bg-gray-50 text-sky-600 font-medium"
-                            >
-                              {choice.choice_text}
-                            </p>
-                          ))}
-                      </div>
-
-                      <details className="group w-full">
-                        <summary className="flex items-center justify-between px-4 py-3 bg-yellow-100 text-gray-800 rounded-lg cursor-pointer hover:bg-yellow-200 transition-colors">
-                          <span className="text-base font-semibold">Explanation</span>
-                          <span className="transform transition-transform group-open:rotate-180">
-                            <svg
-                              className="w-5 h-5 shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M19 9l-7 7-7-7"
-                              />
-                            </svg>
-                          </span>
-                        </summary>
-                        <div className="px-4 py-5 border-l-4 border-sky-500 bg-gray-50 rounded-b-lg">
-                          <p
-                            className="text-sm leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: question.explanation! }}
-                          />
-                        </div>
-                      </details>
-                    </div>
-                  </div>
+            questions.map((question) => (
+              <div key={question.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                <button
+                  onClick={() => openModal(question.id)}
+                  title="View explanation"
+                  className="text-gray-600 hover:text-sky-600 transition-colors"
+                >
+                  <InfoQuizElement />
+                </button>
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-sm font-semibold text-gray-800 leading-relaxed">
+                    {question.question_text}
+                  </h2>
                 </div>
-              );
-            }))}
+                {question.choices.map((choice) => {
+                  const isSelected = examMode && userAnswers[question.id] === choice.id;
+                  return (
+                    <div
+                      key={choice.id}
+                      className="flex items-center pl-4 text-sm py-3 bg-gray-50 rounded-lg my-1 hover:bg-sky-50 transition-colors"
+                    >
+                      <input
+                        type="radio"
+                        name={`question_${question.id}`}
+                        value={choice.id}
+                        checked={isSelected}
+                        disabled
+                        className={`w-5 h-5 mr-4 ${
+                          isSelected
+                            ? choice.is_correct
+                              ? 'text-teal-500'
+                              : 'text-red-500'
+                            : choice.is_correct
+                            ? 'text-teal-500'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                      <label
+                        className={`font-medium ${
+                          isSelected
+                            ? choice.is_correct
+                              ? 'text-teal-500'
+                              : 'text-red-500'
+                            : choice.is_correct
+                            ? 'text-teal-500'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {choice.choice_text}
+                      </label>
+                    </div>
+                  );
+                })}
+                <ExplanationModal
+                  question={question as TypesQuestion} // Type assertion
+                  closeModal={closeModal}
+                  isOpen={modalOpenStates[question.id] || false}
+                />
+              </div>
+            ))
+          )}
         </div>
-
-        {/*<button
+        {/* Uncomment if needed */}
+        {/* <button
           onClick={handleTryAgain}
           className="mt-6 bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
         >
           Try Again
-        </button>*/}
+        </button> */}
       </div>
 
       {(session as UserSession)?.user?.role && ['student', 'staff'].includes((session as UserSession).user.role) && (
