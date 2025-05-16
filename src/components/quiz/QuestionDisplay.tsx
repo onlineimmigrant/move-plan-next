@@ -7,7 +7,7 @@ interface QuestionDisplayProps {
 
 const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ questionText, correctAnswerCount }) => (
   <>
-    <h2 className="mb-4 text-base font-semibold text-gray-800 leading-relaxed">
+    <h2 className="text-sm sm:text-base font-semibold text-gray-800 leading-relaxed">
       <span dangerouslySetInnerHTML={{ __html: questionText }} />
     </h2>
     {correctAnswerCount > 1 && (

@@ -1,9 +1,13 @@
 // src/components/quiz/ChoicesList.tsx
 import React from 'react';
 import { Choice } from './Types';
+import InfoQuizElement from './InfoQuizElement';
 
 interface ChoicesListProps {
   choices: Choice[];
+  examMode: boolean;
+  openModal?: (modalId: string) => void; // Made optional to match QuizFormProps
+  modalId: string;
   questionId: number;
   currentAnswers: number[];
   correctAnswerCount: number;
@@ -13,6 +17,9 @@ interface ChoicesListProps {
 }
 
 const ChoicesList: React.FC<ChoicesListProps> = ({
+  modalId,
+  examMode,
+  openModal,
   choices,
   questionId,
   currentAnswers,
@@ -36,15 +43,21 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
     sortedChoiceIds.find((item) => item.id === choiceId)?.letter || '';
 
   return (
-    <div>
+    <div className="space-y-2">
+      {/* Prompt with no blinking, shown before choices */}
+      {!currentAnswers.length && (
+        <div className="p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-r text-sm font-medium animate-fadeIn !animate-none">
+          Please select {isMulti ? 'one or more options' : 'an option'}.
+        </div>
+      )}
 
-
+      {/* Choices */}
       {choices.map((choice) => {
         const numeration = numerateChoices ? getChoiceLetter(choice.id) : null;
         const isSelected = currentAnswers.includes(choice.id);
 
         return (
-          <div key={choice.id} className="my-2">
+          <div key={choice.id}>
             {isMulti ? (
               <div
                 className={`w-full flex items-center p-3 text-sm rounded-md border transition-colors ${
@@ -52,6 +65,12 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
                     ? 'bg-sky-100 border-sky-500 text-sky-800'
                     : 'bg-gray-50 border-gray-300 text-gray-800 hover:bg-gray-100'
                 }`}
+                onClick={() => {
+                  handleAnswerChange(questionId, choice.id, true);
+                  if (examMode && openModal) {
+                    openModal(modalId); // Safely call openModal if defined
+                  }
+                }}
               >
                 <input
                   type="checkbox"
@@ -61,7 +80,7 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
                   checked={isSelected}
                   onChange={() => handleAnswerChange(questionId, choice.id, true)}
                   data-max={correctAnswerCount}
-                  className="hidden" // Hide default checkbox
+                  className="hidden"
                   aria-checked={isSelected}
                 />
                 <label
@@ -75,7 +94,7 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
                   >
                     {isSelected && '✓'}
                   </span>
-                  <span className="flex-1 text-left">
+                  <span className="flex-1 text-left font-medium text-gray-600">
                     {numeration && (
                       <span className="text-gray-500 font-medium mr-1.5">
                         {numeration}.
@@ -89,11 +108,17 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
               </div>
             ) : (
               <div
-                className={`w-full flex items-center p-3 sm:py-6 py-5 text-sm rounded-md border transition-colors ${
+                className={`w-full flex items-center p-3 text-sm rounded-md border transition-colors ${
                   isSelected
                     ? 'bg-sky-100 border-sky-500 text-sky-800'
                     : 'bg-gray-50 border-gray-300 text-gray-800 hover:bg-gray-100'
                 }`}
+                onClick={() => {
+                  handleAnswerChange(questionId, choice.id, false);
+                  if (examMode && openModal) {
+                    openModal(modalId); // Safely call openModal if defined
+                  }
+                }}
               >
                 <input
                   type="radio"
@@ -102,7 +127,7 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
                   value={choice.id}
                   checked={isSelected}
                   onChange={() => handleAnswerChange(questionId, choice.id, false)}
-                  className="hidden" // Hide default radio
+                  className="hidden"
                   aria-checked={isSelected}
                   required
                 />
@@ -133,11 +158,17 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
           </div>
         );
       })}
-            {/* Prompt with no blinking */}
-      {!currentAnswers.length && (
-        <div className="mt-2 p-2 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-r animate-fadeIn !animate-none">
-          Please select one of these options.
-        </div>
+
+      {/* InfoQuizElement button */}
+      {!examMode && (
+        <button
+          onClick={() => openModal && openModal(modalId)} // Safely call openModal if defined
+          title="Answer and explanation"
+          className="mt-2 flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm font-medium text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors"
+        >
+          <InfoQuizElement />
+          <span>Answer & Explanation</span>
+        </button>
       )}
     </div>
   );
