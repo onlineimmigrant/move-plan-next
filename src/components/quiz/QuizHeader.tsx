@@ -1,5 +1,5 @@
 import React from 'react';
-import InfoQuizElement from '@/components/quiz/InfoQuizElement';
+import InfoQuizElement from './InfoQuizElement';
 
 interface QuizHeaderProps {
   examMode: boolean;
