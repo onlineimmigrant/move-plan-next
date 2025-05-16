@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 import { HiCog } from "react-icons/hi";
 import Tooltip from './Tooltip';
+import Image from 'next/image';
 
 export default function NavbarEduPro() {
   const { session } = useAuth();
@@ -68,16 +69,17 @@ export default function NavbarEduPro() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 bg-transparent z-50 transition-opacity duration-300 ${
+      className={`fixed top-0 left-0 right-0 sm:bg-transparent bg-white z-50 transition-opacity duration-300 ${
         isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          {/* Logo */}
+        <div className="flex justify-between h-16 items-center">
+         <Image src="/images/logo.svg" alt="Logo" width={40} height={40} className="hidden sm:block h-8 w-auto" />
+          {/* Course Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link href={`/account/edupro/${slug}`}>
-              <span className="text-base font-medium text-gray-900 relative tracking-tighter">
+              <span className="sm:text-xl text-base font-medium sm:font-semibold text-gray-900 relative tracking-tighter">
                 {courseTitle}
                 <span className="absolute -bottom-2 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </span>

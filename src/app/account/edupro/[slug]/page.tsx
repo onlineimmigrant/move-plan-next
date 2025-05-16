@@ -67,7 +67,7 @@ export default function EduProCourseDetail() {
                     className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
                       ${
                         activeTab === 'topics'
-                          ? 'bg-sky-600 shadow-md scale-105'
+                          ? 'bg-sky-600 shadow-md scale-120'
                           : 'bg-gray-600'
                       }`}
                   >
@@ -82,7 +82,7 @@ export default function EduProCourseDetail() {
                     className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
                       ${
                         activeTab === 'practice'
-                          ? 'bg-sky-600 shadow-md scale-105'
+                          ? 'bg-sky-600 shadow-md scale-120'
                           : 'bg-gray-600'
                       }`}
                   >
@@ -97,7 +97,7 @@ export default function EduProCourseDetail() {
                     className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
                       ${
                         activeTab === 'studyBooks'
-                          ? 'bg-sky-600 shadow-md scale-105'
+                          ? 'bg-sky-600 shadow-md scale-120'
                           : 'bg-gray-600'
                       }`}
                   >
