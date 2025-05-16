@@ -49,7 +49,7 @@ export default function NavbarEduPro() {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
-      const scrollThreshold = viewportHeight * 0.05; // 5% of viewport height
+      const scrollThreshold = viewportHeight * 0.1; // 5% of viewport height
 
       // Hide navbar if scrolled past 5% and scrolling down
       if (scrollY > scrollThreshold && scrollY > lastScrollY) {
@@ -69,12 +69,12 @@ export default function NavbarEduPro() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 sm:bg-transparent bg-white z-50 transition-opacity duration-300 ${
+      className={`fixed top-0 left-0  right-0 sm:bg-transparent bg-transparent backdrop-blur-sm z-50 transition-opacity duration-300 ${
         isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="flex justify-between h-12 items-center">
          <Image src="/images/logo.svg" alt="Logo" width={40} height={40} className="hidden sm:block h-8 w-auto" />
           {/* Course Logo */}
           <div className="flex-shrink-0 flex items-center">

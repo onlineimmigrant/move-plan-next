@@ -5,6 +5,9 @@ import { Choice, Question } from './Types';
 
 interface QuizFormProps {
   question: Question;
+  openModal?: (modalId: string) => void;
+  modalId: string;
+  examMode: boolean;
   currentAnswers: number[];
   randomizeChoices: boolean;
   numerateChoices: boolean;
@@ -13,6 +16,7 @@ interface QuizFormProps {
   handlePrev: () => void;
   currentIndex: number;
   totalQuestions: number;
+  
 }
 
 const QuizForm: React.FC<QuizFormProps> = ({
@@ -25,6 +29,9 @@ const QuizForm: React.FC<QuizFormProps> = ({
   handlePrev,
   currentIndex,
   totalQuestions,
+  openModal,
+  modalId,
+  examMode,
 }) => (
   <form
     onSubmit={(e) => {
@@ -41,6 +48,10 @@ const QuizForm: React.FC<QuizFormProps> = ({
       randomizeChoices={randomizeChoices}
       numerateChoices={numerateChoices}
       handleAnswerChange={handleAnswerChange}
+    examMode={examMode}
+        openModal={openModal}
+        modalId={modalId}
+   
     />
     <PrevNextButton
       onPrev={handlePrev}

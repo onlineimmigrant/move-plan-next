@@ -10,8 +10,8 @@ interface PrevNextButtonProps {
 
 export default function PrevNextButton({ onPrev, onNext, isFirst, isLast }: PrevNextButtonProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-50/90 backdrop-blur-sm border-t border-gray-200 sm:border-none py-3 sm:py-4 z-10">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 flex justify-between items-center">
+    <div className="fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-sm border-t border-gray-50 shadow sm:shadow-none sm:border-none py-2 sm:py-3 z-10">
+      <div className="mx-auto max-w-3xl px-8 sm:px-0 flex justify-between items-center">
         {/* Previous Button */}
         <button
           type="button"
