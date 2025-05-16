@@ -174,14 +174,14 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
           </h1>
         </div>
       </Link>
-      <nav className="flex flex-col sm:flex-row sm:gap-6 border-gray-200 pb-2">
+      <nav className="flex flex-row justify-center sm:gap-6 border-gray-200 pb-6 ">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-4 py-3 sm:px-3 sm:py-2 text-sm font-medium text-center sm:text-left  sm:rounded-none mb-2 sm:mb-0 transition ${
+              className={`px-4 py-1  sm:px-3 sm:py-2 text-sm font-medium   sm:rounded-none mb-2 sm:mb-0 transition ${
                 isActive
                   ? 'bg-sky-50 text-sky-600 border-b-2 border-sky-600 sm:bg-transparent'
                   : 'text-gray-600 hover:bg-sky-50 hover:text-sky-600 hover:border-b-2 hover:border-sky-200'

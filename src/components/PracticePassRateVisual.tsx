@@ -19,8 +19,8 @@ export default function PracticePassRateVisual({ quiz }: PracticePassRateVisualP
   const strokeDasharrayNeed = (quiz.percent_required / 100) * circumference;
 
   return (
-    <div className="flex justify-center mt-4">
-      <div className="relative w-64 h-64">
+    <div className="hidden sm:flex justify-center mt-4">
+      <div className="relative w-32 h-32 sm:w-64 sm:h-64">
         {/* SVG Circular Chart */}
         <svg
           width="100%"
@@ -53,17 +53,17 @@ export default function PracticePassRateVisual({ quiz }: PracticePassRateVisualP
         </svg>
         {/* Text in the Center */}
         <div className="absolute inset-0 flex items-center justify-center text-center">
-          <p className="flex flex-col items-center text-xs text-gray-900">
-            <span className="flex justify-center items-center font-bold text-3xl text-gray-900">
+          <p className="flex flex-col items-center text-xs text-gray-900 sm:text-sm">
+            <span className="text-xs md:text-sm">You need<br /></span>
+            <span className="flex justify-center items-center font-bold text-sm text-gray-900 md:text-2xl lg:text-3xl">
+              
               {quiz.percent_required}%
-              <br />
-              Need
+              
+              
             </span>
           </p>
         </div>
       </div>
     </div>
-
- 
   );
 }

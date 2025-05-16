@@ -57,18 +57,18 @@ export default function EduProCourseDetail() {
             <div>
               <div>
                 {/* Tabbed navigation */}
-                <div className="flex sm:justify-center mb-4" role="tablist" aria-label="Course Sections">
+                <div className="flex justify-center mb-4" role="tablist" aria-label="Course Sections">
                   <button
                     id="topics-tab"
                     role="tab"
                     aria-selected={activeTab === 'topics'}
                     aria-controls="topics-panel"
                     onClick={() => setActiveTab('topics')}
-                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
+                    className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
                       ${
                         activeTab === 'topics'
-                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
+                          ? 'bg-sky-600 shadow-md scale-105'
+                          : 'bg-gray-600'
                       }`}
                   >
                     Topics
@@ -79,11 +79,11 @@ export default function EduProCourseDetail() {
                     aria-selected={activeTab === 'practice'}
                     aria-controls="practice-panel"
                     onClick={() => setActiveTab('practice')}
-                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
+                    className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
                       ${
                         activeTab === 'practice'
-                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
+                          ? 'bg-sky-600 shadow-md scale-105'
+                          : 'bg-gray-600'
                       }`}
                   >
                     Practice
@@ -94,11 +94,11 @@ export default function EduProCourseDetail() {
                     aria-selected={activeTab === 'studyBooks'}
                     aria-controls="studyBooks-panel"
                     onClick={() => setActiveTab('studyBooks')}
-                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
+                    className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
                       ${
                         activeTab === 'studyBooks'
-                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
+                          ? 'bg-sky-600 shadow-md scale-105'
+                          : 'bg-gray-600'
                       }`}
                   >
                     Books
