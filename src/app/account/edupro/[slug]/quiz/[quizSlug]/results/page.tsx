@@ -294,10 +294,12 @@ export default function QuizResults({ params }: QuizResultsProps) {
   }
 
   return (
-    <main className="flex-1 space-y-6 py-20  px-6 bg-gray-50 min-h-screen">
+    <main className="flex-1 space-y-6 py-20  px-2 bg-gray-50 min-h-screen">
         <NavbarEduPro />
       <div className=" max-w-3xl mx-auto">
-        <div className='my-6  flex justify-between items-center text-lg font-semibold text-gray-900'>
+
+        <div className="mt-8 bg-white rounded-xl sm:shadow-sm sm:p-6 p-4 py-2 space-y-6">
+                    <div className='my-6  flex justify-between items-center text-lg font-semibold text-gray-900'>
             <div className='text-gray-700'>Practice Results</div>
             {examMode && Object.keys(userAnswers).length > 0 ? (
             <div className="text-xs text-gray-500">
@@ -309,7 +311,6 @@ export default function QuizResults({ params }: QuizResultsProps) {
             </div>
             )}
         </div>
-        <div className="sm:bg-white sm:rounded-xl sm:shadow-sm sm:p-6 p-4 space-y-6">
           {questions.length === 0 ? (
             <p className="text-gray-600 font-medium text-center">
               No questions available for this quiz.
@@ -452,12 +453,12 @@ export default function QuizResults({ params }: QuizResultsProps) {
             }))}
         </div>
 
-        <button
+        {/*<button
           onClick={handleTryAgain}
           className="mt-6 bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
         >
           Try Again
-        </button>
+        </button>*/}
       </div>
 
       {(session as UserSession)?.user?.role && ['student', 'staff'].includes((session as UserSession).user.role) && (
