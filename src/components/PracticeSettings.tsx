@@ -222,7 +222,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
   return (
     <div className="space-y-8 text-left">
       <div>
-        <div className="mb-2 text-sm font-semibold text-gray-700">Mode</div>
+        <div className="hidden sm:block mb-2 text-sm font-semibold text-gray-700">Mode</div>
         <div className="flex w-full ">
           <button
             type="button"
@@ -248,7 +248,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
  
 
       <div>
-        <label className="text-sm font-semibold text-gray-700" id="topics-label">
+        <label className="hidden sm:flex text-sm font-semibold text-gray-700" id="topics-label">
           Topics
         </label>
         {topics.length === 0 ? (
