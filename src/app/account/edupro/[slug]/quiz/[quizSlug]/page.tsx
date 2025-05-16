@@ -309,12 +309,12 @@ export default function QuizPage({ params }: QuizPageProps) {
         }}
       />
 
-      <main className="flex-1 space-y-6 pb-20 pt-20 px-4 bg-gray-50 min-h-screen">
+      <main className="flex-1 space-y-6 sm:py-20 pt-12 px-4 sm:bg-gray-50 min-h-screen">
         <NavbarEduPro />
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
           <div className="col-span-1"></div>
 
-          <div className="mt-8 col-span-3 flex flex-col gap-6 px-4 sm:px-6 bg-white rounded-xl shadow-sm p-6">
+          <div className="sm:mt-16 col-span-3 flex flex-col gap-6 px-4 sm:px-6 sm:bg-white sm:rounded-xl sm:shadow-sm p-6">
             <QuizHeader
               examMode={examMode}
               topicTitle={currentQuestion.topic.title}
