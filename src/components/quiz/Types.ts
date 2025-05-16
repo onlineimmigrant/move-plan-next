@@ -26,6 +26,7 @@ export interface Quiz {
   course_id: number;
   slug: string;
   randomize_choices: boolean;
+  numerate_choices:boolean;
 }
 
 export interface UserSession {

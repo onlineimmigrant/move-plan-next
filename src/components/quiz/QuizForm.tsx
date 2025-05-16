@@ -7,6 +7,7 @@ interface QuizFormProps {
   question: Question;
   currentAnswers: number[];
   randomizeChoices: boolean;
+  numerateChoices: boolean;
   handleAnswerChange: (questionId: number, choiceId: number, isMulti: boolean) => void;
   handleNext: () => void;
   handlePrev: () => void;
@@ -18,6 +19,7 @@ const QuizForm: React.FC<QuizFormProps> = ({
   question,
   currentAnswers,
   randomizeChoices,
+  numerateChoices,
   handleAnswerChange,
   handleNext,
   handlePrev,
@@ -37,6 +39,7 @@ const QuizForm: React.FC<QuizFormProps> = ({
       currentAnswers={currentAnswers}
       correctAnswerCount={question.correct_answer_count}
       randomizeChoices={randomizeChoices}
+      numerateChoices={numerateChoices}
       handleAnswerChange={handleAnswerChange}
     />
     <PrevNextButton
