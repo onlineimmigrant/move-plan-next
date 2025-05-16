@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 interface RawStatistic {
   questions_correct: number;
   questions_attempted: number;
-  exam_mode: boolean; // Changed from string to boolean
+  exam_mode: boolean;
 }
 
 interface Statistics {
@@ -44,8 +44,8 @@ export default function PracticeSettingsStatisticsVisuals({
 
   const calculateStats = (data: RawStatistic[], modeFilter: 'exam' | 'train'): Statistics => {
     const filteredData = modeFilter === 'exam'
-      ? data.filter(stat => stat.exam_mode === true) // Filter for true (exam mode)
-      : data.filter(stat => stat.exam_mode === false); // Filter for false (train mode)
+      ? data.filter(stat => stat.exam_mode === true)
+      : data.filter(stat => stat.exam_mode === false);
 
     if (filteredData.length === 0) {
       return {
@@ -140,64 +140,88 @@ export default function PracticeSettingsStatisticsVisuals({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 mt-4">
-        <div className="relative w-48 h-48 mx-auto">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" className="block mx-auto max-w-full">
-            <circle className="fill-none stroke-gray-200" cx="50" cy="50" r="30" strokeWidth="12" />
-            <circle
-              className="fill-none stroke-sky-500"
-              cx="50"
-              cy="50"
-              r="30"
-              strokeWidth="12"
-              strokeLinecap="round"
-              style={{
-                strokeDasharray: `${examStrokeDasharray}, ${circumference}`,
-                transform: 'rotate(-90deg)',
-                transformOrigin: '50% 50%',
-              }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center text-center">
-            <p className="flex flex-col items-center text-sm text-gray-900">
-              <span className="font-bold text-2xl">
-                {examStats.overall_correct_percentage.toFixed(1)}%
-              </span>
-              <span className="font-light text-xs mt-1">
-                {examStats.total_correct_answers} of {examStats.total_questions_answered}
-              </span>
-              <span className="font-light text-xs mt-1">Exam</span>
-            </p>
+      <div className="grid grid-cols-1 sm:grid-cols-1 gap-4 mt-4">
+        {/* Exam Chart */}
+        <div className="hidden sm:flex justify-center">
+          <div className="relative w-32 h-32 sm:w-64 sm:h-64">
+            <svg
+              width="100%"
+              height="100%"
+              viewBox="0 0 100 100"
+              className="block mx-auto max-w-full"
+            >
+              <circle
+                className="fill-none stroke-gray-200"
+                cx="50"
+                cy="50"
+                r="30"
+                strokeWidth="12"
+              />
+              <circle
+                className="fill-none stroke-sky-500"
+                cx="50"
+                cy="50"
+                r="30"
+                strokeWidth="12"
+                strokeLinecap="round"
+                style={{
+                  strokeDasharray: `${examStrokeDasharray}, ${circumference}`,
+                  transform: 'rotate(-90deg)',
+                  transformOrigin: '50% 50%',
+                }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center text-center">
+              <p className="flex flex-col items-center text-xs text-gray-900 sm:text-sm">
+                <span className="text-xs md:text-sm">You have<br /></span>
+                <span className="flex justify-center items-center font-bold text-sm text-gray-900 md:text-2xl lg:text-3xl">
+                  {examStats.overall_correct_percentage.toFixed(1)}%
+                </span>
+                <span className="text-xs md:text-sm">Exam<br /></span>
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="relative w-48 h-48 mx-auto">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" className="block mx-auto max-w-full">
-            <circle className="fill-none stroke-gray-200" cx="50" cy="50" r="30" strokeWidth="12" />
-            <circle
-              className="fill-none stroke-sky-500"
-              cx="50"
-              cy="50"
-              r="30"
-              strokeWidth="12"
-              strokeLinecap="round"
-              style={{
-                strokeDasharray: `${trainStrokeDasharray}, ${circumference}`,
-                transform: 'rotate(-90deg)',
-                transformOrigin: '50% 50%',
-              }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center text-center">
-            <p className="flex flex-col items-center text-sm text-gray-900">
-              <span className="font-bold text-2xl">
-                {trainStats.overall_correct_percentage.toFixed(1)}%
-              </span>
-              <span className="font-light text-xs mt-1">
-                {trainStats.total_correct_answers} of {trainStats.total_questions_answered}
-              </span>
-              <span className="font-light text-xs mt-1">Train</span>
-            </p>
+        {/* Train Chart */}
+        <div className="hidden sm:flex justify-center">
+          <div className="relative w-32 h-32 sm:w-64 sm:h-64">
+            <svg
+              width="100%"
+              height="100%"
+              viewBox="0 0 100 100"
+              className="block mx-auto max-w-full"
+            >
+              <circle
+                className="fill-none stroke-gray-200"
+                cx="50"
+                cy="50"
+                r="30"
+                strokeWidth="12"
+              />
+              <circle
+                className="fill-none stroke-sky-500"
+                cx="50"
+                cy="50"
+                r="30"
+                strokeWidth="12"
+                strokeLinecap="round"
+                style={{
+                  strokeDasharray: `${trainStrokeDasharray}, ${circumference}`,
+                  transform: 'rotate(-90deg)',
+                  transformOrigin: '50% 50%',
+                }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center text-center">
+              <p className="flex flex-col items-center text-xs text-gray-900 sm:text-sm">
+                <span className="text-xs md:text-sm">You have<br /></span>
+                <span className="flex justify-center items-center font-bold text-sm text-gray-900 md:text-2xl lg:text-3xl">
+                  {trainStats.overall_correct_percentage.toFixed(1)}%
+                </span>
+                <span className="text-xs md:text-sm">Train</span>
+              </p>
+            </div>
           </div>
         </div>
       </div>

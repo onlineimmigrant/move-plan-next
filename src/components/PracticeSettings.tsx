@@ -223,7 +223,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
     <div className="space-y-8 text-left">
       <div>
         <div className="mb-2 text-sm font-semibold text-gray-700">Mode</div>
-        <div className="flex w-full space-x-3">
+        <div className="flex w-full ">
           <button
             type="button"
             onClick={() => toggleMode(true)}
@@ -245,34 +245,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
         </div>
       </div>
 
-      <div>
-        <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
-          Number of Questions
-        </label>
-        <div id="quantity-value" className="float-right pr-4 font-bold text-sky-600" aria-live="polite">
-          {quantity}
-        </div>
-        <div className="relative mt-2">
-          <input
-            type="range"
-            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
-            name="quantity"
-            min="5"
-            max="120"
-            value={quantity}
-            onChange={handleQuantityChange}
-            id="quantity"
-            aria-label="Select number of questions"
-            aria-valuenow={quantity}
-            aria-valuemin={5}
-            aria-valuemax={120}
-          />
-          <div className="mt-1 flex justify-between text-xs text-gray-500">
-            <span className="hidden">5</span>
-            <span className="hidden">120</span>
-          </div>
-        </div>
-      </div>
+ 
 
       <div>
         <label className="text-sm font-semibold text-gray-700" id="topics-label">
@@ -330,6 +303,35 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
             ))}
           </div>
         )}
+      </div>
+
+     <div>
+        <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
+          Number of Questions
+        </label>
+        <div id="quantity-value" className="float-right pr-4 font-bold text-sky-600" aria-live="polite">
+          {quantity}
+        </div>
+        <div className="relative mt-2">
+          <input
+            type="range"
+            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            name="quantity"
+            min="5"
+            max="120"
+            value={quantity}
+            onChange={handleQuantityChange}
+            id="quantity"
+            aria-label="Select number of questions"
+            aria-valuenow={quantity}
+            aria-valuemin={5}
+            aria-valuemax={120}
+          />
+          <div className="mt-1 flex justify-between text-xs text-gray-500">
+            <span className="hidden">5</span>
+            <span className="hidden">120</span>
+          </div>
+        </div>
       </div>
 
       {validationError && (
