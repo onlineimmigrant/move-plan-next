@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 import { supabase } from '@/lib/supabaseClient';
-//import FixedNavbarMenu from '@/components/FixedNavbarMenu';
+import FixedNavbarMenu from '@/components/FixedNavbarMenu';
 import InfoQuizElement from '@/components/quiz/InfoQuizElement';
 import { useAuth } from '@/context/AuthContext';
+import NavbarEduPro from '@/components/NavbarEduPro';
 
 interface Choice {
   id: number;
@@ -293,18 +294,21 @@ export default function QuizResults({ params }: QuizResultsProps) {
   }
 
   return (
-    <main className="flex-1 space-y-6 pb-20 mt-16 mb-20 px-6 bg-gray-50 min-h-screen">
-      <div className="max-w-5xl mx-auto">
-        {examMode && Object.keys(userAnswers).length > 0 ? (
-          <div className="mb-6 text-lg font-semibold text-gray-900">
-            Correct Answers: {correctAnswersCount} / {questions.length}
-          </div>
-        ) : (
-          <div className="mb-6 text-lg font-semibold text-gray-900">
-            Train Mode: No answers tracked
-          </div>
-        )}
-
+    <main className="flex-1 space-y-6 py-20  px-6 bg-gray-50 min-h-screen">
+        <NavbarEduPro />
+      <div className=" max-w-3xl mx-auto">
+        <div className='my-6  flex justify-between items-center text-lg font-semibold text-gray-900'>
+            <div className='text-gray-700'>Practice Results</div>
+            {examMode && Object.keys(userAnswers).length > 0 ? (
+            <div className="text-xs text-gray-500">
+                Correct Answers: {correctAnswersCount} / {questions.length}
+            </div>
+            ) : (
+            <div className="text-xs text-gray-500">
+                Train Mode
+            </div>
+            )}
+        </div>
         <div className="sm:bg-white sm:rounded-xl sm:shadow-sm sm:p-6 p-4 space-y-6">
           {questions.length === 0 ? (
             <p className="text-gray-600 font-medium text-center">
@@ -323,7 +327,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
                       <InfoQuizElement />
                     </button>
                   <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-base font-semibold text-gray-800 leading-relaxed">
+                    <h2 className="text-sm font-semibold text-gray-800 leading-relaxed">
                       {question.question_text}
                     </h2>
 
@@ -344,10 +348,10 @@ export default function QuizResults({ params }: QuizResultsProps) {
                           className={`w-5 h-5 mr-4 ${
                             isSelected
                               ? choice.is_correct
-                                ? 'text-green-500'
+                                ? 'text-teal-500'
                                 : 'text-red-500'
                               : choice.is_correct
-                              ? 'text-green-500'
+                              ? 'text-teal-500'
                               : 'text-gray-300'
                           }`}
                         />
@@ -355,10 +359,10 @@ export default function QuizResults({ params }: QuizResultsProps) {
                           className={`font-medium ${
                             isSelected
                               ? choice.is_correct
-                                ? 'text-green-500'
+                                ? 'text-teal-500'
                                 : 'text-red-500'
                               : choice.is_correct
-                              ? 'text-green-500'
+                              ? 'text-teal-500'
                               : 'text-gray-700'
                           }`}
                         >
@@ -443,7 +447,6 @@ export default function QuizResults({ params }: QuizResultsProps) {
                       </details>
                     </div>
                   </div>
-                
                 </div>
               );
             }))}
@@ -457,6 +460,9 @@ export default function QuizResults({ params }: QuizResultsProps) {
         </button>
       </div>
 
+      {(session as UserSession)?.user?.role && ['student', 'staff'].includes((session as UserSession).user.role) && (
+        <FixedNavbarMenu />
+      )}
     </main>
   );
 }

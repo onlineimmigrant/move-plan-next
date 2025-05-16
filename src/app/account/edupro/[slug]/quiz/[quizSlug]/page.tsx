@@ -16,6 +16,7 @@ import QuizForm from '@/components/quiz/QuizForm';
 import ExplanationModal from '@/components/quiz/ExplanationModal';
 import { courseIdFromSlug, shuffleArray } from '@/lib/quizUtils';
 import { Quiz, Question, UserSession, Choice } from '@/components/quiz/Types';
+import NavbarEduPro from '@/components/NavbarEduPro';
 
 interface QuizPageProps {
   params: Promise<{ slug: string; quizSlug: string }>;
@@ -144,6 +145,14 @@ export default function QuizPage({ params }: QuizPageProps) {
     return () => clearTimeout(timer);
   }, [timeRemaining, isLoading, questions]);
 
+  // Ensure modal is hidden on question change
+  useEffect(() => {
+    if (questions.length > 0) {
+      const modalId = `modal-${questions[currentQuestionIndex].id}`;
+      closeModal(modalId);
+    }
+  }, [currentQuestionIndex, questions]);
+
   const handleAnswerChange = (questionId: number, choiceId: number, isMulti: boolean) => {
     setUserAnswers((prev) => {
       const currentAnswers = prev[questionId] || [];
@@ -165,9 +174,11 @@ export default function QuizPage({ params }: QuizPageProps) {
   const handleSubmit = async () => {
     if (!quiz || !session?.user?.id) return;
 
+    let quizStatisticId: string | null = null;
+
     if (examMode) {
       try {
-        const quizStatisticId = uuidv4();
+        quizStatisticId = uuidv4();
         const { error: statisticError } = await supabase
           .from('quiz_quizstatistic')
           .insert({
@@ -179,7 +190,7 @@ export default function QuizPage({ params }: QuizPageProps) {
 
         if (statisticError) {
           console.error('Error creating quiz statistic:', statisticError);
-          setError('Failed to save quiz session');
+          setError(`Failed to save quiz session: ${statisticError.message}`);
           return;
         }
 
@@ -196,7 +207,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         const { error: saveError } = await supabase.from('quiz_useranswer').insert(answersToSave);
         if (saveError) {
           console.error('Error saving answers:', saveError);
-          setError('Failed to save answers');
+          setError(`Failed to save answers: ${saveError.message}`);
           return;
         }
       } catch (err) {
@@ -210,6 +221,7 @@ export default function QuizPage({ params }: QuizPageProps) {
       topics: topicIds.join(','),
       quantity: quantity.toString(),
       mode,
+      ...(quizStatisticId && { statisticId: quizStatisticId }),
     });
     router.push(`/account/edupro/${courseSlug}/quiz/${quizSlug}/results?${params.toString()}`);
   };
@@ -229,6 +241,7 @@ export default function QuizPage({ params }: QuizPageProps) {
   };
 
   const openModal = (modalId: string) => {
+    console.log('Opening modal:', modalId, 'examMode:', examMode); // Debug
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.classList.remove('hidden');
@@ -287,7 +300,8 @@ export default function QuizPage({ params }: QuizPageProps) {
         }}
       />
 
-      <main className="flex-1 space-y-6 pb-20 mt-16 mb-20 px-4 bg-gray-50 min-h-screen">
+      <main className="flex-1 space-y-6 pb-20 p-20  px-4 bg-gray-50 min-h-screen">
+        <NavbarEduPro />
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
           <div className="col-span-1"></div>
 
@@ -318,7 +332,7 @@ export default function QuizPage({ params }: QuizPageProps) {
             <ExplanationModal
               question={currentQuestion}
               examMode={examMode}
-             // randomizeChoices={quiz.randomize_choices}
+           //   randomizeChoices={quiz.randomize_choices} // Restored prop
               closeModal={closeModal}
             />
           </div>

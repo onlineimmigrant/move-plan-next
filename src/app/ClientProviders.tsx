@@ -1,6 +1,7 @@
 // app/ClientProviders.tsx
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { SEOProvider } from '@/context/SEOContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { BasketProvider } from '@/context/BasketContext';
@@ -12,6 +13,7 @@ import CookieBanner from '@/components/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
+import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -28,6 +30,12 @@ export default function ClientProviders({
   headerData,
   activeLanguages,
 }: ClientProvidersProps) {
+  const pathname = usePathname();
+
+  const showNavbarFooter = !hideNavbarFooterPrefixes.some((prefix) =>
+    pathname.startsWith(prefix)
+  );
+
   return (
     <SEOProvider>
       <AuthProvider>
@@ -35,14 +43,23 @@ export default function ClientProviders({
           <SettingsProvider initialSettings={settings}>
             <CookieSettingsProvider>
               <SEOWrapper defaultSEOData={defaultSEOData} />
-              <NavbarFooterWrapper>
-                <div className="">
+              {showNavbarFooter ? (
+                <NavbarFooterWrapper>
+                  <div className="">
+                    {children}
+                    <TemplateHeadingSections />
+                    <TemplateSections />
+                    <Breadcrumbs />
+                  </div>
+                </NavbarFooterWrapper>
+              ) : (
+                <div className="-mt-12">
                   {children}
                   <TemplateHeadingSections />
                   <TemplateSections />
-                  <Breadcrumbs />
+                  
                 </div>
-              </NavbarFooterWrapper>
+              )}
               <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
             </CookieSettingsProvider>
           </SettingsProvider>

@@ -9,8 +9,8 @@ interface PrevNextButtonProps {
 export default function PrevNextButton({ onPrev, onNext, isFirst, isLast }: PrevNextButtonProps) {
   return (
 
-    <div className="fixed bottom-6 left-0 right-0 bg-white border-t sm:border-none border-gray-200 p-2 ">
-      <div className="flex justify-between  mx-auto max-w-5xl px-4 ">
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t sm:border-none border-gray-200 p-4 ">
+      <div className="flex justify-between  mx-auto max-w-3xl px-4 ">
       <button
         type="button"
         onClick={onPrev}
