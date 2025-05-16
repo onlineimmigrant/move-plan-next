@@ -1,5 +1,5 @@
 import React from 'react';
-import PrevNextButton from '@/components/PrevNextButton';
+import PrevNextButton from '@/components/quiz/PrevNextButton';
 import ChoicesList from './ChoicesList';
 import { Choice, Question } from './Types';
 

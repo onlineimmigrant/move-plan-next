@@ -1,4 +1,4 @@
-// app/account/edupro/[slug]/page.tsx
+// app/account/edupro/[slug]/practice/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -14,7 +14,7 @@ export default function EduProCourseDetail() {
   const params = useParams();
   const slug = params?.slug as string;
   const { course, topics, isLoading, error, toast, setToast } = useCourseAndTopics(slug);
-  const [activeTab, setActiveTab] = useState<'topics' | 'studyBooks' | 'practice'>('topics');
+  const [activeTab, setActiveTab] = useState<'topics' | 'studyBooks' | 'practice'>('practice');
 
   if (isLoading) {
     return (

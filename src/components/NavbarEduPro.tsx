@@ -6,12 +6,16 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
+import { HiCog } from "react-icons/hi";
+import Tooltip from './Tooltip';
 
 export default function NavbarEduPro() {
   const { session } = useAuth();
   const params = useParams();
   const slug = params?.slug as string;
-  const [courseTitle, setCourseTitle] = useState<string>('EduPro'); // Fallback title
+  const [courseTitle, setCourseTitle] = useState<string>('EduPro');
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const fetchCourseTitle = async () => {
@@ -40,38 +44,56 @@ export default function NavbarEduPro() {
     fetchCourseTitle();
   }, [slug]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const viewportHeight = window.innerHeight;
+      const scrollThreshold = viewportHeight * 0.05; // 5% of viewport height
+
+      // Hide navbar if scrolled past 5% and scrolling down
+      if (scrollY > scrollThreshold && scrollY > lastScrollY) {
+        setIsVisible(false);
+      }
+      // Show navbar if near top or scrolling up
+      else if (scrollY <= scrollThreshold || scrollY < lastScrollY) {
+        setIsVisible(true);
+      }
+
+      setLastScrollY(scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-transparent z-50">
+    <nav
+      className={`fixed top-0 left-0 right-0 bg-transparent z-50 transition-opacity duration-300 ${
+        isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link href={`/account/edupro/${slug}`}>
-              <span className="px-4 text-base font-medium text-gray-300 hover:text-gray-700">{courseTitle}</span>
+              <span className="text-base font-medium text-gray-900 relative tracking-tighter">
+                {courseTitle}
+                <span className="absolute -bottom-2 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+              </span>
             </Link>
           </div>
 
           {/* Navigation Links */}
-          <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
-            <Link
-              href={`/account/edupro/${slug}`}
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Practice
-            </Link>
-          </div>
-
-          {/* Mobile Menu (Simplified) */}
-          <div className="sm:hidden flex items-center">
-            <button
-              type="button"
-              className="text-gray-600 hover:text-gray-900 focus:outline-none"
-              aria-label="Toggle menu"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+          <div className="flex items-center space-x-4">
+            <Tooltip content="Settings">
+              <Link
+                href={`/account/edupro/${slug}/practice`}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-xl"
+              >
+                <HiCog />
+              </Link>
+            </Tooltip>
           </div>
         </div>
       </div>
