@@ -56,7 +56,7 @@ export default function QuizPage({ params }: QuizPageProps) {
       try {
         const { data: quizData, error: quizError } = await supabase
           .from('quiz_quizcommon')
-          .select('id, course_id, slug, randomize_choices')
+          .select('id, course_id, slug, numerate_choices, randomize_choices')
           .eq('slug', quizSlug)
           .eq('course_id', await courseIdFromSlug(courseSlug))
           .single();
@@ -289,25 +289,7 @@ export default function QuizPage({ params }: QuizPageProps) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: [
-              {
-                '@type': 'Question',
-                name: currentQuestion.question_text,
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: correctAnswer,
-                },
-              },
-            ],
-          }),
-        }}
-      />
+
 
       <main className="flex-1 space-y-6 sm:py-20 pt-12 px-4 sm:bg-gray-50 min-h-screen">
         <NavbarEduPro />
@@ -332,6 +314,7 @@ export default function QuizPage({ params }: QuizPageProps) {
               question={currentQuestion}
               currentAnswers={currentUserAnswers}
               randomizeChoices={quiz.randomize_choices}
+              numerateChoices={quiz.numerate_choices}
               handleAnswerChange={handleAnswerChange}
               handleNext={handleNext}
               handlePrev={handlePrev}

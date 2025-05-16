@@ -2,11 +2,6 @@
 @import "tailwindcss";
 
 
-
-/* src/styles/globals.css */
-.prose {
-  /* Base styles */
-}
 /* Define variables for base styles */
 .prose {
   --h1-size: 1.875rem;
