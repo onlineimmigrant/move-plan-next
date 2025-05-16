@@ -11,13 +11,13 @@ export interface Choice {
 
 export interface Question {
   id: number;
-  topic_id: number;
-  topic: Topic;
+  topic_id: number; // Optional for QuizResults
+  topic: { id: number; title: string }; // Optional for QuizResults
   question_text: string;
-  explanation: string | null;
-  video_player: 'youtube' | 'vimeo' | null;
-  links_to_video: string | null;
-  correct_answer_count: number;
+  explanation?: string | null;
+  video_player?: string | null;
+  links_to_video?: string | null;
+  correct_answer_count: number; // Optional for QuizResults
   choices: Choice[];
 }
 
@@ -33,4 +33,13 @@ export interface UserSession {
     id: string;
     role: 'student' | 'staff' | string;
   };
+}
+
+
+
+interface ExplanationModalProps {
+  question: Question;
+  examMode?: boolean; // Optional for QuizResults
+  randomizeChoices?: boolean; // Optional for QuizResults
+  closeModal: (modalId: string, videoId?: string) => void;
 }

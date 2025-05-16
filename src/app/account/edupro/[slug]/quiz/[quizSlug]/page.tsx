@@ -36,6 +36,7 @@ export default function QuizPage({ params }: QuizPageProps) {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [shouldSubmit, setShouldSubmit] = useState(false); // New state for submission
 
   const topicIds = searchParams.get('topics')?.split(',').map(Number) || [];
   const quantity = Number(searchParams.get('quantity')) || 10;
@@ -129,13 +130,14 @@ export default function QuizPage({ params }: QuizPageProps) {
     fetchQuizAndQuestions();
   }, [courseSlug, quizSlug, session]);
 
+  // Timer Effect
   useEffect(() => {
     if (timeRemaining <= 0 || isLoading || !questions.length) return;
 
     const timer = setTimeout(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
-          handleSubmit();
+          setShouldSubmit(true); // Trigger submission
           return 0;
         }
         return prev - 1;
@@ -144,6 +146,13 @@ export default function QuizPage({ params }: QuizPageProps) {
 
     return () => clearTimeout(timer);
   }, [timeRemaining, isLoading, questions]);
+
+  // Submission Effect
+  useEffect(() => {
+    if (shouldSubmit) {
+      handleSubmit();
+    }
+  }, [shouldSubmit]);
 
   // Ensure modal is hidden on question change
   useEffect(() => {
@@ -230,7 +239,7 @@ export default function QuizPage({ params }: QuizPageProps) {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      handleSubmit();
+      setShouldSubmit(true); // Trigger submission
     }
   };
 
@@ -241,7 +250,7 @@ export default function QuizPage({ params }: QuizPageProps) {
   };
 
   const openModal = (modalId: string) => {
-    console.log('Opening modal:', modalId, 'examMode:', examMode); // Debug
+    console.log('Opening modal:', modalId, 'examMode:', examMode);
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.classList.remove('hidden');
@@ -300,7 +309,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         }}
       />
 
-      <main className="flex-1 space-y-6 pb-20 p-20  px-4 bg-gray-50 min-h-screen">
+      <main className="flex-1 space-y-6 pb-20 pt-20 px-4 bg-gray-50 min-h-screen">
         <NavbarEduPro />
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
           <div className="col-span-1"></div>
@@ -332,7 +341,7 @@ export default function QuizPage({ params }: QuizPageProps) {
             <ExplanationModal
               question={currentQuestion}
               examMode={examMode}
-           //   randomizeChoices={quiz.randomize_choices} // Restored prop
+              randomizeChoices={quiz.randomize_choices} // Restored prop
               closeModal={closeModal}
             />
           </div>
