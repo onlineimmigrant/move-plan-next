@@ -201,7 +201,7 @@ const ExplanationModal: React.FC<ExplanationModalProps> = ({
           ref={dragHandleRef}
           className="w-full p-4 bg-gray-700 sm:rounded-t-xl md:cursor-move cursor-default"
         >
-          <span className="text-base font-medium pl-4 text-white">Response</span>
+          <span className="text-base font-medium pl-4 text-white">Answer</span>
         </div>
 
         {/* Close Button */}

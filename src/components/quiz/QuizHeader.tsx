@@ -27,7 +27,7 @@ const QuizHeader: React.FC<QuizHeaderProps> = ({
   };
 
   return (
-    <div className="my-2 ">
+    <div className="mt-6 sm:my-2 sm:mt-0">
 
       <div className="font-bold text-base sm:text-lg text-gray-900 space-x-1">
          <span>{topicTitle}</span>

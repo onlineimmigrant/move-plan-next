@@ -164,10 +164,10 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
         <button
           onClick={() => openModal && openModal(modalId)} // Safely call openModal if defined
           title="Answer and explanation"
-          className="mt-2 flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm font-medium text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors"
+          className="w-full mt-2 flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm font-medium text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors"
         >
           <InfoQuizElement />
-          <span>Answer & Explanation</span>
+          <span>& Explanation</span>
         </button>
       )}
     </div>

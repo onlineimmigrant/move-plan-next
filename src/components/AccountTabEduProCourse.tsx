@@ -7,6 +7,7 @@ import { usePathname, useParams } from 'next/navigation';
 import { useStudentStatus } from '@/lib/StudentContext';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -138,7 +139,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   const tabs: Tab[] = [
     { label: 'Study', href: `/account/edupro/${slug}` },
     { label: 'Plan', href: `/account/edupro/${slug}/study-plan` },
-   // { label: 'Progress', href: `/account/edupro/${slug}/progress` },
+    { label: 'Progress', href: `/account/edupro/${slug}/progress` },
   //  { label: 'Info', href: `/account/edupro/${slug}/info` },
 
   ];
@@ -165,23 +166,28 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
 
   return (
     <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
+     
+               <Image src="/images/logo.svg" alt="Logo" width={40} height={40} 
+               className="fixed left-4 hidden sm:block h-8 w-auto" />
+              <Image src="/images/logo_collapsed.svg" alt="Logo mobile" width={40} height={40} 
+               className="fixed left-4 block sm:hidden h-8 w-auto" />
       <Link href="/account">
         <div className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-center text-base">
-          <span className="text-gray-500 font-light">{duration}</span>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 relative">
+          <span className=" text-gray-500 font-light">{duration}</span>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 relative">
             {courseTitle}
             <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
           </h1>
         </div>
       </Link>
-      <nav className="flex flex-row justify-center sm:gap-6 border-gray-200 pb-6 ">
+      <nav className="flex flex-row justify-center sm:justify-start sm:gap-8 border-gray-200 pb-6 ">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-4 py-1  sm:px-3 sm:py-2 text-sm font-medium   sm:rounded-none mb-2 sm:mb-0 transition ${
+              className={`px-4 py-2  sm:px-3 sm:py-2 text-sm font-medium   sm:rounded-none mb-2 sm:mb-0 transition ${
                 isActive
                   ? 'bg-sky-50 text-sky-600 border-b-2 border-sky-600 sm:bg-transparent'
                   : 'text-gray-600 hover:bg-sky-50 hover:text-sky-600 hover:border-b-2 hover:border-sky-200'

@@ -69,25 +69,28 @@ export default function NavbarEduPro() {
 
   return (
     <nav
-      className={`fixed top-0 left-0  right-0 sm:bg-transparent bg-transparent backdrop-blur-sm z-50 transition-opacity duration-300 ${
+      className={`fixed top-0 left-0  right-0  bg-transparent backdrop-blur-sm z-50 transition-opacity duration-300 ${
         isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
     >
       <div className="max-w-7xl mx-auto px-8">
-        <div className="flex justify-between h-12 items-center">
-         <Image src="/images/logo.svg" alt="Logo" width={40} height={40} className="hidden sm:block h-8 w-auto" />
-          {/* Course Logo */}
+        <div className='flex justify-center items-center py-3 '>
+         <Image src="/images/logo.svg" alt="Logo" width={40} height={40} 
+         className="fixed left-4 hidden sm:block h-8 w-auto" />
+        <Image src="/images/logo_collapsed.svg" alt="Logo mobile" width={40} height={40} 
+         className="fixed left-4 block sm:hidden h-8 w-auto" />
+         
+         <div className="flex justify-center h-12 items-center">
           <div className="flex-shrink-0 flex items-center">
             <Link href={`/account/edupro/${slug}`}>
-              <span className="sm:text-xl text-base font-medium sm:font-semibold text-gray-900 relative tracking-tighter">
+              <span className="text-xl sm:text-2xl font-bold text-gray-900 relative ">
                 {courseTitle}
                 <span className="absolute -bottom-2 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </span>
             </Link>
           </div>
-
-          {/* Navigation Links */}
-          <div className="flex items-center space-x-4">
+        </div>
+          <div className="fixed right-4 flex items-center space-x-4">
             <Tooltip content="Settings">
               <Link
                 href={`/account/edupro/${slug}/practice`}
@@ -97,7 +100,7 @@ export default function NavbarEduPro() {
               </Link>
             </Tooltip>
           </div>
-        </div>
+       </div>
       </div>
     </nav>
   );

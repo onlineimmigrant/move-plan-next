@@ -57,18 +57,18 @@ export default function EduProCourseDetail() {
             <div>
               <div>
                 {/* Tabbed navigation */}
-                <div className="flex justify-center mb-4" role="tablist" aria-label="Course Sections">
+                <div className="-mt-4 flex space-x-6 justify-center mb-8" role="tablist" aria-label="Course Sections">
                   <button
                     id="topics-tab"
                     role="tab"
                     aria-selected={activeTab === 'topics'}
                     aria-controls="topics-panel"
                     onClick={() => setActiveTab('topics')}
-                    className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
+                    className={`px-2 py-1  text-sm font-semibold  rounded-full transition-transform
                       ${
                         activeTab === 'topics'
-                          ? 'bg-sky-600 shadow-md scale-120'
-                          : 'bg-gray-600'
+                     ? 'bg-sky-600 shadow-md scale-110 text-white'
+                          : 'bg-transparent border-2 border-sky-600 text-sky-600'
                       }`}
                   >
                     Topics
@@ -79,11 +79,11 @@ export default function EduProCourseDetail() {
                     aria-selected={activeTab === 'practice'}
                     aria-controls="practice-panel"
                     onClick={() => setActiveTab('practice')}
-                    className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
+                    className={`px-2 py-1  text-sm font-semibold  rounded-full transition-transform
                       ${
                         activeTab === 'practice'
-                          ? 'bg-sky-600 shadow-md scale-120'
-                          : 'bg-gray-600'
+                          ? 'bg-sky-600 shadow-md scale-110 text-white'
+                          : 'bg-transparent border-2 border-sky-600 text-sky-600'
                       }`}
                   >
                     Practice
@@ -94,11 +94,11 @@ export default function EduProCourseDetail() {
                     aria-selected={activeTab === 'studyBooks'}
                     aria-controls="studyBooks-panel"
                     onClick={() => setActiveTab('studyBooks')}
-                    className={`px-2 py-1 mx-4 sm:mx-2 text-sm font-semibold text-white rounded-full transition-transform
+                    className={`px-2 py-1   text-sm font-semibold  rounded-full transition-transform
                       ${
                         activeTab === 'studyBooks'
-                          ? 'bg-sky-600 shadow-md scale-120'
-                          : 'bg-gray-600'
+                        ? 'bg-sky-600 shadow-md scale-110 text-white'
+                          : 'bg-transparent border-2 border-sky-600 text-sky-600'
                       }`}
                   >
                     Books
