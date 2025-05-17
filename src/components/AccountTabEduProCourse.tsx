@@ -23,12 +23,12 @@ interface AccountTabEduProCourseProps {
   className?: string;
 }
 
-// Define the EduProCourse interface (minimal for fetching the title)
 interface EduProCourse {
-  title: string; // Adjust this field name based on the actual column name in edu_pro_course
+  id: number;
+  title: string;
+  image: string | null; // Allow null for cases where image is not set
 }
 
-// Define the Purchase interface for fetching the pricing plan measure
 interface Purchase {
   id: string;
   profiles_id: string;
@@ -45,12 +45,16 @@ interface Purchase {
 
 export default function AccountTabEduProCourse({ className = '' }: AccountTabEduProCourseProps) {
   const pathname = usePathname();
-  const { slug } = useParams(); // Get the slug from the URL
+  const { slug } = useParams();
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
   const { session } = useAuth();
   const [courseTitle, setCourseTitle] = useState<string>('Loading...');
+  const [courseImage, setCourseImage] = useState<string | null>(null); // Allow null for no image
   const [duration, setDuration] = useState<string>('Loading...');
   const [error, setError] = useState<string | null>(null);
+
+  // Fallback image for when courseImage is not available
+  const fallbackImage = '/images/course-placeholder.svg'; // Add a placeholder image to your public folder
 
   // Check if a purchase is active
   const isPurchaseActive = (purchase: Purchase) => {
@@ -61,21 +65,21 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     return currentDate >= startDate && (!endDate || currentDate <= endDate);
   };
 
-  // Fetch the course title and duration based on the slug
+  // Fetch the course title, image, and duration based on the slug
   useEffect(() => {
     const fetchCourseData = async () => {
       if (!session || !slug) return;
 
       try {
-        // Step 1: Fetch the edu_pro_course record to get the title and id
+        // Step 1: Fetch the edu_pro_course record to get the title, image, and id
         const { data: courseData, error: courseError } = await supabase
           .from('edu_pro_course')
-          .select('id, title') // Adjust the field name if necessary
+          .select('id, title, image')
           .eq('slug', slug)
           .single();
 
         if (courseError) {
-          throw new Error(`Error fetching course title: ${courseError.message}`);
+          throw new Error(`Error fetching course data: ${courseError.message}`);
         }
 
         if (!courseData) {
@@ -83,6 +87,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         }
 
         setCourseTitle(courseData.title);
+        setCourseImage(courseData.image); // Set the course image (may be null)
 
         // Step 2: Fetch the user's active purchases to get the pricing plan measure
         const { data: activePurchases, error: purchaseError } = await supabase
@@ -127,6 +132,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         console.error('AccountTabEduProCourse: Error:', err);
         setError((err as Error).message);
         setCourseTitle('Course Title Not Found');
+        setCourseImage(null);
         setDuration('N/A');
       }
     };
@@ -140,8 +146,6 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     { label: 'Study', href: `/account/edupro/${slug}` },
     { label: 'Plan', href: `/account/edupro/${slug}/study-plan` },
     { label: 'Progress', href: `/account/edupro/${slug}/progress` },
-  //  { label: 'Info', href: `/account/edupro/${slug}/info` },
-
   ];
 
   if (studentLoading) {
@@ -166,28 +170,61 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
 
   return (
     <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
-     
-               <Image src="/images/logo.svg" alt="Logo" width={40} height={40} 
-               className="fixed left-4 hidden sm:block h-8 w-auto" />
-              <Image src="/images/logo_collapsed.svg" alt="Logo mobile" width={40} height={40} 
-               className="fixed left-4 block sm:hidden h-8 w-auto" />
+      {/* Logo */}
+      <Image
+        src="/images/logo.svg"
+        alt="Logo"
+        width={40}
+        height={40}
+        className="fixed left-4 hidden sm:block h-8 w-auto"
+      />
+      <Image
+        src="/images/logo_collapsed.svg"
+        alt="Logo mobile"
+        width={40}
+        height={40}
+        className="fixed left-4 block sm:hidden h-8 w-auto"
+      />
+
+
+
+
+      {/* Course Header */}
       <Link href="/account">
-        <div className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-center text-base">
-          <span className=" text-gray-500 font-light">{duration}</span>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 relative">
-            {courseTitle}
-            <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
-          </h1>
+        <div className="mt-0 sm:mt-2 mb-4 sm:mb-6 flex items-center justify-center gap-4">
+          <div className='flex justify-between items-center'>
+            <div className="text-center">
+              <span className="text-gray-500 font-light text-base">{duration}</span>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 relative">
+                {courseTitle}
+                <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+              </h1>
+            </div>
+            {courseImage && (
+            <Image
+              src={courseImage || fallbackImage}
+              alt={`${courseTitle} course image`}
+              width={96}
+              height={96}
+              className="fixed right-2 top-2 hidden sm:block w-12 h-12 sm:w-auto sm:h-auto rounded-lg object-cover"
+              priority
+            />
+          )}
+          </div>          
         </div>
+        
       </Link>
-      <nav className="flex flex-row justify-center sm:justify-start sm:gap-8 border-gray-200 pb-6 ">
+
+
+      {/* Navigation Tabs */}
+      <nav className="flex flex-row justify-center sm:justify-start sm:gap-8 border-gray-200 pb-6">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-4 py-2  sm:px-3 sm:py-2 text-sm font-medium   sm:rounded-none mb-2 sm:mb-0 transition ${
+              className={`px-4 py-2 sm:px-3 sm:py-2 text-sm font-medium sm:rounded-none mb-2 sm:mb-0 transition ${
                 isActive
                   ? 'bg-sky-50 text-sky-600 border-b-2 border-sky-600 sm:bg-transparent'
                   : 'text-gray-600 hover:bg-sky-50 hover:text-sky-600 hover:border-b-2 hover:border-sky-200'
@@ -201,4 +238,4 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
       </nav>
     </div>
   );
-}
+};
