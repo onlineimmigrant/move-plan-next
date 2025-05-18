@@ -64,7 +64,7 @@ export default function EduProCourseDetail() {
                     aria-selected={activeTab === 'topics'}
                     aria-controls="topics-panel"
                     onClick={() => setActiveTab('topics')}
-                    className={`px-2 py-1  text-sm font-semibold  rounded-full transition-transform
+                    className={`px-2 py-1  text-sm font-semibold  rounded-md transition-transform
                       ${
                         activeTab === 'topics'
                      ? 'bg-sky-600 shadow-md scale-110 text-white'
@@ -79,7 +79,7 @@ export default function EduProCourseDetail() {
                     aria-selected={activeTab === 'practice'}
                     aria-controls="practice-panel"
                     onClick={() => setActiveTab('practice')}
-                    className={`px-2 py-1  text-sm font-semibold  rounded-full transition-transform
+                    className={`px-2 py-1  text-sm font-semibold  rounded-md transition-transform
                       ${
                         activeTab === 'practice'
                           ? 'bg-sky-600 shadow-md scale-110 text-white'
@@ -94,7 +94,7 @@ export default function EduProCourseDetail() {
                     aria-selected={activeTab === 'studyBooks'}
                     aria-controls="studyBooks-panel"
                     onClick={() => setActiveTab('studyBooks')}
-                    className={`px-2 py-1   text-sm font-semibold  rounded-full transition-transform
+                    className={`px-2 py-1   text-sm font-semibold  rounded-md transition-transform
                       ${
                         activeTab === 'studyBooks'
                         ? 'bg-sky-600 shadow-md scale-110 text-white'

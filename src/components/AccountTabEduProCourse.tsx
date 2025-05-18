@@ -26,7 +26,7 @@ interface AccountTabEduProCourseProps {
 interface EduProCourse {
   id: number;
   title: string;
-  image: string | null; // Allow null for cases where image is not set
+  image: string | null;
 }
 
 interface Purchase {
@@ -49,14 +49,12 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
   const { session } = useAuth();
   const [courseTitle, setCourseTitle] = useState<string>('Loading...');
-  const [courseImage, setCourseImage] = useState<string | null>(null); // Allow null for no image
+  const [courseImage, setCourseImage] = useState<string | null>(null);
   const [duration, setDuration] = useState<string>('Loading...');
   const [error, setError] = useState<string | null>(null);
 
-  // Fallback image for when courseImage is not available
-  const fallbackImage = '/images/course-placeholder.svg'; // Add a placeholder image to your public folder
+  const fallbackImage = '/images/course-placeholder.svg';
 
-  // Check if a purchase is active
   const isPurchaseActive = (purchase: Purchase) => {
     if (!purchase.is_active) return false;
     const currentDate = new Date();
@@ -65,13 +63,11 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     return currentDate >= startDate && (!endDate || currentDate <= endDate);
   };
 
-  // Fetch the course title, image, and duration based on the slug
   useEffect(() => {
     const fetchCourseData = async () => {
       if (!session || !slug) return;
 
       try {
-        // Step 1: Fetch the edu_pro_course record to get the title, image, and id
         const { data: courseData, error: courseError } = await supabase
           .from('edu_pro_course')
           .select('id, title, image')
@@ -87,9 +83,8 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         }
 
         setCourseTitle(courseData.title);
-        setCourseImage(courseData.image); // Set the course image (may be null)
+        setCourseImage(courseData.image);
 
-        // Step 2: Fetch the user's active purchases to get the pricing plan measure
         const { data: activePurchases, error: purchaseError } = await supabase
           .from('purchases')
           .select(`
@@ -116,7 +111,6 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
           throw new Error('No active purchases found.');
         }
 
-        // Find the purchase that matches this course
         const matchingPurchase = activePurchases.find((purchase) => {
           const isActive = isPurchaseActive(purchase);
           const courseId = purchase.pricingplan?.product?.course_connected_id;
@@ -148,6 +142,16 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     { label: 'Progress', href: `/account/edupro/${slug}/progress` },
   ];
 
+  // Determine the translate-x for the sliding background
+  const getSliderPosition = () => {
+    const activeIndex = tabs.findIndex((tab) => pathname === tab.href);
+    console.log('Active Tab Index:', activeIndex, 'Pathname:', pathname); // Debug log
+    if (activeIndex === 0) return 'translate-x-0';
+    if (activeIndex === 1) return 'translate-x-[100%]';
+    if (activeIndex === 2) return 'translate-x-[200%]';
+    return 'translate-x-0'; // Default to first tab
+  };
+
   if (studentLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -169,7 +173,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   }
 
   return (
-    <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
+    <div className={`mb-2 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
       {/* Logo */}
       <Image
         src="/images/logo.svg"
@@ -186,13 +190,10 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         className="fixed left-4 block sm:hidden h-8 w-auto"
       />
 
-
-
-
       {/* Course Header */}
       <Link href="/account">
         <div className="mt-0 sm:mt-2 mb-4 sm:mb-6 flex items-center justify-center gap-4">
-          <div className='flex justify-between items-center'>
+          <div className="flex justify-between items-center">
             <div className="text-center">
               <span className="text-gray-500 font-light text-base">{duration}</span>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 relative">
@@ -201,41 +202,42 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
               </h1>
             </div>
             {courseImage && (
-            <Image
-              src={courseImage || fallbackImage}
-              alt={`${courseTitle} course image`}
-              width={96}
-              height={96}
-              className="fixed right-2 top-2 hidden sm:block w-12 h-12 sm:w-auto sm:h-auto rounded-lg object-cover"
-              priority
-            />
-          )}
-          </div>          
+              <Image
+                src={courseImage || fallbackImage}
+                alt={`${courseTitle} course image`}
+                width={96}
+                height={96}
+                className="fixed right-2 top-2 hidden sm:block w-12 h-12 sm:w-auto sm:h-auto rounded-lg object-cover"
+                priority
+              />
+            )}
+          </div>
         </div>
-        
       </Link>
 
-
-      {/* Navigation Tabs */}
-      <nav className="flex flex-row justify-center sm:justify-start sm:gap-8 border-gray-200 ">
-        {tabs.map((tab) => {
-          const isActive = pathname === tab.href;
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`px-4 py-2 sm:px-3 sm:py-2 text-sm font-medium sm:rounded-none mb-2 sm:mb-0 transition ${
-                isActive
-                  ? 'bg-sky-50 text-sky-600 border-b-2 border-sky-600 sm:bg-transparent'
-                  : 'text-gray-600 hover:bg-sky-50 hover:text-sky-600 hover:border-b-2 hover:border-sky-200'
-              }`}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Navigation Tabs with New Style */}
+      <div className="select-none flex justify-center">
+        <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-sky-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
+          {/* Sliding Background */}
+          <div
+            className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.33%-2px)] bg-sky-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
+          ></div>
+          {/* Tab Labels */}
+          <div className="relative flex h-full">
+            {tabs.map((tab, index) => (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-base mona-sans px-0.5 ${
+                  pathname === tab.href ? 'font-semibold text-white z-10' : ''
+                }`}
+              >
+                {tab.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
+}
