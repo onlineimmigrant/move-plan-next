@@ -74,7 +74,7 @@ export default function EduProCourseDetail() {
             <div>
               <div>
                 {/* Tabbed navigation */}
-                <div className="select-none flex justify-center mb-8" role="tablist" aria-label="Course Sections">
+                <div className="select-none flex justify-center mb-2" role="tablist" aria-label="Course Sections">
                   <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-transparent rounded-lg cursor-pointer overflow-hidden px-0.5">
                     {/* Sliding Background */}
                     <div

@@ -95,7 +95,7 @@ export default function Practice({ courseId, courseSlug }: PracticeProps) {
   }
 
   return (
-    <div className="mt-4">
+    <div className="">
       {quizzes.length > 0 ? (
         showFullStats ? (
           // Render only PracticeStatistics when showFullStats is true
@@ -112,7 +112,7 @@ export default function Practice({ courseId, courseSlug }: PracticeProps) {
           </div>
         ) : (
           // Render the grid layout when showFullStats is false
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 gap-x-8">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-8">
             <div className="col-span-1">
               <PracticePassRateVisual quiz={quizzes[0]} />
             </div>
