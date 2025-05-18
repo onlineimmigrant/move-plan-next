@@ -89,14 +89,14 @@ const StudyPlanHeader = ({
             className="fixed inset-0 bg-transparent transition-opacity duration-300"
             onClick={() => setIsSettingsModalOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 w-80 sm:w-96 bg-gradient-to-br from-white to-gray-50 shadow-2xl sm:rounded-l-2xl overflow-auto transform transition-transform duration-300 translate-x-0">
+          <div className="fixed inset-y-0 right-0 w-full sm:w-96 bg-gradient-to-br from-white to-gray-50 shadow-2xl sm:rounded-l-2xl overflow-auto transform transition-transform duration-300 translate-x-0">
             <div className="relative p-6 sm:p-8">
               <Button
                 onClick={() => setIsSettingsModalOpen(false)}
-                className="absolute top-4 left-4 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                className="absolute top-4 right-4 sm:left-4  text-gray-600 hover:text-gray-800 transition-colors duration-200"
                 aria-label="Close settings modal"
               >
-                <HiX className="w-6 h-6" />
+                <HiX className="w-8 h-8 bg-gray-100 hover:bg-gray-50 rounded-full p-1" />
               </Button>
               <h2 className="text-lg font-bold text-gray-800 mb-6 text-center">
                 Settings
