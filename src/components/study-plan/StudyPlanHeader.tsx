@@ -4,7 +4,7 @@ import { HiCog, HiX } from 'react-icons/hi';
 import Button from './Button';
 import DateInput from './DateInput';
 import RadioGroup from './RadioGroup';
-import { StudyPlanPreference } from './types';
+import { StudyPlanPreference } from './Types';
 
 interface StudyPlanHeaderProps {
   studyPlanPeriod: string;
@@ -48,23 +48,24 @@ const StudyPlanHeader = ({
 
   return (
     <>
-      <div className="mb-4 flex justify-between items-start">
-        <div className="flex justify-start space-x-2 items-center">
+      <div className=" flex justify-between items-start">
+        <div className=" p-2 rounded-md flex justify-start space-x-2 items-center cursor-pointer">
           <Button
             onClick={() => setIsSettingsModalOpen(true)}
-            className="text-left flex items-center text-xs text-sky-500 font-light hover:underline"
+            className="text-left flex items-center text-sm text-sky-600 cursor-pointer font-medium hover:text-sky-500"
             title="Edit Study Plan Period"
           >
+            
+            <HiCog className="w-6 h-6 mr-4" />
             {studyPlanPeriod}
-            <HiCog className="w-6 h-6 ml-1" />
           </Button>
         </div>
-        <div className="flex justify-end space-x-2 items-center">
+        <div className="flex justify-end  p-2 space-x-2 items-center cursor-pointer">
           {preference.style === 'flexible' && (
             <>
               <Button
                 onClick={() => setIsEditingDates(!isEditingDates)}
-                className="text-xs text-sky-500 font-light hover:underline"
+                className="text-sm text-sky-600 font-medium cursor-pointer hover:text-sky-500"
                 title={isEditingDates ? 'Cancel Editing Dates' : 'Edit Lesson Dates'}
               >
                 {isEditingDates ? 'Cancel' : 'Dates'}
@@ -72,7 +73,7 @@ const StudyPlanHeader = ({
               {isEditingDates && (
                 <Button
                   onClick={handleSaveDates}
-                  className="text-xs text-sky-500 font-light hover:underline"
+                  className="text-sm text-sky-600 font-medium cursor-pointer hover:text-sky-500"
                   title="Save Lesson Dates"
                 >
                   Save Dates

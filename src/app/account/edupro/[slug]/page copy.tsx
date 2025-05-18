@@ -16,23 +16,6 @@ export default function EduProCourseDetail() {
   const { course, topics, isLoading, error, toast, setToast } = useCourseAndTopics(slug);
   const [activeTab, setActiveTab] = useState<'topics' | 'studyBooks' | 'practice'>('topics');
 
-  // Define the tabs for "Topics," "Practice," and "Books"
-  const tabs = [
-    { label: 'Topics', value: 'topics' },
-    { label: 'Practice', value: 'practice' },
-    { label: 'Books', value: 'studyBooks' },
-  ];
-
-  // Determine the translate-x for the sliding background
-  const getSliderPosition = () => {
-    const activeIndex = tabs.findIndex((tab) => activeTab === tab.value);
-    console.log('Active Tab Index:', activeIndex, 'Active Tab:', activeTab); // Debug log
-    if (activeIndex === 0) return 'translate-x-0';
-    if (activeIndex === 1) return 'translate-x-[100%]';
-    if (activeIndex === 2) return 'translate-x-[200%]';
-    return 'translate-x-0'; // Default to first tab
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -74,31 +57,52 @@ export default function EduProCourseDetail() {
             <div>
               <div>
                 {/* Tabbed navigation */}
-                <div className="select-none flex justify-center mb-8" role="tablist" aria-label="Course Sections">
-                  <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-gray-300 rounded-lg cursor-pointer overflow-hidden px-0.5">
-                    {/* Sliding Background */}
-                    <div
-                      className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.33%-2px)] bg-sky-600 rounded-md transition-transform  duration-200 ease-in-out transform ${getSliderPosition()}`}
-                    ></div>
-                    {/* Tab Labels */}
-                    <div className="relative flex h-full">
-                      {tabs.map((tab, index) => (
-                        <button
-                          key={tab.value}
-                          id={`${tab.value}-tab`}
-                          role="tab"
-                          aria-selected={activeTab === tab.value}
-                          aria-controls={`${tab.value}-panel`}
-                          onClick={() => setActiveTab(tab.value as 'topics' | 'studyBooks' | 'practice')}
-                          className={`flex-1 flex justify-center cursor-pointer items-center text-sky-600 text-sm sm:text-base mona-sans px-0.5 ${
-                            activeTab === tab.value ? 'font-semibold text-white z-10' : ''
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                <div className=" flex space-x-6 justify-center mb-8" role="tablist" aria-label="Course Sections">
+                  <button
+                    id="topics-tab"
+                    role="tab"
+                    aria-selected={activeTab === 'topics'}
+                    aria-controls="topics-panel"
+                    onClick={() => setActiveTab('topics')}
+                    className={`px-2 py-1  text-sm font-semibold  rounded-md transition-transform
+                      ${
+                        activeTab === 'topics'
+                     ? 'bg-sky-600 shadow-md scale-110 text-white'
+                          : 'bg-transparent border-2 border-sky-600 text-sky-600'
+                      }`}
+                  >
+                    Topics
+                  </button>
+                  <button
+                    id="practice-tab"
+                    role="tab"
+                    aria-selected={activeTab === 'practice'}
+                    aria-controls="practice-panel"
+                    onClick={() => setActiveTab('practice')}
+                    className={`px-2 py-1  text-sm font-semibold  rounded-md transition-transform
+                      ${
+                        activeTab === 'practice'
+                          ? 'bg-sky-600 shadow-md scale-110 text-white'
+                          : 'bg-transparent border-2 border-sky-600 text-sky-600'
+                      }`}
+                  >
+                    Practice
+                  </button>
+                  <button
+                    id="studyBooks-tab"
+                    role="tab"
+                    aria-selected={activeTab === 'studyBooks'}
+                    aria-controls="studyBooks-panel"
+                    onClick={() => setActiveTab('studyBooks')}
+                    className={`px-2 py-1   text-sm font-semibold  rounded-md transition-transform
+                      ${
+                        activeTab === 'studyBooks'
+                        ? 'bg-sky-600 shadow-md scale-110 text-white'
+                          : 'bg-transparent border-2 border-sky-600 text-sky-600'
+                      }`}
+                  >
+                    Books
+                  </button>
                 </div>
 
                 {/* Tab panels */}
@@ -114,13 +118,13 @@ export default function EduProCourseDetail() {
                         {topics.map((topic) => (
                           <li
                             key={topic.id}
-                            className="relative border-l-8 border-sky-600 pl-8 py-8 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                            className="relative border-l-8 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
                           >
                             <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
                               {topic.order}
                             </span>
                             <Link href={`/account/edupro/${course.slug}/topic/${topic.slug}`}>
-                              <h3 className="text-base font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
+                              <h3 className="text-sm font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
                                 {topic.title}
                               </h3>
                               <p className="pr-8 text-sm text-gray-600 mt-1">
