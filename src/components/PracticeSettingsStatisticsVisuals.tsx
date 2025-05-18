@@ -226,7 +226,7 @@ export default function PracticeSettingsStatisticsVisuals({
         </div>
       </div>
 
-      <div className="text-center">
+      <div className="hidden sm:block text-center">
         <button
           onClick={() => setShowFullStats(!showFullStats)}
           className="text-sky-500 hover:text-sky-600 font-medium underline focus:outline-none"
