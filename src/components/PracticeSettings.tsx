@@ -277,13 +277,13 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </p>
         ) : (
           <div
-            className="mt-4 max-h-64 overflow-y-auto rounded-lg border border-gray-300 bg-white shadow-sm scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-600"
+            className=" max-h-96 overflow-y-auto   bg-white gap-y-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-600"
             role="group"
             aria-labelledby="topics-label"
           >
             <label
               htmlFor="topic_all"
-              className="sticky top-0 z-10 flex cursor-pointer flex-col border-b border-gray-300 bg-gray-50 p-3 hover:bg-gray-100"
+              className="sticky top-0 z-10 flex cursor-pointer flex-col shadow rounded-md border-2 border-yellow-100  bg-yellow-200 p-2 px-3  hover:bg-gray-100"
             >
               <div className="flex items-center justify-between">
                 <input
@@ -324,7 +324,8 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </div>
         )}
       </div>
-
+<div className="px-8 fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-sm border-t border-gray-50 shadow sm:shadow-none sm:border-none py-2 sm:py-3 z-10">
+   
       <div>
         <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
           Number of Questions
@@ -360,7 +361,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
         </div>
       )}
 
-      <div>
+      <div className='mb-2'>
         <button
           type="button"
           className={`${styles.buttonPrimary} ${isQuizStartDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -372,6 +373,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           Start
         </button>
       </div>
+    </div>
     </div>
   );
 }
