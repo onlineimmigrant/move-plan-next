@@ -313,7 +313,7 @@ export default function EduProTopicDetail() {
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {toast && (
           <Toast
             message={toast.message}
@@ -339,7 +339,7 @@ export default function EduProTopicDetail() {
                 <span className="absolute top-4 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
                   {topic.order}
                 </span>
-                <h3 className="text-lg font-medium text-gray-900 pr-8">{topic.title}</h3>
+                <h3 className="text-base font-medium text-gray-900 pr-8">{topic.title}</h3>
                
               </div>
 

@@ -1,6 +1,6 @@
 // src/components/study-plan/LessonsTable.tsx
 import Link from 'next/link';
-import { LessonProgress } from './types';
+import { LessonProgress } from './Types';
 
 interface LessonsTableProps {
   lessonsProgress: LessonProgress[];
@@ -24,23 +24,23 @@ const LessonsTable = ({
   formatDate,
 }: LessonsTableProps) => {
   return (
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-gray-50">
+    <table className="border-2 sm:border-none  border-gray-200 min-w-full divide-y divide-gray-200">
+      <thead className="bg-gray-50 rounded-md">
         <tr>
           <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
             #
           </th>
-          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+          <th className="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">
             Lesson
           </th>
-          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+          <th className="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">
             Status
           </th>
           <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-            Actual Completion Date
+            Completion 
           </th>
           <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-            Study Plan Date
+            Plan Date
           </th>
         </tr>
       </thead>
@@ -57,10 +57,10 @@ const LessonsTable = ({
             >
               {lessonProg.lesson.order}
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-base font-semibold">
+            <td className="px-2 py-4 whitespace-nowrap text-sm font-semibold">
               <Link
                 href={`/account/edupro/${courseSlug}/topic/${topicSlug}/lesson/${lessonProg.lesson.id}`}
-                className={`rounded-3xl px-5 py-2 hover:bg-gray-200 hover:text-gray-500 ${
+                className={`rounded-md px-5 py-2 hover:bg-gray-200 hover:text-gray-500 ${
                   lessonProg.completed
                     ? 'bg-sky-500 text-white'
                     : lessonProg.lesson.title.includes('Practice')
@@ -71,7 +71,7 @@ const LessonsTable = ({
                 {lessonProg.lesson.title}
               </Link>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+            <td className="px-2 py-4 whitespace-nowrap text-center text-sm">
               {lessonProg.completed ? (
                 <span className="text-sky-500 text-xl" title="Completed">
                   ✓
@@ -106,7 +106,7 @@ const LessonsTable = ({
                     <span>
                       {formatDate(new Date(lessonProg.planned_completion_date))}
                     </span>
-                    <span>
+                    <span className='hidden sm:block'>
                       {new Date(
                         lessonProg.planned_completion_date
                       ).toLocaleString('en-US', {

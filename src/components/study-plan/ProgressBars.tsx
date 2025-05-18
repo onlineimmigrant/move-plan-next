@@ -1,6 +1,6 @@
 // src/components/study-plan/ProgressBars.tsx
 import Link from 'next/link';
-import { CourseProgress } from './types';
+import { CourseProgress } from './Types';
 
 interface ProgressBarsProps {
   courseProgress: CourseProgress;
@@ -10,9 +10,9 @@ const ProgressBars = ({ courseProgress }: ProgressBarsProps) => {
   return (
     <div className="mt-2">
       <div className="mt-2">
-        <div className="w-full bg-gray-100 h-8">
+        <div className="w-full bg-gray-100 h-10">
           <div
-            className="flex bg-teal-500 h-8 items-center justify-between text-xs px-4 text-white font-semibold"
+            className="rounded-md  flex bg-teal-500 h-10 items-center justify-between text-sm px-4 text-white font-semibold"
             style={{
               width: `${courseProgress.quiz_quizstatistic?.percent_correct || 0}%`,
               minWidth: '50%',
@@ -28,7 +28,7 @@ const ProgressBars = ({ courseProgress }: ProgressBarsProps) => {
             <span>Practice</span>
             <Link
               href={`/account/edupro/${courseProgress.course.slug}/quiz/${courseProgress.quiz.slug}`}
-              className="rounded-full font-bold px-1 py-0.5 border border-white hover:bg-white hover:text-gray-500"
+              className="rounded-full font-bold px-1 py-0.5  hover:text-gray-300"
             >
               →
             </Link>
@@ -36,9 +36,9 @@ const ProgressBars = ({ courseProgress }: ProgressBarsProps) => {
         </div>
       </div>
       <div className="mt-4">
-        <div className="w-full bg-gray-100 h-8">
+        <div className="w-full bg-gray-100 h-10">
           <div
-            className={`flex h-8 items-center justify-between text-xs px-4 text-white font-semibold ${
+            className={`rounded-md flex h-10 items-center justify-between text-sm px-4 text-white font-semibold ${
               courseProgress.completed_topics_percentage >= 50 ? 'bg-sky-500' : 'bg-sky-300'
             }`}
             style={{

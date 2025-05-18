@@ -1,7 +1,7 @@
 // src/components/study-plan/TopicSection.tsx
 import Link from 'next/link';
 import LessonsTable from './LessonsTable';
-import { TopicProgress } from './types';
+import { TopicProgress } from './Types';
 
 interface TopicSectionProps {
   topicProg: TopicProgress;
@@ -26,11 +26,11 @@ const TopicSection = ({
 }: TopicSectionProps) => {
   return (
     <div className="mt-8">
-      <div className="text-base font-semibold text-gray-900">
+      <div className="mb-2 text-base font-semibold text-gray-900">
         <div className="grid grid-cols-7 sm:grid-cols-12 items-center">
           <div
-            className={`ml-2 mr-auto flex items-center justify-center h-8 w-8 text-white text-sm font-semibold rounded-full ${
-              topicProg.progress_percentage === 100 ? 'bg-sky-500' : 'bg-gray-300'
+            className={`ml-2 mr-auto flex items-center justify-center h-6 w-6 text-white text-sm font-semibold rounded-full ${
+              topicProg.progress_percentage === 100 ? 'bg-sky-600' : 'bg-gray-300 hover:bg-sky-600'
             }`}
           >
             {topicProg.topic.order}
@@ -39,7 +39,7 @@ const TopicSection = ({
             className="col-span-6 sm:col-span-11"
             href={`/account/edupro/${courseSlug}/topic/${topicProg.topic.slug}`}
           >
-            <h4 className="font-semibold text-base sm:text-lg text-gray-900 hover:text-sky-500">
+            <h4 className="font-semibold text-base sm:text-lg text-gray-700 hover:text-sky-600">
               {topicProg.topic.title}
             </h4>
           </Link>
