@@ -217,7 +217,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
 
 
       {/* Navigation Tabs */}
-      <nav className="flex flex-row justify-center sm:justify-start sm:gap-8 border-gray-200 pb-6">
+      <nav className="flex flex-row justify-center sm:justify-start sm:gap-8 border-gray-200 ">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (

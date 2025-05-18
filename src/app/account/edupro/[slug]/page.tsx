@@ -57,7 +57,7 @@ export default function EduProCourseDetail() {
             <div>
               <div>
                 {/* Tabbed navigation */}
-                <div className="-mt-4 flex space-x-6 justify-center mb-8" role="tablist" aria-label="Course Sections">
+                <div className=" flex space-x-6 justify-center mb-8" role="tablist" aria-label="Course Sections">
                   <button
                     id="topics-tab"
                     role="tab"
