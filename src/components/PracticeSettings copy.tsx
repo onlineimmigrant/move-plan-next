@@ -1,4 +1,4 @@
-// src/components/PracticeSettings.tsx
+// src/components/PracticeSettings.tsx (adjust path as needed)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -192,21 +192,6 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
     }
   };
 
-  // Define the modes for "Exam" and "Train"
-  const modes = [
-    { label: 'Exam', value: true },
-    { label: 'Train', value: false },
-  ];
-
-  // Determine the translate-x for the sliding background
-  const getSliderPosition = () => {
-    const activeIndex = examMode ? 0 : 1; // Exam (true) is 0, Train (false) is 1
-    console.log('Active Mode Index:', activeIndex, 'Exam Mode:', examMode); // Debug log
-    if (activeIndex === 0) return 'translate-x-0';
-    if (activeIndex === 1) return 'translate-x-[100%]';
-    return 'translate-x-0'; // Default to "Exam"
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4" role="status" aria-live="polite">
@@ -238,34 +223,29 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
     <div className="space-y-8 text-left">
       <div>
         <div className="hidden sm:block mb-2 text-sm font-semibold text-gray-700">Mode</div>
-        <div className="select-none flex justify-center">
-          <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-gray-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
-            {/* Sliding Background */}
-            <div
-              className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-gray-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
-            ></div>
-            {/* Mode Labels */}
-            <div className="relative flex h-full" role="tablist" aria-label="Practice Modes">
-              {modes.map((mode, index) => (
-                <button
-                  key={mode.label}
-                  type="button"
-                  onClick={() => toggleMode(mode.value)}
-                  className={`flex-1 flex justify-center items-center cursor-pointer text-gray-600 text-sm sm:text-base mona-sans px-0.5 ${
-                    examMode === mode.value ? 'font-semibold text-white z-10' : ''
-                  }`}
-                  role="tab"
-                  aria-selected={examMode === mode.value}
-                  aria-label={`Select ${mode.label} Mode`}
-                  aria-pressed={examMode === mode.value}
-                >
-                  {mode.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="flex w-full ">
+          <button
+            type="button"
+            onClick={() => toggleMode(true)}
+            className={styles.buttonToggle(examMode)}
+            aria-label="Select Exam Mode"
+            aria-pressed={examMode}
+          >
+            Exam
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleMode(false)}
+            className={styles.buttonToggle(!examMode)}
+            aria-label="Select Train Mode"
+            aria-pressed={!examMode}
+          >
+            Train
+          </button>
         </div>
       </div>
+
+ 
 
       <div>
         <label className="hidden sm:flex text-sm font-semibold text-gray-700" id="topics-label">
@@ -325,7 +305,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
         )}
       </div>
 
-      <div>
+     <div>
         <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
           Number of Questions
         </label>
@@ -369,7 +349,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           aria-label="Start quiz"
           aria-disabled={isQuizStartDisabled}
         >
-          Start
+          Start Quiz
         </button>
       </div>
     </div>
