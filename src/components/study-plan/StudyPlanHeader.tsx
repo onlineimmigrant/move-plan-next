@@ -4,7 +4,7 @@ import { HiCog, HiX } from 'react-icons/hi';
 import Button from './Button';
 import DateInput from './DateInput';
 import RadioGroup from './RadioGroup';
-import { StudyPlanPreference } from './Types';
+import { StudyPlanPreference } from './types';
 
 interface StudyPlanHeaderProps {
   studyPlanPeriod: string;
