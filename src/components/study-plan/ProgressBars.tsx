@@ -1,6 +1,6 @@
 // src/components/study-plan/ProgressBars.tsx
 import Link from 'next/link';
-import { CourseProgress } from './Types';
+import { CourseProgress } from './types';
 
 interface ProgressBarsProps {
   courseProgress: CourseProgress;

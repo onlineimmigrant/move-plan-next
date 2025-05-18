@@ -1,6 +1,6 @@
 // src/components/study-plan/LessonsTable.tsx
 import Link from 'next/link';
-import { LessonProgress } from './Types';
+import { LessonProgress } from './types';
 
 interface LessonsTableProps {
   lessonsProgress: LessonProgress[];

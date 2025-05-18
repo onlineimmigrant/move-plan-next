@@ -11,7 +11,7 @@ import StudyPlanHeader from '@/components/study-plan/StudyPlanHeader';
 import ProgressBars from '@/components/study-plan/ProgressBars';
 import TopicSection from '@/components/study-plan/TopicSection';
 import ToastWrapper from '@/components/study-plan/ToastWrapper';
-import { CourseProgress, Purchase, StudyPlanPreference, TopicProgress, LessonProgress } from '@/components/study-plan/Types';
+import { CourseProgress, Purchase, StudyPlanPreference, TopicProgress, LessonProgress } from '@/components/study-plan/types';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

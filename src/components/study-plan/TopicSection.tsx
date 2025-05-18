@@ -1,7 +1,7 @@
 // src/components/study-plan/TopicSection.tsx
 import Link from 'next/link';
 import LessonsTable from './LessonsTable';
-import { TopicProgress } from './Types';
+import { TopicProgress } from './types';
 
 interface TopicSectionProps {
   topicProg: TopicProgress;
