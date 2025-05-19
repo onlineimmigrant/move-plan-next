@@ -9,7 +9,9 @@ import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
 import Toast from '@/components/Toast';
 import PracticeStatistics from '@/components/PracticeStatistics';
 import PracticePassRateVisual from '@/components/PracticePassRateVisual';
-import PracticeSettingsStatisticsVisuals from '@/components/PracticeSettingsStatisticsVisuals'; // Corrected import
+import PracticeSettingsStatisticsVisuals from '@/components/PracticeSettingsStatisticsVisuals';
+import ProgressStatisticsTopics from '@/components/ProgressStatisticsTopics'; // New import
+import ProgressStatisticsCurrent from '@/components/ProgressStatisticsCurrent'; // New import
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -52,13 +54,12 @@ export default function EduProCourseProgress() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [courseData, setCourseData] = useState<EduProCourse | null>(null);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [showFullStats, setShowFullStats] = useState(false); // New state for toggling full stats
+  const [showFullStats, setShowFullStats] = useState(false);
   const router = useRouter();
   const { slug } = useParams();
   const { session } = useAuth();
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
 
-  // Check if a purchase is active
   const isPurchaseActive = (purchase: Purchase) => {
     if (!purchase.is_active) return false;
     const currentDate = new Date();
@@ -85,7 +86,6 @@ export default function EduProCourseProgress() {
           return;
         }
 
-        // Fetch the edu_pro_course record by slug
         const { data: courseData, error: courseError } = await supabase
           .from('edu_pro_course')
           .select('id, slug')
@@ -100,10 +100,8 @@ export default function EduProCourseProgress() {
           throw new Error('Course not found.');
         }
 
-        // Store courseData in state
         setCourseData(courseData);
 
-        // Fetch quizzes for the course
         const { data: quizzesData, error: quizzesError } = await supabase
           .from('quiz_quizcommon')
           .select('id, title, description, slug, percent_required')
@@ -113,10 +111,8 @@ export default function EduProCourseProgress() {
           throw new Error(`Error fetching quizzes: ${quizzesError.message}`);
         }
 
-        // Store quizzes in state (default to empty array if null)
         setQuizzes(quizzesData ?? []);
 
-        // Fetch the user's active purchases to verify access
         const { data: activePurchases, error: purchaseError } = await supabase
           .from('purchases')
           .select(`
@@ -144,7 +140,6 @@ export default function EduProCourseProgress() {
           throw new Error('No active purchases found.');
         }
 
-        // Check if the user has an active purchase for this course
         const hasAccess = activePurchases.some((purchase) => {
           const isActive = isPurchaseActive(purchase);
           const courseId = purchase.pricingplan?.product?.course_connected_id;
@@ -203,7 +198,7 @@ export default function EduProCourseProgress() {
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto">
         {toast && (
           <Toast
             message={toast.message}
@@ -215,14 +210,13 @@ export default function EduProCourseProgress() {
         <div className="pt-8">
           <AccountTabEduProCourse />
         </div>
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-5 gap-6">
-          <div className=''>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="hidden sm:block">
             {quizzes.length === 0 ? (
               <p className="text-gray-600">No quizzes available for this course.</p>
             ) : (
               quizzes.map((quiz) => (
                 <div key={quiz.id} className="mb-6">
-                  
                   <PracticePassRateVisual quiz={quiz} />
                   <div className="mt-4">
                     <PracticeSettingsStatisticsVisuals
@@ -232,15 +226,43 @@ export default function EduProCourseProgress() {
                       showFullStats={showFullStats}
                       setShowFullStats={setShowFullStats}
                     />
+   
                   </div>
                 </div>
               ))
             )}
           </div>
-          <div className='col-span-1 sm:col-span-3'>
-            <PracticeStatistics courseId={courseData.id} courseSlug={courseData.slug} />
+          <div className="col-span-1 md:col-span-1 lg:col-span-3">
+           
+
+        <div className="">
+            {quizzes.length === 0 ? (
+              <p className="text-gray-600"></p>
+            ) : (
+              quizzes.map((quiz) => (
+                <div key={quiz.id} className="mb-6">
+                  
+                  <div className="">
+   
+                    {/* Add ProgressStatisticsTopics under PracticeSettingsStatisticsVisuals */}
+                    <ProgressStatisticsTopics quizId={quiz.id} />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-          <div className='col-span-1'></div>
+
+ <PracticeStatistics courseId={courseData.id} courseSlug={courseData.slug} />
+
+
+
+          </div>
+          <div className="col-span-1">
+            {/* Add ProgressStatisticsCurrent in the third column */}
+            {quizzes.map((quiz) => (
+              <ProgressStatisticsCurrent key={quiz.id} quizId={quiz.id} />
+            ))}
+          </div>
         </div>
       </div>
     </div>

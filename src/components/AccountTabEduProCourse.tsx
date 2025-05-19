@@ -187,7 +187,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         alt="Logo mobile"
         width={40}
         height={40}
-        className="fixed left-4 block sm:hidden h-8 w-auto"
+        className="fixed left-8 block sm:hidden h-8 w-auto"
       />
 
       {/* Course Header */}
@@ -208,7 +208,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
                 alt={`${courseTitle} course image`}
                 width={96}
                 height={96}
-                className="fixed right-2 top-2 hidden sm:block w-12 h-12 sm:w-auto sm:h-auto rounded-lg object-cover"
+                className="fixed right-8 z-51 top-2 hidden sm:block w-12 h-12 sm:w-auto sm:h-auto rounded-lg object-cover"
                 priority
               />
             )}
