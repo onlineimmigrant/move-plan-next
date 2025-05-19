@@ -1,4 +1,3 @@
-// app/account/edupro/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,7 +32,7 @@ interface Product {
       name: string;
     };
   };
-  edu_pro_course: EduProCourse; // Add the edu_pro_course relationship
+  edu_pro_course: EduProCourse;
 }
 
 interface PricingPlan {
@@ -64,7 +63,7 @@ interface Course {
   is_active: boolean;
   start_date: string;
   end_date: string | null;
-  eduProCourseSlug: string; // Add the slug from edu_pro_course
+  eduProCourseSlug: string;
 }
 
 export default function EduPro() {
@@ -97,7 +96,7 @@ export default function EduPro() {
 
   useEffect(() => {
     const checkStudentStatus = async () => {
-      if (studentLoading) return; // Wait for student status to load
+      if (studentLoading) return;
 
       setIsLoading(true);
       try {
@@ -113,7 +112,6 @@ export default function EduPro() {
           return;
         }
 
-        // Fetch the user's active purchases with the necessary fields, including edu_pro_course
         const { data: activePurchases, error: purchaseError } = await supabase
           .from('purchases')
           .select(`
@@ -159,10 +157,8 @@ export default function EduPro() {
           return;
         }
 
-        // Log the raw data to inspect the structure
         console.log('Raw active purchases:', JSON.stringify(activePurchases, null, 2));
 
-        // Log the product type and edu_pro_course slug for each purchase
         activePurchases.forEach((purchase, index) => {
           const productTypeName = purchase.pricingplan?.product?.product_sub_type?.product_type?.name;
           const eduProCourseSlug = purchase.pricingplan?.product?.edu_pro_course?.slug;
@@ -187,7 +183,6 @@ export default function EduPro() {
           );
         });
 
-        // Filter for purchases where the product type is 'Course'
         const coursePurchases = activePurchases.filter((purchase) => {
           const productTypeName = purchase.pricingplan?.product?.product_sub_type?.product_type?.name;
           return productTypeName === 'Course';
@@ -201,7 +196,6 @@ export default function EduPro() {
           return;
         }
 
-        // Map the filtered Course purchases to the Course interface
         const mappedCourses: Course[] = coursePurchases.map((purchase) => {
           const pricingplan = purchase.pricingplan;
           const product = pricingplan?.product;
@@ -263,7 +257,7 @@ export default function EduPro() {
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {toast && (
           <Toast
             message={toast.message}
@@ -279,72 +273,44 @@ export default function EduPro() {
         {courses.length === 0 ? (
           <p className="mt-4 text-gray-600">No active courses available at this time.</p>
         ) : (
-          <div className="mt-6 overflow-x-auto rounded-t-md">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 z-20 bg-gray-50"
-                  >
-                    Course
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Expire
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {courses.map((course) => (
-                  <tr key={course.purchaseId} className="hover:bg-gray-50 transition duration-150">
-                    <td className="border-r border-gray-200 sm:min-w-xs min-w-48 px-6 py-8 text-sm text-gray-900 sticky left-0 z-10 bg-white">
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={course.product_image}
-                          alt={course.product_name}
-                          className="hidden sm:block w-auto h-24 object-cover rounded-md"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder-image.jpg';
-                          }}
-                        />
-                        <div className="text-xs sm:text-sm">
-                          <div className="flex items-center space-x-2">
-                            <Link
-                              href={`/account/edupro/${course.eduProCourseSlug}`}
-                              className="text-gray-800 hover:text-sky-500 hover:underline transition duration-150"
-                            >
-                              {course.product_name}
-                            </Link>
-                            {isPurchaseActive(course) ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-400">
-                                Expired
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-gray-500 font-thin">{course.pricing_plan}</span>
-                          <br />
-                          <span className="hidden sm:block text-xs text-gray-400 font-light" style={{ fontSize: '8px' }}>
-                            {course.purchased_item_id}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 align-top">
-                      <span className="text-xs font-medium text-gray-700">
-                        {formatShortDate(course.end_date)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {courses.map((course) => (
+              <Link
+                key={course.purchaseId}
+                href={`/account/edupro/${course.eduProCourseSlug}`}
+                className="group flex flex-col items-center justify-center p-6 bgфин-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300"
+                title={course.product_name}
+              >
+                <div className="transform group-hover:scale-110 transition-transform">
+                  <img
+                    src={course.product_image}
+                    alt={course.product_name}
+                    className="w-16 h-16 object-cover rounded-md"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder-image.jpg';
+                    }}
+                  />
+                </div>
+                <span className="mt-3 text-sm font-medium text-gray-800 group-hover:text-sky-600 text-center">
+                  {course.product_name}
+                </span>
+                <span className="mt-1 text-xs text-gray-500 text-center">
+                  {course.pricing_plan}
+                </span>
+                <span className="mt-1 text-xs font-medium text-gray-700 text-center">
+                  {formatShortDate(course.end_date)}
+                </span>
+                {isPurchaseActive(course) ? (
+                  <span className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Active
+                  </span>
+                ) : (
+                  <span className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-400">
+                    Expired
+                  </span>
+                )}
+              </Link>
+            ))}
           </div>
         )}
       </div>

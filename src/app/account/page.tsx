@@ -122,14 +122,14 @@ export default function AccountPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center ">
         <p className="text-red-600 font-medium">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen  pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {toast && (
           <Toast
@@ -139,12 +139,12 @@ export default function AccountPage() {
             aria-live="polite"
           />
         )}
-        <Link href="/account">
-          <h1 className="mt-24 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
-            Account
-            <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full shadow-sm" />
-          </h1>
-        </Link>
+      <Link href="/account">
+        <h1 className="mt-16 sm:mt-18 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
+          Account
+          <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+        </h1>
+      </Link>
         <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {dashboardLinks.map((item) => {
             const isActive = pathname === item.href;

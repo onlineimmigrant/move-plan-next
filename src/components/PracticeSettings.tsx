@@ -277,7 +277,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </p>
         ) : (
           <div
-            className=" max-h-96 overflow-y-auto   bg-white gap-y-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-600"
+            className="pb-8 max-h-120 overflow-y-auto   bg-white gap-y-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-600"
             role="group"
             aria-labelledby="topics-label"
           >
@@ -324,9 +324,9 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </div>
         )}
       </div>
-<div className="px-8 fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-sm border-t border-gray-50 shadow sm:shadow-none sm:border-none py-2 sm:py-3 z-10">
+<div className="max-w-xl mx-auto px-8 sm:px-0 fixed bottom-0 sm:bottom-8 left-0 right-0 bg-transparent backdrop-blur-sm border-t border-gray-50 shadow sm:shadow-none sm:border-none py-2 sm:py-3 z-10">
    
-      <div>
+      <div className=''>
         <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
           Number of Questions
         </label>
