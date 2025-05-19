@@ -2,11 +2,12 @@
 import React from 'react';
 import { Choice } from './Types';
 import InfoQuizElement from './InfoQuizElement';
+import { shuffleArray } from '@/lib/quizUtils';
 
 interface ChoicesListProps {
   choices: Choice[];
   examMode: boolean;
-  openModal?: (modalId: string) => void; // Made optional to match QuizFormProps
+  openModal?: (modalId: string) => void;
   modalId: string;
   questionId: number;
   currentAnswers: number[];
@@ -42,6 +43,9 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
   const getChoiceLetter = (choiceId: number) =>
     sortedChoiceIds.find((item) => item.id === choiceId)?.letter || '';
 
+  // Randomize choices if required
+  const displayChoices = randomizeChoices ? shuffleArray([...choices]) : choices;
+
   return (
     <div className="space-y-2">
       {/* Prompt with no blinking, shown before choices */}
@@ -52,7 +56,7 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
       )}
 
       {/* Choices */}
-      {choices.map((choice) => {
+      {displayChoices.map((choice) => {
         const numeration = numerateChoices ? getChoiceLetter(choice.id) : null;
         const isSelected = currentAnswers.includes(choice.id);
 
@@ -65,12 +69,7 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
                     ? 'bg-sky-100 border-sky-500 text-sky-800'
                     : 'bg-gray-50 border-gray-300 text-gray-800 hover:bg-gray-100'
                 }`}
-                onClick={() => {
-                  handleAnswerChange(questionId, choice.id, true);
-                  if (examMode && openModal) {
-                    openModal(modalId); // Safely call openModal if defined
-                  }
-                }}
+                onClick={() => handleAnswerChange(questionId, choice.id, true)}
               >
                 <input
                   type="checkbox"
@@ -113,12 +112,7 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
                     ? 'bg-sky-100 border-sky-500 text-sky-800'
                     : 'bg-gray-50 border-gray-300 text-gray-800 hover:bg-gray-100'
                 }`}
-                onClick={() => {
-                  handleAnswerChange(questionId, choice.id, false);
-                  if (examMode && openModal) {
-                    openModal(modalId); // Safely call openModal if defined
-                  }
-                }}
+                onClick={() => handleAnswerChange(questionId, choice.id, false)}
               >
                 <input
                   type="radio"
@@ -159,15 +153,18 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
         );
       })}
 
-      {/* InfoQuizElement button */}
-      {!examMode && (
+      {/* InfoQuizElement button, only in non-examMode */}
+      {!examMode && openModal && (
         <button
-          onClick={() => openModal && openModal(modalId)} // Safely call openModal if defined
+          onClick={() => {
+            console.log('Opening modal via button in non-examMode:', modalId);
+            openModal(modalId);
+          }}
           title="Answer and explanation"
           className="w-full mt-2 flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm font-medium text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors"
         >
           <InfoQuizElement />
-          <span>& Explanation</span>
+          <span>Answer & Explanation</span>
         </button>
       )}
     </div>

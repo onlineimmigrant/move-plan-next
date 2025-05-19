@@ -133,56 +133,40 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
     }
 
     try {
-      if (examMode) {
-        // Fetch topic IDs associated with the quiz
-        const { data: topicRelations, error: topicError } = await supabase
-          .from('edu_pro_topics_to_quizzes')
-          .select('topic_id')
-          .eq('quizcommon_id', quizId);
+      const { data: topicRelations, error: topicError } = await supabase
+        .from('edu_pro_topics_to_quizzes')
+        .select('topic_id')
+        .eq('quizcommon_id', quizId);
 
-        if (topicError) throw new Error(`Error fetching topic relations: ${topicError.message}`);
-        if (!topicRelations || topicRelations.length === 0) {
-          setValidationError('No topics available for this quiz.');
-          return;
-        }
-
-        const quizTopicIds: number[] = topicRelations.map((relation: { topic_id: number }) => relation.topic_id);
-
-        // Fetch question IDs for the associated topics
-        let query = supabase
-          .from('edu_pro_quiz_question')
-          .select('id')
-          .in('topic_id', quizTopicIds);
-
-        if (selectedTopics.length > 0) {
-          query = query.in('topic_id', selectedTopics.filter((id) => quizTopicIds.includes(id)));
-        }
-
-        const { data: questionsData, error: questionsError } = await query;
-        if (questionsError) throw new Error(`Error fetching questions: ${questionsError.message}`);
-        if (!questionsData || questionsData.length === 0) {
-          setValidationError('No questions available for the selected topics.');
-          return;
-        }
-
-        const questionIds: number[] = questionsData.map((q: { id: number }) => q.id);
-
-        // Clear previous user answers for these questions
-        const { error: deleteError } = await supabase
-          .from('quiz_useranswer')
-          .delete()
-          .eq('user_id', session.user.id)
-          .in('question_id', questionIds)
-          .eq('exam_mode', true);
-
-        if (deleteError) {
-          console.error('Error clearing previous answers:', deleteError);
-          setValidationError('Failed to start a new quiz session. Please try again.');
-          return;
-        }
+      if (topicError) throw new Error(`Error fetching topic relations: ${topicError.message}`);
+      if (!topicRelations || topicRelations.length === 0) {
+        setValidationError('No topics available for this quiz.');
+        return;
       }
 
+      const quizTopicIds: number[] = topicRelations.map((relation: { topic_id: number }) => relation.topic_id);
+
+      let query = supabase
+        .from('edu_pro_quiz_question')
+        .select('id')
+        .in('topic_id', quizTopicIds);
+
+      if (selectedTopics.length > 0) {
+        query = query.in('topic_id', selectedTopics.filter((id) => quizTopicIds.includes(id)));
+      }
+
+      const { data: questionsData, error: questionsError } = await query;
+      if (questionsError) throw new Error(`Error fetching questions: ${questionsError.message}`);
+      if (!questionsData || questionsData.length === 0) {
+        setValidationError('No questions available for the selected topics.');
+        return;
+      }
+
+      // Removed the deletion logic to preserve previous answers
+      console.log('Starting new quiz without clearing previous answers.');
+
       const quizUrl = getQuizUrl();
+      console.log('Navigating to quiz URL:', quizUrl);
       if (quizUrl !== '#') {
         router.push(quizUrl);
       }
@@ -192,19 +176,16 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
     }
   };
 
-  // Define the modes for "Exam" and "Train"
   const modes = [
     { label: 'Exam', value: true },
     { label: 'Train', value: false },
   ];
 
-  // Determine the translate-x for the sliding background
   const getSliderPosition = () => {
-    const activeIndex = examMode ? 0 : 1; // Exam (true) is 0, Train (false) is 1
-    console.log('Active Mode Index:', activeIndex, 'Exam Mode:', examMode); // Debug log
+    const activeIndex = examMode ? 0 : 1;
     if (activeIndex === 0) return 'translate-x-0';
     if (activeIndex === 1) return 'translate-x-[100%]';
-    return 'translate-x-0'; // Default to "Exam"
+    return 'translate-x-0';
   };
 
   if (isLoading) {
@@ -240,11 +221,9 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
         <div className="hidden sm:block mb-2 text-sm font-semibold text-gray-700">Mode</div>
         <div className="select-none flex justify-center">
           <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-gray-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
-            {/* Sliding Background */}
             <div
               className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-gray-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
             ></div>
-            {/* Mode Labels */}
             <div className="relative flex h-full" role="tablist" aria-label="Practice Modes">
               {modes.map((mode, index) => (
                 <button
@@ -277,13 +256,13 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </p>
         ) : (
           <div
-            className="pb-8 max-h-120 overflow-y-auto   bg-white gap-y-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-600"
+            className="pb-8 max-h-120 overflow-y-auto bg-white gap-y-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-600"
             role="group"
             aria-labelledby="topics-label"
           >
             <label
               htmlFor="topic_all"
-              className="sticky top-0 z-10 flex cursor-pointer flex-col shadow rounded-md border-2 border-yellow-100  bg-yellow-200 p-2 px-3  hover:bg-gray-100"
+              className="sticky top-0 z-10 flex cursor-pointer flex-col shadow rounded-md border-2 border-yellow-100 bg-yellow-200 p-2 px-3 hover:bg-gray-100"
             >
               <div className="flex items-center justify-between">
                 <input
@@ -324,56 +303,55 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </div>
         )}
       </div>
-<div className="max-w-xl mx-auto px-8 sm:px-0 fixed bottom-0 sm:bottom-8 left-0 right-0 bg-transparent backdrop-blur-sm border-t border-gray-50 shadow sm:shadow-none sm:border-none py-2 sm:py-3 z-10">
-   
-      <div className=''>
-        <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
-          Number of Questions
-        </label>
-        <div id="quantity-value" className="float-right pr-4 font-bold text-sky-600" aria-live="polite">
-          {quantity}
-        </div>
-        <div className="relative mt-2">
-          <input
-            type="range"
-            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
-            name="quantity"
-            min="5"
-            max="120"
-            value={quantity}
-            onChange={handleQuantityChange}
-            id="quantity"
-            aria-label="Select number of questions"
-            aria-valuenow={quantity}
-            aria-valuemin={5}
-            aria-valuemax={120}
-          />
-          <div className="mt-1 flex justify-between text-xs text-gray-500">
-            <span className="hidden">5</span>
-            <span className="hidden">120</span>
+      <div className="max-w-xl mx-auto px-8 sm:px-0 fixed bottom-0 sm:bottom-8 left-0 right-0 bg-transparent backdrop-blur-sm border-t border-gray-50 shadow sm:shadow-none sm:border-none py-2 sm:py-3 z-10">
+        <div className="">
+          <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
+            Number of Questions
+          </label>
+          <div id="quantity-value" className="float-right pr-4 font-bold text-sky-600" aria-live="polite">
+            {quantity}
+          </div>
+          <div className="relative mt-2">
+            <input
+              type="range"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              name="quantity"
+              min="5"
+              max="120"
+              value={quantity}
+              onChange={handleQuantityChange}
+              id="quantity"
+              aria-label="Select number of questions"
+              aria-valuenow={quantity}
+              aria-valuemin={5}
+              aria-valuemax={120}
+            />
+            <div className="mt-1 flex justify-between text-xs text-gray-500">
+              <span className="hidden">5</span>
+              <span className="hidden">120</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {validationError && (
-        <div className="text-center text-sm text-red-600" role="alert">
-          {validationError}
+        {validationError && (
+          <div className="text-center text-sm text-red-600" role="alert">
+            {validationError}
+          </div>
+        )}
+
+        <div className="mb-2">
+          <button
+            type="button"
+            className={`${styles.buttonPrimary} ${isQuizStartDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={handleQuizStart}
+            disabled={isQuizStartDisabled}
+            aria-label="Start quiz"
+            aria-disabled={isQuizStartDisabled}
+          >
+            Start
+          </button>
         </div>
-      )}
-
-      <div className='mb-2'>
-        <button
-          type="button"
-          className={`${styles.buttonPrimary} ${isQuizStartDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-          onClick={handleQuizStart}
-          disabled={isQuizStartDisabled}
-          aria-label="Start quiz"
-          aria-disabled={isQuizStartDisabled}
-        >
-          Start
-        </button>
       </div>
-    </div>
     </div>
   );
 }
