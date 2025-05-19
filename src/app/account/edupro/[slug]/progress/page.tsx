@@ -1,4 +1,3 @@
-// app/account/edupro/[slug]/progress/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,16 +7,28 @@ import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
 import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
 import Toast from '@/components/Toast';
+import PracticeStatistics from '@/components/PracticeStatistics';
+import PracticePassRateVisual from '@/components/PracticePassRateVisual';
+import PracticeSettingsStatisticsVisuals from '@/components/PracticeSettingsStatisticsVisuals'; // Corrected import
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Define the EduProCourse interface (minimal for access verification)
+// Define the EduProCourse interface
 interface EduProCourse {
   id: number;
   slug: string;
+}
+
+// Define the Quiz interface to match PracticePassRateVisualProps
+interface Quiz {
+  id: number;
+  title: string;
+  description: string | null;
+  slug: string | null;
+  percent_required: number;
 }
 
 interface Purchase {
@@ -39,6 +50,9 @@ export default function EduProCourseProgress() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [courseData, setCourseData] = useState<EduProCourse | null>(null);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [showFullStats, setShowFullStats] = useState(false); // New state for toggling full stats
   const router = useRouter();
   const { slug } = useParams();
   const { session } = useAuth();
@@ -86,6 +100,22 @@ export default function EduProCourseProgress() {
           throw new Error('Course not found.');
         }
 
+        // Store courseData in state
+        setCourseData(courseData);
+
+        // Fetch quizzes for the course
+        const { data: quizzesData, error: quizzesError } = await supabase
+          .from('quiz_quizcommon')
+          .select('id, title, description, slug, percent_required')
+          .eq('course_id', courseData.id);
+
+        if (quizzesError) {
+          throw new Error(`Error fetching quizzes: ${quizzesError.message}`);
+        }
+
+        // Store quizzes in state (default to empty array if null)
+        setQuizzes(quizzesData ?? []);
+
         // Fetch the user's active purchases to verify access
         const { data: activePurchases, error: purchaseError } = await supabase
           .from('purchases')
@@ -126,27 +156,6 @@ export default function EduProCourseProgress() {
           router.push('/account/edupro');
           return;
         }
-
-        // TODO: Fetch the progress data for this course
-        // Example schema for edu_pro_course_progress table:
-        // - id: number
-        // - profiles_id: string (foreign key to profiles.id)
-        // - edu_pro_course_id: number (foreign key to edu_pro_course.id)
-        // - study_plan_item_id: number (optional, foreign key to edu_pro_course_study_plan.id)
-        // - completed_at: string
-        // - progress_percentage: number (optional, can be computed)
-        //
-        // const { data: progressData, error: progressError } = await supabase
-        //   .from('edu_pro_course_progress')
-        //   .select('*')
-        //   .eq('profiles_id', session.user.id)
-        //   .eq('edu_pro_course_id', courseData.id);
-        //
-        // if (progressError) {
-        //   throw new Error(`Error fetching progress: ${progressError.message}`);
-        // }
-        //
-        // setProgress(progressData || []);
       } catch (err) {
         console.error('EduProCourseProgress: Error:', err);
         setError((err as Error).message);
@@ -182,6 +191,16 @@ export default function EduProCourseProgress() {
     );
   }
 
+  if (!courseData) {
+    return (
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-red-600 font-medium">Course data not available.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -196,15 +215,32 @@ export default function EduProCourseProgress() {
         <div className="pt-8">
           <AccountTabEduProCourse />
         </div>
-        <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold text-gray-900">Progress</h2>
-          <p className="mt-2 text-gray-600">
-            This is the progress for the course with slug: <strong>{slug}</strong>.
-          </p>
-          {/* TODO: Display the progress data here */}
-          <div className="mt-4">
-            <p className="text-gray-600">Progress content will be displayed here.</p>
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-5 gap-6">
+          <div className=''>
+            {quizzes.length === 0 ? (
+              <p className="text-gray-600">No quizzes available for this course.</p>
+            ) : (
+              quizzes.map((quiz) => (
+                <div key={quiz.id} className="mb-6">
+                  
+                  <PracticePassRateVisual quiz={quiz} />
+                  <div className="mt-4">
+                    <PracticeSettingsStatisticsVisuals
+                      quizId={quiz.id}
+                      courseId={courseData.id}
+                      courseSlug={courseData.slug}
+                      showFullStats={showFullStats}
+                      setShowFullStats={setShowFullStats}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+          <div className='col-span-1 sm:col-span-3'>
+            <PracticeStatistics courseId={courseData.id} courseSlug={courseData.slug} />
+          </div>
+          <div className='col-span-1'></div>
         </div>
       </div>
     </div>

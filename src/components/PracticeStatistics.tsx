@@ -179,35 +179,16 @@ export default function PracticeStatistics({ courseId, courseSlug }: PracticeSta
 
   return (
     <div className="space-y-6">
-      {/* Aggregated Statistics */}
-      <div className="bg-gray-50 p-4 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Overview</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-600">Total Correct</p>
-            <p className="text-lg font-semibold text-gray-900">{aggregatedStats.total_correct}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-600">Total Attempted</p>
-            <p className="text-lg font-semibold text-gray-900">{aggregatedStats.total_attempted}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-600">Overall Percentage</p>
-            <p className="text-lg font-semibold text-gray-900">{aggregatedStats.overall_percentage.toFixed(1)}%</p>
-          </div>
-        </div>
-      </div>
+
 
       {/* Detailed Statistics Table */}
       <div className="bg-white p-4 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Quiz Statistics</h2>
+       
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quiz
-                </th>
+
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Mode
                 </th>
@@ -218,7 +199,7 @@ export default function PracticeStatistics({ courseId, courseSlug }: PracticeSta
                   Attempted
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Percentage
+                 Overall
                 </th>
               </tr>
             </thead>
@@ -227,9 +208,7 @@ export default function PracticeStatistics({ courseId, courseSlug }: PracticeSta
                 // Render <tr> elements directly without a fragment
                 [
                   <tr key={`${quizStat.quizId}-exam`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {quizStat.quizTitle}
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Exam</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {quizStat.examStats.total_correct_answers}
@@ -242,9 +221,7 @@ export default function PracticeStatistics({ courseId, courseSlug }: PracticeSta
                     </td>
                   </tr>,
                   <tr key={`${quizStat.quizId}-train`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {quizStat.quizTitle}
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Train</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {quizStat.trainStats.total_correct_answers}
@@ -260,6 +237,25 @@ export default function PracticeStatistics({ courseId, courseSlug }: PracticeSta
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+            {/* Aggregated Statistics */}
+      <div className="bg-gray-50 p-4 rounded-lg shadow-md">
+      
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-600">Total Correct</p>
+            <p className="text-lg font-semibold text-gray-900">{aggregatedStats.total_correct}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-600">Total Attempted</p>
+            <p className="text-lg font-semibold text-gray-900">{aggregatedStats.total_attempted}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-600">Overall</p>
+            <p className="text-lg font-semibold text-gray-900">{aggregatedStats.overall_percentage.toFixed(1)}%</p>
+          </div>
         </div>
       </div>
     </div>

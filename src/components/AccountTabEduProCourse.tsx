@@ -195,7 +195,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         <div className="mt-0  mb-4 sm:mb-6 flex items-center justify-center gap-4 ">
           <div className="flex justify-between items-center">
             <div className="text-center hover:bg-sky-50 px-4 rounded-md">
-              <span className=" text-gray-500 font-normal text-base">{duration}</span>
+              <span className=" text-gray-500 font-normal text-sm sm:text-base">{duration}</span>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 relative">
                 
                 {courseTitle}

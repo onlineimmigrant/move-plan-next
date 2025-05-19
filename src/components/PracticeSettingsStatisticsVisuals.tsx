@@ -143,7 +143,7 @@ export default function PracticeSettingsStatisticsVisuals({
       <div className="grid grid-cols-1 sm:grid-cols-1 gap-4 mt-4">
         {/* Exam Chart */}
         <div className="hidden sm:flex justify-center">
-          <div className="relative w-32 h-32 sm:w-64 sm:h-64">
+          <div className="relative w-32 h-32 sm:w-72 sm:h-72">
             <svg
               width="100%"
               height="100%"
@@ -226,7 +226,7 @@ export default function PracticeSettingsStatisticsVisuals({
         </div>
       </div>
 
-      <div className="hidden sm:block text-center">
+      <div className="hidden  text-center">
         <button
           onClick={() => setShowFullStats(!showFullStats)}
           className="text-sky-500 hover:text-sky-600 font-medium underline focus:outline-none"
