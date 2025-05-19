@@ -200,7 +200,7 @@ export default function PracticeSettingsStatisticsVisuals({
                 strokeWidth="12"
               />
               <circle
-                className="fill-none stroke-sky-500"
+                className="fill-none stroke-gray-700"
                 cx="50"
                 cy="50"
                 r="30"
