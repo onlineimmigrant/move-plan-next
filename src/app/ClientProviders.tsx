@@ -1,4 +1,3 @@
-// app/ClientProviders.tsx
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -7,12 +6,14 @@ import { AuthProvider } from '@/context/AuthContext';
 import { BasketProvider } from '@/context/BasketContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { CookieSettingsProvider } from '@/context/CookieSettingsContext';
+import { BannerProvider } from '@/context/BannerContext'; // Import BannerProvider
 import SEOWrapper from '@/components/SEOWrapper';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
+import {BannerContainer} from '@/components/banners/BannerContainer'; // Import BannerContainer
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 
 interface ClientProvidersProps {
@@ -42,25 +43,28 @@ export default function ClientProviders({
         <BasketProvider>
           <SettingsProvider initialSettings={settings}>
             <CookieSettingsProvider>
-              <SEOWrapper defaultSEOData={defaultSEOData} />
-              {showNavbarFooter ? (
-                <NavbarFooterWrapper>
-                  <div className="">
+              <BannerProvider> {/* Add BannerProvider */}
+                <SEOWrapper defaultSEOData={defaultSEOData} />
+                {showNavbarFooter ? (
+                  <NavbarFooterWrapper>
+                    <div className="">
+                      {children}
+                      <TemplateHeadingSections />
+                      <TemplateSections />
+                      <Breadcrumbs />
+                      <BannerContainer /> {/* Render banners here */}
+                    </div>
+                  </NavbarFooterWrapper>
+                ) : (
+                  <div className="-mt-12">
                     {children}
                     <TemplateHeadingSections />
                     <TemplateSections />
-                    <Breadcrumbs />
+                    <BannerContainer /> {/* Render banners here */}
                   </div>
-                </NavbarFooterWrapper>
-              ) : (
-                <div className="-mt-12">
-                  {children}
-                  <TemplateHeadingSections />
-                  <TemplateSections />
-                  
-                </div>
-              )}
-              <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+                )}
+                <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+              </BannerProvider>
             </CookieSettingsProvider>
           </SettingsProvider>
         </BasketProvider>
