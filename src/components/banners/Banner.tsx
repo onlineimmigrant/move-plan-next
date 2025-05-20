@@ -91,7 +91,7 @@ export const Banner = ({ banner }: BannerProps) => {
 
   return (
     <div
-      className={`fixed z-[100] shadow-lg border-2 border-gray-300 transition-all duration-300 ${
+      className={`fixed z-[100] shadow-lg  transition-all duration-300 ${
         banner.isOpen && banner.openState !== 'absent'
           ? openStateStyles[banner.openState as Exclude<BannerOpenState, 'absent'>]
           : positionStyles[banner.position]
