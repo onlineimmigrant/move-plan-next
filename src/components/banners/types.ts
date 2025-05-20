@@ -1,5 +1,19 @@
 export type BannerPosition = 'top' | 'bottom' | 'left' | 'right';
-export type BannerOpenState = 'full' | 'left-half' | 'right-half' | 'top-half' | 'bottom-half';
+export type BannerOpenState =
+  | 'full'
+  | 'left-half'
+  | 'right-half'
+  | 'top-half'
+  | 'bottom-half'
+  | 'left-30'
+  | 'left-70'
+  | 'right-30'
+  | 'right-70'
+  | 'top-30'
+  | 'top-70'
+  | 'bottom-30'
+  | 'bottom-70'
+  | 'absent';
 export type BannerType = 'permanent' | 'closed';
 
 export interface BannerContent {
@@ -7,6 +21,8 @@ export interface BannerContent {
   link?: { url: string; label: string; isExternal?: boolean };
   icon?: string; // URL to image
   customContent?: string; // Raw HTML with TailwindCSS classes
+  banner_background?: string; // TailwindCSS class, e.g., 'bg-blue-500'
+  banner_content_style?: string; // TailwindCSS class, e.g., 'space-x-6'
 }
 
 export interface Banner {
@@ -14,8 +30,9 @@ export interface Banner {
   position: BannerPosition;
   type: BannerType;
   content: BannerContent;
-  openState?: BannerOpenState; // Optional, only if banner can be opened
-  isOpen?: boolean; // Controlled by context
-  isDismissed?: boolean; // For closed banners
-  pagePath?: string; // Optional, from Supabase schema
+  openState?: BannerOpenState;
+  landing_content?: string; // HTML landing page content
+  isOpen?: boolean;
+  isDismissed?: boolean;
+  pagePath?: string;
 }

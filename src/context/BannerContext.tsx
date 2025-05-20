@@ -2,9 +2,8 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Banner, BannerOpenState } from '../components/banners/types'; // Add BannerOpenState import
+import { Banner, BannerOpenState } from '../components/banners/types';
 import { fetchBanners, fetchDismissedBanners, dismissBanner as supabaseDismissBanner } from '../lib/supabase';
-import { syncDismissedBanners, getDismissedBanners, setDismissedBanners } from '../lib/localStorage';
 import { useAuth } from './AuthContext';
 
 interface BannerContextType {
@@ -25,7 +24,7 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     async function loadBanners() {
       const fetchedBanners = await fetchBanners(pathname, userId);
-      const dismissedIds = await syncDismissedBanners(userId);
+      const dismissedIds = await fetchDismissedBanners(userId);
       setBanners(
         fetchedBanners.map((banner) => ({
           ...banner,
@@ -37,6 +36,7 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
   }, [pathname, userId]);
 
   const openBanner = (id: string, openState: BannerOpenState) => {
+    if (openState === 'absent') return;
     setBanners((prev) =>
       prev.map((banner) =>
         banner.id === id ? { ...banner, isOpen: true, openState } : banner
@@ -59,7 +59,6 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
       )
     );
     await supabaseDismissBanner(id, userId);
-    setDismissedBanners([...getDismissedBanners(), id]);
   };
 
   return (

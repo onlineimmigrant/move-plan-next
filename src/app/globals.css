@@ -223,3 +223,58 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Matches Tailwind's shadow-lg */
   object-fit: cover; /* Ensures video content fills the container without stretching */
 }
+
+
+/* src/app/globals.css */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.resizable {
+  position: relative;
+  overflow: auto;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 10;
+}
+
+.react-resizable-handle-s {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  cursor: ns-resize;
+}
+
+.react-resizable-handle-n {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  cursor: ns-resize;
+}
+
+.react-resizable-handle-e {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  cursor: ew-resize;
+}
+
+.react-resizable-handle-w {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  cursor: ew-resize;
+}
