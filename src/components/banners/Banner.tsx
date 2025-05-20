@@ -91,11 +91,11 @@ export const Banner = ({ banner }: BannerProps) => {
 
   return (
     <div
-      className={`fixed z-[100] shadow-lg  transition-all duration-300 ${
+      className={`fixed z-[100] shadow-sm  transition-all duration-300 ${
         banner.isOpen && banner.openState !== 'absent'
           ? openStateStyles[banner.openState as Exclude<BannerOpenState, 'absent'>]
           : positionStyles[banner.position]
-      } flex ${banner.position === 'left' || banner.position === 'right' ? 'flex-row sm:flex-col' : 'flex-col'} items-center justify-center p-4 py-6 overflow-auto ${
+      } flex ${banner.position === 'left' || banner.position === 'right' ? 'flex-row sm:flex-col' : 'flex-col'} items-center justify-center p-4 py-4 overflow-auto ${
         banner.content?.banner_background || 'bg-gray-50'
       }`}
       role="banner"
@@ -121,7 +121,7 @@ export const Banner = ({ banner }: BannerProps) => {
               : 'flex-col items-center space-y-2'
           }`}
         >
-          <div className={`flex flex-row justify-left items-center space-y-0 ${banner.content?.banner_content_style || 'space-x-4'}`}>
+          <div className={`flex flex-row sm:grid sm:grid-cols-3 justify-left items-center space-y-0 ${banner.content?.banner_content_style || 'space-x-4'}`}>
             {banner.content.icon && (
               <Image
                 src={banner.content.icon}
