@@ -162,7 +162,6 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
         return;
       }
 
-      // Removed the deletion logic to preserve previous answers
       console.log('Starting new quiz without clearing previous answers.');
 
       const quizUrl = getQuizUrl();
@@ -195,7 +194,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="h-4 w-4 animate-bounce rounded-full bg-blue-500"
+              className="h-4 w-4 animate-bounce rounded-full bg-sky-600"
               style={{ animationDelay: `${i * 0.2}s` }}
             />
           ))}
@@ -217,6 +216,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
 
   return (
     <div className="space-y-8 text-left">
+      {/* Mode Selection */}
       <div>
         <div className="hidden sm:block mb-2 text-sm font-semibold text-gray-700">Mode</div>
         <div className="select-none flex justify-center">
@@ -246,6 +246,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
         </div>
       </div>
 
+      {/* Topics Selection */}
       <div>
         <label className="hidden sm:flex text-sm font-semibold text-gray-700" id="topics-label">
           Topics
@@ -262,7 +263,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           >
             <label
               htmlFor="topic_all"
-              className="sticky top-0 z-10 flex cursor-pointer flex-col shadow rounded-md border-2 border-yellow-100 bg-yellow-200 p-2 px-3 hover:bg-gray-100"
+              className="sticky top-0 z-10 flex cursor-pointer flex-col shadow rounded-md border-2 border-yellow-100 bg-yellow-50 p-2 px-3 hover:bg-yellow-100 transition-all duration-300"
             >
               <div className="flex items-center justify-between">
                 <input
@@ -270,7 +271,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
                   id="topic_all"
                   checked={allTopicsSelected}
                   onChange={handleAllTopicsChange}
-                  className={styles.checkbox}
+                  className="custom-checkbox"
                   aria-label="Select all topics"
                   aria-checked={allTopicsSelected}
                 />
@@ -286,23 +287,32 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
               <label
                 key={topic.id}
                 htmlFor={`topic_${topic.id}`}
-                className={styles.topicLabel}
+                className="flex cursor-pointer items-center justify-between p-3 hover:bg-gray-50 transition-all duration-300 group"
               >
-                <input
-                  type="checkbox"
-                  id={`topic_${topic.id}`}
-                  checked={selectedTopics.includes(topic.id)}
-                  onChange={() => handleTopicChange(topic.id)}
-                  className={styles.checkbox}
-                  aria-label={`Select ${topic.title}`}
-                  aria-checked={selectedTopics.includes(topic.id)}
-                />
-                <span className="ml-3 text-sm font-medium text-gray-800">{topic.title}</span>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`topic_${topic.id}`}
+                    checked={selectedTopics.includes(topic.id)}
+                    onChange={() => handleTopicChange(topic.id)}
+                    className="custom-checkbox"
+                    aria-label={`Select ${topic.title}`}
+                    aria-checked={selectedTopics.includes(topic.id)}
+                  />
+                  <span className="ml-3 text-sm font-medium text-gray-800">{topic.title}</span>
+                </div>
+                {topic.description && (
+                  <div className="absolute left-1/2 transform -translate-x-1/2 -mt-12 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-2 px-3 shadow-lg z-20">
+                    {topic.description}
+                  </div>
+                )}
               </label>
             ))}
           </div>
         )}
       </div>
+
+      {/* Quantity and Start Button */}
       <div className="max-w-xl mx-auto px-8 sm:px-0 fixed bottom-0 sm:bottom-8 left-0 right-0 bg-transparent backdrop-blur-sm border-t border-gray-50 shadow sm:shadow-none sm:border-none py-2 sm:py-3 z-10">
         <div className="">
           <label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
@@ -352,6 +362,67 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </button>
         </div>
       </div>
+
+      {/* Custom Checkbox Styles */}
+      <style jsx>{`
+        .custom-checkbox {
+          appearance: none;
+          -webkit-appearance: none;
+          width: 18px;
+          height: 18px;
+          border: 2px solid #d1d5db; /* gray-300 */
+          border-radius: 4px;
+          background-color: #ffffff;
+          position: relative;
+          cursor: pointer;
+          transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+
+        .custom-checkbox:hover {
+          border-color: #4b5563; /* gray-600 */
+          background-color: #f9fafb; /* gray-50 */
+        }
+
+        .custom-checkbox:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3); /* sky-600 with opacity */
+          border-color: #0ea5e9; /* sky-600 */
+        }
+
+        .custom-checkbox:checked {
+          background-color: #0ea5e9; /* sky-600 */
+          border-color: #0ea5e9;
+        }
+
+        .custom-checkbox:checked::after {
+          content: '';
+          position: absolute;
+          top: 2px;
+          left: 6px;
+          width: 5px;
+          height: 10px;
+          border: solid white;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+          opacity: 0;
+          animation: checkmarkFade 0.3s ease-in-out forwards;
+        }
+
+        @keyframes checkmarkFade {
+          0% {
+            opacity: 0;
+            transform: rotate(45deg) scale(0.5);
+          }
+          50% {
+            opacity: 0.5;
+            transform: rotate(45deg) scale(1.2);
+          }
+          100% {
+            opacity: 1;
+            transform: rotate(45deg) scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 }
