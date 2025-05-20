@@ -21,7 +21,7 @@ export interface BannerContent {
   link?: { url: string; label: string; isExternal?: boolean };
   icon?: string; // URL to image
   customContent?: string; // Raw HTML with TailwindCSS classes
-  banner_background?: string; // TailwindCSS class, e.g., 'bg-blue-500'
+  banner_background?: string; // TailwindCSS class, e.g., 'bg-red-500'
   banner_content_style?: string; // TailwindCSS class, e.g., 'space-x-6'
 }
 
@@ -35,4 +35,5 @@ export interface Banner {
   isOpen?: boolean;
   isDismissed?: boolean;
   pagePath?: string;
+  dismissal_duration?: string; // Interval string, e.g., '1 minute', '1 day'
 }
