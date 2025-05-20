@@ -192,7 +192,7 @@ export default function ProgressStatisticsTopics({ quizId }: ProgressStatisticsT
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => handleSort('percent')}
-            className={`text-sm font-medium flex items-center space-x-1 ${
+            className={`cursor-pointer text-sm font-medium flex items-center space-x-1 ${
               sortBy === 'percent' ? 'text-sky-600' : 'text-gray-600 hover:text-sky-600'
             } transition-colors`}
           >
@@ -211,7 +211,7 @@ export default function ProgressStatisticsTopics({ quizId }: ProgressStatisticsT
           </button>
           <button
             onClick={() => handleSort('name')}
-            className={`text-sm font-medium flex items-center space-x-1 ${
+            className={`cursor-pointer text-sm font-medium flex items-center space-x-1 ${
               sortBy === 'name' ? 'text-sky-600' : 'text-gray-600 hover:text-sky-600'
             } transition-colors`}
           >
@@ -230,7 +230,7 @@ export default function ProgressStatisticsTopics({ quizId }: ProgressStatisticsT
           </button>
           <button
             onClick={() => setFilterLowPerformance(!filterLowPerformance)}
-            className={`text-sm font-medium flex items-center space-x-1 ${
+            className={`cursor-pointer text-sm font-medium flex items-center space-x-1 ${
               filterLowPerformance ? 'text-yellow-600' : 'text-gray-600 hover:text-yellow-600'
             } transition-colors`}
           >
@@ -335,7 +335,7 @@ export default function ProgressStatisticsTopics({ quizId }: ProgressStatisticsT
                   {/* Improve Button */}
                   <button
                     onClick={() => handleImproveClick(stat.topic_id)}
-                    className="mt-4 flex items-center justify-center w-full bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-all duration-300 group"
+                    className="cursor-pointer mt-4 flex items-center justify-center w-full bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-all duration-300 group"
                   >
                     <span>Improve</span>
                     <svg
