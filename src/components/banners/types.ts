@@ -34,6 +34,6 @@ export interface Banner {
   landing_content?: string; // HTML landing page content
   isOpen?: boolean;
   isDismissed?: boolean;
-  pagePath?: string;
+  page_paths?: string[] | null; // Updated to array of paths or null
   dismissal_duration?: string; // Interval string, e.g., '1 minute', '1 day'
 }

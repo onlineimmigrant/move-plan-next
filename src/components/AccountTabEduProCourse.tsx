@@ -1,4 +1,3 @@
-// components/AccountTabEduProCourse.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -142,10 +141,21 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     { label: 'Progress', href: `/account/edupro/${slug}/progress` },
   ];
 
+  // Determine if a tab is active
+  const isTabActive = (tab: Tab) => {
+    if (tab.label === 'Study') {
+      // Active for both exact match and topic subroutes
+      return (
+        pathname === tab.href ||
+        pathname.startsWith(`/account/edupro/${slug}/topic/`)
+      );
+    }
+    return pathname === tab.href;
+  };
+
   // Determine the translate-x for the sliding background
   const getSliderPosition = () => {
-    const activeIndex = tabs.findIndex((tab) => pathname === tab.href);
-    console.log('Active Tab Index:', activeIndex, 'Pathname:', pathname); // Debug log
+    const activeIndex = tabs.findIndex((tab) => isTabActive(tab));
     if (activeIndex === 0) return 'translate-x-0';
     if (activeIndex === 1) return 'translate-x-[100%]';
     if (activeIndex === 2) return 'translate-x-[200%]';
@@ -192,12 +202,11 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
 
       {/* Course Header */}
       <Link href="/account">
-        <div className="mt-0  mb-4 sm:mb-6 flex items-center justify-center gap-4 ">
+        <div className="mt-0 mb-4 sm:mb-6 flex items-center justify-center gap-4">
           <div className="flex justify-between items-center">
             <div className="text-center hover:bg-sky-50 px-4 rounded-md">
-              <span className=" text-gray-500 font-normal text-sm sm:text-base">{duration}</span>
+              <span className="text-gray-500 font-normal text-sm sm:text-base">{duration}</span>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 relative">
-                
                 {courseTitle}
                 <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
@@ -230,7 +239,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
                 key={tab.href}
                 href={tab.href}
                 className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-base mona-sans px-0.5 ${
-                  pathname === tab.href ? 'font-semibold text-white z-10' : ''
+                  isTabActive(tab) ? 'font-semibold text-white z-10' : ''
                 }`}
               >
                 {tab.label}
