@@ -147,7 +147,8 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
       // Active for both exact match and topic subroutes
       return (
         pathname === tab.href ||
-        pathname.startsWith(`/account/edupro/${slug}/topic/`)
+        pathname.startsWith(`/account/edupro/${slug}/topic/`) ||
+        pathname.startsWith(`/account/edupro/${slug}/practice`)
       );
     }
     return pathname === tab.href;

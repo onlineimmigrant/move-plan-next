@@ -1,13 +1,14 @@
 // app/account/edupro/[slug]/topic/[topicSlug]/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
 import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
+import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
 
 // Initialize Supabase client
@@ -81,6 +82,29 @@ export default function EduProTopicDetail() {
   const { session } = useAuth();
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
 
+  // State for tab navigation
+  const [activeTab, setActiveTab] = useState<'theory' | 'practice' | 'studyBooks'>('theory');
+
+  const tabs = [
+    { label: 'Theory', value: 'theory' },
+    { label: 'Practice', value: 'practice' },
+    { label: 'Books', value: 'studyBooks' },
+  ];
+
+  // Explicitly type handleTabChange to match Dispatch<SetStateAction<string>>
+  const handleTabChange: Dispatch<SetStateAction<string>> = (tabValue) => {
+    const newTab = typeof tabValue === 'string' ? tabValue : tabValue(activeTab);
+    setActiveTab(newTab as 'theory' | 'practice' | 'studyBooks');
+    // Perform navigation after setting the state
+    if (newTab === 'practice') {
+      router.push(`/account/edupro/${slug}/practice`);
+    } else if (newTab === 'studyBooks') {
+      router.push(`/account/edupro/${slug}`); // Assuming Books tab is on the main course page
+    } else if (newTab === 'theory') {
+      router.push(`/account/edupro/${slug}`); // Navigate back to the course page for Theory
+    }
+  };
+
   const isPurchaseActive = (purchase: Purchase) => {
     if (!purchase.is_active) return false;
     const currentDate = new Date();
@@ -107,7 +131,6 @@ export default function EduProTopicDetail() {
           return;
         }
 
-        console.log('Fetching topic with slug:', topicSlug);
         const { data: topicDataArray, error: topicError } = await supabase
           .from('edu_pro_topic')
           .select('id, title, description, order, slug')
@@ -126,10 +149,8 @@ export default function EduProTopicDetail() {
         }
 
         const topicData = topicDataArray[0];
-        console.log('Topic data:', topicData);
         setTopic(topicData);
 
-        console.log('Fetching course-topic relationships for topic_id:', topicData.id);
         const { data: courseTopicData, error: courseTopicError } = await supabase
           .from('edu_pro_coursetopic')
           .select('course_id')
@@ -144,9 +165,7 @@ export default function EduProTopicDetail() {
         }
 
         const courseIds = courseTopicData.map((ct) => ct.course_id);
-        console.log('Associated course IDs for this topic:', courseIds);
 
-        console.log('Fetching course with slug:', slug, 'and course IDs:', courseIds);
         const { data: courseDataArray, error: courseError } = await supabase
           .from('edu_pro_course')
           .select('id, slug, title, description')
@@ -201,10 +220,8 @@ export default function EduProTopicDetail() {
         }
 
         const courseData = courseDataArray[0];
-        console.log('Course data:', courseData);
         setCourse(courseData);
 
-        console.log('Fetching lessons for topic_id:', topicData.id);
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('edu_pro_lesson')
           .select(`
@@ -234,10 +251,8 @@ export default function EduProTopicDetail() {
           throw new Error(`Error fetching lessons: ${lessonsError.message}`);
         }
 
-        console.log('Lessons data:', lessonsData);
         setLessons(lessonsData || []);
 
-        console.log('Fetching purchases for user:', session.user.id);
         const { data: activePurchases, error: purchaseError } = await supabase
           .from('purchases')
           .select(`
@@ -324,30 +339,23 @@ export default function EduProTopicDetail() {
         )}
         <div className="pt-8">
           <AccountTabEduProCourse />
+          <TabNavigation tabs={tabs} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
-        <div className="px-6">
+        <div className="pb-24 px-6">
           {course && topic ? (
             <div>
-              {/* Responsive topic header: bordered on mobile, badge on larger screens */}
-              <div className="sm:ml-4 text-center mb-4 p-3 border-sky-600 border-2 sm:flex sm:justify-left sm:border-none sm:p-0">
-                <span className="text-sm font-semibold text-gray-900 sm:inline-block sm:bg-sky-600 sm:text-white 
-                sm:px-2 sm:py-1 sm:rounded-full">
-                  Topics 
-                </span>
-              </div>
-              <div className="relative border-l-8 border-sky-600 pl-4 py-4 bg-white rounded-lg shadow-sm">
-                <span className="absolute top-4 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
+            
+              <div className="mx-auto max-w-sm relative border-l-8 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm">
+                <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
                   {topic.order}
                 </span>
                 <h3 className="text-base font-medium text-gray-900 pr-8">{topic.title}</h3>
-               
               </div>
-
-              {/* Lessons Section with responsive styling */}
+            
+              {/* Lessons Section */}
               <div className="mt-8">
-                <div className="sm:ml-4 text-center mb-4 p-3 border-sky-600 border-2 sm:flex sm:justify-left sm:border-none sm:p-0">
-                  <span className="text-md text-sm font-semibold text-gray-900 sm:inline-block sm:bg-sky-600 sm:text-white 
-                  sm:px-2 sm:py-1 sm:rounded-full">
+                <div className="text-center mb-4 p-3  sm:flex sm:justify-left sm:border-none sm:p-0">
+                  <span className="text-md text-sm sm:text-base font-semibold  sm:py-1 ">
                     Lessons
                   </span>
                 </div>
@@ -358,14 +366,13 @@ export default function EduProTopicDetail() {
                         key={lesson.id}
                         className="relative border-l-4 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
                       >
-                        <span className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-sky-600 text-white text-xs font-medium rounded-full">
+                        <span className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
                           {lesson.order}
                         </span>
                         <Link href={`/account/edupro/${slug}/topic/${topicSlug}/lesson/${lesson.id}`}>
                           <h3 className="text-sm font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
                             {lesson.title}
                           </h3>
-                  
                         </Link>
                       </li>
                     ))}

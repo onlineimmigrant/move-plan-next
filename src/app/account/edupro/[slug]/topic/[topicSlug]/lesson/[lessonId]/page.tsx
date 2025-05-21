@@ -1,12 +1,14 @@
 // app/account/edupro/[slug]/topic/[topicSlug]/lesson/[lessonId]/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link'; // Import Link for navigation
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
 import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
+import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
 
 // Initialize Supabase client
@@ -79,6 +81,27 @@ export default function EduProLessonDetail() {
   const { slug, topicSlug, lessonId } = useParams();
   const { session } = useAuth();
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
+
+  // State for tab navigation
+  const [activeTab, setActiveTab] = useState<'theory' | 'practice' | 'studyBooks'>('theory');
+
+  const tabs = [
+    { label: 'Theory', value: 'theory' },
+    { label: 'Practice', value: 'practice' },
+    { label: 'Books', value: 'studyBooks' },
+  ];
+
+  const handleTabChange: Dispatch<SetStateAction<string>> = (tabValue) => {
+    const newTab = typeof tabValue === 'string' ? tabValue : tabValue(activeTab);
+    setActiveTab(newTab as 'theory' | 'practice' | 'studyBooks');
+    if (newTab === 'practice') {
+      router.push(`/account/edupro/${slug}/practice`);
+    } else if (newTab === 'studyBooks') {
+      router.push(`/account/edupro/${slug}`);
+    } else if (newTab === 'theory') {
+      router.push(`/account/edupro/${slug}/topic/${topicSlug}`);
+    }
+  };
 
   const isPurchaseActive = (purchase: Purchase) => {
     if (!purchase.is_active) return false;
@@ -332,16 +355,24 @@ export default function EduProLessonDetail() {
         )}
         <div className="pt-8">
           <AccountTabEduProCourse />
+          <TabNavigation tabs={tabs} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
         <div className="px-6">
           {course && topic && lesson ? (
             <div>
-              {/* Responsive lesson header: bordered on mobile, badge on larger screens */}
-              <div className="text-center mb-4 p-3 border-sky-600 border-2 sm:flex sm:justify-center sm:border-none sm:p-0">
-                <span className="text-md font-semibold text-gray-900 sm:inline-block sm:bg-sky-600 sm:text-white sm:px-4 sm:py-2 sm:rounded-full">
-                  {course.title} - Topic {topic.order} - Lesson {lesson.order}
-                </span>
-              </div>
+              {/* Topic card wrapped in a Link */}
+              <Link href={`/account/edupro/${slug}/topic/${topicSlug}`}>
+                <div className="mx-auto max-w-sm relative border-l-8 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow">
+                  <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
+                    {topic.order}
+                  </span>
+                  <h3 className="text-base font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
+                    {topic.title}
+                  </h3>
+                </div>
+              </Link>
+
+              {/* Existing lesson details */}
               <div className="relative border-l-4 border-sky-600 pl-4 py-4 bg-white rounded-lg shadow-sm">
                 <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
                   {lesson.order}

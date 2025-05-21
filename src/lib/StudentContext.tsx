@@ -18,9 +18,10 @@ const StudentContext = createContext<StudentContextType>({
 export function StudentProvider({ children }: { children: React.ReactNode }) {
   const [isStudent, setIsStudent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { session } = useAuth(); // Use useAuth to get the session
+  const { session } = useAuth();
 
   useEffect(() => {
+    // Fallback timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       console.warn('StudentProvider: Fallback triggered after 5s');
       setIsLoading(false);
@@ -28,8 +29,10 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
 
     const fetchProfile = async () => {
       try {
-        if (!session) {
-          console.warn('StudentProvider: No session found');
+        // Wait for session to be fully loaded
+        if (!session?.user?.id) {
+          console.warn('StudentProvider: No valid session found');
+          setIsStudent(false);
           return;
         }
 
@@ -43,6 +46,7 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
 
         if (error) {
           console.error('StudentProvider: Profile error:', error.message);
+          setIsStudent(false);
           return;
         }
 
@@ -50,6 +54,7 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
         setIsStudent(data.is_student || false);
       } catch (err) {
         console.error('StudentProvider: Unexpected error:', err);
+        setIsStudent(false);
       } finally {
         clearTimeout(timeout);
         setIsLoading(false);
@@ -59,7 +64,7 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
 
     fetchProfile();
     return () => clearTimeout(timeout);
-  }, [session]); // Depend on session
+  }, [session]);
 
   return (
     <StudentContext.Provider value={{ isStudent, isLoading }}>

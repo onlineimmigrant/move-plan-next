@@ -1,30 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Banner, BannerOpenState, BannerPosition, BannerType } from '../components/banners/types';
 
-// Define the raw banner type returned by Supabase
-interface RawBanner {
-  id: string;
-  position: string;
-  type: string;
-  content: {
-    text: string;
-    link?: { url: string; label: string; isExternal?: boolean };
-    icon?: string;
-    customContent?: string;
-    banner_background?: string;
-    banner_content_style?: string;
-  };
-  open_state: string;
-  landing_content?: string;
-  page_paths: string[] | null; // Explicitly type page_paths
-  is_active: boolean;
-  start_at: string;
-  end_at?: string | null;
-  priority: number;
-  target_audience: string[];
-  dismissal_duration?: string;
-}
-
 // Parse interval string to milliseconds
 const parseIntervalToMs = (interval: string | undefined): number => {
   if (!interval) return 60 * 1000; // Default: 1 minute
@@ -55,17 +31,11 @@ const parseIntervalToMs = (interval: string | undefined): number => {
 
 // Match path against pattern (e.g., /product/*)
 const matchesPathPattern = (path: string, pattern: string): boolean => {
-  // Normalize paths: remove query parameters and trailing slashes
-  const normalizedPath = path.split('?')[0].replace(/\/+$/, '');
-  const normalizedPattern = pattern.replace(/\/+$/, '');
-  if (!normalizedPattern.endsWith('/*')) {
-    console.log(`Exact match check: path=${normalizedPath}, pattern=${normalizedPattern}, result=${normalizedPath === normalizedPattern}`);
-    return normalizedPath === normalizedPattern;
+  if (!pattern.endsWith('/*')) {
+    return path === pattern;
   }
-  const prefix = normalizedPattern.slice(0, -2); // Remove '/*'
-  const result = normalizedPath === prefix || normalizedPath.startsWith(prefix + '/');
-  console.log(`Wildcard match check: path=${normalizedPath}, pattern=${normalizedPattern}, prefix=${prefix}, result=${result}`);
-  return result;
+  const prefix = pattern.slice(0, -2); // Remove '/*'
+  return path === prefix || path.startsWith(prefix + '/');
 };
 
 export const supabase = createClient(
@@ -118,17 +88,10 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
   const dismissedIds = await fetchDismissedBanners(userId);
 
   // Filter banners by page_paths (including wildcard matching)
-  const filteredBanners = (data as RawBanner[]).filter((banner) => {
-    if (!pagePath || !banner.page_paths) {
-      console.log(`Banner ${banner.id} included: pagePath=${pagePath}, banner.page_paths=${banner.page_paths} (NULL means all pages)`);
-      return true; // NULL page_paths means all pages
-    }
-    const matches = banner.page_paths.some((path: string) => matchesPathPattern(pagePath, path));
-    console.log(`Banner ${banner.id} path match: pagePath=${pagePath}, banner.page_paths=${banner.page_paths}, matches=${matches}`);
-    return matches;
+  const filteredBanners = data.filter((banner) => {
+    if (!pagePath || !banner.page_paths) return true; // NULL page_paths means all pages
+    return banner.page_paths.some((path: string) => matchesPathPattern(pagePath, path));
   });
-
-  console.log('Filtered banners:', filteredBanners);
 
   return filteredBanners.map((banner) => ({
     id: banner.id,

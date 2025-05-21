@@ -1,0 +1,39 @@
+// components/TheoryContent.tsx
+import Link from 'next/link';
+import { Topic } from '@/lib/types';
+
+interface TheoryContentProps {
+  topics: Topic[];
+  courseSlug: string;
+}
+
+export default function TheoryContent({ topics, courseSlug }: TheoryContentProps) {
+  return (
+    <>
+      {topics.length > 0 ? (
+        <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {topics.map((topic) => (
+            <li
+              key={topic.id}
+              className="relative border-l-8 border-sky-600 pl-8 py-8 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            >
+              <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
+                {topic.order}
+              </span>
+              <Link href={`/account/edupro/${courseSlug}/topic/${topic.slug}`}>
+                <h3 className="text-base font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
+                  {topic.title}
+                </h3>
+                <p className="pr-8 text-sm text-gray-600 mt-1">
+                  {topic.description || 'No description available.'}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-gray-600 text-center">No topics available for this course.</p>
+      )}
+    </>
+  );
+}
