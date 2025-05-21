@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           .map((item) => (
             <div key={item.id} className="relative group">
               <button
-                className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 title={item.display_name}
               >
                 {item.image ? (
@@ -216,7 +216,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           onClick={handleMainPage}
           className="flex items-center text-gray-900 hover:text-sky-600 transition-colors duration-200"
         >
-          <Image src={companyLogo} alt="Logo" width={40} height={40} className="h-8 w-auto" />
+          <Image src={companyLogo} alt="Logo" width={40} height={40} className="cursor-pointer h-8 w-auto" />
           <span className="ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
             {settings?.site || ''}
           </span>

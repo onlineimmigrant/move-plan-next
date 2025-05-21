@@ -1,4 +1,5 @@
 // app/account/edupro/[slug]/practice/page.tsx
+
 'use client';
 
 import { useState } from 'react';
@@ -15,6 +16,23 @@ export default function EduProCourseDetail() {
   const slug = params?.slug as string;
   const { course, topics, isLoading, error, toast, setToast } = useCourseAndTopics(slug);
   const [activeTab, setActiveTab] = useState<'topics' | 'studyBooks' | 'practice'>('practice');
+
+  // Define the tabs for "Topics," "Practice," and "Books"
+  const tabs = [
+    { label: 'Theory', value: 'topics' },
+    { label: 'Practice', value: 'practice' },
+    { label: 'Books', value: 'studyBooks' },
+  ];
+
+  // Determine the translate-x for the sliding background
+  const getSliderPosition = () => {
+    const activeIndex = tabs.findIndex((tab) => activeTab === tab.value);
+    console.log('Active Tab Index:', activeIndex, 'Active Tab:', activeTab); // Debug log
+    if (activeIndex === 0) return 'translate-x-0';
+    if (activeIndex === 1) return 'translate-x-[100%]';
+    if (activeIndex === 2) return 'translate-x-[200%]';
+    return 'translate-x-0'; // Default to first tab
+  };
 
   if (isLoading) {
     return (
@@ -57,52 +75,31 @@ export default function EduProCourseDetail() {
             <div>
               <div>
                 {/* Tabbed navigation */}
-                <div className="flex sm:justify-center mb-4" role="tablist" aria-label="Course Sections">
-                  <button
-                    id="topics-tab"
-                    role="tab"
-                    aria-selected={activeTab === 'topics'}
-                    aria-controls="topics-panel"
-                    onClick={() => setActiveTab('topics')}
-                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
-                      ${
-                        activeTab === 'topics'
-                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
-                      }`}
-                  >
-                    Topics
-                  </button>
-                  <button
-                    id="practice-tab"
-                    role="tab"
-                    aria-selected={activeTab === 'practice'}
-                    aria-controls="practice-panel"
-                    onClick={() => setActiveTab('practice')}
-                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
-                      ${
-                        activeTab === 'practice'
-                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
-                      }`}
-                  >
-                    Practice
-                  </button>
-                  <button
-                    id="studyBooks-tab"
-                    role="tab"
-                    aria-selected={activeTab === 'studyBooks'}
-                    aria-controls="studyBooks-panel"
-                    onClick={() => setActiveTab('studyBooks')}
-                    className={`flex-1 text-center p-3 border-gray-600 border-2 sm:border-none sm:flex-none sm:ml-4 text-md text-sm font-semibold 
-                      ${
-                        activeTab === 'studyBooks'
-                          ? 'bg-gray-100 sm:bg-gray-400 sm:text-white sm:rounded-full sm:shadow-md sm:scale-105 sm:transition-transform sm:px-2 sm:py-1'
-                          : 'sm:bg-gray-600 sm:text-white sm:rounded-full sm:px-2 sm:py-1'
-                      }`}
-                  >
-                    Books
-                  </button>
+                <div className="select-none flex justify-center mb-2" role="tablist" aria-label="Course Sections">
+                  <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-transparent rounded-lg cursor-pointer overflow-hidden px-0.5">
+                    {/* Sliding Background */}
+                    <div
+                      className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.33%-2px)] bg-sky-600 rounded-md transition-transform  duration-200 ease-in-out transform ${getSliderPosition()}`}
+                    ></div>
+                    {/* Tab Labels */}
+                    <div className="relative flex h-full">
+                      {tabs.map((tab, index) => (
+                        <button
+                          key={tab.value}
+                          id={`${tab.value}-tab`}
+                          role="tab"
+                          aria-selected={activeTab === tab.value}
+                          aria-controls={`${tab.value}-panel`}
+                          onClick={() => setActiveTab(tab.value as 'topics' | 'studyBooks' | 'practice')}
+                          className={`flex-1 flex justify-center cursor-pointer items-center text-sky-600 text-sm sm:text-base mona-sans px-0.5 ${
+                            activeTab === tab.value ? 'font-semibold text-white z-10' : ''
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Tab panels */}
@@ -118,13 +115,13 @@ export default function EduProCourseDetail() {
                         {topics.map((topic) => (
                           <li
                             key={topic.id}
-                            className="relative border-l-8 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                            className="relative border-l-8 border-sky-600 pl-8 py-8 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
                           >
                             <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
                               {topic.order}
                             </span>
                             <Link href={`/account/edupro/${course.slug}/topic/${topic.slug}`}>
-                              <h3 className="text-sm font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
+                              <h3 className="text-base font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
                                 {topic.title}
                               </h3>
                               <p className="pr-8 text-sm text-gray-600 mt-1">

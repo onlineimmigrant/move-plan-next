@@ -14,11 +14,11 @@ export default function EduProCourseDetail() {
   const params = useParams();
   const slug = params?.slug as string;
   const { course, topics, isLoading, error, toast, setToast } = useCourseAndTopics(slug);
-  const [activeTab, setActiveTab] = useState<'topics' | 'studyBooks' | 'practice'>('practice');
+  const [activeTab, setActiveTab] = useState<'topics' | 'studyBooks' | 'practice'>('topics');
 
   // Define the tabs for "Topics," "Practice," and "Books"
   const tabs = [
-    { label: 'Topics', value: 'topics' },
+    { label: 'Theory', value: 'topics' },
     { label: 'Practice', value: 'practice' },
     { label: 'Books', value: 'studyBooks' },
   ];

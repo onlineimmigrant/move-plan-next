@@ -47,31 +47,31 @@ export const Banner = ({ banner }: BannerProps) => {
       case 'top':
         return {
           icon: <TbChevronCompactDown className="w-6 h-6" />,
-          className: 'cursor-pointer mt-2 text-gray-400 hover:text-sky-600',
+          className: 'cursor-pointer mt-2 text-sky-500 hover:text-sky-700',
           ariaLabel: 'Expand banner downward',
         };
       case 'bottom':
         return {
           icon: <TbChevronCompactUp className="w-6 h-6" />,
-          className: 'cursor-pointer mb-2 text-sky-600 hover:text-sky-500',
+          className: 'cursor-pointer mb-2 text-sky-500 hover:text-sky-700',
           ariaLabel: 'Expand banner upward',
         };
       case 'left':
         return {
           icon: <TbChevronCompactRight className="w-6 h-6" />,
-          className: 'cursor-pointer ml-2 text-sky-600 hover:text-sky-500',
+          className: 'cursor-pointer ml-2 text-sky-500 hover:text-sky-700',
           ariaLabel: 'Expand banner to the right',
         };
       case 'right':
         return {
           icon: <TbChevronCompactLeft className="w-6 h-6" />,
-          className: 'cursor-pointer mr-2 text-sky-600 hover:text-sky-500',
+          className: 'cursor-pointer mr-2 text-sky-500 hover:text-sky-700',
           ariaLabel: 'Expand banner to the left',
         };
       default:
         return {
           icon: <TbChevronCompactDown className="w-6 h-6" />,
-          className: 'cursor-pointer mt-2 text-sky-600 hover:text-sky-500',
+          className: 'cursor-pointer mt-2 text-sky-500 hover:text-sky-700',
           ariaLabel: 'Open banner',
         };
     }
