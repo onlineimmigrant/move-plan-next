@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import AdvancedVideoPlayer from '@/components/AdvancedVideoPlayer';
+//import AdvancedVideoPlayer from '@/components/AdvancedVideoPlayer';
 
 
 export default function BecomeAffiliatePartner() {
-    const videos = [
+   {/*  const videos = [
         { id: '1', src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', title: 'Big Buck Bunny (External)' },
         { id: '2', publicId: 'samples/elephants', title: 'Cloudinary Elephants' },
         { id: '3', publicId: 'samples/sea-turtle', title: 'Cloudinary Sea Turtle' },
@@ -107,5 +107,5 @@ export default function BecomeAffiliatePartner() {
       </section>
     </main>
         </div>
-          );
+          );*/}
         }

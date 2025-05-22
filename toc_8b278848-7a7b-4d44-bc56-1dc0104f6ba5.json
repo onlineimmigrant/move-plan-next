@@ -1,0 +1,382 @@
+[
+  {
+    "topic": "INTRODUCTION",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "Chapter 1. CONSTITUTION",
+    "href": "chapter-2.xhtml",
+    "order": 1
+  },
+  {
+    "topic": "Overview of Constitution",
+    "href": "chapter-2.xhtml#chapter-2-27",
+    "order": 2
+  },
+  {
+    "topic": "The UK’s Unwritten Constitution",
+    "href": "chapter-2.xhtml#chapter-2-39",
+    "order": 3
+  },
+  {
+    "topic": "Chapter 2. CHARACTERISTICS OF THE BRITISH CONSTITUTION",
+    "href": "chapter-3.xhtml",
+    "order": 4
+  },
+  {
+    "topic": "Multiple Sources",
+    "href": "chapter-3.xhtml#chapter-3-54",
+    "order": 5
+  },
+  {
+    "topic": "Adherence to the Rule of Law",
+    "href": "chapter-3.xhtml#chapter-3-69",
+    "order": 6
+  },
+  {
+    "topic": "Absence of constitutional entrenchment and the principle of parliamentary supremacy",
+    "href": "chapter-3.xhtml#chapter-3-76",
+    "order": 7
+  },
+  {
+    "topic": "Judicial Inability to Nullify Legislation",
+    "href": "chapter-3.xhtml#chapter-3-111",
+    "order": 8
+  },
+  {
+    "topic": "The Role of Judiciary",
+    "href": "chapter-3.xhtml#chapter-3-124",
+    "order": 9
+  },
+  {
+    "topic": "The Role of Monarchy and Royal Prerogative in the UK Constitution",
+    "href": "chapter-3.xhtml#chapter-3-144",
+    "order": 10
+  },
+  {
+    "topic": "The Role of Constitutional Convention",
+    "href": "chapter-3.xhtml#chapter-3-163",
+    "order": 11
+  },
+  {
+    "topic": "The United Kingdom: A Union State with Devolved Powers",
+    "href": "chapter-3.xhtml#chapter-3-188",
+    "order": 12
+  },
+  {
+    "topic": "Parliamentary Framework and Governance",
+    "href": "chapter-3.xhtml#chapter-3-203",
+    "order": 13
+  },
+  {
+    "topic": "Chapter 3. Fundamental Principles Underpinning the Constitution",
+    "href": "chapter-4.xhtml",
+    "order": 14
+  },
+  {
+    "topic": "The Primacy of Parliamentary Sovereignty",
+    "href": "chapter-4.xhtml#chapter-4-236",
+    "order": 15
+  },
+  {
+    "topic": "The Principle of the Separation of Powers in the UK",
+    "href": "chapter-4.xhtml#chapter-4-308",
+    "order": 16
+  },
+  {
+    "topic": "Principle of Legal Governance",
+    "href": "chapter-4.xhtml#chapter-4-357",
+    "order": 17
+  },
+  {
+    "topic": "Chapter 4. Parliament’s Core Functions",
+    "href": "chapter-5.xhtml",
+    "order": 18
+  },
+  {
+    "topic": "Parliamentary Structure",
+    "href": "chapter-5.xhtml#chapter-5-462",
+    "order": 19
+  },
+  {
+    "topic": "Primary Legislation",
+    "href": "chapter-5.xhtml#chapter-5-529",
+    "order": 20
+  },
+  {
+    "topic": "Secondary Legislation",
+    "href": "chapter-5.xhtml#chapter-5-634",
+    "order": 21
+  },
+  {
+    "topic": "Parliamentary Privilege and Freedom of Speech",
+    "href": "chapter-5.xhtml#chapter-5-685",
+    "order": 22
+  },
+  {
+    "topic": "Chapter 5. The Evolution of Monarchical Power and the Royal Prerogative",
+    "href": "chapter-6.xhtml",
+    "order": 23
+  },
+  {
+    "topic": "The 'Crown' as a Symbol of Government Structure",
+    "href": "chapter-6.xhtml#chapter-6-729",
+    "order": 24
+  },
+  {
+    "topic": "Range and Limits of the Royal Prerogative",
+    "href": "chapter-6.xhtml#chapter-6-756",
+    "order": 25
+  },
+  {
+    "topic": "Current Scope of Royal Prerogative",
+    "href": "chapter-6.xhtml#chapter-6-817",
+    "order": 26
+  },
+  {
+    "topic": "Statutory Oversight of Royal Prerogative Powers",
+    "href": "chapter-6.xhtml#chapter-6-882",
+    "order": 27
+  },
+  {
+    "topic": "Oversight of Royal Prerogative Through Constitutional Conventions",
+    "href": "chapter-6.xhtml#chapter-6-898",
+    "order": 28
+  },
+  {
+    "topic": "Selecting the Prime Minister",
+    "href": "chapter-6.xhtml#chapter-6-924",
+    "order": 29
+  },
+  {
+    "topic": "Chapter 6. Central government oversight and responsibility",
+    "href": "chapter-7.xhtml",
+    "order": 30
+  },
+  {
+    "topic": "Government Structure and Leadership",
+    "href": "chapter-7.xhtml#chapter-7-953",
+    "order": 31
+  },
+  {
+    "topic": "Role and Powers of the Prime Minister",
+    "href": "chapter-7.xhtml#chapter-7-963",
+    "order": 32
+  },
+  {
+    "topic": "Formation of the Ministerial Cabinet",
+    "href": "chapter-7.xhtml#chapter-7-1023",
+    "order": 33
+  },
+  {
+    "topic": "The Cabinet",
+    "href": "chapter-7.xhtml#chapter-7-1050",
+    "order": 34
+  },
+  {
+    "topic": "Structure of Government Departments",
+    "href": "chapter-7.xhtml#chapter-7-1107",
+    "order": 35
+  },
+  {
+    "topic": "The Privy Council",
+    "href": "chapter-7.xhtml#chapter-7-1159",
+    "order": 36
+  },
+  {
+    "topic": "Ministerial Responsibility and the Imperative of Accountability",
+    "href": "chapter-7.xhtml#chapter-7-1190",
+    "order": 37
+  },
+  {
+    "topic": "Chapter 7. DEVOLUTION",
+    "href": "chapter-8.xhtml",
+    "order": 38
+  },
+  {
+    "topic": "The Legal Framework of Devolution",
+    "href": "chapter-8.xhtml#chapter-8-1265",
+    "order": 39
+  },
+  {
+    "topic": "Application of the Sewel Convention",
+    "href": "chapter-8.xhtml#chapter-8-1291",
+    "order": 40
+  },
+  {
+    "topic": "Judicial Oversight of Devolved Legislation and Constraints on Legislative Authority",
+    "href": "chapter-8.xhtml#chapter-8-1306",
+    "order": 41
+  },
+  {
+    "topic": "Referral to the Supreme Court for Devolved Legislation",
+    "href": "chapter-8.xhtml#chapter-8-1323",
+    "order": 42
+  },
+  {
+    "topic": "Chapter 8. JUDICIAL OVERSIGHT",
+    "href": "chapter-9.xhtml",
+    "order": 43
+  },
+  {
+    "topic": "Definition of Judicial Oversight",
+    "href": "chapter-9.xhtml#chapter-9-1339",
+    "order": 44
+  },
+  {
+    "topic": "Prerequisites for Judicial Oversight",
+    "href": "chapter-9.xhtml#chapter-9-1360",
+    "order": 45
+  },
+  {
+    "topic": "Illegality as a Ground for Judicial Review",
+    "href": "chapter-9.xhtml#chapter-9-1477",
+    "order": 46
+  },
+  {
+    "topic": "The Notion of Procedural Impropriety in Judicial Review",
+    "href": "chapter-9.xhtml#chapter-9-1549",
+    "order": 47
+  },
+  {
+    "topic": "The Concept of Legitimate Expectations in Public Administration",
+    "href": "chapter-9.xhtml#chapter-9-1601",
+    "order": 48
+  },
+  {
+    "topic": "The Thresholds of Unreasonableness and Irrationality in Decision-Making",
+    "href": "chapter-9.xhtml#chapter-9-1634",
+    "order": 49
+  },
+  {
+    "topic": "Judicial Remedies",
+    "href": "chapter-9.xhtml#chapter-9-1657",
+    "order": 50
+  },
+  {
+    "topic": "Chapter 9. THE HUMAN RIGHTS ACT OF 1998",
+    "href": "chapter-10.xhtml",
+    "order": 51
+  },
+  {
+    "topic": "The Dynamic Relationship between the European Convention on Human Rights and the Human Rights Act 1998",
+    "href": "chapter-10.xhtml#chapter-10-1698",
+    "order": 52
+  },
+  {
+    "topic": "Dissecting HRA Section 1—the Incorporation of the Convention’s Rights into Domestic Law",
+    "href": "chapter-10.xhtml#chapter-10-1708",
+    "order": 53
+  },
+  {
+    "topic": "The Role of Section 2 of the HRA in Interpreting Convention Rights",
+    "href": "chapter-10.xhtml#chapter-10-1833",
+    "order": 54
+  },
+  {
+    "topic": "The HRA's Section 3 and Its Impact on Legislation Interpretation",
+    "href": "chapter-10.xhtml#chapter-10-1841",
+    "order": 55
+  },
+  {
+    "topic": "Section 4 and Declarations of Incompatibility",
+    "href": "chapter-10.xhtml#chapter-10-1854",
+    "order": 56
+  },
+  {
+    "topic": "Section 6 and Its Enforcement Against Public Authorities",
+    "href": "chapter-10.xhtml#chapter-10-1879",
+    "order": 57
+  },
+  {
+    "topic": "Section 7 and Legal Proceedings Against Public Authorities",
+    "href": "chapter-10.xhtml#chapter-10-1904",
+    "order": 58
+  },
+  {
+    "topic": "Section 8 and Available Remedies",
+    "href": "chapter-10.xhtml#chapter-10-1920",
+    "order": 59
+  },
+  {
+    "topic": "Combating Discrimination Through the ECHR and the Equality Act 2010",
+    "href": "chapter-10.xhtml#chapter-10-1935",
+    "order": 60
+  },
+  {
+    "topic": "Chapter 10. Law on Public Order",
+    "href": "chapter-11.xhtml",
+    "order": 61
+  },
+  {
+    "topic": "The Interplay between ECHR and HRA",
+    "href": "chapter-11.xhtml#chapter-11-1977",
+    "order": 62
+  },
+  {
+    "topic": "Breach of the Peace",
+    "href": "chapter-11.xhtml#chapter-11-1993",
+    "order": 63
+  },
+  {
+    "topic": "Regulation of Public Processions",
+    "href": "chapter-11.xhtml#chapter-11-2046",
+    "order": 64
+  },
+  {
+    "topic": "Regulation of Public Assemblies",
+    "href": "chapter-11.xhtml#chapter-11-2105",
+    "order": 65
+  },
+  {
+    "topic": "Chapter 11. Position of the European Union in the UK Constitutional Framework",
+    "href": "chapter-12.xhtml",
+    "order": 66
+  },
+  {
+    "topic": "European Union",
+    "href": "chapter-12.xhtml#chapter-12-2147",
+    "order": 67
+  },
+  {
+    "topic": "EU Legislation",
+    "href": "chapter-12.xhtml#chapter-12-2176",
+    "order": 68
+  },
+  {
+    "topic": "European Communities Act 1972",
+    "href": "chapter-12.xhtml#chapter-12-2217",
+    "order": 69
+  },
+  {
+    "topic": "Brexit",
+    "href": "chapter-12.xhtml#chapter-12-2247",
+    "order": 70
+  },
+  {
+    "topic": "The Brexit Transition Framework",
+    "href": "chapter-12.xhtml#chapter-12-2258",
+    "order": 71
+  },
+  {
+    "topic": "European Union (Withdrawal) Act 2018 and the European Union (Withdrawal Agreement) Act 2020",
+    "href": "chapter-12.xhtml#chapter-12-2265",
+    "order": 72
+  },
+  {
+    "topic": "CONCLUSION",
+    "href": "chapter-13.xhtml",
+    "order": 73
+  },
+  {
+    "topic": "REFERENCES",
+    "href": "chapter-14.xhtml",
+    "order": 74
+  },
+  {
+    "topic": "ABOUT AUTHORS",
+    "href": "chapter-15.xhtml",
+    "order": 75
+  }
+]
