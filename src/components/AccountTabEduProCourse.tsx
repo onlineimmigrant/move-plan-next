@@ -167,9 +167,9 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="flex justify-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
         </div>
       </div>
     );
@@ -218,7 +218,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
                 alt={`${courseTitle} course image`}
                 width={96}
                 height={96}
-                className="fixed right-8 z-51 top-2 hidden sm:block w-12 h-12 sm:w-auto sm:h-auto rounded-lg object-cover"
+                className="fixed right-8 z-51 top-2 hidden xl:block xl:w-12 xl:h-12  rounded-lg object-cover"
                 priority
               />
             )}

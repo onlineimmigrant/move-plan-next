@@ -345,8 +345,8 @@ export default function EduProTopicDetail() {
           {course && topic ? (
             <div>
             
-              <div className="mx-auto max-w-sm relative border-l-8 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm">
-                <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
+              <div className="mx-auto max-w-7xl relative border-l-8 border-sky-600 pl-4 py-4 bg-white rounded-lg shadow-sm">
+                <span className="absolute top-4 right-4 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
                   {topic.order}
                 </span>
                 <h3 className="text-base font-medium text-gray-900 pr-8">{topic.title}</h3>
