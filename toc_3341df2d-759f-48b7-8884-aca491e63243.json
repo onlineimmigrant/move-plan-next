@@ -1,0 +1,572 @@
+[
+  {
+    "topic": "INTRODUCTION",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "CHAPTER 1. ESSENTIAL PRINCIPLES",
+    "href": "chapter-2.xhtml",
+    "order": 1
+  },
+  {
+    "topic": "QUESTIONS - CHAPTER 1",
+    "href": "chapter-3.xhtml",
+    "order": 2
+  },
+  {
+    "topic": "ANSWERS - CHAPTER 1",
+    "href": "chapter-4.xhtml",
+    "order": 3
+  },
+  {
+    "topic": "CHAPTER 2. ENSURING TRUST AND FAIR CONDUCT",
+    "href": "chapter-5.xhtml",
+    "order": 4
+  },
+  {
+    "topic": "2.1. Non-Discrimination",
+    "href": "chapter-5.xhtml#chapter-5-85",
+    "order": 5
+  },
+  {
+    "topic": "2.1.1. Accommodations for Disabled Clients or Employees",
+    "href": "chapter-6.xhtml",
+    "order": 6
+  },
+  {
+    "topic": "2.2. Avoidance of Abuse of Position",
+    "href": "chapter-6.xhtml#chapter-6-99",
+    "order": 7
+  },
+  {
+    "topic": "2.3. Honesty toward all Parties",
+    "href": "chapter-6.xhtml#chapter-6-106",
+    "order": 8
+  },
+  {
+    "topic": "2.4. Fulfilling Undertakings",
+    "href": "chapter-6.xhtml#chapter-6-112",
+    "order": 9
+  },
+  {
+    "topic": "2.4.1. Definition of an Undertaking",
+    "href": "chapter-7.xhtml",
+    "order": 10
+  },
+  {
+    "topic": "2.4.2. Recommended Practices for Undertakings",
+    "href": "chapter-8.xhtml",
+    "order": 11
+  },
+  {
+    "topic": "2.4.3. Common Pitfalls in Undertakings",
+    "href": "chapter-9.xhtml",
+    "order": 12
+  },
+  {
+    "topic": "2.4.4. Undertakings Based on Future Events",
+    "href": "chapter-10.xhtml",
+    "order": 13
+  },
+  {
+    "topic": "2.4.5. Recording Undertakings",
+    "href": "chapter-11.xhtml",
+    "order": 14
+  },
+  {
+    "topic": "2.4.6. Implications of Failing to Honour an Undertaking",
+    "href": "chapter-12.xhtml",
+    "order": 15
+  },
+  {
+    "topic": "QUESTIONS - CHAPTER 2",
+    "href": "chapter-13.xhtml",
+    "order": 16
+  },
+  {
+    "topic": "ANSWERS - CHAPTER 2",
+    "href": "chapter-14.xhtml",
+    "order": 17
+  },
+  {
+    "topic": "CHAPTER 3. DISPUTE RESOLUTION AND LEGAL PROCEEDINGS",
+    "href": "chapter-15.xhtml",
+    "order": 18
+  },
+  {
+    "topic": "3.1. Handling Evidence and Witness Testimony",
+    "href": "chapter-15.xhtml#chapter-15-211",
+    "order": 19
+  },
+  {
+    "topic": "3.1.1. Proper Treatment of Evidence",
+    "href": "chapter-16.xhtml",
+    "order": 20
+  },
+  {
+    "topic": "3.1.2. Guidelines for Witness Compensation",
+    "href": "chapter-17.xhtml",
+    "order": 21
+  },
+  {
+    "topic": "3.2. Courtroom Duties",
+    "href": "chapter-17.xhtml#chapter-17-221",
+    "order": 22
+  },
+  {
+    "topic": "3.2.1. Efficiency in Court",
+    "href": "chapter-18.xhtml",
+    "order": 23
+  },
+  {
+    "topic": "3.2.2. Adherence to Court Orders",
+    "href": "chapter-19.xhtml",
+    "order": 24
+  },
+  {
+    "topic": "3.2.3. Disclosure of Laws and Irregularities",
+    "href": "chapter-20.xhtml",
+    "order": 25
+  },
+  {
+    "topic": "CHAPTER 4. COMPETENCE AND PROFESSIONAL SERVICE",
+    "href": "chapter-21.xhtml",
+    "order": 26
+  },
+  {
+    "topic": "4.1. Client Instructions",
+    "href": "chapter-21.xhtml#chapter-21-240",
+    "order": 27
+  },
+  {
+    "topic": "4.1.1. Adhering to Instructions from an Authorised Representative",
+    "href": "chapter-22.xhtml",
+    "order": 28
+  },
+  {
+    "topic": "4.2. Delivering Competent and Timely Service",
+    "href": "chapter-22.xhtml#chapter-22-251",
+    "order": 29
+  },
+  {
+    "topic": "4.3. Personalised Service for Clients",
+    "href": "chapter-22.xhtml#chapter-22-257",
+    "order": 30
+  },
+  {
+    "topic": "4.4. Managing and Supervising Legal Services",
+    "href": "chapter-22.xhtml#chapter-22-264",
+    "order": 31
+  },
+  {
+    "topic": "4.4.1. Oversight and Supervision",
+    "href": "chapter-23.xhtml",
+    "order": 32
+  },
+  {
+    "topic": "4.4.2. Training and Professional Development",
+    "href": "chapter-24.xhtml",
+    "order": 33
+  },
+  {
+    "topic": "CHAPTER 5. HANDLING CLIENT FUNDS AND PROPERTY",
+    "href": "chapter-25.xhtml",
+    "order": 34
+  },
+  {
+    "topic": "5.1. Responsibility in Accounting for Financial Benefits",
+    "href": "chapter-25.xhtml#chapter-25-281",
+    "order": 35
+  },
+  {
+    "topic": "5.2. Protecting Clients Assets",
+    "href": "chapter-25.xhtml#chapter-25-287",
+    "order": 36
+  },
+  {
+    "topic": "5.3. Management of Client Money",
+    "href": "chapter-25.xhtml#chapter-25-295",
+    "order": 37
+  },
+  {
+    "topic": "QUESTIONS - CHAPTERS 3 - 5",
+    "href": "chapter-26.xhtml",
+    "order": 38
+  },
+  {
+    "topic": "ANSWERS - CHAPTERS 3 - 5",
+    "href": "chapter-27.xhtml",
+    "order": 39
+  },
+  {
+    "topic": "CHAPTER 6. BUSINESS PRACTICES AND ETHICS",
+    "href": "chapter-28.xhtml",
+    "order": 40
+  },
+  {
+    "topic": "6.1. Business Operations and Relationships",
+    "href": "chapter-28.xhtml#chapter-28-353",
+    "order": 41
+  },
+  {
+    "topic": "6.1.1. Disclosure of Interests to Clients",
+    "href": "chapter-29.xhtml",
+    "order": 42
+  },
+  {
+    "topic": "6.1.2. Documentation and Disclosure of Fee Sharing",
+    "href": "chapter-30.xhtml",
+    "order": 43
+  },
+  {
+    "topic": "6.1.3. Restrictions on Payments in Criminal Cases",
+    "href": "chapter-31.xhtml",
+    "order": 44
+  },
+  {
+    "topic": "6.2. Restrictions on Referral Fees",
+    "href": "chapter-31.xhtml#chapter-31-369",
+    "order": 45
+  },
+  {
+    "topic": "6.2.1. Definition of a Prohibited Referral Fee",
+    "href": "chapter-32.xhtml",
+    "order": 46
+  },
+  {
+    "topic": "6.2.2. Proof of Compliance",
+    "href": "chapter-33.xhtml",
+    "order": 47
+  },
+  {
+    "topic": "6.3. Dealings with Separate Business",
+    "href": "chapter-33.xhtml#chapter-33-386",
+    "order": 48
+  },
+  {
+    "topic": "6.4. Additional Requirements for Solicitors",
+    "href": "chapter-33.xhtml#chapter-33-398",
+    "order": 49
+  },
+  {
+    "topic": "6.4.1. Association with Authorised Entities",
+    "href": "chapter-34.xhtml",
+    "order": 50
+  },
+  {
+    "topic": "6.4.2. Requirement of Annual Return Submission",
+    "href": "chapter-35.xhtml",
+    "order": 51
+  },
+  {
+    "topic": "6.4.3. Securing Indemnity Insurance for Non-Commercial Legal Practice",
+    "href": "chapter-36.xhtml",
+    "order": 52
+  },
+  {
+    "topic": "6.5. Firm-Specific Obligations",
+    "href": "chapter-36.xhtml#chapter-36-418",
+    "order": 53
+  },
+  {
+    "topic": "6.5.1. Business Governance",
+    "href": "chapter-37.xhtml",
+    "order": 54
+  },
+  {
+    "topic": "6.5.2. Maintenance of Compliance Records",
+    "href": "chapter-38.xhtml",
+    "order": 55
+  },
+  {
+    "topic": "6.5.3. Ensuring Accountability",
+    "href": "chapter-39.xhtml",
+    "order": 56
+  },
+  {
+    "topic": "6.5.4. Risk Management",
+    "href": "chapter-40.xhtml",
+    "order": 57
+  },
+  {
+    "topic": "6.5.5. Management and Compliance Roles",
+    "href": "chapter-41.xhtml",
+    "order": 58
+  },
+  {
+    "topic": "CHAPTER 7. MANAGING CONFLICTS, MAINTAINING CONFIDENTIALITY, AND ENSURING DISCLOSURE",
+    "href": "chapter-42.xhtml",
+    "order": 59
+  },
+  {
+    "topic": "7.1. Addressing Conflicts of Interest",
+    "href": "chapter-42.xhtml#chapter-42-456",
+    "order": 60
+  },
+  {
+    "topic": "7.1.1. Understanding Conflict Types",
+    "href": "chapter-43.xhtml",
+    "order": 61
+  },
+  {
+    "topic": "7.1.2. Handling ‘Own Interest’ Conflicts",
+    "href": "chapter-44.xhtml",
+    "order": 62
+  },
+  {
+    "topic": "7.1.3. Conflicts Between Clients",
+    "href": "chapter-45.xhtml",
+    "order": 63
+  },
+  {
+    "topic": "7.2. Upholding the Duty of Confidentiality",
+    "href": "chapter-45.xhtml#chapter-45-522",
+    "order": 64
+  },
+  {
+    "topic": "7.2.1. Ensuring Confidentiality of Client Affairs",
+    "href": "chapter-46.xhtml",
+    "order": 65
+  },
+  {
+    "topic": "7.2.2. Scope of the Duty of Confidentiality",
+    "href": "chapter-47.xhtml",
+    "order": 66
+  },
+  {
+    "topic": "7.2.3. Differentiating Confidentiality from Legal Professional Privilege (LPP)",
+    "href": "chapter-48.xhtml",
+    "order": 67
+  },
+  {
+    "topic": "7.2.4. Implementing Systems for Confidentiality Protection",
+    "href": "chapter-49.xhtml",
+    "order": 68
+  },
+  {
+    "topic": "7.2.5. Implications of Breaching Confidentiality",
+    "href": "chapter-50.xhtml",
+    "order": 69
+  },
+  {
+    "topic": "7.2.6. Professional Embarrassment in Confidentiality Matters",
+    "href": "chapter-51.xhtml",
+    "order": 70
+  },
+  {
+    "topic": "7.3. Upholding the Duty of Disclosure",
+    "href": "chapter-51.xhtml#chapter-51-567",
+    "order": 71
+  },
+  {
+    "topic": "7.3.1. Circumstances Exempting Disclosure",
+    "href": "chapter-52.xhtml",
+    "order": 72
+  },
+  {
+    "topic": "7.4. Managing Confidentiality vs. Disclosure in Conflict Situations",
+    "href": "chapter-52.xhtml#chapter-52-580",
+    "order": 73
+  },
+  {
+    "topic": "CHAPTER 8. COLLABORATION AND RESPONSIBILITY STANDARDS",
+    "href": "chapter-53.xhtml",
+    "order": 74
+  },
+  {
+    "topic": "8.1. Upholding the Duty to Co-operate",
+    "href": "chapter-53.xhtml#chapter-53-590",
+    "order": 75
+  },
+  {
+    "topic": "8.2. Interactions with the SRA",
+    "href": "chapter-53.xhtml#chapter-53-597",
+    "order": 76
+  },
+  {
+    "topic": "8.3. Requirement for Prompt Remedial Action",
+    "href": "chapter-53.xhtml#chapter-53-603",
+    "order": 77
+  },
+  {
+    "topic": "8.4. Obligation to Notify the SRA of Specific Events",
+    "href": "chapter-53.xhtml#chapter-53-613",
+    "order": 78
+  },
+  {
+    "topic": "8.4.1. Notification Requirements for Solicitors",
+    "href": "chapter-54.xhtml",
+    "order": 79
+  },
+  {
+    "topic": "8.4.2. Reporting and Notification Requirements for Firms",
+    "href": "chapter-55.xhtml",
+    "order": 80
+  },
+  {
+    "topic": "8.5. Duty to Report Actual and Potential Breaches",
+    "href": "chapter-55.xhtml#chapter-55-632",
+    "order": 81
+  },
+  {
+    "topic": "8.5.1. Understanding 'Serious Breach' in the SRA Context",
+    "href": "chapter-56.xhtml",
+    "order": 82
+  },
+  {
+    "topic": "8.6. Indirect Reporting to the SRA",
+    "href": "chapter-56.xhtml#chapter-56-658",
+    "order": 83
+  },
+  {
+    "topic": "8.7. Responsibility to Admit Mistakes to Clients",
+    "href": "chapter-56.xhtml#chapter-56-665",
+    "order": 84
+  },
+  {
+    "topic": "CHAPTER 9. STANDARDS FOR PROVIDING SERVICES TO THE PUBLIC",
+    "href": "chapter-57.xhtml",
+    "order": 85
+  },
+  {
+    "topic": "9.1. Clarity in Client Representation",
+    "href": "chapter-57.xhtml#chapter-57-675",
+    "order": 86
+  },
+  {
+    "topic": "9.2. Communication about Regulation and Protection",
+    "href": "chapter-57.xhtml#chapter-57-683",
+    "order": 87
+  },
+  {
+    "topic": "9.3. Ensuring Client Awareness and Understanding",
+    "href": "chapter-57.xhtml#chapter-57-689",
+    "order": 88
+  },
+  {
+    "topic": "9.3.1. Clear Communication About Legal Services",
+    "href": "chapter-58.xhtml",
+    "order": 89
+  },
+  {
+    "topic": "9.3.2. Transparency in Pricing and Costs",
+    "href": "chapter-59.xhtml",
+    "order": 90
+  },
+  {
+    "topic": "9.4. Effective Management of Client Complaints",
+    "href": "chapter-59.xhtml#chapter-59-704",
+    "order": 91
+  },
+  {
+    "topic": "9.4.1. Communicating Complaint Procedures to Clients",
+    "href": "chapter-60.xhtml",
+    "order": 92
+  },
+  {
+    "topic": "9.4.2. Post-Complaint Follow-Up",
+    "href": "chapter-61.xhtml",
+    "order": 93
+  },
+  {
+    "topic": "9.4.3. Principles for Handling Complaints",
+    "href": "chapter-62.xhtml",
+    "order": 94
+  },
+  {
+    "topic": "9.5. Guidelines for Publicity and Advertising",
+    "href": "chapter-62.xhtml#chapter-62-730",
+    "order": 95
+  },
+  {
+    "topic": "9.5.1. Accuracy in Publicity",
+    "href": "chapter-63.xhtml",
+    "order": 96
+  },
+  {
+    "topic": "9.5.2. Restrictions on Unsolicited Approaches",
+    "href": "chapter-64.xhtml",
+    "order": 97
+  },
+  {
+    "topic": "9.6. Adherence to SRA Transparency Rules",
+    "href": "chapter-64.xhtml#chapter-64-745",
+    "order": 98
+  },
+  {
+    "topic": "QUESTIONS - CHAPTERS 6 - 9",
+    "href": "chapter-65.xhtml",
+    "order": 99
+  },
+  {
+    "topic": "ANSWERS - CHAPTERS 6-9",
+    "href": "chapter-66.xhtml",
+    "order": 100
+  },
+  {
+    "topic": "FINAL QUESTIONS 1-20",
+    "href": "chapter-67.xhtml",
+    "order": 101
+  },
+  {
+    "topic": "FINAL ANSWERS 1-20",
+    "href": "chapter-68.xhtml",
+    "order": 102
+  },
+  {
+    "topic": "FINAL QUESTIONS 21-40",
+    "href": "chapter-69.xhtml",
+    "order": 103
+  },
+  {
+    "topic": "FINAL ANSWERS 21-40",
+    "href": "chapter-70.xhtml",
+    "order": 104
+  },
+  {
+    "topic": "FINAL QUESTIONS 41-60",
+    "href": "chapter-71.xhtml",
+    "order": 105
+  },
+  {
+    "topic": "FINAL ANSWERS 41-60",
+    "href": "chapter-72.xhtml",
+    "order": 106
+  },
+  {
+    "topic": "FINAL QUESTIONS 61-80",
+    "href": "chapter-73.xhtml",
+    "order": 107
+  },
+  {
+    "topic": "FINAL ANSWERS 61-80",
+    "href": "chapter-74.xhtml",
+    "order": 108
+  },
+  {
+    "topic": "FINAL QUESTIONS 81-100",
+    "href": "chapter-75.xhtml",
+    "order": 109
+  },
+  {
+    "topic": "FINAL ANSWERS 81-100",
+    "href": "chapter-76.xhtml",
+    "order": 110
+  },
+  {
+    "topic": "CONCLUSION",
+    "href": "chapter-77.xhtml",
+    "order": 111
+  },
+  {
+    "topic": "REFERENCES",
+    "href": "chapter-78.xhtml",
+    "order": 112
+  },
+  {
+    "topic": "ABOUT AUTHORS",
+    "href": "chapter-79.xhtml",
+    "order": 113
+  }
+]
