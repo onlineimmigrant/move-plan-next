@@ -1,0 +1,88 @@
+'use client';
+
+import { useState } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// Use a verified CDN link for the worker script
+pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.2.133/build/pdf.worker.min.js';
+
+interface PdfViewerProps {
+  sasUrl: string;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+}
+
+const PdfViewer: React.FC<PdfViewerProps> = ({ sasUrl, currentPage, setCurrentPage }) => {
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  console.log('PdfViewer rendering with props:', { sasUrl, currentPage });
+
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    console.log('PDF loaded successfully, pages:', numPages);
+    setNumPages(numPages);
+    setError(null);
+  }
+
+  function onDocumentLoadError(err: Error) {
+    console.error('PDF load error:', err);
+    setError(`Failed to load PDF: ${err.message}`);
+  }
+
+  return (
+    <div className="w-full p-4">
+      <p className="text-gray-600 mb-2">
+        PDF URL: <a href={sasUrl} target="_blank" rel="noopener noreferrer" className="text-sky-600">{sasUrl}</a>
+      </p>
+      {error ? (
+        <p className="text-red-600">{error}</p>
+      ) : (
+        <>
+          <div className="border rounded-lg shadow-lg min-h-[500px]">
+            <Document
+              file={sasUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={<p>Loading PDF...</p>}
+              noData={<p>No PDF data available.</p>}
+              error={<p>Failed to load PDF.</p>}
+            >
+              {console.log('Rendering Page component with pageNumber:', currentPage)}
+              <Page
+                pageNumber={currentPage}
+                renderTextLayer={true}
+                renderAnnotationLayer={true}
+                onLoadSuccess={() => console.log('Page loaded successfully')}
+                onRenderSuccess={() => console.log('Page rendered successfully')}
+                onRenderError={(err) => console.error('Page render error:', err)}
+              />
+            </Document>
+          </div>
+          {numPages && (
+            <div className="flex justify-between mt-4">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span>Page {currentPage} of {numPages}</span>
+              <button
+                onClick={() => setCurrentPage(Math.min(numPages, currentPage + 1))}
+                disabled={currentPage === numPages}
+                className="px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default PdfViewer;
