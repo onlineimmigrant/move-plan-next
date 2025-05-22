@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import fetch from 'node-fetch';
+//import fetch from 'node-fetch';
 
 // Define product table structure
 interface Product {

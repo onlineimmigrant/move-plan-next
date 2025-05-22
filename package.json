@@ -14,6 +14,7 @@
     "@cloudinary/url-gen": "^1.21.0",
     "@headlessui/react": "^2.2.1",
     "@heroicons/react": "^2.2.0",
+    "@mapbox/node-pre-gyp": "^2.0.0",
     "@stripe/react-stripe-js": "^3.6.0",
     "@stripe/stripe-js": "^3.5.0",
     "@supabase/auth-helpers-react": "^0.5.0",
@@ -62,7 +63,7 @@
     "minimatch": "^10.0.1",
     "next": "^15.2.3",
     "next-i18next": "^15.4.2",
-    "node-fetch": "^3.3.2",
+    "node-fetch": "^2.7.0",
     "papaparse": "^5.5.2",
     "pdfjs-dist": "^4.7.76",
     "react": "^19.0.0",
@@ -90,7 +91,8 @@
     "tailwind-merge": "^3.0.2",
     "tiptap-extension-resize-image": "^1.2.1",
     "uuid": "^11.1.0",
-    "validator": "^13.15.0"
+    "validator": "^13.15.0",
+    "xmldom": "^0.6.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
