@@ -1,0 +1,297 @@
+[
+  {
+    "topic": "INTRODUCTION",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "Chapter 1. An Overview of Contract Formation",
+    "href": "chapter-2.xhtml",
+    "order": 1
+  },
+  {
+    "topic": "Defining Contract",
+    "href": "chapter-2.xhtml#chapter-2-30",
+    "order": 2
+  },
+  {
+    "topic": "Categories of Contracts",
+    "href": "chapter-2.xhtml#chapter-2-42",
+    "order": 3
+  },
+  {
+    "topic": "Chapter 2. Agreement",
+    "href": "chapter-3.xhtml",
+    "order": 4
+  },
+  {
+    "topic": "The Nature of an Offer",
+    "href": "chapter-3.xhtml#chapter-3-92",
+    "order": 5
+  },
+  {
+    "topic": "Discontinuation of an Offer",
+    "href": "chapter-3.xhtml#chapter-3-146",
+    "order": 6
+  },
+  {
+    "topic": "Defining Acceptance",
+    "href": "chapter-3.xhtml#chapter-3-203",
+    "order": 7
+  },
+  {
+    "topic": "Chapter 3. LEGAL INTENT AND CAPACITY IN CONTRACT FORMATION",
+    "href": "chapter-4.xhtml",
+    "order": 8
+  },
+  {
+    "topic": "Presumed Intentions based on Party Relationships",
+    "href": "chapter-4.xhtml#chapter-4-293",
+    "order": 9
+  },
+  {
+    "topic": "Legal Capacity for Contractual Agreement",
+    "href": "chapter-4.xhtml#chapter-4-334",
+    "order": 10
+  },
+  {
+    "topic": "Chapter 4. THE PRINCIPLE OF CONSIDERATION",
+    "href": "chapter-5.xhtml",
+    "order": 11
+  },
+  {
+    "topic": "Distinction between Executed and Executory Consideration",
+    "href": "chapter-5.xhtml#chapter-5-392",
+    "order": 12
+  },
+  {
+    "topic": "The Necessity of Consideration from Promisee",
+    "href": "chapter-5.xhtml#chapter-5-403",
+    "order": 13
+  },
+  {
+    "topic": "Legal Sufficiency versus Adequacy of Consideration",
+    "href": "chapter-5.xhtml#chapter-5-415",
+    "order": 14
+  },
+  {
+    "topic": "Consideration and the Performance of an Existing Duty",
+    "href": "chapter-5.xhtml#chapter-5-440",
+    "order": 15
+  },
+  {
+    "topic": "Prior Acts and Promises",
+    "href": "chapter-5.xhtml#chapter-5-490",
+    "order": 16
+  },
+  {
+    "topic": "The Principle of Partial Debt Settlement",
+    "href": "chapter-5.xhtml#chapter-5-514",
+    "order": 17
+  },
+  {
+    "topic": "The Doctrine of Promissory Estoppel",
+    "href": "chapter-5.xhtml#chapter-5-537",
+    "order": 18
+  },
+  {
+    "topic": "Chapter 5. THE DOCTRINE OF PRIVITY OF CONTRACT",
+    "href": "chapter-6.xhtml",
+    "order": 19
+  },
+  {
+    "topic": "Legal Exceptions under Statute",
+    "href": "chapter-6.xhtml#chapter-6-576",
+    "order": 20
+  },
+  {
+    "topic": "Refinements to the Privity Doctrine in Common Law",
+    "href": "chapter-6.xhtml#chapter-6-640",
+    "order": 21
+  },
+  {
+    "topic": "Chapter 6. OUTLINING THE TERMS OF A CONTRACT",
+    "href": "chapter-7.xhtml",
+    "order": 22
+  },
+  {
+    "topic": "Categories of Contract Terms",
+    "href": "chapter-7.xhtml#chapter-7-713",
+    "order": 23
+  },
+  {
+    "topic": "Comparing Terms with Representations",
+    "href": "chapter-7.xhtml#chapter-7-721",
+    "order": 24
+  },
+  {
+    "topic": "Categorising Contract Terms: Conditions and Warranties",
+    "href": "chapter-7.xhtml#chapter-7-760",
+    "order": 25
+  },
+  {
+    "topic": "Inclusion of Express Terms in Contracts",
+    "href": "chapter-7.xhtml#chapter-7-827",
+    "order": 26
+  },
+  {
+    "topic": "Integrating Implied Terms into Contracts",
+    "href": "chapter-7.xhtml#chapter-7-875",
+    "order": 27
+  },
+  {
+    "topic": "Addressing Incomplete Agreements and Ambiguous Terms",
+    "href": "chapter-7.xhtml#chapter-7-977",
+    "order": 28
+  },
+  {
+    "topic": "Chapter 7. THE LEGAL FRAMEWORK OF EXCLUSION CLAUSES",
+    "href": "chapter-8.xhtml",
+    "order": 29
+  },
+  {
+    "topic": "Integrating Exclusion Clauses into a Contract",
+    "href": "chapter-8.xhtml#chapter-8-1034",
+    "order": 30
+  },
+  {
+    "topic": "Interpretation of Exclusion Clauses",
+    "href": "chapter-8.xhtml#chapter-8-1081",
+    "order": 31
+  },
+  {
+    "topic": "Overview of the Unfair Contract Terms Act 1977",
+    "href": "chapter-8.xhtml#chapter-8-1100",
+    "order": 32
+  },
+  {
+    "topic": "The Consumer Rights Act 2015 and its Application",
+    "href": "chapter-8.xhtml#chapter-8-1158",
+    "order": 33
+  },
+  {
+    "topic": "Chapter 8. VITIATING FACTORS AFFECTING CONTRACT VALIDITY",
+    "href": "chapter-9.xhtml",
+    "order": 34
+  },
+  {
+    "topic": "Differentiating between Void and Voidable Contracts",
+    "href": "chapter-9.xhtml#chapter-9-1253",
+    "order": 35
+  },
+  {
+    "topic": "The Impact of Mistake on Contract Validity",
+    "href": "chapter-9.xhtml#chapter-9-1282",
+    "order": 36
+  },
+  {
+    "topic": "Duress in Contract Law",
+    "href": "chapter-9.xhtml#chapter-9-1371",
+    "order": 37
+  },
+  {
+    "topic": "The Doctrine of Undue Influence",
+    "href": "chapter-9.xhtml#chapter-9-1420",
+    "order": 38
+  },
+  {
+    "topic": "Voidness of Contracts due to Illegality or Contravention of Public Policy",
+    "href": "chapter-9.xhtml#chapter-9-1469",
+    "order": 39
+  },
+  {
+    "topic": "Chapter 9. MISREPRESENTATION IN CONTRACT LAW",
+    "href": "chapter-10.xhtml",
+    "order": 40
+  },
+  {
+    "topic": "Criteria for a Misrepresentation Claim",
+    "href": "chapter-10.xhtml#chapter-10-1547",
+    "order": 41
+  },
+  {
+    "topic": "Classification of Misrepresentation in Contract Law",
+    "href": "chapter-10.xhtml#chapter-10-1596",
+    "order": 42
+  },
+  {
+    "topic": "Available Remedies for Misrepresentation",
+    "href": "chapter-10.xhtml#chapter-10-1626",
+    "order": 43
+  },
+  {
+    "topic": "Exclusion Clauses in the Context of Misrepresentation",
+    "href": "chapter-10.xhtml#chapter-10-1679",
+    "order": 44
+  },
+  {
+    "topic": "Chapter 10. Termination and Modification of Contract",
+    "href": "chapter-11.xhtml",
+    "order": 45
+  },
+  {
+    "topic": "Discharge of a Contract by Agreement",
+    "href": "chapter-11.xhtml#chapter-11-1707",
+    "order": 46
+  },
+  {
+    "topic": "Variation of Contracts",
+    "href": "chapter-11.xhtml#chapter-11-1736",
+    "order": 47
+  },
+  {
+    "topic": "Completion of Contractual Obligations",
+    "href": "chapter-11.xhtml#chapter-11-1775",
+    "order": 48
+  },
+  {
+    "topic": "Contractual Breach and its Implications",
+    "href": "chapter-11.xhtml#chapter-11-1808",
+    "order": 49
+  },
+  {
+    "topic": "Contract Frustration and its Criteria",
+    "href": "chapter-11.xhtml#chapter-11-1863",
+    "order": 50
+  },
+  {
+    "topic": "Chapter 11. REMEDIES FOR CONTRACT BREACH: FINANCIAL COMPENSATION",
+    "href": "chapter-12.xhtml",
+    "order": 51
+  },
+  {
+    "topic": "Financial Remedies in Contract Breach",
+    "href": "chapter-12.xhtml#chapter-12-1921",
+    "order": 52
+  },
+  {
+    "topic": "Debt Claims in Contractual Agreement",
+    "href": "chapter-12.xhtml#chapter-12-2047",
+    "order": 53
+  },
+  {
+    "topic": "Equitable Remedies Overview",
+    "href": "chapter-12.xhtml#chapter-12-2065",
+    "order": 54
+  },
+  {
+    "topic": "Restitutionary Remedies Explained and Necessary Requirements",
+    "href": "chapter-12.xhtml#chapter-12-2096",
+    "order": 55
+  },
+  {
+    "topic": "CONCLUSION",
+    "href": "chapter-13.xhtml",
+    "order": 56
+  },
+  {
+    "topic": "REFERENCES",
+    "href": "chapter-14.xhtml",
+    "order": 57
+  },
+  {
+    "topic": "ABOUT AUTHORS",
+    "href": "chapter-15.xhtml",
+    "order": 58
+  }
+]
