@@ -264,7 +264,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
         {/* EPUB Viewer */}
         <div className={`w-full ${isTocOpen && isMobile ? 'hidden' : 'md:w-3/4'} ${isMaximized && !isMobile ? 'h-screen' : 'h-full'}`}>
           {/* Control Bar */}
-          <div className="flex justify-between items-center mb-4 p-2 bg-gray-50 rounded-lg shadow-sm">
+          <div className="flex justify-between items-center  px-2 bg-gray-50 rounded-lg shadow-sm">
             {/* TOC Toggle or Maximize/Minimize Button */}
             <button
               onClick={isMobile ? () => setIsTocOpen(true) : toggleMaximize}
@@ -334,22 +334,22 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
                 <div
                   className={`flex justify-between mt-4 sm:px-8 ${
                     isMaximized && isMobile
-                      ? 'fixed bottom-0 left-0 right-0 p-4 bg-white shadow-lg z-10'
+                      ? 'fixed bottom-0 left-0 right-0 p-2 bg-transparent shadow-lg z-10'
                       : ''
                   }`}
                 >
                   <button
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
-                    className="cursor-pointer px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-50"
+                    className="cursor-pointer px-4 py-1 text-sm bg-sky-600 text-white rounded disabled:opacity-50"
                   >
                     Prev
                   </button>
-                  <span className="text-gray-400">Page {currentPage} of {totalPages}</span>
+                  <span className="pt-4 text-gray-400">Page {currentPage} of {totalPages}</span>
                   <button
                     onClick={handleNextPage}
                     disabled={currentPage === totalPages}
-                    className="cursor-pointer px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-50"
+                    className="cursor-pointer px-4  text-sm bg-sky-600 text-white rounded disabled:opacity-50"
                   >
                     Next
                   </button>

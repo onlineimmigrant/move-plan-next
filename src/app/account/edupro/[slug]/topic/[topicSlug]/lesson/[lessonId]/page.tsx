@@ -53,6 +53,7 @@ interface EduProLesson {
   description: string | null;
   links_to_video: string | null;
   video_player: string | null;
+  link_to_practice: string | null;
 }
 
 interface Purchase {
@@ -167,7 +168,7 @@ const TopicHeader = ({
   lesson: EduProLesson;
 }) => (
   <Link href={`/account/edupro/${slug}/topic/${topicSlug}`}>
-    <div className="mx-auto max-w-7xl relative border-l-8 border-sky-600 px-4 py-4 bg-white rounded-lg shadow-sm mb-4 hover:flex-md transition-shadow">
+    <div className="mx-auto max-w-7xl relative border-l-8 border-sky-600 px-4 py-4 bg-white rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow">
       <div className="flex flex-col space-y-0">
         <div>
           <span className="absolute top-4 right-4 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
@@ -186,9 +187,8 @@ const TopicHeader = ({
 const LessonHeaderDesktop = ({ lesson }: { lesson: EduProLesson }) => (
   <div className="hidden sm:flex justify-center items-center bg-white">
     <div className="flex items-center space-x-2 px-4 max-w-md">
-
       <span className="flex-shrink-0 text-sm font-light text-gray-500">Lesson</span>
-            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
+      <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
         {lesson.order}
       </span>
       <h3 className="pl-8 text-base font-medium text-gray-900 max-w-full truncate">{lesson.title}</h3>
@@ -290,6 +290,7 @@ export default function EduProLessonDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const router = useRouter();
   const { slug, topicSlug, lessonId } = useParams() as { slug: string; topicSlug: string; lessonId: string };
   const { session } = useAuth();
@@ -306,6 +307,24 @@ export default function EduProLessonDetail() {
       studyBooks: `/account/edupro/${slug}/topic/${topicSlug}/lesson/${lessonId}`,
     };
     router.push(routes[newTab as Tab]);
+  };
+
+  // Fetch user role to determine admin status
+  const fetchUserRole = async () => {
+    if (!session?.user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) throw new Error(`Error fetching user role: ${error.message}`);
+      setIsAdmin(data?.role === 'admin');
+    } catch (err) {
+      console.error('fetchUserRole: Error:', err);
+      setToast({ message: 'Failed to verify user role', type: 'error' });
+    }
   };
 
   // Fetch lesson details
@@ -371,7 +390,7 @@ export default function EduProLessonDetail() {
           id, title, plan, interactive_elements, assessment_methods, metadata,
           content_type, created_at, updated_at, topic_id, image, order,
           next_lesson_id, previous_lesson_id, duration, description,
-          links_to_video, video_player
+          links_to_video, video_player, link_to_practice
         `)
         .eq('id', lessonId)
         .eq('topic_id', topicData.id)
@@ -423,7 +442,10 @@ export default function EduProLessonDetail() {
   };
 
   useEffect(() => {
-    fetchLessonDetails();
+    if (session) {
+      fetchUserRole();
+      fetchLessonDetails();
+    }
   }, [slug, topicSlug, lessonId, session, isStudent, studentLoading]);
 
   if (isLoading || studentLoading) return <LoadingSpinner />;
@@ -457,7 +479,17 @@ export default function EduProLessonDetail() {
                   )}
                 </div>
               ) : activeTab === 'theory' || activeTab === 'practice' ? (
-                <LessonContent lesson={lesson} />
+                <div className="mt-16 text-center">
+                  {lesson.link_to_practice && (
+                    <Link
+                      href={lesson.link_to_practice}
+                      className="inline-block text-base mb-4 bg-sky-500 text-white px-16 py-3 font-medium rounded-md hover:bg-sky-700 transition-colors"
+                    >
+                      Start
+                    </Link>
+                  )}
+                  {isAdmin && <LessonContent lesson={lesson} />}
+                </div>
               ) : (
                 <p className="mt-4 text-gray-600 text-center">
                   {materials.length === 0 ? 'No study materials available.' : 'Missing SAS URL.'}
