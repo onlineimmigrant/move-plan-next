@@ -184,14 +184,14 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   }
 
   return (
-    <div className={`-mt-2 mb-2 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
+    <div className={`-mt-2 mb-2 max-w-7xl mx-auto sm:px-6 lg:px-8 ${className}`}>
       {/* Logo */}
       <Image
         src="/images/logo.svg"
         alt="Logo"
         width={40}
         height={40}
-        className="fixed left-4 hidden sm:block h-8 w-auto"
+        className="fixed left-4 hidden xl:block h-8 w-auto"
       />
       <Image
         src="/images/logo_collapsed.svg"
@@ -206,8 +206,8 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         <div className="mt-0 mb-4 sm:mb-6 flex items-center justify-center gap-4">
           <div className="flex justify-between items-center">
             <div className="text-center hover:bg-sky-50 px-4 rounded-md">
-              <span className="text-gray-500 font-normal text-sm sm:text-base">{duration}</span>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 relative">
+              <span className="text-gray-500 font-light text-sm sm:text-sm">{duration}</span>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 relative">
                 {courseTitle}
                 <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
@@ -218,7 +218,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
                 alt={`${courseTitle} course image`}
                 width={96}
                 height={96}
-                className="fixed right-8 z-51 top-2 hidden xl:block xl:w-12 xl:h-12  rounded-lg object-cover"
+                className="fixed right-8 z-51 top-2 hidden xl:block xl:w-auto xl:h-auto  rounded-lg object-cover"
                 priority
               />
             )}
