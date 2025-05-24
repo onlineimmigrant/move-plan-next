@@ -22,6 +22,7 @@ interface EduProTopic {
   description: string;
   order: number;
   slug: string;
+  background_color: string;
 }
 
 interface Purchase {
@@ -138,7 +139,8 @@ export function useCourseAndTopics(slug: string) {
               title,
               description,
               order,
-              slug
+              slug,
+              background_color
             )
           `)
           .eq('course_id', courseData.id)

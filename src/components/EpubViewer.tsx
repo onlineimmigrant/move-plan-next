@@ -229,17 +229,17 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
         <div
           className={`${
             isTocOpen
-              ? 'fixed inset-0 z-50 md:static md:w-1/4 p-4 py-4 px-8 bg-gray-50 rounded-lg text-sm font-medium'
+              ? 'fixed inset-0 z-50 md:static md:w-1/4 p-4 py-4 px-8 sm:pl-4 bg-white rounded-lg text-sm font-medium'
               : 'hidden md:block md:w-1/4 p-4 bg-gray-50 rounded-lg'
           } transition-all duration-300 ease-in-out`}
         >
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">Table of Contents</h2>
+            <h2 className="text-sm font-medium text-gray-700">Contents</h2>
             <button
               onClick={() => setIsTocOpen(false)}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
             >
-              <Menu className="w-6 h-6 text-gray-600" />
+              <Menu className="w-6 h-6 text-gray-600 sm:hidden" />
             </button>
           </div>
           <ul className="space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto">
@@ -268,7 +268,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
             {/* TOC Toggle or Maximize/Minimize Button */}
             <button
               onClick={isMobile ? () => setIsTocOpen(true) : toggleMaximize}
-              className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+              className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
             >
               {isMobile ? (
                 <Menu className="w-6 h-6 text-gray-600" />
@@ -283,21 +283,21 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setTextSize((prev) => Math.max(50, prev - 10))}
-                className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
               >
                 <Minus className="w-5 h-5 text-gray-600" />
               </button>
               <span>{textSize}%</span>
               <button
                 onClick={() => setTextSize((prev) => Math.min(200, prev + 10))}
-                className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
               >
                 <Plus className="w-5 h-5 text-gray-600" />
               </button>
               {isMobile && (
                 <button
                   onClick={toggleMaximize}
-                  className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                  className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
                 >
                   {isMaximized ? (
                     <Minimize className="w-5 h-5 text-gray-600" />
@@ -311,7 +311,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
             {/* Page View Toggle */}
             <button
               onClick={() => setIsTwoPageView((prev) => !prev)}
-              className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+              className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
             >
               {isTwoPageView ? (
                 <BookOpen className="w-5 h-5 text-gray-600" />
@@ -341,7 +341,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
                   <button
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-50"
+                    className="cursor-pointer px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-50"
                   >
                     Prev
                   </button>
@@ -349,7 +349,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
                   <button
                     onClick={handleNextPage}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-50"
+                    className="cursor-pointer px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-50"
                   >
                     Next
                   </button>
