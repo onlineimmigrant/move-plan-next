@@ -56,6 +56,16 @@ interface EduProLesson {
   link_to_practice: string | null;
 }
 
+interface EduProLessonProgress {
+  id: string;
+  lesson_id: number;
+  user_id: string;
+  completed: boolean;
+  completion_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface Purchase {
   id: string;
   profiles_id: string;
@@ -161,43 +171,115 @@ const TopicHeader = ({
   slug,
   topicSlug,
   lesson,
+  previousLesson,
+  nextLesson,
+  navigateToLesson,
+  isLessonCompleted,
+  toggleLessonCompletion,
+  session,
+  isToggling,
 }: {
   topic: EduProTopic;
   slug: string;
   topicSlug: string;
   lesson: EduProLesson;
+  previousLesson: EduProLesson | null;
+  nextLesson: EduProLesson | null;
+  navigateToLesson: (lessonId: number) => void;
+  isLessonCompleted: boolean;
+  toggleLessonCompletion: () => void;
+  session: any;
+  isToggling: boolean;
 }) => (
-  <Link href={`/account/edupro/${slug}/topic/${topicSlug}`}>
-    <div className="mx-auto max-w-7xl relative border-l-8 border-sky-600 px-4 py-4 bg-white rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow">
-      <div className="flex flex-col space-y-0">
-        <div>
-          <span className="absolute top-4 right-4 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
-            {topic.order}
-          </span>
+  <div className="mx-auto max-w-7xl relative border-l-8 border-sky-600 px-4 py-4 bg-white rounded-lg shadow-sm mb-4">
+    <div className="flex flex-col space-y-0">
+      <div className="flex items-center justify-between">
+        <Link href={`/account/edupro/${slug}/topic/${topicSlug}`}>
           <h3 className="text-base font-semibold text-gray-900 pr-8 hover:text-sky-600 transition-colors">
             {topic.title}
           </h3>
-        </div>
-        <LessonHeaderDesktop lesson={lesson} />
+        </Link>
+        <span className="flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
+          {topic.order}
+        </span>
       </div>
+      <div className="hidden sm:flex justify-center items-center space-x-3 mb-2 text-sm">
+        <button
+          onClick={() => previousLesson && navigateToLesson(previousLesson.id)}
+          disabled={!previousLesson}
+          className="cursor-pointer flex items-center px-4 py-1 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-full shadow-sm hover:scale-105 transform transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
+          aria-label="Previous Lesson"
+        >
+          <span className="mr-1">←</span> Prev
+        </button>
+        <div
+          onClick={toggleLessonCompletion}
+          className={`relative cursor-pointer w-6 h-6 flex items-center justify-center border-2 rounded-full transition-all duration-300 ${
+            isLessonCompleted
+              ? 'bg-teal-500 border-teal-500 text-white'
+              : 'border-gray-300 text-gray-300 hover:border-teal-400 hover:text-teal-400'
+          } ${isToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
+          aria-label={isLessonCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
+          title={isLessonCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
+        >
+          {isLessonCompleted && (
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </div>
+        <button
+          onClick={() => nextLesson && navigateToLesson(nextLesson.id)}
+          disabled={!nextLesson}
+          className="cursor-pointer flex items-center px-4 py-1 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-full shadow-sm hover:scale-105 transform transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
+          aria-label="Next Lesson"
+        >
+          Next <span className="ml-1">→</span>
+        </button>
+      </div>
+      <LessonHeaderDesktop lesson={lesson} />
     </div>
-  </Link>
+  </div>
 );
 
 const LessonHeaderDesktop = ({ lesson }: { lesson: EduProLesson }) => (
   <div className="hidden sm:flex justify-center items-center bg-white">
-    <div className="flex items-center space-x-2 px-4 max-w-md">
-      <span className="flex-shrink-0 text-sm font-light text-gray-500">Lesson</span>
-      <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
-        {lesson.order}
-      </span>
-      <h3 className="pl-8 text-base font-medium text-gray-900 max-w-full truncate">{lesson.title}</h3>
+    <div className="flex flex-col items-center space-y-2 px-4 max-w-md">
+      <div className="flex items-center space-x-2 w-full">
+        <span className="flex-shrink-0 text-sm font-light text-gray-500">Lesson</span>
+        <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
+          {lesson.order}
+        </span>
+        <h3 className="pl-8 text-base font-medium text-gray-900 max-w-full truncate">{lesson.title}</h3>
+      </div>
       {lesson.description && <p className="text-sm text-gray-600 max-w-full truncate">{lesson.description}</p>}
     </div>
   </div>
 );
 
-const LessonHeader = ({ lesson }: { lesson: EduProLesson }) => (
+const LessonHeader = ({
+  lesson,
+  previousLesson,
+  nextLesson,
+  navigateToLesson,
+  isLessonCompleted,
+  toggleLessonCompletion,
+  session,
+}: {
+  lesson: EduProLesson;
+  previousLesson: EduProLesson | null;
+  nextLesson: EduProLesson | null;
+  navigateToLesson: (lessonId: number) => void;
+  isLessonCompleted: boolean;
+  toggleLessonCompletion: () => void;
+  session: any;
+}) => (
   <div className="sm:hidden relative pl-4 py-4 pt-2 bg-white rounded-lg">
     <span className="text-sm font-light text-gray-500">Lesson</span>
     <span className="absolute top-4 right-4 flex items-center justify-center w-6 h-6 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
@@ -205,6 +287,38 @@ const LessonHeader = ({ lesson }: { lesson: EduProLesson }) => (
     </span>
     <h3 className="text-base font-medium text-gray-900 pr-8">{lesson.title}</h3>
     {lesson.description && <p className="text-sm text-gray-600 mt-2">{lesson.description}</p>}
+    <div className="flex flex-col items-center space-y-2 mt-4 text-sm">
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => previousLesson && navigateToLesson(previousLesson.id)}
+          disabled={!previousLesson}
+          className="cursor-pointer inline-block px-6 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Previous Lesson"
+        >
+          Prev
+        </button>
+        <button
+          onClick={toggleLessonCompletion}
+          className={`cursor-pointer inline-block px-6 py-1 rounded-md font-medium transition-colors ${
+            isLessonCompleted
+              ? 'bg-teal-500 text-white hover:bg-teal-600'
+              : 'bg-sky-600 text-white hover:bg-sky-700'
+          }`}
+          disabled={!session}
+          aria-label={isLessonCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
+        >
+          {isLessonCompleted ? 'Completed' : 'Completion'}
+        </button>
+        <button
+          onClick={() => nextLesson && navigateToLesson(nextLesson.id)}
+          disabled={!nextLesson}
+          className="cursor-pointer inline-block px-6 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Next Lesson"
+        >
+          Next
+        </button>
+      </div>
+    </div>
   </div>
 );
 
@@ -282,6 +396,7 @@ export default function EduProLessonDetail() {
   const [course, setCourse] = useState<EduProCourse | null>(null);
   const [topic, setTopic] = useState<EduProTopic | null>(null);
   const [lesson, setLesson] = useState<EduProLesson | null>(null);
+  const [allLessons, setAllLessons] = useState<EduProLesson[]>([]);
   const [materials, setMaterials] = useState<StudyMaterial[]>([]);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [sasUrl, setSasUrl] = useState<string | null>(null);
@@ -291,6 +406,8 @@ export default function EduProLessonDetail() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(false);
+  const [isToggling, setIsToggling] = useState<boolean>(false);
   const router = useRouter();
   const { slug, topicSlug, lessonId } = useParams() as { slug: string; topicSlug: string; lessonId: string };
   const { session } = useAuth();
@@ -324,6 +441,92 @@ export default function EduProLessonDetail() {
     } catch (err) {
       console.error('fetchUserRole: Error:', err);
       setToast({ message: 'Failed to verify user role', type: 'error' });
+    }
+  };
+
+  // Fetch lesson completion status
+  const fetchLessonCompletionStatus = async () => {
+    if (!session?.user?.id || !lessonId) return;
+    try {
+      const { data, error } = await supabase
+        .from('edu_pro_lessonprogress')
+        .select('completed')
+        .eq('lesson_id', lessonId)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw new Error(`Error fetching lesson completion status: ${error.message}`);
+      }
+      setIsLessonCompleted(data?.completed || false);
+    } catch (err) {
+      console.error('fetchLessonCompletionStatus: Error:', err);
+      setToast({ message: 'Failed to fetch lesson completion status', type: 'error' });
+    }
+  };
+
+  // Toggle lesson completion status
+  const toggleLessonCompletion = async () => {
+    if (!session?.user?.id || !lessonId || isToggling) return;
+    setIsToggling(true);
+    try {
+      const newCompletedStatus = !isLessonCompleted;
+      const completionDate = newCompletedStatus ? new Date().toISOString() : null;
+
+      // Check if a record already exists for this lesson and user
+      const { data: existingRecord, error: fetchError } = await supabase
+        .from('edu_pro_lessonprogress')
+        .select('id')
+        .eq('lesson_id', lessonId)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw new Error(`Error checking existing lesson progress: ${fetchError.message}`);
+      }
+
+      if (existingRecord) {
+        // Update the existing record
+        const { error: updateError } = await supabase
+          .from('edu_pro_lessonprogress')
+          .update({
+            completed: newCompletedStatus,
+            completion_date: completionDate,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingRecord.id);
+
+        if (updateError) {
+          throw new Error(`Error updating lesson completion status: ${updateError.message}`);
+        }
+      } else {
+        // Insert a new record if none exists
+        const { error: insertError } = await supabase
+          .from('edu_pro_lessonprogress')
+          .insert({
+            lesson_id: lessonId,
+            user_id: session.user.id,
+            completed: newCompletedStatus,
+            completion_date: completionDate,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+
+        if (insertError) {
+          throw new Error(`Error inserting lesson completion status: ${insertError.message}`);
+        }
+      }
+
+      setIsLessonCompleted(newCompletedStatus);
+      setToast({
+        message: newCompletedStatus ? 'Lesson marked as complete' : 'Lesson marked as incomplete',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error('toggleLessonCompletion: Error:', err);
+      setToast({ message: 'Failed to update lesson completion status', type: 'error' });
+    } finally {
+      setIsToggling(false);
     }
   };
 
@@ -383,7 +586,24 @@ export default function EduProLessonDetail() {
       }
       setCourse(courseData);
 
-      // Fetch lesson
+      // Fetch all lessons for the topic to enable paging
+      const { data: allLessonsData, error: allLessonsError } = await supabase
+        .from('edu_pro_lesson')
+        .select(`
+          id, title, plan, interactive_elements, assessment_methods, metadata,
+          content_type, created_at, updated_at, topic_id, image, order,
+          next_lesson_id, previous_lesson_id, duration, description,
+          links_to_video, video_player, link_to_practice
+        `)
+        .eq('topic_id', topicData.id)
+        .order('order', { ascending: true });
+
+      if (allLessonsError || !allLessonsData) {
+        throw new Error(`Error fetching lessons for topic "${topicSlug}": ${allLessonsError?.message}`);
+      }
+      setAllLessons(allLessonsData);
+
+      // Fetch current lesson
       const { data: lessonData, error: lessonError } = await supabase
         .from('edu_pro_lesson')
         .select(`
@@ -441,12 +661,29 @@ export default function EduProLessonDetail() {
     }
   };
 
+  // Navigate to a lesson by ID
+  const navigateToLesson = (lessonId: number) => {
+    router.push(`/account/edupro/${slug}/topic/${topicSlug}/lesson/${lessonId}`);
+  };
+
   useEffect(() => {
     if (session) {
       fetchUserRole();
       fetchLessonDetails();
     }
   }, [slug, topicSlug, lessonId, session, isStudent, studentLoading]);
+
+  // Fetch completion status when lesson changes
+  useEffect(() => {
+    if (lessonId) {
+      fetchLessonCompletionStatus();
+    }
+  }, [lessonId, session]);
+
+  // Determine previous and next lessons based on order
+  const currentLessonIndex = allLessons.findIndex((l) => l.id === Number(lessonId));
+  const previousLesson = currentLessonIndex > 0 ? allLessons[currentLessonIndex - 1] : null;
+  const nextLesson = currentLessonIndex < allLessons.length - 1 ? allLessons[currentLessonIndex + 1] : null;
 
   if (isLoading || studentLoading) return <LoadingSpinner />;
   if (error) return <ErrorDisplay error={error} />;
@@ -459,11 +696,31 @@ export default function EduProLessonDetail() {
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
-        <div className="px-4">
+        <div className="px-2">
           {course && topic && lesson ? (
             <div>
-              <TopicHeader topic={topic} slug={slug} topicSlug={topicSlug} lesson={lesson} />
-              <LessonHeader lesson={lesson} />
+              <TopicHeader
+                topic={topic}
+                slug={slug}
+                topicSlug={topicSlug}
+                lesson={lesson}
+                previousLesson={previousLesson}
+                nextLesson={nextLesson}
+                navigateToLesson={navigateToLesson}
+                isLessonCompleted={isLessonCompleted}
+                toggleLessonCompletion={toggleLessonCompletion}
+                session={session}
+                isToggling={isToggling}
+              />
+              <LessonHeader
+                lesson={lesson}
+                previousLesson={previousLesson}
+                nextLesson={nextLesson}
+                navigateToLesson={navigateToLesson}
+                isLessonCompleted={isLessonCompleted}
+                toggleLessonCompletion={toggleLessonCompletion}
+                session={session}
+              />
               {activeTab === 'theory' && materials.length > 0 && sasUrl ? (
                 <div className="mt-4">
                   {materials[0].file_type === 'epub' ? (
@@ -483,7 +740,7 @@ export default function EduProLessonDetail() {
                   {lesson.link_to_practice && (
                     <Link
                       href={lesson.link_to_practice}
-                      className="inline-block text-base mb-4 bg-sky-500 text-white px-16 py-3 font-medium rounded-md hover:bg-sky-700 transition-colors"
+                      className="inline-block text-base mb-4 bg-yellow-200 text-gray-700 px-16 py-3 font-medium rounded-md hover:bg-sky-700 hover:text-white transition-colors"
                     >
                       Start
                     </Link>
