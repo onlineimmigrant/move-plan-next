@@ -118,6 +118,7 @@ const TopicHeader = ({ topic }: { topic: EduProTopic }) => (
       {topic.order}
     </span>
     <h3 className="text-base font-medium text-gray-900 pr-8">{topic.title}</h3>
+    <span className="text-sm  text-gray-400 pr-8">{topic.description}</span>
   </div>
 );
 
