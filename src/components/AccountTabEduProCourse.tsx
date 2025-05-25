@@ -136,14 +136,14 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   }, [slug, session]);
 
   const tabs: Tab[] = [
-    { label: 'Study', href: `/account/edupro/${slug}` },
+    { label: 'Course', href: `/account/edupro/${slug}` },
     { label: 'Plan', href: `/account/edupro/${slug}/study-plan` },
     { label: 'Progress', href: `/account/edupro/${slug}/progress` },
   ];
 
   // Determine if a tab is active
   const isTabActive = (tab: Tab) => {
-    if (tab.label === 'Study') {
+    if (tab.label === 'Course') {
       // Active for both exact match and topic subroutes
       return (
         pathname === tab.href ||
@@ -206,8 +206,8 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         <div className="mt-0 mb-4 sm:mb-6 flex items-center justify-center gap-4">
           <div className="flex justify-between items-center">
             <div className="text-center hover:bg-sky-50 px-4 rounded-md">
-              <span className="text-gray-500 font-light text-sm sm:text-sm">{duration}</span>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900 relative">
+              <span className="hidden sm:block text-gray-500 font-light text-sm sm:text-sm">{duration}</span>
+              <h1 className="text-base tracking-tight py-1  sm:text-xl font-bold text-gray-900 relative">
                 {courseTitle}
                 <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
