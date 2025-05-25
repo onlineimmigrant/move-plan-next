@@ -1,3 +1,4 @@
+// components/EpubViewer.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -17,12 +18,12 @@ interface EpubViewerProps {
   epubUrl: string;
   currentPage: number;
   setCurrentPage: (page: number) => void;
+  setTotalPages: (pages: number) => void;
   toc: TocItem[];
   setCurrentSection: (section: string) => void;
 }
 
-const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurrentPage, toc, setCurrentSection }) => {
-  const [totalPages, setTotalPages] = useState<number | null>(null);
+const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurrentPage, setTotalPages, toc, setCurrentSection }) => {
   const [error, setError] = useState<string | null>(null);
   const [locationsLoaded, setLocationsLoaded] = useState(false);
   const [textSize, setTextSize] = useState(100);
@@ -93,7 +94,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
       .then(() => {
         if (!isMountedRef.current) return;
         const total = bookRef.current?.locations?.total || 0;
-        setTotalPages(total);
+        setTotalPages(total); // Set total pages in parent
         setLocationsLoaded(true);
 
         if (currentPage > 0 && total > 0) {
@@ -144,7 +145,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
       bookRef.current = null;
       renditionRef.current = null;
     };
-  }, [epubUrl, isTwoPageView]);
+  }, [epubUrl, isTwoPageView, setCurrentPage, setTotalPages]);
 
   // Update text size
   useEffect(() => {
@@ -162,15 +163,16 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
 
   // Navigate to page
   useEffect(() => {
-    if (!renditionRef.current || !bookRef.current || !totalPages || !locationsLoaded) return;
+    if (!renditionRef.current || !bookRef.current || !locationsLoaded) return;
 
-    if (currentPage > 0 && currentPage <= totalPages) {
+    const total = bookRef.current?.locations?.total || 0;
+    if (currentPage > 0 && currentPage <= total) {
       const adjustedPage = isTwoPageView ? Math.floor((currentPage - 1) / 2) * 2 + 1 : currentPage;
-      const percentage = (adjustedPage - 1) / totalPages;
+      const percentage = (adjustedPage - 1) / total;
       const location = bookRef.current.locations.cfiFromPercentage(percentage);
       renditionRef.current.display(location);
     }
-  }, [currentPage, totalPages, locationsLoaded, isTwoPageView]);
+  }, [currentPage, locationsLoaded, isTwoPageView]);
 
   // Handle maximize/minimize
   const toggleMaximize = () => {
@@ -182,7 +184,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
 
   // Navigate to the next page using rendition.next()
   const handleNextPage = () => {
-    if (!renditionRef.current || !bookRef.current || !totalPages || !locationsLoaded) return;
+    if (!renditionRef.current || !bookRef.current || !locationsLoaded) return;
 
     renditionRef.current.next().then(() => {
       const location = renditionRef.current.currentLocation();
@@ -194,7 +196,8 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
           newPage = Math.floor(newPage / 2) * 2 + 1;
         }
 
-        if (newPage <= totalPages) {
+        const total = bookRef.current?.locations?.total || 0;
+        if (newPage <= total) {
           setCurrentPage(newPage);
         }
       }
@@ -203,7 +206,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
 
   // Navigate to the previous page using rendition.prev()
   const handlePrevPage = () => {
-    if (!renditionRef.current || !bookRef.current || !totalPages || !locationsLoaded) return;
+    if (!renditionRef.current || !bookRef.current || !locationsLoaded) return;
 
     renditionRef.current.prev().then(() => {
       const location = renditionRef.current.currentLocation();
@@ -237,7 +240,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
             <h2 className="text-sm font-medium text-gray-700">Contents</h2>
             <button
               onClick={() => setIsTocOpen(false)}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-full hover:bg-gray-200 transition-colors"
             >
               <Menu className="w-6 h-6 text-gray-600 sm:hidden" />
             </button>
@@ -264,7 +267,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
         {/* EPUB Viewer */}
         <div className={`w-full ${isTocOpen && isMobile ? 'hidden' : 'md:w-3/4'} ${isMaximized && !isMobile ? 'h-screen' : 'h-full'}`}>
           {/* Control Bar */}
-          <div className="flex justify-between items-center  px-2 bg-gray-50 rounded-lg shadow-sm">
+          <div className="flex justify-between items-center px-2 bg-gray-50 rounded-lg shadow-sm">
             {/* TOC Toggle or Maximize/Minimize Button */}
             <button
               onClick={isMobile ? () => setIsTocOpen(true) : toggleMaximize}
@@ -330,7 +333,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
               >
                 <div ref={viewerRef} className="w-full h-full" />
               </div>
-              {totalPages && (
+              {locationsLoaded && bookRef.current?.locations?.total && ( // Only show when locations are loaded
                 <div
                   className={`flex justify-between mt-4 sm:px-8 ${
                     isMaximized && isMobile
@@ -345,11 +348,11 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
                   >
                     Prev
                   </button>
-                  <span className="pt-4 text-gray-400">Page {currentPage} of {totalPages}</span>
+                  <span className="pt-4 text-gray-400">Page {currentPage} of {bookRef.current.locations.total}</span>
                   <button
                     onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                    className="cursor-pointer px-4  text-sm bg-sky-600 text-white rounded disabled:opacity-50"
+                    disabled={currentPage === bookRef.current.locations.total}
+                    className="cursor-pointer px-4 text-sm bg-sky-600 text-white rounded disabled:opacity-50"
                   >
                     Next
                   </button>

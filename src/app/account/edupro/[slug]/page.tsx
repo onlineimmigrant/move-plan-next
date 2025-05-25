@@ -1,15 +1,23 @@
 // app/account/edupro/[slug]/page.tsx
 'use client';
 
-import { useState, Dispatch, SetStateAction } from 'react';
+import { useState, Dispatch, SetStateAction, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
 import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
 import StudyBooks from '@/components/StudyBooks';
 import Practice from '@/components/Practice';
 import Toast from '@/components/Toast';
 import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
 import { useCourseAndTopics } from '@/lib/hooks/useCourseAndTopics';
+import { useAuth } from '@/context/AuthContext';
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // Define Tab type to match TabNavigation
 type Tab = 'theory' | 'practice' | 'studyBooks';
@@ -24,7 +32,9 @@ export default function EduProCourseDetail() {
   const params = useParams();
   const slug = params?.slug as string;
   const { course, topics, isLoading, error, toast, setToast } = useCourseAndTopics(slug);
+  const { session } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('theory');
+  const [topicCompletion, setTopicCompletion] = useState<Record<number, boolean>>({});
 
   // Define the tabs for "Theory," "Practice," and "Books"
   const TABS: TabOption[] = [
@@ -32,6 +42,74 @@ export default function EduProCourseDetail() {
     { label: 'Practice', value: 'practice' },
     { label: 'Books', value: 'studyBooks' },
   ] as const;
+
+  // Fetch lesson progress to determine topic completion
+  const fetchTopicCompletion = async () => {
+    if (!session?.user?.id || !topics.length) return;
+
+    try {
+      // Fetch all lessons for the topics
+      const topicIds = topics.map((topic) => topic.id);
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from('edu_pro_lesson')
+        .select('id, topic_id')
+        .in('topic_id', topicIds);
+
+      if (lessonsError) throw new Error(`Error fetching lessons: ${lessonsError.message}`);
+
+      if (!lessonsData?.length) {
+        // If no lessons, mark all topics as incomplete
+        const completionMap: Record<number, boolean> = {};
+        topics.forEach((topic) => {
+          completionMap[topic.id] = false;
+        });
+        setTopicCompletion(completionMap);
+        return;
+      }
+
+      // Fetch lesson progress for the user
+      const lessonIds = lessonsData.map((lesson) => lesson.id);
+      const { data: progressData, error: progressError } = await supabase
+        .from('edu_pro_lessonprogress')
+        .select('lesson_id, completed')
+        .in('lesson_id', lessonIds)
+        .eq('user_id', session.user.id);
+
+      if (progressError) throw new Error(`Error fetching lesson progress: ${progressError.message}`);
+
+      // Create a map of lesson completion status
+      const lessonProgressMap: Record<number, boolean> = {};
+      lessonIds.forEach((id) => {
+        lessonProgressMap[id] = false; // Default to false if no progress record
+      });
+      progressData?.forEach((progress) => {
+        lessonProgressMap[progress.lesson_id] = progress.completed;
+      });
+
+      // Determine topic completion
+      const completionMap: Record<number, boolean> = {};
+      topics.forEach((topic) => {
+        const topicLessons = lessonsData.filter((lesson) => lesson.topic_id === topic.id);
+        if (topicLessons.length === 0) {
+          completionMap[topic.id] = false; // No lessons means incomplete
+        } else {
+          const allCompleted = topicLessons.every((lesson) => lessonProgressMap[lesson.id]);
+          completionMap[topic.id] = allCompleted;
+        }
+      });
+
+      setTopicCompletion(completionMap);
+    } catch (err) {
+      console.error('fetchTopicCompletion: Error:', err);
+      setToast({ message: 'Failed to fetch topic completion status', type: 'error' });
+    }
+  };
+
+  useEffect(() => {
+    if (!isLoading && topics.length && session) {
+      fetchTopicCompletion();
+    }
+  }, [isLoading, topics, session]);
 
   if (isLoading) {
     return (
@@ -85,11 +163,14 @@ export default function EduProCourseDetail() {
                     {topics.length > 0 ? (
                       <ul className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {topics.map((topic) => {
-                          const topicBackground = topic.background_color || 'sky-600';
+                          const isCompleted = topicCompletion[topic.id];
+                          const topicBackground = isCompleted ? 'teal-600' : topic.background_color || 'sky-600';
                           return (
                             <li
                               key={topic.id}
-                              className={`relative border-l-8 border-${topicBackground} pl-8 py-12 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow`}
+                              className={`relative border-l-8 border-${topicBackground} pl-8 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                                isCompleted ? 'bg-teal-100' : 'bg-white'
+                              }`}
                             >
                               <span
                                 className={`absolute bottom-2 right-2 flex items-center justify-center sm:w-6 w-5 sm:h-6 h-5 bg-${topicBackground} text-white text-xs font-medium rounded-full`}
@@ -100,9 +181,6 @@ export default function EduProCourseDetail() {
                                 <h3 className="text-base font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
                                   {topic.title}
                                 </h3>
-                                <p className="pr-8 text-sm text-gray-600 mt-1">
-                                  {topic.description || 'No description available.'}
-                                </p>
                               </Link>
                             </li>
                           );

@@ -69,6 +69,16 @@ interface Purchase {
   };
 }
 
+interface EduProLessonProgress {
+  id: string;
+  lesson_id: number;
+  user_id: string;
+  completed: boolean;
+  completion_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Types
 type Tab = 'theory' | 'practice' | 'studyBooks';
 type ToastState = { message: string; type: 'success' | 'error' } | null;
@@ -118,11 +128,21 @@ const TopicHeader = ({ topic }: { topic: EduProTopic }) => (
       {topic.order}
     </span>
     <h3 className="text-base font-medium text-gray-900 pr-8">{topic.title}</h3>
-    <span className="text-sm  text-gray-400 pr-8">{topic.description}</span>
+    <span className="text-sm text-gray-400 pr-8">{topic.description}</span>
   </div>
 );
 
-const LessonsList = ({ lessons, slug, topicSlug }: { lessons: EduProLesson[]; slug: string; topicSlug: string }) => (
+const LessonsList = ({
+  lessons,
+  slug,
+  topicSlug,
+  lessonProgress,
+}: {
+  lessons: EduProLesson[];
+  slug: string;
+  topicSlug: string;
+  lessonProgress: Record<number, boolean>;
+}) => (
   <div className="mt-8">
     <div className="text-center mb-4 p-3 sm:flex sm:justify-left sm:border-none sm:p-0">
       <span className="text-md text-sm sm:text-base font-semibold sm:py-1">Lessons</span>
@@ -132,7 +152,9 @@ const LessonsList = ({ lessons, slug, topicSlug }: { lessons: EduProLesson[]; sl
         {lessons.map((lesson) => (
           <li
             key={lesson.id}
-            className="relative border-l-4 border-sky-600 pl-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            className={`relative border-l-4 border-sky-600 pl-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+              lessonProgress[lesson.id] ? 'bg-teal-100' : 'bg-white'
+            }`}
           >
             <span className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
               {lesson.order}
@@ -155,6 +177,7 @@ export default function EduProTopicDetail() {
   const [course, setCourse] = useState<EduProCourse | null>(null);
   const [topic, setTopic] = useState<EduProTopic | null>(null);
   const [lessons, setLessons] = useState<EduProLesson[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<Record<number, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
@@ -169,11 +192,36 @@ export default function EduProTopicDetail() {
     const newTab = typeof tabValue === 'string' ? tabValue : tabValue(activeTab);
     setActiveTab(newTab as Tab);
     const routes: Record<Tab, string> = {
-      theory: `/account/edupro/${slug}/topic/${topicSlug}`, // Adjusted to stay on topic page for theory
+      theory: `/account/edupro/${slug}/topic/${topicSlug}`,
       practice: `/account/edupro/${slug}/practice`,
       studyBooks: `/account/edupro/${slug}`,
     };
     router.push(routes[newTab as Tab]);
+  };
+
+  // Fetch lesson completion status
+  const fetchLessonProgress = async (lessonIds: number[]) => {
+    if (!session?.user?.id || !lessonIds.length) return;
+    try {
+      const { data, error } = await supabase
+        .from('edu_pro_lessonprogress')
+        .select('lesson_id, completed')
+        .in('lesson_id', lessonIds)
+        .eq('user_id', session.user.id);
+
+      if (error) throw new Error(`Error fetching lesson progress: ${error.message}`);
+      const progressMap: Record<number, boolean> = {};
+      lessonIds.forEach((id) => {
+        progressMap[id] = false; // Default to false if no progress record
+      });
+      data?.forEach((progress) => {
+        progressMap[progress.lesson_id] = progress.completed;
+      });
+      setLessonProgress(progressMap);
+    } catch (err) {
+      console.error('fetchLessonProgress: Error:', err);
+      setToast({ message: 'Failed to fetch lesson completion status', type: 'error' });
+    }
   };
 
   // Fetch topic details
@@ -249,6 +297,12 @@ export default function EduProTopicDetail() {
       if (lessonsError) throw new Error(`Error fetching lessons: ${lessonsError.message}`);
       setLessons(lessonsData || []);
 
+      // Fetch lesson progress
+      if (lessonsData?.length) {
+        const lessonIds = lessonsData.map((lesson) => lesson.id);
+        await fetchLessonProgress(lessonIds);
+      }
+
       // Fetch purchases
       const { data: activePurchases, error: purchaseError } = await supabase
         .from('purchases')
@@ -300,7 +354,7 @@ export default function EduProTopicDetail() {
           {course && topic ? (
             <>
               <TopicHeader topic={topic} />
-              <LessonsList lessons={lessons} slug={slug} topicSlug={topicSlug} />
+              <LessonsList lessons={lessons} slug={slug} topicSlug={topicSlug} lessonProgress={lessonProgress} />
             </>
           ) : (
             <p className="mt-4 text-gray-600 text-center">No topic details available.</p>
