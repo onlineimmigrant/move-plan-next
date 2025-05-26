@@ -216,6 +216,9 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
 
   return (
     <div className="space-y-8 text-left">
+        <div className='mt-2 mb-4 text-center'>
+            <span className=" text-md text-sm sm:text-base font-semibold sm:py-1">Test</span>
+        </div>
       {/* Mode Selection */}
       <div>
         <div className="hidden sm:block mb-2 text-sm font-semibold text-gray-700">Mode</div>
