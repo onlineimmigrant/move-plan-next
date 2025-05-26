@@ -243,7 +243,7 @@ const LessonHeader = ({
         <button
           onClick={() => previousLesson && navigateToLesson(previousLesson.id)}
           disabled={!previousLesson}
-          className="relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className="cursor-pointer relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           aria-label="Previous Lesson"
         >
           <ArrowLeftIcon className="w-5 h-5" />
@@ -254,11 +254,11 @@ const LessonHeader = ({
         <button
           onClick={() => nextLesson && navigateToLesson(nextLesson.id)}
           disabled={!nextLesson}
-          className="relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className="cursor-pointer relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           aria-label="Next Lesson"
         >
           <ArrowRightIcon className="w-5 h-5" />
-          <span className="absolute top-full right-0 mt-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <span className=" absolute top-full right-0 mt-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             Next
           </span>
         </button>
@@ -722,6 +722,9 @@ export default function EduProLessonDetail() {
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
+            <div className='mt-4 mb-4 text-center'>
+                    <span className=" text-md text-sm sm:text-base font-semibold sm:py-1">Lesson</span>
+            </div>
         <div className="px-2">
           {course && topic && lesson ? (
             <div>
@@ -748,7 +751,7 @@ export default function EduProLessonDetail() {
                 </div>
               </div>
               {activeTab === 'theory' && materials.length > 0 && sasUrl ? (
-                <div className="mt-4">
+                <div className="">
                   {materials[0].file_type === 'epub' ? (
                     <EpubViewer
                       epubUrl={sasUrl}

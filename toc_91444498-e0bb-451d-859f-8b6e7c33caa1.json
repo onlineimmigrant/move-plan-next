@@ -1,0 +1,62 @@
+[
+  {
+    "topic": "CHAPTER 3. OVERVIEW OF THE JUDICIAL",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "SYSTEM",
+    "href": "chapter-2.xhtml",
+    "order": 1
+  },
+  {
+    "topic": "3.1. Court Hierarchy in England and Wales",
+    "href": "chapter-2.xhtml#chapter-2-11",
+    "order": 2
+  },
+  {
+    "topic": "3.2. Civil Court Structure",
+    "href": "chapter-2.xhtml#chapter-2-31",
+    "order": 3
+  },
+  {
+    "topic": "3.2.1. County Court",
+    "href": "chapter-3.xhtml",
+    "order": 4
+  },
+  {
+    "topic": "3.2.2. High Court",
+    "href": "chapter-4.xhtml",
+    "order": 5
+  },
+  {
+    "topic": "3.3. Criminal Court Structure",
+    "href": "chapter-4.xhtml#chapter-4-64",
+    "order": 6
+  },
+  {
+    "topic": "3.3.1. Magistrates’ Court",
+    "href": "chapter-5.xhtml",
+    "order": 7
+  },
+  {
+    "topic": "3.3.2. Crown Court",
+    "href": "chapter-6.xhtml",
+    "order": 8
+  },
+  {
+    "topic": "3.3.3. The Jury",
+    "href": "chapter-7.xhtml",
+    "order": 9
+  },
+  {
+    "topic": "3.4. Solicitors’ and Barristers’ Rights of Audience",
+    "href": "chapter-7.xhtml#chapter-7-98",
+    "order": 10
+  },
+  {
+    "topic": "3.5. Non-Court Civil Dispute Resolution Methods",
+    "href": "chapter-7.xhtml#chapter-7-104",
+    "order": 11
+  }
+]

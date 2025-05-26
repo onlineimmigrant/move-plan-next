@@ -297,6 +297,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
               >
                 <Plus className="w-5 h-5 text-gray-600" />
               </button>
+               </div>
               {isMobile && (
                 <button
                   onClick={toggleMaximize}
@@ -309,12 +310,12 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
                   )}
                 </button>
               )}
-            </div>
+           
 
             {/* Page View Toggle */}
             <button
               onClick={() => setIsTwoPageView((prev) => !prev)}
-              className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
+              className="hidden sm:block cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
             >
               {isTwoPageView ? (
                 <BookOpen className="w-5 h-5 text-gray-600" />
