@@ -148,7 +148,7 @@ export default function EduProCourseDetail() {
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
-        <div className="">
+        <div className="px-4">
           {course ? (
             <div>
               <div>

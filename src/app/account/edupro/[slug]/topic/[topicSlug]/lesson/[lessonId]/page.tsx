@@ -1,4 +1,3 @@
-// app/account/edupro/[slug]/topic/[topicSlug]/lesson/[lessonId]/page.tsx
 'use client';
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
@@ -181,11 +180,11 @@ const TopicHeader = ({
   isTopicCompleted: boolean;
 }) => (
   <div
-    className={`mx-auto max-w-7xl relative border-r-4 border-sky-600 px-4 py-2 sm:py-4 rounded-lg shadow-sm mb-4 ${
+    className={`mx-auto max-w-7xl relative border-r-4 border-sky-600 px-4 py-2 sm:py-4 rounded-lg shadow-sm mb-4 min-h-[100px] sm:min-h-[120px] flex items-center ${
       isTopicCompleted ? 'bg-teal-50' : 'bg-white'
     }`}
   >
-    <div className="flex flex-col space-y-0">
+    <div className="flex flex-col space-y-0 flex-1">
       <div className="flex items-center justify-between">
         <Link href={`/account/edupro/${slug}/topic/${topicSlug}`}>
           <span className="sm:text-sm text-sm font-light text-gray-500">Topic</span>
@@ -193,7 +192,7 @@ const TopicHeader = ({
             {topic.title}
           </h3>
         </Link>
-        <span className="absolute top-4 right-4 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full cursor-pointer">
+        <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full cursor-pointer">
           {topic.order}
         </span>
       </div>
@@ -219,49 +218,51 @@ const LessonHeader = ({
   navigateToLesson: (lessonId: number) => void;
 }) => (
   <div
-    className={`ml-2 relative pl-4 py-1 pt-2 rounded-lg border-r-4 group ${
-      isLessonCompleted ? 'border-teal-600 bg-teal-50 text-white' : 'border-sky-600'
+    className={`ml-2 relative pl-4 py-2 sm:py-4 rounded-lg border-r-4 group min-h-[100px] sm:min-h-[120px] flex items-center ${
+      isLessonCompleted ? 'border-teal-600 bg-teal-50' : 'border-sky-600'
     }`}
   >
-    <span className="text-sm font-light text-gray-500">Lesson</span>
-    <div
-      onClick={session ? toggleLessonCompletion : undefined}
-      className={`absolute top-4 right-4 flex items-center justify-center w-6 h-6 border-2 ${
-        isLessonCompleted ? 'bg-teal-600 hover:bg-teal-500 text-white' : 'border-sky-600 text-sky-600'
-      } text-xs font-medium rounded-full transition-all duration-200 ${
-        session ? 'cursor-pointer hover:scale-110 hover:bg-teal-50' : 'cursor-default'
-      } group-hover:ring-2 group-hover:ring-teal-300 group`}
-      aria-label={isLessonCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
-      title={isLessonCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
-    >
-      <span className="group-hover:hidden">{lesson.order}</span>
-      {session && <CheckIcon className="hidden group-hover:block w-4 h-4" />}
-    </div>
-    <h3 className="text-sm sm:text-base font-medium text-gray-900 pr-8">{lesson.title}</h3>
-    {lesson.description && <p className="text-sm text-gray-600">{lesson.description}</p>}
-    <div className="absolute bottom-2 right-4 flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-      <button
-        onClick={() => previousLesson && navigateToLesson(previousLesson.id)}
-        disabled={!previousLesson}
-        className=" cursor-pointer relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-        aria-label="Previous Lesson"
+    <div className="flex flex-col space-y-0 flex-1">
+      <span className="text-sm font-light text-gray-500">Lesson</span>
+      <div
+        onClick={session ? toggleLessonCompletion : undefined}
+        className={`absolute top-2 right-2 flex items-center justify-center w-6 h-6 border-2 ${
+          isLessonCompleted ? 'bg-teal-600 hover:bg-teal-500 text-white' : 'border-sky-600 text-sky-600'
+        } text-xs font-medium rounded-full transition-all duration-200 ${
+          session ? 'cursor-pointer hover:scale-110 hover:bg-teal-50' : 'cursor-default'
+        } group-hover:ring-2 group-hover:ring-teal-300 group`}
+        aria-label={isLessonCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
+        title={isLessonCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
       >
-        <ArrowLeftIcon className="w-5 h-5" />
-        <span className=" absolute top-full right-0 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          Previous
-        </span>
-      </button>
-      <button
-        onClick={() => nextLesson && navigateToLesson(nextLesson.id)}
-        disabled={!nextLesson}
-        className="cursor-pointer relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-        aria-label="Next Lesson"
-      >
-        <ArrowRightIcon className="w-5 h-5" />
-        <span className=" absolute top-full right-0 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          Next
-        </span>
-      </button>
+        <span className="group-hover:hidden">{lesson.order}</span>
+        {session && <CheckIcon className="hidden group-hover:block w-4 h-4" />}
+      </div>
+      <h3 className="text-sm sm:text-base font-medium text-gray-900 pr-8">{lesson.title}</h3>
+      {lesson.description && <p className="text-sm text-gray-600">{lesson.description}</p>}
+      <div className="absolute bottom-2 right-2 flex items-center space-x-2">
+        <button
+          onClick={() => previousLesson && navigateToLesson(previousLesson.id)}
+          disabled={!previousLesson}
+          className="relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          aria-label="Previous Lesson"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          <span className="absolute top-full right-0 mt-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            Prev
+          </span>
+        </button>
+        <button
+          onClick={() => nextLesson && navigateToLesson(nextLesson.id)}
+          disabled={!nextLesson}
+          className="relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          aria-label="Next Lesson"
+        >
+          <ArrowRightIcon className="w-5 h-5" />
+          <span className="absolute top-full right-0 mt-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            Next
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 );
@@ -758,7 +759,7 @@ export default function EduProLessonDetail() {
                   {lesson.link_to_practice && (
                     <Link
                       href={lesson.link_to_practice}
-                      className="inline-block text-base mb-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white px-24 py-3 font-medium rounded-full shadow-md hover:from-sky-700 hover:to-sky-800 transition-all duration-200 cursor-pointer"
+                      className="inline-block text-base mb-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white px-36 py-3 font-medium rounded-md shadow-md hover:from-sky-700 hover:to-sky-800 transition-all duration-200 cursor-pointer"
                     >
                       Start
                     </Link>
