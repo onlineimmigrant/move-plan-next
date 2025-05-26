@@ -555,7 +555,7 @@ export default function EduProCourseStudyPlan() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-5xl mx-auto">
         <ToastWrapper toast={toast} setToast={setToast} />
         <div className="pt-8">

@@ -51,6 +51,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   const [courseImage, setCourseImage] = useState<string | null>(null);
   const [duration, setDuration] = useState<string>('Loading...');
   const [error, setError] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const fallbackImage = '/images/course-placeholder.svg';
 
@@ -135,16 +136,25 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     }
   }, [slug, session]);
 
+  // Handle scroll effect for navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollThreshold = window.innerHeight * 0.2; // 20% of viewport height
+      setIsScrolled(window.scrollY > scrollThreshold);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const tabs: Tab[] = [
     { label: 'Course', href: `/account/edupro/${slug}` },
     { label: 'Plan', href: `/account/edupro/${slug}/study-plan` },
     { label: 'Progress', href: `/account/edupro/${slug}/progress` },
   ];
 
-  // Determine if a tab is active
   const isTabActive = (tab: Tab) => {
     if (tab.label === 'Course') {
-      // Active for both exact match and topic subroutes
       return (
         pathname === tab.href ||
         pathname.startsWith(`/account/edupro/${slug}/topic/`) ||
@@ -154,18 +164,17 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     return pathname === tab.href;
   };
 
-  // Determine the translate-x for the sliding background
   const getSliderPosition = () => {
     const activeIndex = tabs.findIndex((tab) => isTabActive(tab));
     if (activeIndex === 0) return 'translate-x-0';
     if (activeIndex === 1) return 'translate-x-[100%]';
     if (activeIndex === 2) return 'translate-x-[200%]';
-    return 'translate-x-0'; // Default to first tab
+    return 'translate-x-0';
   };
 
   if (studentLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 text-center">
         <div className="flex justify-center gap-2">
           <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
           <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
@@ -177,78 +186,91 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 text-center">
         <p className="text-red-600 font-medium">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className={`-mt-2 mb-2 max-w-7xl mx-auto sm:px-6 lg:px-8 ${className}`}>
-      {/* Logo */}
-      <Image
-        src="/images/logo.svg"
-        alt="Logo"
-        width={40}
-        height={40}
-        className="fixed left-4 hidden xl:block h-8 w-auto"
-      />
-      <Image
-        src="/images/logo_collapsed.svg"
-        alt="Logo mobile"
-        width={40}
-        height={40}
-        className="fixed left-8 block sm:hidden h-8 w-auto"
-      />
+    <>
+      {/* Top Navbar */}
+      <div
+        className={`bg-white sm:rounded-lg z-50 transition-all duration-200 ${
+          isScrolled ? 'fixed top-0 left-0 right-0 shadow-md' : 'relative'
+        } ${className}`}
+      >
+        <div className="max-w-7xl mx-auto px-8 sm:px-6 lg:px-8 py-2">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/account">
+              <Image
+                src="/images/logo.svg"
+                alt="Logo"
+                width={40}
+                height={40}
+                className="h-8 w-auto hidden xl:block"
+              />
+              <Image
+                src="/images/logo_collapsed.svg"
+                alt="Logo mobile"
+                width={40}
+                height={40}
+                className="h-8 w-auto block xl:hidden"
+              />
+            </Link>
 
-      {/* Course Header */}
-      <Link href="/account">
-        <div className="mt-0 mb-4 sm:mb-6 flex items-center justify-center gap-4">
-          <div className="flex justify-between items-center">
-            <div className="text-center hover:bg-sky-50 px-4 rounded-md">
-              <span className="hidden sm:block text-gray-500 font-light text-sm sm:text-sm">{duration}</span>
-              <h1 className="text-base tracking-tight py-1  sm:text-xl font-bold text-gray-900 relative">
+            {/* Course Header */}
+            <div className="flex flex-col items-center">
+              <span className="hidden sm:block text-gray-500 font-light text-sm">{duration}</span>
+              <h1 className="text-base sm:text-xl font-bold text-gray-900 relative">
                 {courseTitle}
-                <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
             </div>
+
+            {/* Course Image */}
             {courseImage && (
               <Image
                 src={courseImage || fallbackImage}
                 alt={`${courseTitle} course image`}
-                width={96}
-                height={96}
-                className="fixed right-8 z-51 top-2 hidden xl:block xl:w-auto xl:h-auto  rounded-lg object-cover"
+                width={64}
+                height={64}
+                className="h-12 w-12 rounded-lg object-cover hidden xl:block"
                 priority
               />
             )}
           </div>
         </div>
-      </Link>
+      </div>
 
-      {/* Navigation Tabs with New Style */}
-      <div className="select-none flex justify-center">
-        <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-sky-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
-          {/* Sliding Background */}
-          <div
-            className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.33%-2px)] bg-sky-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
-          ></div>
-          {/* Tab Labels */}
-          <div className="relative flex h-full">
-            {tabs.map((tab, index) => (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-base mona-sans px-0.5 ${
-                  isTabActive(tab) ? 'font-semibold text-white z-10' : ''
-                }`}
-              >
-                {tab.label}
-              </Link>
-            ))}
+      {/* Navigation Tabs */}
+      <div
+        className={`max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pt-4 ${
+          isScrolled ? 'mt-16' : ''
+        }`}
+      >
+        <div className="select-none flex justify-center">
+          <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-sky-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
+            <div
+              className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.33%-2px)] bg-sky-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
+            ></div>
+            <div className="relative flex h-full">
+              {tabs.map((tab) => (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-base mona-sans px-0.5 ${
+                    isTabActive(tab) ? 'font-semibold text-white z-10' : ''
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
