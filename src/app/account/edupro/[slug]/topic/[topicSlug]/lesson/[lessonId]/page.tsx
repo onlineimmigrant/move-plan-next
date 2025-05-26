@@ -351,7 +351,7 @@ const CompletionControls = ({
   <div className="mt-4">
     <button
       onClick={toggleLessonCompletion}
-      className={`w-full py-3 px-4 border-2 ${
+      className={`w-full py-8 sm:py-16 shadow px-4 border-2 ${
         isLessonCompleted
           ? 'border-teal-600 text-teal-600 bg-teal-50 hover:bg-white'
           : 'border-sky-600 text-sky-600 hover:bg-sky-50'
@@ -361,9 +361,17 @@ const CompletionControls = ({
       disabled={!session || isToggling}
       aria-label={isLessonCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
     >
-      {isLessonCompleted
-        ? 'Lesson Completed - Click to Mark as Incomplete'
-        : 'Mark Lesson as Completed'}
+      {isLessonCompleted ? (
+        <span  data-completion-status="completed">
+          <p className="text-2xl font-semibold">Lesson Completed  </p>
+          <p className='text-gray-400'>Click to Mark as Incomplete</p>
+        </span>
+      ) : (
+        <span className="completion-text" data-completion-status="incomplete">
+           <p className="text-2xl font-semibold">Incomplete Lesson  </p>
+          <p className='text-gray-400'>Click to Mark as Complete</p>
+        </span>
+      )}
     </button>
   </div>
 );
@@ -755,7 +763,7 @@ export default function EduProLessonDetail() {
                   )}
                 </div>
               ) : activeTab === 'theory' || activeTab === 'practice' ? (
-                <div className="mt-16 text-center">
+                <div className="my-24 text-center">
                   {lesson.link_to_practice && (
                     <Link
                       href={lesson.link_to_practice}

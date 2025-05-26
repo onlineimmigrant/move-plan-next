@@ -33,7 +33,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
   return (
     <div
       ref={toastRef}
-      className={`fixed top-4 right-4 z-50 flex items-center p-4 rounded-md shadow-lg border-2 bg-white text-gray-700 border-${bgColor} max-w-sm animate-slide-in`}
+      className={`fixed top-4 right-4 z-60 flex items-center p-4 rounded-md shadow-lg border-2 bg-white text-gray-700 border-${bgColor} max-w-sm animate-slide-in`}
       role="alert"
       aria-live="assertive"
       tabIndex={-1}

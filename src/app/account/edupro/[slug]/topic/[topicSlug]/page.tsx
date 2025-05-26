@@ -123,12 +123,17 @@ const ErrorDisplay = ({ error }: { error: string }) => (
 );
 
 const TopicHeader = ({ topic }: { topic: EduProTopic }) => (
-  <div className="mx-auto max-w-7xl relative border-l-8 border-sky-600 pl-4 py-4 bg-white rounded-lg">
-    <span className="absolute top-4 right-4 flex items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full">
+<div >
+    <div className='mt-8 mb-4 text-center'>
+        <span className=" text-md text-sm sm:text-base font-semibold sm:py-1">Topic</span>
+    </div>
+  <div className="sm:flex items-center mx-auto max-w-7xl relative border-l-8 border-sky-600 pl-4 py-4 bg-white rounded-lg">
+    <span className="absolute top-4 right-4 flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-sky-600 text-white text-xs sm:text-base font-medium rounded-full">
       {topic.order}
     </span>
     <h3 className="text-base font-medium text-gray-900 pr-8">{topic.title}</h3>
-    <span className="text-sm text-gray-400 pr-8">{topic.description}</span>
+    <span className="text-sm sm:text-base font-light text-gray-500 pr-8">{topic.description}</span>
+  </div>
   </div>
 );
 
@@ -144,7 +149,7 @@ const LessonsList = ({
   lessonProgress: Record<number, boolean>;
 }) => (
   <div className="mt-8">
-    <div className="text-center mb-4 p-3 sm:flex sm:justify-left sm:border-none sm:p-0">
+    <div className="text-center mb-4 p-3 sm:border-none sm:p-0">
       <span className="text-md text-sm sm:text-base font-semibold sm:py-1">Lessons</span>
     </div>
     {lessons.length > 0 ? (
@@ -344,7 +349,7 @@ export default function EduProTopicDetail() {
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         <div className="pt-8">
           <AccountTabEduProCourse />

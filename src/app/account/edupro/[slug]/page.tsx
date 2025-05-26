@@ -161,10 +161,15 @@ export default function EduProCourseDetail() {
                     hidden={activeTab !== 'theory'}
                   >
                     {topics.length > 0 ? (
-                      <ul className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div>
+                        <div className='mt-8 mb-4 text-center'>
+                            <span className=" text-md text-sm sm:text-base font-semibold sm:py-1">Topics</span>
+                        </div>
+                        
+                      <ul className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
                         {topics.map((topic) => {
                           const isCompleted = topicCompletion[topic.id];
-                          const topicBackground = isCompleted ? 'teal-600' : topic.background_color || 'sky-600';
+                          const topicBackground = isCompleted ? 'teal-600' : 'sky-600';
                           return (
                             <li
                               key={topic.id}
@@ -186,6 +191,7 @@ export default function EduProCourseDetail() {
                           );
                         })}
                       </ul>
+                      </div>
                     ) : (
                       <p className="mt-2 text-gray-600 text-center">No topics available for this course.</p>
                     )}
