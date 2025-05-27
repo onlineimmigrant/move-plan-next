@@ -42,6 +42,7 @@ interface SubMenuItem {
   name: string;
   url_name: string;
   description?: string;
+  is_displayed?: boolean; // Optional, treat undefined as true
 }
 
 interface HeaderProps {
@@ -70,9 +71,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           throw new Error('Failed to fetch menu items');
         }
         const data: MenuItem[] = await response.json();
-        console.log('Fetched menu items:', data);
+        console.log('Fetched menu items:', JSON.stringify(data, null, 2));
         data.forEach((item) => {
-          console.log(`Menu item: ${item.display_name}, icon_name: ${item.react_icons?.icon_name}`);
+          console.log(`Menu item: ${item.display_name}`);
+          console.log(`Submenu items for ${item.display_name}:`, JSON.stringify(item.website_submenuitem, null, 2));
         });
         setMenuItems(data);
       } catch (error) {
@@ -89,11 +91,13 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   useEffect(() => {
     console.log('isLoggedIn:', isLoggedIn);
     console.log('session:', session);
-    console.log('menuItems:', menuItems);
+    console.log('menuItems:', JSON.stringify(menuItems, null, 2));
     console.log('isOpen:', isOpen);
     console.log('isLoginOpen:', isLoginOpen);
     console.log('isContactOpen:', isContactOpen);
-  }, [isLoggedIn, session, menuItems, isOpen, isLoginOpen, isContactOpen]);
+    console.log('companyLogo:', companyLogo);
+    console.log('settings:', settings);
+  }, [isLoggedIn, session, menuItems, isOpen, isLoginOpen, isContactOpen, companyLogo, settings]);
 
   const handleToggle = () => {
     console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
@@ -101,22 +105,34 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   };
 
   const handleMainPage = () => {
-    setIsOpen(false);
-    router.push('/');
+    try {
+      console.log('Navigating to main page');
+      setIsOpen(false);
+      router.push('/');
+    } catch (error) {
+      console.error('Error navigating to main page:', error);
+    }
   };
 
   const handleLogoutAction = () => {
-    setIsOpen(false);
-    logout();
-    router.push('/');
+    try {
+      console.log('Logging out');
+      setIsOpen(false);
+      logout();
+      router.push('/');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   const handleShowLogin = () => {
+    console.log('Opening login modal');
     setIsOpen(false);
     setIsLoginOpen(true);
   };
 
   const handleShowContact = () => {
+    console.log('Opening contact modal');
     setIsOpen(false);
     setIsContactOpen(true);
   };
@@ -143,41 +159,70 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
       ) : (
         menuItems
           .filter((item) => item.is_displayed && item.display_name !== 'Profile')
-          .map((item) => (
-            <div key={item.id} className="relative group">
-              <button
-                type="button"
-                className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                title={item.display_name}
-                aria-label={`Open ${item.display_name} menu`}
-              >
-                {item.image ? (
-                  <Image
-                    src={item.image}
-                    alt={item.display_name}
-                    width={24}
-                    height={24}
-                    className="h-6 w-6 text-gray-600"
-                  />
-                ) : (
-                  renderIcon(item.react_icons?.icon_name)
-                )}
-              </button>
-              {item.website_submenuitem && item.website_submenuitem.length > 0 && (
-                <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50">
-                  {item.website_submenuitem.map((subItem) => (
-                    <Link
-                      key={subItem.id}
-                      href={subItem.url_name}
-                      className="cursor-pointer block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+          .map((item) => {
+            // Filter displayed submenu items, include if is_displayed is true or undefined
+            const displayedSubItems = (item.website_submenuitem || []).filter(
+              (subItem) => subItem.is_displayed !== false
+            );
+            console.log(`Desktop rendering ${item.display_name}, displayedSubItems:`, JSON.stringify(displayedSubItems, null, 2));
+
+            return (
+              <div key={item.id} className="relative group">
+                {displayedSubItems.length > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                      title={item.display_name}
+                      aria-label={`Open ${item.display_name} menu`}
                     >
-                      {subItem.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))
+                      {item.image ? (
+                        <Image
+                          src={item.image}
+                          alt={item.display_name}
+                          width={24}
+                          height={24}
+                          className="h-6 w-6 text-gray-600"
+                        />
+                      ) : (
+                        renderIcon(item.react_icons?.icon_name)
+                      )}
+                    </button>
+                    <div className="absolute right-0  w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
+                      {displayedSubItems.map((subItem) => (
+                        <Link
+                          key={subItem.id}
+                          href={subItem.url_name}
+                          className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+                        >
+                          {subItem.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <Link
+                    href={item.url_name}
+                    className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                    title={item.display_name}
+                    aria-label={`Go to ${item.display_name}`}
+                  >
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.display_name}
+                        width={24}
+                        height={24}
+                        className="h-6 w-6 text-gray-600"
+                      />
+                    ) : (
+                      renderIcon(item.react_icons?.icon_name)
+                    )}
+                  </Link>
+                )}
+              </div>
+            );
+          })
       )}
     </>
   );
@@ -190,41 +235,58 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
       ) : (
         menuItems
           .filter((item) => item.is_displayed && item.display_name !== 'Profile')
-          .map((item) => (
-            <Disclosure key={item.id}>
-              {({ open }) => (
-                <div>
-                  <Disclosure.Button
-                    className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    aria-label={`Toggle ${item.display_name} menu`}
-                  >
-                    <span className="text-base font-medium text-gray-700">{item.display_name}</span>
-                    {item.website_submenuitem && item.website_submenuitem.length > 0 && (
-                      open ? (
-                        <MinusIcon className="h-5 w-5" aria-hidden="true" />
-                      ) : (
-                        <PlusIcon className="h-5 w-5" aria-hidden="true" />
-                      )
-                    )}
-                  </Disclosure.Button>
-                  {item.website_submenuitem && item.website_submenuitem.length > 0 && (
-                    <Disclosure.Panel className="pl-8">
-                      {item.website_submenuitem.map((subItem) => (
-                        <Link
-                          key={subItem.id}
-                          href={subItem.url_name}
-                          onClick={() => setIsOpen(false)}
-                          className="cursor-pointer block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+          .map((item) => {
+            // Filter displayed submenu items, include if is_displayed is true or undefined
+            const displayedSubItems = (item.website_submenuitem || []).filter(
+              (subItem) => subItem.is_displayed !== false
+            );
+            console.log(`Mobile rendering ${item.display_name}, displayedSubItems:`, JSON.stringify(displayedSubItems, null, 2));
+
+            return (
+              <Disclosure key={item.id}>
+                {({ open }) => (
+                  <div>
+                    {displayedSubItems.length > 0 ? (
+                      <>
+                        <Disclosure.Button
+                          className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                          aria-label={`Toggle ${item.display_name} menu`}
                         >
-                          {subItem.name}
-                        </Link>
-                      ))}
-                    </Disclosure.Panel>
-                  )}
-                </div>
-              )}
-            </Disclosure>
-          ))
+                          <span className="text-base font-medium text-gray-700">{item.display_name}</span>
+                          {open ? (
+                            <MinusIcon className="h-5 w-5" aria-hidden="true" />
+                          ) : (
+                            <PlusIcon className="h-5 w-5" aria-hidden="true" />
+                          )}
+                        </Disclosure.Button>
+                        <Disclosure.Panel className="pl-8">
+                          {displayedSubItems.map((subItem) => (
+                            <Link
+                              key={subItem.id}
+                              href={subItem.url_name}
+                              onClick={() => setIsOpen(false)}
+                              className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                            >
+                              {subItem.name}
+                            </Link>
+                          ))}
+                        </Disclosure.Panel>
+                      </>
+                    ) : (
+                      <Link
+                        href={item.url_name}
+                        onClick={() => setIsOpen(false)}
+                        className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                        aria-label={`Go to ${item.display_name}`}
+                      >
+                        <span className="text-base font-medium text-gray-700">{item.display_name}</span>
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </Disclosure>
+            );
+          })
       )}
     </>
   );
@@ -238,10 +300,22 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           onClick={handleMainPage}
           className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200"
           aria-label="Go to homepage"
+          disabled={!router} // Disable if router is unavailable
         >
-          <Image src={companyLogo} alt="Logo" width={40} height={40} className="h-8 w-auto" />
+          {companyLogo ? (
+            <Image
+              src={companyLogo}
+              alt="Logo"
+              width={40}
+              height={40}
+              className="h-8 w-auto"
+              onError={() => console.error('Failed to load logo:', companyLogo)}
+            />
+          ) : (
+            <span className="text-gray-500">No Logo</span>
+          )}
           <span className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
-            {settings?.site || ''}
+            {settings?.site || 'Default Site Name'}
           </span>
         </button>
 
@@ -270,24 +344,24 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
               >
                 <UserIcon className="h-6 w-6 text-gray-600" />
               </button>
-              <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50">
+              <div className="absolute right-0  w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
                 <Link
                   href="/account"
-                  className="cursor-pointer block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+                  className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                 >
                   Account
                 </Link>
                 <button
                   type="button"
                   onClick={handleShowContact}
-                  className="cursor-pointer block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+                  className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                 >
                   Contact
                 </button>
                 <button
                   type="button"
                   onClick={handleLogoutAction}
-                  className="cursor-pointer block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
+                  className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Logout
                 </button>
@@ -354,7 +428,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                     <Link
                       href="/account"
                       onClick={() => setIsOpen(false)}
-                      className="cursor-pointer block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                      className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                     >
                       Account
                     </Link>
@@ -364,7 +438,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                         setIsOpen(false);
                         handleShowContact();
                       }}
-                      className="cursor-pointer block w-full text-left px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                      className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                     >
                       Contact
                     </button>
@@ -374,7 +448,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                         setIsOpen(false);
                         handleLogoutAction();
                       }}
-                      className="cursor-pointer block w-full text-left px-6 py-6 text-gray-700 hover:bg-sky-50 rounded-md font-medium transition-colors duration-200"
+                      className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-sky-50 rounded-md font-medium transition-colors duration-200"
                     >
                       Logout
                     </button>

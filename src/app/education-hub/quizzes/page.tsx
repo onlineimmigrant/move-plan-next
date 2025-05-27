@@ -7,8 +7,8 @@ import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline
 interface BlogQuiz {
   id: number;
   slug: string;
-  quiz_name: string | null;
-  quiz_description: string | null;
+  title: string | null;
+  description: string | null;
   display_this_quiz?: boolean;
   display_as_blog_quiz?: boolean;
   quiz_image?: string | null;
@@ -56,8 +56,8 @@ const QuizzesListPage: React.FC = () => {
 
   const filteredQuizzes = quizzes
     .filter((quiz) => {
-      const quiz_name = quiz.quiz_name ?? '';
-      const quiz_description = quiz.quiz_description ?? '';
+      const quiz_name = quiz.title ?? '';
+      const quiz_description = quiz.description ?? '';
       const subsection = quiz.subsection ?? '';
       const query = searchQuery.toLowerCase();
       const shouldDisplay = quiz.display_this_quiz !== false;
@@ -125,7 +125,7 @@ const QuizzesListPage: React.FC = () => {
                     <div className="w-full h-auto p-2 flex-shrink-0">
                       <img
                         src={quiz.quiz_image}
-                        alt={quiz.quiz_name ?? 'Blog quiz image'}
+                        alt={quiz.title ?? 'Blog quiz image'}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           console.error('Image failed to load:', quiz.quiz_image);
@@ -136,10 +136,10 @@ const QuizzesListPage: React.FC = () => {
                   )}
                   <div className="p-6 flex flex-col flex-grow">
                     <h2 className="tracking-tight text-lg line-clamp-1 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
-                      {quiz.quiz_name ?? 'Untitled'}
+                      {quiz.title ?? 'Untitled'}
                     </h2>
                     <p className="tracking-widest text-base text-gray-600 font-light line-clamp-2 flex-grow">
-                      {quiz.quiz_description ?? 'No quiz_description available'}
+                      {quiz.description ?? 'No quiz_description available'}
                     </p>
                   </div>
                   <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end relative">

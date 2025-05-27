@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import ContactForm from '@/components/ContactForm';
 import { useSettings } from '@/context/SettingsContext';
 
@@ -9,12 +10,15 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen flex">
+
       {/* Left side: Gradient background */}
       <div className="hidden md:flex w-1/2 bg-gradient-to-b from-sky-400 to-sky-700 items-center justify-center">
         <div className="text-white text-center">
-          <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
-            Contact Us
-          </h1>
+            <Link href='/'>
+                <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
+                    Contact Us
+                </h1>
+          </Link>
           <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
             We’re here to answer your questions!
           </p>
@@ -24,7 +28,12 @@ export default function ContactPage() {
       {/* Right side: Contact form */}
       <div className="w-full md:w-1/2 transparent flex items-center justify-center py-12">
         <div className="w-full max-w-lg p-6 bg-transparent">
-          <h1 className="my-8 text-center tracking-tight text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
+                    <Link href='/'>
+                      <span className="my-4 flex justify-center " >
+                       <Image src='/images/logo.svg' alt="Logo" width={60} height={60} className="h-12 w-auto"/>
+                      </span>
+                      </Link>
+          <h1 className="my-2 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
             Get in Touch
           </h1>
 

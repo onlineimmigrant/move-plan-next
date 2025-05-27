@@ -100,7 +100,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
 
           <div className={`text-${hero.title_alighnement || 'center'}`}>
             <h1
-              className={`${hero.h1_text_size_mobile || 'text-4xl'} sm:${hero.h1_text_size || 'text-5xl'} font-bold tracking-tight inline text-${hero.h1_title_color_id || 'gray-900'} hover:text-gray-700 
+              className={`${hero.h1_text_size_mobile || 'text-4xl'} sm:${hero.h1_text_size || 'text-7xl'} font-bold tracking-tight inline text-${hero.h1_title_color_id || 'gray-900'} hover:text-gray-700 
               
                   bg-gradient-to-r from-gray-700 via-sky-400 to-indigo-200 bg-clip-text text-transparent`}
                  
@@ -110,7 +110,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
             </h1>
 
             <p
-              className={`mt-6 tracking-wide ${hero.p_description_size_mobile || 'text-lg'} sm:${hero.p_description_size || 'text-xl'} text-${hero.p_description_color || 'gray-600' } hover:text-gray-900`}
+              className={`mt-6 tracking-wide ${hero.p_description_size_mobile || 'text-lg'} sm:text-2xl text-${hero.p_description_color || 'gray-600' } hover:text-gray-900`}
               style={{ fontWeight: hero.p_description_weight || 'normal' }}
             >
               {parse(heroData.p_description)}
