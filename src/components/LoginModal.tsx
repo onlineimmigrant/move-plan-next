@@ -2,16 +2,21 @@
 
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import ContactForm from './ContactForm';
+import LoginForm from './LoginForm';
+import Privacy from './Privacy';
+import Terms from './Terms';
 import { useSettings } from '@/context/SettingsContext';
+import { useState } from 'react';
 
-interface ContactModalProps {
+interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
+export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { settings } = useSettings();
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -41,18 +46,18 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="bg-white rounded-lg p-6 max-w-lg w-full h-full sm:max-h-[85vh] overflow-y-auto shadow-lg">
+              <Dialog.Panel className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg">
                 <div className="flex justify-between items-center mb-4">
                   <Dialog.Title
                     as="h2"
                     className="text-2xl font-extrabold text-gray-800 bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
                   >
-                    Contact Us
+                    {settings?.site || 'Login'}
                   </Dialog.Title>
                   <button
                     onClick={onClose}
                     className="cursor-pointer text-gray-600 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-full p-1"
-                    aria-label="Close contact modal"
+                    aria-label="Close login modal"
                   >
                     <svg
                       className="h-6 w-6"
@@ -70,7 +75,13 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                     </svg>
                   </button>
                 </div>
-                <ContactForm onSuccess={onClose} />
+                <LoginForm
+                  onShowPrivacy={() => setIsPrivacyOpen(true)}
+                  onShowTerms={() => setIsTermsOpen(true)}
+                  onSuccess={onClose}
+                />
+                <Privacy isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
+                <Terms isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
               </Dialog.Panel>
             </Transition.Child>
           </div>

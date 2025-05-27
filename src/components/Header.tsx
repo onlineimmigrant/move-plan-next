@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { Disclosure } from '@headlessui/react';
 import * as HeroIcons from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
+import LoginModal from './LoginModal';
+import ContactModal from './ContactModal';
 
 // Explicitly import the required icons
 import {
@@ -20,6 +22,7 @@ import {
   ShoppingCartIcon,
   UserIcon,
   MapIcon,
+  EnvelopeIcon,
 } from '@heroicons/react/24/outline';
 
 // Types
@@ -49,6 +52,8 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const { basket } = useBasket();
   const { session, logout } = useAuth();
   const router = useRouter();
@@ -80,13 +85,15 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     fetchMenuItems();
   }, []);
 
-  // Debug: Log the state of isLoggedIn, menuItems, and isOpen
+  // Debug: Log the state
   useEffect(() => {
     console.log('isLoggedIn:', isLoggedIn);
     console.log('session:', session);
     console.log('menuItems:', menuItems);
     console.log('isOpen:', isOpen);
-  }, [isLoggedIn, session, menuItems, isOpen]);
+    console.log('isLoginOpen:', isLoginOpen);
+    console.log('isContactOpen:', isContactOpen);
+  }, [isLoggedIn, session, menuItems, isOpen, isLoginOpen, isContactOpen]);
 
   const handleToggle = () => {
     console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
@@ -101,12 +108,17 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const handleLogoutAction = () => {
     setIsOpen(false);
     logout();
-    router.push('/login');
+    router.push('/');
   };
 
   const handleShowLogin = () => {
     setIsOpen(false);
-    router.push('/login');
+    setIsLoginOpen(true);
+  };
+
+  const handleShowContact = () => {
+    setIsOpen(false);
+    setIsContactOpen(true);
   };
 
   // Function to dynamically render the icon based on icon_name
@@ -134,8 +146,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           .map((item) => (
             <div key={item.id} className="relative group">
               <button
+                type="button"
                 className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 title={item.display_name}
+                aria-label={`Open ${item.display_name} menu`}
               >
                 {item.image ? (
                   <Image
@@ -155,7 +169,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                     <Link
                       key={subItem.id}
                       href={subItem.url_name}
-                      className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+                      className="cursor-pointer block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                     >
                       {subItem.name}
                     </Link>
@@ -180,10 +194,17 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             <Disclosure key={item.id}>
               {({ open }) => (
                 <div>
-                  <Disclosure.Button className="flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200">
+                  <Disclosure.Button
+                    className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                    aria-label={`Toggle ${item.display_name} menu`}
+                  >
                     <span className="text-base font-medium text-gray-700">{item.display_name}</span>
                     {item.website_submenuitem && item.website_submenuitem.length > 0 && (
-                      open ? <MinusIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />
+                      open ? (
+                        <MinusIcon className="h-5 w-5" aria-hidden="true" />
+                      ) : (
+                        <PlusIcon className="h-5 w-5" aria-hidden="true" />
+                      )
                     )}
                   </Disclosure.Button>
                   {item.website_submenuitem && item.website_submenuitem.length > 0 && (
@@ -193,7 +214,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                           key={subItem.id}
                           href={subItem.url_name}
                           onClick={() => setIsOpen(false)}
-                          className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                          className="cursor-pointer block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                         >
                           {subItem.name}
                         </Link>
@@ -213,20 +234,26 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
       <div className="p-4 sm:px-6 flex justify-between items-center">
         {/* Logo */}
         <button
+          type="button"
           onClick={handleMainPage}
-          className="flex items-center text-gray-900 hover:text-sky-600 transition-colors duration-200"
+          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200"
+          aria-label="Go to homepage"
         >
-          <Image src={companyLogo} alt="Logo" width={40} height={40} className="cursor-pointer h-8 w-auto" />
+          <Image src={companyLogo} alt="Logo" width={40} height={40} className="h-8 w-auto" />
           <span className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
             {settings?.site || ''}
           </span>
         </button>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-16 text-sm">
+        <div className="hidden md:flex items-center space-x-6 text-sm">
           {renderMenuItems()}
           {isMounted && totalItems > 0 && (
-            <Link href="/basket" className="relative">
+            <Link
+              href="/basket"
+              className="cursor-pointer relative"
+              aria-label={`View basket with ${totalItems} items`}
+            >
               <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
@@ -236,21 +263,31 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           {isLoggedIn ? (
             <div className="relative group">
               <button
-                className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                type="button"
+                className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                 title="Profile"
+                aria-label="Open profile menu"
               >
                 <UserIcon className="h-6 w-6 text-gray-600" />
               </button>
               <div className="absolute right-0 mt-0 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50">
                 <Link
                   href="/account"
-                  className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+                  className="cursor-pointer block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                 >
                   Account
                 </Link>
                 <button
+                  type="button"
+                  onClick={handleShowContact}
+                  className="cursor-pointer block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+                >
+                  Contact
+                </button>
+                <button
+                  type="button"
                   onClick={handleLogoutAction}
-                  className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
+                  className="cursor-pointer block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Logout
                 </button>
@@ -258,9 +295,11 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             </div>
           ) : (
             <button
+              type="button"
               onClick={handleShowLogin}
-              className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+              className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
               title="Login"
+              aria-label="Open login modal"
             >
               <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600" />
             </button>
@@ -270,7 +309,11 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         {/* Mobile Menu Toggle */}
         <div className="flex items-center md:hidden">
           {isMounted && totalItems > 0 && (
-            <Link href="/basket" className="relative mr-4">
+            <Link
+              href="/basket"
+              className="cursor-pointer relative mr-4"
+              aria-label={`View basket with ${totalItems} items`}
+            >
               <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
@@ -278,8 +321,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             </Link>
           )}
           <button
+            type="button"
             onClick={handleToggle}
-            className="text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-md p-1 transition-all duration-200"
+            className="cursor-pointer text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-md p-1 transition-all duration-200"
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
           >
             {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3BottomRightIcon className="h-6 w-6" />}
           </button>
@@ -294,24 +339,42 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             <Disclosure>
               {({ open }) => (
                 <div>
-                  <Disclosure.Button className="flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200">
+                  <Disclosure.Button
+                    className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                    aria-label="Toggle profile menu"
+                  >
                     <span className="text-base font-medium text-gray-700">Profile</span>
-                    {open ? <MinusIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />}
+                    {open ? (
+                      <MinusIcon className="h-5 w-5" aria-hidden="true" />
+                    ) : (
+                      <PlusIcon className="h-5 w-5" aria-hidden="true" />
+                    )}
                   </Disclosure.Button>
                   <Disclosure.Panel className="pl-8">
                     <Link
                       href="/account"
                       onClick={() => setIsOpen(false)}
-                      className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                      className="cursor-pointer block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                     >
                       Account
                     </Link>
                     <button
+                      type="button"
+                      onClick={() => {
+                        setIsOpen(false);
+                        handleShowContact();
+                      }}
+                      className="cursor-pointer block w-full text-left px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                    >
+                      Contact
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         setIsOpen(false);
                         handleLogoutAction();
                       }}
-                      className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-sky-50 rounded-md font-medium transition-colors duration-200"
+                      className="cursor-pointer block w-full text-left px-6 py-6 text-gray-700 hover:bg-sky-50 rounded-md font-medium transition-colors duration-200"
                     >
                       Logout
                     </button>
@@ -321,8 +384,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             </Disclosure>
           ) : (
             <button
+              type="button"
               onClick={handleShowLogin}
-              className="flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+              className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+              aria-label="Open login modal"
             >
               <span className="text-base font-medium text-gray-700">Login</span>
               <ArrowLeftOnRectangleIcon className="h-5 w-5 text-gray-600" />
@@ -330,6 +395,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           )}
         </div>
       )}
+
+      {/* Modals */}
+      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </nav>
   );
 };
