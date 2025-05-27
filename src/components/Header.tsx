@@ -217,7 +217,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           className="flex items-center text-gray-900 hover:text-sky-600 transition-colors duration-200"
         >
           <Image src={companyLogo} alt="Logo" width={40} height={40} className="cursor-pointer h-8 w-auto" />
-          <span className="ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
+          <span className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
             {settings?.site || ''}
           </span>
         </button>

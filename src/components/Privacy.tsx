@@ -2,6 +2,8 @@
 
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Link from 'next/link';
+import { useSettings } from '@/context/SettingsContext';
 
 interface PrivacyProps {
   isOpen: boolean;
@@ -9,9 +11,12 @@ interface PrivacyProps {
 }
 
 export default function Privacy({ isOpen, onClose }: PrivacyProps) {
+  const { settings } = useSettings();
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
+        {/* Overlay */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -21,11 +26,12 @@ export default function Privacy({ isOpen, onClose }: PrivacyProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-50" />
+          <div className="fixed inset-0 bg-gray-500 opacity-70" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 ">
+          <div className="flex min-h-full items-center justify-center p-4">
+            {/* Modal Content */}
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -35,44 +41,61 @@ export default function Privacy({ isOpen, onClose }: PrivacyProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+              <Dialog.Panel className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-lg">
                 <div className="flex justify-between items-center mb-4">
-                  <Dialog.Title as="h2" className="text-2xl font-bold text-gray-800">
-                    Privacy Policy
+                  <Dialog.Title
+                    as="h2"
+                    className="text-2xl font-extrabold text-gray-800 bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
+                  >
+                    Privacy Policy Summary
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="text-gray-600 hover:text-gray-800 focus:outline-none"
+                    className="cursor-pointer text-gray-600 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-full p-1"
+                    aria-label="Close privacy policy modal"
                   >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
-                <div className="text-gray-700">
+                <div className="text-gray-700 text-sm leading-relaxed">
                   <p className="mb-4">
-                    This is the Privacy Policy for Let Spring. We are committed to protecting your personal information and your right to privacy.
+                    At {settings?.site || 'our platform'}, we value your privacy and are committed to safeguarding your personal information. This summary outlines how we handle your data. For the complete details, read our full{' '}
+                    <Link href="/privacy-policy" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                      Privacy Policy
+                    </Link>.
                   </p>
                   <p className="mb-4">
-                    When you use our services, you trust us with your information. This Privacy Policy is meant to help you understand what data we collect, why we collect it, and what we do with it.
+                    <strong className="font-semibold text-gray-800">What We Collect:</strong> We collect information you provide, such as your email address, username, and profile details, to create and manage your account. We may also collect usage data to enhance your experience.
                   </p>
                   <p className="mb-4">
-                    <strong>Data Collection:</strong> We collect personal information such as your email address, username, and any other information you provide during registration or use of our services.
+                    <strong className="font-semibold text-gray-800">How We Use It:</strong> Your data helps us deliver, personalize, and improve our services, communicate with you, and ensure platform security. We never sell your personal information.
                   </p>
                   <p className="mb-4">
-                    <strong>Data Usage:</strong> We use your data to provide and improve our services, communicate with you, and ensure the security of our platform.
+                    <strong className="font-semibold text-gray-800">How We Protect It:</strong> We use industry-standard security measures to protect your data and limit access to authorized personnel only.
                   </p>
                   <p className="mb-4">
-                    For more details, please contact us at privacy@letspring.com.
+                    <strong className="font-semibold text-gray-800">Your Rights:</strong> You can access, update, or delete your account information at any time. Contact us to exercise your rights or learn more.
                   </p>
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    onClick={onClose}
-                    className="px-4 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    Close
-                  </button>
+                  <p className="mb-4">
+                    Have questions? Reach out via our{' '}
+                    <Link href="/contact" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                      contact form
+                    </Link>{' '}
+
+                  </p>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
