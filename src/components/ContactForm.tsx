@@ -385,7 +385,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             name="message"
             value={formData.message}
             onChange={handleChange}
-            rows={5}
+            rows={2}
             className={`w-full px-4 py-2 border ${
               errors.message ? 'border-red-500' : 'border-gray-300'
             } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
