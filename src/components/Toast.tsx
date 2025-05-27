@@ -27,7 +27,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
     }
   }, []);
 
-  const bgColor = type === 'success' ? 'teal-600' : 'red-600';
+  const bgColor = type === 'success' ? 'sky-600' : 'red-600';
   const icon = type === 'success' ? <FaCheckCircle className="h-8 w-8" /> : <FaExclamationCircle className="h-8 w-8" />;
 
   return (
