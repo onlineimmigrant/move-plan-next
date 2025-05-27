@@ -5,6 +5,8 @@ import LoginForm from '@/components/LoginForm';
 import Privacy from '@/components/Privacy';
 import Terms from '@/components/Terms';
 import { useSettings } from '@/context/SettingsContext';
+import Image from 'next/image';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const { settings } = useSettings();
@@ -16,9 +18,11 @@ export default function LoginPage() {
       {/* Left side: Gradient background */}
       <div className="hidden md:flex w-1/2 bg-gradient-to-b from-sky-400 to-sky-700 items-center justify-center">
         <div className="text-white text-center">
+          <Link href='/'>
           <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
-            Welcome <br />to {settings?.site || ''}
+            Welcome 
           </h1>
+          </Link>
           <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
             Start your learning journey with ease.
           </p>
@@ -27,9 +31,15 @@ export default function LoginPage() {
 
       {/* Right side: Login form */}
       <div className="w-full md:w-1/2 transparent flex items-center justify-center">
+      
         <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
-          <h1 className="my-8 text-center tracking-tight text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
-            {settings?.site || 'Login'}
+          <Link href='/'>
+          <span className="mb-16 flex justify-center " >
+           <Image src='/images/logo.svg' alt="Logo" width={60} height={60} className="h-12 w-auto"/>
+          </span>
+          </Link>
+          <h1 className=" my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
+            Login
           </h1>
 
           <LoginForm

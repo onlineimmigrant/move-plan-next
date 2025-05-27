@@ -8,6 +8,8 @@ import Privacy from '@/components/Privacy';
 import Terms from '@/components/Terms';
 import { useSettings } from '@/context/SettingsContext';
 import ContactModal from '@/components/ContactModal';
+import Image from 'next/image';
+import Link from 'next/link';
 
 
 
@@ -120,11 +122,13 @@ export default function RegisterPage() {
       {/* Left side: Gradient background */}
       <div className="hidden md:flex w-1/2 bg-gradient-to-b from-sky-400 to-sky-700 items-center justify-center">
         <div className="text-white text-center">
+          <Link href='/'>
           <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
-            Welcome <br />to {settings?.site || ''}
+            Welcome 
           </h1>
+          </Link>
           <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
-            Create your account to start learning.
+            Start your learning journey with ease.
           </p>
         </div>
       </div>
@@ -132,12 +136,17 @@ export default function RegisterPage() {
       {/* Right side: Register form */}
       <div className="w-full md:w-1/2 transparent flex items-center justify-center">
         <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
-          <h1 className="my-8 text-center tracking-tight text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
+          <Link href='/'>
+          <span className="mb-16 flex justify-center hover:bg-gray-50" >
+           <Image src='/images/logo.svg' alt="Logo" width={60} height={60} className="h-12 w-auto"/>
+          </span>
+          </Link>
+          <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
             Create {settings?.site || ''} Account
           </h1>
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-          {success && <p className="text-green-500 text-center mb-4">{success}</p>}
+          {success && <p className="text-teal-500 text-center mb-4">{success}</p>}
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-4">
@@ -190,18 +199,18 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="mt-16 space-y-4">
+            <div className="mt-16 space-y-4 text-base">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="text-xl w-full px-4 py-4 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer disabled:bg-sky-400 disabled:cursor-not-allowed"
+                className="w-full px-4 py-4 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer disabled:bg-sky-400 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Registering...' : 'Register'}
               </button>
               <button
                 type="button"
                 onClick={handleLogin}
-                className="text-xl w-full px-4 py-4 bg-amber-300 text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer"
+                className=" w-full px-4 py-4 bg-yellow-200 text-gray-600 hover:text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer"
               >
                 Back to Login
               </button>

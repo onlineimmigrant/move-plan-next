@@ -192,18 +192,18 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
             </div>
           </div>
 
-          <div className="mt-16 space-y-4">
+          <div className="mt-16 space-y-4 text-base">
             <button
               type="submit"
               disabled={isLoading}
-              className="text-xl w-full px-4 py-4 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer disabled:bg-sky-400 disabled:cursor-not-allowed"
+              className="w-full px-4 py-4 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer disabled:bg-sky-400 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </button>
             <button
               type="button"
               onClick={handleRegister}
-              className="text-xl w-full px-4 py-4 bg-amber-300 text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer mt-2"
+                className=" w-full px-4 py-4 bg-yellow-200 text-gray-600 hover:text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer"
             >
               Register
             </button>

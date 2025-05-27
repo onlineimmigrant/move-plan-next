@@ -7,6 +7,8 @@ import Privacy from './Privacy';
 import Terms from './Terms';
 import { useSettings } from '@/context/SettingsContext';
 import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -36,6 +38,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
+
             {/* Modal Content */}
             <Transition.Child
               as={Fragment}
@@ -47,10 +50,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-end items-center mb-4">
                   <Dialog.Title
                     as="h2"
-                    className="text-2xl font-extrabold text-gray-800 bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
+                    className="sr-only text-2xl font-extrabold text-gray-800 bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
                   >
                     {settings?.site || 'Login'}
                   </Dialog.Title>
@@ -75,6 +78,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     </svg>
                   </button>
                 </div>
+                                      <Link href='/'>
+          <span className="mb-16 flex justify-center " >
+           <Image src='/images/logo.svg' alt="Logo" width={60} height={60} className="h-10 w-auto"/>
+          </span>
+          </Link>
                 <LoginForm
                   onShowPrivacy={() => setIsPrivacyOpen(true)}
                   onShowTerms={() => setIsTermsOpen(true)}

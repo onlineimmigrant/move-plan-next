@@ -37,7 +37,8 @@ export async function GET() {
           name,
           order,
           url_name,
-          description
+          description,
+          is_displayed
         )
       `)
       .order('order', { ascending: true }) // Order top-level menu items

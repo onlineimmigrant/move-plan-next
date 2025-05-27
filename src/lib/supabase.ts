@@ -45,110 +45,158 @@ export const supabase = createClient(
 
 // Fetch user profile
 export async function fetchUserProfile(userId?: string) {
-  if (!userId) return null;
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('user_status, last_login_at')
-    .eq('id', userId)
-    .single();
-
-  if (error) {
-    console.error('Error fetching profile:', error);
+  if (!userId) {
+    console.log('No userId provided, skipping profile fetch');
     return null;
   }
-  return data;
+
+  try {
+    console.log(`Fetching profile for userId: ${userId}`);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('user_status, last_login_at')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile:', {
+        message: error.message || 'No error message provided',
+        code: error.code || 'No error code',
+        details: error.details || 'No details',
+        hint: error.hint || 'No hint',
+        userId,
+      });
+      return null;
+    }
+
+    console.log('Profile fetched:', data);
+    return data;
+  } catch (err) {
+    console.error('Unexpected error fetching profile:', err, { userId });
+    return null;
+  }
 }
 
 // Fetch banners
 export async function fetchBanners(pagePath?: string, userId?: string): Promise<Banner[]> {
-  const profile = await fetchUserProfile(userId);
-  const userStatus = profile?.user_status || 'anonymous';
-  const isReturning = profile?.last_login_at && new Date(profile.last_login_at) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? 'returning' : null;
+  try {
+    console.log(`Fetching banners for pagePath: ${pagePath}, userId: ${userId}`);
+    const profile = await fetchUserProfile(userId);
+    const userStatus = profile?.user_status || 'anonymous';
+    const isReturning = profile?.last_login_at && new Date(profile.last_login_at) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? 'returning' : null;
 
-  const targetAudiences = [userStatus];
-  if (isReturning) targetAudiences.push('returning');
+    const targetAudiences = [userStatus];
+    if (isReturning) targetAudiences.push('returning');
 
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('banners')
-    .select('id, position, type, content, open_state, landing_content, page_paths, is_active, start_at, end_at, priority, target_audience, dismissal_duration')
-    .eq('is_active', true)
-    .lte('start_at', now)
-    .or(`end_at.is.null,end_at.gte.${now}`)
-    .overlaps('target_audience', targetAudiences)
-    .order('priority', { ascending: true });
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('banners')
+      .select('id, position, type, content, open_state, landing_content, page_paths, is_active, start_at, end_at, priority, target_audience, dismissal_duration')
+      .eq('is_active', true)
+      .lte('start_at', now)
+      .or(`end_at.is.null,end_at.gte.${now}`)
+      .overlaps('target_audience', targetAudiences)
+      .order('priority', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching banners:', error);
+    if (error) {
+      console.error('Error fetching banners:', {
+        message: error.message || 'No error message provided',
+        code: error.code || 'No error code',
+        details: error.details || 'No details',
+        hint: error.hint || 'No hint',
+      });
+      return [];
+    }
+
+    console.log('Fetched banners:', data);
+
+    const dismissedIds = await fetchDismissedBanners(userId);
+
+    // Filter banners by page_paths (including wildcard matching)
+    const filteredBanners = data.filter((banner) => {
+      if (!pagePath || !banner.page_paths) return true; // NULL page_paths means all pages
+      return banner.page_paths.some((path: string) => matchesPathPattern(pagePath, path));
+    });
+
+    return filteredBanners.map((banner) => ({
+      id: banner.id,
+      position: banner.position as BannerPosition,
+      type: banner.type as BannerType,
+      content: {
+        text: banner.content.text,
+        link: banner.content.link
+          ? {
+              url: banner.content.link.url,
+              label: banner.content.link.label,
+              isExternal: banner.content.link.isExternal,
+            }
+          : undefined,
+        icon: banner.content.icon,
+        customContent: banner.content.customContent,
+        banner_background: banner.content.banner_background,
+        banner_content_style: banner.content.banner_content_style,
+      },
+      openState: banner.open_state as BannerOpenState,
+      landing_content: banner.landing_content,
+      page_paths: banner.page_paths,
+      isDismissed: dismissedIds.includes(banner.id),
+      dismissal_duration: banner.dismissal_duration,
+    }));
+  } catch (err) {
+    console.error('Unexpected error fetching banners:', err);
     return [];
   }
-
-  console.log('Fetched banners:', data);
-
-  const dismissedIds = await fetchDismissedBanners(userId);
-
-  // Filter banners by page_paths (including wildcard matching)
-  const filteredBanners = data.filter((banner) => {
-    if (!pagePath || !banner.page_paths) return true; // NULL page_paths means all pages
-    return banner.page_paths.some((path: string) => matchesPathPattern(pagePath, path));
-  });
-
-  return filteredBanners.map((banner) => ({
-    id: banner.id,
-    position: banner.position as BannerPosition,
-    type: banner.type as BannerType,
-    content: {
-      text: banner.content.text,
-      link: banner.content.link
-        ? {
-            url: banner.content.link.url,
-            label: banner.content.link.label,
-            isExternal: banner.content.link.isExternal,
-          }
-        : undefined,
-      icon: banner.content.icon,
-      customContent: banner.content.customContent,
-      banner_background: banner.content.banner_background,
-      banner_content_style: banner.content.banner_content_style,
-    },
-    openState: banner.open_state as BannerOpenState,
-    landing_content: banner.landing_content,
-    page_paths: banner.page_paths,
-    isDismissed: dismissedIds.includes(banner.id),
-    dismissal_duration: banner.dismissal_duration,
-  }));
 }
 
 // Fetch dismissed banners
 export async function fetchDismissedBanners(userId?: string): Promise<string[]> {
-  const now = new Date().toISOString();
-  const query = supabase
-    .from('banner_dismissals')
-    .select('banner_id')
-    .or(userId ? `user_id.eq.${userId},is_global.eq.true` : 'is_global.eq.true')
-    .gte('expires_at', now);
+  try {
+    const now = new Date().toISOString();
+    const query = supabase
+      .from('banner_dismissals')
+      .select('banner_id')
+      .or(userId ? `user_id.eq.${userId},is_global.eq.true` : 'is_global.eq.true')
+      .gte('expires_at', now);
 
-  const { data, error } = await query;
+    const { data, error } = await query;
 
-  if (error) {
-    console.error('Error fetching dismissed banners:', error);
+    if (error) {
+      console.error('Error fetching dismissed banners:', {
+        message: error.message || 'No error message provided',
+        code: error.code || 'No error code',
+        details: error.details || 'No details',
+        hint: error.hint || 'No hint',
+      });
+      return [];
+    }
+
+    return data.map((dismissal) => dismissal.banner_id);
+  } catch (err) {
+    console.error('Unexpected error fetching dismissed banners:', err);
     return [];
   }
-
-  return data.map((dismissal) => dismissal.banner_id);
 }
 
 // Dismiss a banner
 export async function dismissBanner(bannerId: string, userId: string | null, dismissalDuration: string | undefined) {
-  const expiresAt = new Date(Date.now() + parseIntervalToMs(dismissalDuration));
-  const { error } = await supabase.from('banner_dismissals').insert({
-    banner_id: bannerId,
-    user_id: userId,
-    is_global: userId === null,
-    expires_at: expiresAt.toISOString(),
-  });
+  try {
+    const expiresAt = new Date(Date.now() + parseIntervalToMs(dismissalDuration));
+    const { error } = await supabase.from('banner_dismissals').insert({
+      banner_id: bannerId,
+      user_id: userId,
+      is_global: userId === null,
+      expires_at: expiresAt.toISOString(),
+    });
 
-  if (error) {
-    console.error('Error dismissing banner:', error);
+    if (error) {
+      console.error('Error dismissing banner:', {
+        message: error.message || 'No error message provided',
+        code: error.code || 'No error code',
+        details: error.details || 'No details',
+        hint: error.hint || 'No hint',
+      });
+    }
+  } catch (err) {
+    console.error('Unexpected error dismissing banner:', err);
   }
 }
