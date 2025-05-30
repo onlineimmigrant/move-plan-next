@@ -3,15 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, getOrganizationId } from '@/lib/supabase';
 import Privacy from '@/components/Privacy';
 import Terms from '@/components/Terms';
 import { useSettings } from '@/context/SettingsContext';
 import ContactModal from '@/components/ContactModal';
 import Image from 'next/image';
 import Link from 'next/link';
-
-
 
 
 // Define constants using Next.js environment variables
@@ -29,11 +27,10 @@ export default function RegisterPage() {
   const { settings } = useSettings();
   const { setSession } = useAuth();
   const router = useRouter();
-  const [isContactOpen, setIsContactOpen] = useState(false);
-
-  // State for Privacy/Terms modals
+  const [isContactOpen, setIsContactOpen] = useState<boolean>(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
   const [isTermsOpen, setIsTermsOpen] = useState<boolean>(false);
+  
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,12 +57,21 @@ export default function RegisterPage() {
       return;
     }
 
-    const options = {
-      data: { username },
-      emailRedirectTo: `${DOMAIN_CUSTOM}/login`, // Redirect to login after email confirmation
-    };
-
     try {
+      // Fetch organization ID based on current domain
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        setError('Unable to identify organization. Please contact support.');
+        setIsLoading(false);
+        return;
+      }
+
+      const options = {
+        data: { username },
+        emailRedirectTo: `${DOMAIN_CUSTOM}/login`,
+      };
+
       // Attempt sign-up with Supabase
       const { data, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
@@ -74,32 +80,70 @@ export default function RegisterPage() {
       });
 
       if (authError) {
-        setError(authError.message);
+        console.error('Auth error:', authError.message, authError);
+        if (authError.message.includes('already registered')) {
+          setError('This email is already in use. Please try a different email.');
+        } else if (authError.message.includes('Database error saving new user')) {
+          setError('Unable to create account due to a server issue. Please try again later or contact support.');
+        } else {
+          setError(authError.message);
+        }
         setIsLoading(false);
         return;
       }
 
-      // Insert a profile row if user is created
+      // Insert or update a profile row if user is created
       if (data.user) {
         const userId = data.user.id;
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert({ id: userId, username, full_name: username });
+          .upsert(
+            {
+              id: userId,
+              username,
+              full_name: username,
+              email: email.trim(),
+              organization_id: organizationId,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'id' }
+          );
         if (profileError) {
-          console.error('Profile creation error:', profileError);
-          setError('Failed to create user profile.');
+          console.error('Profile creation error:', profileError.message, profileError.details);
+          setError(`Failed to create or update user profile: ${profileError.message}`);
           setIsLoading(false);
           return;
         }
+
+        // Trigger welcome email
+        try {
+          const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'welcome', to: email.trim(), name: username }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Failed to send welcome email:', errorData.error, errorData.details || '');
+            setError('Registration successful, but failed to send welcome email. Please contact support.');
+          } else {
+            console.log('Welcome email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('Error triggering welcome email:', emailError);
+          setError('Registration successful, but failed to send welcome email. Please contact support.');
+          // Non-blocking: Email failure doesn't affect signup
+        }
       }
 
-      // If a session is returned (no email confirmation required), set it
+      // Handle session or email confirmation
       if (data.session) {
         setSession(data.session);
-        setSuccess('Registration successful! Redirecting to dashboard...');
-        setTimeout(() => router.push('/dashboard'), 2000);
+        setSuccess('Registration successful! Redirecting to profile...');
+        setTimeout(() => router.push('/account/profile'), 2000);
       } else if (EMAIL_CONFIRM_REQUIRED) {
-        // Show success message for email confirmation
         setSuccess('Please check your email to confirm your account.');
         setTimeout(() => router.push('/login'), 2000);
       } else {
@@ -122,10 +166,10 @@ export default function RegisterPage() {
       {/* Left side: Gradient background */}
       <div className="hidden md:flex w-1/2 bg-gradient-to-b from-sky-400 to-sky-700 items-center justify-center">
         <div className="text-white text-center">
-          <Link href='/'>
-          <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
-            Welcome 
-          </h1>
+          <Link href="/">
+            <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
+              Welcome
+            </h1>
           </Link>
           <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
             Start your learning journey with ease.
@@ -135,11 +179,23 @@ export default function RegisterPage() {
 
       {/* Right side: Register form */}
       <div className="w-full md:w-1/2 transparent flex items-center justify-center">
-        <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
-          <Link href='/'>
-          <span className="mb-16 flex justify-center hover:bg-gray-50" >
-           <Image src='/images/logo.svg' alt="Logo" width={60} height={60} className="h-12 w-auto"/>
-          </span>
+        <div className="w-full max-w-sm p-6">
+          <Link href="/">
+            <span className="mb-16 flex justify-center hover:bg-gray-50">
+                        {settings.image? (
+                          <Image
+                            src={settings.image}
+                            alt="Logo"
+                            width={60}
+                            height={60}
+                            className="h-8 w-auto"
+                            onError={() => console.error('Failed to load logo:')}
+                          />
+                        ) : (
+                          <span className="text-gray-500"></span>
+                        )}
+
+            </span>
           </Link>
           <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
             Create {settings?.site || ''} Account
@@ -210,7 +266,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={handleLogin}
-                className=" w-full px-4 py-4 bg-yellow-200 text-gray-600 hover:text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer"
+                className="w-full px-4 py-4 bg-yellow-200 text-gray-600 hover:text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer"
               >
                 Back to Login
               </button>
@@ -231,7 +287,7 @@ export default function RegisterPage() {
               >
                 Terms
               </button>
-                <button
+              <button
                 type="button"
                 onClick={() => setIsContactOpen(true)}
                 className="text-sm text-gray-600 hover:text-sky-600 cursor-pointer"
@@ -243,7 +299,7 @@ export default function RegisterPage() {
 
           <Privacy isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
           <Terms isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
-            <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+          <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
         </div>
       </div>
     </div>

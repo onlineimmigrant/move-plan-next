@@ -1,23 +1,35 @@
 // app/layout.tsx
 import { getSettings } from '@/lib/getSettings';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import './globals.css';
 import ClientProviders from './ClientProviders';
+import { Settings } from '@/types/settings';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getSettings();
+  // Get base URL from environment
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-  // Fetch site-wide FAQs
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Fetch settings for the organization
+  const settings: Settings = await getSettings(baseUrl);
+
+  // Fetch site-wide FAQs (organization-specific)
   let siteFaqs: { question: string; answer: string }[] = [];
   try {
-    const { data, error } = await supabase.from('faq').select('question, answer');
-    if (error) throw error;
-    siteFaqs = data || [];
+    const organizationId = await supabase
+      .from('organizations')
+      .select('id')
+      .eq(process.env.NODE_ENV === 'development' ? 'base_url_local' : 'base_url', baseUrl)
+      .single()
+      .then(({ data }) => data?.id);
+
+    if (organizationId) {
+      const { data, error } = await supabase
+        .from('faq')
+        .select('question, answer')
+        .eq('organization_id', organizationId);
+      if (error) throw error;
+      siteFaqs = data || [];
+    }
   } catch (error) {
     console.error('Failed to fetch FAQs:', error);
   }
@@ -26,8 +38,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     text_color: settings.primary_color.name,
     text_color_hover: settings.secondary_color.name,
     font_family: settings.primary_font.name.toLowerCase(),
-    image_for_privacy_settings: '/images/logo.svg',
+    image_for_privacy_settings: settings.image,
     site: settings.site,
+    image: settings.image,
     disclaimer: `© ${new Date().getFullYear()} ${settings.site || ''}. All rights reserved.`,
   };
 
@@ -48,7 +61,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {
         '@context': 'https://schema.org',
         '@type': 'WebPage',
-        name: settings?.site || `${baseUrl}`,
+        name: settings?.site || baseUrl,
         url: baseUrl,
         description: 'Sample admin app with Next.js 15',
         publisher: {
@@ -91,4 +104,4 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   );
 }
 
-export const revalidate = 3600; // Revalidate FAQs every hour
+export const revalidate = 3600; // Revalidate every hour

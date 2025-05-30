@@ -1,4 +1,4 @@
-// src/components/TemplateSections.tsx
+// /src/components/TemplateSections.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -15,6 +15,7 @@ interface Metric {
   is_image_rounded_full: boolean;
   is_card_type: boolean;
   background_color?: string;
+  organization_id: string | null; // Added
 }
 
 interface TemplateSectionData {
@@ -42,6 +43,7 @@ interface TemplateSectionData {
   metric_description_weight?: string;
   metric_description_color?: string;
   website_metric: Metric[];
+  organization_id: string | null; // Added
 }
 
 const TemplateSections: React.FC = () => {

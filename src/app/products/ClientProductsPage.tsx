@@ -11,6 +11,7 @@ import FeedbackAccordion from '@/components/FeedbackAccordion';
 type Product = {
   id: number;
   slug?: string;
+  organisation_id: string;
   product_name: string | null;
   product_sub_type_id: number;
   product_sub_type_additional_id: number;

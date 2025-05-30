@@ -1,7 +1,8 @@
+// app/api/products/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, stripe } from '@/lib/stripe-supabase';
-
-// Validate image URL (ensure it's a valid URL starting with http:// or https://)
+import { supabase, getOrganizationId } from '@/lib/supabase'; 
+import { stripe } from '@/lib/stripe-supabase'; 
+// Validate image URL
 function validateImageUrl(url: string): string | undefined {
   if (!url || typeof url !== 'string') {
     return undefined;
@@ -17,6 +18,12 @@ function validateImageUrl(url: string): string | undefined {
 
 export async function POST(request: Request) {
   try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const { product_name, is_displayed = true, product_description, product_tax_code, links_to_image, attrs } = body;
 
@@ -24,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required field: product_name' }, { status: 400 });
     }
 
-    // Insert the product into Supabase
+    // Insert the product into Supabase with organization_id
     const { data: product, error: insertError } = await supabase
       .from('product')
       .insert({
@@ -32,8 +39,9 @@ export async function POST(request: Request) {
         is_displayed,
         product_description,
         product_tax_code,
-        links_to_image, // Store as a single string in Supabase
+        links_to_image,
         attrs,
+        organization_id: organizationId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -50,27 +58,27 @@ export async function POST(request: Request) {
       console.warn(`Invalid or unsupported image URL provided: ${links_to_image}. Proceeding without image.`);
     }
 
-    // Create the product in Stripe, excluding images if invalid or absent
+    // Create the product in Stripe
     const createParams: any = {
       name: product_name,
       active: is_displayed,
-      tax_code: product_tax_code, // Map product_tax_code to Stripe's tax_code
+      tax_code: product_tax_code,
       description: product_description || undefined,
       metadata: attrs || undefined,
     };
 
-    // Only include images if the URL is valid
     if (validatedImageUrl) {
       createParams.images = [validatedImageUrl];
     }
 
     const stripeProduct = await stripe.products.create(createParams);
 
-    // Update the product with the stripe_product_id
+    // Update the product with stripe_product_id
     const { error: updateError } = await supabase
       .from('product')
       .update({ stripe_product_id: stripeProduct.id, updated_at: new Date().toISOString() })
-      .eq('id', product.id);
+      .eq('id', product.id)
+      .eq('organization_id', organizationId);
 
     if (updateError) {
       return NextResponse.json({ error: `Failed to update product with stripe_product_id: ${updateError.message}` }, { status: 500 });
@@ -84,6 +92,12 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const { productId, updates } = body;
 
@@ -98,6 +112,7 @@ export async function PUT(request: Request) {
       .from('product')
       .select('id, product_name, is_displayed, product_description, product_tax_code, links_to_image, attrs, stripe_product_id')
       .eq('id', productId)
+      .eq('organization_id', organizationId)
       .single();
 
     if (fetchError || !product) {
@@ -110,7 +125,7 @@ export async function PUT(request: Request) {
       is_displayed: is_displayed !== undefined ? is_displayed : product.is_displayed,
       product_description: product_description !== undefined ? product_description : product.product_description,
       product_tax_code: product_tax_code !== undefined ? product_tax_code : product.product_tax_code,
-      links_to_image: links_to_image !== undefined ? links_to_image : product.links_to_image, // Store as a single string
+      links_to_image: links_to_image !== undefined ? links_to_image : product.links_to_image,
       attrs: attrs !== undefined ? attrs : product.attrs,
       updated_at: new Date().toISOString(),
     };
@@ -119,6 +134,7 @@ export async function PUT(request: Request) {
       .from('product')
       .update(updateData)
       .eq('id', productId)
+      .eq('organization_id', organizationId)
       .select()
       .single();
 
@@ -138,7 +154,7 @@ export async function PUT(request: Request) {
         name: updatedProduct.product_name,
         active: updatedProduct.is_displayed,
         description: updatedProduct.product_description || undefined,
-        tax_code: updatedProduct.product_tax_code, // Map product_tax_code to Stripe's tax_code
+        tax_code: updatedProduct.product_tax_code,
         metadata: updatedProduct.attrs || undefined,
       };
 
@@ -151,7 +167,8 @@ export async function PUT(request: Request) {
       const { error: stripeUpdateError } = await supabase
         .from('product')
         .update({ stripe_product_id: stripeProduct.id, updated_at: new Date().toISOString() })
-        .eq('id', productId);
+        .eq('id', productId)
+        .eq('organization_id', organizationId);
 
       if (stripeUpdateError) {
         return NextResponse.json({ error: `Failed to update stripe_product_id: ${stripeUpdateError.message}` }, { status: 500 });
@@ -164,7 +181,7 @@ export async function PUT(request: Request) {
       name: updatedProduct.product_name,
       active: updatedProduct.is_displayed,
       description: updatedProduct.product_description || undefined,
-      tax_code: updatedProduct.product_tax_code, // Map product_tax_code to Stripe's tax_code
+      tax_code: updatedProduct.product_tax_code,
       metadata: updatedProduct.attrs || undefined,
     };
 
@@ -182,6 +199,12 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const { productId } = body;
 
@@ -193,6 +216,7 @@ export async function DELETE(request: Request) {
       .from('product')
       .select('stripe_product_id')
       .eq('id', productId)
+      .eq('organization_id', organizationId)
       .single();
 
     if (fetchError || !product) {
@@ -210,7 +234,8 @@ export async function DELETE(request: Request) {
     const { error: deleteError } = await supabase
       .from('product')
       .delete()
-      .eq('id', productId);
+      .eq('id', productId)
+      .eq('organization_id', organizationId);
 
     if (deleteError) {
       return NextResponse.json({ error: `Failed to delete product: ${deleteError.message}` }, { status: 500 });

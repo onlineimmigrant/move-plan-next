@@ -80,7 +80,18 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 </div>
                                       <Link href='/'>
           <span className="mb-16 flex justify-center " >
-           <Image src='/images/logo.svg' alt="Logo" width={60} height={60} className="h-10 w-auto"/>
+                     {settings.image? (
+                       <Image
+                         src={settings.image}
+                         alt="Logo"
+                         width={40}
+                         height={40}
+                         className="h-8 w-auto"
+                         onError={() => console.error('Failed to load logo:')}
+                       />
+                     ) : (
+                       <span className="text-gray-500"></span>
+                     )}
           </span>
           </Link>
                 <LoginForm

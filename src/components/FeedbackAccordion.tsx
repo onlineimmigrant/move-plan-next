@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, getOrganizationId } from '@/lib/supabase';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { v4 as uuidv4 } from 'uuid';
 import FeedbackForm from './FeedbackForm';
@@ -141,12 +141,20 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
     setError(null);
 
     try {
+      // Fetch organization_id
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        throw new Error('Organization not found');
+      }
+
       let productIdToUse = productId;
       if (type === 'product' && slug && !productIdToUse) {
         const { data: product, error: productError } = await supabase
           .from('product')
           .select('id')
           .eq('slug', slug)
+          .eq('organization_id', organizationId)
           .single();
         if (productError || !product) throw new Error('Error fetching product or not found');
         setProductId(product.id);
@@ -158,7 +166,8 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
       let countQuery = supabase
         .from('feedback_feedbackproducts')
         .select('*', { count: 'exact', head: true })
-        .eq('is_approved_by_admin', true);
+        .eq('is_approved_by_admin', true)
+        .eq('organization_id', organizationId);
 
       if (type === 'product' && productIdToUse) {
         countQuery = countQuery.eq('product_id', productIdToUse);
@@ -177,7 +186,8 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
       let avgQuery = supabase
         .from('feedback_feedbackproducts')
         .select('rating')
-        .eq('is_approved_by_admin', true);
+        .eq('is_approved_by_admin', true)
+        .eq('organization_id', organizationId);
 
       if (type === 'product' && productIdToUse) {
         avgQuery = avgQuery.eq('product_id', productIdToUse);
@@ -196,6 +206,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
       let feedbackQuery = supabase
         .from('feedback_feedbackproducts')
         .select('id, rating, comment, submitted_at, is_visible_to_user, is_approved_by_admin, user_id, user_name, user_surname, product_id')
+        .eq('organization_id', organizationId)
         .order('submitted_at', { ascending: false })
         .range(start, end);
 
@@ -223,7 +234,8 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
       const { data: productsData, error: productsError } = await supabase
         .from('product')
         .select('id, slug, product_name')
-        .in('id', productIds);
+        .in('id', productIds)
+        .eq('organization_id', organizationId);
 
       if (productsError) throw productsError;
 

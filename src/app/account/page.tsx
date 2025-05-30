@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Toast from '@/components/Toast';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, getOrganizationId } from '@/lib/supabase'; // Import getOrganizationId
 import { useStudentStatus } from '@/lib/StudentContext';
 import {
   UserIcon,
@@ -16,6 +16,7 @@ import {
 
 interface Profile {
   full_name: string | null;
+  organization_id: string | null; // Add organization_id to Profile interface
 }
 
 const useAuth = () => {
@@ -31,14 +32,29 @@ const useAuth = () => {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw new Error(`Failed to fetch session: ${error.message}`);
 
-        if (session) {
-          setAccessToken(session.access_token);
-        } else {
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError || !refreshData.session) {
-            throw new Error('No active session found. Please log in.');
-          }
-          setAccessToken(refreshData.session.access_token);
+        if (!session) {
+          throw new Error('No active session found. Please log in.');
+        }
+
+        setAccessToken(session.access_token);
+
+        // Fetch the organization_id for the current context
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const organizationId = await getOrganizationId(baseUrl);
+        if (!organizationId) {
+          throw new Error('Organization not found');
+        }
+
+        // Verify user's profile has matching organization_id
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', session.user.id)
+          .eq('organization_id', organizationId)
+          .single();
+
+        if (profileError || !profile) {
+          throw new Error('User is not authorized for this organization');
         }
       } catch (error) {
         console.error('useAuth: Error:', error);
@@ -101,11 +117,30 @@ export default function AccountPage() {
   const error = authError || nameError;
 
   const dashboardLinks = [
-        ...(isStudent ? [{ label: 'Student', icon: <AcademicCapIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/edupro' }] : []),
-    { label: 'Profile', icon: <UserIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/profile' },
-
-    { label: 'Purchases', icon: <ShoppingBagIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/purchases' },
-    { label: 'Payments', icon: <CreditCardIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />, href: '/account/payments' },
+    ...(isStudent
+      ? [
+          {
+            label: 'Student',
+            icon: <AcademicCapIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+            href: '/account/edupro',
+          },
+        ]
+      : []),
+    {
+      label: 'Profile',
+      icon: <UserIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: '/account/profile',
+    },
+    {
+      label: 'Purchases',
+      icon: <ShoppingBagIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: '/account/purchases',
+    },
+    {
+      label: 'Payments',
+      icon: <CreditCardIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: '/account/payments',
+    },
   ];
 
   if (isLoading) {
@@ -122,14 +157,14 @@ export default function AccountPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center ">
+      <div className="min-h-screen flex items-center justify-center">
         <p className="text-red-600 font-medium">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen  pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {toast && (
           <Toast
@@ -139,12 +174,12 @@ export default function AccountPage() {
             aria-live="polite"
           />
         )}
-      <Link href="/account">
-        <h1 className="mt-16 sm:mt-18 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
-          Account
-          <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
-        </h1>
-      </Link>
+        <Link href="/account">
+          <h1 className="mt-16 sm:mt-18 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
+            Account
+            <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+          </h1>
+        </Link>
         <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {dashboardLinks.map((item) => {
             const isActive = pathname === item.href;

@@ -1,48 +1,51 @@
+// /components/Header.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useBasket } from '../context/BasketContext';
-import { useAuth } from '../context/AuthContext';
+import { useBasket } from '@/context/BasketContext';
+import { useAuth } from '@/context/AuthContext';
 import { Disclosure } from '@headlessui/react';
 import * as HeroIcons from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import LoginModal from './LoginModal';
 import ContactModal from './ContactModal';
 
-// Explicitly import the required icons
 import {
   PlusIcon,
   MinusIcon,
-  Bars3BottomRightIcon,
+  Bars3Icon,
   XMarkIcon,
   ArrowLeftOnRectangleIcon,
   ShoppingCartIcon,
   UserIcon,
   MapIcon,
-  EnvelopeIcon,
 } from '@heroicons/react/24/outline';
-
-// Types
-interface MenuItem {
-  id: number;
-  display_name: string;
-  url_name: string;
-  is_displayed: boolean;
-  image?: string;
-  react_icon_id?: number;
-  react_icons?: { icon_name: string };
-  website_submenuitem?: SubMenuItem[];
-}
 
 interface SubMenuItem {
   id: number;
   name: string;
   url_name: string;
   description?: string;
-  is_displayed?: boolean; // Optional, treat undefined as true
+  order?: number;
+  is_displayed?: boolean;
+  organization_id: string | null;
+}
+
+interface MenuItem {
+  id: number;
+  display_name: string;
+  url_name: string;
+  is_displayed: boolean;
+  is_displayed_on_footer: boolean;
+  order?: number;
+  image?: string;
+  react_icon_id?: number;
+  react_icons?: { icon_name: string };
+  website_submenuitem?: SubMenuItem[];
+  organization_id: string | null;
 }
 
 interface HeaderProps {
@@ -62,7 +65,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const isLoggedIn = !!session;
   const { settings } = useSettings();
 
-  // Fetch menu items from the API route on mount
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
@@ -72,10 +74,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         }
         const data: MenuItem[] = await response.json();
         console.log('Fetched menu items:', JSON.stringify(data, null, 2));
-        data.forEach((item) => {
-          console.log(`Menu item: ${item.display_name}`);
-          console.log(`Submenu items for ${item.display_name}:`, JSON.stringify(item.website_submenuitem, null, 2));
-        });
         setMenuItems(data);
       } catch (error) {
         console.error('Error fetching menu items:', error);
@@ -87,7 +85,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     fetchMenuItems();
   }, []);
 
-  // Debug: Log the state
   useEffect(() => {
     console.log('isLoggedIn:', isLoggedIn);
     console.log('session:', session);
@@ -137,7 +134,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     setIsContactOpen(true);
   };
 
-  // Function to dynamically render the icon based on icon_name
   const renderIcon = (iconName: string | undefined) => {
     if (!iconName) {
       console.log('No icon name provided, defaulting to MapIcon');
@@ -151,7 +147,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     return <IconComponent className="h-6 w-6 text-gray-600" />;
   };
 
-  // Common menu items rendering for desktop
   const renderMenuItems = () => (
     <>
       {menuItems.length === 0 ? (
@@ -160,7 +155,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         menuItems
           .filter((item) => item.is_displayed && item.display_name !== 'Profile')
           .map((item) => {
-            // Filter displayed submenu items, include if is_displayed is true or undefined
             const displayedSubItems = (item.website_submenuitem || []).filter(
               (subItem) => subItem.is_displayed !== false
             );
@@ -188,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                         renderIcon(item.react_icons?.icon_name)
                       )}
                     </button>
-                    <div className="absolute right-0  w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
+                    <div className="absolute right-0 w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
                       {displayedSubItems.map((subItem) => (
                         <Link
                           key={subItem.id}
@@ -227,7 +221,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     </>
   );
 
-  // Common menu items rendering for mobile
   const renderMobileMenuItems = () => (
     <>
       {menuItems.length === 0 ? (
@@ -236,7 +229,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         menuItems
           .filter((item) => item.is_displayed && item.display_name !== 'Profile')
           .map((item) => {
-            // Filter displayed submenu items, include if is_displayed is true or undefined
             const displayedSubItems = (item.website_submenuitem || []).filter(
               (subItem) => subItem.is_displayed !== false
             );
@@ -294,17 +286,16 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-gray-200 bg-white">
       <div className="p-4 sm:px-6 flex justify-between items-center">
-        {/* Logo */}
         <button
           type="button"
           onClick={handleMainPage}
           className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200"
           aria-label="Go to homepage"
-          disabled={!router} // Disable if router is unavailable
+          disabled={!router}
         >
-          {companyLogo ? (
-            <Image
-              src={companyLogo}
+          {settings.image? (
+            <img
+              src={settings.image}
               alt="Logo"
               width={40}
               height={40}
@@ -312,14 +303,13 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
               onError={() => console.error('Failed to load logo:', companyLogo)}
             />
           ) : (
-            <span className="text-gray-500">No Logo</span>
+            <span className="text-gray-500"></span>
           )}
           <span className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
             {settings?.site || 'Default Site Name'}
           </span>
         </button>
 
-        {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-6 text-sm">
           {renderMenuItems()}
           {isMounted && totalItems > 0 && (
@@ -344,7 +334,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
               >
                 <UserIcon className="h-6 w-6 text-gray-600" />
               </button>
-              <div className="absolute right-0  w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
+              <div className="absolute right-0 w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
                 <Link
                   href="/account"
                   className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
@@ -380,7 +370,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           )}
         </div>
 
-        {/* Mobile Menu Toggle */}
         <div className="flex items-center md:hidden">
           {isMounted && totalItems > 0 && (
             <Link
@@ -400,12 +389,11 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
             className="cursor-pointer text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-md p-1 transition-all duration-200"
             aria-label={isOpen ? 'Close menu' : 'Open menu'}
           >
-            {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3BottomRightIcon className="h-6 w-6" />}
+            {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t border-gray-200 bg-white shadow-lg max-h-[70vh] overflow-y-auto">
           {renderMobileMenuItems()}
@@ -470,7 +458,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         </div>
       )}
 
-      {/* Modals */}
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </nav>

@@ -1,4 +1,4 @@
-// src/components/TemplateSection.tsx
+// /src/components/TemplateSection.tsx
 'use client';
 
 import React from 'react';
@@ -15,6 +15,7 @@ interface Metric {
   is_image_rounded_full: boolean;
   is_card_type: boolean;
   background_color?: string;
+  organization_id: string | null; // Added
 }
 
 interface TemplateSectionData {
@@ -42,9 +43,8 @@ interface TemplateSectionData {
   metric_description_weight?: string;
   metric_description_color?: string;
   website_metric: Metric[];
+  organization_id: string | null; // Added
 }
-
-
 
 const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }) => {
   if (!section) {
@@ -54,9 +54,9 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
   // Sanitize HTML content to remove problematic characters and tags
   const sanitizeHTML = (html: string) => {
     return DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'span'], // Allow only safe tags
-      ALLOWED_ATTR: ['href', 'class', 'style'], // Allow only safe attributes
-      FORBID_TAGS: ['iframe'], // Explicitly forbid problematic tags like iframe
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'span'],
+      ALLOWED_ATTR: ['href', 'class', 'style'],
+      FORBID_TAGS: ['iframe'],
     });
   };
 

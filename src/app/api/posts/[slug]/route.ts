@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
+import { getOrganizationId } from '@/lib/supabase';
 
 // Define a type for the blog post body (all fields from blog_post table with defaults)
 type BlogPostBody = {
@@ -23,6 +24,7 @@ type BlogPostBody = {
   product_1_id?: number | null;
   product_2_id?: number | null;
   created_on?: string; // Optional, set by server in POST
+  organization_id?: string; // Added for multi-tenancy
 };
 
 // Single Supabase client instance
@@ -42,18 +44,27 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export async function GET(_request: NextRequest, context: any) {
+// GET handler for fetching a specific blog post by slug
+export async function GET(request: NextRequest, context: any) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const { slug } = context.params;
-  console.log('Received GET request for /api/posts/[slug]:', slug);
+  const slug = (context.params as { slug: string }).slug;
+  const { searchParams } = new URL(request.url);
+  const organizationId = searchParams.get('organization_id');
+  console.log('Received GET request for /api/posts/[slug]:', slug, 'organization_id:', organizationId);
+
+  if (!organizationId) {
+    console.error('Missing organization_id in query parameters');
+    return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+  }
 
   try {
-    console.log('Fetching post from Supabase for slug:', slug);
+    console.log('Fetching post from Supabase for slug:', slug, 'organization_id:', organizationId);
     const { data: postData, error: postError } = await supabase
       .from('blog_post')
       .select('*')
       .eq('slug', slug)
+      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
       .single();
 
     if (postError) {
@@ -65,7 +76,7 @@ export async function GET(_request: NextRequest, context: any) {
     }
 
     if (!postData) {
-      console.log('No post found for slug:', slug);
+      console.log('No post found for slug:', slug, 'organization_id:', organizationId);
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
@@ -88,6 +99,7 @@ export async function GET(_request: NextRequest, context: any) {
   }
 }
 
+// POST handler for creating a new blog post
 export async function POST(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
@@ -124,15 +136,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Checking if slug exists:', slug);
+    // Fetch organization_id
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      console.error('Organization not found for baseUrl:', baseUrl);
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    console.log('Checking if slug exists:', slug, 'organization_id:', organizationId);
     const { data: existingPost, error: slugCheckError } = await supabase
       .from('blog_post')
       .select('slug')
       .eq('slug', slug)
+      .eq('organization_id', organizationId)
       .single();
 
     if (existingPost) {
-      return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'Slug already exists for this organization' }, { status: 409 });
     }
     if (slugCheckError && slugCheckError.code !== 'PGRST116') {
       console.error('Slug check error:', slugCheckError);
@@ -163,6 +184,7 @@ export async function POST(request: NextRequest) {
         cta_card_four_id,
         product_1_id,
         product_2_id,
+        organization_id: organizationId,
       })
       .select('*')
       .single();
@@ -186,10 +208,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PATCH handler for updating an existing blog post
 export async function PATCH(request: NextRequest, context: any) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const { slug } = context.params;
+  const slug = (context.params as { slug: string }).slug;
   console.log('Received PATCH request for /api/posts/[slug]:', slug);
 
   try {
@@ -214,13 +237,20 @@ export async function PATCH(request: NextRequest, context: any) {
       cta_card_four_id,
       product_1_id,
       product_2_id,
+      organization_id,
     } = body;
 
-    console.log('Checking if post exists for slug:', slug);
+    if (!organization_id) {
+      console.error('Missing organization_id in request body');
+      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+    }
+
+    console.log('Checking if post exists for slug:', slug, 'organization_id:', organization_id);
     const { data: existingPost, error: fetchError } = await supabase
       .from('blog_post')
       .select('id')
       .eq('slug', slug)
+      .or(`organization_id.eq.${organization_id},organization_id.is.null`)
       .single();
 
     if (fetchError || !existingPost) {
@@ -229,15 +259,16 @@ export async function PATCH(request: NextRequest, context: any) {
     }
 
     if (newSlug && newSlug !== slug) {
-      console.log('Checking if new slug exists:', newSlug);
+      console.log('Checking if new slug exists:', newSlug, 'organization_id:', organization_id);
       const { data: slugCheck, error: slugCheckError } = await supabase
         .from('blog_post')
         .select('slug')
         .eq('slug', newSlug)
+        .eq('organization_id', organization_id)
         .single();
 
       if (slugCheck) {
-        return NextResponse.json({ error: 'New slug already exists' }, { status: 409 });
+        return NextResponse.json({ error: 'New slug already exists for this organization' }, { status: 409 });
       }
       if (slugCheckError && slugCheckError.code !== 'PGRST116') {
         console.error('Slug check error:', slugCheckError);
@@ -271,6 +302,7 @@ export async function PATCH(request: NextRequest, context: any) {
       .from('blog_post')
       .update(updateData)
       .eq('slug', slug)
+      .or(`organization_id.eq.${organization_id},organization_id.is.null`)
       .select('*')
       .single();
 

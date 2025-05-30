@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+// /components/HomePageSections/Hero.tsx
+import React from 'react';
 import parse from 'html-react-parser';
-import Link from 'next/link'
+import Link from 'next/link';
 
 interface HeroProps {
   hero: {
@@ -26,6 +27,7 @@ interface HeroProps {
     p_description_size_mobile?: string;
     p_description_weight?: string;
     image_first?: boolean;
+    organization_id: string | null; // Added
   };
   labelsDefault?: {
     button_main_get_started?: { url: string; text: string };
@@ -33,47 +35,25 @@ interface HeroProps {
   };
 }
 
-
-
 const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
-  const [heroData, setHeroData] = useState({ h1_title: hero.h1_title, p_description: hero.p_description });
-
-  useEffect(() => {
-    const fetchHeroData = async () => {
-      try {
-        const response = await fetch('/api/hero');
-        const data = await response.json();
-        if (data) {
-          setHeroData({ h1_title: data.h1_title, p_description: data.p_description });
-        }
-      } catch (error) {
-        console.error('Error fetching hero data:', error);
-      }
-    };
-
-    fetchHeroData();
-  }, []);
-
   if (!hero) return null;
 
   return (
     <div className={`pt-16 min-h-screen relative isolate px-6 lg:px-8 bg-transparent hover:bg-sky-50`}>
-      
-        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80 text-sky-500" aria-hidden="true">
-          <div
-            className={`relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg]
-              bg-gradient-to-tr
-              from-sky-700
-              via-transparent
-              to-sky-500
-              opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]`}
-            style={{
-              clipPath:
-                'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-            }}
-          />
-        </div>
-     
+      <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80 text-sky-500" aria-hidden="true">
+        <div
+          className={`relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg]
+            bg-gradient-to-tr
+            from-sky-700
+            via-transparent
+            to-sky-500
+            opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]`}
+          style={{
+            clipPath:
+              'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
+          }}
+        />
+      </div>
 
       {hero.image_url && hero.is_image_full_page && (
         <img src={hero.image_url} alt={`Image of ${hero.h1_title}`} className="absolute inset-0 -z-10 h-full w-full object-cover" />
@@ -101,19 +81,16 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
           <div className={`text-${hero.title_alighnement || 'center'}`}>
             <h1
               className={`${hero.h1_text_size_mobile || 'text-4xl'} sm:${hero.h1_text_size || 'text-7xl'} font-bold tracking-tight inline text-${hero.h1_title_color_id || 'gray-900'} hover:text-gray-700 
-              
-                  bg-gradient-to-r from-gray-700 via-sky-400 to-indigo-200 bg-clip-text text-transparent`}
-                 
-            
+                bg-gradient-to-r from-gray-700 via-sky-400 to-indigo-200 bg-clip-text text-transparent`}
             >
-              {parse(heroData.h1_title)}
+              {parse(hero.h1_title)}
             </h1>
 
             <p
-              className={`mt-6 tracking-wide ${hero.p_description_size_mobile || 'text-lg'} sm:text-2xl text-${hero.p_description_color || 'gray-600' } hover:text-gray-900`}
+              className={`mt-6 tracking-wide ${hero.p_description_size_mobile || 'text-lg'} sm:text-2xl text-${hero.p_description_color || 'gray-600'} hover:text-gray-900`}
               style={{ fontWeight: hero.p_description_weight || 'normal' }}
             >
-              {parse(heroData.p_description)}
+              {parse(hero.p_description)}
             </p>
 
             <div className={`mt-10 flex items-center justify-${hero.title_alighnement || 'center'} gap-x-6`}>

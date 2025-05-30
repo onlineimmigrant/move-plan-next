@@ -1,3 +1,4 @@
+// /app/components/HomePage.tsx
 "use client";
 
 import React, { Suspense, useEffect, useState } from 'react';
@@ -6,17 +7,17 @@ import dynamic from 'next/dynamic';
 // Lazy load components
 const Hero = dynamic(() => import('@/components/HomePageSections/Hero'), { ssr: false });
 const Brands = dynamic(() => import('@/components/HomePageSections/Brands'), { ssr: false });
-const FAQSection = dynamic(() => import('@/components/FAQSection'), { ssr: false });
+const FAQSection = dynamic(() => import('@/components/HomePageSections/FAQSection'), { ssr: false });
 
 interface HeroData {
   h1_title: string;
   p_description: string;
-  p_description_color: string; // Added required field
+  p_description_color: string;
   background_color_home_page?: string;
   is_bg_gradient?: boolean;
-  h1_title_color_id?: string; // Changed to match Hero component
-  h1_via_gradient_color?: string;
-  h1_to_gradient_color?: string;
+  h1_title_color_id?: string;
+  h1_via_gradient_color_id?: string;
+  h1_to_gradient_color_id?: string;
   image_url?: string;
   is_image_full_page?: boolean;
   is_seo_title?: boolean;
@@ -31,12 +32,14 @@ interface HeroData {
   p_description_size_mobile?: string;
   p_description_weight?: string;
   image_first?: boolean;
+  organization_id: string | null; // Added
 }
 
 interface Brand {
   id: string;
   web_storage_address: string;
   name: string;
+  organization_id: string | null; // Added
 }
 
 interface FAQ {
@@ -46,6 +49,7 @@ interface FAQ {
   section?: string;
   display_order?: number;
   order?: number;
+  organization_id: string | null; // Added
 }
 
 interface HomePageData {
@@ -90,11 +94,12 @@ const HomePage: React.FC = () => {
         setData({
           hero: {
             ...heroData,
-            p_description_color: heroData.p_description_color || '#000000', // Default value
-            h1_title_color_id: heroData.h1_title_color_id || '', // Default value
+            p_description_color: heroData.p_description_color || '#000000',
+            h1_title_color_id: heroData.h1_title_color_id || '',
+            organization_id: heroData.organization_id || null, // Added
           },
-          brands: brandsData,
-          faqs: faqsData,
+          brands: brandsData || [],
+          faqs: faqsData || [],
           brands_heading: '',
           labels_default: {
             button_main_get_started: { url: '/products', text: 'Get Started' },
@@ -136,8 +141,8 @@ const HomePage: React.FC = () => {
       <Suspense fallback={<div>Loading FAQs...</div>}>
         <div className="">
           <FAQSection faqs={data.faqs || []} />
-        </div>
-      </Suspense>
+          </div>
+        </Suspense>
     </div>
   );
 };

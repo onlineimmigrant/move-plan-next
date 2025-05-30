@@ -1,3 +1,4 @@
+// /components/HomePageSections/FAQSection.tsx
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -5,7 +6,6 @@ import parse from 'html-react-parser';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 
-// Define types for FAQ items
 type FAQ = {
   id: number;
   question: string;
@@ -14,6 +14,7 @@ type FAQ = {
   display_order?: number;
   order?: number;
   product_sub_type_id?: number;
+  organization_id: string | null; // Added
   [key: string]: any;
 };
 
@@ -27,7 +28,6 @@ const FAQSection = ({ faqs }: FAQSectionProps) => {
     return null;
   }
 
-  // Group FAQs by section, defaulting to "General" if section is not specified
   const groupedFaqs = useMemo(() => {
     return faqs.reduce((acc: { [key: string]: FAQ[] }, item) => {
       const sectionName = item.section || 'General';
@@ -39,7 +39,6 @@ const FAQSection = ({ faqs }: FAQSectionProps) => {
     }, {});
   }, [faqs]);
 
-  // Filter out sections with no FAQs
   const filteredSections = Object.keys(groupedFaqs).filter(
     (section) => groupedFaqs[section].length > 0
   );
@@ -51,12 +50,9 @@ const FAQSection = ({ faqs }: FAQSectionProps) => {
   return (
     <section className="w-full py-20">
       <div className="mx-auto w-full max-w-4xl px-4">
-        {/* FAQ Title */}
         <h2 className="text-center text-3xl sm:text-4xl font-extrabold text-gray-900 mb-12 tracking-tight">
           Frequently Asked Questions
         </h2>
-
-        {/* FAQ Sections */}
         <div className="space-y-16">
           {filteredSections.map((section) => (
             <div key={section} className="space-y-8">
@@ -74,11 +70,9 @@ const FAQSection = ({ faqs }: FAQSectionProps) => {
   );
 };
 
-// Individual FAQ item component
 const FAQItem = ({ item }: { item: FAQ }) => {
   const [parsedAnswer, setParsedAnswer] = useState<React.ReactNode | null>(null);
 
-  // Preload parsing during idle time
   useEffect(() => {
     const parseAnswer = () => {
       setParsedAnswer(parse(item.answer));
@@ -97,7 +91,7 @@ const FAQItem = ({ item }: { item: FAQ }) => {
       {({ open }) => (
         <>
           <DisclosureButton
-            className={`group flex w-full items-center justify-between text-left py-5 transition-colors duration-200 ${
+            className={`cursor-pointer group flex w-full items-center justify-between text-left py-5 transition-colors duration-200 ${
               open ? ' border-gray-100' : ''
             }`}
           >

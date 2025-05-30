@@ -1,3 +1,4 @@
+// /components/Footer.tsx
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -18,6 +19,7 @@ interface MenuItem {
   react_icon_id?: number;
   react_icons?: { icon_name: string };
   website_submenuitem?: SubMenuItem[];
+  organization_id?: string; // Optional for NULL logic
 }
 
 interface SubMenuItem {
@@ -25,6 +27,8 @@ interface SubMenuItem {
   name: string;
   url_name: string;
   description?: string;
+  is_displayed?: boolean;
+  organization_id?: string; // Optional for NULL logic
 }
 
 interface FooterProps {
@@ -62,6 +66,7 @@ const Footer: React.FC<FooterProps> = ({}) => {
   }, []);
 
   const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
+    // Step 1: Filter items with subitems
     const withSubitems = menuItems.filter(
       (item) =>
         item.is_displayed_on_footer &&
@@ -69,6 +74,7 @@ const Footer: React.FC<FooterProps> = ({}) => {
         item.website_submenuitem?.length
     );
 
+    // Step 2: Filter items without subitems
     const withoutSubitems = menuItems.filter(
       (item) =>
         item.is_displayed_on_footer &&
@@ -76,12 +82,17 @@ const Footer: React.FC<FooterProps> = ({}) => {
         !item.website_submenuitem?.length
     );
 
-    const grouped = [];
+    // Step 3: Group items without subitems
+    const grouped: MenuItem[][] = [];
     for (let i = 0; i < withoutSubitems.length; i += maxItemsPerColumn) {
       grouped.push(withoutSubitems.slice(i, i + maxItemsPerColumn));
     }
 
-    return { itemsWithSubitems: withSubitems, groupedItemsWithoutSubitems: grouped };
+    // Step 4: Return computed values
+    return {
+      itemsWithSubitems: withSubitems,
+      groupedItemsWithoutSubitems: grouped,
+    };
   }, [menuItems]);
 
   const totalColumns = itemsWithSubitems.length + groupedItemsWithoutSubitems.length + 1;
@@ -92,6 +103,30 @@ const Footer: React.FC<FooterProps> = ({}) => {
   };
 
   const handleNavigation = (path: string) => () => router.push(path);
+
+  // Fallback UI for empty menu
+  if (menuItems.length === 0) {
+    return (
+      <footer className={cn('bg-gray-700 py-12 text-sm text-white')}>
+        <div className="mx-auto max-w-7xl px-8">
+          <div className="mb-8">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="hover:text-gray-300"
+              aria-label="Privacy Settings"
+            >
+              <strong>Privacy Settings</strong>
+            </button>
+          </div>
+          <div className="mt-12 border-t border-gray-100 pt-8 text-center">
+            <p className="text-xs font-medium tracking-widest text-gray-300">
+              © 2025 {settings?.site || 'Company'}. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer className={cn('bg-gray-700 py-12 text-sm text-white')}>
@@ -117,13 +152,15 @@ const Footer: React.FC<FooterProps> = ({}) => {
                 </Link>
               </h3>
               <ul className="space-y-2">
-                {item.website_submenuitem?.map((subItem) => (
-                  <li key={subItem.id}>
-                    <Link href={subItem.url_name} className="text-gray-300 hover:text-white">
-                      {subItem.name}
-                    </Link>
-                  </li>
-                ))}
+                {item.website_submenuitem
+                  ?.filter((subItem) => subItem.is_displayed !== false)
+                  .map((subItem) => (
+                    <li key={subItem.id}>
+                      <Link href={subItem.url_name} className="text-gray-300 hover:text-white">
+                        {subItem.name}
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             </div>
           ))}
@@ -132,8 +169,8 @@ const Footer: React.FC<FooterProps> = ({}) => {
             <div key={`group-${index}`}>
               <h3 className="mb-0 text-sm font-semibold">
                 <Link
-                  href={group[0]?.url_name || '#'}
                   className="text-white hover:text-gray-300"
+                  href={group[0]?.url_name || '#'}
                 >
                   {itemsWithSubitems.length ? '' : 'Links'}
                 </Link>
@@ -155,7 +192,7 @@ const Footer: React.FC<FooterProps> = ({}) => {
             <ul className="space-y-2">
               {isLoggedIn ? (
                 <li>
-                  <button onClick={handleLogout} className="text-gray-300 hover:text-white">
+                  <button onClick={handleLogout} type="button" className="text-gray-300 hover:text-white">
                     Logout
                   </button>
                 </li>
@@ -163,6 +200,7 @@ const Footer: React.FC<FooterProps> = ({}) => {
                 <>
                   <li>
                     <button
+                      type="button"
                       onClick={handleNavigation('/login')}
                       className="text-gray-300 hover:text-white"
                     >
@@ -171,6 +209,7 @@ const Footer: React.FC<FooterProps> = ({}) => {
                   </li>
                   <li>
                     <button
+                      type="button"
                       onClick={handleNavigation('/register')}
                       className="text-gray-300 hover:text-white"
                     >
@@ -184,7 +223,7 @@ const Footer: React.FC<FooterProps> = ({}) => {
         </div>
 
         <div className="mt-12 border-t border-gray-100 pt-8 text-center">
-          <p className="text-xs font-medium tracking-widest text-gray-300">
+          <p className="text-xs font-medium text-gray-300 tracking-wide">
             © 2025 {settings?.site || 'Company'}. All rights reserved.
           </p>
         </div>
