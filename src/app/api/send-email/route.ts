@@ -3,9 +3,6 @@ import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import WelcomeEmail from '../../../emails/WelcomeEmail';
 
-// Initialize Resend with API key
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
   try {
     // Validate Resend API key
@@ -13,6 +10,9 @@ export async function POST(request: Request) {
       console.error('RESEND_API_KEY is not set in environment variables');
       return NextResponse.json({ error: 'Server configuration error: Missing RESEND_API_KEY' }, { status: 500 });
     }
+
+    // Initialize Resend client inside the handler
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { type, to, name } = await request.json();
 
@@ -30,7 +30,6 @@ export async function POST(request: Request) {
     // Render the email HTML
     let emailHtml: string;
     try {
-      // Await the render call since it returns a Promise
       const rendered = await render(WelcomeEmail({ name }), { pretty: true });
       console.log('Rendered output type:', typeof rendered);
       console.log('Rendered output:', rendered);
