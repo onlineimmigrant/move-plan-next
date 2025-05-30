@@ -42,6 +42,7 @@ jobs:
           NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
           echo "SUPABASE_URL is set: ${SUPABASE_URL:+true}"
           echo "SUPABASE_SERVICE_KEY is set: ${SUPABASE_SERVICE_KEY:+true}"
@@ -81,6 +82,7 @@ jobs:
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
           NEXT_TELEMETRY_DISABLED: 1
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           
         run: |
           npm install
