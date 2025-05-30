@@ -8,6 +8,7 @@ import FocusTrap from 'focus-trap-react';
 import { FaTimes } from 'react-icons/fa';
 import AccountTab from '@/components/AccountTab';
 import { FiRefreshCw } from 'react-icons/fi';
+import { useStudentStatus } from '@/lib/StudentContext';
 
 // Constants
 import { FIELD_LABELS, EDITABLE_FIELDS } from '@/components/constants/profile';
@@ -161,6 +162,7 @@ const validateField = (field: string, value: string): string | null => {
 };
 
 export default function ProfilePage() {
+  const { isStudent, organizationId} = useStudentStatus();
   const { accessToken, isLoading: authLoading, error: authError } = useAuth();
   const { profile, setProfile, fetchProfile, isLoading: profileLoading, error: profileError } = useProfile(accessToken);
   const {

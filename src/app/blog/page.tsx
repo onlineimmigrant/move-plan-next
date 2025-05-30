@@ -1,10 +1,10 @@
-// app/blog/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MagnifyingGlassIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { getPostUrl } from '@/lib/postUtils';
+import { getOrganizationId } from '@/lib/supabase';
 
 interface BlogPost {
   id: number;
@@ -16,34 +16,47 @@ interface BlogPost {
   main_photo?: string | null;
   subsection?: string | null;
   section_id?: number | null;
+  organization_id?: string; // Already included
 }
 
 const BlogListPage: React.FC = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch('/api/posts');
+        // Fetch organization_id
+        const organizationId = await getOrganizationId(baseUrl);
+        if (!organizationId) {
+          throw new Error('Organization not found');
+        }
+
+        const response = await fetch(`/api/posts?organization_id=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
           console.log('Raw API response:', data);
           // Validate that data is an array and contains section_id
           if (!Array.isArray(data)) {
             console.error('Expected an array, got:', data);
+            setError('Invalid data format');
             return;
           }
           data.forEach((post: BlogPost, index: number) => {
-            console.log(`Post ${index}:`, { slug: post.slug, section_id: post.section_id });
+            console.log(`Post ${index}:`, { slug: post.slug, section_id: post.section_id, organization_id: post.organization_id });
           });
           setPosts(data);
         } else {
-          console.error('Failed to fetch posts:', response.status, response.statusText);
+          const errorData = await response.json();
+          console.error('Failed to fetch posts:', response.status, response.statusText, errorData);
+          setError(errorData.error || 'Failed to fetch posts');
         }
       } catch (error) {
         console.error('An error occurred:', error);
+        setError(error instanceof Error ? error.message : 'An unexpected error occurred');
       } finally {
         setLoading(false);
       }
@@ -61,7 +74,8 @@ const BlogListPage: React.FC = () => {
       const isBlogPost = post.display_as_blog_post !== false;
       console.log('Post:', post, 'display_this_post:', post.display_this_post, 'Should display:', shouldDisplay);
       return (
-        shouldDisplay && isBlogPost &&
+        shouldDisplay &&
+        isBlogPost &&
         (title.toLowerCase().includes(query) || description.toLowerCase().includes(query) || subsection.toLowerCase().includes(query))
       );
     })
@@ -71,11 +85,21 @@ const BlogListPage: React.FC = () => {
       return hasPhotoB ? 1 : hasPhotoA ? -1 : 0;
     });
 
-  if (loading) return (
-    <div className="py-32 text-center text-gray-500">
-      <div className="animate-pulse">Loading...</div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="py-32 text-center text-gray-500">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-32 text-center text-red-500">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50">

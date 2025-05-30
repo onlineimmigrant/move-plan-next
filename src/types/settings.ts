@@ -33,4 +33,6 @@ export interface Settings {
   font_size_small: Size;
   font_size_large: Size;
   updated_at: string;
+  organization_id: string;
+  image: string;
 }

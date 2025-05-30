@@ -2,6 +2,7 @@
 import ClientFAQPage from './ClientFAQPage';
 import { supabase } from '../../lib/supabaseClient';
 
+
 type FAQ = {
   id: number;
   question: string;
@@ -10,6 +11,7 @@ type FAQ = {
   display_order?: number;
   order?: number;
   product_sub_type_id?: number;
+  organization_id: string;
   [key: string]: any;
 };
 

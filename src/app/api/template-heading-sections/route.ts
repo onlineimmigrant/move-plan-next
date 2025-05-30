@@ -1,6 +1,6 @@
-// app/api/template-heading-sections/route.ts
-import { createClient } from '@supabase/supabase-js';
+// /app/api/template-heading-sections/route.ts
 import { NextResponse } from 'next/server';
+import { supabase, getOrganizationId } from '@/lib/supabase';
 
 export async function GET(request: Request) {
   console.log('Received GET request for /api/template-heading-sections:', request.url);
@@ -18,25 +18,18 @@ export async function GET(request: Request) {
   const decodedUrlPage = decodeURIComponent(url_page);
   console.log('Decoded url_page:', decodedUrlPage);
 
-  console.log('Creating Supabase client...');
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
-  );
-
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('Missing Supabase environment variables');
-    return NextResponse.json({ error: 'Server configuration error: Missing Supabase credentials' }, { status: 500 });
-  }
-
-  console.log('Supabase client created successfully');
-
   try {
-    console.log('Fetching template heading sections from Supabase for url_page:', decodedUrlPage);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      console.error('Organization not found');
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    console.log('Fetching template heading sections for organization_id:', organizationId);
     const { data: headingsData, error: headingsError } = await supabase
       .from('website_templatesectionheading')
-      .select(
-        `
+      .select(`
         id,
         name,
         name_part_2,
@@ -59,10 +52,11 @@ export async function GET(request: Request) {
         h1_text_color,
         is_text_link,
         image_first,
-        is_included_template_sections_active
-      `
-      )
+        is_included_template_sections_active,
+        organization_id
+      `)
       .eq('url_page', decodedUrlPage)
+      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
       .order('order', { ascending: true });
 
     if (headingsError) {
@@ -76,7 +70,7 @@ export async function GET(request: Request) {
     console.log('Fetched heading sections:', headingsData);
 
     if (!headingsData || headingsData.length === 0) {
-      console.log('No heading sections found for url_page:', decodedUrlPage);
+      console.log('No heading sections found for url_page:', decodedUrlPage, 'and organization_id:', organizationId);
       return NextResponse.json([], { status: 200 });
     }
 

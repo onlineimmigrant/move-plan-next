@@ -1,33 +1,32 @@
-// app/faq/ClientFAQPage.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import FAQSection from '../../components/FAQSection';
-
-type FAQ = {
-  id: number;
-  question: string;
-  answer: string;
-  section?: string;
-  display_order?: number;
-  order?: number;
-  product_sub_type_id?: number;
-  [key: string]: any;
-};
+import FAQSection from '../../components/HomePageSections/FAQSection';
+import { FAQ } from '@/types/faq';
 
 interface ClientFAQPageProps {
   initialFAQs: FAQ[];
 }
 
 export default function ClientFAQPage({ initialFAQs }: ClientFAQPageProps) {
-  const [faqs, setFAQs] = useState<FAQ[]>(initialFAQs);
-  const [filteredFAQs, setFilteredFAQs] = useState<FAQ[]>(initialFAQs);
+  // Memoize normalizedFAQs to prevent recreation on every render
+  const normalizedFAQs = useMemo(
+    () =>
+      initialFAQs.map(faq => ({
+        ...faq,
+        organization_id: faq.organization_id ?? faq.organisation_id ?? '', // Fallback for legacy data
+      })),
+    [initialFAQs]
+  );
+
+  const [faqs, setFAQs] = useState<FAQ[]>(normalizedFAQs);
+  const [filteredFAQs, setFilteredFAQs] = useState<FAQ[]>(normalizedFAQs);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter FAQs based on search query
   useEffect(() => {
-    let result = initialFAQs;
+    let result = normalizedFAQs;
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -38,7 +37,7 @@ export default function ClientFAQPage({ initialFAQs }: ClientFAQPageProps) {
     }
 
     setFilteredFAQs(result);
-  }, [searchQuery, initialFAQs]);
+  }, [searchQuery, normalizedFAQs]);
 
   return (
     <div className="">

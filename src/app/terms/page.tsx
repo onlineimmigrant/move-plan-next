@@ -1,12 +1,12 @@
-// app/terms/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MagnifyingGlassIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { getPostUrl } from '@/lib/postUtils';
+import { getOrganizationId } from '@/lib/supabase';
 
-interface BlogPost {
+interface Post {
   id: number;
   slug: string;
   title: string | null;
@@ -16,39 +16,50 @@ interface BlogPost {
   main_photo?: string | null;
   subsection?: string | null;
   section_id?: number | null;
+  organization_id?: string;
 }
 
-const BlogListPage: React.FC = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+const TermsPage: React.FC = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchTerms = async () => {
       try {
-        const response = await fetch('/api/posts');
+        const organizationId = await getOrganizationId(baseUrl);
+        if (!organizationId) {
+          throw new Error('Organization not found');
+        }
+
+        const response = await fetch(`/api/terms?organization_id=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
           console.log('Raw API response:', data);
-          // Validate that data is an array and contains section_id
           if (!Array.isArray(data)) {
             console.error('Expected an array, got:', data);
+            setError('Invalid data format');
             return;
           }
-          data.forEach((post: BlogPost, index: number) => {
-            console.log(`Post ${index}:`, { slug: post.slug, section_id: post.section_id });
+          data.forEach((post: Post, index: number) => {
+            console.log(`Post ${index}:`, { slug: post.slug, section_id: post.section_id, organization_id: post.organization_id });
           });
           setPosts(data);
         } else {
-          console.error('Failed to fetch posts:', response.status, response.statusText);
+          const errorData = await response.json();
+          console.error('Failed to fetch terms:', response.status, response.statusText, errorData);
+          setError(errorData.error || 'Failed to fetch terms');
         }
       } catch (error) {
         console.error('An error occurred:', error);
+        setError(error instanceof Error ? error.message : 'An unexpected error occurred');
       } finally {
         setLoading(false);
       }
     };
-    fetchPosts();
+    fetchTerms();
   }, []);
 
   const filteredPosts = posts
@@ -58,11 +69,9 @@ const BlogListPage: React.FC = () => {
       const subsection = post.subsection ?? '';
       const query = searchQuery.toLowerCase();
       const shouldDisplay = post.display_this_post !== false;
-      const isTerm = post.subsection === 'Terms';
-      const isBlogPost = post.display_as_blog_post !== false;
-      console.log('Post:', post, 'display_this_post:', post.display_this_post, 'Should display:', shouldDisplay);
+      console.log('Post:', post, 'display_this_post:', post.display_this_post, 'shouldDisplay:', shouldDisplay);
       return (
-        shouldDisplay && isBlogPost && isTerm &&
+        shouldDisplay &&
         (title.toLowerCase().includes(query) || description.toLowerCase().includes(query) || subsection.toLowerCase().includes(query))
       );
     })
@@ -72,19 +81,25 @@ const BlogListPage: React.FC = () => {
       return hasPhotoB ? 1 : hasPhotoA ? -1 : 0;
     });
 
-  if (loading) return (
-    <div className="py-32 text-center text-gray-500">
-      <div className="animate-pulse">Loading...</div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="py-32 text-center text-gray-500">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-32 text-center text-red-500">{error}</div>
+    );
+  }
 
   return (
     <div className="bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-16">
+      <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-12">
-          <h1 className="text-2xl font-bold text-gray-700 tracking-wide mb-6 sm:mb-0">
-            Terms
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-700 tracking-wide mb-6 sm:mb-0">Terms</h1>
           <div className="relative w-full sm:w-80 px-4 sm:px-0">
             <span className="absolute inset-y-0 left-4 sm:left-0 flex items-center pl-3">
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
@@ -93,32 +108,28 @@ const BlogListPage: React.FC = () => {
               type="text"
               placeholder="Search terms..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-3 py-4 text-base font-light border bg-white border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
             />
           </div>
         </div>
 
         {posts.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            No posts available
-          </div>
+          <div className="text-center py-16 text-gray-500">No terms available</div>
         ) : filteredPosts.length === 0 && searchQuery ? (
-          <div className="text-center py-16 text-gray-500">
-            No posts found matching - {searchQuery}
-          </div>
+          <div className="text-center py-16 text-gray-500">No terms found matching "{searchQuery}"</div>
         ) : (
           <div className="px-4 sm:px-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredPosts.map((post) => (
+            {filteredPosts.map(post => (
               <Link key={post.id} href={getPostUrl(post)} className="group">
                 <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                   {post.main_photo && post.main_photo.trim() !== '' && (
                     <div className="w-full h-auto p-2 flex-shrink-0">
                       <img
                         src={post.main_photo}
-                        alt={post.title ?? 'Blog post image'}
+                        alt={post.title ?? 'Terms image'}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
+                        onError={e => {
                           console.error('Image failed to load:', post.main_photo);
                           e.currentTarget.style.display = 'none';
                         }}
@@ -159,4 +170,4 @@ const BlogListPage: React.FC = () => {
   );
 };
 
-export default BlogListPage;
+export default TermsPage;

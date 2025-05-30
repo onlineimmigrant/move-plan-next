@@ -1,6 +1,6 @@
-// app/api/posts/route.ts
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { getOrganizationId } from '@/lib/supabase';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
@@ -17,17 +17,27 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
   console.log('Received GET request for /api/posts');
 
   try {
-    console.log('Fetching all posts from Supabase');
+    const { searchParams } = new URL(request.url);
+    const organizationId = searchParams.get('organization_id');
+    console.log('organization_id:', organizationId);
+
+    if (!organizationId) {
+      console.error('Missing organization_id in query parameters');
+      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+    }
+
+    console.log('Fetching posts from Supabase for organization_id:', organizationId);
     const { data: postsData, error: postsError } = await supabase
       .from('blog_post')
-      .select('id, slug, title, description, display_this_post, display_as_blog_post, main_photo, section_id, subsection') // Explicitly includes subsection
+      .select('id, slug, title, description, display_this_post, display_as_blog_post, main_photo, section_id, subsection, organization_id')
       .eq('display_this_post', true)
+      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
       .order('created_on', { ascending: false });
 
     if (postsError) {
@@ -38,8 +48,8 @@ export async function GET(request: Request) {
       );
     }
 
-    // Log each post's subsection to confirm it's fetched
-    postsData.forEach(post => console.log(`Post ID ${post.id} subsection:`, post.subsection));
+    // Log each post's subsection and organization_id to confirm
+    postsData.forEach(post => console.log(`Post ID ${post.id} subsection:`, post.subsection, 'organization_id:', post.organization_id));
     console.log('Fetched posts:', postsData);
 
     return NextResponse.json(postsData, {
@@ -55,8 +65,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST handler unchanged for brevity, but it already handles subsection
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
   console.log('Received POST request for /api/posts');
@@ -92,15 +101,24 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('Checking if slug exists:', slug);
+    // Fetch organization_id
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      console.error('Organization not found for baseUrl:', baseUrl);
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    console.log('Checking if slug exists:', slug, 'organization_id:', organizationId);
     const { data: existingPost, error: slugCheckError } = await supabase
       .from('blog_post')
       .select('slug')
       .eq('slug', slug)
+      .eq('organization_id', organizationId)
       .single();
 
     if (existingPost) {
-      return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'Slug already exists for this organization' }, { status: 409 });
     }
     if (slugCheckError && slugCheckError.code !== 'PGRST116') {
       console.error('Slug check error:', slugCheckError);
@@ -131,6 +149,7 @@ export async function POST(request: Request) {
         cta_card_four_id,
         product_1_id,
         product_2_id,
+        organization_id: organizationId,
       })
       .select('*')
       .single();

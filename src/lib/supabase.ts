@@ -1,6 +1,40 @@
 import { createClient } from '@supabase/supabase-js';
 import { Banner, BannerOpenState, BannerPosition, BannerType } from '../components/banners/types';
 
+// Validate environment variables
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  console.error('Missing Supabase environment variables');
+  throw new Error('Supabase configuration incomplete');
+}
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+export async function getOrganizationId(baseUrl?: string): Promise<string | null> {
+  const currentUrl = baseUrl || process.env.NEXT_PUBLIC_BASE_URL;
+  const isLocal = process.env.NODE_ENV === 'development';
+
+  console.log('Fetching organization ID for URL:', currentUrl, 'isLocal:', isLocal);
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('id')
+    .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
+    .single();
+
+  if (error) {
+    console.error('Error fetching organization:', {
+      message: error.message || 'No error message',
+      code: error.code || 'No code',
+      details: error.details || 'No details',
+      hint: error.hint || 'No hint',
+    });
+    return null;
+  }
+  return data?.id;
+}
+
 // Parse interval string to milliseconds
 const parseIntervalToMs = (interval: string | undefined): number => {
   if (!interval) return 60 * 1000; // Default: 1 minute
@@ -38,11 +72,6 @@ const matchesPathPattern = (path: string, pattern: string): boolean => {
   return path === prefix || path.startsWith(prefix + '/');
 };
 
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 // Fetch user profile
 export async function fetchUserProfile(userId?: string) {
   if (!userId) {
@@ -51,28 +80,56 @@ export async function fetchUserProfile(userId?: string) {
   }
 
   try {
-    console.log(`Fetching profile for userId: ${userId}`);
+    const organizationId = await getOrganizationId();
+    if (!organizationId) {
+      console.log('No organization found, skipping profile fetch');
+      return null;
+    }
+
+    console.log('Query inputs:', {
+      userId,
+      organizationId,
+      isUserIdValid: !!userId,
+      isOrgIdValid: !!organizationId,
+      timestamp: new Date().toISOString(),
+    });
+
     const { data, error } = await supabase
       .from('profiles')
-      .select('user_status, last_login_at')
+      .select('user_status, last_login_at, organization_id')
       .eq('id', userId)
-      .single();
+      .eq('organization_id', organizationId)
+      .maybeSingle(); // Changed from .single()
 
     if (error) {
       console.error('Error fetching profile:', {
+        rawError: error,
         message: error.message || 'No error message provided',
         code: error.code || 'No error code',
         details: error.details || 'No details',
         hint: error.hint || 'No hint',
         userId,
+        organizationId,
+        query: 'SELECT user_status, last_login_at, organization_id FROM profiles WHERE id = :userId AND organization_id = :organizationId',
       });
+      return null;
+    }
+
+    if (!data) {
+      console.log(`No profile found for userId: ${userId}, organizationId: ${organizationId}`);
       return null;
     }
 
     console.log('Profile fetched:', data);
     return data;
   } catch (err) {
-    console.error('Unexpected error fetching profile:', err, { userId });
+    console.error('Unexpected error fetching profile:', {
+      error: err,
+      userId,
+      message: err instanceof Error ? err.message : 'Unknown error',
+      stack: err instanceof Error ? err.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
     return null;
   }
 }
@@ -80,7 +137,13 @@ export async function fetchUserProfile(userId?: string) {
 // Fetch banners
 export async function fetchBanners(pagePath?: string, userId?: string): Promise<Banner[]> {
   try {
-    console.log(`Fetching banners for pagePath: ${pagePath}, userId: ${userId}`);
+    const organizationId = await getOrganizationId();
+    if (!organizationId) {
+      console.log('No organization found, skipping banner fetch');
+      return [];
+    }
+
+    console.log(`Fetching banners for pagePath: ${pagePath}, userId: ${userId}, organizationId: ${organizationId}`);
     const profile = await fetchUserProfile(userId);
     const userStatus = profile?.user_status || 'anonymous';
     const isReturning = profile?.last_login_at && new Date(profile.last_login_at) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? 'returning' : null;
@@ -93,6 +156,7 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
       .from('banners')
       .select('id, position, type, content, open_state, landing_content, page_paths, is_active, start_at, end_at, priority, target_audience, dismissal_duration')
       .eq('is_active', true)
+      .eq('organization_id', organizationId)
       .lte('start_at', now)
       .or(`end_at.is.null,end_at.gte.${now}`)
       .overlaps('target_audience', targetAudiences)
@@ -104,6 +168,7 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
         code: error.code || 'No error code',
         details: error.details || 'No details',
         hint: error.hint || 'No hint',
+        organizationId,
       });
       return [];
     }
@@ -151,10 +216,17 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
 // Fetch dismissed banners
 export async function fetchDismissedBanners(userId?: string): Promise<string[]> {
   try {
+    const organizationId = await getOrganizationId();
+    if (!organizationId) {
+      console.log('No organization found, skipping dismissed banners fetch');
+      return [];
+    }
+
     const now = new Date().toISOString();
     const query = supabase
       .from('banner_dismissals')
       .select('banner_id')
+      .eq('organization_id', organizationId)
       .or(userId ? `user_id.eq.${userId},is_global.eq.true` : 'is_global.eq.true')
       .gte('expires_at', now);
 
@@ -166,6 +238,7 @@ export async function fetchDismissedBanners(userId?: string): Promise<string[]> 
         code: error.code || 'No error code',
         details: error.details || 'No details',
         hint: error.hint || 'No hint',
+        organizationId,
       });
       return [];
     }
@@ -180,11 +253,18 @@ export async function fetchDismissedBanners(userId?: string): Promise<string[]> 
 // Dismiss a banner
 export async function dismissBanner(bannerId: string, userId: string | null, dismissalDuration: string | undefined) {
   try {
+    const organizationId = await getOrganizationId();
+    if (!organizationId) {
+      console.log('No organization found, skipping banner dismissal');
+      return;
+    }
+
     const expiresAt = new Date(Date.now() + parseIntervalToMs(dismissalDuration));
     const { error } = await supabase.from('banner_dismissals').insert({
       banner_id: bannerId,
       user_id: userId,
       is_global: userId === null,
+      organization_id: organizationId,
       expires_at: expiresAt.toISOString(),
     });
 
@@ -194,6 +274,7 @@ export async function dismissBanner(bannerId: string, userId: string | null, dis
         code: error.code || 'No error code',
         details: error.details || 'No details',
         hint: error.hint || 'No hint',
+        organizationId,
       });
     }
   } catch (err) {

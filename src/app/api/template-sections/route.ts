@@ -1,6 +1,6 @@
-// app/api/template-sections/route.ts
-import { createClient } from '@supabase/supabase-js';
+// /app/api/template-sections/route.ts
 import { NextResponse } from 'next/server';
+import { supabase, getOrganizationId } from '@/lib/supabase';
 
 export async function GET(request: Request) {
   console.log('Received GET request for /api/template-sections:', request.url);
@@ -18,25 +18,18 @@ export async function GET(request: Request) {
   const decodedUrlPage = decodeURIComponent(url_page);
   console.log('Decoded url_page:', decodedUrlPage);
 
-  console.log('Creating Supabase client...');
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
-  );
-
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('Missing Supabase environment variables');
-    return NextResponse.json({ error: 'Server configuration error: Missing Supabase credentials' }, { status: 500 });
-  }
-
-  console.log('Supabase client created successfully');
-
   try {
-    console.log('Fetching template sections from Supabase for url_page:', decodedUrlPage);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      console.error('Organization not found');
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    console.log('Fetching template sections for organization_id:', organizationId);
     const { data: sectionsData, error: sectionsError } = await supabase
       .from('website_templatesection')
-      .select(
-        `
+      .select(`
         id,
         section_title,
         section_title_color,
@@ -62,6 +55,7 @@ export async function GET(request: Request) {
         image_metrics_height,
         order,
         url_page,
+        organization_id,
         website_templatesection_metrics!templatesection_id (
           metric_id,
           website_metric!metric_id (
@@ -72,12 +66,13 @@ export async function GET(request: Request) {
             is_image_rounded_full,
             is_title_displayed,
             background_color,
-            is_card_type
+            is_card_type,
+            organization_id
           )
         )
-      `
-      )
+      `)
       .eq('url_page', decodedUrlPage)
+      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
       .order('order', { ascending: true });
 
     if (sectionsError) {
@@ -90,16 +85,21 @@ export async function GET(request: Request) {
 
     console.log('Fetched sections (raw):', sectionsData);
 
-    // Transform the data to match the expected structure
+    // Transform data to match expected structure
     const transformedSections = sectionsData?.map(section => ({
       ...section,
-      website_metric: section.website_templatesection_metrics?.map((metricLink: any) => metricLink.website_metric) || [],
+      website_metric: section.website_templatesection_metrics
+        ?.filter((metricLink: any) =>
+          metricLink.website_metric?.organization_id === null ||
+          metricLink.website_metric?.organization_id === organizationId
+        )
+        .map((metricLink: any) => metricLink.website_metric) || [],
     })) || [];
 
     console.log('Transformed sections:', transformedSections);
 
     if (!transformedSections || transformedSections.length === 0) {
-      console.log('No sections found for url_page:', decodedUrlPage);
+      console.log('No sections found for url_page:', decodedUrlPage, 'and organization_id:', organizationId);
       return NextResponse.json([], { status: 200 });
     }
 

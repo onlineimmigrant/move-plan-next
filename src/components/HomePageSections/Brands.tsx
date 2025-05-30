@@ -1,9 +1,11 @@
+// /components/HomePageSections/Brands.tsx
 import React from 'react';
 
 interface Brand {
   id: string;
   web_storage_address: string;
   name: string;
+  organization_id: string | null; // Added
 }
 
 interface BrandsProps {

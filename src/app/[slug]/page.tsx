@@ -8,6 +8,7 @@ import { notFound, redirect } from 'next/navigation';
 import '@/components/PostEditor.css';
 import { getPostUrl } from '@/lib/postUtils';
 import { useSEO } from '@/context/SEOContext';
+import { getOrganizationId } from '@/lib/supabase';
 
 interface TOCItem {
   tag_name: string;
@@ -21,7 +22,7 @@ interface Post {
   title: string;
   description: string;
   content: string;
-  section?: string; // Made optional to handle undefined/null
+  section?: string;
   subsection?: string;
   created_on: string;
   is_with_author: boolean;
@@ -35,6 +36,7 @@ interface Post {
   display_this_post: boolean;
   reviews?: { rating: number; author: string; comment: string }[];
   faqs?: { question: string; answer: string }[];
+  organization_id?: string;
 }
 
 const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
@@ -85,7 +87,13 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await fetch(`/api/posts/${slug}`);
+        // Fetch organization_id
+        const organizationId = await getOrganizationId(baseUrl);
+        if (!organizationId) {
+          throw new Error('Organization not found');
+        }
+
+        const response = await fetch(`/api/posts/${slug}?organization_id=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
           console.log('Fetched post:', data); // Debug log
@@ -107,7 +115,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
       }
     };
     fetchPost();
-  }, [slug]);
+  }, [slug, baseUrl]);
 
   // Set SEO data
   useEffect(() => {
@@ -285,10 +293,15 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     const updatedContent = contentRef.current.innerHTML;
 
     try {
+      const organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        throw new Error('Organization not found');
+      }
+
       const response = await fetch(`/api/posts/${slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: updatedContent }),
+        body: JSON.stringify({ content: updatedContent, organization_id: organizationId }),
       });
 
       if (response.ok) {
@@ -299,10 +312,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     } catch (error) {
       console.error('Error updating content:', error);
     }
-  };
-
-  const handlePostHeaderClick = (href: string) => {
-    window.location.href = href;
   };
 
   const makeEditable = (e: React.MouseEvent) => {

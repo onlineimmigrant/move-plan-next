@@ -1,11 +1,10 @@
-// src/components/TemplateHeadingSections.tsx
+// /src/components/TemplateHeadingSections.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import TemplateHeadingSection from './TemplateHeadingSection';
 
-// Types
 interface TemplateHeadingSectionData {
   id: number;
   name: string;
@@ -29,6 +28,7 @@ interface TemplateHeadingSectionData {
   is_text_link?: boolean;
   image_first?: boolean;
   is_included_templatesection?: boolean;
+  organization_id: string | null; // Added
 }
 
 const TemplateHeadingSections: React.FC = () => {
@@ -53,9 +53,7 @@ const TemplateHeadingSections: React.FC = () => {
       console.log('Fetching template heading sections from URL:', url);
 
       try {
-        const response = await fetch(url, {
-          method: 'GET',
-        });
+        const response = await fetch(url, { method: 'GET' });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -77,12 +75,12 @@ const TemplateHeadingSections: React.FC = () => {
   }, [pathname]);
 
   if (isLoading) {
-    return <div className=" text-center text-gray-500">Loading heading sections...</div>;
+    return <div className="text-center text-gray-500">Loading heading sections...</div>;
   }
 
   if (error) {
     return (
-      <div className=" text-center text-red-500">
+      <div className="text-center text-red-500">
         <p>Error: {error}</p>
         <p>Please try refreshing the page or contact support if the issue persists.</p>
       </div>

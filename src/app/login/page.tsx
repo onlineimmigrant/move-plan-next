@@ -35,7 +35,18 @@ export default function LoginPage() {
         <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
           <Link href='/'>
           <span className="mb-16 flex justify-center " >
-           <Image src='/images/logo.svg' alt="Logo" width={60} height={60} className="h-12 w-auto"/>
+                     {settings.image? (
+                       <Image
+                         src={settings.image}
+                         alt="Logo"
+                         width={40}
+                         height={40}
+                         className="h-8 w-auto"
+                         onError={() => console.error('Failed to load logo:')}
+                       />
+                     ) : (
+                       <span className="text-gray-500"></span>
+                     )}
           </span>
           </Link>
           <h1 className=" my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
