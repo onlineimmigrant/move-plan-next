@@ -1,8 +1,10 @@
 import { supabase } from './supabase';
 import { Settings } from '@/types/settings';
 
-export async function getOrganizationId(baseUrl?: string): Promise<string | null> {
-  const currentUrl = baseUrl || process.env.NEXT_PUBLIC_BASE_URL;
+export async function getOrganizationId(req?: { headers: { host?: string } }): Promise<string | null> {
+  const currentUrl = req?.headers.host
+    ? `https://${req.headers.host}`
+    : process.env.NEXT_PUBLIC_BASE_URL;
   const isLocal = process.env.NODE_ENV === 'development';
 
   const { data, error } = await supabase
