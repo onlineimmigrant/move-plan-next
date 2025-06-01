@@ -18,14 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install pnpm
+        run: npm install -g pnpm@10.11.0 # Install pnpm before caching
+
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
           cache: 'pnpm' # Cache pnpm dependencies to speed up builds
-
-      - name: Install pnpm
-        run: npm install -g pnpm@10.11.0 # Match the version specified in package.json
 
       - name: Debug environment variables
         env:
