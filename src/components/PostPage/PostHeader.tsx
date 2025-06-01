@@ -47,8 +47,8 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
   const { settings } = useSettings();
 
   // Use settings for text size, font weight, and colors with default values
-  const textSizeHeadings = settings?.font_size_small?.name || 'text-sm';
-  const textColorHover = settings?.secondary_color?.name ? settings.secondary_color.name : 'gray-400';
+  const textSizeHeadings = 'text-sm';
+  const textColorHover =  'gray-400';
   const brandName = settings?.site || '';
 
   // Generate subsection slug and URL

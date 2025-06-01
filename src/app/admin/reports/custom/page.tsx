@@ -135,9 +135,7 @@ export default function CustomReportPage() {
         <h1
           className={cn(
             "text-sm p-6 pt-4 pb-0 capitalize font-bold",
-            settings?.primary_color?.name
-              ? `text-${settings.primary_color.name}`
-              : "text-gray-700"
+"text-gray-700"
           )}
         >
           Constructor
@@ -145,9 +143,7 @@ export default function CustomReportPage() {
         <span
           className={cn(
             "text-sm p-6 pt-4 pb-0 capitalize font-bold",
-            settings?.secondary_color?.name
-              ? `text-${settings.secondary_color.name}`
-              : "text-gray-700"
+"text-gray-700"
           )}
         >
           Report

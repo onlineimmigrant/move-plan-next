@@ -1,22 +1,11 @@
-// /components/HomePageSections/FAQSection.tsx
+// components/HomePageSections/FAQSection.tsx
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
 import parse from 'html-react-parser';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
-
-type FAQ = {
-  id: number;
-  question: string;
-  answer: string;
-  section?: string;
-  display_order?: number;
-  order?: number;
-  product_sub_type_id?: number;
-  organization_id: string | null; // Added
-  [key: string]: any;
-};
+import { FAQ } from '@/types/faq';
 
 interface FAQSectionProps {
   slug?: string;

@@ -1,3 +1,4 @@
+// src/app/posts/[slug]/page.tsx
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
@@ -9,6 +10,8 @@ import '@/components/PostEditor.css';
 import { getPostUrl } from '@/lib/postUtils';
 import { useSEO } from '@/context/SEOContext';
 import { getOrganizationId } from '@/lib/supabase';
+import { isAdminClient } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 interface TOCItem {
   tag_name: string;
@@ -43,12 +46,22 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   const { slug } = React.use(params);
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(true); // Replace with real admin check later
+  const [isAdmin, setIsAdmin] = useState(false); // State for admin status
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const { setSEOData } = useSEO();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const activeLanguages = ['en', 'es', 'fr'];
+
+  // Check admin status client-side
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const adminStatus = await isAdminClient();
+      console.log('Admin status:', adminStatus);
+      setIsAdmin(adminStatus);
+    };
+    checkAdminStatus();
+  }, []);
 
   // Touch handler for table scrolling
   useEffect(() => {
@@ -87,7 +100,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        // Fetch organization_id
         const organizationId = await getOrganizationId(baseUrl);
         if (!organizationId) {
           throw new Error('Organization not found');
@@ -96,7 +108,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
         const response = await fetch(`/api/posts/${slug}?organization_id=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Fetched post:', data); // Debug log
+          console.log('Fetched post:', data);
           const postUrl = getPostUrl({ section_id: data.section_id, slug });
           if (postUrl !== `/${slug}`) {
             redirect(postUrl);
@@ -135,7 +147,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
         hreflang: lang,
       })),
       structuredData: [
-        // Article Schema
         {
           '@context': 'https://schema.org',
           '@type': 'Article',
@@ -170,7 +181,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
           },
           url: postUrl,
         },
-        // BreadcrumbList Schema
         {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
@@ -211,7 +221,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
             },
           ],
         },
-        // Review Schema (if reviews exist)
         ...(post.reviews?.length
           ? [
               {
@@ -238,7 +247,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
       ],
     });
 
-    // Cleanup on unmount
     return () => setSEOData(null);
   }, [post, setSEOData, baseUrl, slug]);
 
@@ -288,7 +296,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   };
 
   const handleContentUpdate = async () => {
-    if (!contentRef.current || !post) return;
+    if (!contentRef.current || !post || !isAdmin) return; // Guard against non-admins
 
     const updatedContent = contentRef.current.innerHTML;
 
@@ -306,6 +314,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
 
       if (response.ok) {
         setPost({ ...post, content: updatedContent });
+        console.log('Content updated successfully');
       } else {
         console.error('Failed to update content:', await response.json());
       }
@@ -366,7 +375,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                 >
                   <PostHeader
                     post={{
-                      section: post.section || '', // Fallback for PostHeader
+                      section: post.section || '',
                       subsection: post.subsection || 'Subsection',
                       title: post.title,
                       created_on: post.created_on,

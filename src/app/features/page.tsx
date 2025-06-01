@@ -1,12 +1,12 @@
-// src/app/features/page.tsx (your version with fix)
+// src/app/features/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import * as Icons from '@heroicons/react/24/outline';
 import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import { supabase } from '../../lib/supabaseClient';
-import parse from 'html-react-parser';
+import { getOrganizationId } from '@/lib/supabase';
+import parse from 'html-react-parser'; // Added
 
 interface Feature {
   id: string;
@@ -21,22 +21,37 @@ interface Feature {
   package?: string;
   description?: string;
   type_display?: string;
+  organization_id: string | null;
 }
 
 export default function FeaturesPage() {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchFeatures = async () => {
       try {
-        const { data, error } = await supabase.from('feature').select('*');
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const organizationId = await getOrganizationId(baseUrl);
+        if (!organizationId) {
+          throw new Error('Organization not found');
+        }
 
-        if (error) throw new Error(error.message);
+        const response = await fetch(`/api/features?organization_id=${organizationId}`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch features');
+        }
+        const data = await response.json();
+        console.log('Fetched features:', data);
         setFeatures(data || []);
-      } catch (error) {
-        console.error('Error fetching features:', error);
+      } catch (err) {
+        console.error('Error fetching features:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch features');
       } finally {
         setLoading(false);
       }
@@ -54,6 +69,7 @@ export default function FeaturesPage() {
     .sort((a, b) => (b.feature_image ? 1 : a.feature_image ? -1 : 0));
 
   if (loading) return <div className="py-32 text-center text-gray-500 animate-pulse">Loading...</div>;
+  if (error) return <div className="py-32 text-center text-red-500">{error}</div>;
 
   return (
     <div className="max-w-7xl mx-auto sm:px-0 px-6 py-16 pt-24">
@@ -75,7 +91,7 @@ export default function FeaturesPage() {
 
       {filteredFeatures.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
-          {searchQuery ? `No features found matching \"${searchQuery}\"` : 'No features available'}
+          {searchQuery ? `No features found matching "${searchQuery}"` : 'No features available'}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

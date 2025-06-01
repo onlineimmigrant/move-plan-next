@@ -1,9 +1,10 @@
+// src/app/features/[slug]/page.tsx
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '../../../lib/supabaseClient';
 import parse from 'html-react-parser';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
-import FeatureHeader from '../../../components/FeatureHeader'; // Adjust path as needed
+import FeatureHeader from '../../../components/FeatureHeader';
+import { getOrganizationId } from '@/lib/supabase';
 
 interface Feature {
   id: string;
@@ -18,6 +19,7 @@ interface Feature {
   package?: string;
   description?: string;
   type_display?: string;
+  organization_id: string | null; // Added
 }
 
 interface PricingPlan {
@@ -29,30 +31,6 @@ interface PricingPlan {
   measure?: string;
   price: number;
   currency: string;
-}
-
-interface PricingPlanResponse {
-  pricingplan_id: string;
-  pricingplan:
-    | {
-        id: string;
-        slug?: string;
-        package?: string;
-        measure?: string;
-        price: number;
-        currency: string;
-        product: { product_name: string; slug: string } | { product_name: string; slug: string }[];
-      }
-    | {
-        id: string;
-        slug?: string;
-        package?: string;
-        measure?: string;
-        price: number;
-        currency: string;
-        product: { product_name: string; slug: string } | { product_name: string; slug: string }[];
-      }[]
-    | null;
 }
 
 interface FeaturePageProps {
@@ -96,7 +74,6 @@ function PricingPlanCard({ plan, color }: { plan: PricingPlan; color: string }) 
           {plan.product_name}
         </h2>
         <p className="flex justify-end tracking-widest text-base text-gray-600 font-light line-clamp-2 flex-grow leading-tight uppercase">
-         
           <span>{plan.currency} </span>
           <span className='text-xl'>{plan.price}</span>
         </p>
@@ -124,78 +101,30 @@ function PricingPlanCard({ plan, color }: { plan: PricingPlan; color: string }) 
 export default async function FeaturePage({ params }: FeaturePageProps) {
   const { slug } = await params;
 
-  // Fetch the feature by slug
-  const { data: feature, error: featureError } = await supabase
-    .from('feature')
-    .select('*')
-    .eq('slug', slug)
-    .single();
-
-  if (featureError || !feature) {
-    console.error('Error fetching feature:', featureError);
+  // Fetch organization_id
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const organizationId = await getOrganizationId(baseUrl);
+  if (!organizationId) {
+    console.error('Organization not found for baseUrl:', baseUrl);
     notFound();
   }
 
-  // Fetch associated pricing plans with product data, including product slug
-  const { data: pricingPlansData, error: pricingPlansError } = await supabase
-    .from('pricingplan_features')
-    .select(`
-      pricingplan_id,
-      pricingplan:pricingplan_id (
-        id,
-        slug,
-        package,
-        measure,
-        price,
-        currency,
-        product:product_id (
-          product_name,
-          slug
-        )
-      )
-    `)
-    .eq('feature_id', feature.id);
-
-  if (pricingPlansError) {
-    console.error('Error fetching pricing plans:', pricingPlansError);
+  // Fetch feature and pricing plans via API
+  const response = await fetch(
+    `http://localhost:3000/api/features/${slug}?organization_id=${organizationId}`,
+    { cache: 'no-store' }
+  );
+  if (!response.ok) {
+    console.error('Error fetching feature:', response.statusText);
+    notFound();
   }
 
-  // Log pricingPlansData for debugging
-  console.log('pricingPlansData:', JSON.stringify(pricingPlansData, null, 2));
+  const { feature, pricingPlans: associatedPricingPlans } = await response.json();
 
-  const associatedPricingPlans: PricingPlan[] = (pricingPlansData ?? []).flatMap(
-    (item: PricingPlanResponse): PricingPlan[] => {
-      // Handle pricingplan as single object or array
-      const plans = Array.isArray(item.pricingplan)
-        ? item.pricingplan
-        : item.pricingplan
-        ? [item.pricingplan]
-        : [];
-
-      return plans.map((plan): PricingPlan | null => {
-        if (!plan || !plan.id) return null;
-
-        // Handle product as single object or array (take first if array)
-        const product = Array.isArray(plan.product)
-          ? plan.product[0]
-          : plan.product;
-
-        const product_name = product?.product_name ?? 'Unknown Product';
-        const product_slug = product?.slug ?? 'unknown';
-
-        return {
-          id: plan.id.toString(),
-          slug: plan.slug ?? plan.id.toString(),
-          product_name,
-          product_slug,
-          package: plan.package ?? undefined,
-          measure: plan.measure ?? undefined,
-          price: plan.price,
-          currency: plan.currency,
-        };
-      }).filter((plan): plan is PricingPlan => plan !== null);
-    }
-  );
+  if (!feature) {
+    console.error('Feature not found for slug:', slug);
+    notFound();
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-24">
@@ -208,7 +137,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             Available with purchase
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
-            {associatedPricingPlans.map((plan, index) => (
+            {associatedPricingPlans.map((plan: PricingPlan, index: number) => (
               <Link key={plan.id} href={`/products/${plan.product_slug}`} className="group">
                 <PricingPlanCard plan={plan} color={colors[index % colors.length]} />
               </Link>

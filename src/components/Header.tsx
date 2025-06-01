@@ -58,12 +58,26 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const [isMounted, setIsMounted] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { basket } = useBasket();
   const { session, logout } = useAuth();
   const router = useRouter();
   const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
   const isLoggedIn = !!session;
   const { settings } = useSettings();
+
+  // Handle scroll effect for nav background
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const scrollThreshold = windowHeight * 0.1; // 10% of window height
+      setIsScrolled(scrollPosition > scrollThreshold);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -95,6 +109,9 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     console.log('companyLogo:', companyLogo);
     console.log('settings:', settings);
   }, [isLoggedIn, session, menuItems, isOpen, isLoginOpen, isContactOpen, companyLogo, settings]);
+
+  const menuWidth = settings.menu_width;
+  const menuItemsAreText = settings.menu_items_are_text;
 
   const handleToggle = () => {
     console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
@@ -166,11 +183,13 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                   <>
                     <button
                       type="button"
-                      className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                      className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                       title={item.display_name}
                       aria-label={`Open ${item.display_name} menu`}
                     >
-                      {item.image ? (
+                      {menuItemsAreText ? (
+                        <span className="text-base font-medium text-gray-700">{item.display_name}</span>
+                      ) : item.image ? (
                         <Image
                           src={item.image}
                           alt={item.display_name}
@@ -197,17 +216,19 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                 ) : (
                   <Link
                     href={item.url_name}
-                    className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                    className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                     title={item.display_name}
                     aria-label={`Go to ${item.display_name}`}
                   >
-                    {item.image ? (
+                    {menuItemsAreText ? (
+                      <span className="text-base font-medium text-gray-700">{item.display_name}</span>
+                    ) : item.image ? (
                       <Image
                         src={item.image}
                         alt={item.display_name}
                         width={24}
                         height={24}
-                        className="h-6 w-6 text-gray-600"
+                        className="h-4 w-6 text-gray-600"
                       />
                     ) : (
                       renderIcon(item.react_icons?.icon_name)
@@ -284,8 +305,12 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-gray-200 bg-white">
-      <div className="p-4 sm:px-6 flex justify-between items-center">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
+        isScrolled ? 'border-gray-200 bg-white' : 'bg-transparent'
+      }`}
+    >
+      <div className={`mx-auto max-w-${menuWidth || '7xl'} p-4 sm:px-6 flex justify-between items-center`}>
         <button
           type="button"
           onClick={handleMainPage}
@@ -293,7 +318,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           aria-label="Go to homepage"
           disabled={!router}
         >
-          {settings.image? (
+          {settings.image ? (
             <img
               src={settings.image}
               alt="Logo"

@@ -115,9 +115,7 @@ export default function DefaultReportPage() {
                   key={field}
                   className={cn(
                     "border p-2 text-left text-xs font-medium",
-                    settings?.primary_color?.name
-                      ? `text-${settings.primary_color.name}`
-                      : "text-gray-700"
+                   "text-gray-700"
                   )}
                 >
                   {field}
@@ -182,18 +180,14 @@ export default function DefaultReportPage() {
         <h1
           className={cn(
             "text-sm p-6 pt-4 pb-0 capitalize font-bold",
-            settings?.primary_color?.name
-              ? `text-${settings.primary_color.name}`
-              : "text-gray-700"
+         "text-gray-700"
           )}
         >
           {formattedDisclosure} Table
           <span
             className={cn(
               "",
-              settings?.secondary_color?.name
-                ? `text-${settings.secondary_color.name}`
-                : "text-gray-700"
+       "text-gray-700"
             )}
           >
             {" "}
@@ -203,9 +197,7 @@ export default function DefaultReportPage() {
         <span
           className={cn(
             "text-sm p-6 pt-4 pb-0 capitalize font-bold",
-            settings?.secondary_color?.name
-              ? `text-${settings.secondary_color.name}`
-              : "text-gray-700"
+   "text-gray-700"
           )}
         >
           Report
@@ -219,9 +211,9 @@ export default function DefaultReportPage() {
             className={cn(
               "px-3 py-1 rounded-md text-xs font-medium",
               diagramType === "table"
-                ? settings?.primary_color?.name
-                  ? `bg-${settings.primary_color.name} text-white`
-                  : "bg-gray-600 text-white"
+                
+                ? `bg-gray-700 text-white`
+                
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             )}
           >
@@ -232,9 +224,9 @@ export default function DefaultReportPage() {
             className={cn(
               "px-3 py-1 rounded-md text-xs font-medium",
               diagramType === "bar"
-                ? settings?.primary_color?.name
-                  ? `bg-${settings.primary_color.name} text-white`
-                  : "bg-gray-600 text-white"
+               
+                  ? `bg-gray-700 text-white`
+                 
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             )}
           >
@@ -245,9 +237,9 @@ export default function DefaultReportPage() {
             className={cn(
               "px-3 py-1 rounded-md text-xs font-medium",
               diagramType === "line"
-                ? settings?.primary_color?.name
-                  ? `bg-${settings.primary_color.name} text-white`
-                  : "bg-gray-600 text-white"
+             
+                  ? `bg-gray-700 text-white`
+               
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             )}
           >
@@ -257,9 +249,7 @@ export default function DefaultReportPage() {
             onClick={exportToPDF}
             className={cn(
               "px-3 py-1 rounded-md text-xs font-medium",
-              settings?.secondary_color?.name
-                ? `bg-${settings.secondary_color.name} text-white hover:bg-${settings.secondary_color.name}-700`
-                : "bg-blue-600 text-white hover:bg-blue-700"
+      "bg-blue-600 text-white hover:bg-blue-700"
             )}
           >
             Export to PDF
@@ -268,9 +258,7 @@ export default function DefaultReportPage() {
             onClick={exportToPNG}
             className={cn(
               "px-3 py-1 rounded-md text-xs font-medium",
-              settings?.secondary_color?.name
-                ? `bg-${settings.secondary_color.name} text-white hover:bg-${settings.secondary_color.name}-700`
-                : "bg-green-600 text-white hover:bg-green-700"
+ "bg-green-600 text-white hover:bg-green-700"
             )}
           >
             Export to PNG

@@ -86,9 +86,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   // Use settings for text size, font weight, and colors with default values
 
-  const fontTextWeight = settings?.primary_font?.default_type ? 'font-normal' : 'font-medium';
+  const fontTextWeight =  'font-medium';
 
-  const textColorHover = settings?.secondary_color?.name ? settings.secondary_color.name : 'gray-400';
+  const textColorHover = 'gray-400';
 
   return (
     <div className="flex justify-center w-full">

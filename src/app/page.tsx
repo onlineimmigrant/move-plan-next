@@ -1,4 +1,4 @@
-// /app/components/HomePage.tsx
+// app/components/HomePage.tsx
 "use client";
 
 import React, { Suspense, useEffect, useState } from 'react';
@@ -11,6 +11,11 @@ const FAQSection = dynamic(() => import('@/components/HomePageSections/FAQSectio
 
 interface HeroData {
   h1_title: string;
+  h1_text_color: string; // Added
+  is_h1_gradient_text?: boolean; // Added
+  h1_text_color_gradient_from: string; // Added
+  h1_text_color_gradient_via: string; // Added
+  h1_text_color_gradient_to: string; // Added
   p_description: string;
   p_description_color: string;
   background_color_home_page?: string;
@@ -24,7 +29,6 @@ interface HeroData {
   seo_title?: string;
   h1_text_size_mobile?: string;
   h1_text_size?: string;
-  is_h1_gradient_text?: boolean;
   title_alighnement?: string;
   title_block_width?: string;
   title_block_columns?: number;
@@ -32,25 +36,17 @@ interface HeroData {
   p_description_size_mobile?: string;
   p_description_weight?: string;
   image_first?: boolean;
-  organization_id: string | null; // Added
+  organization_id: string | null;
 }
 
 interface Brand {
   id: string;
   web_storage_address: string;
   name: string;
-  organization_id: string | null; // Added
+  organization_id: string | null;
 }
 
-interface FAQ {
-  id: number;
-  question: string;
-  answer: string;
-  section?: string;
-  display_order?: number;
-  order?: number;
-  organization_id: string | null; // Added
-}
+import { FAQ } from '@/types/faq';
 
 interface HomePageData {
   hero: HeroData;
@@ -94,9 +90,16 @@ const HomePage: React.FC = () => {
         setData({
           hero: {
             ...heroData,
+            h1_title: heroData.h1_title || 'Welcome to Our Platform',
+            h1_text_color: heroData.h1_text_color || 'gray-900', // Fallback
+            is_h1_gradient_text: heroData.is_h1_gradient_text ?? false, // Fallback
+            h1_text_color_gradient_from: heroData.h1_text_color_gradient_from || 'gray-900', // Fallback
+            h1_text_color_gradient_via: heroData.h1_text_color_gradient_via || 'gray-700', // Fallback
+            h1_text_color_gradient_to: heroData.h1_text_color_gradient_to || 'gray-500', // Fallback
+            p_description: heroData.p_description || 'Discover our services.',
             p_description_color: heroData.p_description_color || '#000000',
             h1_title_color_id: heroData.h1_title_color_id || '',
-            organization_id: heroData.organization_id || null, // Added
+            organization_id: heroData.organization_id || null,
           },
           brands: brandsData || [],
           faqs: faqsData || [],
@@ -141,8 +144,8 @@ const HomePage: React.FC = () => {
       <Suspense fallback={<div>Loading FAQs...</div>}>
         <div className="">
           <FAQSection faqs={data.faqs || []} />
-          </div>
-        </Suspense>
+        </div>
+      </Suspense>
     </div>
   );
 };

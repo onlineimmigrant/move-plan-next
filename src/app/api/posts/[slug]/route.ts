@@ -2,10 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 import { getOrganizationId } from '@/lib/supabase';
 
-// Define a type for the blog post body (all fields from blog_post table with defaults)
+// Define a type for the blog post body
 type BlogPostBody = {
   title: string;
-  slug: string; // For POST, slug is new; for PATCH, it’s renamed to newSlug
+  slug: string;
   content: string;
   description?: string;
   display_this_post?: boolean;
@@ -23,8 +23,8 @@ type BlogPostBody = {
   cta_card_four_id?: number | null;
   product_1_id?: number | null;
   product_2_id?: number | null;
-  created_on?: string; // Optional, set by server in POST
-  organization_id?: string; // Added for multi-tenancy
+  created_on?: string;
+  organization_id?: string;
 };
 
 // Single Supabase client instance
@@ -44,18 +44,61 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// GET handler for fetching a specific blog post by slug
-export async function GET(request: NextRequest, context: any) {
+// GET handler
+export async function GET(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const slug = (context.params as { slug: string }).slug;
+  const { slug } = await context.params;
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organization_id');
   console.log('Received GET request for /api/posts/[slug]:', slug, 'organization_id:', organizationId);
 
   if (!organizationId) {
     console.error('Missing organization_id in query parameters');
-    return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const fallbackOrgId = await getOrganizationId(baseUrl);
+    if (!fallbackOrgId) {
+      return NextResponse.json({ error: 'Organization ID is required and could not be resolved' }, { status: 400 });
+    }
+    console.log('Using fallback organization_id:', fallbackOrgId);
+    try {
+      const { data: postData, error: postError } = await supabase
+        .from('blog_post')
+        .select('*')
+        .eq('slug', slug)
+        .or(`organization_id.eq.${fallbackOrgId},organization_id.is.null`)
+        .single();
+
+      if (postError) {
+        console.error('Supabase query error:', postError);
+        return NextResponse.json(
+          { error: 'Failed to fetch post', details: postError.message },
+          { status: 500 }
+        );
+      }
+
+      if (!postData) {
+        console.log('No post found for slug:', slug, 'organization_id:', fallbackOrgId);
+        return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      }
+
+      if (postData.display_this_post === false) {
+        console.log('Post hidden due to display_this_post being false:', slug);
+        return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      }
+
+      console.log('Fetched post:', postData);
+      return NextResponse.json(postData, {
+        status: 200,
+        headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' },
+      });
+    } catch (error) {
+      console.error('Error in GET /api/posts/[slug] with fallback:', error);
+      return NextResponse.json(
+        { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      );
+    }
   }
 
   try {
@@ -99,7 +142,7 @@ export async function GET(request: NextRequest, context: any) {
   }
 }
 
-// POST handler for creating a new blog post
+// POST handler
 export async function POST(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
@@ -136,7 +179,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch organization_id
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
@@ -208,15 +250,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH handler for updating an existing blog post
-export async function PATCH(request: NextRequest, context: any) {
+// PATCH handler
+export async function PATCH(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const slug = (context.params as { slug: string }).slug;
+  const { slug } = await context.params;
   console.log('Received PATCH request for /api/posts/[slug]:', slug);
+  console.log('Request headers:', Object.fromEntries(request.headers));
 
   try {
     const body: Partial<BlogPostBody> = await request.json();
+    console.log('PATCH request body:', body);
+
     const {
       title,
       slug: newSlug,
@@ -237,13 +282,22 @@ export async function PATCH(request: NextRequest, context: any) {
       cta_card_four_id,
       product_1_id,
       product_2_id,
-      organization_id,
+      organization_id: providedOrgId,
     } = body;
 
+    // Fallback to getOrganizationId if organization_id is missing
+    const organization_id = providedOrgId;
     if (!organization_id) {
-      console.error('Missing organization_id in request body');
-      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+      console.warn('Missing organization_id in request body, attempting fallback');
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const organization_id = await getOrganizationId(baseUrl);
+      if (!organization_id) {
+        console.error('Could not resolve organization_id');
+        return NextResponse.json({ error: 'Organization ID is required and could not be resolved' }, { status: 400 });
+      }
+      console.log('Using fallback organization_id:', organization_id);
     }
+    console.log('Resolved organization_id:', organization_id);
 
     console.log('Checking if post exists for slug:', slug, 'organization_id:', organization_id);
     const { data: existingPost, error: fetchError } = await supabase
@@ -254,7 +308,7 @@ export async function PATCH(request: NextRequest, context: any) {
       .single();
 
     if (fetchError || !existingPost) {
-      console.error('Post not found or fetch error:', fetchError);
+      console.error('Post not found or fetch error:', fetchError?.message || 'No post found');
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
@@ -268,15 +322,16 @@ export async function PATCH(request: NextRequest, context: any) {
         .single();
 
       if (slugCheck) {
+        console.error('New slug already exists:', newSlug);
         return NextResponse.json({ error: 'New slug already exists for this organization' }, { status: 409 });
       }
       if (slugCheckError && slugCheckError.code !== 'PGRST116') {
         console.error('Slug check error:', slugCheckError);
-        return NextResponse.json({ error: 'Failed to check slug availability' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to check slug availability', details: slugCheckError.message }, { status: 500 });
       }
     }
 
-    console.log('Updating post in Supabase...');
+    console.log('Building update data for post...');
     const updateData: Partial<BlogPostBody> = {};
     if (title !== undefined) updateData.title = title;
     if (newSlug !== undefined) updateData.slug = newSlug;
@@ -298,6 +353,12 @@ export async function PATCH(request: NextRequest, context: any) {
     if (product_1_id !== undefined) updateData.product_1_id = product_1_id;
     if (product_2_id !== undefined) updateData.product_2_id = product_2_id;
 
+    if (Object.keys(updateData).length === 0) {
+      console.warn('No fields provided to update');
+      return NextResponse.json({ error: 'No fields provided to update' }, { status: 400 });
+    }
+
+    console.log('Updating post in Supabase with data:', updateData);
     const { data: updatedPost, error: updateError } = await supabase
       .from('blog_post')
       .update(updateData)
@@ -314,7 +375,7 @@ export async function PATCH(request: NextRequest, context: any) {
       );
     }
 
-    console.log('Post updated:', updatedPost);
+    console.log('Post updated successfully:', updatedPost);
     return NextResponse.json(updatedPost, { status: 200 });
   } catch (error) {
     console.error('Error in PATCH /api/posts/[slug]:', error);

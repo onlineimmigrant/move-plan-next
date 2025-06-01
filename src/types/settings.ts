@@ -25,14 +25,9 @@ export interface Size {
 export interface Settings {
   site: string | null | undefined; // Simplified to match usage
   id: number;
-  primary_color: Color;
-  secondary_color: Color;
-  primary_font: Font;
-  secondary_font: Font | null;
-  font_size_base: Size;
-  font_size_small: Size;
-  font_size_large: Size;
-  updated_at: string;
   organization_id: string;
   image: string;
+  menu_width: string;
+  menu_items_are_text: boolean;
+  footer_color: string;
 }
