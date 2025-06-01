@@ -18,21 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        run: npm install -g pnpm@10.11.0 # Install pnpm before caching
-
-      - name: Verify pnpm-lock.yaml exists
-        run: |
-          if [ ! -f "pnpm-lock.yaml" ]; then
-            echo "Error: pnpm-lock.yaml not found. Please run 'pnpm install' locally and commit the lock file."
-            exit 1
-          fi
-
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-          cache: 'pnpm' # Cache pnpm dependencies to speed up builds
+          cache: 'npm' # Cache npm dependencies to speed up builds
 
       - name: Debug environment variables
         env:
@@ -75,7 +65,7 @@ jobs:
           echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is set: ${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:+true}"
           echo "NODE_ENV is set: ${NODE_ENV:+true}"
 
-      - name: Install dependencies, build, and test
+      - name: npm install, build, and test
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -98,9 +88,9 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NODE_ENV: development # Set NODE_ENV for build stage
         run: |
-          pnpm install # Use pnpm instead of npm
-          pnpm run build --if-present
-          pnpm run test --if-present
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r -x "node_modules/*" ".git/*" "tests/*"
@@ -174,7 +164,7 @@ jobs:
 
       - name: Configure App Service startup command
         run: |
-          az webapp config set --name metexam-next-app-2 --resource-group metexam-apps --startup-file "npm install -g pnpm@10.11.0 && pnpm run start"
+          az webapp config set --name metexam-next-app-2 --resource-group metexam-apps --startup-file "npm run start"
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
 
