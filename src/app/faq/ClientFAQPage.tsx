@@ -1,3 +1,4 @@
+// app/faq/ClientFAQPage.tsx
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -10,12 +11,12 @@ interface ClientFAQPageProps {
 }
 
 export default function ClientFAQPage({ initialFAQs }: ClientFAQPageProps) {
-  // Memoize normalizedFAQs to prevent recreation on every render
+  // Memoize normalizedFAQs
   const normalizedFAQs = useMemo(
     () =>
       initialFAQs.map(faq => ({
         ...faq,
-        organization_id: faq.organization_id ?? faq.organisation_id ?? '', // Fallback for legacy data
+        organization_id: faq.organization_id ?? faq.organisation_id ?? null,
       })),
     [initialFAQs]
   );

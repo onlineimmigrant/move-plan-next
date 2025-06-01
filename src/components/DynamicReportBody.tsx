@@ -48,8 +48,8 @@ const DynamicReportBody: React.FC<DynamicReportBodyProps> = ({
               {selectedFields.map((field) => (
                 <th
                   key={field}
-                  style={{ color: settings?.primary_color?.name || "#6B7280" }}
-                  className="border p-2 text-left text-xs font-medium"
+                  
+                  className="border p-2 text-left text-xs font-medium text-gray-700"
                 >
                   {field}
                 </th>

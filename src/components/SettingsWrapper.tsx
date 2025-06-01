@@ -14,14 +14,13 @@ function SettingsWrapper({
 }) {
   useEffect(() => {
     // Optional: Set CSS variables for custom styling (not needed for Tailwind classes)
-    document.documentElement.style.setProperty("--primary-color", settings.primary_color.hex);
-    document.documentElement.style.setProperty("--font-family", settings.primary_font.name);
-    document.documentElement.style.setProperty("--font-size-base", `${settings.font_size_base.value}px`);
+    document.documentElement.style.setProperty("--primary-color", settings.footer_color);
+
   }, [settings]);
 
   return (
     <div
-      className={`font-${settings.primary_font.name.toLowerCase()} text-${settings.font_size_base.name}`}
+      className={`font-inter text-base`}
     >
       <NavbarWrapper>{children}</NavbarWrapper>
     </div>

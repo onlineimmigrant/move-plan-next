@@ -35,9 +35,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   const headerData = {
-    text_color: settings.primary_color.name,
-    text_color_hover: settings.secondary_color.name,
-    font_family: settings.primary_font.name.toLowerCase(),
     image_for_privacy_settings: settings.image,
     site: settings.site,
     image: settings.image,

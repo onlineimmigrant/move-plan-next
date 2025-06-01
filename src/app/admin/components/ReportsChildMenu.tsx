@@ -77,9 +77,7 @@ const MenuItem = ({
 
   const iconClasses = cn(
     "w-4 h-4",
-    isActive && settings?.primary_color?.name
-      ? `text-${settings.primary_color.name}`
-      : isActive
+    isActive 
       ? "text-sky-600"
       : "text-gray-400"
   );
@@ -242,8 +240,8 @@ export default function ReportsChildMenu({
   const mobileIconClasses = (key: DisclosureKey) =>
     cn(
       "h-4 w-4",
-      isSectionActive(pathname, sidebarLinks[key]) && settings?.primary_color?.name
-        ? `text-${settings.primary_color.name}`
+      isSectionActive(pathname, sidebarLinks[key]) 
+        ? `text-gray-700`
         : isSectionActive(pathname, sidebarLinks[key])
         ? "text-sky-600"
         : "text-gray-400"

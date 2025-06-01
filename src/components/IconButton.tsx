@@ -29,9 +29,7 @@ const IconButton: React.FC<IconButtonProps> = ({ onClick, disabled, icon: Icon, 
 
   const iconClasses = cn(
     "h-4 w-4",
-    isActive && settings?.primary_color?.name
-      ? `text-${settings.primary_color.name}` // Use primary_color when active
-      : isActive
+    isActive 
       ? "text-sky-600" // Fallback when active and no primary_color
       : "text-red-500" // Default inactive color
   );

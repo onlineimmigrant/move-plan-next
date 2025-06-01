@@ -101,10 +101,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
   return (
     <div
       className={cn(
-        "z-50 bg-gray-50 border-r border-gray-200 h-screen flex flex-col transition-all duration-300",
-        settings?.primary_font?.name && settings?.font_size_base?.name
-          ? `font-${settings.primary_font.name.toLowerCase()} text-${settings.font_size_base.name}`
-          : "font-inter text-base",
+        "z-50 bg-gray-50 border-r border-gray-200 h-screen flex flex-col transition-all duration-300 text-base",
         isCollapsed ? "w-14" : "w-48",
       )}
       onMouseEnter={() => setIsCollapsed(false)}
@@ -137,12 +134,9 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
             {!isCollapsed && (
               <Link
                 href="/"
-                className={cn(
-                  "ml-4 tracking-tight text-sm sm:text-base font-bold",
-                  settings?.primary_color?.name
-                    ? `text-${settings.primary_color.name}`
-                    : "text-sky-600",
-                )}
+                className=
+                  "ml-4 tracking-tight text-sm sm:text-base font-bold text-sky-600"
+               
               >
                 {settings?.site || ''}
               </Link>
@@ -173,8 +167,8 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
                     isCollapsed
                       ? "h-10 w-10 hover:bg-gray-100 hover:rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500"
                       : "justify-self-start",
-                    isActive && settings?.primary_color?.name
-                      ? `text-${settings.primary_color.name}`
+                    isActive 
+                      ? `text-gray-700`
                       : isActive
                       ? "text-sky-600"
                       : "",
@@ -184,15 +178,9 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
                 </span>
                 {!isCollapsed && (
                   <span
-                    className={cn(
-                      settings?.secondary_color?.name
-                        ? `text-${settings.secondary_color.name}`
-                        : "text-gray-900",
-                      "font-semibold text-left pl-4",
-                      settings?.font_size_small?.name
-                        ? `text-${settings.font_size_small.name}`
-                        : "text-base",
-                    )}
+                    className=
+                       "text-gray-900 font-semibold text-left pl-4 text-base"
+                   
                   >
                     {item.label}
                   </span>

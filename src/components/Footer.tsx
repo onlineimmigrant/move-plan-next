@@ -104,10 +104,12 @@ const Footer: React.FC<FooterProps> = ({}) => {
 
   const handleNavigation = (path: string) => () => router.push(path);
 
+  const footerBackground = settings.footer_color;
+
   // Fallback UI for empty menu
   if (menuItems.length === 0) {
     return (
-      <footer className={cn('bg-gray-700 py-12 text-sm text-white')}>
+      <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
         <div className="mx-auto max-w-7xl px-8">
           <div className="mb-8">
             <button
@@ -129,7 +131,7 @@ const Footer: React.FC<FooterProps> = ({}) => {
   }
 
   return (
-    <footer className={cn('bg-gray-700 py-12 text-sm text-white')}>
+    <footer className={`bg-${footerBackground}  py-12 text-sm text-white`}>
       <div className="mx-auto max-w-7xl px-8">
         <div className="mb-8">
           <button

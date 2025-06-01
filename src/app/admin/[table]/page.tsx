@@ -5,7 +5,7 @@ import DynamicTable from "@/components/DynamicTable";
 import { getTableToDisclosure } from "@/lib/sidebarLinks";
 import { useSettings } from "@/context/SettingsContext";
 import { useParams } from "next/navigation";
-import { cn } from "@/lib/utils";
+
 import ColorsModal from "@/components/ColorsModal";
 import { useModal } from "@/context/ModalContext";
 
@@ -56,33 +56,22 @@ export default function TablePage() {
     <div className="relative">
       <div className="flex justify-between items-center">
         <h1
-          className={cn(
-            "text-sm p-6 pt-4 pb-0 capitalize font-bold",
-            settings?.primary_color?.name
-              ? `text-${settings.primary_color.name}`
-              : "text-gray-700"
-          )}
+          className=
+            "text-sm p-6 pt-4 pb-0 capitalize font-bold text-gray-700"
         >
           {formattedDisclosure}
           <span
-            className={cn(
-              "",
-              settings?.secondary_color?.name
-                ? `text-${settings.secondary_color.name}`
-                : "text-gray-700"
-            )}
+            className="text-gray-700"
+           
           >
             {" "}
             {tableName.charAt(0).toUpperCase() + tableName.slice(1)}
           </span>
         </h1>
         <span
-          className={cn(
-            "text-sm p-6 pt-4 pb-0 capitalize font-bold",
-            settings?.secondary_color?.name
-              ? `text-${settings.secondary_color.name}`
-              : "text-gray-700"
-          )}
+          className=
+            "text-sm p-6 pt-4 pb-0 capitalize font-bold text-gray-700"
+         
         >
           Table
         </span>

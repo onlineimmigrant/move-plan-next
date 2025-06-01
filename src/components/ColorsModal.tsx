@@ -39,16 +39,8 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
     const hex = tailwindColors[color][shade];
     setSettings((prev) => ({
       ...prev,
-      primary_color: {
-        ...prev.primary_color,
-        name: `${color.toLowerCase()}-${shade}`,
-        hex,
-      },
-      secondary_color: {
-        ...prev.secondary_color,
-        name: `${color.toLowerCase()}-${shade}`,
-        hex,
-      },
+      primary_color: settings.footer_color,
+      secondary_color: settings.footer_color,
     }));
   };
 
@@ -206,8 +198,8 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
                 {shades.map((shade) => {
                   const hex = shadesObj[shade];
                   const isSelected =
-                    settings?.primary_color?.name === `${colorName.toLowerCase()}-${shade}` ||
-                    settings?.secondary_color?.name === `${colorName.toLowerCase()}-${shade}`;
+                    settings?.footer_color === `${colorName.toLowerCase()}-${shade}` ||
+                    settings?.footer_color === `${colorName.toLowerCase()}-${shade}`;
                   return (
                     <div key={`${colorName}-${shade}`} className="relative group">
                       <button
