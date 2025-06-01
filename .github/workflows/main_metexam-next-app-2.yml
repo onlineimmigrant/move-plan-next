@@ -22,12 +22,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-          cache: 'npm' # Cache npm dependencies to speed up builds
 
       - name: Debug environment variables
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }} # Fixed typo: SSUPABASE_SERVICE_KEY to SUPABASE_SERVICE_KEY
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -44,7 +43,6 @@ jobs:
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          NODE_ENV: development # Set NODE_ENV for build stage
         run: |
           echo "SUPABASE_URL is set: ${SUPABASE_URL:+true}"
           echo "SUPABASE_SERVICE_KEY is set: ${SUPABASE_SERVICE_KEY:+true}"
@@ -63,7 +61,6 @@ jobs:
           echo "NEXT_PUBLIC_BASE_URL is set: ${NEXT_PUBLIC_BASE_URL:+true}"
           echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is set: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:+true}"
           echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is set: ${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:+true}"
-          echo "NODE_ENV is set: ${NODE_ENV:+true}"
 
       - name: npm install, build, and test
         env:
@@ -86,7 +83,8 @@ jobs:
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
           NEXT_TELEMETRY_DISABLED: 1
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          NODE_ENV: development # Set NODE_ENV for build stage
+          
+          
         run: |
           npm install
           npm run build --if-present
@@ -136,35 +134,7 @@ jobs:
 
       - name: Configure App Service settings
         run: |
-          az webapp config appsettings set --name metexam-next-app-2 --resource-group metexam-apps --settings \
-            WEBSITES_PORT=3000 \
-            WEBSITE_NODE_DEFAULT_VERSION=20 \
-            SCM_DO_BUILD_DURING_DEPLOYMENT=true \
-            NODE_ENV=production \
-            NEXT_PUBLIC_BASE_URL=https://metexam-next-app-2-frhqf5bjhkhxbhdg.uksouth-01.azurewebsites.net \
-            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }} \
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }} \
-            SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }} \
-            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
-            NEXT_API_URL=${{ secrets.NEXT_API_URL }} \
-            NEXT_PUBLIC_DOMAIN_CUSTOM=${{ secrets.NEXT_PUBLIC_DOMAIN_CUSTOM }} \
-            NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME=${{ secrets.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME }} \
-            NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY=${{ secrets.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_KEY }} \
-            NEXT_PUBLIC_AZURE_CONTAINER_NAME=${{ secrets.NEXT_PUBLIC_AZURE_CONTAINER_NAME }} \
-            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
-            STRIPE_PRICE_ID=${{ secrets.STRIPE_PRICE_ID }} \
-            NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED=${{ secrets.NEXT_PUBLIC_EMAIL_CONFIRM_REQUIRED }} \
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
-            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }} \
-            NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }} \
-            RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
-        env:
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
-
-      - name: Configure App Service startup command
-        run: |
-          az webapp config set --name metexam-next-app-2 --resource-group metexam-apps --startup-file "npm run start"
+          az webapp config appsettings set --name metexam-next-app-2 --resource-group metexam-apps --settings WEBSITES_PORT=3000 WEBSITE_NODE_DEFAULT_VERSION=20 SCM_DO_BUILD_DURING_DEPLOYMENT=true
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
 
@@ -184,11 +154,3 @@ jobs:
         run: |
           sleep 30
           curl -f https://metexam-next-app-2-frhqf5bjhkhxbhdg.uksouth-01.azurewebsites.net || exit 1
-
-      - name: Enable detailed logging and fetch logs
-        if: failure() # Run this step only if the deployment fails
-        run: |
-          az webapp log config --name metexam-next-app-2 --resource-group metexam-apps --web-server-logging filesystem --application-logging true --detailed-error-messages true
-          az webapp log tail --name metexam-next-app-2 --resource-group metexam-apps
-        env:
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
