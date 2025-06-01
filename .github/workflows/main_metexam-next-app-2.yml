@@ -21,6 +21,13 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm@10.11.0 # Install pnpm before caching
 
+      - name: Verify pnpm-lock.yaml exists
+        run: |
+          if [ ! -f "pnpm-lock.yaml" ]; then
+            echo "Error: pnpm-lock.yaml not found. Please run 'pnpm install' locally and commit the lock file."
+            exit 1
+          fi
+
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
@@ -167,7 +174,7 @@ jobs:
 
       - name: Configure App Service startup command
         run: |
-          az webapp config set --name metexam-next-app-2 --resource-group metexam-apps --startup-file "pnpm run start"
+          az webapp config set --name metexam-next-app-2 --resource-group metexam-apps --startup-file "npm install -g pnpm@10.11.0 && pnpm run start"
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6A3D9B2A5184D0BB4CD811E14B5CD8E }}
 
