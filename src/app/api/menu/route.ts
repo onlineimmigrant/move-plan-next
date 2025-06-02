@@ -1,3 +1,4 @@
+// /app/api/menu/route.ts
 import { NextResponse } from 'next/server';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 
@@ -24,15 +25,24 @@ interface MenuItem {
   order: number;
   image?: string;
   react_icon_id?: number;
-  react_icons?: ReactIcon;
+  react_icons?: ReactIcon | ReactIcon[];
   website_submenuitem?: SubMenuItem[];
   organization_id: string | null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Skip Supabase query during Vercel build
+  const isBuild = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' && process.env.NEXT_PUBLIC_VERCEL_URL === undefined;
+  if (isBuild) {
+    console.log('Skipping Supabase query during Vercel build');
+    return NextResponse.json([], { status: 200 });
+  }
+
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const { searchParams } = new URL(request.url);
+    const baseUrl = searchParams.get('baseUrl') || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     console.log('Fetching organizationId with baseUrl:', baseUrl);
+
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
       console.error('Organization not found for baseUrl:', baseUrl);
@@ -75,27 +85,44 @@ export async function GET() {
 
     if (!data || data.length === 0) {
       console.warn('No menu items found for organization_id:', organizationId);
-      return NextResponse.json([], { status: 200 });
+      return NextResponse.json([], {
+        status: 200,
+        headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' },
+      });
     }
 
     console.log('Raw menu items fetched:', JSON.stringify(data, null, 2));
 
-    // Cast data to MenuItem[] safely
-    const filteredData: MenuItem[] = ((data as unknown) as MenuItem[] || []).map((item) => ({
-      ...item,
-      website_submenuitem: (item.website_submenuitem || []).filter(
-        (subItem) =>
-          subItem.is_displayed !== false &&
-          (subItem.organization_id === null || // Common subitem
-           subItem.organization_id === organizationId || // Organization-specific
-           subItem.organization_id === item.organization_id) // Matches parent
-      ),
-    }));
+    // Filter and cast data to MenuItem[]
+    const filteredData: MenuItem[] = data.map((item) => {
+      // Handle react_icons as either an array or single object
+      let reactIcons: ReactIcon | ReactIcon[] | undefined = item.react_icons;
+      if (Array.isArray(item.react_icons)) {
+        // If react_icons is an array, take the first item or set to undefined
+        reactIcons = item.react_icons.length > 0 ? item.react_icons[0] : undefined;
+      }
+
+      return {
+        ...item,
+        react_icons: reactIcons,
+        website_submenuitem: (item.website_submenuitem || []).filter(
+          (subItem: SubMenuItem) =>
+            subItem.is_displayed !== false &&
+            (subItem.organization_id === null || subItem.organization_id === organizationId)
+        ),
+      };
+    });
 
     console.log('Filtered menu items:', JSON.stringify(filteredData, null, 2), 'for organization_id:', organizationId);
-    return NextResponse.json(filteredData, { status: 200 });
+    return NextResponse.json(filteredData, {
+      status: 200,
+      headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' },
+    });
   } catch (error) {
     console.error('Server error in /api/menu:', error);
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }
