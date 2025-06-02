@@ -1,115 +1,8 @@
 // /app/page.tsx
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import HomePage from './HomePage';
-import { FAQ } from '@/types/faq';
 import { supabase } from '@/lib/supabase';
-
-interface HeroData {
-  h1_title: string;
-  h1_text_color: string;
-  is_h1_gradient_text?: boolean;
-  h1_text_color_gradient_from: string;
-  h1_text_color_gradient_via: string;
-  h1_text_color_gradient_to: string;
-  p_description: string;
-  p_description_color: string;
-  background_color_home_page?: string;
-  is_bg_gradient?: boolean;
-  h1_title_color_id?: string;
-  h1_via_gradient_color_id?: string;
-  h1_to_gradient_color_id?: string;
-  image_url?: string;
-  is_image_full_page?: boolean;
-  is_seo_title?: boolean;
-  seo_title?: string;
-  h1_text_size_mobile?: string;
-  h1_text_size?: string;
-  title_alighnement?: string;
-  title_block_width?: string;
-  title_block_columns?: number;
-  p_description_size?: string;
-  p_description_size_mobile?: string;
-  p_description_weight?: string;
-  image_first?: boolean;
-  organization_id: string | null;
-}
-
-interface Brand {
-  id: string;
-  web_storage_address: string;
-  name: string;
-  organization_id: string | null;
-}
-
-interface TemplateSection {
-  id: string;
-  section_title: string;
-  section_title_color?: string;
-  section_title_size?: string;
-  section_title_weight?: string;
-  section_description?: string;
-  section_description_color?: string;
-  section_description_size?: string;
-  section_description_weight?: string;
-  metric_title_color?: string;
-  metric_title_size?: string;
-  metric_title_weight?: string;
-  metric_description_color?: string;
-  metric_description_size?: string;
-  metric_description_weight?: string;
-  background_color?: string;
-  font_family?: string;
-  grid_columns?: number;
-  is_full_width?: boolean;
-  is_section_title_aligned_center?: boolean;
-  is_section_title_aligned_right?: boolean;
-  is_image_bottom?: boolean;
-  image_metrics_height?: string;
-  order?: number;
-  url_page?: string;
-  organization_id?: string | null;
-  website_metric: any[];
-}
-
-interface TemplateHeadingSection {
-  id: string;
-  name: string;
-  name_part_2?: string;
-  name_part_3?: string;
-  description_text: string;
-  button_text?: string;
-  url?: string;
-  url_page: string;
-  image?: string;
-  background_color?: string;
-  font_family?: string;
-  text_color?: string;
-  button_color?: string;
-  button_text_color?: string;
-  text_size_h1?: string;
-  text_size_h1_mobile?: string;
-  text_size?: string;
-  font_weight_1?: string;
-  font_weight?: string;
-  h1_text_color?: string;
-  is_text_link?: boolean;
-  image_first?: boolean;
-  is_included_template_sections_active?: boolean;
-  organization_id: string | null;
-}
-
-interface HomePageData {
-  hero: HeroData;
-  brands: Brand[];
-  faqs: FAQ[];
-  templateSections: TemplateSection[];
-  templateHeadingSections: TemplateHeadingSection[];
-  brands_heading: string;
-  labels_default?: {
-    button_main_get_started?: { url: string; text: string };
-    button_explore?: string;
-  };
-}
+import { HomePageData } from '@/types/home_page_data';
 
 async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   const defaultData: HomePageData = {
@@ -159,7 +52,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
       console.error('Error fetching hero data:', heroError || 'No hero data found', 'organization_id:', organizationId);
     }
 
-    // Fetch brands data (corrected table name and added is_active filter)
+    // Fetch brands data
     const { data: brandsData, error: brandsError } = await supabase
       .from('website_brand')
       .select(`
