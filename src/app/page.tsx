@@ -159,15 +159,16 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
       console.error('Error fetching hero data:', heroError || 'No hero data found', 'organization_id:', organizationId);
     }
 
-    // Fetch brands data
+    // Fetch brands data (corrected table name and added is_active filter)
     const { data: brandsData, error: brandsError } = await supabase
-      .from('brands')
+      .from('website_brand')
       .select(`
         id,
         web_storage_address,
         name,
         organization_id
       `)
+      .eq('is_active', true)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`);
 
     if (brandsError || !brandsData) {
