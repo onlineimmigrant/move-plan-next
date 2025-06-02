@@ -61,6 +61,8 @@ interface HomePageData {
 
 async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   try {
+    console.log('Fetching homepage data with baseUrl:', baseUrl);
+
     const [heroResponse, brandsResponse, faqsResponse, templateSectionsResponse] = await Promise.all([
       fetch(`${baseUrl}/api/hero`, { cache: 'force-cache' }),
       fetch(`${baseUrl}/api/brands`, { cache: 'force-cache' }),
@@ -68,10 +70,22 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
       fetch(`${baseUrl}/api/template-sections?url_page=/home`, { cache: 'force-cache' }),
     ]);
 
+    // Log response statuses
+    console.log('Hero response status:', heroResponse.status, heroResponse.statusText);
+    console.log('Brands response status:', brandsResponse.status, brandsResponse.statusText);
+    console.log('FAQs response status:', faqsResponse.status, faqsResponse.statusText);
+    console.log('Template sections response status:', templateSectionsResponse.status, templateSectionsResponse.statusText);
+
     const heroData = await heroResponse.json();
     const brandsData = await brandsResponse.json();
     const faqsData = await faqsResponse.json();
     const templateSectionsData = await templateSectionsResponse.json();
+
+    // Log fetched data
+    console.log('Hero data:', heroData);
+    console.log('Brands data:', brandsData);
+    console.log('FAQs data:', faqsData);
+    console.log('Template sections data:', templateSectionsData);
 
     if (!heroResponse.ok) throw new Error(heroData.error || 'Failed to fetch hero data');
     if (!brandsResponse.ok) throw new Error(brandsData.error || 'Failed to fetch brands data');
@@ -136,7 +150,9 @@ export default async function Page() {
   return (
     <div>
       <h1 className="sr-only">{settings.site || 'Welcome'}</h1>
-
+      {settings.image && (
+        <img src={settings.image} alt={`${settings.site} logo`} style={{ maxWidth: '200px' }} className="mx-auto my-4" />
+      )}
       <HomePage data={homePageData} />
     </div>
   );
