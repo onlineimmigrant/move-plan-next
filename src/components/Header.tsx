@@ -1,4 +1,3 @@
-// /components/Header.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -56,6 +55,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -82,17 +82,21 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/menu');
         if (!response.ok) {
-          throw new Error('Failed to fetch menu items');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch menu items');
         }
         const data: MenuItem[] = await response.json();
-        console.log('Fetched menu items:', JSON.stringify(data, null, 2));
+        console.log('Fetched menu items in Header:', JSON.stringify(data, null, 2));
         setMenuItems(data);
       } catch (error) {
-        console.error('Error fetching menu items:', error);
+        console.error('Error fetching menu items in Header:', error);
+        setMenuItems([]);
       } finally {
         setIsMounted(true);
+        setIsLoading(false);
       }
     };
 
@@ -110,8 +114,8 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     console.log('settings:', settings);
   }, [isLoggedIn, session, menuItems, isOpen, isLoginOpen, isContactOpen, companyLogo, settings]);
 
-  const menuWidth = settings.menu_width;
-  const menuItemsAreText = settings.menu_items_are_text;
+  const menuWidth = settings?.menu_width || '7xl';
+  const menuItemsAreText = settings?.menu_items_are_text ?? true;
 
   const handleToggle = () => {
     console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
@@ -166,7 +170,9 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
 
   const renderMenuItems = () => (
     <>
-      {menuItems.length === 0 ? (
+      {isLoading ? (
+        <span className="text-gray-500">Loading menu...</span>
+      ) : menuItems.length === 0 ? (
         <span className="text-gray-500">No menu items available</span>
       ) : (
         menuItems
@@ -196,6 +202,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                           width={24}
                           height={24}
                           className="h-6 w-6 text-gray-600"
+                          onError={() => console.error(`Failed to load image for menu item ${item.display_name}: ${item.image}`)}
                         />
                       ) : (
                         renderIcon(item.react_icons?.icon_name)
@@ -229,6 +236,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                         width={24}
                         height={24}
                         className="h-4 w-6 text-gray-600"
+                        onError={() => console.error(`Failed to load image for menu item ${item.display_name}: ${item.image}`)}
                       />
                     ) : (
                       renderIcon(item.react_icons?.icon_name)
@@ -244,7 +252,9 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
 
   const renderMobileMenuItems = () => (
     <>
-      {menuItems.length === 0 ? (
+      {isLoading ? (
+        <span className="block px-6 py-6 text-gray-500">Loading menu...</span>
+      ) : menuItems.length === 0 ? (
         <span className="block px-6 py-6 text-gray-500">No menu items available</span>
       ) : (
         menuItems
@@ -304,13 +314,17 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     </>
   );
 
+  if (!isMounted) {
+    return null; // Prevent rendering until mounted to avoid hydration issues
+  }
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
         isScrolled ? 'border-gray-200 bg-white' : 'bg-transparent'
       }`}
     >
-      <div className={`mx-auto max-w-${menuWidth || '7xl'} p-4 sm:px-6 flex justify-between items-center`}>
+      <div className={`mx-auto max-w-${menuWidth} p-4 sm:px-6 flex justify-between items-center`}>
         <button
           type="button"
           onClick={handleMainPage}
@@ -318,17 +332,20 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           aria-label="Go to homepage"
           disabled={!router}
         >
-          {settings.image ? (
+          {settings?.image ? (
             <img
               src={settings.image}
               alt="Logo"
               width={40}
               height={40}
               className="h-8 w-auto"
-              onError={() => console.error('Failed to load logo:', companyLogo)}
+              onError={(e) => {
+                console.error('Failed to load logo:', settings.image);
+                e.currentTarget.src = companyLogo; // Fallback to default logo
+              }}
             />
           ) : (
-            <span className="text-gray-500"></span>
+            <span className="text-gray-500">No logo available</span>
           )}
           <span className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
             {settings?.site || 'Default Site Name'}
