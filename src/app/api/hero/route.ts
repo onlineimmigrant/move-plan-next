@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    let organizationId = searchParams.get('organizationId') || searchParams.get('tenantId');
+    const organizationId = searchParams.get('organizationId') || searchParams.get('tenantId');
 
     if (!organizationId) {
       console.error('No organizationId or tenantId provided in query parameters');
