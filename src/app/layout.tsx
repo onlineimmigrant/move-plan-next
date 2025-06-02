@@ -1,3 +1,4 @@
+// /app/layout.tsx
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import { supabase } from '@/lib/supabase';
 import './globals.css';
@@ -5,18 +6,60 @@ import ClientProviders from './ClientProviders';
 import { Settings } from '@/types/settings';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Get base URL from environment
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  // Skip Supabase queries during Vercel build
+  const isBuild = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' && process.env.NEXT_PUBLIC_VERCEL_URL === undefined;
+  if (isBuild) {
+    console.log('Skipping Supabase queries during Vercel build');
+    return (
+      <html lang="en">
+        <body>
+          <ClientProviders
+            defaultSEOData={{
+              title: 'My Next.js App',
+              description: 'Sample admin app with Next.js 15',
+              keywords: 'education, resources, app',
+              canonicalUrl: 'http://localhost:3000',
+              hreflang: [],
+              faqs: [],
+              structuredData: [],
+            }}
+            settings={{ id: 0, site: '', image: '', organization_id: '', menu_width: '', menu_items_are_text: false, footer_color: '' }}
+            headerData={{ image_for_privacy_settings: '', site: '', image: '', disclaimer: `© ${new Date().getFullYear()} My Next.js App` }}
+            activeLanguages={['en', 'es', 'fr']}
+            heroData={{ h1_text_color: 'gray-900', p_description_color: '#000000' }}
+          >
+            {children}
+          </ClientProviders>
+        </body>
+      </html>
+    );
+  }
+
+  // Determine base URL dynamically
+  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  console.log('Base URL in RootLayout:', baseUrl);
 
   // Fetch settings for the organization
-  const settings: Settings = await getSettings(baseUrl);
-  console.log('Fetched settings in layout:', settings);
+  let settings: Settings = { id: 0, site: '', image: '', organization_id: '', menu_width: '', menu_items_are_text: false, footer_color: '' };
+  try {
+    settings = await getSettings(baseUrl);
+    console.log('Fetched settings in layout:', settings);
+  } catch (error) {
+    console.error('Failed to fetch settings in layout:', error);
+  }
 
-  // Fetch organization ID using the same logic as getSettings
-  const organizationId = await getOrganizationId(baseUrl);
-  console.log('Fetched organizationId in layout:', organizationId);
+  // Fetch organization ID
+  let organizationId: string | null = null;
+  try {
+    organizationId = await getOrganizationId(baseUrl);
+    console.log('Fetched organizationId in layout:', organizationId);
+  } catch (error) {
+    console.error('Failed to fetch organizationId in layout:', error);
+  }
 
-  // Fetch site-wide FAQs (organization-specific or null)
+  // Fetch site-wide FAQs
   let siteFaqs: { question: string; answer: string }[] = [];
   if (organizationId) {
     try {
@@ -34,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     console.error('No organization ID found for FAQ fetch, URL:', baseUrl);
   }
 
-  // Fetch hero data for ClientProviders
+  // Fetch hero data
   let heroData = {
     h1_text_color: 'gray-900',
     p_description_color: '#000000',
@@ -61,12 +104,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     image_for_privacy_settings: settings.image,
     site: settings.site,
     image: settings.image,
-    disclaimer: `© ${new Date().getFullYear()} ${settings.site || ''}. All rights reserved.`,
+    disclaimer: `© ${new Date().getFullYear()} ${settings.site || 'My Next.js App'}. All rights reserved.`,
   };
 
   const activeLanguages = ['en', 'es', 'fr'];
 
-  // Default SEO data
   const defaultSEOData = {
     title: settings.site || 'My Next.js App',
     description: 'Sample admin app with Next.js 15',
