@@ -5,7 +5,6 @@ import { Settings } from '@/types/settings';
 export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: string } } | string): Promise<string | null> {
   let currentUrl: string | undefined;
 
-  // Check if the argument is a req object (with headers) or a baseUrl string
   if (typeof reqOrBaseUrl === 'string') {
     currentUrl = reqOrBaseUrl;
   } else if (reqOrBaseUrl && 'headers' in reqOrBaseUrl && reqOrBaseUrl.headers.host) {
@@ -22,7 +21,7 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
     .from('organizations')
     .select('id')
     .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
-    .single();
+    .maybeSingle(); // Use maybeSingle to handle no rows gracefully
 
   if (error) {
     console.error('Error fetching organization:', error, 'URL:', currentUrl);
@@ -38,7 +37,7 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
 }
 
 export async function getSettings(baseUrl?: string): Promise<Settings> {
-  const defaultSettings = {
+  const defaultSettings: Settings = {
     id: 0,
     site: '',
     image: '',
@@ -48,6 +47,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
     footer_color: '',
   };
 
+  // Skip Supabase query during Vercel build to avoid errors
   const isBuild = process.env.NODE_ENV === 'production' && !process.env.CI;
   if (isBuild) {
     return defaultSettings;
@@ -77,7 +77,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       .maybeSingle();
 
     if (error || !data) {
-      console.error('Error fetching settings:', error);
+      console.error('Error fetching settings:', error || 'No settings found', 'organization_id:', organizationId);
       return defaultSettings;
     }
 
