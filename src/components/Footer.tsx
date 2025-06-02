@@ -1,4 +1,3 @@
-// /components/Footer.tsx
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -37,6 +36,7 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({}) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { session, logout } = useAuth();
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
@@ -49,12 +49,20 @@ const Footer: React.FC<FooterProps> = ({}) => {
 
     const fetchMenuItems = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/menu', { cache: 'force-cache' });
-        if (!response.ok) throw new Error('Failed to fetch menu items');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch menu items');
+        }
         const data = await response.json();
+        console.log('Fetched menu items in Footer:', JSON.stringify(data, null, 2));
         if (mounted) setMenuItems(data);
       } catch (error) {
-        console.error('Error fetching menu items:', error);
+        console.error('Error fetching menu items in Footer:', error);
+        if (mounted) setMenuItems([]);
+      } finally {
+        if (mounted) setIsLoading(false);
       }
     };
 
@@ -104,9 +112,19 @@ const Footer: React.FC<FooterProps> = ({}) => {
 
   const handleNavigation = (path: string) => () => router.push(path);
 
-  const footerBackground = settings.footer_color;
+  const footerBackground = settings?.footer_color || 'gray-800';
 
-  // Fallback UI for empty menu
+  // Fallback UI for loading or empty menu
+  if (isLoading) {
+    return (
+      <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
+        <div className="mx-auto max-w-7xl px-8">
+          <p className="text-center text-gray-300">Loading footer...</p>
+        </div>
+      </footer>
+    );
+  }
+
   if (menuItems.length === 0) {
     return (
       <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
@@ -131,7 +149,7 @@ const Footer: React.FC<FooterProps> = ({}) => {
   }
 
   return (
-    <footer className={`bg-${footerBackground}  py-12 text-sm text-white`}>
+    <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
       <div className="mx-auto max-w-7xl px-8">
         <div className="mb-8">
           <button
