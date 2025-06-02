@@ -1,18 +1,16 @@
 // /app/api/hero/route.ts
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { HeroData } from '@/types/hero_data';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get('organizationId') || searchParams.get('tenantId');
+    const organizationId = searchParams.get('organizationId');
 
     if (!organizationId) {
-      console.error('No organizationId or tenantId provided in query parameters');
-      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
     }
-
-    console.log('Fetching hero data for organization_id:', organizationId);
 
     const { data, error } = await supabase
       .from('website_hero')
@@ -20,19 +18,28 @@ export async function GET(request: Request) {
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)
       .single();
 
-    if (error) {
-      console.error('Error fetching hero data:', error);
-      return NextResponse.json({ error: 'Failed to fetch hero data', details: error.message }, { status: 500 });
+    if (error || !data) {
+      console.error('Error fetching hero data:', error || 'No hero data found', 'organization_id:', organizationId);
+      return NextResponse.json(
+        { error: 'Failed to fetch hero data', details: error?.message || 'No data found' },
+        { status: 500 }
+      );
     }
 
-    if (!data) {
-      console.log('No hero data found for organization_id:', organizationId);
-      return NextResponse.json({ error: 'No hero data found' }, { status: 404 });
-    }
+    const heroData: HeroData = {
+      ...data,
+      organization_id: data.organization_id || null,
+    };
 
-    return NextResponse.json(data);
+    return NextResponse.json(heroData, {
+      status: 200,
+      headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' },
+    });
   } catch (error) {
-    console.error('Error fetching hero data:', error);
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    console.error('Error in hero API:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }

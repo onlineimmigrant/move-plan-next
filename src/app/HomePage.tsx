@@ -111,7 +111,9 @@ const HomePage: React.FC<HomePageProps> = ({ data }) => {
           ))}
         </div>
       ) : (
-""
+        <div className="mt-12 text-gray-500 text-center">
+          <p>No template heading sections available.</p>
+        </div>
       )}
 
       {/* Render Template Sections */}
@@ -213,7 +215,9 @@ const HomePage: React.FC<HomePageProps> = ({ data }) => {
           ))}
         </div>
       ) : (
-""
+        <div className="mt-12 text-gray-500 text-center">
+          <p>No template sections available.</p>
+        </div>
       )}
 
       <Suspense fallback={<div>Loading Brands...</div>}>
