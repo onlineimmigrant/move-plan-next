@@ -1,15 +1,18 @@
 // /app/api/hero/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getOrganizationId(baseUrl);
+    const { searchParams } = new URL(request.url);
+    let organizationId = searchParams.get('organizationId') || searchParams.get('tenantId');
+
     if (!organizationId) {
-      console.error('Organization not found');
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      console.error('No organizationId or tenantId provided in query parameters');
+      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
     }
+
+    console.log('Fetching hero data for organization_id:', organizationId);
 
     const { data, error } = await supabase
       .from('website_hero')
