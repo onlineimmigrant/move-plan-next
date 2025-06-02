@@ -1,3 +1,4 @@
+// /app/ClientProviders.tsx
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -29,6 +30,7 @@ interface ClientProvidersProps {
     h1_text_color: string;
     p_description_color: string;
   };
+  baseUrl: string; // Add baseUrl prop
 }
 
 export default function ClientProviders({
@@ -38,6 +40,7 @@ export default function ClientProviders({
   headerData,
   activeLanguages,
   heroData,
+  baseUrl,
 }: ClientProvidersProps) {
   const pathname = usePathname();
   const [sections, setSections] = useState<TemplateSection[]>([]);
@@ -48,12 +51,9 @@ export default function ClientProviders({
     const fetchTemplateData = async () => {
       try {
         setLoading(true);
-
-        // Construct the API URLs using the current pathname
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
         const urlPage = pathname === '/' ? '/home' : pathname;
 
-        // Fetch template sections
+        // Use server-side baseUrl for consistency
         const sectionsResponse = await fetch(
           `${baseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`,
           { cache: 'force-cache' }
@@ -66,7 +66,6 @@ export default function ClientProviders({
         console.log('Fetched template sections in ClientProviders:', sectionsData);
         setSections(sectionsData || []);
 
-        // Fetch template heading sections
         const headingsResponse = await fetch(
           `${baseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`,
           { cache: 'force-cache' }
@@ -88,7 +87,7 @@ export default function ClientProviders({
     };
 
     fetchTemplateData();
-  }, [pathname]);
+  }, [pathname, baseUrl]);
 
   const showNavbarFooter = !hideNavbarFooterPrefixes.some((prefix) =>
     pathname.startsWith(prefix)
@@ -106,10 +105,10 @@ export default function ClientProviders({
                   <div className="text-center py-12">Loading template sections...</div>
                 ) : showNavbarFooter ? (
                   <NavbarFooterWrapper>
-                    <div className="">
+                    <div>
                       {children}
-                      <TemplateHeadingSections  />
-                      <TemplateSections  />
+                      <TemplateHeadingSections />
+                      <TemplateSections />
                       <Breadcrumbs />
                       <BannerContainer />
                     </div>
@@ -117,8 +116,8 @@ export default function ClientProviders({
                 ) : (
                   <div className="-mt-12">
                     {children}
-                    <TemplateHeadingSections  />
-                    <TemplateSections  />
+                    <TemplateHeadingSections />
+                    <TemplateSections />
                     <BannerContainer />
                   </div>
                 )}
