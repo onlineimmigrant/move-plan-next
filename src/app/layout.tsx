@@ -7,9 +7,18 @@ import { Settings } from '@/types/settings';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Skip Supabase queries during Vercel build
-  const isBuild = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' && process.env.NEXT_PUBLIC_VERCEL_URL === undefined;
+  const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
   if (isBuild) {
     console.log('Skipping Supabase queries during Vercel build');
+    const defaultSettings: Settings = {
+      id: 0,
+      site: 'My Next.js App',
+      image: '/images/logo.svg',
+      organization_id: '',
+      menu_width: '7xl',
+      menu_items_are_text: true,
+      footer_color: 'gray-800',
+    };
     return (
       <html lang="en">
         <body>
@@ -23,10 +32,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               faqs: [],
               structuredData: [],
             }}
-            settings={{ id: 0, site: '', image: '', organization_id: '', menu_width: '', menu_items_are_text: false, footer_color: '' }}
-            headerData={{ image_for_privacy_settings: '', site: '', image: '', disclaimer: `© ${new Date().getFullYear()} My Next.js App` }}
+            settings={defaultSettings}
+            headerData={{
+              image_for_privacy_settings: defaultSettings.image,
+              site: defaultSettings.site,
+              image: defaultSettings.image,
+              disclaimer: `© ${new Date().getFullYear()} My Next.js App. All rights reserved.`,
+            }}
             activeLanguages={['en', 'es', 'fr']}
             heroData={{ h1_text_color: 'gray-900', p_description_color: '#000000' }}
+            baseUrl="http://localhost:3000"
           >
             {children}
           </ClientProviders>
@@ -36,13 +51,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   // Determine base URL dynamically
-  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
     : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   console.log('Base URL in RootLayout:', baseUrl);
 
   // Fetch settings for the organization
-  let settings: Settings = { id: 0, site: '', image: '', organization_id: '', menu_width: '', menu_items_are_text: false, footer_color: '' };
+  let settings: Settings = {
+    id: 0,
+    site: 'My Next.js App',
+    image: '/images/logo.svg',
+    organization_id: '',
+    menu_width: '7xl',
+    menu_items_are_text: true,
+    footer_color: 'gray-800',
+  };
   try {
     settings = await getSettings(baseUrl);
     console.log('Fetched settings in layout:', settings);
@@ -155,10 +178,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <ClientProviders
           defaultSEOData={defaultSEOData}
-          settings={settings}
+          settings={{ ...settings, baseUrl }} // Pass baseUrl in settings
           headerData={headerData}
           activeLanguages={activeLanguages}
           heroData={heroData}
+          baseUrl={baseUrl}
         >
           {children}
         </ClientProviders>
