@@ -1,5 +1,4 @@
-// app/layout.tsx
-import { getSettings, getOrganizationId } from '@/lib/getSettings'; // Import getOrganizationId
+import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import { supabase } from '@/lib/supabase';
 import './globals.css';
 import ClientProviders from './ClientProviders';
@@ -11,25 +10,51 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   // Fetch settings for the organization
   const settings: Settings = await getSettings(baseUrl);
+  console.log('Fetched settings in layout:', settings);
 
   // Fetch organization ID using the same logic as getSettings
   const organizationId = await getOrganizationId(baseUrl);
+  console.log('Fetched organizationId in layout:', organizationId);
 
-  // Fetch site-wide FAQs (organization-specific)
+  // Fetch site-wide FAQs (organization-specific or null)
   let siteFaqs: { question: string; answer: string }[] = [];
   if (organizationId) {
     try {
       const { data, error } = await supabase
         .from('faq')
         .select('question, answer')
-        .eq('organization_id', organizationId);
+        .or(`organization_id.eq.${organizationId},organization_id.is.null`);
       if (error) throw error;
       siteFaqs = data || [];
+      console.log('Fetched siteFaqs in layout:', siteFaqs);
     } catch (error) {
-      console.error('Failed to fetch FAQs:', error);
+      console.error('Failed to fetch FAQs in layout:', error);
     }
   } else {
     console.error('No organization ID found for FAQ fetch, URL:', baseUrl);
+  }
+
+  // Fetch hero data for ClientProviders
+  let heroData = {
+    h1_text_color: 'gray-900',
+    p_description_color: '#000000',
+  };
+  if (organizationId) {
+    try {
+      const { data, error } = await supabase
+        .from('website_hero')
+        .select('h1_text_color, p_description_color')
+        .or(`organization_id.eq.${organizationId},organization_id.is.null`)
+        .single();
+      if (error) throw error;
+      heroData = {
+        h1_text_color: data?.h1_text_color || 'gray-900',
+        p_description_color: data?.p_description_color || '#000000',
+      };
+      console.log('Fetched heroData in layout:', heroData);
+    } catch (error) {
+      console.error('Failed to fetch hero data in layout:', error);
+    }
   }
 
   const headerData = {
@@ -91,6 +116,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           settings={settings}
           headerData={headerData}
           activeLanguages={activeLanguages}
+          heroData={heroData}
         >
           {children}
         </ClientProviders>
