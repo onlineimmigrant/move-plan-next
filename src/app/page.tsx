@@ -43,8 +43,58 @@ interface Brand {
 interface TemplateSection {
   id: string;
   section_title: string;
-  section_description: string;
+  section_title_color?: string;
+  section_title_size?: string;
+  section_title_weight?: string;
+  section_description?: string;
+  section_description_color?: string;
+  section_description_size?: string;
+  section_description_weight?: string;
+  metric_title_color?: string;
+  metric_title_size?: string;
+  metric_title_weight?: string;
+  metric_description_color?: string;
+  metric_description_size?: string;
+  metric_description_weight?: string;
+  background_color?: string;
+  font_family?: string;
+  grid_columns?: number;
+  is_full_width?: boolean;
+  is_section_title_aligned_center?: boolean;
+  is_section_title_aligned_right?: boolean;
+  is_image_bottom?: boolean;
+  image_metrics_height?: string;
+  order?: number;
+  url_page?: string;
+  organization_id?: string | null;
   website_metric: any[];
+}
+
+interface TemplateHeadingSection {
+  id: string;
+  name: string;
+  name_part_2?: string;
+  name_part_3?: string;
+  description_text: string;
+  button_text?: string;
+  url?: string;
+  url_page: string;
+  image?: string;
+  background_color?: string;
+  font_family?: string;
+  text_color?: string;
+  button_color?: string;
+  button_text_color?: string;
+  text_size_h1?: string;
+  text_size_h1_mobile?: string;
+  text_size?: string;
+  font_weight_1?: string;
+  font_weight?: string;
+  h1_text_color?: string;
+  is_text_link?: boolean;
+  image_first?: boolean;
+  is_included_template_sections_active?: boolean;
+  organization_id: string | null;
 }
 
 interface HomePageData {
@@ -52,6 +102,7 @@ interface HomePageData {
   brands: Brand[];
   faqs: FAQ[];
   templateSections: TemplateSection[];
+  templateHeadingSections: TemplateHeadingSection[];
   brands_heading: string;
   labels_default?: {
     button_main_get_started?: { url: string; text: string };
@@ -63,11 +114,12 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   try {
     console.log('Fetching homepage data with baseUrl:', baseUrl);
 
-    const [heroResponse, brandsResponse, faqsResponse, templateSectionsResponse] = await Promise.all([
+    const [heroResponse, brandsResponse, faqsResponse, templateSectionsResponse, templateHeadingSectionsResponse] = await Promise.all([
       fetch(`${baseUrl}/api/hero`, { cache: 'force-cache' }),
       fetch(`${baseUrl}/api/brands`, { cache: 'force-cache' }),
       fetch(`${baseUrl}/api/faqs`, { cache: 'force-cache' }),
       fetch(`${baseUrl}/api/template-sections?url_page=/home`, { cache: 'force-cache' }),
+      fetch(`${baseUrl}/api/template-heading-sections?url_page=/home`, { cache: 'force-cache' }),
     ]);
 
     // Log response statuses
@@ -75,22 +127,26 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
     console.log('Brands response status:', brandsResponse.status, brandsResponse.statusText);
     console.log('FAQs response status:', faqsResponse.status, faqsResponse.statusText);
     console.log('Template sections response status:', templateSectionsResponse.status, templateSectionsResponse.statusText);
+    console.log('Template heading sections response status:', templateHeadingSectionsResponse.status, templateHeadingSectionsResponse.statusText);
 
     const heroData = await heroResponse.json();
     const brandsData = await brandsResponse.json();
     const faqsData = await faqsResponse.json();
     const templateSectionsData = await templateSectionsResponse.json();
+    const templateHeadingSectionsData = await templateHeadingSectionsResponse.json();
 
     // Log fetched data
     console.log('Hero data:', heroData);
     console.log('Brands data:', brandsData);
     console.log('FAQs data:', faqsData);
     console.log('Template sections data:', templateSectionsData);
+    console.log('Template heading sections data:', templateHeadingSectionsData);
 
     if (!heroResponse.ok) throw new Error(heroData.error || 'Failed to fetch hero data');
     if (!brandsResponse.ok) throw new Error(brandsData.error || 'Failed to fetch brands data');
     if (!faqsResponse.ok) throw new Error(faqsData.error || 'Failed to fetch FAQs data');
     if (!templateSectionsResponse.ok) throw new Error(templateSectionsData.error || 'Failed to fetch template sections');
+    if (!templateHeadingSectionsResponse.ok) throw new Error(templateHeadingSectionsData.error || 'Failed to fetch template heading sections');
 
     return {
       hero: {
@@ -109,6 +165,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
       brands: brandsData || [],
       faqs: faqsData || [],
       templateSections: templateSectionsData || [],
+      templateHeadingSections: templateHeadingSectionsData || [],
       brands_heading: '',
       labels_default: {
         button_main_get_started: { url: '/products', text: 'Get Started' },
@@ -133,6 +190,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
       brands: [],
       faqs: [],
       templateSections: [],
+      templateHeadingSections: [],
       brands_heading: '',
       labels_default: {
         button_main_get_started: { url: '/products', text: 'Get Started' },
@@ -150,9 +208,6 @@ export default async function Page() {
   return (
     <div>
       <h1 className="sr-only">{settings.site || 'Welcome'}</h1>
-      {settings.image && (
-        <img src={settings.image} alt={`${settings.site} logo`} style={{ maxWidth: '200px' }} className="mx-auto my-4" />
-      )}
       <HomePage data={homePageData} />
     </div>
   );
