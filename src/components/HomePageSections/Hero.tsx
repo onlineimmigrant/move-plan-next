@@ -1,6 +1,4 @@
 // /components/HomePageSections/Hero.tsx
-"use client"; // Add this if not already present, since this is a Client Component
-
 import React, { useEffect, useRef, useState } from 'react';
 import parse from 'html-react-parser';
 import Link from 'next/link';
@@ -39,17 +37,9 @@ interface HeroProps {
     button_main_get_started?: { url: string; text: string };
     button_explore?: string;
   };
-  templateSections: TemplateSection[]; // Add this prop
 }
 
-interface TemplateSection {
-  id: string;
-  section_title: string;
-  section_description: string;
-  website_metric: any[];
-}
-
-const Hero: React.FC<HeroProps> = ({ hero, labelsDefault, templateSections }) => {
+const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
   if (!hero) return null;
 
   const [isVisible, setIsVisible] = useState(false);
@@ -103,7 +93,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault, templateSections }) =>
   return (
     <div
       ref={heroRef}
-      className={`pt-16 min-h-screen relative isolate px-6 lg:px-8 ${backgroundClass} flex items-center justify-center`}
+      className={`pt-16 min-h-screen relative isolate px-6 lg:px-8 ${backgroundClass}  flex items-center justify-center`}
     >
       {hero.is_bg_gradient && (
         <div
@@ -147,7 +137,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault, templateSections }) =>
 
           <div className={`text-${hero.title_alighnement || 'center'}`}>
             <h1
-              className={`${h1TextSize} font-bold tracking-tight inline hover:text-gray-700 ${textColorClass} animate-hero-title ${isVisible ? 'animate' : ''}`}
+              className={`${h1TextSize}   font-bold tracking-tight inline hover:text-gray-700 ${textColorClass} animate-hero-title ${isVisible ? 'animate' : ''}`}
             >
               {parse(hero.h1_title)}
             </h1>
@@ -191,48 +181,6 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault, templateSections }) =>
           )}
         </div>
       </div>
-
-      {/* Render Template Sections */}
-      {templateSections.length > 0 ? (
-        <div className="mt-12">
-          {templateSections.map((section) => (
-            <div key={section.id} className="mb-8">
-              <h2 className={`text-2xl font-semibold text-${hero.h1_text_color || 'gray-700'}`}>
-                {section.section_title}
-              </h2>
-              <p className={`mt-2 text-${hero.p_description_color || 'gray-600'}`}>
-                {section.section_description || 'No description available'}
-              </p>
-              {section.website_metric?.length > 0 ? (
-                <ul className="mt-4 space-y-2">
-                  {section.website_metric.map((metric: any, idx: number) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      {metric.image && (
-                        <img
-                          src={metric.image}
-                          alt={metric.title}
-                          className={`h-8 w-8 ${metric.is_image_rounded_full ? 'rounded-full' : ''}`}
-                        />
-                      )}
-                      <div>
-                        {metric.is_title_displayed && (
-                          <span className="font-medium">{metric.title}</span>
-                        )}
-                        {metric.is_title_displayed && metric.description && <span>: </span>}
-                        <span>{metric.description}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-2 text-gray-500">No metrics available.</p>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-""
-      )}
 
       {/* CSS for animations */}
       <style jsx>{`
