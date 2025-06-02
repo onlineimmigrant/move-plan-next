@@ -1,5 +1,5 @@
 // /app/page.tsx
-import { getSettings } from '@/lib/getSettings';
+import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import HomePage from './HomePage';
 import { FAQ } from '@/types/faq';
 
@@ -114,12 +114,26 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   try {
     console.log('Fetching homepage data with baseUrl:', baseUrl);
 
+    // Ensure organizationId is resolved correctly
+    const organizationId = await getOrganizationId(baseUrl);
+    console.log('Resolved organizationId:', organizationId);
+
+    if (!organizationId) {
+      console.error('No organizationId resolved, falling back to NEXT_PUBLIC_TENANT_ID');
+      const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
+      if (!tenantId) {
+        throw new Error('No organizationId found and NEXT_PUBLIC_TENANT_ID is not set');
+      }
+      console.log('Using NEXT_PUBLIC_TENANT_ID:', tenantId);
+      // Use tenantId in fetch calls (we'll append it as a query parameter)
+    }
+
     const [heroResponse, brandsResponse, faqsResponse, templateSectionsResponse, templateHeadingSectionsResponse] = await Promise.all([
-      fetch(`${baseUrl}/api/hero`, { cache: 'force-cache' }),
-      fetch(`${baseUrl}/api/brands`, { cache: 'force-cache' }),
-      fetch(`${baseUrl}/api/faqs`, { cache: 'force-cache' }),
-      fetch(`${baseUrl}/api/template-sections?url_page=/home`, { cache: 'force-cache' }),
-      fetch(`${baseUrl}/api/template-heading-sections?url_page=/home`, { cache: 'force-cache' }),
+      fetch(`${baseUrl}/api/hero${organizationId ? `?organizationId=${organizationId}` : `?tenantId=${process.env.NEXT_PUBLIC_TENANT_ID}`}`, { cache: 'force-cache' }),
+      fetch(`${baseUrl}/api/brands${organizationId ? `?organizationId=${organizationId}` : `?tenantId=${process.env.NEXT_PUBLIC_TENANT_ID}`}`, { cache: 'force-cache' }),
+      fetch(`${baseUrl}/api/faqs${organizationId ? `?organizationId=${organizationId}` : `?tenantId=${process.env.NEXT_PUBLIC_TENANT_ID}`}`, { cache: 'force-cache' }),
+      fetch(`${baseUrl}/api/template-sections?url_page=/home${organizationId ? `&organizationId=${organizationId}` : `&tenantId=${process.env.NEXT_PUBLIC_TENANT_ID}`}`, { cache: 'force-cache' }),
+      fetch(`${baseUrl}/api/template-heading-sections?url_page=/home${organizationId ? `&organizationId=${organizationId}` : `&tenantId=${process.env.NEXT_PUBLIC_TENANT_ID}`}`, { cache: 'force-cache' }),
     ]);
 
     // Log response statuses
@@ -202,6 +216,8 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
 
 export default async function Page() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  console.log('Page - Using baseUrl:', baseUrl);
+
   const settings = await getSettings(baseUrl);
   const homePageData = await fetchHomePageData(baseUrl);
 
