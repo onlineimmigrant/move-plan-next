@@ -1,6 +1,7 @@
 // /app/api/template-heading-sections/route.ts
 import { NextResponse } from 'next/server';
 import { supabase, getOrganizationId } from '@/lib/supabase';
+import { TemplateHeadingSection } from '@/types/template_heading_section';
 
 export async function GET(request: Request) {
   console.log('Received GET request for /api/template-heading-sections:', request.url);
@@ -69,12 +70,17 @@ export async function GET(request: Request) {
 
     console.log('Fetched heading sections:', headingsData);
 
+    const headings: TemplateHeadingSection[] = (headingsData || []).map(item => ({
+      ...item,
+      organization_id: item.organization_id || null,
+    }));
+
     if (!headingsData || headingsData.length === 0) {
       console.log('No heading sections found for url_page:', decodedUrlPage, 'and organization_id:', organizationId);
       return NextResponse.json([], { status: 200 });
     }
 
-    return NextResponse.json(headingsData, {
+    return NextResponse.json(headings, {
       status: 200,
       headers: {
         'Cache-Control': 's-maxage=3600, stale-while-revalidate',

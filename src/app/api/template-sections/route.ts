@@ -1,6 +1,7 @@
 // /app/api/template-sections/route.ts
 import { NextResponse } from 'next/server';
 import { supabase, getOrganizationId } from '@/lib/supabase';
+import { TemplateSection } from '@/types/template_section';
 
 export async function GET(request: Request) {
   console.log('Received GET request for /api/template-sections:', request.url);
@@ -86,7 +87,7 @@ export async function GET(request: Request) {
     console.log('Fetched sections (raw):', sectionsData);
 
     // Transform data to match expected structure
-    const transformedSections = sectionsData?.map(section => ({
+    const transformedSections: TemplateSection[] = (sectionsData || []).map(section => ({
       ...section,
       website_metric: section.website_templatesection_metrics
         ?.filter((metricLink: any) =>
@@ -94,7 +95,8 @@ export async function GET(request: Request) {
           metricLink.website_metric?.organization_id === organizationId
         )
         .map((metricLink: any) => metricLink.website_metric) || [],
-    })) || [];
+      organization_id: section.organization_id || null,
+    }));
 
     console.log('Transformed sections:', transformedSections);
 

@@ -1,14 +1,15 @@
 // /app/api/faqs/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { FAQ } from '@/types/faq';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getOrganizationId(baseUrl);
+    const { searchParams } = new URL(request.url);
+    const organizationId = searchParams.get('organizationId');
+
     if (!organizationId) {
-      console.error('Organization not found');
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -19,13 +20,27 @@ export async function GET() {
       .order('order', { ascending: true });
 
     if (error) {
-      console.error('Error fetching FAQs:', error);
-      return NextResponse.json({ error: 'Failed to fetch FAQs', details: error.message }, { status: 500 });
+      console.error('Error fetching FAQs data:', error, 'organization_id:', organizationId);
+      return NextResponse.json(
+        { error: 'Failed to fetch FAQs data', details: error.message },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json(data || []);
+    const faqsData: FAQ[] = (data || []).map(item => ({
+      ...item,
+      organization_id: item.organization_id || null,
+    }));
+
+    return NextResponse.json(faqsData, {
+      status: 200,
+      headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' },
+    });
   } catch (error) {
-    console.error('Error fetching FAQs:', error);
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    console.error('Error in faqs API:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }
