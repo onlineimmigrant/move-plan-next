@@ -1,3 +1,4 @@
+// /components/Header.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -71,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       const windowHeight = window.innerHeight;
-      const scrollThreshold = windowHeight * 0.1; // 10% of window height
+      const scrollThreshold = windowHeight * 0.1;
       setIsScrolled(scrollPosition > scrollThreshold);
     };
 
@@ -83,7 +84,9 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
     const fetchMenuItems = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/menu');
+        // Pass baseUrl to the API to ensure correct organization_id resolution
+        const baseUrl = window.location.origin;
+        const response = await fetch(`/api/menu?baseUrl=${encodeURIComponent(baseUrl)}`);
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to fetch menu items');

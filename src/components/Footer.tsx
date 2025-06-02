@@ -1,3 +1,4 @@
+// /components/Footer.tsx
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -18,7 +19,7 @@ interface MenuItem {
   react_icon_id?: number;
   react_icons?: { icon_name: string };
   website_submenuitem?: SubMenuItem[];
-  organization_id?: string; // Optional for NULL logic
+  organization_id?: string | null;
 }
 
 interface SubMenuItem {
@@ -27,14 +28,14 @@ interface SubMenuItem {
   url_name: string;
   description?: string;
   is_displayed?: boolean;
-  organization_id?: string; // Optional for NULL logic
+  organization_id?: string | null;
 }
 
 interface FooterProps {
   companyLogo?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({}) => {
+const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { session, logout } = useAuth();
@@ -50,7 +51,10 @@ const Footer: React.FC<FooterProps> = ({}) => {
     const fetchMenuItems = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/menu', { cache: 'force-cache' });
+        const baseUrl = window.location.origin;
+        const response = await fetch(`/api/menu?baseUrl=${encodeURIComponent(baseUrl)}`, {
+          cache: 'force-cache',
+        });
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to fetch menu items');
@@ -74,7 +78,6 @@ const Footer: React.FC<FooterProps> = ({}) => {
   }, []);
 
   const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
-    // Step 1: Filter items with subitems
     const withSubitems = menuItems.filter(
       (item) =>
         item.is_displayed_on_footer &&
@@ -82,7 +85,6 @@ const Footer: React.FC<FooterProps> = ({}) => {
         item.website_submenuitem?.length
     );
 
-    // Step 2: Filter items without subitems
     const withoutSubitems = menuItems.filter(
       (item) =>
         item.is_displayed_on_footer &&
@@ -90,13 +92,11 @@ const Footer: React.FC<FooterProps> = ({}) => {
         !item.website_submenuitem?.length
     );
 
-    // Step 3: Group items without subitems
     const grouped: MenuItem[][] = [];
     for (let i = 0; i < withoutSubitems.length; i += maxItemsPerColumn) {
       grouped.push(withoutSubitems.slice(i, i + maxItemsPerColumn));
     }
 
-    // Step 4: Return computed values
     return {
       itemsWithSubitems: withSubitems,
       groupedItemsWithoutSubitems: grouped,
@@ -114,7 +114,6 @@ const Footer: React.FC<FooterProps> = ({}) => {
 
   const footerBackground = settings?.footer_color || 'gray-800';
 
-  // Fallback UI for loading or empty menu
   if (isLoading) {
     return (
       <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
@@ -130,6 +129,19 @@ const Footer: React.FC<FooterProps> = ({}) => {
       <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
         <div className="mx-auto max-w-7xl px-8">
           <div className="mb-8">
+            {settings?.image && (
+              <img
+                src={settings.image}
+                alt="Logo"
+                width={40}
+                height={40}
+                className="h-8 w-auto mb-4"
+                onError={(e) => {
+                  console.error('Failed to load logo:', settings.image);
+                  e.currentTarget.src = companyLogo;
+                }}
+              />
+            )}
             <button
               onClick={() => setShowSettings(true)}
               className="hover:text-gray-300"
@@ -152,6 +164,19 @@ const Footer: React.FC<FooterProps> = ({}) => {
     <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
       <div className="mx-auto max-w-7xl px-8">
         <div className="mb-8">
+          {settings?.image && (
+            <img
+              src={settings.image}
+              alt="Logo"
+              width={40}
+              height={40}
+              className="h-8 w-auto mb-4"
+              onError={(e) => {
+                console.error('Failed to load logo:', settings.image);
+                e.currentTarget.src = companyLogo;
+              }}
+            />
+          )}
           <button
             onClick={() => setShowSettings(true)}
             className="hover:text-gray-300"
