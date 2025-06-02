@@ -1,5 +1,5 @@
 // app/layout.tsx
-import { getSettings } from '@/lib/getSettings';
+import { getSettings, getOrganizationId } from '@/lib/getSettings'; // Import getOrganizationId
 import { supabase } from '@/lib/supabase';
 import './globals.css';
 import ClientProviders from './ClientProviders';
@@ -12,26 +12,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Fetch settings for the organization
   const settings: Settings = await getSettings(baseUrl);
 
+  // Fetch organization ID using the same logic as getSettings
+  const organizationId = await getOrganizationId(baseUrl);
+
   // Fetch site-wide FAQs (organization-specific)
   let siteFaqs: { question: string; answer: string }[] = [];
-  try {
-    const organizationId = await supabase
-      .from('organizations')
-      .select('id')
-      .eq(process.env.NODE_ENV === 'development' ? 'base_url_local' : 'base_url', baseUrl)
-      .single()
-      .then(({ data }) => data?.id);
-
-    if (organizationId) {
+  if (organizationId) {
+    try {
       const { data, error } = await supabase
         .from('faq')
         .select('question, answer')
         .eq('organization_id', organizationId);
       if (error) throw error;
       siteFaqs = data || [];
+    } catch (error) {
+      console.error('Failed to fetch FAQs:', error);
     }
-  } catch (error) {
-    console.error('Failed to fetch FAQs:', error);
+  } else {
+    console.error('No organization ID found for FAQ fetch, URL:', baseUrl);
   }
 
   const headerData = {
