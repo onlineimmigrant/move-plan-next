@@ -1,4 +1,3 @@
-// /app/page.tsx
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import HomePage from './HomePage';
 import { supabase } from '@/lib/supabase';
@@ -20,8 +19,8 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
     },
     brands: [],
     faqs: [],
-    templateSections: [],
-    templateHeadingSections: [],
+    templateSections: [], // Still needed in type, but won't be fetched
+    templateHeadingSections: [], // Still needed in type, but won't be fetched
     brands_heading: '',
     labels_default: {
       button_main_get_started: { url: '/products', text: 'Get Started' },
@@ -50,6 +49,8 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
 
     if (heroError || !heroData) {
       console.error('Error fetching hero data:', heroError || 'No hero data found', 'organization_id:', organizationId);
+    } else {
+      console.log('Fetched hero data:', heroData);
     }
 
     // Fetch brands data
@@ -66,6 +67,8 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
 
     if (brandsError || !brandsData) {
       console.error('Error fetching brands data:', brandsError || 'No brands data found', 'organization_id:', organizationId);
+    } else {
+      console.log('Fetched brands data:', brandsData);
     }
 
     // Fetch FAQs data
@@ -78,109 +81,8 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
 
     if (faqsError || !faqsData) {
       console.error('Error fetching FAQs data:', faqsError || 'No FAQs data found', 'organization_id:', organizationId);
-    }
-
-    // Fetch template sections data
-    const { data: sectionsData, error: sectionsError } = await supabase
-      .from('website_templatesection')
-      .select(`
-        id,
-        section_title,
-        section_title_color,
-        section_title_size,
-        section_title_weight,
-        section_description,
-        section_description_color,
-        section_description_size,
-        section_description_weight,
-        metric_title_color,
-        metric_title_size,
-        metric_title_weight,
-        metric_description_color,
-        metric_description_size,
-        metric_description_weight,
-        background_color,
-        font_family,
-        grid_columns,
-        is_full_width,
-        is_section_title_aligned_center,
-        is_section_title_aligned_right,
-        is_image_bottom,
-        image_metrics_height,
-        order,
-        url_page,
-        organization_id,
-        website_templatesection_metrics!templatesection_id (
-          metric_id,
-          website_metric!metric_id (
-            id,
-            title,
-            description,
-            image,
-            is_image_rounded_full,
-            is_title_displayed,
-            background_color,
-            is_card_type,
-            organization_id
-          )
-        )
-      `)
-      .eq('url_page', '/home')
-      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
-      .order('order', { ascending: true });
-
-    if (sectionsError || !sectionsData) {
-      console.error('Error fetching template sections data:', sectionsError || 'No template sections found', 'organization_id:', organizationId);
-    }
-
-    // Transform template sections data
-    const transformedSections = sectionsData?.map(section => ({
-      ...section,
-      website_metric: section.website_templatesection_metrics
-        ?.filter((metricLink: any) =>
-          metricLink.website_metric?.organization_id === null ||
-          metricLink.website_metric?.organization_id === organizationId
-        )
-        .map((metricLink: any) => metricLink.website_metric) || [],
-    })) || [];
-
-    console.log('Transformed template sections:', transformedSections);
-
-    // Fetch template heading sections data
-    const { data: headingsData, error: headingsError } = await supabase
-      .from('website_templatesectionheading')
-      .select(`
-        id,
-        name,
-        name_part_2,
-        name_part_3,
-        description_text,
-        button_text,
-        url,
-        url_page,
-        image,
-        background_color,
-        font_family,
-        text_color,
-        button_color,
-        button_text_color,
-        text_size_h1,
-        text_size_h1_mobile,
-        text_size,
-        font_weight_1,
-        font_weight,
-        h1_text_color,
-        is_text_link,
-        image_first,
-        is_included_template_sections_active,
-        organization_id
-      `)
-      .eq('url_page', '/home')
-      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
-      .order('order', { ascending: true });
-
-    if (headingsError || !headingsData) {
-      console.error('Error fetching template heading sections data:', headingsError || 'No heading sections found', 'organization_id:', organizationId);
+    } else {
+      console.log('Fetched FAQs data:', faqsData);
     }
 
     return {
@@ -201,8 +103,8 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
         : defaultData.hero,
       brands: brandsData || [],
       faqs: faqsData || [],
-      templateSections: transformedSections,
-      templateHeadingSections: headingsData || [],
+      templateSections: [], // Empty, as it will be fetched in ClientProviders
+      templateHeadingSections: [], // Empty, as it will be fetched in ClientProviders
       brands_heading: '',
       labels_default: {
         button_main_get_started: { url: '/products', text: 'Get Started' },
