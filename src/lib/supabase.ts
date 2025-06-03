@@ -1,4 +1,6 @@
+// /lib/supabase.ts
 import { createClient } from '@supabase/supabase-js';
+import { getBaseUrl } from './utils';
 import { Banner, BannerOpenState, BannerPosition, BannerType } from '../components/banners/types';
 
 // Validate environment variables
@@ -13,26 +15,58 @@ export const supabase = createClient(
 );
 
 export async function getOrganizationId(baseUrl?: string): Promise<string | null> {
-  const currentUrl = baseUrl || process.env.NEXT_PUBLIC_BASE_URL;
   const isLocal = process.env.NODE_ENV === 'development';
+  const currentUrl = baseUrl || getBaseUrl(true); // Use getBaseUrl for Vercel compatibility
+  const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
 
-  console.log('Fetching organization ID for URL:', currentUrl, 'isLocal:', isLocal);
-  const { data, error } = await supabase
+  console.log('Fetching organization ID for URL:', currentUrl, 'isLocal:', isLocal, 'tenantId:', tenantId);
+
+  // Try fetching by base_url or base_url_local
+  const query = supabase
     .from('organizations')
     .select('id')
-    .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
-    .single();
+    .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl);
 
-  if (error) {
-    console.error('Error fetching organization:', {
-      message: error.message || 'No error message',
-      code: error.code || 'No code',
-      details: error.details || 'No details',
-      hint: error.hint || 'No hint',
+  const { data, error } = await query.single();
+
+  if (error || !data) {
+    console.error('Error fetching organization by baseUrl:', {
+      message: error?.message || 'No error message',
+      code: error?.code || 'No code',
+      details: error?.details || 'No details',
+      hint: error?.hint || 'No hint',
+      baseUrl: currentUrl,
     });
+
+    // Fallback to tenantId if provided
+    if (tenantId) {
+      console.log('Attempting fallback with tenantId:', tenantId);
+      const { data: tenantData, error: tenantError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .single();
+
+      if (tenantError || !tenantData) {
+        console.error('Error fetching organization by tenantId:', {
+          message: tenantError?.message || 'No error message',
+          code: tenantError?.code || 'No code',
+          details: tenantError?.details || 'No details',
+          hint: tenantError?.hint || 'No hint',
+          tenantId,
+        });
+        return null;
+      }
+
+      console.log('Fetched organization ID by tenantId:', tenantData.id);
+      return tenantData.id;
+    }
+
     return null;
   }
-  return data?.id;
+
+  console.log('Fetched organization ID by baseUrl:', data.id);
+  return data.id;
 }
 
 // Parse interval string to milliseconds
@@ -99,7 +133,7 @@ export async function fetchUserProfile(userId?: string) {
       .select('user_status, last_login_at, organization_id')
       .eq('id', userId)
       .eq('organization_id', organizationId)
-      .maybeSingle(); // Changed from .single()
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching profile:', {
