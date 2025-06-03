@@ -1,18 +1,18 @@
-// /src/app/products/[id]/page.tsx
+// /app/products/[id]/page.tsx
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { supabase, getOrganizationId } from '../../../lib/supabase';
-import ProductDetailPricingPlans from '../../../components/ProductDetailPricingPlans';
-import CategoryBarProductDetailPage from '../../../components/CategoryBarProductDetailPage';
-import FAQSection from '../../../components/HomePageSections/FAQSection';
-import FeedbackAccordion from '../../../components/FeedbackAccordion';
+import { supabase, getOrganizationId } from '@/lib/supabase';
+import { getBaseUrl } from '@/lib/utils';
+import ProductDetailPricingPlans from '@/components/ProductDetailPricingPlans';
+import CategoryBarProductDetailPage from '@/components/CategoryBarProductDetailPage';
+import FAQSection from '@/components/HomePageSections/FAQSection';
+import FeedbackAccordion from '@/components/FeedbackAccordion';
 import parse from 'html-react-parser';
-import ProgressBar from '../../../components/ProgressBar';
-import { getBasket } from '../../../lib/basketUtils';
-import ProductDetailMediaDisplay from '../../../components/ProductDetailMediaDisplay';
-import ProductHeader from '../../../components/ProductHeader';
+import ProgressBar from '@/components/ProgressBar';
+import { getBasket } from '@/lib/basketUtils';
+import ProductDetailMediaDisplay from '@/components/ProductDetailMediaDisplay';
+import ProductHeader from '@/components/ProductHeader';
 
-// Define types for the product, pricing plans, FAQs, features, and media items
 interface MediaItem {
   id: number;
   product_id: number;
@@ -81,9 +81,7 @@ interface FAQ {
   [key: string]: any;
 }
 
-// Fetch product data on the server side
-async function fetchProduct(slug: string): Promise<Product | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+async function fetchProduct(slug: string, baseUrl: string): Promise<Product | null> {
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
     console.error('Organization not found');
@@ -107,7 +105,6 @@ async function fetchProduct(slug: string): Promise<Product | null> {
     return null;
   }
 
-  // Fetch product sub-type
   let productSubType: { name: string } | null = null;
   const { data: subTypeData, error: subTypeError } = await supabase
     .from('product_sub_type')
@@ -122,7 +119,6 @@ async function fetchProduct(slug: string): Promise<Product | null> {
     productSubType = subTypeData;
   }
 
-  // Fetch pricing plans with associated features
   let pricingPlans: PricingPlan[] = [];
   const { data: plansData, error: plansError } = await supabase
     .from('pricingplan')
@@ -149,7 +145,6 @@ async function fetchProduct(slug: string): Promise<Product | null> {
 
   if (plansError) {
     console.error('Error fetching pricing plans:', plansError);
-    // Fallback to fetch pricing plans without features
     const { data: fallbackPlansData, error: fallbackPlansError } = await supabase
       .from('pricingplan')
       .select(`
@@ -190,7 +185,6 @@ async function fetchProduct(slug: string): Promise<Product | null> {
     }));
   }
 
-  // Fetch product media
   let productMedia: MediaItem[] = [];
   const { data: mediaData, error: mediaError } = await supabase
     .from('product_media')
@@ -216,9 +210,7 @@ async function fetchProduct(slug: string): Promise<Product | null> {
   return product;
 }
 
-// Fetch FAQs on the server side
-async function fetchFAQs(slug: string): Promise<FAQ[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+async function fetchFAQs(slug: string, baseUrl: string): Promise<FAQ[]> {
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
     console.error('Organization not found');
@@ -255,21 +247,18 @@ async function fetchFAQs(slug: string): Promise<FAQ[]> {
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: slug } = await params;
+  const baseUrl = getBaseUrl(true); // Server-side baseUrl
 
-  const product = await fetchProduct(slug);
+  const product = await fetchProduct(slug, baseUrl);
   if (!product) {
-    notFound(); // Trigger Next.js 404 page
+    notFound();
   }
 
-  const faqs = await fetchFAQs(slug);
-
-  // Get the basket on the server side
+  const faqs = await fetchFAQs(slug, baseUrl);
   const basket = await getBasket();
   const totalItems = basket.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
   const { product_name, product_description, product_media, links_to_image } = product;
-
-  console.log('Product slug:', product.slug);
 
   return (
     <div className="min-h-screen">
@@ -277,8 +266,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         {totalItems > 0 && <ProgressBar stage={1} />}
       </div>
       <div className="px-4 mx-auto max-w-7xl py-16 md:py-10">
-        <div className=" -mx-4 max-w-7xl  md:px-4 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
-          {/* Text Section */}
+        <div className="-mx-4 max-w-7xl md:px-4 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:items-start flex flex-col md:flex-row">
           <div className="order-1 md:order-2 lg:col-span-1 text-gray-900 text-sm md:text-base md:mt-2 sm:mt-0 mb-1 md:mb-2 lg:max-w-lg">
             <a
               href="#pricing-plans"
@@ -311,7 +299,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
 
-          {/* Media Section */}
           <div className="order-2 md:order-1 lg:col-span-1 py-4 sm:pt-6 md:pb-8 flex justify-center items-center">
             {product_media && product_media.length > 0 ? (
               <ProductDetailMediaDisplay mediaItems={product_media} />

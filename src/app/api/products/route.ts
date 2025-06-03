@@ -1,13 +1,13 @@
-// app/api/products/route.ts
+// /app/api/products/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, getOrganizationId } from '@/lib/supabase'; 
-import { stripe } from '@/lib/stripe-supabase'; 
-// Validate image URL
+import { supabase, getOrganizationId } from '@/lib/supabase';
+import { stripe } from '@/lib/stripe-supabase';
+import { getBaseUrl } from '@/lib/utils';
+
 function validateImageUrl(url: string): string | undefined {
   if (!url || typeof url !== 'string') {
     return undefined;
   }
-
   try {
     new URL(url);
     return url.startsWith('http://') || url.startsWith('https://') ? url : undefined;
@@ -18,7 +18,7 @@ function validateImageUrl(url: string): string | undefined {
 
 export async function POST(request: Request) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = getBaseUrl(true);
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
@@ -31,7 +31,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required field: product_name' }, { status: 400 });
     }
 
-    // Insert the product into Supabase with organization_id
     const { data: product, error: insertError } = await supabase
       .from('product')
       .insert({
@@ -52,13 +51,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Failed to create product: ${insertError?.message}` }, { status: 500 });
     }
 
-    // Validate the image URL
     const validatedImageUrl = validateImageUrl(links_to_image);
     if (links_to_image && !validatedImageUrl) {
       console.warn(`Invalid or unsupported image URL provided: ${links_to_image}. Proceeding without image.`);
     }
 
-    // Create the product in Stripe
     const createParams: any = {
       name: product_name,
       active: is_displayed,
@@ -73,7 +70,6 @@ export async function POST(request: Request) {
 
     const stripeProduct = await stripe.products.create(createParams);
 
-    // Update the product with stripe_product_id
     const { error: updateError } = await supabase
       .from('product')
       .update({ stripe_product_id: stripeProduct.id, updated_at: new Date().toISOString() })
@@ -92,7 +88,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = getBaseUrl(true);
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
@@ -107,7 +103,6 @@ export async function PUT(request: Request) {
 
     const { product_name, is_displayed, product_description, product_tax_code, links_to_image, attrs } = updates;
 
-    // Fetch the existing product
     const { data: product, error: fetchError } = await supabase
       .from('product')
       .select('id, product_name, is_displayed, product_description, product_tax_code, links_to_image, attrs, stripe_product_id')
@@ -119,7 +114,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // Update the product in Supabase
     const updateData = {
       product_name: product_name || product.product_name,
       is_displayed: is_displayed !== undefined ? is_displayed : product.is_displayed,
@@ -142,13 +136,11 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: `Failed to update product: ${updateError?.message}` }, { status: 500 });
     }
 
-    // Validate the image URL
     const validatedImageUrl = validateImageUrl(updatedProduct.links_to_image);
     if (updatedProduct.links_to_image && !validatedImageUrl) {
       console.warn(`Invalid or unsupported image URL provided: ${updatedProduct.links_to_image}. Proceeding without image.`);
     }
 
-    // Sync to Stripe
     if (!product.stripe_product_id) {
       const createParams: any = {
         name: updatedProduct.product_name,
@@ -199,7 +191,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = getBaseUrl(true);
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
