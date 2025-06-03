@@ -28,6 +28,7 @@ type ProductSubType = {
 async function fetchProducts(baseUrl: string) {
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
+    console.error('Organization not found for fetchProducts, baseUrl:', baseUrl);
     throw new Error('Organization not found');
   }
 
@@ -45,6 +46,7 @@ async function fetchProducts(baseUrl: string) {
 async function fetchProductSubTypes(baseUrl: string) {
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
+    console.error('Organization not found for fetchProductSubTypes, baseUrl:', baseUrl);
     throw new Error('Organization not found');
   }
 
@@ -73,17 +75,30 @@ export default async function ProductsPage() {
     );
   }
 
-  const baseUrl = getBaseUrl(true); // Use centralized baseUrl
+  // Try getBaseUrl first, fallback to NEXT_PUBLIC_BASE_URL
+  let baseUrl = getBaseUrl(true);
+  console.log('ProductsPage baseUrl:', baseUrl, 'VERCEL_URL:', process.env.VERCEL_URL, 'NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
+
   let allProducts: Product[] = [];
   let productSubTypes: ProductSubType[] = [];
   let error: string | null = null;
-  const isAdmin = false; // Replace with auth logic if needed
+  const isAdmin = false;
 
   try {
     allProducts = await fetchProducts(baseUrl);
     productSubTypes = await fetchProductSubTypes(baseUrl);
   } catch (err: any) {
-    error = err.message;
+    console.error('Error fetching data with getBaseUrl, trying NEXT_PUBLIC_BASE_URL fallback:', err.message);
+    // Fallback to NEXT_PUBLIC_BASE_URL
+    baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    console.log('Falling back to baseUrl:', baseUrl);
+    try {
+      allProducts = await fetchProducts(baseUrl);
+      productSubTypes = await fetchProductSubTypes(baseUrl);
+    } catch (fallbackErr: any) {
+      error = fallbackErr.message;
+      console.error('Fallback failed:', fallbackErr.message);
+    }
   }
 
   return (
