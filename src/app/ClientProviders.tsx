@@ -17,8 +17,37 @@ import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
+import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
 import { TemplateHeadingSection } from '@/types/template_heading_section';
+
+interface SubMenuItem {
+  id: number;
+  name: string;
+  url_name: string;
+  order: number;
+  description?: string;
+  is_displayed?: boolean;
+  organization_id: string | null;
+}
+
+interface ReactIcon {
+  icon_name: string;
+}
+
+interface MenuItem {
+  id: number;
+  display_name: string;
+  url_name: string;
+  is_displayed: boolean;
+  is_displayed_on_footer: boolean;
+  order: number;
+  image?: string;
+  react_icon_id?: number;
+  react_icons?: ReactIcon | ReactIcon[]; // Updated type
+  website_submenuitem?: SubMenuItem[];
+  organization_id: string | null;
+}
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -30,7 +59,8 @@ interface ClientProvidersProps {
     h1_text_color: string;
     p_description_color: string;
   };
-  baseUrl: string; // Add baseUrl prop
+  baseUrl: string;
+  menuItems: MenuItem[] | undefined; // Allow undefined
 }
 
 export default function ClientProviders({
@@ -41,6 +71,7 @@ export default function ClientProviders({
   activeLanguages,
   heroData,
   baseUrl,
+  menuItems,
 }: ClientProvidersProps) {
   const pathname = usePathname();
   const [sections, setSections] = useState<TemplateSection[]>([]);
@@ -53,9 +84,11 @@ export default function ClientProviders({
         setLoading(true);
         const urlPage = pathname === '/' ? '/home' : pathname;
 
-        // Use server-side baseUrl for consistency
+        const clientBaseUrl = getBaseUrl(false);
+        console.log('Client baseUrl in ClientProviders:', clientBaseUrl);
+
         const sectionsResponse = await fetch(
-          `${baseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`,
+          `${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`,
           { cache: 'force-cache' }
         );
         if (!sectionsResponse.ok) {
@@ -67,7 +100,7 @@ export default function ClientProviders({
         setSections(sectionsData || []);
 
         const headingsResponse = await fetch(
-          `${baseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`,
+          `${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`,
           { cache: 'force-cache' }
         );
         if (!headingsResponse.ok) {
@@ -87,7 +120,7 @@ export default function ClientProviders({
     };
 
     fetchTemplateData();
-  }, [pathname, baseUrl]);
+  }, [pathname]);
 
   const showNavbarFooter = !hideNavbarFooterPrefixes.some((prefix) =>
     pathname.startsWith(prefix)
@@ -104,7 +137,7 @@ export default function ClientProviders({
                 {loading ? (
                   <div className="text-center py-12">Loading template sections...</div>
                 ) : showNavbarFooter ? (
-                  <NavbarFooterWrapper>
+                  <NavbarFooterWrapper menuItems={menuItems || []}>
                     <div>
                       {children}
                       <TemplateHeadingSections />

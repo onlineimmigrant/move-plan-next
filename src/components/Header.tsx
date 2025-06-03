@@ -34,6 +34,10 @@ interface SubMenuItem {
   organization_id: string | null;
 }
 
+interface ReactIcon {
+  icon_name: string;
+}
+
 interface MenuItem {
   id: number;
   display_name: string;
@@ -43,20 +47,19 @@ interface MenuItem {
   order?: number;
   image?: string;
   react_icon_id?: number;
-  react_icons?: { icon_name: string };
+  react_icons?: ReactIcon | ReactIcon[]; // Updated type
   website_submenuitem?: SubMenuItem[];
   organization_id: string | null;
 }
 
 interface HeaderProps {
   companyLogo?: string;
+  menuItems: MenuItem[] | undefined;
 }
 
-const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuItems = [] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -67,7 +70,6 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const isLoggedIn = !!session;
   const { settings } = useSettings();
 
-  // Handle scroll effect for nav background
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -81,81 +83,16 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   }, []);
 
   useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        setIsLoading(true);
-        // Pass baseUrl to the API to ensure correct organization_id resolution
-        const baseUrl = window.location.origin;
-        const response = await fetch(`/api/menu?baseUrl=${encodeURIComponent(baseUrl)}`);
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch menu items');
-        }
-        const data: MenuItem[] = await response.json();
-        console.log('Fetched menu items in Header:', JSON.stringify(data, null, 2));
-        setMenuItems(data);
-      } catch (error) {
-        console.error('Error fetching menu items in Header:', error);
-        setMenuItems([]);
-      } finally {
-        setIsMounted(true);
-        setIsLoading(false);
-      }
-    };
+    setIsMounted(true);
+    console.log('Menu items in Header:', JSON.stringify(menuItems, null, 2));
+  }, [menuItems]);
 
-    fetchMenuItems();
-  }, []);
-
-  useEffect(() => {
-    console.log('isLoggedIn:', isLoggedIn);
-    console.log('session:', session);
-    console.log('menuItems:', JSON.stringify(menuItems, null, 2));
-    console.log('isOpen:', isOpen);
-    console.log('isLoginOpen:', isLoginOpen);
-    console.log('isContactOpen:', isContactOpen);
-    console.log('companyLogo:', companyLogo);
-    console.log('settings:', settings);
-  }, [isLoggedIn, session, menuItems, isOpen, isLoginOpen, isContactOpen, companyLogo, settings]);
-
-  const menuWidth = settings?.menu_width || '7xl';
-  const menuItemsAreText = settings?.menu_items_are_text ?? true;
-
-  const handleToggle = () => {
-    console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
-    setIsOpen(!isOpen);
-  };
-
-  const handleMainPage = () => {
-    try {
-      console.log('Navigating to main page');
-      setIsOpen(false);
-      router.push('/');
-    } catch (error) {
-      console.error('Error navigating to main page:', error);
+  const getIconName = (reactIcons: ReactIcon | ReactIcon[] | undefined): string | undefined => {
+    if (!reactIcons) return undefined;
+    if (Array.isArray(reactIcons)) {
+      return reactIcons.length > 0 ? reactIcons[0].icon_name : undefined;
     }
-  };
-
-  const handleLogoutAction = () => {
-    try {
-      console.log('Logging out');
-      setIsOpen(false);
-      logout();
-      router.push('/');
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
-  };
-
-  const handleShowLogin = () => {
-    console.log('Opening login modal');
-    setIsOpen(false);
-    setIsLoginOpen(true);
-  };
-
-  const handleShowContact = () => {
-    console.log('Opening contact modal');
-    setIsOpen(false);
-    setIsContactOpen(true);
+    return reactIcons.icon_name;
   };
 
   const renderIcon = (iconName: string | undefined) => {
@@ -173,9 +110,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
 
   const renderMenuItems = () => (
     <>
-      {isLoading ? (
-        <span className="text-gray-500">Loading menu...</span>
-      ) : menuItems.length === 0 ? (
+      {menuItems.length === 0 ? (
         <span className="text-gray-500">No menu items available</span>
       ) : (
         menuItems
@@ -196,7 +131,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                       title={item.display_name}
                       aria-label={`Open ${item.display_name} menu`}
                     >
-                      {menuItemsAreText ? (
+                      {settings?.menu_items_are_text ? (
                         <span className="text-base font-medium text-gray-700">{item.display_name}</span>
                       ) : item.image ? (
                         <Image
@@ -208,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                           onError={() => console.error(`Failed to load image for menu item ${item.display_name}: ${item.image}`)}
                         />
                       ) : (
-                        renderIcon(item.react_icons?.icon_name)
+                        renderIcon(getIconName(item.react_icons))
                       )}
                     </button>
                     <div className="absolute right-0 w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
@@ -230,7 +165,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                     title={item.display_name}
                     aria-label={`Go to ${item.display_name}`}
                   >
-                    {menuItemsAreText ? (
+                    {settings?.menu_items_are_text ? (
                       <span className="text-base font-medium text-gray-700">{item.display_name}</span>
                     ) : item.image ? (
                       <Image
@@ -242,7 +177,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                         onError={() => console.error(`Failed to load image for menu item ${item.display_name}: ${item.image}`)}
                       />
                     ) : (
-                      renderIcon(item.react_icons?.icon_name)
+                      renderIcon(getIconName(item.react_icons))
                     )}
                   </Link>
                 )}
@@ -255,9 +190,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
 
   const renderMobileMenuItems = () => (
     <>
-      {isLoading ? (
-        <span className="block px-6 py-6 text-gray-500">Loading menu...</span>
-      ) : menuItems.length === 0 ? (
+      {menuItems.length === 0 ? (
         <span className="block px-6 py-6 text-gray-500">No menu items available</span>
       ) : (
         menuItems
@@ -318,7 +251,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
   );
 
   if (!isMounted) {
-    return null; // Prevent rendering until mounted to avoid hydration issues
+    return null;
   }
 
   return (
@@ -327,10 +260,14 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
         isScrolled ? 'border-gray-200 bg-white' : 'bg-transparent'
       }`}
     >
-      <div className={`mx-auto max-w-${menuWidth} p-4 sm:px-6 flex justify-between items-center`}>
+      <div className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 sm:px-6 flex justify-between items-center`}>
         <button
           type="button"
-          onClick={handleMainPage}
+          onClick={() => {
+            console.log('Navigating to main page');
+            setIsOpen(false);
+            router.push('/');
+          }}
           className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200"
           aria-label="Go to homepage"
           disabled={!router}
@@ -344,7 +281,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
               className="h-8 w-auto"
               onError={(e) => {
                 console.error('Failed to load logo:', settings.image);
-                e.currentTarget.src = companyLogo; // Fallback to default logo
+                e.currentTarget.src = companyLogo;
               }}
             />
           ) : (
@@ -388,14 +325,23 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                 </Link>
                 <button
                   type="button"
-                  onClick={handleShowContact}
+                  onClick={() => {
+                    console.log('Opening contact modal');
+                    setIsOpen(false);
+                    setIsContactOpen(true);
+                  }}
                   className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                 >
                   Contact
                 </button>
                 <button
                   type="button"
-                  onClick={handleLogoutAction}
+                  onClick={() => {
+                    console.log('Logging out');
+                    setIsOpen(false);
+                    logout();
+                    router.push('/');
+                  }}
                   className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Logout
@@ -405,7 +351,11 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           ) : (
             <button
               type="button"
-              onClick={handleShowLogin}
+              onClick={() => {
+                console.log('Opening login modal');
+                setIsOpen(false);
+                setIsLoginOpen(true);
+              }}
               className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
               title="Login"
               aria-label="Open login modal"
@@ -430,7 +380,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           )}
           <button
             type="button"
-            onClick={handleToggle}
+            onClick={() => {
+              console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
+              setIsOpen(!isOpen);
+            }}
             className="cursor-pointer text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-md p-1 transition-all duration-200"
             aria-label={isOpen ? 'Close menu' : 'Open menu'}
           >
@@ -469,7 +422,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                       type="button"
                       onClick={() => {
                         setIsOpen(false);
-                        handleShowContact();
+                        setIsContactOpen(true);
                       }}
                       className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                     >
@@ -479,7 +432,8 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
                       type="button"
                       onClick={() => {
                         setIsOpen(false);
-                        handleLogoutAction();
+                        logout();
+                        router.push('/');
                       }}
                       className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-sky-50 rounded-md font-medium transition-colors duration-200"
                     >
@@ -492,7 +446,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg' }) => 
           ) : (
             <button
               type="button"
-              onClick={handleShowLogin}
+              onClick={() => {
+                setIsOpen(false);
+                setIsLoginOpen(true);
+              }}
               className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
               aria-label="Open login modal"
             >
