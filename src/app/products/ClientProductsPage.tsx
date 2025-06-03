@@ -1,4 +1,3 @@
-// /app/products/ClientProductsPage.tsx
 'use client';
 
 import Link from 'next/link';
@@ -8,6 +7,7 @@ import CategoriesBar from '@/components/CategoriesBar';
 import IconButton from '@/components/IconButton';
 import FeedbackAccordion from '@/components/FeedbackAccordion';
 
+// Define types for products and sub-types
 type Product = {
   id: number;
   slug?: string;
@@ -15,7 +15,7 @@ type Product = {
   product_name: string | null;
   product_sub_type_id: number;
   product_sub_type_additional_id: number;
-  order: number;
+  order: number; // Added for sorting
   price_manual?: string;
   currency_manual_symbol?: string;
   links_to_image?: string | null;
@@ -47,9 +47,11 @@ export default function ClientProductsPage({
   const [visibleItemsCount, setVisibleItemsCount] = useState<number>(8);
   const [error, setError] = useState<string | null>(initialError);
 
+  // Filter and sort products based on search query, active sub-type, and order
   useEffect(() => {
     let result = initialProducts;
 
+    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter((product) => {
@@ -58,6 +60,7 @@ export default function ClientProductsPage({
       });
     }
 
+    // Apply sub-type filter, checking both product_sub_type_id and product_sub_type_additional_id
     if (activeSubType) {
       result = result.filter(
         (p) =>
@@ -66,13 +69,15 @@ export default function ClientProductsPage({
       );
     }
 
+    // Sort by order field in ascending order
     result = result.sort((a, b) => a.order - b.order);
+
     setFilteredProducts(result);
     setVisibleItemsCount(8);
   }, [searchQuery, activeSubType, initialProducts]);
 
   function handleCategoryChange(subType: ProductSubType | null) {
-    setActiveSubType(subType); // Fixed typo from 'subitems'
+    setActiveSubType(subType);
   }
 
   function loadMoreItems() {
@@ -140,14 +145,14 @@ export default function ClientProductsPage({
             {searchQuery ? `No products found matching "${searchQuery}"` : 'No products available'}
           </div>
         ) : (
-          <div className="sm:px-0 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4">
+          <div className=" sm:px-0 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4">
             {filteredProducts.slice(0, visibleItemsCount).map((product) => (
               <Link
                 key={product.id}
                 href={product.slug ? `/products/${product.slug}` : '#'}
                 className="group"
               >
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                <div className=" bg-white rounded-xl shadow-sm overflow-hidden flex  flex-col">
                   {product.links_to_image && product.links_to_image.trim() !== '' && (
                     <div className="p-2 sm:p-0 w-1/2 h-1/2 sm:w-full sm:h-auto flex-shrink-0">
                       <img
@@ -195,6 +200,7 @@ export default function ClientProductsPage({
           </div>
         )}
 
+        {/* Add FeedbackAccordion for all products */}
         <FeedbackAccordion type="all_products" />
       </div>
     </div>
