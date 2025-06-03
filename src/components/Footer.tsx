@@ -1,26 +1,12 @@
 // /components/Footer.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
-import { cn } from '@/lib/utils';
-
-interface MenuItem {
-  id: number;
-  display_name: string;
-  url_name: string;
-  is_displayed: boolean;
-  is_displayed_on_footer: boolean;
-  image?: string;
-  react_icon_id?: number;
-  react_icons?: { icon_name: string };
-  website_submenuitem?: SubMenuItem[];
-  organization_id?: string | null;
-}
 
 interface SubMenuItem {
   id: number;
@@ -31,13 +17,29 @@ interface SubMenuItem {
   organization_id?: string | null;
 }
 
-interface FooterProps {
-  companyLogo?: string;
+interface ReactIcon {
+  icon_name: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface MenuItem {
+  id: number;
+  display_name: string;
+  url_name: string;
+  is_displayed: boolean;
+  is_displayed_on_footer: boolean;
+  image?: string;
+  react_icon_id?: number;
+  react_icons?: ReactIcon | ReactIcon[]; // Updated type
+  website_submenuitem?: SubMenuItem[];
+  organization_id?: string | null;
+}
+
+interface FooterProps {
+  companyLogo?: string;
+  menuItems: MenuItem[] | undefined;
+}
+
+const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuItems = [] }) => {
   const { session, logout } = useAuth();
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
@@ -45,47 +47,19 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
   const isLoggedIn = !!session;
   const maxItemsPerColumn = 8;
 
-  useEffect(() => {
-    let mounted = true;
-
-    const fetchMenuItems = async () => {
-      try {
-        setIsLoading(true);
-        const baseUrl = window.location.origin;
-        const response = await fetch(`/api/menu?baseUrl=${encodeURIComponent(baseUrl)}`, {
-          cache: 'force-cache',
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch menu items');
-        }
-        const data = await response.json();
-        console.log('Fetched menu items in Footer:', JSON.stringify(data, null, 2));
-        if (mounted) setMenuItems(data);
-      } catch (error) {
-        console.error('Error fetching menu items in Footer:', error);
-        if (mounted) setMenuItems([]);
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    fetchMenuItems();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  console.log('Menu items in Footer:', JSON.stringify(menuItems, null, 2));
 
   const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
-    const withSubitems = menuItems.filter(
+    const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
+
+    const withSubitems = safeMenuItems.filter(
       (item) =>
         item.is_displayed_on_footer &&
         item.display_name !== 'Profile' &&
         item.website_submenuitem?.length
     );
 
-    const withoutSubitems = menuItems.filter(
+    const withoutSubitems = safeMenuItems.filter(
       (item) =>
         item.is_displayed_on_footer &&
         item.display_name !== 'Profile' &&
@@ -114,17 +88,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg' }) => 
 
   const footerBackground = settings?.footer_color || 'gray-800';
 
-  if (isLoading) {
-    return (
-      <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
-        <div className="mx-auto max-w-7xl px-8">
-          <p className="text-center text-gray-300">Loading footer...</p>
-        </div>
-      </footer>
-    );
-  }
-
-  if (menuItems.length === 0) {
+  if (itemsWithSubitems.length === 0 && groupedItemsWithoutSubitems.length === 0) {
     return (
       <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
         <div className="mx-auto max-w-7xl px-8">

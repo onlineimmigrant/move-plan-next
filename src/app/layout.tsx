@@ -1,9 +1,38 @@
 // /app/layout.tsx
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import { supabase } from '@/lib/supabase';
+import { getBaseUrl } from '@/lib/utils';
 import './globals.css';
 import ClientProviders from './ClientProviders';
 import { Settings } from '@/types/settings';
+
+interface SubMenuItem {
+  id: number;
+  name: string;
+  url_name: string;
+  order: number;
+  description?: string;
+  is_displayed?: boolean;
+  organization_id: string | null;
+}
+
+interface ReactIcon {
+  icon_name: string;
+}
+
+interface MenuItem {
+  id: number;
+  display_name: string;
+  url_name: string;
+  is_displayed: boolean;
+  is_displayed_on_footer: boolean;
+  order: number;
+  image?: string;
+  react_icon_id?: number;
+  react_icons?: ReactIcon | ReactIcon[]; // Support both single object and array
+  website_submenuitem?: SubMenuItem[];
+  organization_id: string | null;
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Skip Supabase queries during Vercel build
@@ -42,6 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             activeLanguages={['en', 'es', 'fr']}
             heroData={{ h1_text_color: 'gray-900', p_description_color: '#000000' }}
             baseUrl="http://localhost:3000"
+            menuItems={[]}
           >
             {children}
           </ClientProviders>
@@ -50,10 +80,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     );
   }
 
-  // Determine base URL dynamically
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  // Use centralized baseUrl logic
+  const baseUrl = getBaseUrl(true);
   console.log('Base URL in RootLayout:', baseUrl);
 
   // Fetch settings for the organization
@@ -123,6 +151,66 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   }
 
+  // Fetch menu items
+  let menuItems: MenuItem[] = [];
+  if (organizationId) {
+    try {
+      const { data, error } = await supabase
+        .from('website_menuitem')
+        .select(`
+          id,
+          display_name,
+          url_name,
+          is_displayed,
+          is_displayed_on_footer,
+          "order",
+          image,
+          react_icon_id,
+          organization_id,
+          react_icons (icon_name),
+          website_submenuitem (
+            id,
+            name,
+            order,
+            url_name,
+            description,
+            is_displayed,
+            organization_id
+          )
+        `)
+        .or(`organization_id.eq.${organizationId},organization_id.is.null`)
+        .order('order', { ascending: true })
+        .order('order', { ascending: true, referencedTable: 'website_submenuitem' });
+
+      if (error) throw error;
+
+      // Filter and cast data to MenuItem[]
+      menuItems = (data || []).map((item) => {
+        let reactIcons: ReactIcon | ReactIcon[] | undefined = item.react_icons;
+        if (Array.isArray(item.react_icons)) {
+          reactIcons = item.react_icons.length > 0 ? item.react_icons[0] : undefined;
+        } else if (item.react_icons && typeof item.react_icons === 'object') {
+          reactIcons = item.react_icons as ReactIcon;
+        }
+
+        return {
+          ...item,
+          react_icons: reactIcons,
+          website_submenuitem: (item.website_submenuitem || []).filter(
+            (subItem: SubMenuItem) =>
+              subItem.is_displayed !== false &&
+              (subItem.organization_id === null || subItem.organization_id === organizationId)
+          ),
+        };
+      });
+      console.log('Fetched menuItems in layout:', JSON.stringify(menuItems, null, 2));
+    } catch (error) {
+      console.error('Failed to fetch menu items in layout:', error);
+    }
+  } else {
+    console.error('No organization ID found for menu fetch, URL:', baseUrl);
+  }
+
   const headerData = {
     image_for_privacy_settings: settings.image,
     site: settings.site,
@@ -178,11 +266,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <ClientProviders
           defaultSEOData={defaultSEOData}
-          settings={{ ...settings, baseUrl }} // Pass baseUrl in settings
+          settings={{ ...settings, baseUrl }}
           headerData={headerData}
           activeLanguages={activeLanguages}
           heroData={heroData}
           baseUrl={baseUrl}
+          menuItems={menuItems}
         >
           {children}
         </ClientProviders>
