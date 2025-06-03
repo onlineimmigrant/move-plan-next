@@ -1,6 +1,5 @@
-// /app/products/page.tsx
-import { supabase, getOrganizationId } from '../../lib/supabase';
-import { getBaseUrl } from '../../lib/utils';
+// app/products/page.tsx
+import { supabase, getOrganizationId } from '../../lib/supabase'; // Import getOrganizationId
 import ClientProductsPage from './ClientProductsPage';
 
 type Product = {
@@ -25,7 +24,8 @@ type ProductSubType = {
   [key: string]: any;
 };
 
-async function fetchProducts(baseUrl: string) {
+async function fetchProducts() {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
     throw new Error('Organization not found');
@@ -34,7 +34,7 @@ async function fetchProducts(baseUrl: string) {
   const { data, error } = await supabase
     .from('product')
     .select('*')
-    .eq('organization_id', organizationId)
+    .eq('organization_id', organizationId) // Filter by organization_id
     .order('order', { ascending: true });
 
   console.log('Fetched products:', data, 'for organization_id:', organizationId);
@@ -42,7 +42,8 @@ async function fetchProducts(baseUrl: string) {
   return data || [];
 }
 
-async function fetchProductSubTypes(baseUrl: string) {
+async function fetchProductSubTypes() {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
     throw new Error('Organization not found');
@@ -51,7 +52,7 @@ async function fetchProductSubTypes(baseUrl: string) {
   const { data, error } = await supabase
     .from('product_sub_type')
     .select('*')
-    .eq('organization_id', organizationId);
+    .eq('organization_id', organizationId); // Filter by organization_id
 
   console.log('Fetched sub-types:', data, 'for organization_id:', organizationId);
   if (error) throw new Error('Failed to load product sub-types: ' + error.message);
@@ -59,29 +60,15 @@ async function fetchProductSubTypes(baseUrl: string) {
 }
 
 export default async function ProductsPage() {
-  // Skip Supabase queries during Vercel static build
-  const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
-  if (isBuild) {
-    console.log('Skipping Supabase queries during Vercel build');
-    return (
-      <ClientProductsPage
-        initialProducts={[]}
-        initialSubTypes={[]}
-        initialError={null}
-        isAdmin={false}
-      />
-    );
-  }
-
-  const baseUrl = getBaseUrl(true); // Use centralized baseUrl
   let allProducts: Product[] = [];
   let productSubTypes: ProductSubType[] = [];
   let error: string | null = null;
-  const isAdmin = false; // Replace with auth logic, e.g., const { user } = await supabase.auth.getUser();
+  const isAdmin = false; // Replace with auth logic
 
   try {
-    allProducts = await fetchProducts(baseUrl);
-    productSubTypes = await fetchProductSubTypes(baseUrl);
+    allProducts = await fetchProducts();
+    productSubTypes = await fetchProductSubTypes();
+    // Example: const { user } = await supabase.auth.getUser(); isAdmin = user?.role === 'admin';
   } catch (err: any) {
     error = err.message;
   }
