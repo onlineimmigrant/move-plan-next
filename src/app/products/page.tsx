@@ -1,5 +1,6 @@
-// app/products/page.tsx
-import { supabase, getOrganizationId } from '../../lib/supabase'; // Import getOrganizationId
+// /app/products/page.tsx
+import { supabase, getOrganizationId } from '../../lib/supabase';
+import { getBaseUrl } from '../../lib/utils';
 import ClientProductsPage from './ClientProductsPage';
 
 type Product = {
@@ -24,8 +25,7 @@ type ProductSubType = {
   [key: string]: any;
 };
 
-async function fetchProducts() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+async function fetchProducts(baseUrl: string) {
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
     throw new Error('Organization not found');
@@ -34,7 +34,7 @@ async function fetchProducts() {
   const { data, error } = await supabase
     .from('product')
     .select('*')
-    .eq('organization_id', organizationId) // Filter by organization_id
+    .eq('organization_id', organizationId)
     .order('order', { ascending: true });
 
   console.log('Fetched products:', data, 'for organization_id:', organizationId);
@@ -42,8 +42,7 @@ async function fetchProducts() {
   return data || [];
 }
 
-async function fetchProductSubTypes() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+async function fetchProductSubTypes(baseUrl: string) {
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
     throw new Error('Organization not found');
@@ -52,7 +51,7 @@ async function fetchProductSubTypes() {
   const { data, error } = await supabase
     .from('product_sub_type')
     .select('*')
-    .eq('organization_id', organizationId); // Filter by organization_id
+    .eq('organization_id', organizationId);
 
   console.log('Fetched sub-types:', data, 'for organization_id:', organizationId);
   if (error) throw new Error('Failed to load product sub-types: ' + error.message);
@@ -60,15 +59,29 @@ async function fetchProductSubTypes() {
 }
 
 export default async function ProductsPage() {
+  // Skip Supabase queries during Vercel static build
+  const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
+  if (isBuild) {
+    console.log('Skipping Supabase queries during Vercel build');
+    return (
+      <ClientProductsPage
+        initialProducts={[]}
+        initialSubTypes={[]}
+        initialError={null}
+        isAdmin={false}
+      />
+    );
+  }
+
+  const baseUrl = getBaseUrl(true); // Use centralized baseUrl
   let allProducts: Product[] = [];
   let productSubTypes: ProductSubType[] = [];
   let error: string | null = null;
-  const isAdmin = false; // Replace with auth logic
+  const isAdmin = false; // Replace with auth logic if needed
 
   try {
-    allProducts = await fetchProducts();
-    productSubTypes = await fetchProductSubTypes();
-    // Example: const { user } = await supabase.auth.getUser(); isAdmin = user?.role === 'admin';
+    allProducts = await fetchProducts(baseUrl);
+    productSubTypes = await fetchProductSubTypes(baseUrl);
   } catch (err: any) {
     error = err.message;
   }
