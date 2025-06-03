@@ -1,17 +1,17 @@
 // /app/products/[id]/page.tsx
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { supabase, getOrganizationId } from '@/lib/supabase';
-import { getBaseUrl } from '@/lib/utils';
-import ProductDetailPricingPlans from '@/components/ProductDetailPricingPlans';
-import CategoryBarProductDetailPage from '@/components/CategoryBarProductDetailPage';
-import FAQSection from '@/components/HomePageSections/FAQSection';
-import FeedbackAccordion from '@/components/FeedbackAccordion';
+import { supabase, getOrganizationId } from '../../../lib/supabase';
+import { getBaseUrl } from '../../../lib/utils';
+import ProductDetailPricingPlans from '../../../components/ProductDetailPricingPlans';
+import CategoryBarProductDetailPage from '../../../components/CategoryBarProductDetailPage';
+import FAQSection from '../../../components/HomePageSections/FAQSection';
+import FeedbackAccordion from '../../../components/FeedbackAccordion';
 import parse from 'html-react-parser';
-import ProgressBar from '@/components/ProgressBar';
-import { getBasket } from '@/lib/basketUtils';
-import ProductDetailMediaDisplay from '@/components/ProductDetailMediaDisplay';
-import ProductHeader from '@/components/ProductHeader';
+import ProgressBar from '../../../components/ProgressBar';
+import { getBasket } from '../../../lib/basketUtils';
+import ProductDetailMediaDisplay from '../../../components/ProductDetailMediaDisplay';
+import ProductHeader from '../../../components/ProductHeader';
 
 interface MediaItem {
   id: number;
@@ -82,11 +82,13 @@ interface FAQ {
 }
 
 async function fetchProduct(slug: string, baseUrl: string): Promise<Product | null> {
+  console.log('Fetching product for slug:', slug, 'with baseUrl:', baseUrl);
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
-    console.error('Organization not found');
+    console.error('Organization not found for baseUrl:', baseUrl);
     return null;
   }
+  console.log('Organization ID:', organizationId);
 
   const { data: productData, error: productError } = await supabase
     .from('product')
@@ -96,7 +98,7 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     .single();
 
   if (productError || !productData) {
-    console.error('Error fetching product:', productError?.message || 'No product found');
+    console.error('Error fetching product:', productError?.message || 'No product found', 'for slug:', slug);
     return null;
   }
 
@@ -114,7 +116,7 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     .single();
 
   if (subTypeError) {
-    console.error('Error fetching product sub-type:', subTypeError);
+    console.error('Error fetching product sub-type:', subTypeError.message);
   } else {
     productSubType = subTypeData;
   }
@@ -144,7 +146,7 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     .eq('organization_id', organizationId);
 
   if (plansError) {
-    console.error('Error fetching pricing plans:', plansError);
+    console.error('Error fetching pricing plans:', plansError.message);
     const { data: fallbackPlansData, error: fallbackPlansError } = await supabase
       .from('pricingplan')
       .select(`
@@ -161,7 +163,7 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
       .eq('organization_id', organizationId);
 
     if (fallbackPlansError) {
-      console.error('Fallback error fetching pricing plans:', fallbackPlansError);
+      console.error('Fallback error fetching pricing plans:', fallbackPlansError.message);
     } else {
       pricingPlans = (fallbackPlansData || []).map((plan) => ({
         ...plan,
@@ -193,7 +195,7 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     .eq('organization_id', organizationId);
 
   if (mediaError) {
-    console.error('Error fetching product media:', mediaError);
+    console.error('Error fetching product media:', mediaError.message);
   } else {
     productMedia = mediaData || [];
   }
@@ -206,14 +208,15 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     product_media: productMedia,
   };
 
-  console.log('Fetched product data:', JSON.stringify(product, null, 2), 'for organization_id:', organizationId);
+  console.log('Fetched product data:', JSON.stringify(product, null, 2));
   return product;
 }
 
 async function fetchFAQs(slug: string, baseUrl: string): Promise<FAQ[]> {
+  console.log('Fetching FAQs for slug:', slug);
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
-    console.error('Organization not found');
+    console.error('Organization not found for baseUrl:', baseUrl);
     return [];
   }
 
@@ -237,20 +240,29 @@ async function fetchFAQs(slug: string, baseUrl: string): Promise<FAQ[]> {
     .order('order', { ascending: true });
 
   if (error) {
-    console.error('Error fetching FAQs:', error);
+    console.error('Error fetching FAQs:', error.message);
     return [];
   }
 
-  console.log('Fetched FAQs:', data, 'for organization_id:', organizationId);
+  console.log('Fetched FAQs:', data);
   return data || [];
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Skip Supabase queries during Vercel static build
+  const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
+  if (isBuild) {
+    console.log('Skipping Supabase queries during Vercel build');
+    notFound();
+  }
+
   const { id: slug } = await params;
-  const baseUrl = getBaseUrl(true); // Server-side baseUrl
+  const baseUrl = getBaseUrl(true);
+  console.log('ProductDetailPage baseUrl:', baseUrl);
 
   const product = await fetchProduct(slug, baseUrl);
   if (!product) {
+    console.log('Product not found for slug:', slug);
     notFound();
   }
 
