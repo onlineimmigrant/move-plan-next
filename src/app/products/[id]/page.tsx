@@ -102,42 +102,56 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     return null;
   }
 
+  console.log('Fetched product:', productData);
+
   if (!productData.product_sub_type_id) {
-    console.error('Product missing product_sub_type_id:', productData.id);
-    return productData as Product; // Proceed without sub-type
+    console.warn('Product missing product_sub_type_id:', productData.id);
   }
 
   let productSubType: { name: string } | null = null;
-  const { data: subTypeData, error: subTypeError } = await supabase
-    .from('product_sub_type')
-    .select('name')
-    .eq('id', productData.product_sub_type_id)
-    .eq('organization_id', organizationId)
-    .single();
+  if (productData.product_sub_type_id) {
+    const { data: subTypeData, error: subTypeError } = await supabase
+      .from('product_sub_type')
+      .select('name')
+      .eq('id', productData.product_sub_type_id)
+      .eq('organization_id', organizationId)
+      .single();
 
-  if (subTypeError) {
-    console.error('Error fetching product sub-type:', subTypeError.message);
-  } else {
-    productSubType = subTypeData;
+    if (subTypeError || !subTypeData) {
+      console.error('Error fetching product sub-type:', subTypeError?.message || 'No sub-type found', 'product_sub_type_id:', productData.product_sub_type_id, 'organizationId:', organizationId);
+    } else {
+      productSubType = subTypeData;
+      console.log('Fetched product sub-type:', productSubType);
+    }
   }
 
   let pricingPlans: PricingPlan[] = [];
   const { data: plansData, error: plansError } = await supabase
     .from('pricingplan')
-    .select('*')
+    .select(`
+      *,
+      inventory!fk_pricing_plan_id(status),
+      pricingplan_features(feature:feature_id(id, name, content, slug))
+    `)
     .eq('product_id', productData.id)
     .eq('organization_id', organizationId);
 
-  if (plansError) {
-    console.error('Error fetching pricing plans:', plansError.message);
+  if (plansError || !plansData) {
+    console.error('Error fetching pricing plans:', plansError?.message || 'No pricing plans found', 'product_id:', productData.id, 'organizationId:', organizationId);
   } else {
-    pricingPlans = (plansData || []).map((plan) => ({
+    pricingPlans = plansData.map((plan) => ({
       ...plan,
       product_name: productData.product_name,
       links_to_image: productData.links_to_image,
       currency: plan.currency || productData.currency_manual || 'GBP',
-      features: [], // Simplified: remove complex join for now
+      currency_symbol: plan.currency_symbol || '£',
+      features: plan.pricingplan_features
+        ? plan.pricingplan_features
+            .map((pf: any) => pf.feature)
+            .filter((feature: any) => feature != null)
+        : [],
     }));
+    console.log('Fetched pricing plans:', pricingPlans);
   }
 
   let productMedia: MediaItem[] = [];
@@ -148,9 +162,10 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     .eq('organization_id', organizationId);
 
   if (mediaError) {
-    console.error('Error fetching product media:', mediaError.message);
+    console.error('Error fetching product media:', mediaError?.message, 'product_id:', productData.id, 'organizationId:', organizationId);
   } else {
     productMedia = mediaData || [];
+    console.log('Fetched product media:', productMedia);
   }
 
   const product: Product = {
@@ -160,7 +175,7 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     product_media: productMedia,
   };
 
-  console.log('Fetched product data:', product);
+  console.log('Final product data:', product);
   return product;
 }
 
@@ -180,7 +195,7 @@ async function fetchFAQs(slug: string, baseUrl: string): Promise<FAQ[]> {
     .single();
 
   if (productError || !product || !product.product_sub_type_id) {
-    console.error('Error fetching product for FAQs:', productError?.message || 'No product found');
+    console.error('Error fetching product for FAQs:', productError?.message || 'No product found', 'slug:', slug, 'organizationId:', organizationId);
     return [];
   }
 
@@ -192,7 +207,7 @@ async function fetchFAQs(slug: string, baseUrl: string): Promise<FAQ[]> {
     .order('order', { ascending: true });
 
   if (error) {
-    console.error('Error fetching FAQs:', error.message);
+    console.error('Error fetching FAQs:', error?.message, 'product_sub_type_id:', product.product_sub_type_id, 'organizationId:', organizationId);
     return [];
   }
 
@@ -201,7 +216,6 @@ async function fetchFAQs(slug: string, baseUrl: string): Promise<FAQ[]> {
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  // Skip Supabase queries during Vercel static build
   const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
   if (isBuild) {
     console.log('Skipping Supabase queries during Vercel build');
@@ -275,7 +289,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </div>
             )}
 
-            {product.pricing_plans && product.pricing_plans.length > 0 && (
+            {product.pricing_plans && product.pricing_plans.length > 0 ? (
               <div
                 id="pricing-plans"
                 className={product_description ? 'px-4 mt-4 md:mt-8' : 'px-4 mt-2 md:mt-4'}
@@ -285,6 +299,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                   amazonBooksUrl={product.amazon_books_url}
                 />
               </div>
+            ) : (
+              <div className="px-4 mt-4 text-gray-500">No pricing plans available.</div>
             )}
           </div>
 
