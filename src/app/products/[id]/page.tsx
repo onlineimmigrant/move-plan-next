@@ -98,13 +98,13 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     .single();
 
   if (productError || !productData) {
-    console.error('Error fetching product:', productError?.message || 'No product found', 'for slug:', slug);
+    console.error('Error fetching product:', productError?.message || 'No product found', 'for slug:', slug, 'organizationId:', organizationId);
     return null;
   }
 
   if (!productData.product_sub_type_id) {
     console.error('Product missing product_sub_type_id:', productData.id);
-    return null;
+    return productData as Product; // Proceed without sub-type
   }
 
   let productSubType: { name: string } | null = null;
@@ -124,66 +124,19 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
   let pricingPlans: PricingPlan[] = [];
   const { data: plansData, error: plansError } = await supabase
     .from('pricingplan')
-    .select(`
-      *,
-      inventory!fk_pricing_plan_id (
-        status
-      ),
-      product:product_id (
-        product_name,
-        links_to_image
-      ),
-      pricingplan_features (
-        feature:feature_id (
-          id,
-          name,
-          content,
-          slug
-        )
-      )
-    `)
+    .select('*')
     .eq('product_id', productData.id)
     .eq('organization_id', organizationId);
 
   if (plansError) {
     console.error('Error fetching pricing plans:', plansError.message);
-    const { data: fallbackPlansData, error: fallbackPlansError } = await supabase
-      .from('pricingplan')
-      .select(`
-        *,
-        inventory!fk_pricing_plan_id (
-          status
-        ),
-        product:product_id (
-          product_name,
-          links_to_image
-        )
-      `)
-      .eq('product_id', productData.id)
-      .eq('organization_id', organizationId);
-
-    if (fallbackPlansError) {
-      console.error('Fallback error fetching pricing plans:', fallbackPlansError.message);
-    } else {
-      pricingPlans = (fallbackPlansData || []).map((plan) => ({
-        ...plan,
-        product_name: plan.product?.product_name || productData.product_name,
-        links_to_image: plan.product?.links_to_image || productData.links_to_image,
-        currency: plan.currency || productData.currency_manual || 'GBP',
-        features: [],
-      }));
-    }
   } else {
     pricingPlans = (plansData || []).map((plan) => ({
       ...plan,
-      product_name: plan.product?.product_name || productData.product_name,
-      links_to_image: plan.product?.links_to_image || productData.links_to_image,
+      product_name: productData.product_name,
+      links_to_image: productData.links_to_image,
       currency: plan.currency || productData.currency_manual || 'GBP',
-      features: plan.pricingplan_features
-        ? plan.pricingplan_features
-            .map((pf: any) => pf.feature)
-            .filter((feature: any) => feature != null)
-        : [],
+      features: [], // Simplified: remove complex join for now
     }));
   }
 
@@ -202,13 +155,12 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
 
   const product: Product = {
     ...productData,
-    product_sub_type_id: productData.product_sub_type_id,
     product_sub_type: productSubType,
     pricing_plans: pricingPlans,
     product_media: productMedia,
   };
 
-  console.log('Fetched product data:', JSON.stringify(product, null, 2));
+  console.log('Fetched product data:', product);
   return product;
 }
 
@@ -257,16 +209,41 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   const { id: slug } = await params;
-  const baseUrl = getBaseUrl(true);
-  console.log('ProductDetailPage baseUrl:', baseUrl);
+  let baseUrl = getBaseUrl(true);
+  console.log('ProductDetailPage baseUrl:', baseUrl, 'VERCEL_URL:', process.env.VERCEL_URL, 'NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
 
-  const product = await fetchProduct(slug, baseUrl);
+  let product: Product | null = null;
+  let faqs: FAQ[] = [];
+  const error: string | null = null;
+
+  try {
+    product = await fetchProduct(slug, baseUrl);
+    if (!product) {
+      console.log('Product not found for slug:', slug);
+      throw new Error('Product not found');
+    }
+    faqs = await fetchFAQs(slug, baseUrl);
+  } catch (err: any) {
+    console.error('Error fetching product with getBaseUrl, trying NEXT_PUBLIC_BASE_URL fallback:', err.message);
+    baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    console.log('Falling back to baseUrl:', baseUrl);
+    try {
+      product = await fetchProduct(slug, baseUrl);
+      if (!product) {
+        console.log('Product not found for slug (fallback):', slug);
+        throw new Error('Product not found');
+      }
+      faqs = await fetchFAQs(slug, baseUrl);
+    } catch (fallbackErr: any) {
+      console.error('Fallback failed:', fallbackErr.message);
+      notFound();
+    }
+  }
+
   if (!product) {
-    console.log('Product not found for slug:', slug);
     notFound();
   }
 
-  const faqs = await fetchFAQs(slug, baseUrl);
   const basket = await getBasket();
   const totalItems = basket.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
