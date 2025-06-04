@@ -7,28 +7,39 @@ import { FAQ } from '@/types/faq';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get('organization_id'); // Changed to snake_case for consistency
+    const organizationId = searchParams.get('organization_id'); // Changed to snake_case
 
     if (!organizationId) {
       console.error('Missing organization_id in query params');
       return NextResponse.json({ error: 'organization_id is required' }, { status: 400 });
     }
 
-    // Resolve organizationId using getBaseUrl to ensure consistency
-    const baseUrl = getBaseUrl(true);
+    // Resolve organizationId using getBaseUrl
+    let baseUrl = getBaseUrl(true);
     console.log('API /faqs baseUrl:', baseUrl, 'organization_id from query:', organizationId);
 
     let resolvedOrganizationId: string | null = null;
     try {
       resolvedOrganizationId = await getOrganizationId(baseUrl);
       if (!resolvedOrganizationId) {
-        console.error('Failed to resolve organizationId for baseUrl:', baseUrl);
-        return NextResponse.json({ error: 'Failed to resolve organization' }, { status: 500 });
+        throw new Error('Organization not found');
       }
       console.log('Resolved organizationId:', resolvedOrganizationId);
     } catch (err) {
-      console.error('Error resolving organizationId:', err);
-      return NextResponse.json({ error: 'Failed to resolve organization' }, { status: 500 });
+      console.error('Error resolving organizationId with initial baseUrl:', err);
+      // Fallback to NEXT_PUBLIC_BASE_URL
+      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      console.log('Falling back to baseUrl:', baseUrl);
+      try {
+        resolvedOrganizationId = await getOrganizationId(baseUrl);
+        if (!resolvedOrganizationId) {
+          throw new Error('Organization not found after fallback');
+        }
+        console.log('Resolved organizationId after fallback:', resolvedOrganizationId);
+      } catch (fallbackErr) {
+        console.error('Error resolving organizationId after fallback:', fallbackErr);
+        return NextResponse.json({ error: 'Failed to resolve organization' }, { status: 500 });
+      }
     }
 
     // Validate that the provided organizationId matches the resolved one
