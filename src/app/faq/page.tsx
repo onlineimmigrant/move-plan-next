@@ -1,39 +1,54 @@
-// app/faq/page.tsx
+// /app/faq/page.tsx
 import ClientFAQPage from './ClientFAQPage';
-import { getOrganizationId } from '@/lib/supabase';
-import type { FAQ } from '@/types/faq'; // Use type-only import
+import { getOrganizationId, supabase } from '@/lib/supabase';
+import { getBaseUrl } from '@/lib/utils';
+import type { FAQ } from '@/types/faq';
 
 async function fetchFAQs(organizationId: string): Promise<FAQ[]> {
-  try {
-    const response = await fetch(
-      `http://localhost:3000/api/faqs?organization_id=${organizationId}`,
-      { cache: 'no-store' }
-    );
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch FAQs');
-    }
-    const data = await response.json();
-    console.log('Fetched FAQs:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching FAQs:', error);
-    throw new Error(`Failed to load FAQs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  console.log('Fetching FAQs for organizationId:', organizationId);
+  const { data, error } = await supabase
+    .from('faq')
+    .select('id, order, display_order, question, answer, section, organization_id, product_sub_type_id')
+    .eq('organization_id', organizationId)
+    .order('order', { ascending: true });
+
+  if (error || !data) {
+    console.error('Error fetching FAQs:', error?.message || 'No FAQs found', 'organizationId:', organizationId, 'data:', data);
+    throw new Error(`Failed to load FAQs: ${error?.message || 'No FAQs found'}`);
   }
+
+  console.log('Fetched FAQs:', data);
+  return data;
 }
 
 export default async function FAQ() {
+  // Skip Supabase queries during Vercel static build
+  const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
+  if (isBuild) {
+    console.log('Skipping Supabase queries during Vercel build');
+    return (
+      <div className="mt-16">
+        <div className="mx-auto max-w-7xl mt-8">
+          <ClientFAQPage initialFAQs={[]} />
+        </div>
+      </div>
+    );
+  }
+
   let faqs: FAQ[] = [];
   let error: string | null = null;
 
   // Fetch organizationId dynamically
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = getBaseUrl(true);
+  console.log('FAQPage baseUrl:', baseUrl, 'VERCEL_URL:', process.env.VERCEL_URL, 'NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
+
   let organizationId: string | null = null;
   try {
     organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
       throw new Error('Organization not found');
     }
+    console.log('Fetched organizationId:', organizationId);
   } catch (err) {
     console.error('Error fetching organizationId:', err);
     error = 'Failed to resolve organization. Please try again later.';
@@ -43,6 +58,7 @@ export default async function FAQ() {
     try {
       faqs = await fetchFAQs(organizationId);
     } catch (err: any) {
+      console.error('Error in fetchFAQs:', err.message);
       error = err.message;
     }
   }

@@ -1,4 +1,4 @@
-// app/faq/ClientFAQPage.tsx
+// /app/faq/ClientFAQPage.tsx
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -11,6 +11,8 @@ interface ClientFAQPageProps {
 }
 
 export default function ClientFAQPage({ initialFAQs }: ClientFAQPageProps) {
+  console.log('ClientFAQPage initialFAQs:', initialFAQs);
+
   // Memoize normalizedFAQs
   const normalizedFAQs = useMemo(
     () =>
@@ -62,7 +64,11 @@ export default function ClientFAQPage({ initialFAQs }: ClientFAQPageProps) {
       </div>
 
       {/* FAQ Section */}
-      <FAQSection faqs={filteredFAQs} />
+      {filteredFAQs.length > 0 ? (
+        <FAQSection faqs={filteredFAQs} />
+      ) : (
+        <div className="text-center text-gray-500 py-8">No FAQs available.</div>
+      )}
     </div>
   );
 }
