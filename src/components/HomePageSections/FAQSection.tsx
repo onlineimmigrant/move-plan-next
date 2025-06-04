@@ -45,7 +45,7 @@ const FAQSection = ({ faqs }: FAQSectionProps) => {
         <div className="space-y-16">
           {filteredSections.map((section) => (
             <div key={section} className="space-y-8">
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-500">{section}</h3>
+              <h3 className="text-center text-lg  font-bold text-gray-700">{section}</h3>
               <div className="divide-y divide-gray-200 rounded-xl bg-white shadow-lg ring-1 ring-gray-100">
                 {groupedFaqs[section].map((item) => (
                   <FAQItem key={item.id} item={item} />

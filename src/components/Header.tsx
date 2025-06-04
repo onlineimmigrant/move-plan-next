@@ -260,7 +260,7 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuI
         isScrolled ? 'border-gray-200 bg-white' : 'bg-transparent'
       }`}
     >
-      <div className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 sm:px-6 flex justify-between items-center`}>
+      <div className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 pl-8 sm:px-6 flex justify-between items-center`}>
         <button
           type="button"
           onClick={() => {
