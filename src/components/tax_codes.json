@@ -820,5 +820,14 @@
       "product_tax_code": "txcd_20301000",
       "description": "Telemedicine Services",
       "tax_category": "Services"
+    },
+
+        {
+      "product_tax_code": "txcd_20060058",
+      "description": "Self-study Web-based",
+      "tax_category": "Training Services"
     }
   ]
+
+
+ 
