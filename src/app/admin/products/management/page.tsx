@@ -177,70 +177,78 @@ export default function ProductsManagement() {
     [taxCodes]
   );
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+// /app/admin/products/management/page.tsx (partial update to handleSubmit)
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError(null);
 
-    try {
-      const sanitizedFormData = {
-        product_name: formData.product_name.trim(),
-        product_description: formData.product_description.trim(),
-        links_to_image: formData.links_to_image.trim(),
-        attributes: formData.attributes.trim(),
-        product_tax_code: formData.product_tax_code.trim(),
-        is_displayed: formData.is_displayed,
-      };
+  try {
+    const sanitizedFormData = {
+      product_name: formData.product_name.trim(),
+      product_description: formData.product_description.trim(),
+      links_to_image: formData.links_to_image.trim(),
+      attributes: formData.attributes.trim(),
+      product_tax_code: formData.product_tax_code.trim(),
+      is_displayed: formData.is_displayed,
+    };
 
-      if (sanitizedFormData.links_to_image && !validateURL(sanitizedFormData.links_to_image)) {
-        throw new Error('Invalid image URL');
-      }
-
-      let attributes: Record<string, any> = {};
-      if (sanitizedFormData.attributes) {
-        if (!validateJSON(sanitizedFormData.attributes)) {
-          throw new Error('Invalid JSON in attributes field');
-        }
-        attributes = JSON.parse(sanitizedFormData.attributes);
-      }
-
-      if (
-        sanitizedFormData.product_tax_code &&
-        !taxCodes.some((tc) => tc.product_tax_code === sanitizedFormData.product_tax_code)
-      ) {
-        throw new Error('Invalid tax code');
-      }
-
-      const payload = {
-        product_name: sanitizedFormData.product_name,
-        is_displayed: sanitizedFormData.is_displayed,
-        product_description: sanitizedFormData.product_description || undefined,
-        links_to_image: sanitizedFormData.links_to_image || undefined,
-        attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
-        product_tax_code: sanitizedFormData.product_tax_code || undefined,
-      };
-
-      const response = await fetch(API_ENDPOINTS.MANAGE_PRODUCTS, {
-        method: editingId ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingId ? { productId: editingId, updates: payload } : payload),
-      });
-
-      if (!response.ok) throw new Error((await response.json()).error);
-
-      setToast({
-        message: editingId ? 'Product updated successfully' : 'Product created successfully',
-        type: 'success',
-      });
-      closeModal();
-      fetchProducts();
-    } catch (error) {
-      setError(`Error: ${(error as Error).message}`);
-      setToast({ message: `Error: ${(error as Error).message}`, type: 'error' });
-    } finally {
-      setIsLoading(false);
+    if (sanitizedFormData.links_to_image && !validateURL(sanitizedFormData.links_to_image)) {
+      throw new Error('Invalid image URL');
     }
-  };
+
+    let attributes: Record<string, any> = {};
+    if (sanitizedFormData.attributes) {
+      if (!validateJSON(sanitizedFormData.attributes)) {
+        throw new Error('Invalid JSON in attributes field');
+      }
+      attributes = JSON.parse(sanitizedFormData.attributes);
+    }
+
+    if (
+      sanitizedFormData.product_tax_code &&
+      !taxCodes.some((tc) => tc.product_tax_code === sanitizedFormData.product_tax_code)
+    ) {
+      throw new Error('Invalid tax code');
+    }
+
+    const payload = {
+      product_name: sanitizedFormData.product_name,
+      is_displayed: sanitizedFormData.is_displayed,
+      product_description: sanitizedFormData.product_description || undefined,
+      links_to_image: sanitizedFormData.links_to_image || undefined,
+      attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
+      product_tax_code: sanitizedFormData.product_tax_code || undefined,
+    };
+
+    console.log('Submitting payload to API:', editingId ? { productId: editingId, updates: payload } : payload);
+
+    const response = await fetch(API_ENDPOINTS.MANAGE_PRODUCTS, {
+      method: editingId ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editingId ? { productId: editingId, updates: payload } : payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('API error response:', errorData);
+      throw new Error(errorData.error);
+    }
+
+    setToast({
+      message: editingId ? 'Product updated successfully' : 'Product created successfully',
+      type: 'success',
+    });
+    closeModal();
+    fetchProducts();
+  } catch (error) {
+    console.error('Error submitting product:', (error as Error).message);
+    setError(`Error: ${(error as Error).message}`);
+    setToast({ message: `Error: ${(error as Error).message}`, type: 'error' });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleEdit = (product: Product) => {
     setEditingId(product.id);
