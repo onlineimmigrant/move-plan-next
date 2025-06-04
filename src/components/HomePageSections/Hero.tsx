@@ -125,7 +125,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
               <div className="flex items-center relative rounded-full px-3 py-1 text-sm leading-6 text-gray-600 hover:text-gray-500 ring-2 ring-gray-900/10 hover:ring-sky-700/20">
                 {hero.seo_title}
                 <Link
-                  href="/education-hub"
+                  href="/blog"
                   aria-label={`Explore ${hero.seo_title}`}
                   className="ml-2 flex items-center font-semibold text-gray-700 hover:text-gray-300"
                 >
@@ -161,7 +161,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
                 {labelsDefault?.button_main_get_started?.text || 'Get Started'}
               </a>
               <a
-                href="/education"
+                href="/blog"
                 className={`flex items-center text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 animate-hero-button-explore ${isVisible ? 'animate' : ''}`}
               >
                 {labelsDefault?.button_explore || 'Explore'} <span className="ml-1">→</span>
