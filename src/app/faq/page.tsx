@@ -39,7 +39,7 @@ export default async function FAQ() {
   let error: string | null = null;
 
   // Fetch organizationId dynamically
-  const baseUrl = getBaseUrl(true);
+  let baseUrl = getBaseUrl(true);
   console.log('FAQPage baseUrl:', baseUrl, 'VERCEL_URL:', process.env.VERCEL_URL, 'NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
 
   let organizationId: string | null = null;
@@ -50,8 +50,20 @@ export default async function FAQ() {
     }
     console.log('Fetched organizationId:', organizationId);
   } catch (err) {
-    console.error('Error fetching organizationId:', err);
-    error = 'Failed to resolve organization. Please try again later.';
+    console.error('Error fetching organizationId with initial baseUrl:', err);
+    // Fallback to NEXT_PUBLIC_BASE_URL
+    baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    console.log('Falling back to baseUrl:', baseUrl);
+    try {
+      organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        throw new Error('Organization not found after fallback');
+      }
+      console.log('Fetched organizationId after fallback:', organizationId);
+    } catch (fallbackErr) {
+      console.error('Error fetching organizationId after fallback:', fallbackErr);
+      error = 'Failed to resolve organization. Please try again later.';
+    }
   }
 
   if (organizationId && !error) {
