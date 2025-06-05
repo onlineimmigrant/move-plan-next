@@ -74,9 +74,7 @@ const TemplateHeadingSections: React.FC = () => {
     fetchHeadings();
   }, [pathname]);
 
-  if (isLoading) {
-    return <div className="text-center text-gray-500">Loading heading sections...</div>;
-  }
+
 
   if (error) {
     return (
