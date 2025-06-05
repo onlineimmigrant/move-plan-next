@@ -26,7 +26,7 @@ export default function CategoriesBar({
       {/* "All" button */}
       <button
         onClick={() => onCategoryChange(null)}
-        className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${
+        className={`cursor-pointer px-3 py-1 text-sm font-semibold rounded transition-colors ${
           activeSubTypeName === null ? 'bg-sky-100 text-sky-500' : 'bg-gray-50 text-gray-800'
         } hover:bg-sky-200`}
       >
@@ -40,7 +40,7 @@ export default function CategoriesBar({
           <button
             key={subType.id}
             onClick={() => onCategoryChange(subType)}
-            className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+            className={`cursor-pointer px-3 py-1 text-sm font-medium rounded transition-colors ${
               isActive ? 'bg-sky-100 text-sky-500' : 'bg-gray-50 text-gray-800'
             } hover:bg-sky-200`}
           >
