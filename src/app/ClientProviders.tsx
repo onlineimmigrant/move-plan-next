@@ -16,6 +16,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
+import SkeletonLoader from '@/components/SkeletonLoader'; // Import the SkeletonLoader
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -44,7 +45,7 @@ interface MenuItem {
   order: number;
   image?: string;
   react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[]; // Updated type
+  react_icons?: ReactIcon | ReactIcon[];
   website_submenuitem?: SubMenuItem[];
   organization_id: string | null;
 }
@@ -60,7 +61,7 @@ interface ClientProvidersProps {
     p_description_color: string;
   };
   baseUrl: string;
-  menuItems: MenuItem[] | undefined; // Allow undefined
+  menuItems: MenuItem[] | undefined;
 }
 
 export default function ClientProviders({
@@ -135,7 +136,7 @@ export default function ClientProviders({
               <BannerProvider>
                 <SEOWrapper defaultSEOData={defaultSEOData} />
                 {loading ? (
-                  <div className="text-center py-12">Loading template sections...</div>
+                  <SkeletonLoader /> // Replace with SkeletonLoader
                 ) : showNavbarFooter ? (
                   <NavbarFooterWrapper menuItems={menuItems || []}>
                     <div>

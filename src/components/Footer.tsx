@@ -3,6 +3,7 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; // Import Next.js Image
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -29,7 +30,7 @@ interface MenuItem {
   is_displayed_on_footer: boolean;
   image?: string;
   react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[]; // Updated type
+  react_icons?: ReactIcon | ReactIcon[];
   website_submenuitem?: SubMenuItem[];
   organization_id?: string | null;
 }
@@ -37,9 +38,10 @@ interface MenuItem {
 interface FooterProps {
   companyLogo?: string;
   menuItems: MenuItem[] | undefined;
+  error?: string; // Added for error handling
 }
 
-const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuItems = [] }) => {
+const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuItems = [], error }) => {
   const { session, logout } = useAuth();
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
@@ -88,23 +90,43 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
 
   const footerBackground = settings?.footer_color || 'gray-800';
 
+  if (error) {
+    return (
+      <footer className={`bg-${footerBackground} py-12 text-sm text-white min-h-[300px]`}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-red-300 min-h-[160px] flex items-center justify-center">
+            <p>{error}</p>
+          </div>
+          <div className="mt-12 border-t border-gray-100 pt-8 text-center">
+            <p className="text-xs font-medium tracking-widest text-gray-300">
+              © 2025 {settings?.site || 'Company'}. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
   if (itemsWithSubitems.length === 0 && groupedItemsWithoutSubitems.length === 0) {
     return (
-      <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
-        <div className="mx-auto max-w-7xl px-8">
+      <footer className={`bg-${footerBackground} py-12 text-sm text-white min-h-[300px]`}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            {settings?.image && (
-              <img
+            {settings?.image ? (
+              <Image
                 src={settings.image}
                 alt="Logo"
-                width={40}
-                height={40}
+                width={32}
+                height={32}
                 className="h-8 w-auto mb-4"
+                priority={false}
                 onError={(e) => {
                   console.error('Failed to load logo:', settings.image);
                   e.currentTarget.src = companyLogo;
                 }}
               />
+            ) : (
+              <div className="h-8 w-8 bg-gray-600 rounded animate-pulse mb-4" aria-busy="true" />
             )}
             <button
               onClick={() => setShowSettings(true)}
@@ -125,21 +147,24 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
   }
 
   return (
-    <footer className={`bg-${footerBackground} py-12 text-sm text-white`}>
-      <div className="mx-auto max-w-7xl px-8">
+    <footer className={`bg-${footerBackground} py-12 text-sm text-white min-h-[300px]`}>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          {settings?.image && (
-            <img
+          {settings?.image ? (
+            <Image
               src={settings.image}
               alt="Logo"
-              width={40}
-              height={40}
+              width={32}
+              height={32}
               className="h-8 w-auto mb-4"
+              priority={false}
               onError={(e) => {
                 console.error('Failed to load logo:', settings.image);
                 e.currentTarget.src = companyLogo;
               }}
             />
+          ) : (
+            <div className="h-8 w-8 bg-gray-600 rounded animate-pulse mb-4" aria-busy="true" />
           )}
           <button
             onClick={() => setShowSettings(true)}
@@ -176,7 +201,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
 
           {groupedItemsWithoutSubitems.map((group, index) => (
             <div key={`group-${index}`}>
-              <h3 className="mb-0 text-sm font-semibold">
+              <h3 className="mb-4 text-sm font-semibold">
                 <Link
                   className="text-white hover:text-gray-300"
                   href={group[0]?.url_name || '#'}
@@ -201,7 +226,12 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
             <ul className="space-y-2">
               {isLoggedIn ? (
                 <li>
-                  <button onClick={handleLogout} type="button" className="text-gray-300 hover:text-white">
+                  <button
+                    onClick={handleLogout}
+                    type="button"
+                    className="text-gray-300 hover:text-white"
+                    aria-label="Logout"
+                  >
                     Logout
                   </button>
                 </li>
@@ -212,6 +242,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
                       type="button"
                       onClick={handleNavigation('/login')}
                       className="text-gray-300 hover:text-white"
+                      aria-label="Login"
                     >
                       Login
                     </button>
@@ -221,6 +252,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
                       type="button"
                       onClick={handleNavigation('/register')}
                       className="text-gray-300 hover:text-white"
+                      aria-label="Register"
                     >
                       Register
                     </button>
@@ -232,7 +264,7 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
         </div>
 
         <div className="mt-12 border-t border-gray-100 pt-8 text-center">
-          <p className="text-xs font-medium text-gray-300 tracking-wide">
+          <p className="text-xs font-medium tracking-widest text-gray-300">
             © 2025 {settings?.site || 'Company'}. All rights reserved.
           </p>
         </div>

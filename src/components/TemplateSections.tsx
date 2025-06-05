@@ -92,9 +92,7 @@ const TemplateSections: React.FC = () => {
     fetchSections();
   }, [pathname]);
 
-  if (isLoading) {
-    return <div className="text-center text-gray-500">Loading sections...</div>;
-  }
+
 
   if (error) {
     return <div className="text-center text-red-500">Error: {error}</div>;
