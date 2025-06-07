@@ -30,4 +30,5 @@ export interface Settings {
   menu_width: string;
   menu_items_are_text: boolean;
   footer_color: string;
+  favicon: string | null;
 }
