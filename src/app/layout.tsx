@@ -5,7 +5,7 @@ import { getBreadcrumbStructuredData } from '@/lib/getBreadcrumbs';
 import './globals.css';
 import ClientProviders from './ClientProviders';
 import { Settings } from '@/types/settings';
-import { SEOData } from '@/types/seo'; // Import new type
+import { SEOData } from '@/types/seo';
 import Head from 'next/head';
 
 interface SubMenuItem {
@@ -37,38 +37,49 @@ interface MenuItem {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Skip Supabase queries during Vercel build
+  // Skip Supabase queries during Vercel build, but attempt to fetch settings
   const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
+  const baseUrl = getBaseUrl(true) || process.env.NEXT_PUBLIC_BASE_URL || 'https://default-domain.com';
+  console.log(`${isBuild ? 'Build-time' : 'Runtime'} base URL:`, baseUrl);
+
+  // Default settings as fallback
+  const defaultSettings: Settings = {
+    id: 0,
+    site: 'My Next.js App',
+    image: '/images/logo.svg',
+    organization_id: '',
+    menu_width: '7xl',
+    menu_items_are_text: true,
+    footer_color: 'gray-800',
+    favicon: '/images/favicon.png',
+    seo_title: null,
+    seo_description: null,
+    seo_keywords: null,
+    seo_og_image: null,
+    seo_twitter_card: null,
+    seo_structured_data: null,
+  };
+
+  // Fetch settings
+  let settings = defaultSettings;
+  try {
+    settings = await getSettings(baseUrl);
+    console.log('Fetched settings in layout:', settings);
+  } catch (error) {
+    console.error('Failed to fetch settings:', error);
+  }
+
   if (isBuild) {
-    console.log('Skipping Supabase queries during Vercel build');
-    const defaultSettings: Settings = {
-      id: 0,
-      site: 'My Next.js App',
-      image: '/images/logo.svg',
-      organization_id: '',
-      menu_width: '7xl',
-      menu_items_are_text: true,
-      footer_color: 'gray-800',
-      favicon: '/images/favicon.png',
-      seo_title: null,
-      seo_description: null,
-      seo_keywords: null,
-      seo_og_image: null,
-      seo_twitter_card: null,
-      seo_structured_data: null,
-    };
-    // Dynamic baseUrl for build-time
-    const baseUrl = getBaseUrl(true) || process.env.NEXT_PUBLIC_BASE_URL || 'https://default-domain.com';
-    console.log('Build-time base URL:', baseUrl);
+    console.log('Build-time settings:', settings);
     const defaultSEOData: SEOData = {
-      title: defaultSettings.seo_title || 'My Next.js App',
-      description: defaultSettings.seo_description || 'Sample admin app with Next.js 15',
-      keywords: defaultSettings.seo_keywords || 'education, resources, app',
+      title: settings.seo_title || settings.site || 'My Next.js App',
+      description: settings.seo_description || 'Sample admin app with Next.js 15',
+      keywords: settings.seo_keywords || 'education, resources, app',
       canonicalUrl: baseUrl,
       hreflang: [],
       faqs: [],
       structuredData: [
-        ...(defaultSettings.seo_structured_data || []),
+        ...(settings.seo_structured_data || []),
         {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
@@ -78,12 +89,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }),
         },
       ],
-      seo_og_image: defaultSettings.seo_og_image || undefined,
+      seo_og_image: settings.seo_og_image || undefined,
     };
     return (
       <html lang="en">
         <Head>
-          <link rel="icon" href={defaultSettings.favicon || '/images/favicon.png'} />
+          <link rel="icon" href={settings.favicon || '/images/favicon.png'} />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <title>{defaultSEOData.title}</title>
           <meta name="description" content={defaultSEOData.description} />
@@ -97,9 +108,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <meta property="og:type" content="website" />
             </>
           )}
-          {defaultSettings.seo_twitter_card && (
+          {settings.seo_twitter_card && (
             <>
-              <meta name="twitter:card" content={defaultSettings.seo_twitter_card} />
+              <meta name="twitter:card" content={settings.seo_twitter_card} />
               <meta name="twitter:title" content={defaultSEOData.title} />
               <meta name="twitter:description" content={defaultSEOData.description} />
               {defaultSEOData.seo_og_image && <meta name="twitter:image" content={defaultSEOData.seo_og_image} />}
@@ -120,11 +131,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <body>
           <ClientProviders
             defaultSEOData={defaultSEOData}
-            settings={defaultSettings}
+            settings={settings}
             headerData={{
-              image_for_privacy_settings: defaultSettings.image,
-              site: defaultSettings.site,
-              image: defaultSettings.image,
+              image_for_privacy_settings: settings.image,
+              site: settings.site,
+              image: settings.image,
               disclaimer: `© ${new Date().getFullYear()} Company. All rights reserved.`,
             }}
             activeLanguages={['en', 'es', 'fr']}
@@ -137,34 +148,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </body>
       </html>
     );
-  }
-
-  // Use centralized baseUrl logic
-  const baseUrl = getBaseUrl(true);
-  console.log('Base URL in RootLayout:', baseUrl);
-
-  // Fetch settings for the organization
-  let settings: Settings = {
-    id: 0,
-    site: 'App',
-    image: '/images/logo.svg',
-    organization_id: '',
-    menu_width: '7xl',
-    menu_items_are_text: true,
-    footer_color: 'gray-800',
-    favicon: '/images/favicon.png',
-    seo_title: null,
-    seo_description: null,
-    seo_keywords: null,
-    seo_og_image: null,
-    seo_twitter_card: null,
-    seo_structured_data: null,
-  };
-  try {
-    settings = await getSettings(baseUrl);
-    console.log('Fetched settings in layout:', settings);
-  } catch (error) {
-    console.error('Failed to fetch settings in layout:', error);
   }
 
   // Fetch organization ID
