@@ -19,9 +19,8 @@
     "@react-email/render": "^1.1.2",
     "@stripe/react-stripe-js": "^3.6.0",
     "@stripe/stripe-js": "^3.5.0",
-    "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.8",
+    "@supabase/supabase-js": "^2.43.4",
     "@tiptap/extension-blockquote": "^2.11.7",
     "@tiptap/extension-character-count": "^2.11.7",
     "@tiptap/extension-code-block": "^2.11.7",
@@ -64,7 +63,7 @@
     "lucide-react": "^0.511.0",
     "micromatch": "^4.0.8",
     "minimatch": "^10.0.1",
-    "next": "^15.2.3",
+    "next": "^15.3.3",
     "next-i18next": "^15.4.2",
     "node-fetch": "^2.7.0",
     "papaparse": "^5.5.2",
@@ -90,7 +89,7 @@
     "set-value": "^4.1.0",
     "shelljs": "^0.9.2",
     "slick-carousel": "^1.8.1",
-    "stripe": "^18.1.0",
+    "stripe": "^18.2.1",
     "styled-components": "^6.1.17",
     "supabase": "^2.23.4",
     "tailwind-merge": "^3.0.2",
@@ -100,30 +99,31 @@
     "xmldom": "^0.6.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
+    "@eslint/eslintrc": "^3.0.0",
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/culori": "^2.1.1",
+    "@types/dompurify": "^3.0.5",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/lodash": "^4.17.16",
-    "@types/node": "^20",
+    "@types/node": "^20.7.0",
     "@types/papaparse": "^5.3.15",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@types/react-slick": "^0.23.13",
+    "@types/stripe": "^8.0.417",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9.25.1",
-    "eslint-config-next": "15.2.3",
-    "eta": "^3.5.0",
-    "flatted": "^3.3.3",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "15.0.0-rc.0",
+    "eta": "^2.2.0",
+    "flatted": "^3.3.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5"
+    "typescript": "^5.5.2"
   },
   "resolutions": {
-    "pdfjs-dist": "4.8.69"
+    "pdfjs-dist": "4.7.76"
   },
   "optionalDependencies": {
     "fsevents": "^2.3.3"
-  },
-  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
+  }
 }

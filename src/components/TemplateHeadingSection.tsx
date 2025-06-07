@@ -1,10 +1,11 @@
-// /src/components/TemplateHeadingSection.tsx
+// src/components/TemplateHeadingSection.tsx
 'use client';
 
 import React from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 
+// Types
 interface TemplateHeadingSectionData {
   id: number;
   name: string;
@@ -29,18 +30,21 @@ interface TemplateHeadingSectionData {
   is_text_link?: boolean;
   image_first?: boolean;
   is_included_templatesection?: boolean;
-  organization_id: string | null; // Added
 }
 
 interface TemplateHeadingSectionProps {
   templateSectionHeadings: TemplateHeadingSectionData[];
 }
 
+// Utility function to map color values (same as in TemplateSection)
+
+
 const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templateSectionHeadings }) => {
   if (!templateSectionHeadings || templateSectionHeadings.length === 0) {
     return null;
   }
 
+  // Sanitize HTML content to remove problematic characters and tags
   const sanitizeHTML = (html: string) => {
     return DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'span'],
@@ -57,6 +61,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
           className={`min-h-screen py-12 sm:py-32 mx-auto w-full bg-${sectionHeading.background_color}`}
         >
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center px-6">
+            {/* Left Side (Text) */}
             <div
               className={`space-y-8 text-center md:text-left ${sectionHeading.image_first ? 'order-2' : 'order-1'}`}
             >
@@ -101,6 +106,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
               )}
             </div>
 
+            {/* Right Side (Image) */}
             <div
               className={`flex justify-center items-center ${sectionHeading.image_first ? 'order-1' : 'order-2'}`}
             >
