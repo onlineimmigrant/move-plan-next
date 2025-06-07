@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaPlus, FaSearch, FaTrash, FaTimes } from 'react-icons/fa';
 import { MdAddCircle } from 'react-icons/md';
 import taxCodesData from '@/components/tax_codes.json';
 import { debounce } from 'lodash';
 import Toast from '@/components/Toast';
 import Tooltip from '@/components/Tooltip';
+import { supabase } from '@/lib/supabase';
 
 // Centralized API endpoints
 const API_ENDPOINTS = {
@@ -56,6 +58,7 @@ const Button = ({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonEl
 );
 
 export default function ProductsManagement() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState<FormData>({
@@ -77,10 +80,47 @@ export default function ProductsManagement() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
   const modalRef = useRef<HTMLDivElement>(null);
   const [isTaxCodeDropdownOpen, setIsTaxCodeDropdownOpen] = useState<boolean>(false);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setSearchQuery(value), 300), []);
+
+  // Admin check
+  useEffect(() => {
+    async function checkAdmin() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push('/');
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error || !profile) {
+        router.push('/');
+        return;
+      }
+
+      if (profile.role !== 'admin') {
+        router.push('/');
+        return;
+      }
+
+      setIsAdmin(true);
+      setAuthLoading(false);
+    }
+
+    checkAdmin();
+  }, [router]);
 
   const filteredProductsMemo = useMemo(() => {
     let filtered = products;
@@ -102,8 +142,10 @@ export default function ProductsManagement() {
   }, [filteredProductsMemo]);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (isAdmin) {
+      fetchProducts();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isModalOpen && modalRef.current) {
@@ -177,78 +219,77 @@ export default function ProductsManagement() {
     [taxCodes]
   );
 
-// /app/admin/products/management/page.tsx (partial update to handleSubmit)
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError(null);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
-  try {
-    const sanitizedFormData = {
-      product_name: formData.product_name.trim(),
-      product_description: formData.product_description.trim(),
-      links_to_image: formData.links_to_image.trim(),
-      attributes: formData.attributes.trim(),
-      product_tax_code: formData.product_tax_code.trim(),
-      is_displayed: formData.is_displayed,
-    };
+    try {
+      const sanitizedFormData = {
+        product_name: formData.product_name.trim(),
+        product_description: formData.product_description.trim(),
+        links_to_image: formData.links_to_image.trim(),
+        attributes: formData.attributes.trim(),
+        product_tax_code: formData.product_tax_code.trim(),
+        is_displayed: formData.is_displayed,
+      };
 
-    if (sanitizedFormData.links_to_image && !validateURL(sanitizedFormData.links_to_image)) {
-      throw new Error('Invalid image URL');
-    }
-
-    let attributes: Record<string, any> = {};
-    if (sanitizedFormData.attributes) {
-      if (!validateJSON(sanitizedFormData.attributes)) {
-        throw new Error('Invalid JSON in attributes field');
+      if (sanitizedFormData.links_to_image && !validateURL(sanitizedFormData.links_to_image)) {
+        throw new Error('Invalid image URL');
       }
-      attributes = JSON.parse(sanitizedFormData.attributes);
+
+      let attributes: Record<string, any> = {};
+      if (sanitizedFormData.attributes) {
+        if (!validateJSON(sanitizedFormData.attributes)) {
+          throw new Error('Invalid JSON in attributes field');
+        }
+        attributes = JSON.parse(sanitizedFormData.attributes);
+      }
+
+      if (
+        sanitizedFormData.product_tax_code &&
+        !taxCodes.some((tc) => tc.product_tax_code === sanitizedFormData.product_tax_code)
+      ) {
+        throw new Error('Invalid tax code');
+      }
+
+      const payload = {
+        product_name: sanitizedFormData.product_name,
+        is_displayed: sanitizedFormData.is_displayed,
+        product_description: sanitizedFormData.product_description || undefined,
+        links_to_image: sanitizedFormData.links_to_image || undefined,
+        attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
+        product_tax_code: sanitizedFormData.product_tax_code || undefined,
+      };
+
+      console.log('Submitting payload to API:', editingId ? { productId: editingId, updates: payload } : payload);
+
+      const response = await fetch(API_ENDPOINTS.MANAGE_PRODUCTS, {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingId ? { productId: editingId, updates: payload } : payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error response:', errorData);
+        throw new Error(errorData.error);
+      }
+
+      setToast({
+        message: editingId ? 'Product updated successfully' : 'Product created successfully',
+        type: 'success',
+      });
+      closeModal();
+      fetchProducts();
+    } catch (error) {
+      console.error('Error submitting product:', (error as Error).message);
+      setError(`Error: ${(error as Error).message}`);
+      setToast({ message: `Error: ${(error as Error).message}`, type: 'error' });
+    } finally {
+      setIsLoading(false);
     }
-
-    if (
-      sanitizedFormData.product_tax_code &&
-      !taxCodes.some((tc) => tc.product_tax_code === sanitizedFormData.product_tax_code)
-    ) {
-      throw new Error('Invalid tax code');
-    }
-
-    const payload = {
-      product_name: sanitizedFormData.product_name,
-      is_displayed: sanitizedFormData.is_displayed,
-      product_description: sanitizedFormData.product_description || undefined,
-      links_to_image: sanitizedFormData.links_to_image || undefined,
-      attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
-      product_tax_code: sanitizedFormData.product_tax_code || undefined,
-    };
-
-    console.log('Submitting payload to API:', editingId ? { productId: editingId, updates: payload } : payload);
-
-    const response = await fetch(API_ENDPOINTS.MANAGE_PRODUCTS, {
-      method: editingId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editingId ? { productId: editingId, updates: payload } : payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('API error response:', errorData);
-      throw new Error(errorData.error);
-    }
-
-    setToast({
-      message: editingId ? 'Product updated successfully' : 'Product created successfully',
-      type: 'success',
-    });
-    closeModal();
-    fetchProducts();
-  } catch (error) {
-    console.error('Error submitting product:', (error as Error).message);
-    setError(`Error: ${(error as Error).message}`);
-    setToast({ message: `Error: ${(error as Error).message}`, type: 'error' });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleEdit = (product: Product) => {
     setEditingId(product.id);
@@ -335,6 +376,18 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   );
 
   const pageTitle = editingId ? 'Update Product' : 'Add Product';
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-lg font-semibold text-gray-600 animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null; // or some fallback UI while redirecting
+  }
 
   return (
     <div className="p-6 pb-16 max-w-7xl sm:mx-auto bg-white min-h-screen font-sans border border-gray-200 my-4 mx-2 rounded-lg">
