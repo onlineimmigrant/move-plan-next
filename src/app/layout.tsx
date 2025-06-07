@@ -1,10 +1,12 @@
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import { supabase } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
+import { getBreadcrumbStructuredData } from '@/lib/getBreadcrumbs';
 import './globals.css';
 import ClientProviders from './ClientProviders';
 import { Settings } from '@/types/settings';
-import Head from 'next/head'; // Import next/head for favicon
+import { SEOData } from '@/types/seo'; // Import new type
+import Head from 'next/head';
 
 interface SubMenuItem {
   id: number;
@@ -29,7 +31,7 @@ interface MenuItem {
   order: number;
   image?: string;
   react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[]; // Support both single object and array
+  react_icons?: ReactIcon | ReactIcon[];
   website_submenuitem?: SubMenuItem[];
   organization_id: string | null;
 }
@@ -47,35 +49,87 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       menu_width: '7xl',
       menu_items_are_text: true,
       footer_color: 'gray-800',
-      favicon: '/images/favicon.png', // Default favicon for build
+      favicon: '/images/favicon.png',
+      seo_title: null,
+      seo_description: null,
+      seo_keywords: null,
+      seo_og_image: null,
+      seo_twitter_card: null,
+      seo_structured_data: null,
+    };
+    // Dynamic baseUrl for build-time
+    const baseUrl = getBaseUrl(true) || process.env.NEXT_PUBLIC_BASE_URL || 'https://default-domain.com';
+    console.log('Build-time base URL:', baseUrl);
+    const defaultSEOData: SEOData = {
+      title: defaultSettings.seo_title || 'My Next.js App',
+      description: defaultSettings.seo_description || 'Sample admin app with Next.js 15',
+      keywords: defaultSettings.seo_keywords || 'education, resources, app',
+      canonicalUrl: baseUrl,
+      hreflang: [],
+      faqs: [],
+      structuredData: [
+        ...(defaultSettings.seo_structured_data || []),
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: getBreadcrumbStructuredData({
+            pathname: '/',
+            baseUrl,
+          }),
+        },
+      ],
+      seo_og_image: defaultSettings.seo_og_image || undefined,
     };
     return (
       <html lang="en">
         <Head>
           <link rel="icon" href={defaultSettings.favicon || '/images/favicon.png'} />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>{defaultSEOData.title}</title>
+          <meta name="description" content={defaultSEOData.description} />
+          <meta name="keywords" content={defaultSEOData.keywords} />
+          {defaultSEOData.seo_og_image && (
+            <>
+              <meta property="og:title" content={defaultSEOData.title} />
+              <meta property="og:description" content={defaultSEOData.description} />
+              <meta property="og:image" content={defaultSEOData.seo_og_image} />
+              <meta property="og:url" content={defaultSEOData.canonicalUrl} />
+              <meta property="og:type" content="website" />
+            </>
+          )}
+          {defaultSettings.seo_twitter_card && (
+            <>
+              <meta name="twitter:card" content={defaultSettings.seo_twitter_card} />
+              <meta name="twitter:title" content={defaultSEOData.title} />
+              <meta name="twitter:description" content={defaultSEOData.description} />
+              {defaultSEOData.seo_og_image && <meta name="twitter:image" content={defaultSEOData.seo_og_image} />}
+            </>
+          )}
+          <link rel="canonical" href={defaultSEOData.canonicalUrl} />
+          {defaultSEOData.hreflang.map((link) => (
+            <link key={link.hreflang} rel="alternate" href={link.href} hrefLang={link.hreflang} />
+          ))}
+          {defaultSEOData.structuredData.map((data, index) => (
+            <script
+              key={`structured-data-${index}`}
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+            />
+          ))}
         </Head>
         <body>
           <ClientProviders
-            defaultSEOData={{
-              title: 'My Next.js App',
-              description: 'Sample admin app with Next.js 15',
-              keywords: 'education, resources, app',
-              canonicalUrl: 'http://localhost:3000',
-              hreflang: [],
-              faqs: [],
-              structuredData: [],
-            }}
+            defaultSEOData={defaultSEOData}
             settings={defaultSettings}
             headerData={{
               image_for_privacy_settings: defaultSettings.image,
               site: defaultSettings.site,
               image: defaultSettings.image,
-              disclaimer: `© ${new Date().getFullYear()} My Next.js App. All rights reserved.`,
+              disclaimer: `© ${new Date().getFullYear()} Company. All rights reserved.`,
             }}
             activeLanguages={['en', 'es', 'fr']}
             heroData={{ h1_text_color: 'gray-900', p_description_color: '#000000' }}
-            baseUrl="http://localhost:3000"
+            baseUrl={baseUrl}
             menuItems={[]}
           >
             {children}
@@ -98,7 +152,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     menu_width: '7xl',
     menu_items_are_text: true,
     footer_color: 'gray-800',
-    favicon: '/images/favicon.png', // Default favicon
+    favicon: '/images/favicon.png',
+    seo_title: null,
+    seo_description: null,
+    seo_keywords: null,
+    seo_og_image: null,
+    seo_twitter_card: null,
+    seo_structured_data: null,
   };
   try {
     settings = await getSettings(baseUrl);
@@ -190,7 +250,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       if (error) throw error;
 
-      // Filter and cast data to MenuItem[]
       menuItems = (data || []).map((item) => {
         let reactIcons: ReactIcon | ReactIcon[] | undefined = item.react_icons;
         if (Array.isArray(item.react_icons)) {
@@ -226,10 +285,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const activeLanguages = ['en', 'es', 'fr'];
 
-  const defaultSEOData = {
-    title: settings.site || 'My Next.js App',
-    description: 'Sample admin app with Next.js 15',
-    keywords: 'education, resources, app',
+  // Get current pathname (server-side)
+  const pathname = new URL(baseUrl).pathname || '/';
+
+  // Generate dynamic breadcrumb structured data
+  const breadcrumbStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: getBreadcrumbStructuredData({ pathname, baseUrl }),
+  };
+
+  const defaultSEOData: SEOData = {
+    title: settings.seo_title || settings.site || 'My Next.js App',
+    description: settings.seo_description || 'Sample admin app with Next.js 15',
+    keywords: settings.seo_keywords || 'education, resources, app',
     canonicalUrl: baseUrl,
     hreflang: activeLanguages.map((lang) => ({
       href: `${baseUrl}/${lang}`,
@@ -237,44 +306,55 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     })),
     faqs: siteFaqs,
     structuredData: [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        name: settings?.site || baseUrl,
-        url: baseUrl,
-        description: 'Sample admin app with Next.js 15',
-        publisher: {
-          '@type': 'Organization',
-          name: settings.site || 'Your Site Name',
-          logo: {
-            '@type': 'ImageObject',
-            url: `${baseUrl}/images/logo.svg`,
-          },
-        },
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Home',
-            item: baseUrl,
-          },
-        ],
-      },
+      ...(settings.seo_structured_data || []),
+      breadcrumbStructuredData,
     ],
+    seo_og_image: settings.seo_og_image || undefined,
   };
 
   // Determine favicon URL
-  const faviconUrl = settings.favicon || '/images/favicon.png';
+  const faviconUrl = settings.favicon
+    ? settings.favicon.startsWith('http')
+      ? settings.favicon
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/favicons/${settings.favicon}`
+    : '/images/favicon.png';
 
   return (
     <html lang="en">
       <Head>
         <link rel="icon" href={faviconUrl} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{defaultSEOData.title}</title>
+        <meta name="description" content={defaultSEOData.description} />
+        <meta name="keywords" content={defaultSEOData.keywords} />
+        {defaultSEOData.seo_og_image && (
+          <>
+            <meta property="og:title" content={defaultSEOData.title} />
+            <meta property="og:description" content={defaultSEOData.description} />
+            <meta property="og:image" content={defaultSEOData.seo_og_image} />
+            <meta property="og:url" content={defaultSEOData.canonicalUrl} />
+            <meta property="og:type" content="website" />
+          </>
+        )}
+        {settings.seo_twitter_card && (
+          <>
+            <meta name="twitter:card" content={settings.seo_twitter_card} />
+            <meta name="twitter:title" content={defaultSEOData.title} />
+            <meta name="twitter:description" content={defaultSEOData.description} />
+            {defaultSEOData.seo_og_image && <meta name="twitter:image" content={defaultSEOData.seo_og_image} />}
+          </>
+        )}
+        <link rel="canonical" href={defaultSEOData.canonicalUrl} />
+        {defaultSEOData.hreflang.map((link) => (
+          <link key={link.hreflang} rel="alternate" href={link.href} hrefLang={link.hreflang} />
+        ))}
+        {defaultSEOData.structuredData.map((data, index) => (
+          <script
+            key={`structured-data-${index}`}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+          />
+        ))}
       </Head>
       <body>
         <ClientProviders

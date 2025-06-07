@@ -31,4 +31,11 @@ export interface Settings {
   menu_items_are_text: boolean;
   footer_color: string;
   favicon: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string | null;
+  seo_og_image: string | null;
+  seo_twitter_card: string | null;
+  seo_structured_data: any[] | null; // Use any[] for flexibility; can be typed stricter if needed
+
 }
