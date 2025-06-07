@@ -1,0 +1,1872 @@
+
+> move-plan-next@0.1.0 dev /Users/ois/move-plan-next
+> next dev
+
+   ▲ Next.js 15.3.3
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.240.91:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1369ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 765ms (82 modules)
+ GET /favicon.ico 200 in 899ms
+ ○ Compiling /admin ...
+ ⚠ ./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/index.js
+./node_modules/.pnpm/@supabase+supabase-js@2.50.0/node_modules/@supabase/supabase-js/dist/module/index.js
+./src/lib/supabase.ts
+./src/app/layout.tsx
+Base URL in RootLayout: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+NEXT_PUBLIC_SUPABASE_URL: https://rgbmdfaoowqbgshjuwwm.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8
+Supabase client initialized: SupabaseClient {
+  supabaseUrl: 'https://rgbmdfaoowqbgshjuwwm.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+  realtimeUrl: URL {
+    href: 'wss://rgbmdfaoowqbgshjuwwm.supabase.co/realtime/v1',
+    origin: 'wss://rgbmdfaoowqbgshjuwwm.supabase.co',
+    protocol: 'wss:',
+    username: '',
+    password: '',
+    host: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    port: '',
+    pathname: '/realtime/v1',
+    search: '',
+    searchParams: URLSearchParams {},
+    hash: ''
+  },
+  authUrl: URL {
+    href: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/auth/v1',
+    origin: 'https://rgbmdfaoowqbgshjuwwm.supabase.co',
+    protocol: 'https:',
+    username: '',
+    password: '',
+    host: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    port: '',
+    pathname: '/auth/v1',
+    search: '',
+    searchParams: URLSearchParams {},
+    hash: ''
+  },
+  storageUrl: URL {
+    href: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1',
+    origin: 'https://rgbmdfaoowqbgshjuwwm.supabase.co',
+    protocol: 'https:',
+    username: '',
+    password: '',
+    host: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    port: '',
+    pathname: '/storage/v1',
+    search: '',
+    searchParams: URLSearchParams {},
+    hash: ''
+  },
+  functionsUrl: URL {
+    href: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/functions/v1',
+    origin: 'https://rgbmdfaoowqbgshjuwwm.supabase.co',
+    protocol: 'https:',
+    username: '',
+    password: '',
+    host: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    port: '',
+    pathname: '/functions/v1',
+    search: '',
+    searchParams: URLSearchParams {},
+    hash: ''
+  },
+  storageKey: 'sb-rgbmdfaoowqbgshjuwwm-auth-token',
+  headers: { 'X-Client-Info': 'supabase-js-node/2.50.0' },
+  auth: SupabaseAuthClient {
+    memoryStorage: {},
+    stateChangeEmitters: Map(1) { '51a66e05-2a60-4185-8b7b-803c07360026' => [Object] },
+    autoRefreshTicker: null,
+    visibilityChangedCallback: null,
+    refreshingDeferred: null,
+    initializePromise: Promise {
+      <pending>,
+      [Symbol(async_id_symbol)]: 108710,
+      [Symbol(trigger_async_id_symbol)]: 108705,
+      [Symbol(kResourceStore)]: undefined,
+      [Symbol(kResourceStore)]: [Object],
+      [Symbol(kResourceStore)]: [Object],
+      [Symbol(kResourceStore)]: undefined,
+      [Symbol(kResourceStore)]: undefined,
+      [Symbol(kResourceStore)]: [RequestInstance]
+    },
+    detectSessionInUrl: true,
+    hasCustomAuthorizationHeader: false,
+    suppressGetSessionWarning: false,
+    lockAcquired: true,
+    pendingInLock: [ [Promise] ],
+    broadcastChannel: null,
+    logger: [Function: log],
+    instanceID: 0,
+    logDebugMessages: false,
+    persistSession: true,
+    storageKey: 'sb-rgbmdfaoowqbgshjuwwm-auth-token',
+    autoRefreshToken: true,
+    admin: GoTrueAdminApi {
+      url: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/auth/v1',
+      headers: [Object],
+      fetch: [Function (anonymous)],
+      mfa: [Object]
+    },
+    url: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/auth/v1',
+    headers: {
+      Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+      apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+      'X-Client-Info': 'supabase-js-node/2.50.0'
+    },
+    fetch: [Function (anonymous)],
+    lock: [AsyncFunction: lockNoOp],
+    flowType: 'implicit',
+    jwks: { keys: [] },
+    jwks_cached_at: -9007199254740991,
+    mfa: {
+      verify: [Function: bound _verify] AsyncFunction,
+      enroll: [Function: bound _enroll] AsyncFunction,
+      unenroll: [Function: bound _unenroll] AsyncFunction,
+      challenge: [Function: bound _challenge] AsyncFunction,
+      listFactors: [Function: bound _listFactors] AsyncFunction,
+      challengeAndVerify: [Function: bound _challengeAndVerify] AsyncFunction,
+      getAuthenticatorAssuranceLevel: [Function: bound _getAuthenticatorAssuranceLevel] AsyncFunction
+    },
+    storage: {
+      getItem: [Function: getItem],
+      setItem: [Function: setItem],
+      removeItem: [Function: removeItem]
+    }
+  },
+  fetch: [Function (anonymous)],
+  realtime: RealtimeClient {
+    accessTokenValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+    apiKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+    channels: [],
+    endPoint: 'wss://rgbmdfaoowqbgshjuwwm.supabase.co/realtime/v1/websocket',
+    httpEndpoint: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/realtime/v1',
+    headers: { 'X-Client-Info': 'supabase-js-node/2.50.0' },
+    params: {
+      apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8'
+    },
+    timeout: 10000,
+    heartbeatIntervalMs: 25000,
+    heartbeatTimer: undefined,
+    pendingHeartbeatRef: null,
+    heartbeatCallback: [Function: noop],
+    ref: 0,
+    logger: [Function: noop],
+    conn: null,
+    sendBuffer: [],
+    serializer: Serializer { HEADER_LENGTH: 1 },
+    stateChangeCallbacks: { open: [], close: [], error: [], message: [] },
+    accessToken: [Function: bound _getAccessToken],
+    _resolveFetch: [Function (anonymous)],
+    transport: null,
+    reconnectAfterMs: [Function (anonymous)],
+    encode: [Function (anonymous)],
+    decode: [Function: bound decode],
+    reconnectTimer: Timer {
+      callback: [AsyncFunction (anonymous)],
+      timerCalc: [Function (anonymous)],
+      timer: undefined,
+      tries: 0
+    },
+    fetch: [Function (anonymous)]
+  },
+  rest: PostgrestClient {
+    url: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/rest/v1',
+    headers: { 'X-Client-Info': 'supabase-js-node/2.50.0' },
+    schemaName: 'public',
+    fetch: [Function (anonymous)]
+  }
+}
+Fetching settings for organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+Settings fetched successfully: {
+  id: 5,
+  site: 'MetExam',
+  image: 'https://codedharmony.blob.core.windows.net/logos/logo-metexam.svg',
+  menu_width: '3xl',
+  menu_items_are_text: false,
+  footer_color: 'gray-700',
+  organization_id: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetched settings in layout: {
+  id: 5,
+  site: 'MetExam',
+  image: 'https://codedharmony.blob.core.windows.net/logos/logo-metexam.svg',
+  menu_width: '3xl',
+  menu_items_are_text: false,
+  footer_color: 'gray-700',
+  organization_id: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Fetched organizationId in layout: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetched siteFaqs in layout: [
+  {
+    question: 'What is it?',
+    answer: 'MetExam is a professional training company in the UK, preparing solicitors, mortgage advisors, financial advisors, and immigration advisors for qualification exams with realistic test simulations.'
+  },
+  {
+    question: 'What’s in the Library?',
+    answer: 'The Library offers study books for SQE, CeMAP, DipFA, and OISC Levels 1 and 2, covering exam procedures and practical knowledge.'
+  },
+  {
+    question: "How closely do MetExam's test simulations resemble the actual exams?",
+    answer: 'Our simulations are crafted based on extensive research and feedback from previous exam-takers, ensuring that they are closely aligned with the content, format, and difficulty of the real exams.'
+  },
+  {
+    question: 'How much does it cost to access MetExam’s simulations?',
+    answer: 'Pricing varies depending on the exam simulation chosen. For detailed pricing information, please refer to the respective exam section on our website.'
+  },
+  {
+    question: 'How often are the test simulations updated?',
+    answer: 'Our team continuously monitors changes and updates in the professional examinations, ensuring that our test simulations remain current and relevant.'
+  },
+  {
+    question: 'How do the Library resources help with exam preparation?',
+    answer: '<p>Our Library resources are tailored to provide the essential knowledge needed for each specific examination. The books include detailed explanations of key concepts, step-by-step guides on exam procedures, and practical tasks that mirror what you will encounter in the actual exams. This ensures you are thoroughly prepared both theoretically and practically.</p>'
+  },
+  {
+    question: 'Do you offer any group or institutional discounts?',
+    answer: 'Yes, we offer group and institutional packages. Please get in touch with our customer support for more details.'
+  },
+  {
+    question: 'What is the structure and delivery method of the SQE2 assessment?',
+    answer: '<p class="mb-4">\r\n' +
+      "        The SQE2 assessment is a rigorous examination designed to test a candidate's practical legal skills across a broad range of legal contexts. It consists of 16 separate tasks, which are evenly split between written and oral formats. These tasks are crafted to simulate real-world legal scenarios, requiring candidates to demonstrate their ability to apply legal knowledge in practical situations.\r\n" +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Structure of the SQE2 Assessment</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        The written tasks may include drafting legal documents, providing legal advice in writing, or conducting legal research. On the other hand, the oral tasks might involve advocacy, interviewing clients, or making oral presentations. Each task is carefully designed to assess a specific set of skills that are crucial for the practice of law, ensuring that candidates are well-prepared for the realities of legal work.\r\n' +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Delivery Method</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      "        The delivery of the SQE2 assessment is conducted in-person at designated testing centers across the UK. These centers are equipped to provide a controlled and professional environment, where candidates can focus solely on their performance. The in-person nature of the assessment is essential because it allows the examiners to closely observe candidates' behaviors, especially during oral tasks where communication skills are being tested.\r\n" +
+      '    </p>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      "        The tasks are administered under strict timed conditions, reflecting the time pressures lawyers face in real legal practice. This timing aspect is crucial, as it not only tests candidates' knowledge and skills but also their ability to perform under pressure. The in-person delivery also ensures that the assessment is standardized and fair, providing each candidate with the same opportunities and challenges.\r\n" +
+      '    </p>'
+  },
+  {
+    question: 'How’s Kindle version different?',
+    answer: 'Kindle books match our site’s content but differ in:\n' +
+      '<ul>\n' +
+      '<li>• Format: Ours include PDF and ePUB; Kindle’s are app-specific.</li>\n' +
+      '<li>• Access: Ours download instantly; Kindle’s are cheaper.</li>\n' +
+      '<li>• Paperbacks: Ours include eBooks; Kindle’s are physical-only, with faster shipping via Prime.  </li>\n' +
+      '</ul>\n'
+  },
+  {
+    question: 'How long is course access?',
+    answer: 'Course access ranges from 1, 3, 6, to 12 months, giving ample time for study and review.'
+  },
+  {
+    question: 'What is the SQE1 exam?',
+    answer: '<div>\r\n' +
+      '      <p>The SQE1 exam is the first part of the Solicitors Qualifying Examination (SQE), focusing on Functioning Legal Knowledge (FLK). It assesses your understanding of fundamental legal principles across multiple areas, using Multiple-Choice Questions (MCQs).</p>\r\n' +
+      '    </div>'
+  },
+  {
+    question: 'What are the key features of the SQE2 Prep Course?',
+    answer: "The course provides focused training with practice assessments, detailed feedback, and resources that align with the SQE2 exam format. It's designed to build your confidence and competence in handling real-world legal tasks."
+  },
+  {
+    question: 'Why should I choose MetExam for my SQE1 preparation?',
+    answer: '<ul class="my-4 ml-4 space-y-2">\r\n' +
+      '        <li>• <strong>Comprehensive Learning:</strong> Access a wide range of study materials and practice questions.</li>\r\n' +
+      '        <li>• <strong>Flexible Study Plans:</strong> Customise your learning schedule with our adjustable Study Plan feature.</li>\r\n' +
+      '        <li>• <strong>Optimised Learning:</strong> Benefit from our Smart Algorithms that make your study process 3-5 times faster and more efficient.</li>\r\n' +
+      '        <li>• <strong>Expert Guidance:</strong> Learn from materials developed by industry professionals who understand the exam’s demands.</li>\r\n' +
+      '      </ul>\r\n' +
+      '      <p>MetExam provides the tools you need to succeed in the SQE1 exam.</p>'
+  },
+  {
+    question: 'How long do I have access to the SQE1 Prep Course materials?',
+    answer: '<p>You have full access to all course materials for the duration of your chosen plan:</p>\r\n' +
+      '      <ul class="my-4 ml-4 space-y-2">\r\n' +
+      '        <li>• 1 month</li>\r\n' +
+      '        <li>• 6 months</li>\r\n' +
+      '        <li>• 12 months</li>\r\n' +
+      '      </ul>\r\n' +
+      '      <p>This allows you to pace your studies according to your needs.</p>'
+  },
+  {
+    question: 'What topics are covered in the SQE1 Prep Course?',
+    answer: '<p>The course covers all 16 key areas of Functioning Legal Knowledge, including:</p>\r\n' +
+      '      <ul class="my-4 ml-4 space-y-2">\r\n' +
+      '        <li>• Business Law and Practice</li>\r\n' +
+      '        <li>• Dispute Resolution</li>\r\n' +
+      '        <li>• Contract Law</li>\r\n' +
+      '        <li>• Tort Law</li>\r\n' +
+      '        <li>• Legal System of England and Wales</li>\r\n' +
+      '        <li>• Constitutional and Administrative Law, and EU Law</li>\r\n' +
+      '        <li>• Criminal Law</li>\r\n' +
+      '        <li>• Criminal Practice</li>\r\n' +
+      '        <li>• Land Law</li>\r\n' +
+      '        <li>• Trusts</li>\r\n' +
+      '        <li>• Wills and the Administration of Estates</li>\r\n' +
+      '        <li>• Solicitors’ Accounts</li>\r\n' +
+      '        <li>• Ethics and Professional Conduct</li>\r\n' +
+      '        <li>• Property Practice</li>\r\n' +
+      '        <li>• Taxation</li>\r\n' +
+      '        <li>• Trusts</li>\r\n' +
+      '      </ul>\r\n' +
+      '      <p>Each topic is paired with practice questions and detailed explanations to ensure thorough preparation.</p>'
+  },
+  {
+    question: 'How does MetExam SQE2 Prep Course help me prepare?',
+    answer: 'MetExam SQE2 Prep Course offers a structured 3-month intensive program with 6-month full access. It includes in-depth resources, practice assessments, and guidance to help you master both the oral and written components of the SQE2.'
+  },
+  {
+    question: 'Can I be both an Affiliate and a Channel Partner?',
+    answer: 'Yes, businesses can participate in both programs if they meet the criteria. They can promote via referral links and resell MetExam courses.'
+  },
+  {
+    question: 'What’s in a paperback?',
+    answer: 'A paperback includes free PDF and ePUB versions, providing both physical and digital copies for versatile study.'
+  },
+  {
+    question: 'Who should consider becoming a MetExam Affiliate?',
+    answer: 'Content creators, bloggers, influencers, or anyone with an audience interested in education and career development are ideal for becoming a MetExam affiliate.'
+  },
+  {
+    question: 'Are there any test-solving techniques included in the Library resources?',
+    answer: '<p>Absolutely! The MetExam Library includes books that offer valuable test-solving techniques. These techniques are specifically designed to help you approach and answer exam questions more effectively, increasing your chances of success in the actual examination.</p>'
+  },
+  {
+    question: 'How do commissions work for affiliates?',
+    answer: 'Affiliates earn a percentage of each sale made through their referral link, with payments typically made monthly.'
+  },
+  {
+    question: 'Do the books in the Library cover practical tasks?',
+    answer: "<p>Yes, the books in our Library are designed to cover practical tasks as well as theoretical knowledge. They provide insights into real-world applications of the concepts you'll need to understand for your professional exams, ensuring you are well-equipped to handle the practical aspects of your exam and future career.</p>"
+  },
+  {
+    question: 'How does the MetExam referral program work?',
+    answer: 'Once registered, you will receive a referral link that you can share with your friends, colleagues, or network. Each time someone signs up using your link, you earn referral bonuses that can be applied toward discounts on MetExam courses, eBooks, and other services.'
+  },
+  {
+    question: 'Can MetExam’s courses be integrated into our existing Learning Management System (LMS)?',
+    answer: 'Yes, MetExam’s courses are easily integrated into your LMS via API or plug-ins.'
+  },
+  {
+    question: 'How much can I earn through the referral program?',
+    answer: 'For every successful referral, you can earn a £20 bonus. Additionally, you may earn up to 20% of the total purchase value from the referee, which can be applied toward future purchases.'
+  },
+  {
+    question: 'Is there a limit to how many referrals I can make?',
+    answer: 'No, there’s no limit! You can refer as many people as you like and continue earning bonuses for each successful registration and purchase made using your referral link.'
+  },
+  {
+    question: 'Who should consider becoming a MetExam Channel Partner?',
+    answer: 'Businesses such as educational institutions, corporate training providers, or companies offering employee development programs are ideal channel partners for MetExam.'
+  },
+  {
+    question: 'What kind of support do Channel Partners receive?',
+    answer: 'Channel partners receive dedicated sales and technical support, as well as marketing resources to integrate and sell MetExam’s courses.'
+  },
+  {
+    question: 'What is the difference between an Affiliate and a Channel Partner?',
+    answer: 'An affiliate promotes MetExam courses through content to their audience in exchange for a referral fee, while a channel partner integrates and actively sells MetExam’s courses as part of their own service offering.'
+  },
+  {
+    question: 'Can I earn 100% discounts through the referral program?',
+    answer: 'Yes, by accumulating enough bonuses, you can apply them to cover up to 100% of the price for any MetExam course, eBook, or other services. The more referrals you generate, the bigger your discount.'
+  },
+  {
+    question: 'Do my referees receive any benefits?',
+    answer: 'Yes! When someone signs up using your referral link, they receive a discount on their purchase, making it a mutually beneficial process.'
+  },
+  {
+    question: 'How soon will I see my bonuses after a referral?',
+    answer: "Bonuses are typically credited to your account once the referee completes their registration and makes a purchase. You can monitor your bonuses in the 'Bonuses' section of your profile."
+  },
+  {
+    question: 'What are the benefits of the MetExam Affiliate Program?',
+    answer: 'Affiliates earn commissions on sales generated through their referral links and have access to MetExam marketing materials and support.'
+  },
+  {
+    question: 'How do I register for the MetExam referral program?',
+    answer: "To register for the referral program, simply sign up on MetExam’s website, then log in to your profile. Navigate to the 'Bonuses' section where you can access and share your unique referral link."
+  },
+  {
+    question: 'What eBook formats available?',
+    answer: 'Library eBooks are available in PDF and ePUB, compatible with e-readers, tablets, and computers for flexible studying.'
+  },
+  {
+    question: 'What are the benefits of becoming a MetExam Channel Partner?',
+    answer: 'Channel partners receive sales support, co-branding opportunities, and special pricing models for selling or bundling MetExam’s products.'
+  },
+  {
+    question: 'What does a Channel Partner do?',
+    answer: 'A channel partner integrates MetExam’s courses into their existing service offerings and actively sells them to clients.'
+  },
+  {
+    question: 'Can we customise the content to fit our curriculum needs?',
+    answer: 'Yes, content can be tailored to your curriculum. In the fully integrated model, additional customisation options like fonts, designs, and special tasks are available.'
+  },
+  {
+    question: 'Do my referral bonuses expire?',
+    answer: 'No, your referral bonuses do not expire. You can accumulate them over time and use them whenever you’re ready to make a purchase.'
+  },
+  {
+    question: 'How does the revenue-sharing work for universities?',
+    answer: 'In the zero-cost model, universities receive 50% of the course fee from each student. In the fully integrated model, the university keeps 100% of the student income but pays a fixed licence fee to MetExam.'
+  },
+  {
+    question: 'How will the content be branded?',
+    answer: 'In the zero-cost model, branding includes your logos and colours. In the fully integrated model, additional customisation such as fonts, designs, and special sections can be implemented.'
+  },
+  {
+    question: 'How does the MetExam Affiliate Program work?',
+    answer: 'Affiliates promote MetExam courses by sharing unique referral links with their audience, earning commissions when a referred user purchases a course.'
+  },
+  {
+    question: 'What is the difference between the SQE1 Prep Course and the SQE1 Quiz Pack?\n' +
+      '\n',
+    answer: '\n' +
+      '  <p class="text-gray-600 mb-2">\n' +
+      '    The <span class="font-medium">SQE1 Prep Course</span> is a comprehensive package for Solicitor Qualifying Examination 1 (SQE1) preparation. It includes over 3,000 practice MCQs, 16 detailed study books (eBooks) covering all SQE1 topics, a customized study plan, and smart algorithms for optimized learning. The eBooks offer in-depth explanations, ideal for a complete, structured study experience.\n' +
+      '  </p>\n' +
+      '  <p class="text-gray-600">\n' +
+      '    The <span class="font-medium">SQE1 Quiz Pack</span> provides the same ~3,000 MCQs for practice but excludes the study books (eBooks). These eBooks can be purchased separately, individually, or as a bundle for additional study support.\n' +
+      '  </p>\n'
+  },
+  {
+    question: 'What topics are covered in the SQE2 Prep Course?',
+    answer: "The MetExam course covers 16 comprehensive topics, including client interviewing, advocacy, legal drafting, and more. These are designed to mirror the tasks you'll face in the SQE2 exam, ensuring you are fully prepared."
+  },
+  {
+    question: 'Why should I use the MetExam Library for my exam preparation?',
+    answer: '<p>The MetExam Library is an invaluable resource for anyone preparing for professional exams like SQE, CeMAP, DipFA, and OISC Levels 1 and 2. Our books are meticulously crafted to cover all the necessary knowledge, exam procedures, practical tasks, and test-solving techniques. This comprehensive approach ensures you have everything you need to confidently pass your exams and excel in your professional career.</p>'
+  },
+  {
+    question: 'What is the cost for universities to integrate MetExam’s courses?',
+    answer: 'Universities can choose between a zero-cost model, where students pay directly, or a fully integrated model, where the university pays a fixed licence fee.'
+  },
+  {
+    question: 'How long does it take to implement MetExam’s courses into our curriculum?',
+    answer: "Integration typically takes a few weeks, depending on your university's requirements."
+  },
+  {
+    question: 'What kind of support does MetExam provide to universities and students?',
+    answer: 'We offer full technical and academic support, including setup, updates, and assistance for both universities and students.'
+  },
+  {
+    question: 'Can I use my bonuses immediately?',
+    answer: 'Yes, once your bonuses are credited to your account, you can apply them toward any future purchase on MetExam, including courses, eBooks, and other services.'
+  },
+  {
+    question: 'What kind of exam preparations does MetExam offer?',
+    answer: '<div>MetExam provides comprehensive exam preparation for a variety of professional qualifications:\r\n' +
+      '\r\n' +
+      '<ul class="my-8 space-y-4 ml-4 ">\r\n' +
+      '  <li>• <strong> SQE Prep Courses.</strong> For future solicitors, we offer in-depth preparation for the SQE (Solicitors Qualifying Examination), including Multiple-Choice Questions (MCQs) and practical skill assessments.</li>\r\n' +
+      '  \r\n' +
+      '  <li>• <strong>CeMAP Prep Courses.</strong> Mortgage advisors can prepare with our CeMAP (Certificate in Mortgage Advice and Practice) courses, featuring detailed study materials and practice exams.</li>\r\n' +
+      '  \r\n' +
+      '  <li>• <strong>DipFA Prep Courses.</strong> Financial advisors benefit from our tailored DipFA (Diploma for Financial Advisers) prep courses, which include rigorous practice questions and study guides.</li>\r\n' +
+      '  \r\n' +
+      '  <li>• <strong>OISC Prep Courses.</strong> For immigration advisers, we offer specialized preparation for OISC (Office of the Immigration Services Commissioner) levels 1 and 2, with content designed to match the exam format.</li>\r\n' +
+      '</ul>\r\n' +
+      '\r\n' +
+      'Each course is designed to simulate the exam environment and provide candidates with the tools they need to succeed.\r\n' +
+      '</div>'
+  },
+  {
+    question: 'How do I share my referral link?',
+    answer: "After registering, log into your MetExam profile and go to the 'Bonuses' section. There, you’ll find your unique referral link, which you can share via email, social media, or any other communication platform."
+  },
+  {
+    question: 'What is the SQE2 exam?',
+    answer: 'The SQE2 exam is the second part of the Solicitors Qualifying Examination (SQE) in the UK, focusing on practical legal skills. It assesses your ability to perform tasks such as client interviews, advocacy, legal drafting, and legal research.'
+  },
+  {
+    question: 'How does SQE1 Prep help?',
+    answer: 'The SQE1 Prep Course provides:\n' +
+      '<ul>\n' +
+      '\n' +
+      '<li>• 3,200+ MCQs for knowledge testing.<li>\n' +
+      '<li>• 16 key legal topic books.<li>\n' +
+      '<li>• Flexible study scheduling.<li>\n' +
+      '</ul>\n' +
+      'It ensures a deep understanding of SQE1 legal concepts.  \n' +
+      '\n'
+  },
+  {
+    question: 'How to join University Programme?',
+    answer: 'Contact us via our website for a demo or discussion. We’ll assist with integration and implementation.'
+  },
+  {
+    question: 'What practice areas are covered in the SQE2 assessment, and how long does it take to complete?',
+    answer: '<p class="mb-4">\r\n' +
+      '        The SQE2 assessment covers a broad range of practice areas to ensure that candidates are well-rounded and capable of handling various types of legal work. The key practice areas included in the assessment are carefully chosen to represent the core areas of legal practice that a newly qualified solicitor is likely to encounter.\r\n' +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Practice Areas Covered</h4>\r\n' +
+      '    <ul class="ml-4 my-4 space-y-2">\r\n' +
+      '        <li>★ <strong>Criminal Litigation:</strong> Involves tasks related to defending or prosecuting criminal cases, including preparing cases for trial and advising clients on criminal law matters.</li>\r\n' +
+      '        <li>★ <strong>Dispute Resolution:</strong> Focuses on resolving civil disputes through negotiation, mediation, or litigation. Tasks may include drafting pleadings, advising clients, and managing settlement discussions.</li>\r\n' +
+      '        <li>★ <strong>Property Practice:</strong> Covers legal work related to property transactions, such as drafting contracts for the sale of property, handling lease agreements, and advising on property law.</li>\r\n' +
+      '        <li>★ <strong>Wills and the Administration of Estates:</strong> Involves advising clients on wills, managing the probate process, and ensuring that estates are administered according to the law.</li>\r\n' +
+      '        <li>★ <strong>Business Organisations, Rules, and Procedures:</strong> Includes tasks related to the formation, management, and dissolution of business entities, as well as advising on corporate governance and compliance issues.</li>\r\n' +
+      '    </ul>\r\n' +
+      '    <h4 class="font-semibold my-4">Completion Time</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        The SQE2 assessment is spread over several days, reflecting the comprehensive nature of the tasks and the broad range of skills being tested. Candidates are required to complete all 16 tasks, with each task being timed to simulate the time pressures found in real legal practice. The exact duration of the assessment varies, but it typically spans 5 days.\r\n' +
+      '    </p>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      "        The timing of each task is carefully calculated to reflect the complexity of the legal issues involved. For example, an advocacy task might be allotted more time than a legal writing task due to the need for oral presentation and interaction. This time management is a crucial part of the assessment, as it tests not only the candidates'"
+  },
+  {
+    question: 'How are candidates marked, and what is the passing score?',
+    answer: '<p class="mb-4">\r\n' +
+      '        The marking of the SQE2 assessment is carried out by experienced legal professionals who are trained to evaluate candidates consistently and fairly. Each task is marked according to specific criteria that are designed to assess the key competencies required of a newly qualified solicitor. These criteria might include the accuracy of legal knowledge, the effectiveness of communication, and the ability to apply the law in practical scenarios.\r\n' +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Marking Process</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        The marking process is standardized across all candidates, meaning that each task is scored in the same way, regardless of who the candidate is or where they took the exam. This standardization is crucial for maintaining the integrity of the assessment and ensuring that all candidates are judged on the same basis. To further ensure fairness, the examiners undergo regular training and calibration exercises to align their marking standards.\r\n' +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Passing Score</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        The passing score for the SQE2 assessment is determined through a rigorous standard-setting process. This process involves analyzing the performance of candidates to determine the minimum level of competence required to pass. The passing score is not fixed and may vary slightly from one assessment cycle to the next, depending on the difficulty of the tasks and the overall performance of the cohort.\r\n' +
+      '    </p>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        This approach ensures that the passing threshold accurately reflects the level of competence expected of a newly qualified solicitor. It is designed to be challenging but fair, ensuring that only those candidates who have demonstrated the required skills and knowledge are able to pass. Candidates who meet or exceed the passing score are considered to have the practical legal skills necessary to begin practicing law.\r\n' +
+      '    </p>'
+  },
+  {
+    question: 'Why choose for preparation?',
+    answer: 'MetExam provides:\n' +
+      '\n' +
+      '<ul>\n' +
+      '  <li>• Realistic exam simulations for confidence.</li>\n' +
+      '  \n' +
+      '  <li>• Smart algorithms for faster learning.</li>\n' +
+      '  \n' +
+      '  <li>• Flexible, personalised study plans.</li>\n' +
+      '  \n' +
+      '  <li>• Comprehensive, tailored study materials.</li>\n' +
+      '  \n' +
+      '  <li>• Expert guidance from industry professionals.</li>\n' +
+      '  \n' +
+      '  <li>• Proven success for exam candidates.</li>\n' +
+      '</ul>\n'
+  }
+]
+Fetched heroData in layout: { h1_text_color: 'gray-700', p_description_color: 'gray-500' }
+Fetched menuItems in layout: [
+  {
+    "id": 5,
+    "display_name": "Connect Hub",
+    "url_name": "/contact",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": null,
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 3,
+    "display_name": "Support",
+    "url_name": "/support",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": null,
+    "website_submenuitem": [
+      {
+        "id": 9,
+        "name": "FAQ",
+        "order": 1,
+        "url_name": "/faq",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": null
+      },
+      {
+        "id": 19,
+        "name": "Subscriptions and payments",
+        "order": 1,
+        "url_name": "/managing-subscriptions-and-payments",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 18,
+        "name": "Reporting bugs",
+        "order": 1,
+        "url_name": "/reporting-issues-or-bugs",
+        "description": "",
+        "is_displayed": null,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 22,
+        "name": "Features",
+        "order": 5,
+        "url_name": "/features/",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": null
+      },
+      {
+        "id": 10,
+        "name": "Contact Us",
+        "order": 6,
+        "url_name": "/contact",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": null
+      }
+    ],
+    "react_icons": null
+  },
+  {
+    "id": 13,
+    "display_name": "Developers",
+    "url_name": "/developers",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 12,
+    "display_name": "Referral Bonuses",
+    "url_name": "/referral-bonuses",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 1,
+    "display_name": "Learn Today",
+    "url_name": "/",
+    "is_displayed": false,
+    "is_displayed_on_footer": false,
+    "order": 1,
+    "image": null,
+    "react_icon_id": 249,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": {
+      "icon_name": "ShoppingBagIcon"
+    }
+  },
+  {
+    "id": 16,
+    "display_name": "Terms",
+    "url_name": "/terms",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": null,
+    "website_submenuitem": [
+      {
+        "id": 1,
+        "name": "Privacy",
+        "order": 1,
+        "url_name": "/privacy-policy",
+        "description": "Main Product Description",
+        "is_displayed": true,
+        "organization_id": null
+      },
+      {
+        "id": 4,
+        "name": "Cookie",
+        "order": 2,
+        "url_name": "/cookie-policy",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 8,
+        "name": "Delivery",
+        "order": 3,
+        "url_name": "/delivery-policy",
+        "description": "Description of product 6",
+        "is_displayed": true,
+        "organization_id": null
+      },
+      {
+        "id": 5,
+        "name": "Return",
+        "order": 4,
+        "url_name": "/return-policy",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": null
+      }
+    ],
+    "react_icons": null
+  },
+  {
+    "id": 14,
+    "display_name": "Investors",
+    "url_name": "/investors",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 2,
+    "display_name": "Products",
+    "url_name": "/products",
+    "is_displayed": true,
+    "is_displayed_on_footer": true,
+    "order": 2,
+    "image": null,
+    "react_icon_id": 259,
+    "organization_id": null,
+    "website_submenuitem": [
+      {
+        "id": 23,
+        "name": "SQE1 Prep",
+        "order": 1,
+        "url_name": "/products/sqe-1-training-course",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 6,
+        "name": "Free Trial",
+        "order": 2,
+        "url_name": "/products/sqe-1-free-trial",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 2,
+        "name": "Study Books Bundle",
+        "order": 3,
+        "url_name": "/products/sqe-1-study-books-full-bundle",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 12,
+        "name": "All Products",
+        "order": 4,
+        "url_name": "/products",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": null
+      }
+    ],
+    "react_icons": {
+      "icon_name": "SquaresPlusIcon"
+    }
+  },
+  {
+    "id": 11,
+    "display_name": "Pricing",
+    "url_name": "/pricing",
+    "is_displayed": false,
+    "is_displayed_on_footer": false,
+    "order": 3,
+    "image": null,
+    "react_icon_id": 70,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": {
+      "icon_name": "BookmarkIcon"
+    }
+  },
+  {
+    "id": 7,
+    "display_name": "Blog",
+    "url_name": "/blog",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 4,
+    "image": null,
+    "react_icon_id": 241,
+    "organization_id": null,
+    "website_submenuitem": [
+      {
+        "id": 21,
+        "name": "How it works",
+        "order": 0,
+        "url_name": "/how-it-works-sqe-1-free-trial",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 17,
+        "name": "SQE Unveiled",
+        "order": 1,
+        "url_name": "/navigating-the-legal-labyrinth-the-solicitors-qualification-exam-sqe-unveiled",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 20,
+        "name": "Training Quizzes",
+        "order": 2,
+        "url_name": "/training-quizzes",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      }
+    ],
+    "react_icons": {
+      "icon_name": "RssIcon"
+    }
+  },
+  {
+    "id": 10,
+    "display_name": "Affiliates and Partners",
+    "url_name": "/become-affiliate-partner",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 4,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 8,
+    "display_name": "About Us",
+    "url_name": "/about-us",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 5,
+    "image": null,
+    "react_icon_id": 2,
+    "organization_id": null,
+    "website_submenuitem": [],
+    "react_icons": {
+      "icon_name": "AdjustmentsHorizontalIcon"
+    }
+  },
+  {
+    "id": 9,
+    "display_name": "Education Hub",
+    "url_name": "/education-hub",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 6,
+    "image": null,
+    "react_icon_id": 1,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": {
+      "icon_name": "AcademicCapIcon"
+    }
+  }
+]
+supabaseClient - NEXT_PUBLIC_SUPABASE_URL: https://rgbmdfaoowqbgshjuwwm.supabase.co
+supabaseClient - NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8
+supabaseClient - Auth state changed: INITIAL_SESSION Session: null
+ GET /admin 200 in 3955ms
+ ⚠ ./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/index.js
+./node_modules/.pnpm/@supabase+supabase-js@2.50.0/node_modules/@supabase/supabase-js/dist/module/index.js
+./src/lib/supabase.ts
+./src/app/layout.tsx
+ ⚠ ./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/index.js
+./node_modules/.pnpm/@supabase+supabase-js@2.50.0/node_modules/@supabase/supabase-js/dist/module/index.js
+./src/lib/supabase.ts
+./src/app/layout.tsx
+Base URL in RootLayout: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Fetching settings for organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+Settings fetched successfully: {
+  id: 5,
+  site: 'MetExam',
+  image: 'https://codedharmony.blob.core.windows.net/logos/logo-metexam.svg',
+  menu_width: '3xl',
+  menu_items_are_text: false,
+  footer_color: 'gray-700',
+  organization_id: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetched settings in layout: {
+  id: 5,
+  site: 'MetExam',
+  image: 'https://codedharmony.blob.core.windows.net/logos/logo-metexam.svg',
+  menu_width: '3xl',
+  menu_items_are_text: false,
+  footer_color: 'gray-700',
+  organization_id: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Fetched organizationId in layout: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetched siteFaqs in layout: [
+  {
+    question: 'What is it?',
+    answer: 'MetExam is a professional training company in the UK, preparing solicitors, mortgage advisors, financial advisors, and immigration advisors for qualification exams with realistic test simulations.'
+  },
+  {
+    question: 'What’s in the Library?',
+    answer: 'The Library offers study books for SQE, CeMAP, DipFA, and OISC Levels 1 and 2, covering exam procedures and practical knowledge.'
+  },
+  {
+    question: "How closely do MetExam's test simulations resemble the actual exams?",
+    answer: 'Our simulations are crafted based on extensive research and feedback from previous exam-takers, ensuring that they are closely aligned with the content, format, and difficulty of the real exams.'
+  },
+  {
+    question: 'How much does it cost to access MetExam’s simulations?',
+    answer: 'Pricing varies depending on the exam simulation chosen. For detailed pricing information, please refer to the respective exam section on our website.'
+  },
+  {
+    question: 'How often are the test simulations updated?',
+    answer: 'Our team continuously monitors changes and updates in the professional examinations, ensuring that our test simulations remain current and relevant.'
+  },
+  {
+    question: 'How do the Library resources help with exam preparation?',
+    answer: '<p>Our Library resources are tailored to provide the essential knowledge needed for each specific examination. The books include detailed explanations of key concepts, step-by-step guides on exam procedures, and practical tasks that mirror what you will encounter in the actual exams. This ensures you are thoroughly prepared both theoretically and practically.</p>'
+  },
+  {
+    question: 'Do you offer any group or institutional discounts?',
+    answer: 'Yes, we offer group and institutional packages. Please get in touch with our customer support for more details.'
+  },
+  {
+    question: 'What is the structure and delivery method of the SQE2 assessment?',
+    answer: '<p class="mb-4">\r\n' +
+      "        The SQE2 assessment is a rigorous examination designed to test a candidate's practical legal skills across a broad range of legal contexts. It consists of 16 separate tasks, which are evenly split between written and oral formats. These tasks are crafted to simulate real-world legal scenarios, requiring candidates to demonstrate their ability to apply legal knowledge in practical situations.\r\n" +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Structure of the SQE2 Assessment</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        The written tasks may include drafting legal documents, providing legal advice in writing, or conducting legal research. On the other hand, the oral tasks might involve advocacy, interviewing clients, or making oral presentations. Each task is carefully designed to assess a specific set of skills that are crucial for the practice of law, ensuring that candidates are well-prepared for the realities of legal work.\r\n' +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Delivery Method</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      "        The delivery of the SQE2 assessment is conducted in-person at designated testing centers across the UK. These centers are equipped to provide a controlled and professional environment, where candidates can focus solely on their performance. The in-person nature of the assessment is essential because it allows the examiners to closely observe candidates' behaviors, especially during oral tasks where communication skills are being tested.\r\n" +
+      '    </p>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      "        The tasks are administered under strict timed conditions, reflecting the time pressures lawyers face in real legal practice. This timing aspect is crucial, as it not only tests candidates' knowledge and skills but also their ability to perform under pressure. The in-person delivery also ensures that the assessment is standardized and fair, providing each candidate with the same opportunities and challenges.\r\n" +
+      '    </p>'
+  },
+  {
+    question: 'How’s Kindle version different?',
+    answer: 'Kindle books match our site’s content but differ in:\n' +
+      '<ul>\n' +
+      '<li>• Format: Ours include PDF and ePUB; Kindle’s are app-specific.</li>\n' +
+      '<li>• Access: Ours download instantly; Kindle’s are cheaper.</li>\n' +
+      '<li>• Paperbacks: Ours include eBooks; Kindle’s are physical-only, with faster shipping via Prime.  </li>\n' +
+      '</ul>\n'
+  },
+  {
+    question: 'How long is course access?',
+    answer: 'Course access ranges from 1, 3, 6, to 12 months, giving ample time for study and review.'
+  },
+  {
+    question: 'What is the SQE1 exam?',
+    answer: '<div>\r\n' +
+      '      <p>The SQE1 exam is the first part of the Solicitors Qualifying Examination (SQE), focusing on Functioning Legal Knowledge (FLK). It assesses your understanding of fundamental legal principles across multiple areas, using Multiple-Choice Questions (MCQs).</p>\r\n' +
+      '    </div>'
+  },
+  {
+    question: 'What are the key features of the SQE2 Prep Course?',
+    answer: "The course provides focused training with practice assessments, detailed feedback, and resources that align with the SQE2 exam format. It's designed to build your confidence and competence in handling real-world legal tasks."
+  },
+  {
+    question: 'Why should I choose MetExam for my SQE1 preparation?',
+    answer: '<ul class="my-4 ml-4 space-y-2">\r\n' +
+      '        <li>• <strong>Comprehensive Learning:</strong> Access a wide range of study materials and practice questions.</li>\r\n' +
+      '        <li>• <strong>Flexible Study Plans:</strong> Customise your learning schedule with our adjustable Study Plan feature.</li>\r\n' +
+      '        <li>• <strong>Optimised Learning:</strong> Benefit from our Smart Algorithms that make your study process 3-5 times faster and more efficient.</li>\r\n' +
+      '        <li>• <strong>Expert Guidance:</strong> Learn from materials developed by industry professionals who understand the exam’s demands.</li>\r\n' +
+      '      </ul>\r\n' +
+      '      <p>MetExam provides the tools you need to succeed in the SQE1 exam.</p>'
+  },
+  {
+    question: 'How long do I have access to the SQE1 Prep Course materials?',
+    answer: '<p>You have full access to all course materials for the duration of your chosen plan:</p>\r\n' +
+      '      <ul class="my-4 ml-4 space-y-2">\r\n' +
+      '        <li>• 1 month</li>\r\n' +
+      '        <li>• 6 months</li>\r\n' +
+      '        <li>• 12 months</li>\r\n' +
+      '      </ul>\r\n' +
+      '      <p>This allows you to pace your studies according to your needs.</p>'
+  },
+  {
+    question: 'What topics are covered in the SQE1 Prep Course?',
+    answer: '<p>The course covers all 16 key areas of Functioning Legal Knowledge, including:</p>\r\n' +
+      '      <ul class="my-4 ml-4 space-y-2">\r\n' +
+      '        <li>• Business Law and Practice</li>\r\n' +
+      '        <li>• Dispute Resolution</li>\r\n' +
+      '        <li>• Contract Law</li>\r\n' +
+      '        <li>• Tort Law</li>\r\n' +
+      '        <li>• Legal System of England and Wales</li>\r\n' +
+      '        <li>• Constitutional and Administrative Law, and EU Law</li>\r\n' +
+      '        <li>• Criminal Law</li>\r\n' +
+      '        <li>• Criminal Practice</li>\r\n' +
+      '        <li>• Land Law</li>\r\n' +
+      '        <li>• Trusts</li>\r\n' +
+      '        <li>• Wills and the Administration of Estates</li>\r\n' +
+      '        <li>• Solicitors’ Accounts</li>\r\n' +
+      '        <li>• Ethics and Professional Conduct</li>\r\n' +
+      '        <li>• Property Practice</li>\r\n' +
+      '        <li>• Taxation</li>\r\n' +
+      '        <li>• Trusts</li>\r\n' +
+      '      </ul>\r\n' +
+      '      <p>Each topic is paired with practice questions and detailed explanations to ensure thorough preparation.</p>'
+  },
+  {
+    question: 'How does MetExam SQE2 Prep Course help me prepare?',
+    answer: 'MetExam SQE2 Prep Course offers a structured 3-month intensive program with 6-month full access. It includes in-depth resources, practice assessments, and guidance to help you master both the oral and written components of the SQE2.'
+  },
+  {
+    question: 'Can I be both an Affiliate and a Channel Partner?',
+    answer: 'Yes, businesses can participate in both programs if they meet the criteria. They can promote via referral links and resell MetExam courses.'
+  },
+  {
+    question: 'What’s in a paperback?',
+    answer: 'A paperback includes free PDF and ePUB versions, providing both physical and digital copies for versatile study.'
+  },
+  {
+    question: 'Who should consider becoming a MetExam Affiliate?',
+    answer: 'Content creators, bloggers, influencers, or anyone with an audience interested in education and career development are ideal for becoming a MetExam affiliate.'
+  },
+  {
+    question: 'Are there any test-solving techniques included in the Library resources?',
+    answer: '<p>Absolutely! The MetExam Library includes books that offer valuable test-solving techniques. These techniques are specifically designed to help you approach and answer exam questions more effectively, increasing your chances of success in the actual examination.</p>'
+  },
+  {
+    question: 'How do commissions work for affiliates?',
+    answer: 'Affiliates earn a percentage of each sale made through their referral link, with payments typically made monthly.'
+  },
+  {
+    question: 'Do the books in the Library cover practical tasks?',
+    answer: "<p>Yes, the books in our Library are designed to cover practical tasks as well as theoretical knowledge. They provide insights into real-world applications of the concepts you'll need to understand for your professional exams, ensuring you are well-equipped to handle the practical aspects of your exam and future career.</p>"
+  },
+  {
+    question: 'How does the MetExam referral program work?',
+    answer: 'Once registered, you will receive a referral link that you can share with your friends, colleagues, or network. Each time someone signs up using your link, you earn referral bonuses that can be applied toward discounts on MetExam courses, eBooks, and other services.'
+  },
+  {
+    question: 'Can MetExam’s courses be integrated into our existing Learning Management System (LMS)?',
+    answer: 'Yes, MetExam’s courses are easily integrated into your LMS via API or plug-ins.'
+  },
+  {
+    question: 'How much can I earn through the referral program?',
+    answer: 'For every successful referral, you can earn a £20 bonus. Additionally, you may earn up to 20% of the total purchase value from the referee, which can be applied toward future purchases.'
+  },
+  {
+    question: 'Is there a limit to how many referrals I can make?',
+    answer: 'No, there’s no limit! You can refer as many people as you like and continue earning bonuses for each successful registration and purchase made using your referral link.'
+  },
+  {
+    question: 'Who should consider becoming a MetExam Channel Partner?',
+    answer: 'Businesses such as educational institutions, corporate training providers, or companies offering employee development programs are ideal channel partners for MetExam.'
+  },
+  {
+    question: 'What kind of support do Channel Partners receive?',
+    answer: 'Channel partners receive dedicated sales and technical support, as well as marketing resources to integrate and sell MetExam’s courses.'
+  },
+  {
+    question: 'What is the difference between an Affiliate and a Channel Partner?',
+    answer: 'An affiliate promotes MetExam courses through content to their audience in exchange for a referral fee, while a channel partner integrates and actively sells MetExam’s courses as part of their own service offering.'
+  },
+  {
+    question: 'Can I earn 100% discounts through the referral program?',
+    answer: 'Yes, by accumulating enough bonuses, you can apply them to cover up to 100% of the price for any MetExam course, eBook, or other services. The more referrals you generate, the bigger your discount.'
+  },
+  {
+    question: 'Do my referees receive any benefits?',
+    answer: 'Yes! When someone signs up using your referral link, they receive a discount on their purchase, making it a mutually beneficial process.'
+  },
+  {
+    question: 'How soon will I see my bonuses after a referral?',
+    answer: "Bonuses are typically credited to your account once the referee completes their registration and makes a purchase. You can monitor your bonuses in the 'Bonuses' section of your profile."
+  },
+  {
+    question: 'What are the benefits of the MetExam Affiliate Program?',
+    answer: 'Affiliates earn commissions on sales generated through their referral links and have access to MetExam marketing materials and support.'
+  },
+  {
+    question: 'How do I register for the MetExam referral program?',
+    answer: "To register for the referral program, simply sign up on MetExam’s website, then log in to your profile. Navigate to the 'Bonuses' section where you can access and share your unique referral link."
+  },
+  {
+    question: 'What eBook formats available?',
+    answer: 'Library eBooks are available in PDF and ePUB, compatible with e-readers, tablets, and computers for flexible studying.'
+  },
+  {
+    question: 'What are the benefits of becoming a MetExam Channel Partner?',
+    answer: 'Channel partners receive sales support, co-branding opportunities, and special pricing models for selling or bundling MetExam’s products.'
+  },
+  {
+    question: 'What does a Channel Partner do?',
+    answer: 'A channel partner integrates MetExam’s courses into their existing service offerings and actively sells them to clients.'
+  },
+  {
+    question: 'Can we customise the content to fit our curriculum needs?',
+    answer: 'Yes, content can be tailored to your curriculum. In the fully integrated model, additional customisation options like fonts, designs, and special tasks are available.'
+  },
+  {
+    question: 'Do my referral bonuses expire?',
+    answer: 'No, your referral bonuses do not expire. You can accumulate them over time and use them whenever you’re ready to make a purchase.'
+  },
+  {
+    question: 'How does the revenue-sharing work for universities?',
+    answer: 'In the zero-cost model, universities receive 50% of the course fee from each student. In the fully integrated model, the university keeps 100% of the student income but pays a fixed licence fee to MetExam.'
+  },
+  {
+    question: 'How will the content be branded?',
+    answer: 'In the zero-cost model, branding includes your logos and colours. In the fully integrated model, additional customisation such as fonts, designs, and special sections can be implemented.'
+  },
+  {
+    question: 'How does the MetExam Affiliate Program work?',
+    answer: 'Affiliates promote MetExam courses by sharing unique referral links with their audience, earning commissions when a referred user purchases a course.'
+  },
+  {
+    question: 'What is the difference between the SQE1 Prep Course and the SQE1 Quiz Pack?\n' +
+      '\n',
+    answer: '\n' +
+      '  <p class="text-gray-600 mb-2">\n' +
+      '    The <span class="font-medium">SQE1 Prep Course</span> is a comprehensive package for Solicitor Qualifying Examination 1 (SQE1) preparation. It includes over 3,000 practice MCQs, 16 detailed study books (eBooks) covering all SQE1 topics, a customized study plan, and smart algorithms for optimized learning. The eBooks offer in-depth explanations, ideal for a complete, structured study experience.\n' +
+      '  </p>\n' +
+      '  <p class="text-gray-600">\n' +
+      '    The <span class="font-medium">SQE1 Quiz Pack</span> provides the same ~3,000 MCQs for practice but excludes the study books (eBooks). These eBooks can be purchased separately, individually, or as a bundle for additional study support.\n' +
+      '  </p>\n'
+  },
+  {
+    question: 'What topics are covered in the SQE2 Prep Course?',
+    answer: "The MetExam course covers 16 comprehensive topics, including client interviewing, advocacy, legal drafting, and more. These are designed to mirror the tasks you'll face in the SQE2 exam, ensuring you are fully prepared."
+  },
+  {
+    question: 'Why should I use the MetExam Library for my exam preparation?',
+    answer: '<p>The MetExam Library is an invaluable resource for anyone preparing for professional exams like SQE, CeMAP, DipFA, and OISC Levels 1 and 2. Our books are meticulously crafted to cover all the necessary knowledge, exam procedures, practical tasks, and test-solving techniques. This comprehensive approach ensures you have everything you need to confidently pass your exams and excel in your professional career.</p>'
+  },
+  {
+    question: 'What is the cost for universities to integrate MetExam’s courses?',
+    answer: 'Universities can choose between a zero-cost model, where students pay directly, or a fully integrated model, where the university pays a fixed licence fee.'
+  },
+  {
+    question: 'How long does it take to implement MetExam’s courses into our curriculum?',
+    answer: "Integration typically takes a few weeks, depending on your university's requirements."
+  },
+  {
+    question: 'What kind of support does MetExam provide to universities and students?',
+    answer: 'We offer full technical and academic support, including setup, updates, and assistance for both universities and students.'
+  },
+  {
+    question: 'Can I use my bonuses immediately?',
+    answer: 'Yes, once your bonuses are credited to your account, you can apply them toward any future purchase on MetExam, including courses, eBooks, and other services.'
+  },
+  {
+    question: 'What kind of exam preparations does MetExam offer?',
+    answer: '<div>MetExam provides comprehensive exam preparation for a variety of professional qualifications:\r\n' +
+      '\r\n' +
+      '<ul class="my-8 space-y-4 ml-4 ">\r\n' +
+      '  <li>• <strong> SQE Prep Courses.</strong> For future solicitors, we offer in-depth preparation for the SQE (Solicitors Qualifying Examination), including Multiple-Choice Questions (MCQs) and practical skill assessments.</li>\r\n' +
+      '  \r\n' +
+      '  <li>• <strong>CeMAP Prep Courses.</strong> Mortgage advisors can prepare with our CeMAP (Certificate in Mortgage Advice and Practice) courses, featuring detailed study materials and practice exams.</li>\r\n' +
+      '  \r\n' +
+      '  <li>• <strong>DipFA Prep Courses.</strong> Financial advisors benefit from our tailored DipFA (Diploma for Financial Advisers) prep courses, which include rigorous practice questions and study guides.</li>\r\n' +
+      '  \r\n' +
+      '  <li>• <strong>OISC Prep Courses.</strong> For immigration advisers, we offer specialized preparation for OISC (Office of the Immigration Services Commissioner) levels 1 and 2, with content designed to match the exam format.</li>\r\n' +
+      '</ul>\r\n' +
+      '\r\n' +
+      'Each course is designed to simulate the exam environment and provide candidates with the tools they need to succeed.\r\n' +
+      '</div>'
+  },
+  {
+    question: 'How do I share my referral link?',
+    answer: "After registering, log into your MetExam profile and go to the 'Bonuses' section. There, you’ll find your unique referral link, which you can share via email, social media, or any other communication platform."
+  },
+  {
+    question: 'What is the SQE2 exam?',
+    answer: 'The SQE2 exam is the second part of the Solicitors Qualifying Examination (SQE) in the UK, focusing on practical legal skills. It assesses your ability to perform tasks such as client interviews, advocacy, legal drafting, and legal research.'
+  },
+  {
+    question: 'How does SQE1 Prep help?',
+    answer: 'The SQE1 Prep Course provides:\n' +
+      '<ul>\n' +
+      '\n' +
+      '<li>• 3,200+ MCQs for knowledge testing.<li>\n' +
+      '<li>• 16 key legal topic books.<li>\n' +
+      '<li>• Flexible study scheduling.<li>\n' +
+      '</ul>\n' +
+      'It ensures a deep understanding of SQE1 legal concepts.  \n' +
+      '\n'
+  },
+  {
+    question: 'How to join University Programme?',
+    answer: 'Contact us via our website for a demo or discussion. We’ll assist with integration and implementation.'
+  },
+  {
+    question: 'What practice areas are covered in the SQE2 assessment, and how long does it take to complete?',
+    answer: '<p class="mb-4">\r\n' +
+      '        The SQE2 assessment covers a broad range of practice areas to ensure that candidates are well-rounded and capable of handling various types of legal work. The key practice areas included in the assessment are carefully chosen to represent the core areas of legal practice that a newly qualified solicitor is likely to encounter.\r\n' +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Practice Areas Covered</h4>\r\n' +
+      '    <ul class="ml-4 my-4 space-y-2">\r\n' +
+      '        <li>★ <strong>Criminal Litigation:</strong> Involves tasks related to defending or prosecuting criminal cases, including preparing cases for trial and advising clients on criminal law matters.</li>\r\n' +
+      '        <li>★ <strong>Dispute Resolution:</strong> Focuses on resolving civil disputes through negotiation, mediation, or litigation. Tasks may include drafting pleadings, advising clients, and managing settlement discussions.</li>\r\n' +
+      '        <li>★ <strong>Property Practice:</strong> Covers legal work related to property transactions, such as drafting contracts for the sale of property, handling lease agreements, and advising on property law.</li>\r\n' +
+      '        <li>★ <strong>Wills and the Administration of Estates:</strong> Involves advising clients on wills, managing the probate process, and ensuring that estates are administered according to the law.</li>\r\n' +
+      '        <li>★ <strong>Business Organisations, Rules, and Procedures:</strong> Includes tasks related to the formation, management, and dissolution of business entities, as well as advising on corporate governance and compliance issues.</li>\r\n' +
+      '    </ul>\r\n' +
+      '    <h4 class="font-semibold my-4">Completion Time</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        The SQE2 assessment is spread over several days, reflecting the comprehensive nature of the tasks and the broad range of skills being tested. Candidates are required to complete all 16 tasks, with each task being timed to simulate the time pressures found in real legal practice. The exact duration of the assessment varies, but it typically spans 5 days.\r\n' +
+      '    </p>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      "        The timing of each task is carefully calculated to reflect the complexity of the legal issues involved. For example, an advocacy task might be allotted more time than a legal writing task due to the need for oral presentation and interaction. This time management is a crucial part of the assessment, as it tests not only the candidates'"
+  },
+  {
+    question: 'How are candidates marked, and what is the passing score?',
+    answer: '<p class="mb-4">\r\n' +
+      '        The marking of the SQE2 assessment is carried out by experienced legal professionals who are trained to evaluate candidates consistently and fairly. Each task is marked according to specific criteria that are designed to assess the key competencies required of a newly qualified solicitor. These criteria might include the accuracy of legal knowledge, the effectiveness of communication, and the ability to apply the law in practical scenarios.\r\n' +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Marking Process</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        The marking process is standardized across all candidates, meaning that each task is scored in the same way, regardless of who the candidate is or where they took the exam. This standardization is crucial for maintaining the integrity of the assessment and ensuring that all candidates are judged on the same basis. To further ensure fairness, the examiners undergo regular training and calibration exercises to align their marking standards.\r\n' +
+      '    </p>\r\n' +
+      '    <h4 class="font-semibold my-4">Passing Score</h4>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        The passing score for the SQE2 assessment is determined through a rigorous standard-setting process. This process involves analyzing the performance of candidates to determine the minimum level of competence required to pass. The passing score is not fixed and may vary slightly from one assessment cycle to the next, depending on the difficulty of the tasks and the overall performance of the cohort.\r\n' +
+      '    </p>\r\n' +
+      '    <p class="mb-4">\r\n' +
+      '        This approach ensures that the passing threshold accurately reflects the level of competence expected of a newly qualified solicitor. It is designed to be challenging but fair, ensuring that only those candidates who have demonstrated the required skills and knowledge are able to pass. Candidates who meet or exceed the passing score are considered to have the practical legal skills necessary to begin practicing law.\r\n' +
+      '    </p>'
+  },
+  {
+    question: 'Why choose for preparation?',
+    answer: 'MetExam provides:\n' +
+      '\n' +
+      '<ul>\n' +
+      '  <li>• Realistic exam simulations for confidence.</li>\n' +
+      '  \n' +
+      '  <li>• Smart algorithms for faster learning.</li>\n' +
+      '  \n' +
+      '  <li>• Flexible, personalised study plans.</li>\n' +
+      '  \n' +
+      '  <li>• Comprehensive, tailored study materials.</li>\n' +
+      '  \n' +
+      '  <li>• Expert guidance from industry professionals.</li>\n' +
+      '  \n' +
+      '  <li>• Proven success for exam candidates.</li>\n' +
+      '</ul>\n'
+  }
+]
+Fetched heroData in layout: { h1_text_color: 'gray-700', p_description_color: 'gray-500' }
+Fetched menuItems in layout: [
+  {
+    "id": 5,
+    "display_name": "Connect Hub",
+    "url_name": "/contact",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": null,
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 3,
+    "display_name": "Support",
+    "url_name": "/support",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": null,
+    "website_submenuitem": [
+      {
+        "id": 9,
+        "name": "FAQ",
+        "order": 1,
+        "url_name": "/faq",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": null
+      },
+      {
+        "id": 19,
+        "name": "Subscriptions and payments",
+        "order": 1,
+        "url_name": "/managing-subscriptions-and-payments",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 18,
+        "name": "Reporting bugs",
+        "order": 1,
+        "url_name": "/reporting-issues-or-bugs",
+        "description": "",
+        "is_displayed": null,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 22,
+        "name": "Features",
+        "order": 5,
+        "url_name": "/features/",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": null
+      },
+      {
+        "id": 10,
+        "name": "Contact Us",
+        "order": 6,
+        "url_name": "/contact",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": null
+      }
+    ],
+    "react_icons": null
+  },
+  {
+    "id": 13,
+    "display_name": "Developers",
+    "url_name": "/developers",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 12,
+    "display_name": "Referral Bonuses",
+    "url_name": "/referral-bonuses",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 1,
+    "display_name": "Learn Today",
+    "url_name": "/",
+    "is_displayed": false,
+    "is_displayed_on_footer": false,
+    "order": 1,
+    "image": null,
+    "react_icon_id": 249,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": {
+      "icon_name": "ShoppingBagIcon"
+    }
+  },
+  {
+    "id": 16,
+    "display_name": "Terms",
+    "url_name": "/terms",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": null,
+    "website_submenuitem": [
+      {
+        "id": 1,
+        "name": "Privacy",
+        "order": 1,
+        "url_name": "/privacy-policy",
+        "description": "Main Product Description",
+        "is_displayed": true,
+        "organization_id": null
+      },
+      {
+        "id": 4,
+        "name": "Cookie",
+        "order": 2,
+        "url_name": "/cookie-policy",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 8,
+        "name": "Delivery",
+        "order": 3,
+        "url_name": "/delivery-policy",
+        "description": "Description of product 6",
+        "is_displayed": true,
+        "organization_id": null
+      },
+      {
+        "id": 5,
+        "name": "Return",
+        "order": 4,
+        "url_name": "/return-policy",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": null
+      }
+    ],
+    "react_icons": null
+  },
+  {
+    "id": 14,
+    "display_name": "Investors",
+    "url_name": "/investors",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 1,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 2,
+    "display_name": "Products",
+    "url_name": "/products",
+    "is_displayed": true,
+    "is_displayed_on_footer": true,
+    "order": 2,
+    "image": null,
+    "react_icon_id": 259,
+    "organization_id": null,
+    "website_submenuitem": [
+      {
+        "id": 23,
+        "name": "SQE1 Prep",
+        "order": 1,
+        "url_name": "/products/sqe-1-training-course",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 6,
+        "name": "Free Trial",
+        "order": 2,
+        "url_name": "/products/sqe-1-free-trial",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 2,
+        "name": "Study Books Bundle",
+        "order": 3,
+        "url_name": "/products/sqe-1-study-books-full-bundle",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 12,
+        "name": "All Products",
+        "order": 4,
+        "url_name": "/products",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": null
+      }
+    ],
+    "react_icons": {
+      "icon_name": "SquaresPlusIcon"
+    }
+  },
+  {
+    "id": 11,
+    "display_name": "Pricing",
+    "url_name": "/pricing",
+    "is_displayed": false,
+    "is_displayed_on_footer": false,
+    "order": 3,
+    "image": null,
+    "react_icon_id": 70,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": {
+      "icon_name": "BookmarkIcon"
+    }
+  },
+  {
+    "id": 7,
+    "display_name": "Blog",
+    "url_name": "/blog",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 4,
+    "image": null,
+    "react_icon_id": 241,
+    "organization_id": null,
+    "website_submenuitem": [
+      {
+        "id": 21,
+        "name": "How it works",
+        "order": 0,
+        "url_name": "/how-it-works-sqe-1-free-trial",
+        "description": null,
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 17,
+        "name": "SQE Unveiled",
+        "order": 1,
+        "url_name": "/navigating-the-legal-labyrinth-the-solicitors-qualification-exam-sqe-unveiled",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      },
+      {
+        "id": 20,
+        "name": "Training Quizzes",
+        "order": 2,
+        "url_name": "/training-quizzes",
+        "description": "",
+        "is_displayed": true,
+        "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891"
+      }
+    ],
+    "react_icons": {
+      "icon_name": "RssIcon"
+    }
+  },
+  {
+    "id": 10,
+    "display_name": "Affiliates and Partners",
+    "url_name": "/become-affiliate-partner",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 4,
+    "image": null,
+    "react_icon_id": null,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": null
+  },
+  {
+    "id": 8,
+    "display_name": "About Us",
+    "url_name": "/about-us",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 5,
+    "image": null,
+    "react_icon_id": 2,
+    "organization_id": null,
+    "website_submenuitem": [],
+    "react_icons": {
+      "icon_name": "AdjustmentsHorizontalIcon"
+    }
+  },
+  {
+    "id": 9,
+    "display_name": "Education Hub",
+    "url_name": "/education-hub",
+    "is_displayed": false,
+    "is_displayed_on_footer": true,
+    "order": 6,
+    "image": null,
+    "react_icon_id": 1,
+    "organization_id": "de0d5c21-787f-49c2-a665-7ff8e599c891",
+    "website_submenuitem": [],
+    "react_icons": {
+      "icon_name": "AcademicCapIcon"
+    }
+  }
+]
+NEXT_PUBLIC_SUPABASE_URL: https://rgbmdfaoowqbgshjuwwm.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8
+Supabase client initialized: SupabaseClient {
+  supabaseUrl: 'https://rgbmdfaoowqbgshjuwwm.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+  realtimeUrl: URL {
+    href: 'wss://rgbmdfaoowqbgshjuwwm.supabase.co/realtime/v1',
+    origin: 'wss://rgbmdfaoowqbgshjuwwm.supabase.co',
+    protocol: 'wss:',
+    username: '',
+    password: '',
+    host: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    port: '',
+    pathname: '/realtime/v1',
+    search: '',
+    searchParams: URLSearchParams {},
+    hash: ''
+  },
+  authUrl: URL {
+    href: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/auth/v1',
+    origin: 'https://rgbmdfaoowqbgshjuwwm.supabase.co',
+    protocol: 'https:',
+    username: '',
+    password: '',
+    host: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    port: '',
+    pathname: '/auth/v1',
+    search: '',
+    searchParams: URLSearchParams {},
+    hash: ''
+  },
+  storageUrl: URL {
+    href: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1',
+    origin: 'https://rgbmdfaoowqbgshjuwwm.supabase.co',
+    protocol: 'https:',
+    username: '',
+    password: '',
+    host: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    port: '',
+    pathname: '/storage/v1',
+    search: '',
+    searchParams: URLSearchParams {},
+    hash: ''
+  },
+  functionsUrl: URL {
+    href: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/functions/v1',
+    origin: 'https://rgbmdfaoowqbgshjuwwm.supabase.co',
+    protocol: 'https:',
+    username: '',
+    password: '',
+    host: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+    port: '',
+    pathname: '/functions/v1',
+    search: '',
+    searchParams: URLSearchParams {},
+    hash: ''
+  },
+  storageKey: 'sb-rgbmdfaoowqbgshjuwwm-auth-token',
+  headers: { 'X-Client-Info': 'supabase-js-node/2.50.0' },
+  auth: SupabaseAuthClient {
+    memoryStorage: {},
+    stateChangeEmitters: Map(1) { '6e44de99-2210-4db0-ae6a-d1bc9d989bd2' => [Object] },
+    autoRefreshTicker: null,
+    visibilityChangedCallback: null,
+    refreshingDeferred: null,
+    initializePromise: Promise {
+      <pending>,
+      [Symbol(async_id_symbol)]: 133112,
+      [Symbol(trigger_async_id_symbol)]: 133103,
+      [Symbol(kResourceStore)]: undefined,
+      [Symbol(kResourceStore)]: [Object],
+      [Symbol(kResourceStore)]: [Object],
+      [Symbol(kResourceStore)]: undefined,
+      [Symbol(kResourceStore)]: undefined,
+      [Symbol(kResourceStore)]: [RequestInstance]
+    },
+    detectSessionInUrl: true,
+    hasCustomAuthorizationHeader: false,
+    suppressGetSessionWarning: false,
+    lockAcquired: true,
+    pendingInLock: [ [Promise] ],
+    broadcastChannel: null,
+    logger: [Function: log],
+    instanceID: 0,
+    logDebugMessages: false,
+    persistSession: true,
+    storageKey: 'sb-rgbmdfaoowqbgshjuwwm-auth-token',
+    autoRefreshToken: true,
+    admin: GoTrueAdminApi {
+      url: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/auth/v1',
+      headers: [Object],
+      fetch: [Function (anonymous)],
+      mfa: [Object]
+    },
+    url: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/auth/v1',
+    headers: {
+      Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+      apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+      'X-Client-Info': 'supabase-js-node/2.50.0'
+    },
+    fetch: [Function (anonymous)],
+    lock: [AsyncFunction: lockNoOp],
+    flowType: 'implicit',
+    jwks: { keys: [] },
+    jwks_cached_at: -9007199254740991,
+    mfa: {
+      verify: [Function: bound _verify] AsyncFunction,
+      enroll: [Function: bound _enroll] AsyncFunction,
+      unenroll: [Function: bound _unenroll] AsyncFunction,
+      challenge: [Function: bound _challenge] AsyncFunction,
+      listFactors: [Function: bound _listFactors] AsyncFunction,
+      challengeAndVerify: [Function: bound _challengeAndVerify] AsyncFunction,
+      getAuthenticatorAssuranceLevel: [Function: bound _getAuthenticatorAssuranceLevel] AsyncFunction
+    },
+    storage: {
+      getItem: [Function: getItem],
+      setItem: [Function: setItem],
+      removeItem: [Function: removeItem]
+    }
+  },
+  fetch: [Function (anonymous)],
+  realtime: RealtimeClient {
+    accessTokenValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+    apiKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8',
+    channels: [],
+    endPoint: 'wss://rgbmdfaoowqbgshjuwwm.supabase.co/realtime/v1/websocket',
+    httpEndpoint: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/realtime/v1',
+    headers: { 'X-Client-Info': 'supabase-js-node/2.50.0' },
+    params: {
+      apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8'
+    },
+    timeout: 10000,
+    heartbeatIntervalMs: 25000,
+    heartbeatTimer: undefined,
+    pendingHeartbeatRef: null,
+    heartbeatCallback: [Function: noop],
+    ref: 0,
+    logger: [Function: noop],
+    conn: null,
+    sendBuffer: [],
+    serializer: Serializer { HEADER_LENGTH: 1 },
+    stateChangeCallbacks: { open: [], close: [], error: [], message: [] },
+    accessToken: [Function: bound _getAccessToken],
+    _resolveFetch: [Function (anonymous)],
+    transport: null,
+    reconnectAfterMs: [Function (anonymous)],
+    encode: [Function (anonymous)],
+    decode: [Function: bound decode],
+    reconnectTimer: Timer {
+      callback: [AsyncFunction (anonymous)],
+      timerCalc: [Function (anonymous)],
+      timer: undefined,
+      tries: 0
+    },
+    fetch: [Function (anonymous)]
+  },
+  rest: PostgrestClient {
+    url: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/rest/v1',
+    headers: { 'X-Client-Info': 'supabase-js-node/2.50.0' },
+    schemaName: 'public',
+    fetch: [Function (anonymous)]
+  }
+}
+supabaseClient - NEXT_PUBLIC_SUPABASE_URL: https://rgbmdfaoowqbgshjuwwm.supabase.co
+supabaseClient - NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8
+supabaseClient - Auth state changed: INITIAL_SESSION Session: null
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 3114ms
+ ⚠ ./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/index.js
+./node_modules/.pnpm/@supabase+supabase-js@2.50.0/node_modules/@supabase/supabase-js/dist/module/index.js
+./src/lib/supabase.ts
+./src/app/layout.tsx
+ ⚠ ./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+./node_modules/.pnpm/@supabase+realtime-js@2.11.10/node_modules/@supabase/realtime-js/dist/main/index.js
+./node_modules/.pnpm/@supabase+supabase-js@2.50.0/node_modules/@supabase/supabase-js/dist/module/index.js
+./src/lib/supabaseServerClient.js
+./src/app/api/cookies/categories/route.ts
+Received GET request for /api/template-heading-sections: http://localhost:3000/api/template-heading-sections?url_page=%2Fadmin
+url_page: /admin
+Decoded url_page: /admin
+Fetching organization ID for URL: http://localhost:3000 isLocal: true tenantId: de0d5c21-787f-49c2-a665-7ff8e599c891
+Received GET request for /api/template-sections: http://localhost:3000/api/template-sections?url_page=%2Fadmin
+url_page: /admin
+Decoded url_page: /admin
+Fetching organization ID for URL: http://localhost:3000 isLocal: true tenantId: de0d5c21-787f-49c2-a665-7ff8e599c891
+ GET /favicon.ico 200 in 1709ms
+supabaseServerClient - SUPABASE_URL: https://rgbmdfaoowqbgshjuwwm.supabase.co
+supabaseServerClient - SUPABASE_SERVICE_ROLE_KEY: Set
+ GET /favicon.ico 200 in 7ms
+Fetched organization ID by baseUrl: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetching template heading sections for organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetched organization ID by baseUrl: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetching template sections for organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+ GET /api/cookies/categories 200 in 1873ms
+Fetched heading sections: []
+No heading sections found for url_page: /admin and organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+ GET /api/template-heading-sections?url_page=%2Fadmin 200 in 1833ms
+Received GET request for /api/template-heading-sections: http://localhost:3000/api/template-heading-sections?url_page=%2Fadmin
+url_page: /admin
+Decoded url_page: /admin
+Fetching organization ID for URL: http://localhost:3000 isLocal: true tenantId: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetched sections (raw): []
+Transformed sections: []
+No sections found for url_page: /admin and organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+ GET /api/template-sections?url_page=%2Fadmin 200 in 1897ms
+Received GET request for /api/template-sections: http://localhost:3000/api/template-sections?url_page=%2Fadmin
+url_page: /admin
+Decoded url_page: /admin
+Fetching organization ID for URL: http://localhost:3000 isLocal: true tenantId: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetched organization ID by baseUrl: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetching template heading sections for organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetched organization ID by baseUrl: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetching template sections for organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+Fetched heading sections: []
+No heading sections found for url_page: /admin and organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+ GET /api/template-heading-sections?url_page=%2Fadmin 200 in 186ms
+Fetched sections (raw): []
+Transformed sections: []
+No sections found for url_page: /admin and organization_id: de0d5c21-787f-49c2-a665-7ff8e599c891
+ GET /api/template-sections?url_page=%2Fadmin 200 in 173ms
+[?25h

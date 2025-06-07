@@ -1,0 +1,14 @@
+'use client';
+import DynamicTable from '@/components/DynamicTable';
+
+export default function ClientTablePage({
+  tableName,
+  apiEndpoint,
+  userRole,
+}: {
+  tableName: string;
+  apiEndpoint: string;
+  userRole: 'admin' | 'user'; // Update type to match DynamicTable
+}) {
+  return <DynamicTable tableName={tableName} apiEndpoint={apiEndpoint} userRole={userRole} />;
+}

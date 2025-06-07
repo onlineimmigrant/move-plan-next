@@ -1,7 +1,9 @@
-// /components/HomePageSections/Hero.tsx
+'use client'; // Ensure client-side rendering for hooks
+
 import React, { useEffect, useRef, useState } from 'react';
 import parse from 'html-react-parser';
 import Link from 'next/link';
+import Image from 'next/image'; // Import next/image
 
 interface HeroProps {
   hero: {
@@ -40,16 +42,19 @@ interface HeroProps {
 }
 
 const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
-  if (!hero) return null;
-
+  // Move hooks to top level
   const [isVisible, setIsVisible] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // Early return after hooks
+  if (!hero) return null;
 
   // Debug log
   console.log('Hero props:', { h1_title: hero.h1_title, p_description: hero.p_description, title_alighnement: hero.title_alighnement });
 
   // Intersection Observer to detect visibility
   useEffect(() => {
+    const currentRef = heroRef.current; // Store ref value
     const observer = new IntersectionObserver(
       ([entry]) => {
         const visible = entry.isIntersecting;
@@ -61,16 +66,16 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
       }
     );
 
-    if (heroRef.current) {
-      observer.observe(heroRef.current);
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => {
-      if (heroRef.current) {
-        observer.unobserve(heroRef.current);
+      if (currentRef) {
+        observer.unobserve(currentRef); // Use stored ref value
       }
     };
-  }, []);
+  }, []); // Empty dependency array since heroRef is stable
 
   // Determine text classes based on is_h1_gradient_text
   const textColorClass = hero.is_h1_gradient_text
@@ -93,7 +98,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
   return (
     <div
       ref={heroRef}
-      className={`pt-16 min-h-screen relative isolate px-6 lg:px-8 ${backgroundClass}  flex items-center justify-center`}
+      className={`pt-16 min-h-screen relative isolate px-6 lg:px-8 ${backgroundClass} flex items-center justify-center`}
     >
       {hero.is_bg_gradient && (
         <div
@@ -107,10 +112,13 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
       )}
 
       {hero.image && hero.is_image_full_page && (
-        <img
+        <Image
           src={hero.image}
           alt={`Image of ${hero.h1_title}`}
           className="absolute inset-0 -z-10 h-auto w-auto object-contain sm:h-auto sm:w-auto sm:object-contain"
+          width={1280} // Adjust based on actual image size
+          height={720} // Adjust based on actual image size
+          priority={true} // Full-page image is likely critical for LCP
         />
       )}
 
@@ -137,7 +145,7 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
 
           <div className={`text-${hero.title_alighnement || 'center'}`}>
             <h1
-              className={`${h1TextSize}   font-bold tracking-tight inline hover:text-gray-700 ${textColorClass} animate-hero-title ${isVisible ? 'animate' : ''}`}
+              className={`${h1TextSize} font-bold tracking-tight inline hover:text-gray-700 ${textColorClass} animate-hero-title ${isVisible ? 'animate' : ''}`}
             >
               {parse(hero.h1_title)}
             </h1>
@@ -154,28 +162,31 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
             <div
               className={`mt-10 flex items-center justify-${hero.title_alighnement || 'center'} gap-x-6`}
             >
-              <a
+              <Link
                 href={labelsDefault?.button_main_get_started?.url || '#'}
                 className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-2 px-4 text-sm font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
               >
                 {labelsDefault?.button_main_get_started?.text || 'Get Started'}
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/blog"
                 className={`flex items-center text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 animate-hero-button-explore ${isVisible ? 'animate' : ''}`}
               >
                 {labelsDefault?.button_explore || 'Explore'} <span className="ml-1">→</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
         <div className="order-1">
           {hero.image && !hero.is_image_full_page && (
             <div className={`text-${hero.title_alighnement || 'center'}`}>
-              <img
+              <Image
                 src={hero.image}
                 alt={`Image of ${hero.h1_title}`}
                 className="h-full w-full object-cover sm:h-auto sm:w-full sm:max-w-[80%] sm:mx-auto sm:object-contain"
+                width={1024} // Adjust based on actual image size
+                height={576} // Adjust based on actual image size
+                priority={false}
               />
             </div>
           )}

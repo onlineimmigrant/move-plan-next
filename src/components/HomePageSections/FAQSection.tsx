@@ -1,4 +1,3 @@
-// components/HomePageSections/FAQSection.tsx
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -13,11 +12,11 @@ interface FAQSectionProps {
 }
 
 const FAQSection = ({ faqs }: FAQSectionProps) => {
-  if (!faqs || faqs.length === 0) {
-    return null;
-  }
-
+  // Move useMemo to top level
   const groupedFaqs = useMemo(() => {
+    if (!faqs || faqs.length === 0) {
+      return {};
+    }
     return faqs.reduce((acc: { [key: string]: FAQ[] }, item) => {
       const sectionName = item.section || 'General';
       if (!acc[sectionName]) {
@@ -27,6 +26,11 @@ const FAQSection = ({ faqs }: FAQSectionProps) => {
       return acc;
     }, {});
   }, [faqs]);
+
+  // Early return after hooks
+  if (!faqs || faqs.length === 0) {
+    return null;
+  }
 
   const filteredSections = Object.keys(groupedFaqs).filter(
     (section) => groupedFaqs[section].length > 0
@@ -45,7 +49,7 @@ const FAQSection = ({ faqs }: FAQSectionProps) => {
         <div className="space-y-16">
           {filteredSections.map((section) => (
             <div key={section} className="space-y-8">
-              <h3 className="text-center text-lg  font-bold text-gray-700">{section}</h3>
+              <h3 className="text-center text-lg font-bold text-gray-700">{section}</h3>
               <div className="divide-y divide-gray-200 rounded-xl bg-white shadow-lg ring-1 ring-gray-100">
                 {groupedFaqs[section].map((item) => (
                   <FAQItem key={item.id} item={item} />

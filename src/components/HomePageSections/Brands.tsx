@@ -1,5 +1,7 @@
-// /components/HomePageSections/Brands.tsx
+'use client'; // Ensure client-side rendering for useSettings
+
 import React from 'react';
+import Image from 'next/image'; // Import next/image
 import { useSettings } from '@/context/SettingsContext';
 
 interface Brand {
@@ -17,10 +19,12 @@ interface BrandsProps {
 }
 
 const Brands: React.FC<BrandsProps> = ({ brands, textContent }) => {
-  if (!brands || brands.length === 0) return null;
-
+  // Move useSettings to top level
   const { settings } = useSettings();
   const animationDuration = Math.max(20, brands.length * 6); // Slower: 20s min, 6s per item
+
+  // Early return after hooks
+  if (!brands || brands.length === 0) return null;
 
   // Debug log
   console.log('Brands count:', brands.length, 'Animation duration:', animationDuration);
@@ -45,10 +49,13 @@ const Brands: React.FC<BrandsProps> = ({ brands, textContent }) => {
                 key={`${logo.id}-${index}`}
                 className="flex-none flex justify-center text-center w-48"
               >
-                <img
+                <Image
                   className="h-8 sm:h-12 w-48 object-contain"
                   src={logo.web_storage_address}
                   alt={logo.name}
+                  width={192} // w-48 = 192px
+                  height={48} // h-8 = 32px, sm:h-12 = 48px
+                  priority={false} // Set to true if critical for LCP
                 />
               </div>
             ))}

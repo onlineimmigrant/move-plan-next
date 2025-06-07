@@ -106,7 +106,9 @@ const matchesPathPattern = (path: string, pattern: string): boolean => {
   return path === prefix || path.startsWith(prefix + '/');
 };
 
-// Fetch user profile
+
+//fetch userProfile
+// /lib/supabase.ts (updated fetchUserProfile)
 export async function fetchUserProfile(userId?: string) {
   if (!userId) {
     console.log('No userId provided, skipping profile fetch');
@@ -130,7 +132,7 @@ export async function fetchUserProfile(userId?: string) {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('user_status, last_login_at, organization_id')
+      .select('user_status, role, last_login_at, organization_id') // Added role
       .eq('id', userId)
       .eq('organization_id', organizationId)
       .maybeSingle();
@@ -144,7 +146,7 @@ export async function fetchUserProfile(userId?: string) {
         hint: error.hint || 'No hint',
         userId,
         organizationId,
-        query: 'SELECT user_status, last_login_at, organization_id FROM profiles WHERE id = :userId AND organization_id = :organizationId',
+        query: 'SELECT user_status, role, last_login_at, organization_id FROM profiles WHERE id = :userId AND organization_id = :organizationId',
       });
       return null;
     }
@@ -167,6 +169,7 @@ export async function fetchUserProfile(userId?: string) {
     return null;
   }
 }
+
 
 // Fetch banners
 export async function fetchBanners(pagePath?: string, userId?: string): Promise<Banner[]> {

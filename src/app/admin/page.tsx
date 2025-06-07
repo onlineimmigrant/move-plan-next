@@ -12,7 +12,7 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function AdminDashboardPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login");
+        router.push("/");
         return;
       }
 
@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
         .single();
 
       if (error || !profile) {
-        router.push("/login");
+        router.push("/");
         return;
       }
 
