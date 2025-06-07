@@ -4,7 +4,7 @@ import { getBaseUrl } from '@/lib/utils';
 import './globals.css';
 import ClientProviders from './ClientProviders';
 import { Settings } from '@/types/settings';
-import Head from 'next/head';
+import Head from 'next/head'; // Import next/head for favicon
 
 interface SubMenuItem {
   id: number;
@@ -29,7 +29,7 @@ interface MenuItem {
   order: number;
   image?: string;
   react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[];
+  react_icons?: ReactIcon | ReactIcon[]; // Support both single object and array
   website_submenuitem?: SubMenuItem[];
   organization_id: string | null;
 }
@@ -47,12 +47,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       menu_width: '7xl',
       menu_items_are_text: true,
       footer_color: 'gray-800',
-      favicon: '/images/favicon.png',
+      favicon: '/images/favicon.png', // Default favicon for build
     };
     return (
       <html lang="en">
         <Head>
-          <link rel="icon" href={defaultSettings.favicon} />
+          <link rel="icon" href={defaultSettings.favicon || '/images/favicon.png'} />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         </Head>
         <body>
@@ -92,13 +92,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Fetch settings for the organization
   let settings: Settings = {
     id: 0,
-    site: 'My Next.js App',
+    site: 'App',
     image: '/images/logo.svg',
     organization_id: '',
     menu_width: '7xl',
     menu_items_are_text: true,
     footer_color: 'gray-800',
-    favicon: '/images/favicon.png',
+    favicon: '/images/favicon.png', // Default favicon
   };
   try {
     settings = await getSettings(baseUrl);
@@ -106,9 +106,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   } catch (error) {
     console.error('Failed to fetch settings in layout:', error);
   }
-
-  // Log favicon for debugging
-  console.log('Favicon URL:', settings.favicon);
 
   // Fetch organization ID
   let organizationId: string | null = null;
@@ -193,6 +190,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       if (error) throw error;
 
+      // Filter and cast data to MenuItem[]
       menuItems = (data || []).map((item) => {
         let reactIcons: ReactIcon | ReactIcon[] | undefined = item.react_icons;
         if (Array.isArray(item.react_icons)) {
@@ -269,12 +267,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ],
   };
 
-  // Determine favicon URL with Supabase Storage support
-  const faviconUrl = settings.favicon
-    ? settings.favicon.startsWith('http')
-      ? `${settings.favicon}?v=${settings.id}` // External URL with cache-busting
-      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/favicons/${settings.favicon}?v=${settings.id}` // Supabase Storage
-    : '/images/favicon.png';
+  // Determine favicon URL
+  const faviconUrl = settings.favicon || '/images/favicon.png';
 
   return (
     <html lang="en">
