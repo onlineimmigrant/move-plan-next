@@ -71,6 +71,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
     menu_width: '',
     menu_items_are_text: false,
     footer_color: '',
+    favicon: null, // Default to null if no favicon is set
   };
 
   // Skip Supabase query only during Vercel build (not at runtime)
@@ -105,7 +106,8 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
         organization_id,
         menu_width,
         menu_items_are_text,
-        footer_color
+        footer_color,
+        favicon
       `)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
@@ -121,10 +123,11 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       id: data.id,
       site: data.site,
       image: data.image,
+      organization_id: data.organization_id ?? organizationId,
       menu_width: data.menu_width,
       menu_items_are_text: data.menu_items_are_text,
       footer_color: data.footer_color,
-      organization_id: data.organization_id ?? organizationId,
+      favicon: data.favicon ?? null,
     };
 
     console.log('Settings fetched successfully:', settings);

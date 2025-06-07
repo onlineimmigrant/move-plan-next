@@ -1,10 +1,10 @@
-// /app/layout.tsx
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import { supabase } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import './globals.css';
 import ClientProviders from './ClientProviders';
 import { Settings } from '@/types/settings';
+import Head from 'next/head';
 
 interface SubMenuItem {
   id: number;
@@ -29,7 +29,7 @@ interface MenuItem {
   order: number;
   image?: string;
   react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[]; // Support both single object and array
+  react_icons?: ReactIcon | ReactIcon[];
   website_submenuitem?: SubMenuItem[];
   organization_id: string | null;
 }
@@ -47,9 +47,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       menu_width: '7xl',
       menu_items_are_text: true,
       footer_color: 'gray-800',
+      favicon: '/images/favicon.png',
     };
     return (
       <html lang="en">
+        <Head>
+          <link rel="icon" href={defaultSettings.favicon} />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </Head>
         <body>
           <ClientProviders
             defaultSEOData={{
@@ -93,6 +98,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     menu_width: '7xl',
     menu_items_are_text: true,
     footer_color: 'gray-800',
+    favicon: '/images/favicon.png',
   };
   try {
     settings = await getSettings(baseUrl);
@@ -100,6 +106,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   } catch (error) {
     console.error('Failed to fetch settings in layout:', error);
   }
+
+  // Log favicon for debugging
+  console.log('Favicon URL:', settings.favicon);
 
   // Fetch organization ID
   let organizationId: string | null = null;
@@ -184,7 +193,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       if (error) throw error;
 
-      // Filter and cast data to MenuItem[]
       menuItems = (data || []).map((item) => {
         let reactIcons: ReactIcon | ReactIcon[] | undefined = item.react_icons;
         if (Array.isArray(item.react_icons)) {
@@ -261,8 +269,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ],
   };
 
+  // Determine favicon URL with Supabase Storage support
+  const faviconUrl = settings.favicon
+    ? settings.favicon.startsWith('http')
+      ? `${settings.favicon}?v=${settings.id}` // External URL with cache-busting
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/favicons/${settings.favicon}?v=${settings.id}` // Supabase Storage
+    : '/images/favicon.png';
+
   return (
     <html lang="en">
+      <Head>
+        <link rel="icon" href={faviconUrl} />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </Head>
       <body>
         <ClientProviders
           defaultSEOData={defaultSEOData}
