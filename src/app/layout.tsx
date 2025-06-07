@@ -202,8 +202,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     breadcrumbStructuredData,
   ].filter((data) => {
     try {
-      JSON.stringify(data); // Ensure valid JSON
-      return data['@type'] && data['@context']; // Check required fields
+      JSON.stringify(data); 
+      return data['@type'] && data['@context']; 
     } catch {
       console.error('Invalid structured data:', data);
       return false;
