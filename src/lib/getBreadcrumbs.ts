@@ -2,7 +2,7 @@ interface StructuredBreadcrumbItem {
   '@type': string;
   position: number;
   name: string;
-  item?: string;
+  item: string; // Always include item for Schema.org compliance
 }
 
 export function getBreadcrumbStructuredData({
@@ -16,10 +16,12 @@ export function getBreadcrumbStructuredData({
   overrides?: { segment: string; label: string; url?: string }[];
   extraCrumbs?: { label: string; url?: string }[];
 }): StructuredBreadcrumbItem[] {
-  // Normalize baseUrl and pathname
-  const normalizedBaseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
+  // Normalize URLs
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
   const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`;
-  const breadcrumbs: { label: string; url?: string }[] = [{ label: 'Home', url: '/' }];
+  const breadcrumbs: { label: string; url: string }[] = [
+    { label: 'Home', url: normalizedBaseUrl },
+  ];
   let accumulatedPath = '';
 
   // Split pathname into segments
@@ -37,17 +39,23 @@ export function getBreadcrumbStructuredData({
       accumulatedPath = override.url || accumulatedPath;
     }
 
-    // Add breadcrumb
-    breadcrumbs.push({ label: formattedLabel, url: accumulatedPath });
+    breadcrumbs.push({ label: formattedLabel, url: `${normalizedBaseUrl}${accumulatedPath}` });
   });
 
-  // Insert extra crumbs after "Products" or "All Products"
+  // Insert extra crumbs
   if (extraCrumbs.length > 0) {
     const productsIndex = breadcrumbs.findIndex(
       (crumb) => crumb.label === 'Products' || crumb.label === 'All Products'
     );
     if (productsIndex !== -1) {
-      breadcrumbs.splice(productsIndex + 1, 0, ...extraCrumbs);
+      breadcrumbs.splice(
+        productsIndex + 1,
+        0,
+        ...extraCrumbs.map((crumb) => ({
+          label: crumb.label,
+          url: crumb.url ? `${normalizedBaseUrl}${crumb.url}` : `${normalizedBaseUrl}${accumulatedPath}`,
+        }))
+      );
     }
   }
 
@@ -56,6 +64,6 @@ export function getBreadcrumbStructuredData({
     '@type': 'ListItem',
     position: index + 1,
     name: crumb.label,
-    item: crumb.url ? `${normalizedBaseUrl}${crumb.url}` : undefined,
+    item: crumb.url,
   }));
 }
