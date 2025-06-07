@@ -6,7 +6,6 @@ import './globals.css';
 import ClientProviders from './ClientProviders';
 import { Settings } from '@/types/settings';
 import { SEOData } from '@/types/seo';
-import Head from 'next/head';
 
 interface SubMenuItem {
   id: number;
@@ -83,19 +82,40 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   // Fetch site-wide FAQs
   let siteFaqs: { question: string; answer: string }[] = [];
-  if (organizationId && !isBuild) {
+  if (organizationId) {
     try {
       const { data, error } = await supabase
         .from('faq')
         .select('question, answer')
         .or(`organization_id.eq.${organizationId},organization_id.is.null`);
       if (error) throw error;
-      siteFaqs = data || [];
-      console.log('Fetched siteFaqs:', siteFaqs);
+      siteFaqs = (data || []).map((faq) => ({
+        question: faq.question?.trim() || '', // Trim question
+        answer: faq.answer?.trim() || '', // Trim answer
+      }));
+      console.log('Raw siteFaqs:', siteFaqs);
     } catch (error) {
       console.error('Failed to fetch FAQs:', error);
     }
   }
+
+  // Generate FAQPage structured data
+  const faqStructuredData = siteFaqs.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: siteFaqs
+          .filter((faq) => faq.question && faq.answer) // Ensure non-empty fields
+          .map((faq) => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: faq.answer.replace(/\n+/g, ' ').trim(), // Replace newlines with spaces and trim
+            },
+          })),
+      }
+    : null;
 
   // Fetch hero data
   let heroData = {
@@ -106,8 +126,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     try {
       const { data, error } = await supabase
         .from('website_hero')
-        .select('h1_text_color, p_description_color')
-        .or(`organization_id.eq.${organizationId},organization_id.is.null`)
+        .select('image, h1_text_color, p_description_color')
+        .or(`organization_id.eq.${organizationId || '?'},organization_id.is.null`)
         .single();
       if (error) throw error;
       heroData = {
@@ -200,12 +220,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const structuredData = [
     ...(settings.seo_structured_data || []),
     breadcrumbStructuredData,
+    ...(faqStructuredData ? [faqStructuredData] : []),
   ].filter((data) => {
     try {
-      JSON.stringify(data); 
-      return data['@type'] && data['@context']; 
-    } catch {
-      console.error('Invalid structured data:', data);
+      JSON.stringify(data); // Ensure valid JSON
+      return data['@type'] && data['@context']; // Check required fields
+    } catch (e) {
+      console.error('Invalid structured data:', data, e);
       return false;
     }
   });
