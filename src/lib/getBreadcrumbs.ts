@@ -1,8 +1,3 @@
-interface Breadcrumb {
-  label: string;
-  url?: string;
-}
-
 interface StructuredBreadcrumbItem {
   '@type': string;
   position: number;
@@ -21,12 +16,14 @@ export function getBreadcrumbStructuredData({
   overrides?: { segment: string; label: string; url?: string }[];
   extraCrumbs?: { label: string; url?: string }[];
 }): StructuredBreadcrumbItem[] {
-  // Initialize breadcrumbs with "Home"
-  const breadcrumbs: Breadcrumb[] = [{ label: 'Home', url: '/' }];
+  // Normalize baseUrl and pathname
+  const normalizedBaseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
+  const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  const breadcrumbs: { label: string; url?: string }[] = [{ label: 'Home', url: '/' }];
   let accumulatedPath = '';
 
   // Split pathname into segments
-  const pathSegments = pathname.split('/').filter(Boolean);
+  const pathSegments = normalizedPathname.split('/').filter(Boolean);
 
   // Build breadcrumbs
   pathSegments.forEach((segment, index) => {
@@ -41,11 +38,7 @@ export function getBreadcrumbStructuredData({
     }
 
     // Add breadcrumb
-    if (index < pathSegments.length - 1) {
-      breadcrumbs.push({ label: formattedLabel, url: accumulatedPath });
-    } else {
-      breadcrumbs.push({ label: formattedLabel });
-    }
+    breadcrumbs.push({ label: formattedLabel, url: accumulatedPath });
   });
 
   // Insert extra crumbs after "Products" or "All Products"
@@ -63,6 +56,6 @@ export function getBreadcrumbStructuredData({
     '@type': 'ListItem',
     position: index + 1,
     name: crumb.label,
-    item: crumb.url ? `${baseUrl}${crumb.url}` : undefined,
+    item: crumb.url ? `${normalizedBaseUrl}${crumb.url}` : undefined,
   }));
 }
