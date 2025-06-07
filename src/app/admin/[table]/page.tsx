@@ -1,13 +1,15 @@
 // admin/[table]/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DynamicTable from "@/components/DynamicTable";
 import { getTableToDisclosure } from "@/lib/sidebarLinks";
 import { useSettings } from "@/context/SettingsContext";
 import { useParams } from "next/navigation";
-
 import ColorsModal from "@/components/ColorsModal";
 import { useModal } from "@/context/ModalContext";
+import { supabase } from "@/lib/supabase";
 
 // Mapping of URL table names to actual Supabase table names
 const tableNameMapping: { [key: string]: string } = {
@@ -21,18 +23,64 @@ const tableNameMapping: { [key: string]: string } = {
   currencies: "currency",
   todo: "todo",
   item_types: "item_types",
-  settings: "settings", // Add settings to the mapping
+  settings: "settings",
 };
 
 export default function TablePage() {
+  const router = useRouter();
   const params = useParams();
   const { settings } = useSettings();
   const { isPaletteModalOpen, setIsPaletteModalOpen, isMinimized, setIsMinimized } = useModal();
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const urlTableName = params.table as string;
 
-  console.log("urlTableName:", urlTableName);
-  console.log("isPaletteModalOpen:", isPaletteModalOpen);
-  console.log("isMinimized:", isMinimized);
+  useEffect(() => {
+    async function checkAdmin() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/");
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !profile) {
+        router.push("/");
+        return;
+      }
+
+      if (profile.role !== "admin") {
+        router.push("/");
+        return;
+      }
+
+      setIsAdmin(true);
+      setLoading(false);
+    }
+
+    checkAdmin();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-lg font-semibold text-gray-600 animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null; // or some fallback UI while redirecting
+  }
 
   // Map the URL table name to the actual Supabase table name
   const tableName = tableNameMapping[urlTableName] || urlTableName;
@@ -55,24 +103,14 @@ export default function TablePage() {
   return (
     <div className="relative">
       <div className="flex justify-between items-center">
-        <h1
-          className=
-            "text-sm p-6 pt-4 pb-0 capitalize font-bold text-gray-700"
-        >
+        <h1 className="text-sm p-6 pt-4 pb-0 capitalize font-bold text-gray-700">
           {formattedDisclosure}
-          <span
-            className="text-gray-700"
-           
-          >
+          <span className="text-gray-700">
             {" "}
             {tableName.charAt(0).toUpperCase() + tableName.slice(1)}
           </span>
         </h1>
-        <span
-          className=
-            "text-sm p-6 pt-4 pb-0 capitalize font-bold text-gray-700"
-         
-        >
+        <span className="text-sm p-6 pt-4 pb-0 capitalize font-bold text-gray-700">
           Table
         </span>
       </div>

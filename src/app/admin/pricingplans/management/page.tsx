@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaPlus, FaSearch, FaTrash, FaTimes } from 'react-icons/fa';
 import { debounce } from 'lodash';
 import Toast from '@/components/Toast';
 import Tooltip from '@/components/Tooltip';
+import { supabase } from '@/lib/supabase';
 
 interface Product {
   id: string;
@@ -59,6 +61,7 @@ const Button = ({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonEl
 );
 
 export default function PricingPlansManagement() {
+  const router = useRouter();
   const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
   const [filteredPricingPlans, setFilteredPricingPlans] = useState<PricingPlan[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -78,15 +81,54 @@ export default function PricingPlansManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
   const modalRef = useRef<HTMLDivElement>(null);
 
   const debouncedTableSearch = useMemo(() => debounce((value: string) => setSearchQuery(value), 300), []);
   const debouncedProductSearch = useMemo(() => debounce((value: string) => setProductSearchQuery(value), 300), []);
 
+  // Admin check
   useEffect(() => {
-    fetchPricingPlans();
-    fetchProducts();
-  }, []);
+    async function checkAdmin() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push('/');
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error || !profile) {
+        router.push('/');
+        return;
+      }
+
+      if (profile.role !== 'admin') {
+        router.push('/');
+        return;
+      }
+
+      setIsAdmin(true);
+      setAuthLoading(false);
+    }
+
+    checkAdmin();
+  }, [router]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchPricingPlans();
+      fetchProducts();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     let filtered = pricingPlans;
@@ -294,6 +336,18 @@ export default function PricingPlansManagement() {
 
   const pageTitle = editingId ? 'Update Pricing Plan' : 'Add Pricing Plan';
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-lg font-semibold text-gray-600 animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null; // or some fallback UI while redirecting
+  }
+
   return (
     <div className="p-6 pb-16 max-w-7xl sm:mx-auto bg-white min-h-screen font-sans border border-gray-200 my-4 mx-2 rounded-lg">
       {/* Toast Notification */}
@@ -369,7 +423,7 @@ export default function PricingPlansManagement() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xswhere text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Product
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
@@ -387,7 +441,7 @@ export default function PricingPlansManagement() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Interval
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                    <th className="px-4 py-3 text-left text-xs font-medium text- gray-500 uppercase tracking-wider hidden sm:table-cell">
                       Active
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
@@ -511,7 +565,7 @@ export default function PricingPlansManagement() {
                   <div className="relative">
                     <label
                       htmlFor="product_id"
-                      className="block text-xs font-medium text-gray-700 mb-1"
+                      className=".justify-items-center block text-xs font-medium text-gray-700 mb-1"
                     >
                       Product
                     </label>
@@ -667,7 +721,7 @@ export default function PricingPlansManagement() {
                         name="is_active"
                         checked={formData.is_active}
                         onChange={handleInputChange}
-                        className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition duration-150 ease-in-out"
+                        className="mlOsman 2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition duration-150 ease-in-out"
                         aria-label="Toggle pricing plan active status"
                       />
                     </label>
