@@ -11,11 +11,16 @@ const supabase = createClient(
 
 // GET handler for the sitemap
 export async function GET(request: NextRequest) {
+  // Get the actual host and protocol from the request
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = request.headers.get('x-forwarded-proto') || 'http';
+  const actualBaseUrl = `${protocol}://${host}`;
+
   // Get the organization ID
   const organizationId = await getOrganizationId();
   if (!organizationId) {
-    console.error('No organization found for sitemap generation');
-    return new Response(generateSitemapWithDefault(request), {
+    console.error('No organization found for sitemap generation', { host });
+    return new Response(generateSitemapWithDefault(actualBaseUrl), {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
     });
@@ -28,15 +33,18 @@ export async function GET(request: NextRequest) {
     .eq('id', organizationId)
     .single();
 
-  // Get the actual host and protocol from the request
-  const host = request.headers.get('host') || 'localhost:3000';
-  const protocol = request.headers.get('x-forwarded-proto') || 'http';
-  const actualBaseUrl = `${protocol}://${host}`;
-
   // Use Supabase base_url or fallback to actualBaseUrl
   const baseUrl = orgData?.base_url && !orgData.base_url.includes('move-plan-next.vercel.app')
     ? orgData.base_url
     : actualBaseUrl;
+
+  // Log organization data
+  console.log('Organization data:', {
+    organizationId,
+    baseUrl,
+    actualBaseUrl,
+    orgError: orgError?.message || null,
+  });
 
   // If there's an error fetching organization data, use actualBaseUrl
   if (orgError || !orgData) {
@@ -44,34 +52,13 @@ export async function GET(request: NextRequest) {
       message: orgError?.message || 'No error message',
       code: orgError?.code || 'No code',
       details: orgError?.details || 'No details',
+      host,
     });
-    return new Response(generateSitemapWithDefault(request, actualBaseUrl), {
+    return new Response(generateSitemapWithDefault(baseUrl), {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
     });
   }
-
-  // Fetch additional static pages from sitemap_static_pages
-  const { data: staticPagesData, error: staticPagesError } = await supabase
-    .from('sitemap_static_pages')
-    .select('url_path, priority, last_modified')
-    .eq('organization_id', organizationId);
-
-  if (staticPagesError) {
-    console.error('Error fetching static pages:', {
-      message: staticPagesError.message || 'No error message',
-      code: staticPagesError.code || 'No code',
-      details: staticPagesError.details || 'No details',
-      organizationId,
-    });
-  }
-
-  // Map additional static pages
-  const additionalStaticPages = (staticPagesData || []).map((page) => ({
-    url: `${baseUrl}${page.url_path}`,
-    lastmod: page.last_modified ? new Date(page.last_modified).toISOString() : new Date().toISOString(),
-    priority: page.priority || 1.0,
-  }));
 
   // Define common static pages with priority 1.0
   const commonStaticPages = [
@@ -85,6 +72,26 @@ export async function GET(request: NextRequest) {
     { url: `${baseUrl}/terms`, lastmod: new Date().toISOString(), priority: 1.0 },
   ];
 
+  // Fetch additional static pages from sitemap_static_pages
+  const { data: staticPagesData, error: staticPagesError } = await supabase
+    .from('sitemap_static_pages')
+    .select('url_path, priority, last_modified')
+    .eq('organization_id', organizationId);
+
+  // Log static pages result
+  console.log('Static pages query:', {
+    staticPagesCount: staticPagesData?.length || 0,
+    staticPagesError: staticPagesError?.message || null,
+    organizationId,
+  });
+
+  // Map additional static pages
+  const additionalStaticPages = (staticPagesData || []).map((page) => ({
+    url: `${baseUrl}${page.url_path}`,
+    lastmod: page.last_modified ? new Date(page.last_modified).toISOString() : new Date().toISOString(),
+    priority: page.priority || 1.0,
+  }));
+
   // Fetch dynamic pages from Supabase (blog_post table)
   const { data: posts, error: postError } = await supabase
     .from('blog_post')
@@ -92,41 +99,12 @@ export async function GET(request: NextRequest) {
     .eq('display_this_post', true)
     .eq('organization_id', organizationId);
 
-  if (postError) {
-    console.error('Error fetching posts:', {
-      message: postError.message || 'No error message',
-      code: postError.code || 'No code',
-      details: postError.details || 'No details',
-    });
-  }
-
-  // Fetch features
-  const { data: features, error: featureError } = await supabase
-    .from('feature')
-    .select('slug, created_at')
-    .eq('organization_id', organizationId);
-
-  if (featureError) {
-    console.error('Error fetching features:', {
-      message: featureError.message || 'No error message',
-      code: featureError.code || 'No code',
-      details: featureError.details || 'No details',
-    });
-  }
-
-  // Fetch products
-  const { data: products, error: productError } = await supabase
-    .from('product')
-    .select('slug, updated_at')
-    .eq('organization_id', organizationId);
-
-  if (productError) {
-    console.error('Error fetching products:', {
-      message: productError.message || 'No error message',
-      code: productError.code || 'No code',
-      details: productError.details || 'No details',
-    });
-  }
+  // Log blog posts result
+  console.log('Blog posts query:', {
+    postsCount: posts?.length || 0,
+    postError: postError?.message || null,
+    organizationId,
+  });
 
   // Map dynamic pages from blog_post with priority 0.8
   const dynamicPages = (posts || []).map((post) => ({
@@ -135,20 +113,65 @@ export async function GET(request: NextRequest) {
     priority: 0.8,
   }));
 
+  // Fetch features
+  const { data: features, error: featureError } = await supabase
+    .from('feature')
+    .select('slug, created_at')
+    .eq('organization_id', organizationId);
+
+  // Log features result
+  console.log('Features query:', {
+    featuresCount: features?.length || 0,
+    featureError: featureError?.message || null,
+    organizationId,
+  });
+
+  // Map dynamic feature pages
   const dynamicFeaturePages = (features || []).map((feature) => ({
     url: `${baseUrl}/features/${feature.slug}`,
     lastmod: feature.created_at || new Date().toISOString(),
     priority: 0.8,
   }));
 
+  // Fetch products
+  const { data: products, error: productError } = await supabase
+    .from('product')
+    .select('slug, updated_at')
+    .eq('organization_id', organizationId);
+
+  // Log products result
+  console.log('Products query:', {
+    productsCount: products?.length || 0,
+    productError: productError?.message || null,
+    organizationId,
+  });
+
+  // Map dynamic product pages
   const dynamicProductsPages = (products || []).map((product) => ({
     url: `${baseUrl}/products/${product.slug}`,
     lastmod: product.updated_at || new Date().toISOString(),
     priority: 0.8,
   }));
 
-  // Combine common static, additional static, and dynamic pages
-  const pages = [...commonStaticPages, ...additionalStaticPages, ...dynamicPages, ...dynamicFeaturePages, ...dynamicProductsPages];
+  // Combine all pages
+  const pages = [
+    ...commonStaticPages,
+    ...additionalStaticPages,
+    ...dynamicPages,
+    ...dynamicFeaturePages,
+    ...dynamicProductsPages,
+  ];
+
+  // Log final pages count
+  console.log('Sitemap pages:', {
+    totalPages: pages.length,
+    commonStaticPages: commonStaticPages.length,
+    additionalStaticPages: additionalStaticPages.length,
+    dynamicPages: dynamicPages.length,
+    dynamicFeaturePages: dynamicFeaturePages.length,
+    dynamicProductsPages: dynamicProductsPages.length,
+    host,
+  });
 
   // Generate and return the sitemap
   return new Response(generateSitemap(pages), {
@@ -184,13 +207,9 @@ function generateSitemap(pages: { url: string; lastmod: string; priority: number
 }
 
 // Helper function to generate sitemap with default homepage
-function generateSitemapWithDefault(request: NextRequest, baseUrl?: string) {
-  const host = request.headers.get('host') || 'localhost:3000';
-  const protocol = request.headers.get('x-forwarded-proto') || 'http';
-  const defaultBaseUrl = baseUrl || `${protocol}://${host}`;
-
+function generateSitemapWithDefault(baseUrl: string) {
   const defaultPage = [{
-    url: `${defaultBaseUrl}/`,
+    url: `${baseUrl}/`,
     lastmod: new Date().toISOString(),
     priority: 1.0,
   }];
