@@ -1,4 +1,3 @@
-// /app/ClientProviders.tsx
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -13,10 +12,11 @@ import SEOWrapper from '@/components/SEOWrapper';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import StructuredDataInjector from '@/components/StructuredDataInjector';
 import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
-import SkeletonLoader from '@/components/SkeletonLoader'; // Import the SkeletonLoader
+import SkeletonLoader from '@/components/SkeletonLoader';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -135,8 +135,9 @@ export default function ClientProviders({
             <CookieSettingsProvider>
               <BannerProvider>
                 <SEOWrapper defaultSEOData={defaultSEOData} />
+                <StructuredDataInjector />
                 {loading ? (
-                  <SkeletonLoader /> // Replace with SkeletonLoader
+                  <SkeletonLoader />
                 ) : showNavbarFooter ? (
                   <NavbarFooterWrapper menuItems={menuItems || []}>
                     <div>
