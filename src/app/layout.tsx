@@ -244,7 +244,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     console.error('Failed to generate breadcrumb JSON-LD:', error);
   }
 
-  // Validate structured data, excluding ALL BreadcrumbList except our dynamic one
+ 
   const structuredData = [
     ...(Array.isArray(settings.seo_structured_data)
       ? settings.seo_structured_data.filter((data) => {
