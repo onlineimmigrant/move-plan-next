@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
       baseUrl: orgData?.base_url || null,
       actualBaseUrl,
       orgError: orgError?.message || null,
+      orgErrorCode: orgError?.code || null,
+      orgErrorDetails: orgError?.details || null,
     });
 
     if (!orgError && orgData?.base_url && !orgData.base_url.includes('move-plan-next.vercel.app')) {
@@ -78,7 +80,10 @@ export async function GET(request: NextRequest) {
 
     console.log('Static pages query:', {
       staticPagesCount: staticPagesData?.length || 0,
+      staticPages: staticPagesData || [],
       staticPagesError: staticPagesError?.message || null,
+      staticPagesErrorCode: staticPagesError?.code || null,
+      staticPagesErrorDetails: staticPagesError?.details || null,
       organizationId,
     });
 
@@ -97,7 +102,10 @@ export async function GET(request: NextRequest) {
 
     console.log('Blog posts query:', {
       postsCount: posts?.length || 0,
+      posts: posts || [],
       postError: postError?.message || null,
+      postErrorCode: postError?.code || null,
+      postErrorDetails: postError?.details || null,
       organizationId,
     });
 
@@ -115,7 +123,10 @@ export async function GET(request: NextRequest) {
 
     console.log('Features query:', {
       featuresCount: features?.length || 0,
+      features: features || [],
       featureError: featureError?.message || null,
+      featureErrorCode: featureError?.code || null,
+      featureErrorDetails: featureError?.details || null,
       organizationId,
     });
 
@@ -133,7 +144,10 @@ export async function GET(request: NextRequest) {
 
     console.log('Products query:', {
       productsCount: products?.length || 0,
+      products: products || [],
       productError: productError?.message || null,
+      productErrorCode: productError?.code || null,
+      productErrorDetails: productError?.details || null,
       organizationId,
     });
 
@@ -142,6 +156,8 @@ export async function GET(request: NextRequest) {
       lastmod: product.updated_at || new Date().toISOString(),
       priority: 0.8,
     }));
+  } else {
+    console.log('Skipping dynamic pages: No organizationId available');
   }
 
   // Combine all pages
@@ -163,6 +179,7 @@ export async function GET(request: NextRequest) {
     dynamicProductsPages: dynamicProductsPages.length,
     host,
     baseUrl,
+    pageUrls: pages.map((p) => p.url),
   });
 
   // Generate and return the sitemap
