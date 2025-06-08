@@ -15,31 +15,37 @@ export async function GET(request: NextRequest) {
   const organizationId = await getOrganizationId();
   if (!organizationId) {
     console.error('No organization found for sitemap generation');
-    return new Response(generateSitemapWithDefault(), {
+    return new Response(generateSitemapWithDefault(request), {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
     });
   }
 
-  // Fetch organization's base_url as a fallback
+  // Fetch organization's base_url from Supabase
   const { data: orgData, error: orgError } = await supabase
     .from('organizations')
     .select('base_url')
     .eq('id', organizationId)
     .single();
 
-  // Get the host from the request headers
-  const host = request.headers.get('host') || orgData?.base_url || process.env.NEXT_PUBLIC_BASE_URL || 'localhost:3000';
-  const baseUrl = `${request.headers.get('x-forwarded-proto') || 'http'}://${host}`;
+  // Get the actual host and protocol from the request
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = request.headers.get('x-forwarded-proto') || 'http';
+  const actualBaseUrl = `${protocol}://${host}`;
 
-  // If there's an error fetching organization data, return sitemap with default page
+  // Use Supabase base_url or fallback to actualBaseUrl
+  const baseUrl = orgData?.base_url && !orgData.base_url.includes('move-plan-next.vercel.app')
+    ? orgData.base_url
+    : actualBaseUrl;
+
+  // If there's an error fetching organization data, use actualBaseUrl
   if (orgError || !orgData) {
     console.error('Error fetching organization base_url:', {
       message: orgError?.message || 'No error message',
       code: orgError?.code || 'No code',
       details: orgError?.details || 'No details',
     });
-    return new Response(generateSitemapWithDefault(baseUrl), {
+    return new Response(generateSitemapWithDefault(request, actualBaseUrl), {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
     });
@@ -61,13 +67,13 @@ export async function GET(request: NextRequest) {
   }
 
   // Map additional static pages
-  const additionalStaticPages = staticPagesData?.map((page) => ({
+  const additionalStaticPages = (staticPagesData || []).map((page) => ({
     url: `${baseUrl}${page.url_path}`,
     lastmod: page.last_modified ? new Date(page.last_modified).toISOString() : new Date().toISOString(),
     priority: page.priority || 1.0,
-  })) || [];
+  }));
 
-  // Define common static pages with priority 1.0 (always included)
+  // Define common static pages with priority 1.0
   const commonStaticPages = [
     { url: `${baseUrl}/`, lastmod: new Date().toISOString(), priority: 1.0 },
     { url: `${baseUrl}/about-us`, lastmod: new Date().toISOString(), priority: 1.0 },
@@ -123,23 +129,23 @@ export async function GET(request: NextRequest) {
   }
 
   // Map dynamic pages from blog_post with priority 0.8
-  const dynamicPages = posts?.map((post) => ({
+  const dynamicPages = (posts || []).map((post) => ({
     url: `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
     lastmod: post.last_modified || new Date().toISOString(),
     priority: 0.8,
-  })) || [];
+  }));
 
-  const dynamicFeaturePages = features?.map((feature) => ({
+  const dynamicFeaturePages = (features || []).map((feature) => ({
     url: `${baseUrl}/features/${feature.slug}`,
     lastmod: feature.created_at || new Date().toISOString(),
     priority: 0.8,
-  })) || [];
+  }));
 
-  const dynamicProductsPages = products?.map((product) => ({
+  const dynamicProductsPages = (products || []).map((product) => ({
     url: `${baseUrl}/products/${product.slug}`,
     lastmod: product.updated_at || new Date().toISOString(),
     priority: 0.8,
-  })) || [];
+  }));
 
   // Combine common static, additional static, and dynamic pages
   const pages = [...commonStaticPages, ...additionalStaticPages, ...dynamicPages, ...dynamicFeaturePages, ...dynamicProductsPages];
@@ -178,9 +184,13 @@ function generateSitemap(pages: { url: string; lastmod: string; priority: number
 }
 
 // Helper function to generate sitemap with default homepage
-function generateSitemapWithDefault(baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000') {
+function generateSitemapWithDefault(request: NextRequest, baseUrl?: string) {
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = request.headers.get('x-forwarded-proto') || 'http';
+  const defaultBaseUrl = baseUrl || `${protocol}://${host}`;
+
   const defaultPage = [{
-    url: `${baseUrl}/`,
+    url: `${defaultBaseUrl}/`,
     lastmod: new Date().toISOString(),
     priority: 1.0,
   }];
