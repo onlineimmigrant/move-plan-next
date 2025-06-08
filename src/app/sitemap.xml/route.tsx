@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { NextRequest, NextResponse } from 'next/server'; // Updated to include NextRequest
+import { NextRequest, NextResponse } from 'next/server';
 import { getOrganizationId } from '@/lib/supabase';
 import { getPostUrl } from '@/lib/postUtils';
 
@@ -10,12 +10,12 @@ const supabase = createClient(
 );
 
 // GET handler for the sitemap
-export async function GET(request: NextRequest) { // Added request parameter
+export async function GET(request: NextRequest) {
   // Get the organization ID
   const organizationId = await getOrganizationId();
   if (!organizationId) {
     console.error('No organization found for sitemap generation');
-    return new Response(generateSitemap([]), {
+    return new Response(generateSitemapWithDefault(), {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
     });
@@ -28,22 +28,22 @@ export async function GET(request: NextRequest) { // Added request parameter
     .eq('id', organizationId)
     .single();
 
+  // Get the host from the request headers
+  const host = request.headers.get('host') || orgData?.base_url || process.env.NEXT_PUBLIC_BASE_URL || 'localhost:3000';
+  const baseUrl = `${request.headers.get('x-forwarded-proto') || 'http'}://${host}`;
+
+  // If there's an error fetching organization data, return sitemap with default page
   if (orgError || !orgData) {
     console.error('Error fetching organization base_url:', {
       message: orgError?.message || 'No error message',
       code: orgError?.code || 'No code',
       details: orgError?.details || 'No details',
     });
-    return new Response(generateSitemap([]), {
+    return new Response(generateSitemapWithDefault(baseUrl), {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
     });
   }
-
-  // Get the host from the request headers
-  const host = request.headers.get('host') || orgData.base_url || process.env.NEXT_PUBLIC_BASE_URL || 'localhost:3000';
-  // Construct the base URL using the actual host
-  const baseUrl = `${request.headers.get('x-forwarded-proto') || 'http'}://${host}`;
 
   // Fetch additional static pages from sitemap_static_pages
   const { data: staticPagesData, error: staticPagesError } = await supabase
@@ -153,9 +153,41 @@ export async function GET(request: NextRequest) { // Added request parameter
 
 // Helper function to generate XML sitemap
 function generateSitemap(pages: { url: string; lastmod: string; priority: number }[]) {
+  // If pages array is empty, include at least the homepage
+  const finalPages = pages.length > 0 ? pages : [{
+    url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/`,
+    lastmod: new Date().toISOString(),
+    priority: 1.0,
+  }];
+
   return `<?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      ${pages
+      ${finalPages
+        .map(
+          (page) => `
+            <url>
+              <loc>${page.url}</loc>
+              <lastmod>${page.lastmod}</lastmod>
+              <changefreq>weekly</changefreq>
+              <priority>${page.priority}</priority>
+            </url>
+          `
+        )
+        .join('')}
+    </urlset>`;
+}
+
+// Helper function to generate sitemap with default homepage
+function generateSitemapWithDefault(baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000') {
+  const defaultPage = [{
+    url: `${baseUrl}/`,
+    lastmod: new Date().toISOString(),
+    priority: 1.0,
+  }];
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      ${defaultPage
         .map(
           (page) => `
             <url>
