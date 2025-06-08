@@ -1,6 +1,7 @@
+// src/app/layout.tsx
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import { supabase } from '@/lib/supabase';
-import { getBaseUrl } from '@/lib/utils';
+import { headers } from 'next/headers';
 import { getBreadcrumbStructuredData } from '@/lib/getBreadcrumbs';
 import './globals.css';
 import ClientProviders from './ClientProviders';
@@ -36,12 +37,25 @@ interface MenuItem {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Determine build-time vs runtime
+  let currentDomain = 'http://localhost:3000';
+  let pathname = '/';
+  try {
+    const headersList = headers();
+    const host = headersList.get('host') || 'localhost:3000';
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    currentDomain = `${protocol}://${host}`;
+    pathname = headersList.get('x-invoke-path') || headersList.get('x-pathname') || '/';
+    console.log('Headers:', { host, pathname, isHeadersInstance: headersList instanceof Headers });
+  } catch (error) {
+    console.error('Failed to get headers:', error);
+    const fallbackHost = process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
+    currentDomain = `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${fallbackHost}`;
+  }
   const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
-  const baseUrl = getBaseUrl(true) || process.env.NEXT_PUBLIC_BASE_URL || 'https://default-domain.com';
-  console.log(`${isBuild ? 'Build-time' : 'Runtime'} base URL:`, baseUrl);
 
-  // Default settings as fallback
+  console.log(`${isBuild ? 'Build-time' : 'Runtime'} domain: ${currentDomain}, pathname: ${pathname}`);
+
+  // Default settings
   const defaultSettings: Settings = {
     id: 0,
     site: 'App',
@@ -50,23 +64,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     menu_width: '7xl',
     menu_items_are_text: true,
     footer_color: 'gray-800',
-    favicon: '/images/favicon.png',
+    favicon: '/images/favicon.ico',
     seo_title: null,
     seo_description: null,
     seo_keywords: null,
     seo_og_image: null,
     seo_twitter_card: null,
-    seo_structured_data: null,
+    seo_structured_data: [],
   };
 
   // Fetch settings
   let settings = defaultSettings;
   try {
-    const fetchedSettings = await getSettings(baseUrl);
-    if (fetchedSettings) {
-      settings = fetchedSettings;
+    const fetchedSettings = await getSettings(currentDomain);
+    if (fetchedSettings && typeof fetchedSettings === 'object') {
+      settings = { ...defaultSettings, ...fetchedSettings };
     }
-    console.log('Fetched settings in layout:', settings);
+    console.log('Settings:', JSON.stringify(settings, null, 2));
+    console.log('SEO Structured Data Raw:', JSON.stringify(settings.seo_structured_data, null, 2));
   } catch (error) {
     console.error('Failed to fetch settings:', error);
   }
@@ -74,48 +89,51 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Fetch organization ID
   let organizationId: string | null = null;
   try {
-    organizationId = await getOrganizationId(baseUrl);
-    console.log('Fetched organizationId:', organizationId);
+    organizationId = await getOrganizationId(currentDomain);
+    console.log('Organization ID:', organizationId);
   } catch (error) {
     console.error('Failed to fetch organizationId:', error);
   }
 
-  // Fetch site-wide FAQs
+  // Fetch FAQs
   let siteFaqs: { question: string; answer: string }[] = [];
+  let faqStructuredData: any = null;
   if (organizationId) {
     try {
       const { data, error } = await supabase
         .from('faq')
-        .select('question, answer')
-        .or(`organization_id.eq.${organizationId},organization_id.is.null`);
+        .select('question, answer, order')
+        .eq('organization_id', organizationId)
+        .eq('display_home_page', true)
+        .order('order', { ascending: true });
+
       if (error) throw error;
       siteFaqs = (data || []).map((faq) => ({
-        question: faq.question?.trim() || '', // Trim question
-        answer: faq.answer?.trim() || '', // Trim answer
+        question: faq.question?.trim() || '',
+        answer: faq.answer?.trim() || '',
       }));
-      console.log('Raw siteFaqs:', siteFaqs);
+
+      if (siteFaqs.length > 0) {
+        faqStructuredData = {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: siteFaqs
+            .filter((faq) => faq.question && faq.answer)
+            .map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.answer.replace(/\n/g, ' ').trim(),
+              },
+            })),
+        };
+        console.log('FAQ JSON-LD:', JSON.stringify(faqStructuredData, null, 2));
+      }
     } catch (error) {
       console.error('Failed to fetch FAQs:', error);
     }
   }
-
-  // Generate FAQPage structured data
-  const faqStructuredData = siteFaqs.length > 0
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: siteFaqs
-          .filter((faq) => faq.question && faq.answer) // Ensure non-empty fields
-          .map((faq) => ({
-            '@type': 'Question',
-            name: faq.question,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: faq.answer.replace(/\n+/g, ' ').trim(), // Replace newlines with spaces and trim
-            },
-          })),
-      }
-    : null;
 
   // Fetch hero data
   let heroData = {
@@ -127,14 +145,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       const { data, error } = await supabase
         .from('website_hero')
         .select('image, h1_text_color, p_description_color')
-        .or(`organization_id.eq.${organizationId || '?'},organization_id.is.null`)
+        .or(`organization_id.eq.${organizationId || ''},organization_id.is.null`)
         .single();
       if (error) throw error;
       heroData = {
         h1_text_color: data?.h1_text_color || 'gray-900',
         p_description_color: data?.p_description_color || '#000000',
       };
-      console.log('Fetched heroData:', heroData);
+      console.log('Hero Data:', heroData);
     } catch (error) {
       console.error('Failed to fetch hero data:', error);
     }
@@ -152,7 +170,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           url_name,
           is_displayed,
           is_displayed_on_footer,
-          "order",
+          order,
           image,
           react_icon_id,
           organization_id,
@@ -160,8 +178,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           website_submenuitem (
             id,
             name,
-            order,
             url_name,
+            order,
             description,
             is_displayed,
             organization_id
@@ -172,15 +190,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         .order('order', { ascending: true, referencedTable: 'website_submenuitem' });
 
       if (error) throw error;
-
       menuItems = (data || []).map((item) => {
-        let reactIcons: ReactIcon | ReactIcon[] | undefined = item.react_icons;
-        if (Array.isArray(item.react_icons)) {
-          reactIcons = item.react_icons.length > 0 ? item.react_icons[0] : undefined;
-        } else if (item.react_icons && typeof item.react_icons === 'object') {
-          reactIcons = item.react_icons as ReactIcon;
+        let reactIcons: ReactIcon | undefined;
+        if (item.react_icons && typeof item.react_icons === 'object') {
+          reactIcons = Array.isArray(item.react_icons)
+            ? item.react_icons[0]
+            : item.react_icons as ReactIcon;
         }
-
         return {
           ...item,
           react_icons: reactIcons,
@@ -191,7 +207,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           ),
         };
       });
-      console.log('Fetched menuItems:', JSON.stringify(menuItems, null, 2));
+      console.log('Menu Items:', JSON.stringify(menuItems, null, 2));
     } catch (error) {
       console.error('Failed to fetch menu items:', error);
     }
@@ -206,38 +222,79 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const activeLanguages = ['en', 'es', 'fr'];
 
-  // Get current pathname (server-side, fallback to root)
-  const pathname = new URL(baseUrl).pathname || '/';
+  // Breadcrumb overrides and extra crumbs
+  const breadcrumbOverrides: { segment: string; label: string; url?: string }[] = [];
+  const extraCrumbs: { label: string; url?: string }[] = [];
 
-  // Generate dynamic breadcrumb structured data
-  const breadcrumbStructuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: getBreadcrumbStructuredData({ pathname, baseUrl }),
-  };
+  // Generate breadcrumb JSON-LD
+  let breadcrumbStructuredData: any = null;
+  try {
+    breadcrumbStructuredData = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: getBreadcrumbStructuredData({
+        pathname,
+        domain: currentDomain,
+        overrides: breadcrumbOverrides,
+        extraCrumbs,
+      }),
+    };
+    console.log('Breadcrumb JSON-LD Object:', JSON.stringify(breadcrumbStructuredData, null, 2));
+  } catch (error) {
+    console.error('Failed to generate breadcrumb JSON-LD:', error);
+  }
 
-  // Validate structured data
+  // Validate structured data, excluding ALL BreadcrumbList except our dynamic one
   const structuredData = [
-    ...(settings.seo_structured_data || []),
-    breadcrumbStructuredData,
+    ...(Array.isArray(settings.seo_structured_data)
+      ? settings.seo_structured_data.filter((data) => {
+          if (!data || typeof data !== 'object') {
+            console.warn('Skipping null or non-object seo_structured_data:', data);
+            return false;
+          }
+          if (data['@type'] === 'BreadcrumbList') {
+            console.warn('Excluding BreadcrumbList from seo_structured_data:', JSON.stringify(data, null, 2));
+            return false;
+          }
+          return true;
+        })
+      : []),
+    ...(breadcrumbStructuredData ? [breadcrumbStructuredData] : []),
     ...(faqStructuredData ? [faqStructuredData] : []),
   ].filter((data) => {
+    if (!data || typeof data !== 'object') {
+      console.warn('Skipping invalid structured data: null or non-object', data);
+      return false;
+    }
     try {
-      JSON.stringify(data); // Ensure valid JSON
-      return data['@type'] && data['@context']; // Check required fields
-    } catch (e) {
-      console.error('Invalid structured data:', data, e);
+      if (!data['@context'] || !data['@type']) {
+        console.warn('Skipping invalid structured data: missing @context or @type', JSON.stringify(data, null, 2));
+        return false;
+      }
+      const jsonString = JSON.stringify(data, null, 2);
+      if (!jsonString) {
+        console.warn('Skipping invalid structured data: empty JSON string', data);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Skipping invalid structured data due to serialization error:', { data: JSON.stringify(data, null, 2), error });
       return false;
     }
   });
+
+  console.log('Final Structured Data Array:', JSON.stringify(structuredData, null, 2));
+  if (structuredData.length === 0) {
+    console.warn('No valid structured data to render. Check settings.seo_structured_data, breadcrumbStructuredData, and faqStructuredData.');
+  }
 
   const defaultSEOData: SEOData = {
     title: settings.seo_title || settings.site || 'App',
     description: settings.seo_description || 'Description',
     keywords: settings.seo_keywords || 'Keywords',
-    canonicalUrl: baseUrl,
+    canonicalUrl: `${currentDomain}${pathname}`,
     hreflang: activeLanguages.map((lang) => ({
-      href: `${baseUrl}/${lang}`,
+      href: `${currentDomain}/${lang}${pathname === '/' ? '' : pathname}`,
       hreflang: lang,
     })),
     faqs: siteFaqs,
@@ -245,12 +302,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     seo_og_image: settings.seo_og_image || undefined,
   };
 
-  // Determine favicon URL
+  // Favicon URL
   const faviconUrl = settings.favicon
     ? settings.favicon.startsWith('http')
       ? settings.favicon
       : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/favicons/${settings.favicon}`
-    : '/images/favicon.png';
+    : '/images/favicon.ico';
 
   return (
     <html lang="en">
@@ -281,7 +338,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {defaultSEOData.hreflang.map((link) => (
           <link key={link.hreflang} rel="alternate" href={link.href} hrefLang={link.hreflang} />
         ))}
-        {defaultSEOData.structuredData.map((data, index) => (
+        {structuredData.map((data, index) => (
           <script
             key={`structured-data-${index}`}
             type="application/ld+json"
@@ -292,11 +349,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <ClientProviders
           defaultSEOData={defaultSEOData}
-          settings={{ ...settings, baseUrl }}
+          settings={{ ...settings, baseUrl: currentDomain }}
           headerData={headerData}
           activeLanguages={activeLanguages}
           heroData={heroData}
-          baseUrl={baseUrl}
+          baseUrl={currentDomain}
           menuItems={menuItems}
         >
           {children}
@@ -306,4 +363,4 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   );
 }
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 3600;

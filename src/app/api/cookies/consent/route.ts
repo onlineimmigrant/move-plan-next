@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   try {
     // Log the cookies to debug if they're being sent
     const cookieStore = await cookies();
-    console.log('Request cookies in GET /api/cookies/consent:', await cookieStore.getAll());
+   // console.log('Request cookies in GET /api/cookies/consent:', await cookieStore.getAll());
 
     // Get the access token from the Authorization header
     const authHeader = request.headers.get('Authorization');
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
   try {
     // Log the cookies to debug if they're being sent
     const cookieStore = await cookies();
-    console.log('Request cookies in POST /api/cookies/consent:', await cookieStore.getAll());
+  //  console.log('Request cookies in POST /api/cookies/consent:', await cookieStore.getAll());
 
     // Get the access token from the Authorization header
     const authHeader = request.headers.get('Authorization');
