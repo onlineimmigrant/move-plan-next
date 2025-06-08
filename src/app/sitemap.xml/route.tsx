@@ -36,10 +36,23 @@ export async function GET(request: NextRequest) {
       orgError: orgError?.message || null,
       orgErrorCode: orgError?.code || null,
       orgErrorDetails: orgError?.details || null,
+      requestHeaders: Object.fromEntries(request.headers.entries()),
     });
 
-    if (!orgError && orgData?.base_url && !orgData.base_url.includes('move-plan-next.vercel.app')) {
-      baseUrl = orgData.base_url;
+    if (!orgError && orgData?.base_url) {
+      // Use Supabase base_url only if it’s a valid URL and not a Vercel-like deployment URL
+      try {
+        const url = new URL(orgData.base_url);
+        // Check if base_url is a valid tenant domain (not a Vercel-like URL)
+        if (!url.hostname.includes('vercel.app')) {
+          baseUrl = orgData.base_url;
+        }
+      } catch (e) {
+        console.warn('Invalid base_url in Supabase, using actualBaseUrl:', {
+          baseUrl: orgData.base_url,
+          error: e.message,
+        });
+      }
     } else if (orgError) {
       console.error('Error fetching organization base_url:', {
         message: orgError?.message || 'No error message',
