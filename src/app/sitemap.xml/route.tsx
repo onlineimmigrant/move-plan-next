@@ -50,7 +50,6 @@ export async function GET(request: NextRequest) {
       } catch (e) {
         console.warn('Invalid base_url in Supabase, using actualBaseUrl:', {
           baseUrl: orgData.base_url,
-          error: e.message,
         });
       }
     } else if (orgError) {
