@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { SEOProvider } from '@/context/SEOContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { BasketProvider } from '@/context/BasketContext';
@@ -21,34 +21,9 @@ import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
 import { TemplateHeadingSection } from '@/types/template_heading_section';
-
-interface SubMenuItem {
-  id: number;
-  name: string;
-  url_name: string;
-  order: number;
-  description?: string;
-  is_displayed?: boolean;
-  organization_id: string | null;
-}
-
-interface ReactIcon {
-  icon_name: string;
-}
-
-interface MenuItem {
-  id: number;
-  display_name: string;
-  url_name: string;
-  is_displayed: boolean;
-  is_displayed_on_footer: boolean;
-  order: number;
-  image?: string;
-  react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[];
-  website_submenuitem?: SubMenuItem[];
-  organization_id: string | null;
-}
+import { useBanner } from '@/context/BannerContext';
+import { Banner } from '@/components/banners/types';
+import { MenuItem } from '@/types/menu'; // Import MenuItem from shared types
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -84,35 +59,34 @@ export default function ClientProviders({
       try {
         setLoading(true);
         const urlPage = pathname === '/' ? '/home' : pathname;
-
         const clientBaseUrl = getBaseUrl(false);
-        console.log('Client baseUrl in ClientProviders:', clientBaseUrl);
+        console.log('Client baseUrl:', clientBaseUrl);
 
         const sectionsResponse = await fetch(
           `${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`,
-          { cache: 'force-cache' }
+          { cache: 'no-store' }
         );
         if (!sectionsResponse.ok) {
           const errorData = await sectionsResponse.json();
           throw new Error(errorData.error || 'Failed to fetch template sections');
         }
         const sectionsData = await sectionsResponse.json();
-        console.log('Fetched template sections in ClientProviders:', sectionsData);
+        console.log('Sections data:', sectionsData);
         setSections(sectionsData || []);
 
         const headingsResponse = await fetch(
           `${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`,
-          { cache: 'force-cache' }
+          { cache: 'no-store' }
         );
         if (!headingsResponse.ok) {
-          const errorData = await headingsResponse.json();
-          throw new Error(errorData.error || 'Failed to fetch template heading sections');
+          const errorData = await sectionsResponse.json();
+          throw new Error(errorData.error || 'Failed to fetch template headings');
         }
         const headingsData = await headingsResponse.json();
-        console.log('Fetched template heading sections in ClientProviders:', headingsData);
+        console.log('Headings data:', headingsData);
         setHeadings(headingsData || []);
       } catch (error) {
-        console.error('Error fetching template data in ClientProviders:', error);
+        console.error('Error fetching template data:', error);
         setSections([]);
         setHeadings([]);
       } finally {
@@ -136,26 +110,12 @@ export default function ClientProviders({
               <BannerProvider>
                 <SEOWrapper defaultSEOData={defaultSEOData} />
                 <StructuredDataInjector />
-                {loading ? (
-                  <SkeletonLoader />
-                ) : showNavbarFooter ? (
-                  <NavbarFooterWrapper menuItems={menuItems || []}>
-                    <div>
-                      {children}
-                      <TemplateHeadingSections />
-                      <TemplateSections />
-                      <Breadcrumbs />
-                      <BannerContainer />
-                    </div>
-                  </NavbarFooterWrapper>
-                ) : (
-                  <div className="-mt-12">
-                    {children}
-                    <TemplateHeadingSections />
-                    <TemplateSections />
-                    <BannerContainer />
-                  </div>
-                )}
+                <BannerAwareContent
+                  children={children}
+                  showNavbarFooter={showNavbarFooter}
+                  menuItems={menuItems}
+                  loading={loading}
+                />
                 <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
               </BannerProvider>
             </CookieSettingsProvider>
@@ -163,5 +123,64 @@ export default function ClientProviders({
         </BasketProvider>
       </AuthProvider>
     </SEOProvider>
+  );
+}
+
+function BannerAwareContent({
+  children,
+  showNavbarFooter,
+  menuItems,
+  loading,
+}: {
+  children: React.ReactNode;
+  showNavbarFooter: boolean;
+  menuItems: MenuItem[] | undefined;
+  loading: boolean;
+}) {
+  const { banners, getFixedBannersHeight } = useBanner();
+  const fixedBanners = useMemo(
+    () => banners.filter((b) => b.isFixedAboveNavbar && !b.isDismissed && b.position === 'top'),
+    [banners]
+  );
+  const nonFixedBanners = useMemo(
+    () => banners.filter((b) => !b.isFixedAboveNavbar || b.isDismissed || b.position !== 'top'),
+    [banners]
+  );
+  const fixedBannersHeight = getFixedBannersHeight();
+
+  console.log('All banners:', JSON.stringify(banners, null, 2));
+  console.log('Fixed banners:', JSON.stringify(fixedBanners, null, 2));
+  console.log('Non-fixed banners:', JSON.stringify(nonFixedBanners, null, 2));
+  console.log('Fixed banners height applied:', fixedBannersHeight);
+
+  return (
+    <>
+      <BannerContainer banners={fixedBanners} />
+      {loading ? (
+        <SkeletonLoader />
+      ) : (
+        <div style={{ marginTop: `${fixedBannersHeight}px` }} className="w-full">
+          {showNavbarFooter ? (
+            <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
+              <main className="w-full">
+                {children}
+                <TemplateHeadingSections />
+                <TemplateSections />
+                <Breadcrumbs />
+                <BannerContainer banners={nonFixedBanners} />
+              </main>
+            </NavbarFooterWrapper>
+          ) : (
+            <main className="w-full">
+              {children}
+              <TemplateHeadingSections />
+              <TemplateSections />
+              <Breadcrumbs />
+              <BannerContainer banners={nonFixedBanners} />
+            </main>
+          )}
+        </div>
+      )}
+    </>
   );
 }

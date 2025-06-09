@@ -191,7 +191,7 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
     const now = new Date().toISOString();
     const { data, error } = await supabase
       .from('banners')
-      .select('id, position, type, content, open_state, landing_content, page_paths, is_active, start_at, end_at, priority, target_audience, dismissal_duration')
+      .select('id, position, type, content, open_state, landing_content, page_paths, is_active, start_at, end_at, priority, target_audience, dismissal_duration, is_fixed_above_navbar')
       .eq('is_active', true)
       .eq('organization_id', organizationId)
       .lte('start_at', now)
@@ -210,7 +210,7 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
       return [];
     }
 
-    console.log('Fetched banners:', data);
+    console.log('Raw banners from Supabase:', JSON.stringify(data, null, 2));
 
     const dismissedIds = await fetchDismissedBanners(userId);
 
@@ -223,7 +223,8 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
     return filteredBanners.map((banner) => ({
       id: banner.id,
       position: banner.position as BannerPosition,
-      type: banner.type as BannerType,
+      type: banner.type as 'permanent' | 'closed',
+      is_enabled: banner.is_active, // Map is_active to is_enabled
       content: {
         text: banner.content.text,
         link: banner.content.link
@@ -241,8 +242,11 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
       openState: banner.open_state as BannerOpenState,
       landing_content: banner.landing_content,
       page_paths: banner.page_paths,
-      isDismissed: dismissedIds.includes(banner.id),
       dismissal_duration: banner.dismissal_duration,
+      isOpen: false, // Default, managed by BannerContext
+      isDismissed: dismissedIds.includes(banner.id),
+      isFixedAboveNavbar: Boolean(banner.is_fixed_above_navbar ?? false),
+      is_fixed_above_navbar: Boolean(banner.is_fixed_above_navbar ?? false),
     }));
   } catch (err) {
     console.error('Unexpected error fetching banners:', err);
