@@ -175,7 +175,7 @@ function BannerAwareContent({
               {children}
               <TemplateHeadingSections />
               <TemplateSections />
-              <Breadcrumbs />
+              
               <BannerContainer banners={nonFixedBanners} />
             </main>
           )}

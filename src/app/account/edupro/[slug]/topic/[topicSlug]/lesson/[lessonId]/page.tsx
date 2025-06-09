@@ -159,7 +159,7 @@ const LoadingSpinner = () => (
 );
 
 const ErrorDisplay = ({ error }: { error: string | null }) => (
-  <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
     <div className="max-w-7xl mx-auto text-center">
       <p className="text-red-600 font-medium">{error || 'An error occurred'}</p>
     </div>
@@ -715,7 +715,7 @@ export default function EduProLessonDetail() {
   if (error) return <ErrorDisplay error={error} />;
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} aria-live="polite" />}
         <div className="pt-8">

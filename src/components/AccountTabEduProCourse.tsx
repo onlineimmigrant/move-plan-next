@@ -139,7 +139,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   // Handle scroll effect for navbar
   useEffect(() => {
     const handleScroll = () => {
-      const scrollThreshold = window.innerHeight * 0.2; // 20% of viewport height
+      const scrollThreshold = window.innerHeight * 0.5; // percent of viewport height
       setIsScrolled(window.scrollY > scrollThreshold);
     };
 

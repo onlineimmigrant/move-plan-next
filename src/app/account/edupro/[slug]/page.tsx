@@ -125,7 +125,7 @@ export default function EduProCourseDetail() {
 
   if (error) {
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-red-600 font-medium">{error}</p>
         </div>
@@ -134,7 +134,7 @@ export default function EduProCourseDetail() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {toast && (
           <Toast
