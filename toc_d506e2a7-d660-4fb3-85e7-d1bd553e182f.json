@@ -1,0 +1,22 @@
+[
+  {
+    "topic": "Chapter 2. HANDLING MIXED FUNDS",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "Prompt Deposit of Client Funds into the Client Account",
+    "href": "chapter-1.xhtml#chapter-1-10",
+    "order": 1
+  },
+  {
+    "topic": "Managing Mixed Receipts",
+    "href": "chapter-1.xhtml#chapter-1-43",
+    "order": 2
+  },
+  {
+    "topic": "Managing Internal Transfers between Client Accounts",
+    "href": "chapter-1.xhtml#chapter-1-127",
+    "order": 3
+  }
+]
