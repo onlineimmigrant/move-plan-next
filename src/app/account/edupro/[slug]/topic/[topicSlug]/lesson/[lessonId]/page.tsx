@@ -147,7 +147,7 @@ const LessonHeader = ({
   navigateToLesson: (lessonId: number) => void;
 }) => (
   <div
-    className={`ml-2 relative pl-4 py-2 sm:py-4 rounded-lg border-r-4 group min-h-[100px] sm:min-h-[120px] flex items-center ${
+    className={`sm:ml-2 relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 group min-h-[100px] sm:min-h-[120px] flex items-center ${
       isLessonCompleted ? 'border-teal-600 bg-teal-50' : 'border-sky-600 bg-sky-50'
     }`}
   >
@@ -654,6 +654,13 @@ export default function EduProLessonDetail() {
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
 <div className="mt-4 mb-4 flex items-center justify-between">
+  {topic && (
+  <Link href={`/account/edupro/${slug}/topic/${topicSlug}`}>
+          <span className="flex sm:hidden items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full cursor-pointer">
+          {topic.order}
+        </span>
+        </Link>
+  )}
   <div className="flex-1 flex justify-center items-center space-x-3">
     <span className="text-md text-sm sm:text-base font-semibold sm:py-1" aria-label="Current Lesson Section">
       Lesson
@@ -704,8 +711,8 @@ export default function EduProLessonDetail() {
         <div className="">
           {course && topic && lesson ? (
             <div>
-              <div className="grid grid-cols-4 sm:grid-cols-6">
-                <div className="col-span-1 sm:col-span-2">
+              <div className="grid grid-cols-3 sm:grid-cols-6">
+                <div className="hidden sm:block col-span-1 sm:col-span-2">
                   <TopicHeader
                     topic={topic}
                     slug={slug}
