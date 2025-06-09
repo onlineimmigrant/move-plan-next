@@ -1,4 +1,3 @@
-// /components/Header.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +11,6 @@ import * as HeroIcons from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import LoginModal from './LoginModal';
 import ContactModal from './ContactModal';
-
 import {
   PlusIcon,
   MinusIcon,
@@ -23,41 +21,19 @@ import {
   UserIcon,
   MapIcon,
 } from '@heroicons/react/24/outline';
-
-interface SubMenuItem {
-  id: number;
-  name: string;
-  url_name: string;
-  description?: string;
-  order?: number;
-  is_displayed?: boolean;
-  organization_id: string | null;
-}
-
-interface ReactIcon {
-  icon_name: string;
-}
-
-interface MenuItem {
-  id: number;
-  display_name: string;
-  url_name: string;
-  is_displayed: boolean;
-  is_displayed_on_footer: boolean;
-  order?: number;
-  image?: string;
-  react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[]; // Updated type
-  website_submenuitem?: SubMenuItem[];
-  organization_id: string | null;
-}
+import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu'; // Import ReactIcon explicitly
 
 interface HeaderProps {
   companyLogo?: string;
   menuItems: MenuItem[] | undefined;
+  fixedBannersHeight: number;
 }
 
-const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuItems = [] }) => {
+const Header: React.FC<HeaderProps> = ({
+  companyLogo = '/images/logo.svg',
+  menuItems = [],
+  fixedBannersHeight = 0,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -85,9 +61,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuI
   useEffect(() => {
     setIsMounted(true);
     console.log('Menu items in Header:', JSON.stringify(menuItems, null, 2));
-  }, [menuItems]);
+    console.log('Fixed banners height in Header:', fixedBannersHeight);
+  }, [menuItems, fixedBannersHeight]);
 
-  const getIconName = (reactIcons: ReactIcon | ReactIcon[] | undefined): string | undefined => {
+  const getIconName = (reactIcons: ReactIcon | ReactIcon[] | null | undefined): string | undefined => {
     if (!reactIcons) return undefined;
     if (Array.isArray(reactIcons)) {
       return reactIcons.length > 0 ? reactIcons[0].icon_name : undefined;
@@ -119,7 +96,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuI
             const displayedSubItems = (item.website_submenuitem || []).filter(
               (subItem) => subItem.is_displayed !== false
             );
-            console.log(`Desktop rendering ${item.display_name}, displayedSubItems:`, JSON.stringify(displayedSubItems, null, 2));
+            console.log(
+              `Desktop rendering ${item.display_name}, displayedSubItems:`,
+              JSON.stringify(displayedSubItems, null, 2)
+            );
 
             return (
               <div key={item.id} className="relative group">
@@ -140,7 +120,11 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuI
                           width={24}
                           height={24}
                           className="h-6 w-6 text-gray-600"
-                          onError={() => console.error(`Failed to load image for menu item ${item.display_name}: ${item.image}`)}
+                          onError={() =>
+                            console.error(
+                              `Failed to load image for menu item ${item.display_name}: ${item.image}`
+                            )
+                          }
                         />
                       ) : (
                         renderIcon(getIconName(item.react_icons))
@@ -174,7 +158,11 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuI
                         width={24}
                         height={24}
                         className="h-4 w-6 text-gray-600"
-                        onError={() => console.error(`Failed to load image for menu item ${item.display_name}: ${item.image}`)}
+                        onError={() =>
+                          console.error(
+                            `Failed to load image for menu item ${item.display_name}: ${item.image}`
+                          )
+                        }
                       />
                     ) : (
                       renderIcon(getIconName(item.react_icons))
@@ -199,7 +187,10 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuI
             const displayedSubItems = (item.website_submenuitem || []).filter(
               (subItem) => subItem.is_displayed !== false
             );
-            console.log(`Mobile rendering ${item.display_name}, displayedSubItems:`, JSON.stringify(displayedSubItems, null, 2));
+            console.log(
+              `Mobile rendering ${item.display_name}, displayedSubItems:`,
+              JSON.stringify(displayedSubItems, null, 2)
+            );
 
             return (
               <Disclosure key={item.id}>
@@ -256,11 +247,14 @@ const Header: React.FC<HeaderProps> = ({ companyLogo = '/images/logo.svg', menuI
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 opacity-95 transition-all duration-200 ${
+      className={`fixed left-0 right-0 z-40 opacity-95 transition-all duration-200 ${
         isScrolled ? 'border-gray-200 bg-white' : 'bg-transparent'
       }`}
+      style={{ top: `${fixedBannersHeight}px` }}
     >
-      <div className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 pl-8 sm:px-6 flex justify-between items-center`}>
+      <div
+        className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 pl-8 sm:px-6 flex justify-between items-center`}
+      >
         <button
           type="button"
           onClick={() => {

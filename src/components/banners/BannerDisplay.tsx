@@ -1,7 +1,7 @@
-// src/components/BannerDisplay.tsx
 'use client';
 import { useBanner } from '@/context/BannerContext';
-import {Banner} from '@/components/banners/Banner';
+import { Banner } from '@/components/banners/Banner';
+import { useMemo } from 'react';
 
 export default function BannerDisplay() {
   const { banners } = useBanner();
@@ -13,10 +13,22 @@ export default function BannerDisplay() {
     return null;
   }
 
+  const fixedBanners = useMemo(
+    () => banners.filter((banner) => banner.isFixedAboveNavbar && !banner.isOpen && !banner.isDismissed && banner.position === 'top'),
+    [banners]
+  );
+  const nonFixedBanners = useMemo(
+    () => banners.filter((banner) => !banner.isFixedAboveNavbar || banner.isOpen || banner.position !== 'top'),
+    [banners]
+  );
+
   return (
     <>
-      {banners.map((banner) => (
-        <Banner key={banner.id} banner={banner} />
+      {fixedBanners.map((banner, index) => (
+        <Banner key={banner.id} banner={banner} index={index} />
+      ))}
+      {nonFixedBanners.map((banner, index) => (
+        <Banner key={banner.id} banner={banner} index={index} />
       ))}
     </>
   );

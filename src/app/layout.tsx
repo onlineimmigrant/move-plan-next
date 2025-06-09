@@ -7,34 +7,12 @@ import './globals.css';
 import ClientProviders from './ClientProviders';
 import { Settings } from '@/types/settings';
 import { SEOData } from '@/types/seo';
+import { SubMenuItem, MenuItem, ReactIcon } from '@/types/menu';
 
-interface SubMenuItem {
-  id: number;
-  name: string;
-  url_name: string;
-  order: number;
-  description?: string;
-  is_displayed?: boolean;
-  organization_id: string | null;
-}
-
-interface ReactIcon {
-  icon_name: string;
-}
-
-interface MenuItem {
-  id: number;
-  display_name: string;
-  url_name: string;
-  is_displayed: boolean;
-  is_displayed_on_footer: boolean;
-  order: number;
-  image?: string;
-  react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[];
-  website_submenuitem?: SubMenuItem[];
-  organization_id: string | null;
-}
+// No need for local ReactIcon definition
+// interface ReactIcon {
+//   icon_name: string;
+// }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let currentDomain = 'http://localhost:3000';
@@ -191,11 +169,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       if (error) throw error;
       menuItems = (data || []).map((item) => {
-        let reactIcons: ReactIcon | undefined;
+        let reactIcons: ReactIcon | null | undefined;
         if (item.react_icons && typeof item.react_icons === 'object') {
           reactIcons = Array.isArray(item.react_icons)
-            ? item.react_icons[0]
+            ? item.react_icons[0] || null
             : item.react_icons as ReactIcon;
+        } else {
+          reactIcons = null;
         }
         return {
           ...item,
@@ -244,7 +224,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     console.error('Failed to generate breadcrumb JSON-LD:', error);
   }
 
- 
   const structuredData = [
     ...(Array.isArray(settings.seo_structured_data)
       ? settings.seo_structured_data.filter((data) => {

@@ -1,44 +1,18 @@
-// /components/Footer.tsx
 'use client';
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Import Next.js Image
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
-
-interface SubMenuItem {
-  id: number;
-  name: string;
-  url_name: string;
-  description?: string;
-  is_displayed?: boolean;
-  organization_id?: string | null;
-}
-
-interface ReactIcon {
-  icon_name: string;
-}
-
-interface MenuItem {
-  id: number;
-  display_name: string;
-  url_name: string;
-  is_displayed: boolean;
-  is_displayed_on_footer: boolean;
-  image?: string;
-  react_icon_id?: number;
-  react_icons?: ReactIcon | ReactIcon[];
-  website_submenuitem?: SubMenuItem[];
-  organization_id?: string | null;
-}
+import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu'; // Import shared types
 
 interface FooterProps {
   companyLogo?: string;
-  menuItems: MenuItem[] | undefined;
-  error?: string; // Added for error handling
+  menuItems?: MenuItem[]; // Use shared MenuItem type
+  error?: string;
 }
 
 const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuItems = [], error }) => {

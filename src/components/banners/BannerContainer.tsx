@@ -1,12 +1,17 @@
-// components/banners/BannerContainer.tsx
 import { usePathname } from 'next/navigation';
-import { useBanner } from '../../context/BannerContext';
+import { useBanner } from '@/context/BannerContext';
 import { Banner } from './Banner';
-import { hideNavbarFooterPrefixes } from '../../lib/hiddenRoutes';
+import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
+import { BannerType } from './types';
 
-export const BannerContainer = () => {
-  const { banners } = useBanner();
+interface BannerContainerProps {
+  banners?: BannerType[];
+}
+
+export const BannerContainer = ({ banners }: BannerContainerProps) => {
+  const { banners: contextBanners } = useBanner();
   const pathname = usePathname();
+  const bannersToRender = banners || contextBanners;
 
   const shouldShowBanners = !hideNavbarFooterPrefixes.some((prefix) =>
     pathname.startsWith(prefix)
@@ -15,10 +20,14 @@ export const BannerContainer = () => {
   if (!shouldShowBanners) return null;
 
   return (
-    <>
-      {banners.map((banner) => (
-        <Banner key={banner.id} banner={banner} />
-      ))}
-    </>
+    <div className="fixed top-0 left-0 right-0 z-[200]">
+      {bannersToRender
+        .filter((banner) => !banner.isDismissed)
+        .map((banner, index) => (
+          <Banner key={banner.id} banner={banner} index={index} />
+        ))}
+    </div>
   );
 };
+
+export default BannerContainer;
