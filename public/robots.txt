@@ -1,4 +1,3 @@
 User-agent: *
 Disallow: /admin/
 Disallow: /account/
-Sitemap: /sitemap.xml
