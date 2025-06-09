@@ -1,0 +1,22 @@
+[
+  {
+    "topic": "Chapter 8. Stamp Duty Land Tax (SDLT)",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "SDLT Basics",
+    "href": "chapter-1.xhtml#chapter-1-6",
+    "order": 1
+  },
+  {
+    "topic": "Exemptions",
+    "href": "chapter-1.xhtml#chapter-1-93",
+    "order": 2
+  },
+  {
+    "topic": "SDLT Compliance Procedures",
+    "href": "chapter-1.xhtml#chapter-1-112",
+    "order": 3
+  }
+]

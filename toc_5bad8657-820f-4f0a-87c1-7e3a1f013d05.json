@@ -1,0 +1,37 @@
+[
+  {
+    "topic": "Chapter 1. INCOME TAX",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "Overview",
+    "href": "chapter-1.xhtml#chapter-1-8",
+    "order": 1
+  },
+  {
+    "topic": "Tax Collection Methods",
+    "href": "chapter-1.xhtml#chapter-1-37",
+    "order": 2
+  },
+  {
+    "topic": "Categorisation of Taxable Income",
+    "href": "chapter-1.xhtml#chapter-1-94",
+    "order": 3
+  },
+  {
+    "topic": "Process of Income Tax Computation",
+    "href": "chapter-1.xhtml#chapter-1-159",
+    "order": 4
+  },
+  {
+    "topic": "Tax Rate Structure",
+    "href": "chapter-1.xhtml#chapter-1-257",
+    "order": 5
+  },
+  {
+    "topic": "Addressing Tax Avoidance",
+    "href": "chapter-1.xhtml#chapter-1-374",
+    "order": 6
+  }
+]
