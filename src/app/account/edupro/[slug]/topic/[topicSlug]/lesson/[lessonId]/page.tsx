@@ -701,7 +701,7 @@ export default function EduProLessonDetail() {
     </button>
   </div>
 </div>
-        <div className="px-2">
+        <div className="">
           {course && topic && lesson ? (
             <div>
               <div className="grid grid-cols-4 sm:grid-cols-6">
