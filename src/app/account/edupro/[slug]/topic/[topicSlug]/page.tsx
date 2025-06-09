@@ -106,7 +106,7 @@ const LoadingSpinner = () => (
       {[0, 0.2, 0.4].map((delay) => (
         <div
           key={delay}
-          className="w-4 h-4 bg-blue-500 rounded-full animate-bounce"
+          className="w-4 h-4 bg-sky-600 rounded-full animate-bounce"
           style={{ animationDelay: `${delay}s` }}
         />
       ))}
@@ -115,7 +115,7 @@ const LoadingSpinner = () => (
 );
 
 const ErrorDisplay = ({ error }: { error: string }) => (
-  <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
     <div className="max-w-7xl mx-auto text-center">
       <p className="text-red-600 font-medium">{error}</p>
     </div>
@@ -348,7 +348,7 @@ export default function EduProTopicDetail() {
   if (error) return <ErrorDisplay error={error} />;
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         <div className="pt-8">
