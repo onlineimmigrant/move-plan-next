@@ -1,3 +1,4 @@
+// EduProLessonDetail.tsx
 'use client';
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
@@ -11,95 +12,23 @@ import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
 import EpubViewer from '@/components/EpubViewer';
 import { CheckIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import {
+  EduProCourse,
+  EduProTopic,
+  EduProLesson,
+  EduProLessonProgress,
+  Purchase,
+  StudyMaterial,
+  TocItem,
+  Tab,
+  ToastState,
+} from '@/types/edupro';
 
 // Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-// Interfaces
-interface EduProCourse {
-  id: number;
-  slug: string;
-  title: string;
-  description: string;
-}
-
-interface EduProTopic {
-  id: number;
-  title: string;
-  description: string;
-  order: number;
-  slug: string;
-}
-
-interface EduProLesson {
-  id: number;
-  title: string;
-  plan: string | null;
-  interactive_elements: unknown | null;
-  assessment_methods: string | null;
-  metadata: unknown | null;
-  content_type: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  topic_id: number;
-  image: string | null;
-  order: number;
-  next_lesson_id: number | null;
-  previous_lesson_id: number | null;
-  duration: string | null;
-  description: string | null;
-  links_to_video: string | null;
-  video_player: string | null;
-  link_to_practice: string | null;
-}
-
-interface EduProLessonProgress {
-  id: string;
-  lesson_id: number;
-  user_id: string;
-  completed: boolean;
-  completion_date: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Purchase {
-  id: string;
-  profiles_id: string;
-  is_active: boolean;
-  start_date: string;
-  end_date: string | null;
-  purchased_item_id: string;
-  pricingplan: {
-    product_id: string;
-    product: {
-      course_connected_id: number;
-    };
-  };
-}
-
-interface StudyMaterial {
-  id: string;
-  lesson_id: number;
-  file_path: string;
-  file_type: 'pdf' | 'epub';
-}
-
-interface TocItem {
-  id: string;
-  material_id: string;
-  topic: string;
-  page_number: number | null;
-  href: string | null;
-  order: number;
-}
-
-// Types
-type Tab = 'theory' | 'practice' | 'studyBooks';
-type ToastState = { message: string; type: 'success' | 'error' } | null;
 
 // Constants
 const TABS: { label: string; value: Tab }[] = [
@@ -188,7 +117,7 @@ const TopicHeader = ({
       <div className="flex items-center justify-between">
         <Link href={`/account/edupro/${slug}/topic/${topicSlug}`}>
           <span className="sm:text-sm text-sm font-light text-gray-500">Topic</span>
-          <h3 className="sm:text-base text-sm font-semibold text-gray-900 pr-8 hover:text-sky-600 transition-colors cursor-pointer">
+          <h3 className="hidden sm:flex sm:text-base text-sm font-semibold text-gray-900 pr-8 hover:text-sky-600 transition-colors cursor-pointer">
             {topic.title}
           </h3>
         </Link>
@@ -219,11 +148,11 @@ const LessonHeader = ({
 }) => (
   <div
     className={`ml-2 relative pl-4 py-2 sm:py-4 rounded-lg border-r-4 group min-h-[100px] sm:min-h-[120px] flex items-center ${
-      isLessonCompleted ? 'border-teal-600 bg-teal-50' : 'border-sky-600'
+      isLessonCompleted ? 'border-teal-600 bg-teal-50' : 'border-sky-600 bg-sky-50'
     }`}
   >
     <div className="flex flex-col space-y-0 flex-1">
-      <span className="text-sm font-light text-gray-500">Lesson</span>
+      <span className="sr-only text-sm font-light text-gray-500">Lesson</span>
       <div
         onClick={session ? toggleLessonCompletion : undefined}
         className={`absolute top-2 right-2 flex items-center justify-center w-6 h-6 border-2 ${
@@ -237,9 +166,11 @@ const LessonHeader = ({
         <span className="group-hover:hidden">{lesson.order}</span>
         {session && <CheckIcon className="hidden group-hover:block w-4 h-4" />}
       </div>
-      <h3 className="text-sm sm:text-base font-medium text-gray-900 pr-8">{lesson.title}</h3>
-      {lesson.description && <p className="text-sm text-gray-600">{lesson.description}</p>}
-      <div className="absolute bottom-2 right-2 flex items-center space-x-2">
+      <div className='my-4 '>
+        <h3 className="text-lg sm:text-xl font-bold text-sky-600 text-center px-8 ">{lesson.title}</h3>
+        {lesson.description && <p className="hidden sm:block text-sm text-gray-600 text-center">{lesson.description}</p>}
+      </div>
+      <div className="hidden absolute bottom-2 right-2 items-center space-x-2">
         <button
           onClick={() => previousLesson && navigateToLesson(previousLesson.id)}
           disabled={!previousLesson}
@@ -722,14 +653,39 @@ export default function EduProLessonDetail() {
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
-            <div className='mt-4 mb-4 text-center'>
+            <div className='mt-4 text-center'>
                     <span className=" text-md text-sm sm:text-base font-semibold sm:py-1">Lesson</span>
+
             </div>
+              <div className="justify-end flex items-center space-x-2">
+                <button
+                  onClick={() => previousLesson && navigateToLesson(previousLesson.id)}
+                  disabled={!previousLesson}
+                  className="cursor-pointer relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  aria-label="Previous Lesson"
+                >
+                  <ArrowLeftIcon className="w-5 h-5" />
+                  <span className="absolute top-full right-0 mt-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    Prev
+                  </span>
+                </button>
+                <button
+                  onClick={() => nextLesson && navigateToLesson(nextLesson.id)}
+                  disabled={!nextLesson}
+                  className="cursor-pointer relative p-1 text-gray-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  aria-label="Next Lesson"
+                >
+                  <ArrowRightIcon className="w-5 h-5" />
+                  <span className=" absolute top-full right-0 mt-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    Next
+                  </span>
+                </button>
+              </div>
         <div className="px-2">
           {course && topic && lesson ? (
             <div>
-              <div className="grid grid-cols-6">
-                <div className="col-span-3">
+              <div className="grid grid-cols-4 sm:grid-cols-6">
+                <div className="col-span-1 sm:col-span-2">
                   <TopicHeader
                     topic={topic}
                     slug={slug}
@@ -738,7 +694,7 @@ export default function EduProLessonDetail() {
                     isTopicCompleted={isTopicCompleted}
                   />
                 </div>
-                <div className="col-span-3">
+                <div className="col-span-3 sm:col-span-4">
                   <LessonHeader
                     lesson={lesson}
                     isLessonCompleted={isLessonCompleted}
