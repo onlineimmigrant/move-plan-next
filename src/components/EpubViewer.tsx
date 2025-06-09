@@ -267,7 +267,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
         {/* EPUB Viewer */}
         <div className={`w-full ${isTocOpen && isMobile ? 'hidden' : 'md:w-3/4'} ${isMaximized && !isMobile ? 'h-screen' : 'h-full'}`}>
           {/* Control Bar */}
-          <div className="flex justify-between items-center px-2 bg-gray-50 rounded-lg shadow-sm">
+          <div className="flex justify-between items-center px-2 bg-gray-50 sm:rounded-lg shadow-sm">
             {/* TOC Toggle or Maximize/Minimize Button */}
             <button
               onClick={isMobile ? () => setIsTocOpen(true) : toggleMaximize}

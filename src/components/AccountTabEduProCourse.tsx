@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
+import { useSettings } from '@/context/SettingsContext';
 import { useStudentStatus } from '@/lib/StudentContext';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +13,8 @@ import Image from 'next/image';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+
 
 interface Tab {
   label: string;
@@ -54,6 +57,9 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   const [isScrolled, setIsScrolled] = useState(false);
 
   const fallbackImage = '/images/course-placeholder.svg';
+
+  const { settings } = useSettings();
+const companyLogo = settings?.image;
 
   const isPurchaseActive = (purchase: Purchase) => {
     if (!purchase.is_active) return false;
@@ -196,7 +202,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     <>
       {/* Top Navbar */}
       <div
-        className={`bg-gray-50 sm:rounded-lg z-50 transition-all duration-200 ${
+        className={`bg-white sm:rounded-lg z-50 transition-all duration-200 ${
           isScrolled ? 'fixed top-0 left-0 right-0 shadow-md' : 'relative'
         } ${className}`}
       >
@@ -205,14 +211,14 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
             {/* Logo */}
             <Link href="/account">
               <Image
-                src="/images/logo.svg"
+                src={companyLogo}
                 alt="Logo"
                 width={40}
                 height={40}
                 className="h-8 w-auto hidden xl:block"
               />
               <Image
-                src="/images/logo_collapsed.svg"
+                src={companyLogo}
                 alt="Logo mobile"
                 width={40}
                 height={40}
