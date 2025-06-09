@@ -128,11 +128,11 @@ const TopicHeader = ({ topic }: { topic: EduProTopic }) => (
         <span className=" text-md text-sm sm:text-base font-semibold sm:py-1">Topic</span>
     </div>
   <div className="sm:flex items-center mx-auto max-w-7xl relative border-l-8 border-sky-600 pl-4 py-4 bg-white rounded-lg">
-    <span className="absolute top-4 right-4 flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-sky-600 text-white text-xs sm:text-base font-medium rounded-full">
+    <span className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-sky-600 text-white text-xs sm:text-base font-medium rounded-full">
       {topic.order}
     </span>
     <h3 className="text-base font-medium text-gray-900 pr-8">{topic.title}</h3>
-    <span className="text-sm sm:text-base font-light text-gray-500 pr-8">{topic.description}</span>
+    <span className="text-sm sm:text-base font-light text-gray-500">{topic.description}</span>
   </div>
   </div>
 );
@@ -355,7 +355,7 @@ export default function EduProTopicDetail() {
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
-        <div className="pb-24 px-6">
+        <div className="pb-24 px-2">
           {course && topic ? (
             <>
               <TopicHeader topic={topic} />

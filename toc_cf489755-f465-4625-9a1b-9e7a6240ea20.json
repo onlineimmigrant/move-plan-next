@@ -1,0 +1,52 @@
+[
+  {
+    "topic": "Chapter 1. An Overview of Contract Formation",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "Defining Contract",
+    "href": "chapter-1.xhtml#chapter-1-2",
+    "order": 1
+  },
+  {
+    "topic": "Categories of Contracts",
+    "href": "chapter-1.xhtml#chapter-1-14",
+    "order": 2
+  },
+  {
+    "topic": "Chapter 2. Agreement",
+    "href": "chapter-2.xhtml",
+    "order": 3
+  },
+  {
+    "topic": "The Nature of an Offer",
+    "href": "chapter-2.xhtml#chapter-2-64",
+    "order": 4
+  },
+  {
+    "topic": "Discontinuation of an Offer",
+    "href": "chapter-2.xhtml#chapter-2-118",
+    "order": 5
+  },
+  {
+    "topic": "Defining Acceptance",
+    "href": "chapter-2.xhtml#chapter-2-175",
+    "order": 6
+  },
+  {
+    "topic": "Chapter 3. LEGAL INTENT AND CAPACITY IN CONTRACT FORMATION",
+    "href": "chapter-3.xhtml",
+    "order": 7
+  },
+  {
+    "topic": "Presumed Intentions based on Party Relationships",
+    "href": "chapter-3.xhtml#chapter-3-265",
+    "order": 8
+  },
+  {
+    "topic": "Legal Capacity for Contractual Agreement",
+    "href": "chapter-3.xhtml#chapter-3-306",
+    "order": 9
+  }
+]
