@@ -1,0 +1,32 @@
+[
+  {
+    "topic": "Chapter 7. VALUE ADDED TAX (VAT)",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "Introduction to VAT",
+    "href": "chapter-1.xhtml#chapter-1-4",
+    "order": 1
+  },
+  {
+    "topic": "Charge to VAT",
+    "href": "chapter-1.xhtml#chapter-1-28",
+    "order": 2
+  },
+  {
+    "topic": "VAT Rates Overview",
+    "href": "chapter-1.xhtml#chapter-1-103",
+    "order": 3
+  },
+  {
+    "topic": "Option to Tax in VAT",
+    "href": "chapter-1.xhtml#chapter-1-130",
+    "order": 4
+  },
+  {
+    "topic": "Accounting for VAT - Essential Procedures",
+    "href": "chapter-1.xhtml#chapter-1-176",
+    "order": 5
+  }
+]
