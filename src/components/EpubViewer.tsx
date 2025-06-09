@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import ePub from 'epubjs';
-import { Menu, Plus, Minus, BookOpen, Book, Maximize, Minimize } from 'lucide-react';
+import { Menu, Plus, Minus, BookOpen, Book, Maximize, Minimize, Type } from 'lucide-react';
 
 interface TocItem {
   id: string;
@@ -23,17 +23,26 @@ interface EpubViewerProps {
   setCurrentSection: (section: string) => void;
 }
 
-const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurrentPage, setTotalPages, toc, setCurrentSection }) => {
+const EpubViewer: React.FC<EpubViewerProps> = ({
+  epubUrl,
+  currentPage,
+  setCurrentPage,
+  setTotalPages,
+  toc,
+  setCurrentSection,
+}) => {
   const [error, setError] = useState<string | null>(null);
   const [locationsLoaded, setLocationsLoaded] = useState(false);
   const [textSize, setTextSize] = useState(100);
   const [isTwoPageView, setIsTwoPageView] = useState(false);
   const [isTocOpen, setIsTocOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isTextSizeMenuOpen, setIsTextSizeMenuOpen] = useState(false);
   const viewerRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<any>(null);
   const renditionRef = useRef<any>(null);
   const isMountedRef = useRef<boolean>(true);
+  const textSizeMenuRef = useRef<HTMLDivElement>(null);
 
   // Detect if the device is mobile (screen width < 768px)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
@@ -60,6 +69,18 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
     }
   }, [isMobile]);
 
+  // Close text size menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (textSizeMenuRef.current && !textSizeMenuRef.current.contains(event.target as Node)) {
+        setIsTextSizeMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   useEffect(() => {
     if (!epubUrl || !viewerRef.current) {
       setError('No EPUB URL provided or viewer not initialized');
@@ -74,6 +95,7 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
       width: '100%',
       height: '100%',
       spread: isTwoPageView ? 'auto' : 'none',
+      flow: isTwoPageView ? 'paginated' : 'scrolled', // Use paginated for two-page, scrolled for single
     });
 
     // Apply text size scaling
@@ -226,30 +248,31 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
   };
 
   return (
-    <div className={`w-full ${isMaximized && isMobile ? 'fixed inset-0 z-50 bg-white' : ''}`}>
+    <div className={`w-full ${isMaximized && (isMobile || !isMobile) ? 'fixed inset-0 z-50 bg-white' : ''}`}>
       <div className="flex flex-col md:flex-row gap-4 h-full">
         {/* TOC Sidebar */}
         <div
           className={`${
             isTocOpen
-              ? 'fixed inset-0 z-50 md:static md:w-1/4 p-4 py-4 px-8 sm:pl-4 bg-white rounded-lg text-sm font-medium'
+              ? 'fixed inset-0 md:static md:w-1/4 p-4 py-4 px-8 sm:pl-4 bg-white rounded-lg text-sm font-medium'
               : 'hidden md:block md:w-1/4 p-4 bg-gray-50 rounded-lg'
           } transition-all duration-300 ease-in-out`}
         >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-sm font-medium text-gray-700">Contents</h2>
+          <div className="flex justify-between items-center mt-16 mb-4">
+            <h2 className="px-4 text-sm font-medium text-gray-700">Contents</h2>
             <button
               onClick={() => setIsTocOpen(false)}
               className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+              aria-label="Close table of contents"
             >
               <Menu className="w-6 h-6 text-gray-600 sm:hidden" />
             </button>
           </div>
-          <ul className="space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto">
+          <ul className="space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto mx-4">
             {toc.map((item) => (
               <li
                 key={item.id}
-                className="cursor-pointer text-sky-600 hover:bg-gray-200 p-2 py-1 rounded"
+                className="cursor-pointer text-sky-600 hover:bg-gray-200 p-4 py-1 px-4 rounded"
                 onClick={() => {
                   if (item.href) {
                     setCurrentSection(item.href);
@@ -265,78 +288,104 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
         </div>
 
         {/* EPUB Viewer */}
-        <div className={`w-full ${isTocOpen && isMobile ? 'hidden' : 'md:w-3/4'} ${isMaximized && !isMobile ? 'h-screen' : 'h-full'}`}>
+        <div
+          className={`w-full ${
+            isTocOpen && isMobile ? 'hidden' : 'md:w-3/4'
+          } ${isMaximized && !isMobile ? 'h-screen' : 'min-h-[500px]'} overflow-y-auto flex flex-col`}
+        >
           {/* Control Bar */}
-          <div className="flex justify-between items-center px-2 bg-gray-50 sm:rounded-lg sm:shadow-sm">
-            {/* TOC Toggle or Maximize/Minimize Button */}
-            <button
-              onClick={isMobile ? () => setIsTocOpen(true) : toggleMaximize}
-              className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
-            >
-              {isMobile ? (
-                <Menu className="w-6 h-6 text-gray-600" />
-              ) : isMaximized ? (
-                <Minimize className="w-6 h-6 text-gray-600" />
-              ) : (
-                <Maximize className="w-6 h-6 text-gray-600" />
-              )}
-            </button>
-
-            {/* Text Size and Maximize/Minimize Controls for Mobile */}
+          <div
+            className={`flex justify-between items-center px-4 py-2 bg-gray-50 sm:rounded-lg sm:shadow-sm ${
+              isMaximized ? 'fixed top-0 left-0 right-0 z-10' : ''
+            }`}
+          >
+            {/* Left Side: TOC Toggle (Mobile) or Maximize/Minimize (Desktop) */}
             <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setTextSize((prev) => Math.max(50, prev - 10))}
-                className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
-              >
-                <Minus className="w-5 h-5 text-gray-600" />
-              </button>
-              <span>{textSize}%</span>
-              <button
-                onClick={() => setTextSize((prev) => Math.min(200, prev + 10))}
-                className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
-              >
-                <Plus className="w-5 h-5 text-gray-600" />
-              </button>
-               </div>
               {isMobile && (
                 <button
-                  onClick={toggleMaximize}
+                  onClick={() => setIsTocOpen(true)}
                   className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
+                  aria-label="Open table of contents"
                 >
-                  {isMaximized ? (
-                    <Minimize className="w-5 h-5 text-gray-600" />
-                  ) : (
-                    <Maximize className="w-5 h-5 text-gray-600" />
-                  )}
+                  <Menu className="w-6 h-6 text-gray-600" />
                 </button>
               )}
-           
+              <button
+                onClick={toggleMaximize}
+                className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
+                aria-label={isMaximized ? 'Minimize viewer' : 'Maximize viewer'}
+              >
+                {isMaximized ? (
+                  <Minimize className="w-6 h-6 text-gray-600" />
+                ) : (
+                  <Maximize className="w-6 h-6 text-gray-600" />
+                )}
+              </button>
+            </div>
 
-            {/* Page View Toggle */}
-            <button
-              onClick={() => setIsTwoPageView((prev) => !prev)}
-              className="hidden sm:block cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
-            >
-              {isTwoPageView ? (
-                <BookOpen className="w-5 h-5 text-gray-600" />
-              ) : (
-                <Book className="w-5 h-5 text-gray-600" />
-              )}
-            </button>
+            {/* Right Side: Text Size Menu and Page View Toggle */}
+            <div className="flex items-center space-x-2">
+              <div className="relative" ref={textSizeMenuRef}>
+                <button
+                  onClick={() => setIsTextSizeMenuOpen((prev) => !prev)}
+                  className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
+                  aria-label="Toggle text size menu"
+                >
+                  <Type className="w-5 h-5 text-gray-600" />
+                </button>
+                {isTextSizeMenuOpen && (
+                  <div className="cursor-pointer absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-20">
+                    <div className="flex flex-col items-center p-2 space-y-2">
+                      <button
+                        onClick={() => {
+                          setTextSize((prev) => Math.max(50, prev - 10));
+                          setIsTextSizeMenuOpen(false);
+                        }}
+                        className="cursor-pointer w-full flex items-center justify-center p-2 hover:bg-gray-200 rounded"
+                        aria-label="Decrease text size"
+                      >
+                        <Minus className="w-5 h-5 text-gray-600" />
+                      </button>
+                      <span className="text-sm text-gray-600">{textSize}%</span>
+                      <button
+                        onClick={() => {
+                          setTextSize((prev) => Math.min(200, prev + 10));
+                          setIsTextSizeMenuOpen(false);
+                        }}
+                        className="cursor-pointer w-full flex items-center justify-center p-2 hover:bg-gray-200 rounded"
+                        aria-label="Increase text size"
+                      >
+                        <Plus className="w-5 h-5 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setIsTwoPageView((prev) => !prev)}
+                className="hidden sm:block cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-colors"
+                aria-label={isTwoPageView ? 'Switch to single page view' : 'Switch to two page view'}
+              >
+                {isTwoPageView ? (
+                  <BookOpen className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <Book className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+            </div>
           </div>
 
+          {/* Spacer to prevent content overlap with fixed control bar */}
+          {isMaximized && <div className="h-14"></div>}
+
           {error ? (
-            <p className="text-red-600">{error}</p>
+            <p className="text-red-600 p-4">{error}</p>
           ) : (
             <>
-              <div
-                className={`min-h-[500px] ${isMaximized ? 'h-[calc(100vh-80px)]' : 'h-[500px]'}`}
-              >
-                <div ref={viewerRef} className="w-full h-full" />
-              </div>
-              {locationsLoaded && bookRef.current?.locations?.total && ( // Only show when locations are loaded
+              <div ref={viewerRef} className="w-full flex-1 pt-16" />
+              {locationsLoaded && bookRef.current?.locations?.total && (
                 <div
-                  className={`flex justify-between mt-4 sm:px-8 ${
+                  className={`flex justify-between mt-4 p-4 sm:p-8 sm:px-8 ${
                     isMaximized && isMobile
                       ? 'fixed bottom-0 left-0 right-0 p-2 bg-transparent shadow-lg z-10'
                       : ''
@@ -346,14 +395,18 @@ const EpubViewer: React.FC<EpubViewerProps> = ({ epubUrl, currentPage, setCurren
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
                     className="cursor-pointer px-4 py-1 text-sm bg-sky-600 text-white rounded disabled:opacity-50"
+                    aria-label="Previous page"
                   >
                     Prev
                   </button>
-                  <span className="pt-4 text-gray-400">Page {currentPage} of {bookRef.current.locations.total}</span>
+                  <span className="pt-1 text-sm text-gray-400">
+                    {currentPage} of {bookRef.current.locations.total}
+                  </span>
                   <button
                     onClick={handleNextPage}
                     disabled={currentPage === bookRef.current.locations.total}
-                    className="cursor-pointer px-4 text-sm bg-sky-600 text-white rounded disabled:opacity-50"
+                    className="cursor-pointer px-4 py-1 text-sm bg-sky-600 text-white rounded disabled:opacity-50"
+                    aria-label="Next page"
                   >
                     Next
                   </button>
