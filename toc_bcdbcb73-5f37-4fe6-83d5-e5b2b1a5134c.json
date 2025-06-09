@@ -1,0 +1,27 @@
+[
+  {
+    "topic": "Chapter 9.",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "Tortious Responsibility for Faulty Products",
+    "href": "chapter-2.xhtml",
+    "order": 1
+  },
+  {
+    "topic": "Interplay Between Tort and Contractual Claims for Defective Products",
+    "href": "chapter-2.xhtml#chapter-2-5",
+    "order": 2
+  },
+  {
+    "topic": "Pursuing Product Liability Claims Under Common Law Negligence",
+    "href": "chapter-2.xhtml#chapter-2-38",
+    "order": 3
+  },
+  {
+    "topic": "Strict Liability under the Consumer Protection Act 1987",
+    "href": "chapter-2.xhtml#chapter-2-105",
+    "order": 4
+  }
+]
