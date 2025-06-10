@@ -178,7 +178,7 @@ export default function EduProCourseProgress() {
 
   if (error) {
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-red-600 font-medium">{error}</p>
         </div>
@@ -188,7 +188,7 @@ export default function EduProCourseProgress() {
 
   if (!courseData) {
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-red-600 font-medium">Course data not available.</p>
         </div>
@@ -197,7 +197,7 @@ export default function EduProCourseProgress() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto">
         {toast && (
           <Toast
@@ -207,7 +207,7 @@ export default function EduProCourseProgress() {
             aria-live="polite"
           />
         )}
-        <div className="pt-8">
+        <div className="">
           <AccountTabEduProCourse />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">

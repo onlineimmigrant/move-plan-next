@@ -144,7 +144,7 @@ export default function EduProCourseDetail() {
             aria-live="polite"
           />
         )}
-        <div className="pt-8">
+        <div className="">
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>

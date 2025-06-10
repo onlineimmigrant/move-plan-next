@@ -228,24 +228,14 @@ const companyLogo = settings?.image;
 
             {/* Course Header */}
             <div className="flex flex-col items-center">
-              <span className="hidden sm:block text-gray-500 font-light text-sm">{duration}</span>
+              <span className="hidden sm:block text-white font-semibold text-xs  bg-slate-500 py-0 px-1">{duration}</span>
               <h1 className="text-base sm:text-xl font-bold text-gray-900 relative">
                 {courseTitle}
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
             </div>
+<div></div>
 
-            {/* Course Image */}
-            {courseImage && (
-              <Image
-                src={courseImage || fallbackImage}
-                alt={`${courseTitle} course image`}
-                width={64}
-                height={64}
-                className="h-12 w-12 rounded-lg object-cover hidden xl:block"
-                priority
-              />
-            )}
           </div>
         </div>
       </div>
@@ -257,6 +247,11 @@ const companyLogo = settings?.image;
         }`}
       >
         <div className="select-none flex justify-center">
+
+
+
+
+
           <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-sky-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
             <div
               className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.33%-2px)] bg-sky-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
@@ -275,6 +270,8 @@ const companyLogo = settings?.image;
               ))}
             </div>
           </div>
+
+
         </div>
       </div>
     </>
