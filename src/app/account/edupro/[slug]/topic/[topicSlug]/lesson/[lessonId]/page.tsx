@@ -1,4 +1,3 @@
-// ./src/app/account/edupro/[slug]/topic/[topicSlug]/lesson/[lessonId]/page.tsx
 'use client';
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
@@ -12,18 +11,18 @@ import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
 import EpubViewer from '@/components/EpubViewer';
 import LessonContent from '@/components/edupro/LessonContent';
-import { CheckIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon } from '@heroicons/react/24/outline'; // Added ArrowUpIcon
+import { CheckIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import {
   EduProCourse,
   EduProTopic,
   EduProLesson,
-  EduProLessonProgress,
   Purchase,
   StudyMaterial,
   TocItem,
   Tab,
   ToastState,
 } from '@/types/edupro';
+import ProgressStatisticsCurrent from '@/components/ProgressStatisticsCurrent';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -89,7 +88,7 @@ const LoadingSpinner = () => (
 );
 
 const ErrorDisplay = ({ error }: { error: string | null }) => (
-  <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
+  <div className="min-h-screen pb-20 px-4 sm:px-6 lg:px-8">
     <div className="max-w-7xl mx-auto text-center">
       <p className="text-red-600 font-medium">{error || 'An error occurred'}</p>
     </div>
@@ -172,7 +171,7 @@ const LessonHeader = ({
       </div>
       <div className="my-4">
         <h3 className="text-lg sm:text-xl font-bold text-sky-600 text-center px-4">{lesson.title}</h3>
-        {lesson.description && <p className="hidden sm:block text-sm text-gray-600 text-center">{lesson.description}</p>}
+        {lesson.description && <p className="text-sm text-gray-600 text-center">{lesson.description}</p>}
       </div>
       <div className="hidden absolute bottom-2 right-2 items-center space-x-2">
         <button
@@ -202,6 +201,30 @@ const LessonHeader = ({
   </div>
 );
 
+interface Quiz {
+  id: number;
+  title: string;
+  description: string | null;
+  slug: string | null;
+  percent_required: number;
+}
+
+interface Topic {
+  id: number;
+  title: string;
+}
+
+interface QuizResult {
+  id: string;
+  quiz_id: number;
+  created_at: string;
+  exam_mode: boolean;
+  questions_attempted: number;
+  questions_correct: number;
+  percent_correct: number;
+  topics: Topic[];
+}
+
 const CompletionControls = ({
   isLessonCompleted,
   toggleLessonCompletion,
@@ -213,10 +236,10 @@ const CompletionControls = ({
   session: any;
   isToggling: boolean;
 }) => (
-  <div className="mt-4">
+  <div className="fixed bottom-0 left-0 right-0 bg-white z-10 p-4 shadow-lg">
     <button
       onClick={toggleLessonCompletion}
-      className={`w-full py-8 sm:py-16 shadow px-4 border-2 ${
+      className={`w-full py-4 shadow px-4 border-2 ${
         isLessonCompleted
           ? 'border-teal-600 text-teal-600 bg-teal-50 hover:bg-white'
           : 'border-sky-600 text-sky-600 hover:bg-sky-50'
@@ -259,6 +282,8 @@ export default function EduProLessonDetail() {
   const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(false);
   const [isTopicCompleted, setIsTopicCompleted] = useState<boolean>(false);
   const [isToggling, setIsToggling] = useState<boolean>(false);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [latestQuizResult, setLatestQuizResult] = useState<QuizResult | null>(null);
   const router = useRouter();
   const { slug, topicSlug, lessonId } = useParams() as { slug: string; topicSlug: string; lessonId: string };
   const { session } = useAuth();
@@ -332,10 +357,9 @@ export default function EduProLessonDetail() {
 
       if (progressError) throw new Error(`Error fetching lesson progress: ${progressError.message}`);
 
-      // Create a map of lesson completion status
       const lessonProgressMap: Record<number, boolean> = {};
       lessonIds.forEach((id) => {
-        lessonProgressMap[id] = false; // Default to false if no progress record
+        lessonProgressMap[id] = false;
       });
       if (progressData) {
         progressData.forEach((progress) => {
@@ -343,7 +367,6 @@ export default function EduProLessonDetail() {
         });
       }
 
-      // Check if all lessons are completed
       const allCompleted = lessonIds.length > 0 && lessonIds.every((id) => lessonProgressMap[id]);
       setIsTopicCompleted(allCompleted);
     } catch (err) {
@@ -408,7 +431,6 @@ export default function EduProLessonDetail() {
         type: 'success',
       });
 
-      // Re-fetch topic completion status after toggling
       if (topic?.id) {
         await fetchTopicCompletionStatus(topic.id);
       }
@@ -420,31 +442,49 @@ export default function EduProLessonDetail() {
     }
   };
 
-  // Fetch lesson details
+  // Fetch lesson details, quizzes, and latest quiz attempt
   const fetchLessonDetails = async () => {
     if (studentLoading) return;
     setIsLoading(true);
 
     try {
-      if (!session) throw new Error('You must be logged in to access this page.');
-      if (!isStudent) throw new Error('Access denied: You are not enrolled as a student.');
+      // Validate parameters
+      if (!slug || !topicSlug || !lessonId) {
+        throw new Error('Invalid URL parameters: slug, topicSlug, or lessonId missing');
+      }
+      console.log('Params:', { slug, topicSlug, lessonId });
+      console.log('Session:', session);
+      console.log('IsStudent:', isStudent, 'StudentLoading:', studentLoading);
+
+      if (!session) {
+        setError('You must be logged in to access this page.');
+        return;
+      }
+      if (!isStudent) {
+        setError('Access denied: You are not enrolled as a student.');
+        return;
+      }
 
       const { data: topicData, error: topicError } = await supabase
         .from('edu_pro_topic')
         .select('id, title, description, order, slug')
         .eq('slug', topicSlug)
         .single();
-
-      if (topicError || !topicData) throw new Error(`Topic with slug "${topicSlug}" not found.`);
+      console.log('TopicData:', topicData, 'TopicError:', topicError);
+      if (topicError || !topicData) {
+        setError(`Topic with slug "${topicSlug}" not found.`);
+        return;
+      }
       setTopic(topicData);
 
       const { data: courseTopicData, error: courseTopicError } = await supabase
         .from('edu_pro_coursetopic')
         .select('course_id')
         .eq('topic_id', topicData.id);
-
+      console.log('CourseTopicData:', courseTopicData, 'CourseTopicError:', courseTopicError);
       if (courseTopicError || !courseTopicData?.length) {
-        throw new Error(`No courses found for topic "${topicSlug}".`);
+        setError(`No courses found for topic "${topicSlug}".`);
+        return;
       }
 
       const courseIds = courseTopicData.map((ct) => ct.course_id);
@@ -454,23 +494,20 @@ export default function EduProLessonDetail() {
         .eq('slug', slug)
         .in('id', courseIds)
         .single();
-
+      console.log('CourseData:', courseData, 'CourseError:', courseError);
       if (courseError || !courseData) {
         const { data: associatedCourse } = await supabase
           .from('edu_pro_course')
           .select('slug')
           .in('id', courseIds)
           .single();
-
         if (associatedCourse) {
-          setToast({
-            message: `Topic "${topicSlug}" does not belong to course "${slug}". Redirecting.`,
-            type: 'error',
-          });
+          setToast({ message: `Topic "${topicSlug}" does not belong to course "${slug}". Redirecting.`, type: 'error' });
           router.push(`/account/edupro/${associatedCourse.slug}/topic/${topicSlug}`);
           return;
         }
-        throw new Error(`Course with slug "${slug}" not found.`);
+        setError(`Course with slug "${slug}" not found.`);
+        return;
       }
       setCourse(courseData);
 
@@ -484,9 +521,10 @@ export default function EduProLessonDetail() {
         `)
         .eq('topic_id', topicData.id)
         .order('order', { ascending: true });
-
+      console.log('AllLessonsData:', allLessonsData, 'AllLessonsError:', allLessonsError);
       if (allLessonsError || !allLessonsData) {
-        throw new Error(`Error fetching lessons for topic "${topicSlug}": ${allLessonsError?.message}`);
+        setError(`Error fetching lessons for topic "${topicSlug}": ${allLessonsError?.message}`);
+        return;
       }
       setAllLessons(allLessonsData);
 
@@ -501,18 +539,83 @@ export default function EduProLessonDetail() {
         .eq('id', lessonId)
         .eq('topic_id', topicData.id)
         .single();
-
+      console.log('LessonData:', lessonData, 'LessonError:', lessonError);
       if (lessonError || !lessonData) {
-        throw new Error(`Lesson with ID "${lessonId}" not found or does not belong to topic "${topicSlug}".`);
+        setError(`Lesson with ID "${lessonId}" not found or does not belong to topic "${topicSlug}".`);
+        return;
       }
       setLesson(lessonData);
+
+      // Fetch quizzes for the course
+      const { data: quizzesData, error: quizzesError } = await supabase
+        .from('quiz_quizcommon')
+        .select('id, title, description, slug, percent_required')
+        .eq('course_id', courseData.id);
+      console.log('QuizzesData:', quizzesData, 'QuizzesError:', quizzesError);
+      if (quizzesError) {
+        console.warn('Failed to fetch quizzes:', quizzesError.message);
+        setQuizzes([]);
+      } else {
+        setQuizzes(quizzesData ?? []);
+      }
+
+      // Fetch latest quiz attempt for this lesson's quiz, using lesson_id
+      if (session?.user?.id && lessonData?.link_to_practice && quizzesData?.length) {
+        const quizSlug = lessonData.link_to_practice.split('/').pop();
+        const quiz = quizzesData.find(q => q.slug === quizSlug || q.id.toString() === quizSlug);
+        const quizId = quiz?.id || quizzesData[0]?.id;
+        console.log('Fetching quiz attempt for user:', session.user.id, 'quizId:', quizId, 'lessonId:', lessonId);
+        const { data: attemptData, error: attemptError } = await supabase
+          .from('quiz_quizstatistic')
+          .select('id, quiz_id, created_at, exam_mode, questions_attempted, questions_correct, percent_correct')
+          .eq('user_id', session.user.id)
+          .eq('quiz_id', quizId)
+          .eq('lesson_id', lessonId) // Filter by lesson_id
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        console.log('AttemptData:', attemptData, 'AttemptError:', attemptError);
+        if (attemptError && attemptError.code !== 'PGRST116') {
+          console.warn('Failed to fetch latest quiz attempt:', attemptError.message);
+          setLatestQuizResult(null);
+        } else if (attemptData) {
+          let topics: Topic[] = [];
+          const { data: answerData, error: answerError } = await supabase
+            .from('quiz_useranswer')
+            .select('topic_id')
+            .eq('quiz_statistic_id', attemptData.id)
+            .eq('user_id', session.user.id);
+          if (answerError) {
+            console.warn(`Error fetching topic IDs for attempt ${attemptData.id}: ${answerError.message}`);
+          } else if (answerData?.length) {
+            const topicIds = [...new Set(answerData.map((answer: any) => answer.topic_id).filter((id: any) => id))];
+            if (topicIds.length) {
+              const { data: topicData, error: topicError } = await supabase
+                .from('edu_pro_quiz_topic')
+                .select('id, title')
+                .in('id', topicIds);
+              if (topicError) {
+                console.warn(`Error fetching topic details: ${topicError.message}`);
+              } else if (topicData) {
+                topics = topicData.map((topic: any) => ({ id: topic.id, title: topic.title }));
+              }
+            }
+          }
+          setLatestQuizResult({ ...attemptData, topics });
+        } else {
+          setLatestQuizResult(null);
+        }
+      }
 
       const { data: materialsData, error: materialsError } = await supabase
         .from('study_materials')
         .select('id, lesson_id, file_path, file_type')
         .eq('lesson_id', lessonId);
-
-      if (materialsError) throw new Error(`Error fetching materials: ${materialsError.message}`);
+      console.log('MaterialsData:', materialsData, 'MaterialsError:', materialsError);
+      if (materialsError) {
+        setError(`Error fetching materials: ${materialsError.message}`);
+        return;
+      }
       setMaterials(materialsData || []);
 
       if (materialsData?.length) {
@@ -521,7 +624,7 @@ export default function EduProLessonDetail() {
           .select('id, material_id, topic, page_number, href, order')
           .eq('material_id', materialsData[0].id)
           .order('order', { ascending: true });
-
+        console.log('TocData:', tocData, 'TocError:', tocError);
         if (tocError) {
           setToast({ message: `Error fetching TOC: ${tocError.message}`, type: 'error' });
         } else {
@@ -532,6 +635,7 @@ export default function EduProLessonDetail() {
         }
 
         const sasUrl = await fetchSasUrl(materialsData[0].file_path, lessonId, session.access_token);
+        console.log('SasUrl:', sasUrl);
         if (sasUrl) setSasUrl(sasUrl);
       }
     } catch (err) {
@@ -539,7 +643,6 @@ export default function EduProLessonDetail() {
       console.error('EduProLessonDetail: Error:', err);
       setError(errorMessage);
       setToast({ message: errorMessage, type: 'error' });
-      router.push(`/account/edupro/${slug}/topic/${topicSlug}`);
     } finally {
       setIsLoading(false);
     }
@@ -576,11 +679,8 @@ export default function EduProLessonDetail() {
     return true;
   };
 
-  if (isLoading || studentLoading) return <LoadingSpinner />;
-  if (error) return <ErrorDisplay error={error} />;
-
   return (
-    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} aria-live="polite" />}
         <div className="pt-0">
@@ -642,7 +742,7 @@ export default function EduProLessonDetail() {
             </button>
           </div>
         </div>
-        <div className="">
+        <div>
           {course && topic && lesson ? (
             <div>
               <div className="grid grid-cols-3 sm:grid-cols-6">
@@ -668,7 +768,7 @@ export default function EduProLessonDetail() {
                 </div>
               </div>
               {activeTab === 'theory' && materials.length > 0 && sasUrl ? (
-                <div className="">
+                <div>
                   {materials[0].file_type === 'epub' ? (
                     <EpubViewer
                       epubUrl={sasUrl}
@@ -683,11 +783,17 @@ export default function EduProLessonDetail() {
                   )}
                 </div>
               ) : activeTab === 'theory' || activeTab === 'practice' ? (
-                <div className="my-24 text-center">
+                <div className="my-16 mt-8 text-center">
+                  {latestQuizResult ? (
+                    <ProgressStatisticsCurrent quizId={latestQuizResult.quiz_id} lessonId={lessonId} />
+                  ) : (
+                    <p className="text-gray-600 mb-4">No quiz attempts yet for this lesson.</p>
+                  )}
                   {lesson.link_to_practice && (
                     <Link
-                      href={lesson.link_to_practice}
+                      href={`${lesson.link_to_practice}?lessonId=${lessonId}`}
                       className="inline-block text-base mb-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white px-36 py-3 font-medium rounded-md shadow-md hover:from-sky-700 hover:to-sky-800 transition-all duration-200 cursor-pointer"
+                      onClick={() => console.log('Navigating to quiz with lessonId:', lessonId)}
                     >
                       Start
                     </Link>
@@ -699,16 +805,13 @@ export default function EduProLessonDetail() {
                   {materials.length === 0 ? 'No study materials available.' : 'Missing SAS URL.'}
                 </p>
               )}
-
               {shouldShowCompletionControls() && (
-                <div className="">
-                  <CompletionControls
-                    isLessonCompleted={isLessonCompleted}
-                    toggleLessonCompletion={toggleLessonCompletion}
-                    session={session}
-                    isToggling={isToggling}
-                  />
-                </div>
+                <CompletionControls
+                  isLessonCompleted={isLessonCompleted}
+                  toggleLessonCompletion={toggleLessonCompletion}
+                  session={session}
+                  isToggling={isToggling}
+                />
               )}
             </div>
           ) : (
