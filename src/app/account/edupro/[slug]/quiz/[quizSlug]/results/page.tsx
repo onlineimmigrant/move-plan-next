@@ -4,13 +4,18 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import FixedNavbarMenu from '@/components/FixedNavbarMenu';
+import { createClient, SupabaseClient, PostgrestSingleResponse } from '@supabase/supabase-js';
 import InfoQuizElement from '@/components/quiz/InfoQuizElement';
 import ExplanationModal from '@/components/quiz/ExplanationModal';
 import { useAuth } from '@/context/AuthContext';
-import NavbarEduPro from '@/components/NavbarEduPro';
+import NavbarEduPro from '@/components/edupro/NavbarEduPro';
+import ProgressStatisticsCurrent from '@/components/ProgressStatisticsCurrent';
 import { UserSession, Question as TypesQuestion } from '@/components/quiz/Types';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Choice {
   id: number;
@@ -31,20 +36,15 @@ interface Question {
 
 // Utility function to strip and transform HTML tags in question text
 const formatQuestionText = (text: string): string => {
-  // Replace <br/> tags with a newline (or space for inline display)
   let formattedText = text.replace(/<br\s*\/?>/gi, ' ');
-  
-  // Remove other HTML tags while preserving their content
   formattedText = formattedText.replace(/<\/?[^>]+(>|$)/g, '');
-
-  // Decode HTML entities (e.g., &amp; to &, &lt; to <, etc.)
   const entities: { [key: string]: string } = {
-    '&amp;': '&',
-    '&lt;': '<',
-    '&gt;': '>',
-    '&quot;': '"',
-    '&apos;': "'",
-    '&nbsp;': ' ',
+    '&': '&',
+    '<': '<',
+    '>': '>',
+    '"': '"',
+    "'": "'",
+    ' ': ' ',
   };
   return formattedText.replace(/&[a-zA-Z0-9#]+;/g, (match) => entities[match] || match);
 };
@@ -55,14 +55,18 @@ interface QuizResultsProps {
 
 export default function QuizResults({ params }: QuizResultsProps) {
   const { slug: courseSlug, quizSlug } = React.use(params);
-
   const { session } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const lessonIdParam = searchParams.get('lessonId');
+  const lessonId: number | null = lessonIdParam && lessonIdParam !== 'undefined' && !isNaN(parseInt(lessonIdParam, 10))
+    ? parseInt(lessonIdParam, 10)
+    : null;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userAnswers, setUserAnswers] = useState<{ [questionId: number]: number }>({});
   const [correctAnswersCount, setCorrectAnswersCount] = useState<number>(0);
+  const [quizId, setQuizId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpenStates, setModalOpenStates] = useState<{ [questionId: number]: boolean }>({});
@@ -71,6 +75,8 @@ export default function QuizResults({ params }: QuizResultsProps) {
   const quantity = Number(searchParams.get('quantity')) || 10;
   const mode = searchParams.get('mode') || 'exam';
   const examMode = mode === 'exam';
+
+  console.log('QuizResults: Initialized', { courseSlug, quizSlug, lessonId, topicIds, quantity, mode, examMode });
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -83,7 +89,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
 
       setIsLoading(true);
       try {
-        console.log('Fetching quiz with slug:', quizSlug, 'and courseSlug:', courseSlug);
+        console.log('QuizResults: Fetching quiz', { quizSlug, courseSlug });
         const { data: quizData, error: quizError } = await supabase
           .from('quiz_quizcommon')
           .select('id')
@@ -94,23 +100,52 @@ export default function QuizResults({ params }: QuizResultsProps) {
         if (quizError) throw new Error(`Error fetching quiz: ${quizError.message}`);
         if (!quizData) throw new Error('Quiz not found');
 
-        console.log('Fetching latest quiz statistic for user:', typedSession.user.id);
-        const { data: statisticData, error: statisticError } = await supabase
+        setQuizId(quizData.id);
+
+        console.log('QuizResults: Fetching latest quiz statistic', { userId: typedSession.user.id, quizId: quizData.id, lessonId });
+        // Define the base query
+        let statisticQuery = supabase
           .from('quiz_quizstatistic')
-          .select('id')
+          .select('id, lesson_id')
           .eq('user_id', typedSession.user.id)
           .eq('quiz_id', quizData.id)
+          .eq('exam_mode', examMode)
           .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          .limit(1);
+
+        // Apply lesson_id filter conditionally
+        if (lessonId !== null) {
+          statisticQuery = statisticQuery.eq('lesson_id', lessonId);
+        } else {
+          statisticQuery = statisticQuery.is('lesson_id', null);
+        }
+
+        // Execute the query with single()
+        const { data: statisticData, error: statisticError } = await statisticQuery.single() as PostgrestSingleResponse<{ id: string; lesson_id: number | null }>;
 
         if (statisticError) throw new Error(`Error fetching quiz statistic: ${statisticError.message}`);
         if (!statisticData) throw new Error('Quiz session not found');
 
         const quizStatisticId = statisticData.id;
-        console.log('Quiz statistic ID:', quizStatisticId);
+        console.log('QuizResults: Fetched quiz statistic', { quizStatisticId, lessonId: statisticData.lesson_id });
 
-        console.log('Fetching user answers for quiz statistic:', quizStatisticId);
+        // Update quiz_statistic with lessonId if it's missing
+        if (lessonId !== null && statisticData.lesson_id === null) {
+          console.log('QuizResults: Updating quiz_statistic with lessonId', { quizStatisticId, lessonId });
+          const { error: updateError } = await supabase
+            .from('quiz_quizstatistic')
+            .update({ lesson_id: lessonId })
+            .eq('id', quizStatisticId);
+
+          if (updateError) {
+            console.error('QuizResults: Error updating lesson_id:', updateError);
+            setError(`Failed to update lesson ID: ${updateError.message}`);
+            return;
+          }
+          console.log('QuizResults: Successfully updated lesson_id');
+        }
+
+        console.log('QuizResults: Fetching user answers', { quizStatisticId });
         const { data: answersData, error: answersError } = await supabase
           .from('quiz_useranswer')
           .select('question_id, choice_id, is_correct')
@@ -120,16 +155,16 @@ export default function QuizResults({ params }: QuizResultsProps) {
 
         if (answersError) throw new Error(`Error fetching user answers: ${answersError.message}`);
         if (!answersData || answersData.length === 0) {
-          console.log('No user answers found');
+          console.log('QuizResults: No user answers found');
           setQuestions([]);
           setIsLoading(false);
           return;
         }
 
         const questionIds = [...new Set(answersData.map((answer: { question_id: number }) => answer.question_id))];
-        console.log('Question IDs from user answers:', questionIds);
+        console.log('QuizResults: Question IDs from user answers:', questionIds);
 
-        console.log('Fetching questions for IDs:', questionIds);
+        console.log('QuizResults: Fetching questions', { questionIds });
         const { data: questionsData, error: questionsError } = await supabase
           .from('edu_pro_quiz_question')
           .select(`
@@ -145,7 +180,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
 
         if (questionsError) throw new Error(`Error fetching questions: ${questionsError.message}`);
         if (!questionsData || questionsData.length === 0) {
-          console.log('No questions found for the answered IDs');
+          console.log('QuizResults: No questions found');
           setQuestions([]);
           setIsLoading(false);
           return;
@@ -162,7 +197,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
           topic: q.edu_pro_quiz_topic ? { id: q.edu_pro_quiz_topic.id, title: q.edu_pro_quiz_topic.title } : undefined,
         }));
 
-        console.log('Formatted questions:', formattedQuestions.map(q => ({ id: q.id, text: q.question_text })));
+        console.log('QuizResults: Formatted questions:', formattedQuestions.map(q => ({ id: q.id, text: q.question_text })));
         setQuestions(formattedQuestions);
 
         if (examMode) {
@@ -170,7 +205,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
           answersData.forEach((answer: { question_id: number; choice_id: number }) => {
             answersMap[answer.question_id] = answer.choice_id;
           });
-          console.log('User answers map:', answersMap);
+          console.log('QuizResults: User answers map:', answersMap);
 
           setUserAnswers(answersMap);
 
@@ -186,7 +221,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
               correctCount++;
             }
           }
-          console.log('Correct answers count:', correctCount);
+          console.log('QuizResults: Correct answers count:', correctCount);
           setCorrectAnswersCount(correctCount);
         } else {
           setCorrectAnswersCount(0);
@@ -196,19 +231,21 @@ export default function QuizResults({ params }: QuizResultsProps) {
         setError((err as Error).message);
       } finally {
         setIsLoading(false);
-        console.log('Fetch completed, isLoading:', false);
+        console.log('QuizResults: Fetch completed, isLoading:', false);
       }
     };
 
     fetchResults();
-  }, [courseSlug, quizSlug, session]);
+  }, [courseSlug, quizSlug, session, lessonId, examMode]);
 
   const handleTryAgain = () => {
     const params = new URLSearchParams({
       topics: topicIds.join(','),
       quantity: quantity.toString(),
       mode,
+      ...(lessonId !== null && { lessonId: lessonId.toString() }),
     });
+    console.log('QuizResults: Redirecting to quiz', { params: params.toString() });
     router.push(`/account/edupro/${courseSlug}/quiz/${quizSlug}?${params.toString()}`);
   };
 
@@ -249,7 +286,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
     <main className="flex-1 space-y-6 py-20 px-2 bg-gray-50 min-h-screen">
       <NavbarEduPro />
       <div className="max-w-3xl mx-auto">
-        <div className="mt-8 bg-white rounded-xl sm:shadow-sm sm:p-6 p-4 py-2 space-y-6">
+        <div className="bg-white rounded-xl sm:shadow-sm sm:p-6 p-4 py-2 space-y-6">
           <div className="my-6 flex justify-between items-center text-lg font-semibold text-gray-900">
             <div className="text-gray-700">Practice Results</div>
             {examMode && Object.keys(userAnswers).length > 0 ? (
@@ -274,7 +311,6 @@ export default function QuizResults({ params }: QuizResultsProps) {
                 >
                   <InfoQuizElement />
                 </button>
-                {/* Add topic title above the question */}
                 <div className="text-xs text-gray-500 mb-1">
                   {question.topic?.title || 'Unknown Topic'}
                 </div>
@@ -304,11 +340,9 @@ export default function QuizResults({ params }: QuizResultsProps) {
                         value={choice.id}
                         checked={isSelected}
                         disabled
-                        className={`w-5 h-5 mr-4 text-gray-500`} // Removed color styling from radio
+                        className="w-5 h-5 mr-4 text-gray-500"
                       />
-                      <label
-                        className={`font-medium text-gray-700`} // Removed color styling from label
-                      >
+                      <label className="font-medium text-gray-700">
                         {choice.choice_text}
                       </label>
                     </div>
@@ -323,6 +357,11 @@ export default function QuizResults({ params }: QuizResultsProps) {
             ))
           )}
         </div>
+        {quizId && (
+          <div className="mt-6">
+            <ProgressStatisticsCurrent quizId={quizId} lessonId={lessonId} />
+          </div>
+        )}
         <button
           onClick={handleTryAgain}
           className="mt-6 bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
@@ -330,10 +369,6 @@ export default function QuizResults({ params }: QuizResultsProps) {
           Try Again
         </button>
       </div>
-
-      {(session as UserSession)?.user?.role && ['student', 'staff'].includes((session as UserSession).user.role) && (
-        <FixedNavbarMenu />
-      )}
     </main>
   );
 }

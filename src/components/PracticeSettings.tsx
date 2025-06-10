@@ -260,7 +260,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </p>
         ) : (
           <div
-            className="pb-8 max-h-120 overflow-y-auto bg-white gap-y-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-600"
+            className="pb-24 max-h-120 overflow-y-auto bg-white gap-y-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-600"
             role="group"
             aria-labelledby="topics-label"
           >
