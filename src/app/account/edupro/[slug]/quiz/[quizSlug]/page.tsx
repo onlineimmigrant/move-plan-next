@@ -1,6 +1,7 @@
+// src/app/account/edupro/[slug]/quiz/[quizSlug]/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -31,8 +32,21 @@ export default function QuizPage({ params }: QuizPageProps) {
   const { session } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const lessonIdParam = searchParams.get('lessonId');
-  const lessonId: number | null = lessonIdParam && !isNaN(parseInt(lessonIdParam, 10)) ? parseInt(lessonIdParam, 10) : null;
+
+  // Memoize query parameters to prevent re-renders
+  const lessonIdParam = useMemo(() => searchParams.get('lessonId'), [searchParams]);
+  const lessonId: number | null = useMemo(
+    () =>
+      lessonIdParam && lessonIdParam !== 'undefined' && !isNaN(parseInt(lessonIdParam, 10))
+        ? parseInt(lessonIdParam, 10)
+        : null,
+    [lessonIdParam]
+  );
+  const topicIds = useMemo(() => searchParams.get('topics')?.split(',').map(Number).filter(id => !isNaN(id)) || [], [searchParams]);
+  const section = useMemo(() => searchParams.get('section') || null, [searchParams]);
+  const quantity = useMemo(() => Number(searchParams.get('quantity')) || 10, [searchParams]);
+  const mode = useMemo(() => searchParams.get('mode') || 'exam', [searchParams]);
+  const examMode = useMemo(() => mode === 'exam', [mode]);
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -43,17 +57,13 @@ export default function QuizPage({ params }: QuizPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [shouldSubmit, setShouldSubmit] = useState<boolean>(false);
 
-  const topicIds = searchParams.get('topics')?.split(',').map(Number) || [];
-  const quantity = Number(searchParams.get('quantity')) || 10;
-  const mode = searchParams.get('mode') || 'exam';
-  const examMode = mode === 'exam';
-
-  console.log('QuizPage: Initialized', { courseSlug, quizSlug, lessonId, topicIds, quantity, mode, examMode });
+  console.log('QuizPage: Initialized', { courseSlug, quizSlug, lessonId, topicIds, section, quantity, mode, examMode });
 
   useEffect(() => {
     const fetchQuizAndQuestions = async () => {
       const typedSession = session as UserSession | null;
       if (!typedSession?.user?.id) {
+        console.log('QuizPage: User not authenticated');
         setError('User not authenticated');
         setIsLoading(false);
         return;
@@ -69,30 +79,44 @@ export default function QuizPage({ params }: QuizPageProps) {
           .eq('course_id', await courseIdFromSlug(courseSlug))
           .single();
 
-        if (quizError) throw new Error(`Error fetching quiz: ${quizError.message}`);
-        if (!quizData) throw new Error('Quiz not found');
+        if (quizError) {
+          console.error('QuizPage: Quiz error', quizError);
+          throw new Error(`Error fetching quiz: ${quizError.message}`);
+        }
+        if (!quizData) {
+          console.error('QuizPage: Quiz not found');
+          throw new Error('Quiz not found');
+        }
 
         setQuiz(quizData as Quiz);
+        console.log('QuizPage: Quiz fetched', { quizId: quizData.id });
 
+        console.log('QuizPage: Fetching topic relations', { quizId: quizData.id });
         const { data: topicRelations, error: topicError } = await supabase
           .from('edu_pro_topics_to_quizzes')
           .select('topic_id')
           .eq('quizcommon_id', quizData.id);
 
-        if (topicError) throw new Error(`Error fetching topic relations: ${topicError.message}`);
+        if (topicError) {
+          console.error('QuizPage: Topic relations error', topicError);
+          throw new Error(`Error fetching topic relations: ${topicError.message}`);
+        }
         if (!topicRelations || topicRelations.length === 0) {
+          console.log('QuizPage: No topic relations found');
           setQuestions([]);
           setIsLoading(false);
           return;
         }
 
         const quizTopicIds: number[] = topicRelations.map((relation: { topic_id: number }) => relation.topic_id);
+        console.log('QuizPage: Quiz topic IDs', quizTopicIds);
 
         let query = supabase
           .from('edu_pro_quiz_question')
           .select(`
             id,
             topic_id,
+            section,
             question_text,
             explanation,
             video_player,
@@ -103,13 +127,25 @@ export default function QuizPage({ params }: QuizPageProps) {
           .in('topic_id', quizTopicIds);
 
         if (topicIds.length > 0) {
-          query = query.in('topic_id', topicIds.filter((id) => quizTopicIds.includes(id)));
+          const filteredTopicIds = topicIds.filter((id) => quizTopicIds.includes(id));
+          console.log('QuizPage: Applying topic filter', filteredTopicIds);
+          query = query.in('topic_id', filteredTopicIds);
         }
 
+        if (section) {
+          console.log('QuizPage: Applying section filter', section);
+          query = query.eq('section', section);
+        }
+
+        console.log('QuizPage: Fetching questions');
         const { data: questionsData, error: questionsError } = await query;
 
-        if (questionsError) throw new Error(`Error fetching questions: ${questionsError.message}`);
+        if (questionsError) {
+          console.error('QuizPage: Questions error', questionsError);
+          throw new Error(`Error fetching questions: ${questionsError.message}`);
+        }
         if (!questionsData || questionsData.length === 0) {
+          console.log('QuizPage: No questions found');
           setQuestions([]);
           setIsLoading(false);
           return;
@@ -120,6 +156,7 @@ export default function QuizPage({ params }: QuizPageProps) {
           return {
             id: q.id,
             topic_id: q.topic_id,
+            section: q.section,
             topic: q.edu_pro_quiz_topic as { id: number; title: string },
             question_text: q.question_text,
             explanation: q.explanation,
@@ -132,21 +169,21 @@ export default function QuizPage({ params }: QuizPageProps) {
 
         const shuffledQuestions = shuffleArray(formattedQuestions);
         const limitedQuestions = shuffledQuestions.slice(0, quantity);
-
-        console.log('QuizPage: Fetched questions:', limitedQuestions.map(q => ({ id: q.id, topic_id: q.topic_id })));
+        console.log('QuizPage: Fetched questions', limitedQuestions.map(q => ({ id: q.id, topic_id: q.topic_id, section: q.section })));
 
         setQuestions(limitedQuestions);
         setTimeRemaining(limitedQuestions.length * 60);
       } catch (err) {
-        console.error('QuizPage: Error fetching quiz/questions:', err);
+        console.error('QuizPage: Error fetching quiz/questions', err);
         setError((err as Error).message);
       } finally {
+        console.log('QuizPage: Fetch completed, isLoading: false');
         setIsLoading(false);
       }
     };
 
     fetchQuizAndQuestions();
-  }, [courseSlug, quizSlug, session]);
+  }, [courseSlug, quizSlug, session, topicIds, section, quantity]);
 
   useEffect(() => {
     if (timeRemaining <= 0 || isLoading || !questions.length) return;
@@ -209,16 +246,17 @@ export default function QuizPage({ params }: QuizPageProps) {
     });
 
     if (!quiz || !session?.user?.id || questions.length === 0) {
-      setError('Cannot submit: Missing quiz, user, or questions.');
-      console.error('QuizPage: Validation failed: Missing quiz, user, or questions.');
+      setError('Cannot submit: missing quiz, user, or questions.');
+      console.error('QuizPage: Validation failed');
       return;
     }
 
     const answerCount = Object.keys(userAnswers).length;
     if (answerCount === 0) {
-      console.warn('QuizPage: No answers provided; redirecting without saving.');
+      console.log('QuizPage: No answers provided, redirecting without saving');
       const params = new URLSearchParams({
         topics: topicIds.join(','),
+        ...(section && { section }),
         quantity: quantity.toString(),
         mode,
         ...(lessonId !== null && { lessonId: lessonId.toString() }),
@@ -237,27 +275,26 @@ export default function QuizPage({ params }: QuizPageProps) {
         id: quizStatisticId,
         user_id: session.user.id,
         quiz_id: quiz.id,
-        lesson_id: lessonId, // Explicitly include lessonId
+        lesson_id: lessonId,
         created_at: new Date().toISOString(),
         exam_mode: examMode,
         questions_attempted: answerCount,
       };
-      console.log('QuizPage: quiz_statistic payload:', statisticPayload);
+      console.log('QuizPage: Quiz statistic payload', statisticPayload);
 
       const { data: statisticData, error: statisticError } = await supabase
         .from('quiz_quizstatistic')
         .insert(statisticPayload)
-        .select('id, lesson_id') // Select lesson_id to verify insertion
+        .select('id, lesson_id')
         .single();
 
       if (statisticError) {
-        console.error('QuizPage: Error inserting quiz_statistic:', statisticError);
-        setError(`Failed to save quiz session: ${statisticError.message}`);
-        return;
+        console.error('QuizPage: Statistic error', statisticError);
+        throw new Error(`Failed to save quiz statistic: ${statisticError.message}`);
       }
-      console.log('QuizPage: quiz_statistic inserted successfully:', statisticData);
+      console.log('QuizPage: Quiz statistic inserted', statisticData);
 
-      // Verify the inserted record
+      // Verify inserted record
       const { data: verifyData, error: verifyError } = await supabase
         .from('quiz_quizstatistic')
         .select('id, lesson_id')
@@ -265,21 +302,21 @@ export default function QuizPage({ params }: QuizPageProps) {
         .single();
 
       if (verifyError) {
-        console.error('QuizPage: Error verifying quiz_statistic:', verifyError);
+        console.error('QuizPage: Verify error', verifyError);
       } else {
-        console.log('QuizPage: Verified quiz_statistic:', verifyData);
+        console.log('QuizPage: Verified quiz statistic', verifyData);
       }
 
       const questionIds = Object.keys(userAnswers).map(Number);
+      console.log('QuizPage: Fetching question data', questionIds);
       const { data: questionData, error: questionError } = await supabase
         .from('edu_pro_quiz_question')
         .select('id, topic_id, section')
         .in('id', questionIds);
 
       if (questionError) {
-        console.error('QuizPage: Error fetching question data:', questionError);
-        setError(`Failed to fetch question data: ${questionError.message}`);
-        return;
+        console.error('QuizPage: Question data error', questionError);
+        throw new Error(`Failed to fetch question data: ${questionError.message}`);
       }
 
       const questionMap = new Map<number, { topic_id: number; section: string }>();
@@ -288,15 +325,15 @@ export default function QuizPage({ params }: QuizPageProps) {
       });
 
       const choiceIds = Object.values(userAnswers).flat();
+      console.log('QuizPage: Fetching choice data', choiceIds);
       const { data: choiceData, error: choiceError } = await supabase
         .from('edu_pro_quiz_choice')
         .select('id, is_correct')
         .in('id', choiceIds);
 
       if (choiceError) {
-        console.error('QuizPage: Error fetching choice data:', choiceError);
-        setError(`Failed to fetch choice data: ${choiceError.message}`);
-        return;
+        console.error('QuizPage: Choice data error', choiceError);
+        throw new Error(`Failed to fetch choice data: ${choiceError.message}`);
       }
 
       const choiceMap = new Map<number, boolean>();
@@ -321,15 +358,15 @@ export default function QuizPage({ params }: QuizPageProps) {
         })
       );
 
-      console.log('QuizPage: Saving answers:', answersToSave.length);
+      console.log('QuizPage: Saving answers', { count: answersToSave.length });
       const { error: saveError } = await supabase.from('quiz_useranswer').insert(answersToSave);
       if (saveError) {
-        console.error('QuizPage: Error saving answers:', saveError);
-        setError(`Failed to save answers: ${saveError.message}`);
-        return;
+        console.error('QuizPage: Save answers error', saveError);
+        throw new Error(`Failed to save answers: ${saveError.message}`);
       }
-      console.log('QuizPage: Answers saved:', answersToSave.length);
+      console.log('QuizPage: Answers saved', { count: answersToSave.length });
 
+      console.log('QuizPage: Fetching saved answers', { quizStatisticId });
       const { data: savedAnswers, error: fetchSavedError } = await supabase
         .from('quiz_useranswer')
         .select('question_id, is_correct')
@@ -337,12 +374,10 @@ export default function QuizPage({ params }: QuizPageProps) {
         .eq('user_id', session.user.id);
 
       if (fetchSavedError) {
-        console.error('QuizPage: Error fetching saved answers:', fetchSavedError);
-        setError(`Failed to fetch saved answers: ${fetchSavedError.message}`);
-        return;
+        console.error('QuizPage: Fetch saved answers error', fetchSavedError);
+        throw new Error(`Failed to fetch saved answers: ${fetchSavedError.message}`);
       }
-
-      console.log('QuizPage: Fetched saved answers:', savedAnswers);
+      console.log('QuizPage: Fetched saved answers', { count: savedAnswers.length });
 
       let questionsAttempted = 0;
       let questionsCorrect = 0;
@@ -353,13 +388,14 @@ export default function QuizPage({ params }: QuizPageProps) {
 
         for (const questionId of questionIdsAttempted) {
           const questionAnswers = savedAnswers.filter(answer => answer.question_id === questionId);
+          console.log('QuizPage: Fetching choices for question', questionId);
           const { data: choicesData, error: choicesError } = await supabase
             .from('edu_pro_quiz_choice')
             .select('id, is_correct')
             .eq('question_id', questionId);
 
           if (choicesError) {
-            console.error('QuizPage: Error fetching choices:', choicesError);
+            console.error('QuizPage: Choices error', choicesError);
             continue;
           }
 
@@ -374,9 +410,8 @@ export default function QuizPage({ params }: QuizPageProps) {
         }
       }
 
+      console.log('QuizPage: Updating quiz statistic', { questionsAttempted, questionsCorrect });
       const percentCorrect = questionsAttempted > 0 ? (questionsCorrect / questionsAttempted) * 100 : 0;
-      console.log('QuizPage: Updating quiz_statistic:', { questionsAttempted, questionsCorrect, percentCorrect });
-
       const { error: updateStatisticError } = await supabase
         .from('quiz_quizstatistic')
         .update({
@@ -387,23 +422,25 @@ export default function QuizPage({ params }: QuizPageProps) {
         .eq('id', quizStatisticId);
 
       if (updateStatisticError) {
-        console.error('QuizPage: Error updating quiz_statistic:', updateStatisticError);
-        setError(`Failed to update quiz statistics: ${updateStatisticError.message}`);
-        return;
+        console.error('QuizPage: Update statistic error', updateStatisticError);
+        throw new Error(`Failed to update quiz statistics: ${updateStatisticError.message}`);
       }
 
       const params = new URLSearchParams({
         topics: topicIds.join(','),
+        ...(section && { section }),
         quantity: quantity.toString(),
         mode,
         ...(quizStatisticId && { statisticId: quizStatisticId }),
         ...(lessonId !== null && { lessonId: lessonId.toString() }),
       });
-      console.log('QuizPage: Redirecting to results:', params.toString());
+      console.log('QuizPage: Redirecting to results', params.toString());
       router.push(`/account/edupro/${courseSlug}/quiz/${quizSlug}/results?${params.toString()}`);
     } catch (err) {
-      console.error('QuizPage: Error in handleSubmit:', err);
+      console.error('QuizPage: Error in handleSubmit', err);
       setError('An unexpected error occurred while saving answers');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -459,52 +496,47 @@ export default function QuizPage({ params }: QuizPageProps) {
   const correctAnswer = currentQuestion.choices.find((choice) => choice.is_correct)?.choice_text || '';
 
   return (
-    <>
-      <main className="flex-1 sm:pb-36 sm:pt-4 py-12 px-4 sm:bg-gray-50 min-h-screen">
-        <NavbarEduPro />
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
-          <div className="col-span-1"></div>
-          <div className="sm:mt-16 col-span-3 flex flex-col gap-4 sm:gap-8 px-4 sm:px-6 sm:bg-white sm:rounded-xl sm:shadow-sm p-6">
-            <QuizHeader
-              examMode={examMode}
-              topicTitle={currentQuestion.topic.title}
-              currentIndex={currentQuestionIndex}
-              totalQuestions={questions.length}
-              timeRemaining={timeRemaining}
-              openModal={openModal}
-              modalId={`modal-${currentQuestion.id}`}
-            />
-            <QuestionDisplay
-              questionText={currentQuestion.question_text}
-              correctAnswerCount={currentQuestion.choices.filter(choice => choice.is_correct).length}
-            />
-            <QuizForm
-              question={currentQuestion}
-              currentAnswers={currentUserAnswers}
-              randomizeChoices={quiz.randomize_choices}
-              numerateChoices={quiz.numerate_choices}
-              handleAnswerChange={handleAnswerChange}
-              handleNext={handleNext}
-              handlePrev={handlePrev}
-              currentIndex={currentQuestionIndex}
-              totalQuestions={questions.length}
-              openModal={openModal}
-              modalId={`modal-${currentQuestion.id}`}
-              examMode={examMode}
-            />
-            <ExplanationModal
-              question={currentQuestion}
-              examMode={examMode}
-              randomizeChoices={quiz.randomize_choices}
-              closeModal={closeModal}
-            />
-          </div>
-          <div className="col-span-1"></div>
+    <main className="flex-1 sm:pb-36 sm:pt-4 py-12 px-4 sm:bg-gray-50 min-h-screen">
+      <NavbarEduPro />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
+        <div className="col-span-1"></div>
+        <div className="sm:mt-16 col-span-3 flex flex-col gap-4 sm:gap-8 px-4 sm:px-6 sm:bg-white sm:rounded-xl sm:shadow-sm p-6">
+          <QuizHeader
+            examMode={examMode}
+            topicTitle={currentQuestion.topic.title}
+            currentIndex={currentQuestionIndex}
+            totalQuestions={questions.length}
+            timeRemaining={timeRemaining}
+            openModal={openModal}
+            modalId={`modal-${currentQuestion.id}`}
+          />
+          <QuestionDisplay
+            questionText={currentQuestion.question_text}
+            correctAnswerCount={currentQuestion.choices.filter(choice => choice.is_correct).length}
+          />
+          <QuizForm
+            question={currentQuestion}
+            currentAnswers={currentUserAnswers}
+            randomizeChoices={quiz.randomize_choices}
+            numerateChoices={quiz.numerate_choices}
+            handleAnswerChange={handleAnswerChange}
+            handleNext={handleNext}
+            handlePrev={handlePrev}
+            currentIndex={currentQuestionIndex}
+            totalQuestions={questions.length}
+            openModal={openModal}
+            modalId={`modal-${currentQuestion.id}`}
+            examMode={examMode}
+          />
+          <ExplanationModal
+            question={currentQuestion}
+            examMode={examMode}
+            randomizeChoices={quiz.randomize_choices}
+            closeModal={closeModal}
+          />
         </div>
-      </main>
-      {(session as UserSession)?.user?.role && ['student', 'staff'].includes((session as UserSession).user.role) && (
-        <></>
-      )}
-    </>
+        <div className="col-span-1"></div>
+      </div>
+    </main>
   );
 }

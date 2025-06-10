@@ -12,6 +12,7 @@ export interface Choice {
 export interface Question {
   id: number;
   topic_id: number; // Optional for QuizResults
+  section?: string;
   topic: { id: number; title: string }; // Optional for QuizResults
   question_text: string;
   explanation?: string | null;
