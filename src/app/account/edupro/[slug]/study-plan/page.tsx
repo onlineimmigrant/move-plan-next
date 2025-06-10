@@ -536,9 +536,9 @@ export default function EduProCourseStudyPlan() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
         </div>
       </div>
     );
@@ -546,7 +546,7 @@ export default function EduProCourseStudyPlan() {
 
   if (error) {
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center">
           <p className="text-red-600 font-medium">{error}</p>
         </div>
@@ -555,10 +555,10 @@ export default function EduProCourseStudyPlan() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 bg-white">
+    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-5xl mx-auto">
         <ToastWrapper toast={toast} setToast={setToast} />
-        <div className="pt-8">
+        <div className="">
           <AccountTabEduProCourse />
         </div>
         {courseProgress && (
