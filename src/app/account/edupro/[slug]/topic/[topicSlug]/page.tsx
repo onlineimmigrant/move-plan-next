@@ -1,3 +1,4 @@
+// app/account/edupro/[slug]/topic/[topicSlug]/page.tsx
 'use client';
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
@@ -144,15 +145,16 @@ const CourseHeader = ({
         className="hidden group-hover:block absolute top-2 left-2 w-5 h-5 text-sky-600"
         aria-hidden="true"
       />
-      <div className="flex flex-col space-y-0 flex-1">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="sm:text-sm text-sm font-light text-gray-500">Course</span>
-            <h3 className="hidden sm:flex sm:text-base text-sm font-semibold text-gray-900 pr-8 hover:text-sky-600 transition-colors">
-              {course.title}
+      <div className="hidden sm:flex sm:flex-col space-y-0 flex-1 items-center justify-center">
+      
+         
+              <h3 className="  sm:text-xl text-sm font-semibold text-gray-900  hover:text-sky-600 transition-colors">
+              Course
             </h3>
-          </div>
-        </div>
+            <span className="sm:text-sm text-sm font-light text-gray-500 ">Topics</span>
+
+          
+      
       </div>
     </div>
   </Link>
@@ -198,12 +200,12 @@ const LessonsList = ({
   topicSlug: string;
   lessonProgress: Record<number, boolean>;
 }) => (
-  <div className="mt-8">
-    <div className="text-center mb-4 p-3 sm:border-none sm:p-0">
+  <div className="mt-4 sm:mt-8">
+    <div className="text-center mb-2 sm:mb-4 p-3 sm:border-none sm:p-0">
       <span className="text-md text-sm sm:text-base font-semibold sm:py-1">Lessons</span>
     </div>
     {lessons.length > 0 ? (
-      <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-x-16">
         {lessons.map((lesson) => (
           <li
             key={lesson.id}
@@ -578,17 +580,20 @@ export default function EduProTopicDetail() {
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
-        <div className="mt-4 mb-4 flex items-center justify-between">
+        <div className="mt-4 mb-4 grid grid-cols-3">
+          
           <Link
             href={`/account/edupro/${slug}`}
-            className="flex sm:hidden relative group"
-            aria-label="Back to Course"
+            className="flex sm:justify-start justify-center text-gray-600 hover:text-sky-600 p-1"
+            aria-label="Up to Course"
           >
-            <span className="flex items-center justify-center w-6 h-6 bg-sky-600 text-white rounded-full cursor-pointer transition-transform duration-200 group-hover:scale-110">
-              <ArrowUpIcon className="w-4 h-4" />
-            </span>
-            <span className="absolute bottom-full left-0 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              Back to Course
+           
+              
+              <ArrowUpIcon className=" w-5 h-5" />
+              
+           
+            <span className="absolute bottom-full w-24 left-0 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              Up to Course
             </span>
           </Link>
           <div className="flex-1 flex justify-center items-center space-x-3">
@@ -614,7 +619,7 @@ export default function EduProTopicDetail() {
                 </div>
             )}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex justify-center sm:justify-end items-center space-x-2">
             <button
               onClick={() => previousTopic && navigateToTopic(previousTopic.topic.slug)}
               disabled={!previousTopic}
@@ -641,7 +646,7 @@ export default function EduProTopicDetail() {
             </button>
           </div>
         </div>
-        <div className="pb-24 px-2">
+        <div className=" pb-24 px-2">
           {course && topic ? (
             <div>
               <div className="grid grid-cols-3 sm:grid-cols-6">

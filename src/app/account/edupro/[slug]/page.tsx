@@ -1,19 +1,18 @@
-// app/account/edupro/[slug]/page.tsx
 'use client';
 
-import { useState, Dispatch, SetStateAction, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import CourseTabEduPro from '@/components/edupro/CourseTabEduPro';
-
 import StudyBooks from '@/components/StudyBooks';
 import Practice from '@/components/Practice';
 import Toast from '@/components/Toast';
 import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import { useCourseAndTopics } from '@/lib/hooks/useCourseAndTopics';
 import { useAuth } from '@/context/AuthContext';
+import { ArrowUpIcon } from '@heroicons/react/24/outline';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -30,7 +29,80 @@ interface TabOption {
   value: Tab;
 }
 
+// Define Topic interface (based on useCourseAndTopics hook)
+interface Topic {
+  id: number;
+  title: string;
+  slug: string;
+  order: number;
+}
 
+// AccountHeader component (modeled after TopicHeader from topic level)
+const AccountHeader = () => (
+  <div
+    className="relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 border-sky-600 bg-white shadow-sm hover:bg-blue-50 min-h-[100px] sm:min-h-[120px] flex items-center"
+  >
+    <div className="flex flex-col space-y-0 flex-1">
+
+      <div className="my-4">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 text-center">Account</h3>
+        <p className="hidden sm:block text-sm text-gray-600 text-center">Courses, profile, purchases</p>
+      </div>
+    </div>
+  </div>
+);
+
+// CourseHeader component (modeled after TopicHeader from topic level)
+const CourseHeader = ({ course }: { course?: { title: string; slug: string } | null }) => (
+  <div
+    className="sm:ml-2 relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 border-sky-600 bg-blue-50 min-h-[100px] sm:min-h-[120px] flex items-center"
+  >
+    <div className="flex flex-col space-y-0 flex-1">
+      <div className="my-4">
+        <h3 className="text-lg sm:text-xl font-bold text-sky-600 text-center">{course?.title || 'Course'}</h3>
+        <p className="hidden sm:block text-sm text-gray-600 text-center">Content</p>
+      </div>
+    </div>
+  </div>
+);
+
+// TopicHeader component (modeled after LessonsList from topic level)
+const TopicHeader = ({ topics, slug, topicCompletion }: { topics: Topic[]; slug: string; topicCompletion: Record<number, boolean> }) => (
+  <div className="mt-4 sm:mt-8">
+    <div className="text-center mb-2 sm:mb-4 p-3 sm:border-none sm:p-0">
+      <span className="text-md text-sm sm:text-base font-semibold sm:py-1">Topics</span>
+    </div>
+    {topics.length > 0 ? (
+      <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-x-16">
+        {topics.map((topic) => {
+          const isCompleted = topicCompletion[topic.id];
+          const topicBackground = isCompleted ? 'teal-600' : 'sky-600';
+          return (
+            <li
+              key={topic.id}
+              className={`relative border-l-4 border-${topicBackground} pl-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                isCompleted ? 'bg-teal-100' : 'bg-white'
+              }`}
+            >
+              <span
+                className={`absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-${topicBackground} text-white text-xs font-medium rounded-full`}
+              >
+                {topic.order}
+              </span>
+              <Link href={`/account/edupro/${slug}/topic/${topic.slug}`}>
+                <h3 className="text-sm font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
+                  {topic.title}
+                </h3>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    ) : (
+      <p className="mt-2 text-gray-600 text-center">No topics available for this course.</p>
+    )}
+  </div>
+);
 
 export default function EduProCourseDetail() {
   const params = useParams();
@@ -114,7 +186,10 @@ export default function EduProCourseDetail() {
     if (!isLoading && topics.length && session) {
       fetchTopicCompletion();
     }
-  }, [isLoading, topics, session]);
+    if (course) {
+      setCourseTitle(course.title || 'Course');
+    }
+  }, [isLoading, topics, session, course]);
 
   if (isLoading) {
     return (
@@ -151,82 +226,93 @@ export default function EduProCourseDetail() {
         )}
         <div className="">
           <AccountTabEduProCourse />
-        
-          <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={setActiveTab} />
           <CourseTabEduPro />
+           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={setActiveTab} />
+       <div className="mt-4 mb-4 grid grid-cols-3">
+          
+          <Link
+            href={`/account/edupro`}
+            className="flex sm:justify-start justify-center text-gray-600 hover:text-sky-600 p-1"
+            aria-label="Up to Course"
+          >
+           
+              
+              <ArrowUpIcon className=" w-5 h-5" />
+              
+           
+            <span className="absolute bottom-full w-24 left-0 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              Up to Account
+            </span>
+          </Link>
+          <div className="flex-1 flex justify-center items-center space-x-3">
+            <span
+              className="text-md sm:text-lg font-semibold text-gray-900"
+              aria-label="Current Topic Section"
+            >
+              Course
+            </span>
+
+          </div>
+          <div className="flex justify-center sm:justify-end items-center space-x-2">
+
+          </div>
         </div>
-        <div className="px-4">
-          {course ? (
-            <div>
+
+
+
+
+          <div className="grid grid-cols-3 sm:grid-cols-6">
+            <div className="hidden sm:block col-span-1 sm:col-span-2">
+              <AccountHeader />
+            </div>
+            <div className="col-span-3 sm:col-span-4">
+              <CourseHeader course={course} />
+            </div>
+          </div>
+         
+          <div className="px-4">
+            {course ? (
               <div>
-                {/* Tab panels */}
                 <div>
-                  <div
-                    id="theory-panel"
-                    role="tabpanel"
-                    aria-labelledby="theory-tab"
-                    hidden={activeTab !== 'theory'}
-                  >
-                    {topics.length > 0 ? (
-                    <div>
-                        <div className='mt-8 mb-4 text-center'>
-                            <span className=" text-md text-sm sm:text-base font-semibold sm:py-1">Topics</span>
-                        </div>
-                        
-                      <ul className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        {topics.map((topic) => {
-                          const isCompleted = topicCompletion[topic.id];
-                          const topicBackground = isCompleted ? 'teal-600' : 'sky-600';
-                          return (
-                            <li
-                              key={topic.id}
-                              className={`relative border-l-8 border-${topicBackground} pl-8 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
-                                isCompleted ? 'bg-teal-100' : 'bg-white'
-                              }`}
-                            >
-                              <span
-                                className={`absolute bottom-2 right-2 flex items-center justify-center sm:w-6 w-5 sm:h-6 h-5 bg-${topicBackground} text-white text-xs font-medium rounded-full`}
-                              >
-                                {topic.order}
-                              </span>
-                              <Link href={`/account/edupro/${course.slug}/topic/${topic.slug}`}>
-                                <h3 className="text-base font-medium text-gray-900 pr-8 hover:text-sky-600 transition-colors">
-                                  {topic.title}
-                                </h3>
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-gray-600 text-center">No topics available for this course.</p>
-                    )}
-                  </div>
+                  {/* Tab panels */}
+                  <div>
+                    <div
+                      id="theory-panel"
+                      role="tabpanel"
+                      aria-labelledby="theory-tab"
+                      hidden={activeTab !== 'theory'}
+                    >
+                      {topics.length > 0 ? (
+                        <TopicHeader topics={topics} slug={course.slug} topicCompletion={topicCompletion} />
+                      ) : (
+                        <p className="mt-2 text-gray-600 text-center">No topics available for this course.</p>
+                      )}
+                    </div>
 
-                  <div
-                    id="practice-panel"
-                    role="tabpanel"
-                    aria-labelledby="practice-tab"
-                    hidden={activeTab !== 'practice'}
-                  >
-                    <Practice courseId={course.id} courseSlug={course.slug} />
-                  </div>
+                    <div
+                      id="practice-panel"
+                      role="tabpanel"
+                      aria-labelledby="practice-tab"
+                      hidden={activeTab !== 'practice'}
+                    >
+                      <Practice courseId={course.id} courseSlug={course.slug} />
+                    </div>
 
-                  <div
-                    id="studyBooks-panel"
-                    role="tabpanel"
-                    aria-labelledby="studyBooks-tab"
-                    hidden={activeTab !== 'studyBooks'}
-                  >
-                    <StudyBooks courseId={course.id} />
+                    <div
+                      id="studyBooks-panel"
+                      role="tabpanel"
+                      aria-labelledby="studyBooks-tab"
+                      hidden={activeTab !== 'studyBooks'}
+                    >
+                      <StudyBooks courseId={course.id} />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <p className="mt-4 text-gray-600 text-center">No course details available.</p>
-          )}
+            ) : (
+              <p className="mt-4 text-gray-600 text-center">No course details available.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
