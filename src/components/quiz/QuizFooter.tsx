@@ -1,24 +1,23 @@
 import React from 'react';
 import InfoQuizElement from './InfoQuizElement';
 
-interface QuizHeaderProps {
+interface QuizFooterProps {
   examMode: boolean;
-  topicTitle: string;
+ 
   currentIndex: number;
   totalQuestions: number;
   timeRemaining: number;
-  openModal: (modalId: string) => void;
-  modalId: string;
+  
+  
 }
 
-const QuizHeader: React.FC<QuizHeaderProps> = ({
+const QuizFooter: React.FC<QuizFooterProps> = ({
   examMode,
-  topicTitle,
+ 
   currentIndex,
   totalQuestions,
   timeRemaining,
-  openModal,
-  modalId,
+
 }) => {
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -26,12 +25,15 @@ const QuizHeader: React.FC<QuizHeaderProps> = ({
     return `${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+
+
   return (
     <div className="mt-6 sm:my-2 sm:mt-0">
 
       <div className="font-bold text-base sm:text-lg text-gray-900 space-x-1">
-         <span>{topicTitle}</span>
+         
 
+       
       </div>
       <div className="flex justify-between text-sm font-medium text-gray-500">
         <span>
@@ -45,4 +47,4 @@ const QuizHeader: React.FC<QuizHeaderProps> = ({
   );
 };
 
-export default QuizHeader;
+export default QuizFooter;
