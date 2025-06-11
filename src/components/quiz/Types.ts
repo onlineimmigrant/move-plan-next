@@ -28,6 +28,7 @@ export interface Quiz {
   slug: string;
   randomize_choices: boolean;
   numerate_choices:boolean;
+  question_seconds: string;
 }
 
 export interface UserSession {

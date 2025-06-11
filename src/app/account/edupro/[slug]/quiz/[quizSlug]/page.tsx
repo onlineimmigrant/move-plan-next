@@ -1,4 +1,3 @@
-// src/app/account/edupro/[slug]/quiz/[quizSlug]/page.tsx
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -74,7 +73,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         console.log('QuizPage: Fetching quiz with slug:', quizSlug, 'and courseSlug:', courseSlug);
         const { data: quizData, error: quizError } = await supabase
           .from('quiz_quizcommon')
-          .select('id, course_id, slug, numerate_choices, randomize_choices')
+          .select('id, course_id, slug, numerate_choices, randomize_choices, question_seconds')
           .eq('slug', quizSlug)
           .eq('course_id', await courseIdFromSlug(courseSlug))
           .single();
@@ -92,6 +91,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         console.log('QuizPage: Quiz fetched', { quizId: quizData.id });
 
         console.log('QuizPage: Fetching topic relations', { quizId: quizData.id });
+
         const { data: topicRelations, error: topicError } = await supabase
           .from('edu_pro_topics_to_quizzes')
           .select('topic_id')
@@ -172,7 +172,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         console.log('QuizPage: Fetched questions', limitedQuestions.map(q => ({ id: q.id, topic_id: q.topic_id, section: q.section })));
 
         setQuestions(limitedQuestions);
-        setTimeRemaining(limitedQuestions.length * 60);
+        setTimeRemaining(limitedQuestions.length * (quizData.question_seconds || 160)); // Use timeOfQuiz with fallback to 160
       } catch (err) {
         console.error('QuizPage: Error fetching quiz/questions', err);
         setError((err as Error).message);
@@ -184,6 +184,8 @@ export default function QuizPage({ params }: QuizPageProps) {
 
     fetchQuizAndQuestions();
   }, [courseSlug, quizSlug, session, topicIds, section, quantity]);
+
+  const timeOfQuiz = quiz?.question_seconds || 102; // Define timeOfQuiz with fallback
 
   useEffect(() => {
     if (timeRemaining <= 0 || isLoading || !questions.length) return;
