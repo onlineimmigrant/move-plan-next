@@ -274,7 +274,7 @@ export default function EduPro() {
         {courses.length === 0 ? (
           <p className="mt-4 text-gray-600">No active courses available at this time.</p>
         ) : (
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-1 gap-8 sm:gap-x-16  sm:grid-cols-2 lg:grid-cols-4">
             {courses.map((course) => (
               <Link
                 key={course.purchaseId}

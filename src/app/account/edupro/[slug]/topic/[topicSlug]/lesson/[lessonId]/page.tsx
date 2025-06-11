@@ -786,12 +786,12 @@ export default function EduProLessonDetail() {
                   {latestQuizResult ? (
                     <ProgressStatisticsCurrent quizId={latestQuizResult.quiz_id} lessonId={lessonId} />
                   ) : (
-                    <p className="text-gray-600 mb-4">No quiz attempts yet for this lesson.</p>
+                    <p className="text-gray-600 mb-4"></p>
                   )}
                   {lesson.link_to_practice && (
                     <Link
-                      href={`${lesson.link_to_practice}?lessonId=${lessonId}`}
-                      className="inline-block text-base mb-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white px-36 py-3 font-medium rounded-md shadow-md hover:from-sky-700 hover:to-sky-800 transition-all duration-200 cursor-pointer"
+                      href={`${lesson.link_to_practice}&lessonId=${lessonId}`}
+                      className="inline-block text-base my-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white px-36 py-3 font-medium rounded-md shadow-md hover:from-sky-700 hover:to-sky-800 transition-all duration-200 cursor-pointer"
                       onClick={() => console.log('Navigating to quiz with lessonId:', lessonId)}
                     >
                       Start
