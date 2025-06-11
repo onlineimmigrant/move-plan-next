@@ -172,7 +172,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         console.log('QuizPage: Fetched questions', limitedQuestions.map(q => ({ id: q.id, topic_id: q.topic_id, section: q.section })));
 
         setQuestions(limitedQuestions);
-        setTimeRemaining(limitedQuestions.length * (quizData.question_seconds || 160)); // Use timeOfQuiz with fallback to 160
+        setTimeRemaining(limitedQuestions.length * (quizData.question_seconds || 160));
       } catch (err) {
         console.error('QuizPage: Error fetching quiz/questions', err);
         setError((err as Error).message);
@@ -185,7 +185,7 @@ export default function QuizPage({ params }: QuizPageProps) {
     fetchQuizAndQuestions();
   }, [courseSlug, quizSlug, session, topicIds, section, quantity]);
 
-  const timeOfQuiz = quiz?.question_seconds || 102; // Define timeOfQuiz with fallback
+  const timeOfQuiz = quiz?.question_seconds || 102;
 
   useEffect(() => {
     if (timeRemaining <= 0 || isLoading || !questions.length) return;
@@ -263,6 +263,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         mode,
         ...(lessonId !== null && { lessonId: lessonId.toString() }),
       });
+      console.log('QuizPage: Redirecting to results (no answers)', { url: params.toString() });
       router.push(`/account/edupro/${courseSlug}/quiz/${quizSlug}/results?${params.toString()}`);
       return;
     }
@@ -294,20 +295,10 @@ export default function QuizPage({ params }: QuizPageProps) {
         console.error('QuizPage: Statistic error', statisticError);
         throw new Error(`Failed to save quiz statistic: ${statisticError.message}`);
       }
-      console.log('QuizPage: Quiz statistic inserted', statisticData);
-
-      // Verify inserted record
-      const { data: verifyData, error: verifyError } = await supabase
-        .from('quiz_quizstatistic')
-        .select('id, lesson_id')
-        .eq('id', quizStatisticId)
-        .single();
-
-      if (verifyError) {
-        console.error('QuizPage: Verify error', verifyError);
-      } else {
-        console.log('QuizPage: Verified quiz statistic', verifyData);
-      }
+      console.log('QuizPage: Quiz statistic inserted', {
+        id: statisticData.id,
+        lesson_id: statisticData.lesson_id,
+      });
 
       const questionIds = Object.keys(userAnswers).map(Number);
       console.log('QuizPage: Fetching question data', questionIds);
@@ -356,11 +347,12 @@ export default function QuizPage({ params }: QuizPageProps) {
             is_correct: isCorrect,
             topic_id: questionInfo?.topic_id,
             section: questionInfo?.section,
+            lesson_id: lessonId, // Add lesson_id to quiz_useranswer
           };
         })
       );
 
-      console.log('QuizPage: Saving answers', { count: answersToSave.length });
+      console.log('QuizPage: Saving answers', { count: answersToSave.length, sample: answersToSave[0] });
       const { error: saveError } = await supabase.from('quiz_useranswer').insert(answersToSave);
       if (saveError) {
         console.error('QuizPage: Save answers error', saveError);
@@ -371,7 +363,7 @@ export default function QuizPage({ params }: QuizPageProps) {
       console.log('QuizPage: Fetching saved answers', { quizStatisticId });
       const { data: savedAnswers, error: fetchSavedError } = await supabase
         .from('quiz_useranswer')
-        .select('question_id, is_correct')
+        .select('question_id, is_correct, lesson_id')
         .eq('quiz_statistic_id', quizStatisticId)
         .eq('user_id', session.user.id);
 
@@ -379,7 +371,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         console.error('QuizPage: Fetch saved answers error', fetchSavedError);
         throw new Error(`Failed to fetch saved answers: ${fetchSavedError.message}`);
       }
-      console.log('QuizPage: Fetched saved answers', { count: savedAnswers.length });
+      console.log('QuizPage: Fetched saved answers', { count: savedAnswers.length, lesson_id: savedAnswers[0]?.lesson_id });
 
       let questionsAttempted = 0;
       let questionsCorrect = 0;
@@ -436,7 +428,7 @@ export default function QuizPage({ params }: QuizPageProps) {
         ...(quizStatisticId && { statisticId: quizStatisticId }),
         ...(lessonId !== null && { lessonId: lessonId.toString() }),
       });
-      console.log('QuizPage: Redirecting to results', params.toString());
+      console.log('QuizPage: Redirecting to results', { url: params.toString() });
       router.push(`/account/edupro/${courseSlug}/quiz/${quizSlug}/results?${params.toString()}`);
     } catch (err) {
       console.error('QuizPage: Error in handleSubmit', err);

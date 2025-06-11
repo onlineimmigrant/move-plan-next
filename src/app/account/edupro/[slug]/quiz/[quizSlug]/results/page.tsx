@@ -1,7 +1,6 @@
-// src/app/account/edupro/[slug]/quiz/[quizSlug]/results/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 import { createClient, SupabaseClient, PostgrestSingleResponse } from '@supabase/supabase-js';
@@ -13,8 +12,8 @@ import ProgressStatisticsCurrent from '@/components/ProgressStatisticsCurrent';
 import { UserSession, Question as TypesQuestion } from '@/components/quiz/Types';
 
 // Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Choice {
@@ -36,15 +35,15 @@ interface Question {
 
 // Utility function to strip and transform HTML tags in question text
 const formatQuestionText = (text: string): string => {
-  let formattedText = text.replace(/<br\s*\/?>/gi, ' ');
+  let formattedText: string = text.replace(/<br\s*\/?>/gi, ' ');
   formattedText = formattedText.replace(/<\/?[^>]+(>|$)/g, '');
   const entities: { [key: string]: string } = {
-    '&': '&',
-    '<': '<',
-    '>': '>',
-    '"': '"',
-    "'": "'",
-    ' ': ' ',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&apos;': "'",
+    '&nbsp;': ' ',
   };
   return formattedText.replace(/&[a-zA-Z0-9#]+;/g, (match) => entities[match] || match);
 };
@@ -58,10 +57,23 @@ export default function QuizResults({ params }: QuizResultsProps) {
   const { session } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const lessonIdParam = searchParams.get('lessonId');
-  const lessonId: number | null = lessonIdParam && lessonIdParam !== 'undefined' && !isNaN(parseInt(lessonIdParam, 10))
-    ? parseInt(lessonIdParam, 10)
-    : null;
+
+  // Memoize query parameters to prevent re-renders
+  const lessonIdParam = useMemo(() => searchParams.get('lessonId'), [searchParams]);
+  const lessonId: number | null = useMemo(
+    () =>
+      lessonIdParam && lessonIdParam !== 'undefined' && !isNaN(parseInt(lessonIdParam, 10))
+        ? parseInt(lessonIdParam, 10)
+        : null,
+    [lessonIdParam]
+  );
+  const topicIds = useMemo(
+    () => searchParams.get('topics')?.split(',').map(Number).filter(id => !isNaN(id)) || [],
+    [searchParams]
+  );
+  const quantity = useMemo(() => Number(searchParams.get('quantity')) || 10, [searchParams]);
+  const mode = useMemo(() => searchParams.get('mode') || 'exam', [searchParams]);
+  const examMode = useMemo(() => mode === 'exam', [mode]);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userAnswers, setUserAnswers] = useState<{ [questionId: number]: number }>({});
@@ -70,11 +82,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpenStates, setModalOpenStates] = useState<{ [questionId: number]: boolean }>({});
-
-  const topicIds = searchParams.get('topics')?.split(',').map(Number) || [];
-  const quantity = Number(searchParams.get('quantity')) || 10;
-  const mode = searchParams.get('mode') || 'exam';
-  const examMode = mode === 'exam';
+  const [topicSlug, setTopicSlug] = useState<string | null>(null);
 
   console.log('QuizResults: Initialized', { courseSlug, quizSlug, lessonId, topicIds, quantity, mode, examMode });
 
@@ -82,12 +90,12 @@ export default function QuizResults({ params }: QuizResultsProps) {
     const fetchResults = async () => {
       const typedSession = session as UserSession | null;
       if (!typedSession?.user?.id) {
+        console.log('QuizResults: User not authenticated');
         setError('User not authenticated');
         setIsLoading(false);
         return;
       }
 
-      setIsLoading(true);
       try {
         console.log('QuizResults: Fetching quiz', { quizSlug, courseSlug });
         const { data: quizData, error: quizError } = await supabase
@@ -97,13 +105,54 @@ export default function QuizResults({ params }: QuizResultsProps) {
           .eq('course_id', await courseIdFromSlug(courseSlug))
           .single();
 
-        if (quizError) throw new Error(`Error fetching quiz: ${quizError.message}`);
-        if (!quizData) throw new Error('Quiz not found');
+        if (quizError) {
+          console.error('QuizResults: Error fetching quiz:', quizError);
+          throw new Error(`Error fetching quiz: ${quizError.message}`);
+        }
+        if (!quizData) {
+          console.error('QuizResults: Quiz not found');
+          throw new Error('Quiz not found');
+        }
 
         setQuizId(quizData.id);
 
-        console.log('QuizResults: Fetching latest quiz statistic', { userId: typedSession.user.id, quizId: quizData.id, lessonId });
-        // Define the base query
+        // Fetch topic slug if topicIds exist
+        if (topicIds.length > 0) {
+          try {
+            console.log('QuizResults: Fetching topic slug', { topicId: topicIds[0] });
+            const { data: topicData, error: topicError } = await supabase
+              .from('edu_pro_quiz_topic')
+              .select('slug, title')
+              .eq('id', topicIds[0])
+              .single();
+
+            if (topicError) {
+              console.error('QuizResults: Error fetching topic:', topicError);
+              // Fallback to topicId as slug
+              setTopicSlug(`topic-${topicIds[0]}`);
+            } else if (topicData) {
+              // Prefer slug, then title (slugified), then topicId
+              const slug =
+                topicData.slug ||
+                (topicData.title ? topicData.title.toLowerCase().replace(/\s+/g, '-') : `topic-${topicIds[0]}`);
+              setTopicSlug(slug);
+              console.log('QuizResults: Topic slug fetched', { slug });
+            }
+          } catch (err) {
+            console.error('QuizResults: Topic slug fetch failed:', err);
+            // Fallback to topicId as slug
+            setTopicSlug(`topic-${topicIds[0]}`);
+          }
+        } else {
+          console.log('QuizResults: No topicIds provided, skipping topic slug fetch');
+          setTopicSlug(null);
+        }
+
+        console.log('QuizResults: Fetching latest quiz statistic', {
+          userId: typedSession.user.id,
+          quizId: quizData.id,
+          lessonId,
+        });
         let statisticQuery = supabase
           .from('quiz_quizstatistic')
           .select('id, lesson_id')
@@ -113,47 +162,44 @@ export default function QuizResults({ params }: QuizResultsProps) {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        // Apply lesson_id filter conditionally
         if (lessonId !== null) {
           statisticQuery = statisticQuery.eq('lesson_id', lessonId);
         } else {
           statisticQuery = statisticQuery.is('lesson_id', null);
         }
 
-        // Execute the query with single()
-        const { data: statisticData, error: statisticError } = await statisticQuery.single() as PostgrestSingleResponse<{ id: string; lesson_id: number | null }>;
+        const { data: statisticData, error: statisticError } = await statisticQuery.single() as PostgrestSingleResponse<{
+          id: string;
+          lesson_id: number | null;
+        }>;
 
-        if (statisticError) throw new Error(`Error fetching quiz statistic: ${statisticError.message}`);
-        if (!statisticData) throw new Error('Quiz session not found');
+        if (statisticError) {
+          console.error('QuizResults: Error fetching statistics:', statisticError);
+          throw new Error(`Error fetching quiz statistic: ${statisticError.message}`);
+        }
+        if (!statisticData) {
+          console.error('QuizResults: Quiz session not found');
+          throw new Error('Quiz session not found');
+        }
 
         const quizStatisticId = statisticData.id;
-        console.log('QuizResults: Fetched quiz statistic', { quizStatisticId, lessonId: statisticData.lesson_id });
-
-        // Update quiz_statistic with lessonId if it's missing
-        if (lessonId !== null && statisticData.lesson_id === null) {
-          console.log('QuizResults: Updating quiz_statistic with lessonId', { quizStatisticId, lessonId });
-          const { error: updateError } = await supabase
-            .from('quiz_quizstatistic')
-            .update({ lesson_id: lessonId })
-            .eq('id', quizStatisticId);
-
-          if (updateError) {
-            console.error('QuizResults: Error updating lesson_id:', updateError);
-            setError(`Failed to update lesson ID: ${updateError.message}`);
-            return;
-          }
-          console.log('QuizResults: Successfully updated lesson_id');
-        }
+        console.log('QuizResults: Fetched quiz statistic', {
+          quizStatisticId,
+          lesson_id: statisticData.lesson_id,
+        });
 
         console.log('QuizResults: Fetching user answers', { quizStatisticId });
         const { data: answersData, error: answersError } = await supabase
           .from('quiz_useranswer')
-          .select('question_id, choice_id, is_correct')
+          .select('question_id, choice_id, is_correct, lesson_id')
           .eq('user_id', typedSession.user.id)
           .eq('quiz_statistic_id', quizStatisticId)
           .eq('exam_mode', examMode);
 
-        if (answersError) throw new Error(`Error fetching user answers: ${answersError.message}`);
+        if (answersError) {
+          console.error('QuizResults: Error fetching user answers:', answersError);
+          throw new Error(`Error fetching user answers: ${answersError.message}`);
+        }
         if (!answersData || answersData.length === 0) {
           console.log('QuizResults: No user answers found');
           setQuestions([]);
@@ -178,7 +224,10 @@ export default function QuizResults({ params }: QuizResultsProps) {
           `)
           .in('id', questionIds);
 
-        if (questionsError) throw new Error(`Error fetching questions: ${questionsError.message}`);
+        if (questionsError) {
+          console.error('QuizResults: Error fetching questions:', questionsError);
+          throw new Error(`Error fetching questions: ${questionsError.message}`);
+        }
         if (!questionsData || questionsData.length === 0) {
           console.log('QuizResults: No questions found');
           setQuestions([]);
@@ -227,16 +276,16 @@ export default function QuizResults({ params }: QuizResultsProps) {
           setCorrectAnswersCount(0);
         }
       } catch (err) {
-        console.error('QuizResults: Error:', err);
-        setError((err as Error).message);
+        console.error('QuizResults: Fetch error:', err);
+        setError((err as Error).message || 'An unexpected error occurred');
       } finally {
+        console.log('QuizResults: Fetch completed, isLoading: false');
         setIsLoading(false);
-        console.log('QuizResults: Fetch completed, isLoading:', false);
       }
     };
 
     fetchResults();
-  }, [courseSlug, quizSlug, session, lessonId, examMode]);
+  }, [courseSlug, quizSlug, session, lessonId, examMode, topicIds]);
 
   const handleTryAgain = () => {
     const params = new URLSearchParams({
@@ -247,6 +296,13 @@ export default function QuizResults({ params }: QuizResultsProps) {
     });
     console.log('QuizResults: Redirecting to quiz', { params: params.toString() });
     router.push(`/account/edupro/${courseSlug}/quiz/${quizSlug}?${params.toString()}`);
+  };
+
+  const handleBackToLesson = () => {
+    if (lessonId && topicSlug) {
+      console.log('QuizResults: Redirecting to lesson', { lessonId, topicSlug });
+      router.push(`/account/edupro/${courseSlug}/topic/${topicSlug}/lesson/${lessonId}`);
+    }
   };
 
   const openModal = (questionId: number) => {
@@ -262,13 +318,18 @@ export default function QuizResults({ params }: QuizResultsProps) {
     return (
       <div className="flex items-center justify-center py-4 min-h-screen bg-gray-50">
         <div className="flex space-x-2">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="h-4 w-4 animate-bounce rounded-full bg-sky-500"
-              style={{ animationDelay: `${i * 0.2}s` }}
-            />
-          ))}
+          <div
+            className="h-4 w-4 animate-bounce rounded-full bg-sky-500"
+            style={{ animationDelay: `0s` }}
+          />
+          <div
+            className="h-4 w-4 animate-bounce rounded-full bg-sky-500"
+            style={{ animationDelay: `0.2s` }}
+          />
+          <div
+            className="h-4 w-4 animate-bounce rounded-full bg-sky-500"
+            style={{ animationDelay: `0.4s` }}
+          />
         </div>
       </div>
     );
@@ -276,7 +337,7 @@ export default function QuizResults({ params }: QuizResultsProps) {
 
   if (error) {
     return (
-      <div className="py-4 text-center min-h-screen bg-gray-50">
+      <div className="py-2 text-center min-h-screen bg-gray-50">
         <p className="text-red-600 font-medium">{error}</p>
       </div>
     );
@@ -362,12 +423,22 @@ export default function QuizResults({ params }: QuizResultsProps) {
             <ProgressStatisticsCurrent quizId={quizId} lessonId={lessonId} />
           </div>
         )}
-        <button
-          onClick={handleTryAgain}
-          className="mt-6 bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-        >
-          Try Again
-        </button>
+        <div className="mt-6 flex space-x-4">
+          <button
+            onClick={handleTryAgain}
+            className="bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
+          {lessonId !== null && topicSlug && (
+            <button
+              onClick={handleBackToLesson}
+              className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+            >
+              Back to Lesson
+            </button>
+          )}
+        </div>
       </div>
     </main>
   );
@@ -380,6 +451,9 @@ const courseIdFromSlug = async (slug: string): Promise<number> => {
     .eq('slug', slug)
     .single();
 
-  if (error || !data) throw new Error('Course not found');
+  if (error || !data) {
+    console.error('courseIdFromSlug: Error fetching course ID', { slug, error });
+    throw new Error('Course not found');
+  }
   return data.id;
 };
