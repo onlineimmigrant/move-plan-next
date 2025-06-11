@@ -180,7 +180,7 @@ export default function ProgressStatisticsCurrent({ quizId, lessonId }: Progress
 
   return (
     <div className="py-4">
-      <h3 className="pl-2 text-lg font-semibold text-gray-800 mb-6">
+      <h3 className="pl-2 text-xs sm:text-sm font-semibold text-gray-800 mb-4">
         {lessonId ? 'Recent Attempt' : 'Recent Attempts'}
       </h3>
       {attempts.length === 0 ? (

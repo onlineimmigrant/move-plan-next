@@ -1,8 +1,8 @@
-// components/StudyBooks.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -90,54 +90,49 @@ export default function StudyBooks({ courseId }: StudyBooksProps) {
   return (
     <div className="mt-4">
       {resources.length > 0 ? (
-        <ul className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <ul className="grid grid-cols-1 lg:grid-cols-4 gap-8 sm:gap-x-16">
           {resources.map((resource) => (
-            <li
+            <Link
               key={resource.id}
-              className="relative border-l-4 border-gray-600 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-start"
+              href={'/account/purchases'} // Fallback to /account/purchases if url is null
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block " // Ensure the link takes up the full space of the li
             >
-              {/* Order number in top-right corner */}
-              {resource.order !== null && (
-                <span className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-gray-600 text-white text-xs font-medium rounded-full">
-                  {resource.order}
-                </span>
-              )}
-
-              {/* Image on the left */}
-              {resource.image && (
-                <div className="flex-shrink-0 mr-4">
-                  <img
-                    src={resource.image}
-                    alt={`${resource.title} cover`}
-                    className="w-16  h-auto object-cover rounded-md"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder-book-cover.jpg'; // Fallback image if the URL fails
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Text content on the right */}
-              <div className="flex-1 pr-8 mt-4">
-                <h3 className="text-sm font-medium text-gray-900">{resource.title}</h3>
-                {resource.description && (
-                  <p className="text-sm text-gray-600 mt-1">{resource.description}</p>
+              <li
+                className="relative border-l-4 border-gray-600 bg-white hover:bg-sky-50 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center h-24" // Fixed height for vertical centering
+              >
+                {/* Order number in top-right corner */}
+                {resource.order !== null && (
+                  <span className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-gray-600 text-white text-xs font-medium rounded-full">
+                    {resource.order}
+                  </span>
                 )}
-                {resource.url && (
-                  <div className="mt-2">
-                    <a
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sky-600 hover:underline text-sm"
-                    >
-                      Access Resource
-                    </a>
+
+                {/* Image on the left */}
+                {resource.image && (
+                  <div className="flex-shrink-0 mr-4">
+                    <img
+                      src={resource.image}
+                      alt={`${resource.title} cover`}
+                      className="w-16 h-auto object-cover rounded-md"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-book-cover.jpg'; // Fallback image if the URL fails
+                      }}
+                    />
                   </div>
                 )}
- 
-              </div>
-            </li>
+
+                {/* Text content on the right */}
+                <div className="flex-1 flex items-center justify-start pr-8">
+                  <h3 className="text-sm font-medium text-gray-900 ">{resource.title}</h3>
+                  {resource.description && (
+                    <p className="text-sm text-gray-600 mt-1 text-center">{resource.description}</p>
+                  )}
+                  {/* Removed separate Link for Access Resource since the whole li is now clickable */}
+                </div>
+              </li>
+            </Link>
           ))}
         </ul>
       ) : (
