@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import NavbarEduPro from '@/components/edupro/NavbarEduPro';
 import ProgressStatisticsCurrent from '@/components/ProgressStatisticsCurrent';
 import { UserSession, Question as TypesQuestion } from '@/components/quiz/Types';
+import Button from '@/ui/Button';
 
 // Initialize Supabase client
 const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -423,22 +424,26 @@ export default function QuizResults({ params }: QuizResultsProps) {
             <ProgressStatisticsCurrent quizId={quizId} lessonId={lessonId} />
           </div>
         )}
-        <div className="mt-6 flex space-x-4">
-          <button
-            onClick={handleTryAgain}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-          >
-            Try Again
-          </button>
-          {lessonId !== null && topicSlug && (
-            <button
-              onClick={handleBackToLesson}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-            >
-              Back to Lesson
-            </button>
-          )}
-        </div>
+          <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm shadow-lg py-4 z-10">
+            <div className="max-w-3xl mx-auto flex flex-wrap justify-center gap-4 px-4">
+              <Button
+                onClick={handleTryAgain}
+                variant="primary"
+                aria-label="Restart the quiz"
+              >
+                Try Again
+              </Button>
+              {lessonId !== null && topicSlug && (
+                <Button
+                  onClick={handleBackToLesson}
+                  variant="secondary"
+                  aria-label="Return to the lesson"
+                >
+                  Back to Lesson
+                </Button>
+              )}
+            </div>
+          </div>
       </div>
     </main>
   );
