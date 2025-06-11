@@ -161,7 +161,7 @@ const ChoicesList: React.FC<ChoicesListProps> = ({
             openModal(modalId);
           }}
           title="Answer and explanation"
-          className="w-full mt-2 flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm font-medium text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors"
+          className="cursor-pointer w-full mt-2 flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm font-medium text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors"
         >
           <InfoQuizElement />
           <span>Answer & Explanation</span>

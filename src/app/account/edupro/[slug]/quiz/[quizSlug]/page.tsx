@@ -15,7 +15,7 @@ import QuizForm from '@/components/quiz/QuizForm';
 import ExplanationModal from '@/components/quiz/ExplanationModal';
 import { courseIdFromSlug, shuffleArray } from '@/lib/quizUtils';
 import { Quiz, Question, UserSession, Choice } from '@/components/quiz/Types';
-import NavbarEduPro from '@/components/edupro/NavbarEduPro';
+import NavbarEduPro from '@/components/quiz/NavbarEduProQuiz';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -28,7 +28,7 @@ interface QuizPageProps {
 
 export default function QuizPage({ params }: QuizPageProps) {
   const { slug: courseSlug, quizSlug } = React.use(params);
-  const { session } = useAuth() as { session: UserSession | null }; // Explicitly type session
+  const { session } = useAuth() as { session: UserSession | null };
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -57,10 +57,12 @@ export default function QuizPage({ params }: QuizPageProps) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<{ [questionId: number]: number[] }>({});
-  const timeRemainingRef = useRef<number>(0); // Use ref for timeRemaining
+  const timeRemainingRef = useRef<number>(0);
+  const [tick, setTick] = useState<number>(0); // Trigger UI updates for timer
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [shouldSubmit, setShouldSubmit] = useState<boolean>(false);
+  const [openModalId, setOpenModalId] = useState<string | null>(null); // Track open modal
 
   // Log initialization only once
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function QuizPage({ params }: QuizPageProps) {
       mode,
       examMode,
     });
-  }, []); // Empty dependency array for mount-only log
+  }, []);
 
   useEffect(() => {
     const fetchQuizAndQuestions = async () => {
@@ -213,9 +215,9 @@ export default function QuizPage({ params }: QuizPageProps) {
       if (timeRemainingRef.current <= 0) {
         setShouldSubmit(true);
         clearInterval(timer);
+      } else {
+        setTick(prev => prev + 1); // Trigger UI update
       }
-      // Minimal state update to trigger UI render
-      setQuestions([...questions]);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -226,13 +228,6 @@ export default function QuizPage({ params }: QuizPageProps) {
       handleSubmit();
     }
   }, [shouldSubmit]);
-
-  useEffect(() => {
-    if (questions.length > 0) {
-      const modalId = `modal-${questions[currentQuestionIndex].id}`;
-      closeModal(modalId);
-    }
-  }, [currentQuestionIndex, questions]);
 
   const handleAnswerChange = (questionId: number, choiceId: number, isMulti: boolean) => {
     setUserAnswers((prev) => {
@@ -458,6 +453,7 @@ export default function QuizPage({ params }: QuizPageProps) {
   const handleNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setOpenModalId(null); // Close modal when navigating
     } else {
       setShouldSubmit(true);
     }
@@ -466,26 +462,23 @@ export default function QuizPage({ params }: QuizPageProps) {
   const handlePrev = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setOpenModalId(null); // Close modal when navigating
     }
   };
 
   const openModal = (modalId: string) => {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.remove('hidden');
-    }
+    setOpenModalId(modalId);
   };
 
   const closeModal = (modalId: string, videoId?: string) => {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.add('hidden');
-      if (videoId) {
-        const iframe = document.getElementById(videoId) as HTMLIFrameElement;
-        if (iframe) {
-          const iframeSrc = iframe.src;
-          iframe.src = iframeSrc;
-        }
+    if (openModalId === modalId) {
+      setOpenModalId(null);
+    }
+    if (videoId) {
+      const iframe = document.getElementById(videoId) as HTMLIFrameElement;
+      if (iframe) {
+        const iframeSrc = iframe.src;
+        iframe.src = iframeSrc;
       }
     }
   };
@@ -507,23 +500,23 @@ export default function QuizPage({ params }: QuizPageProps) {
   const correctAnswer = currentQuestion.choices.find(choice => choice.is_correct)?.choice_text || '';
 
   return (
-    <main className="flex-1 sm:pb-36 sm:pt-4 py-12 px-4 sm:bg-gray-50 min-h-screen">
+    <main className="flex-1 sm:pb-24 sm:mt-4 mt-2 px-4 sm:bg-gray-50 min-h-screen">
       <NavbarEduPro />
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
+      <div className="pb-12 grid grid-cols-1 lg:grid-cols-5 gap-4 max-w-7xl mx-auto">
         <div className="col-span-1"></div>
-        <div className="sm:mt-16 col-span-3 flex flex-col gap-4 sm:gap-8 px-4 sm:px-6 sm:bg-white sm:rounded-xl sm:shadow-sm p-6">
+        <div className="sm:mt-16 col-span-full lg:col-span-3 flex flex-col gap-4 sm:gap-6 px-4 sm:px-6 sm:bg-white sm:rounded-xl sm:shadow-sm p-6">
           <QuizHeader
             examMode={examMode}
             topicTitle={currentQuestion.topic.title}
             currentIndex={currentQuestionIndex}
             totalQuestions={questions.length}
             timeRemaining={timeRemainingRef.current}
-            openModal={openModal}
-            modalId={`modal-${currentQuestion.id}`}
+            openModal={() => openModal(`question-${currentQuestion.id}`)}
+            modalId={`question-${currentQuestion.id}`}
           />
           <QuestionDisplay
             questionText={currentQuestion.question_text}
-            correctAnswerCount={currentQuestion.choices.filter(choice => choice.is_correct).length}
+            correctAnswerCount={currentQuestion.choices.filter(q => q.is_correct).length}
           />
           <QuizForm
             question={currentQuestion}
@@ -535,8 +528,8 @@ export default function QuizPage({ params }: QuizPageProps) {
             handlePrev={handlePrev}
             currentIndex={currentQuestionIndex}
             totalQuestions={questions.length}
-            openModal={openModal}
-            modalId={`modal-${currentQuestion.id}`}
+            openModal={() => openModal(`question-${currentQuestion.id}`)}
+            modalId={`question-${currentQuestion.id}`}
             examMode={examMode}
           />
           <ExplanationModal
@@ -544,6 +537,7 @@ export default function QuizPage({ params }: QuizPageProps) {
             examMode={examMode}
             randomizeChoices={quiz.randomize_choices}
             closeModal={closeModal}
+            isOpen={openModalId === `question-${currentQuestion.id}`}
           />
         </div>
         <div className="col-span-1"></div>

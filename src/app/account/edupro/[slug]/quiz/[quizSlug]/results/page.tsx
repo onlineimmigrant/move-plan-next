@@ -7,7 +7,7 @@ import { createClient, SupabaseClient, PostgrestSingleResponse } from '@supabase
 import InfoQuizElement from '@/components/quiz/InfoQuizElement';
 import ExplanationModal from '@/components/quiz/ExplanationModal';
 import { useAuth } from '@/context/AuthContext';
-import NavbarEduPro from '@/components/edupro/NavbarEduPro';
+import NavbarEduPro from '@/components/quiz/NavbarEduPro';
 import ProgressStatisticsCurrent from '@/components/ProgressStatisticsCurrent';
 import { UserSession, Question as TypesQuestion } from '@/components/quiz/Types';
 import Button from '@/ui/Button';
