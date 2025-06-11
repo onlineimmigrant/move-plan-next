@@ -71,6 +71,7 @@ export default function EduPro() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [courseTitle, setCourseTitle] = useState<string>('Loading...');
   const router = useRouter();
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
   const { session } = useAuth();

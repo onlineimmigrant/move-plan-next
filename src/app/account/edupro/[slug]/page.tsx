@@ -5,11 +5,13 @@ import { useState, Dispatch, SetStateAction, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
-import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
+import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
+import CourseTabEduPro from '@/components/edupro/CourseTabEduPro';
+
 import StudyBooks from '@/components/StudyBooks';
 import Practice from '@/components/Practice';
 import Toast from '@/components/Toast';
-import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
+import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import { useCourseAndTopics } from '@/lib/hooks/useCourseAndTopics';
 import { useAuth } from '@/context/AuthContext';
 
@@ -28,12 +30,15 @@ interface TabOption {
   value: Tab;
 }
 
+
+
 export default function EduProCourseDetail() {
   const params = useParams();
   const slug = params?.slug as string;
   const { course, topics, isLoading, error, toast, setToast } = useCourseAndTopics(slug);
   const { session } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('theory');
+  const [courseTitle, setCourseTitle] = useState<string>('Loading...');
   const [topicCompletion, setTopicCompletion] = useState<Record<number, boolean>>({});
 
   // Define the tabs for "Theory," "Practice," and "Books"
@@ -134,7 +139,7 @@ export default function EduProCourseDetail() {
   }
 
   return (
-    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {toast && (
           <Toast
@@ -146,7 +151,9 @@ export default function EduProCourseDetail() {
         )}
         <div className="">
           <AccountTabEduProCourse />
+        
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <CourseTabEduPro />
         </div>
         <div className="px-4">
           {course ? (

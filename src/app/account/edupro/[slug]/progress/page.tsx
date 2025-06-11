@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
-import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
+import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import Toast from '@/components/Toast';
 import PracticeStatistics from '@/components/PracticeStatistics';
 import PracticePassRateVisual from '@/components/PracticePassRateVisual';
@@ -197,7 +197,7 @@ export default function EduProCourseProgress() {
   }
 
   return (
-    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-16 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto">
         {toast && (
           <Toast

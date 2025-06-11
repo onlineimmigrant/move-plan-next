@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
-import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
-import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
+import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
+import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
 import { CheckIcon, ArrowUpIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
@@ -238,6 +238,7 @@ export default function EduProTopicDetail() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
   const [isTopicCompleted, setIsTopicCompleted] = useState<boolean>(false);
+  const [courseTitle, setCourseTitle] = useState<string>('Loading...');
   const [isToggling, setIsToggling] = useState<boolean>(false);
   const router = useRouter();
   const { slug, topicSlug } = useParams() as { slug: string; topicSlug: string };

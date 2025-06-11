@@ -7,7 +7,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { useStudentStatus } from '@/lib/StudentContext';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
-import Image from 'next/image';
+
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -16,10 +16,6 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 
 
-interface Tab {
-  label: string;
-  href: string;
-}
 
 interface AccountTabEduProCourseProps {
   className?: string;
@@ -56,10 +52,10 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   const [error, setError] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const fallbackImage = '/images/course-placeholder.svg';
+
 
   const { settings } = useSettings();
-const companyLogo = settings?.image;
+
 
   const isPurchaseActive = (purchase: Purchase) => {
     if (!purchase.is_active) return false;
@@ -142,138 +138,39 @@ const companyLogo = settings?.image;
     }
   }, [slug, session]);
 
-  // Handle scroll effect for navbar
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollThreshold = window.innerHeight * 0.5; // percent of viewport height
-      setIsScrolled(window.scrollY > scrollThreshold);
-    };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
-  const tabs: Tab[] = [
-    { label: 'Course', href: `/account/edupro/${slug}` },
-    { label: 'Plan', href: `/account/edupro/${slug}/study-plan` },
-    { label: 'Progress', href: `/account/edupro/${slug}/progress` },
-  ];
 
-  const isTabActive = (tab: Tab) => {
-    if (tab.label === 'Course') {
-      return (
-        pathname === tab.href ||
-        pathname.startsWith(`/account/edupro/${slug}/topic/`) ||
-        pathname.startsWith(`/account/edupro/${slug}/practice`)
-      );
-    }
-    return pathname === tab.href;
-  };
+ 
 
-  const getSliderPosition = () => {
-    const activeIndex = tabs.findIndex((tab) => isTabActive(tab));
-    if (activeIndex === 0) return 'translate-x-0';
-    if (activeIndex === 1) return 'translate-x-[100%]';
-    if (activeIndex === 2) return 'translate-x-[200%]';
-    return 'translate-x-0';
-  };
-
-  if (studentLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 text-center">
-        <div className="flex justify-center gap-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 text-center">
-        <p className="text-red-600 font-medium">{error}</p>
-      </div>
-    );
-  }
 
   return (
     <>
       {/* Top Navbar */}
       <div
-        className={`bg-white sm:rounded-lg z-50 transition-all duration-200 ${
+        className={`hidden bg-white sm:rounded-lg z-50 transition-all duration-200 ${
           isScrolled ? 'fixed top-0 left-0 right-0 shadow-md' : 'relative'
         } ${className}`}
       >
         <div className="max-w-7xl mx-auto px-8 sm:px-6 lg:px-8 py-2">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/account">
-              <Image
-                src={companyLogo}
-                alt="Logo"
-                width={40}
-                height={40}
-                className="h-8 w-auto hidden xl:block"
-              />
-              <Image
-                src={companyLogo}
-                alt="Logo mobile"
-                width={40}
-                height={40}
-                className="h-8 w-auto block xl:hidden"
-              />
-            </Link>
+          <div className="flex items-center justify-center">
+   
 
             {/* Course Header */}
             <div className="flex flex-col items-center">
-              <span className="hidden sm:block text-white font-semibold text-xs  bg-slate-500 py-0 px-1">{duration}</span>
+              <span className="hidden sm:block text-white font-semibold text-xs  bg-slate-500 py-0 px-2">{duration}</span>
               <h1 className="text-base sm:text-xl font-bold text-gray-900 relative">
                 {courseTitle}
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
             </div>
-<div></div>
+
 
           </div>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div
-        className={`max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pt-4 ${
-          isScrolled ? 'mt-16' : ''
-        }`}
-      >
-        <div className="select-none flex justify-center">
 
-
-
-
-
-          <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-sky-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
-            <div
-              className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.33%-2px)] bg-sky-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
-            ></div>
-            <div className="relative flex h-full">
-              {tabs.map((tab) => (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-base mona-sans px-0.5 ${
-                    isTabActive(tab) ? 'font-semibold text-white z-10' : ''
-                  }`}
-                >
-                  {tab.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-
-        </div>
-      </div>
     </>
   );
 }

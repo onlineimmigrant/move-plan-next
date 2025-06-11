@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
-import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
+import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import Toast from '@/components/Toast';
 
 // Initialize Supabase client

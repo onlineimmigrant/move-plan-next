@@ -5,11 +5,11 @@ import { useState, Dispatch, SetStateAction, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
-import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
+import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import StudyBooks from '@/components/StudyBooks';
 import Practice from '@/components/Practice';
 import Toast from '@/components/Toast';
-import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
+import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import { useCourseAndTopics } from '@/lib/hooks/useCourseAndTopics';
 import { useAuth } from '@/context/AuthContext';
 
@@ -125,7 +125,7 @@ export default function EduProCourseDetail() {
 
   if (error) {
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-red-600 font-medium">{error}</p>
         </div>
@@ -134,7 +134,7 @@ export default function EduProCourseDetail() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {toast && (
           <Toast
@@ -144,7 +144,7 @@ export default function EduProCourseDetail() {
             aria-live="polite"
           />
         )}
-        <div className="pt-8">
+        <div className="">
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
