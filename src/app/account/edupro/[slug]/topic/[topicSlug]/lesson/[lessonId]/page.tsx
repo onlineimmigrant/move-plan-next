@@ -239,7 +239,7 @@ const CompletionControls = ({
   <div className="fixed bottom-10 sm:bottom-0 left-0 right-0 bg-white z-10 p-4 shadow-lg">
     <button
       onClick={toggleLessonCompletion}
-      className={`w-full py-4 shadow px-4 border-2 ${
+      className={`w-full py-2 shadow px-4 border-2 ${
         isLessonCompleted
           ? 'border-teal-600 text-teal-600 bg-teal-50 hover:bg-white'
           : 'border-sky-600 text-sky-600 hover:bg-sky-50'
@@ -251,13 +251,13 @@ const CompletionControls = ({
     >
       {isLessonCompleted ? (
         <span data-completion-status="completed">
-          <p className="text-2xl font-semibold">Lesson Completed</p>
-          <p className="text-gray-400">Click to Mark as Incomplete</p>
+          <p className="text-sm sm:text-xl font-semibold">Lesson Completed</p>
+          <p className="text-sm text-gray-400">Click to Mark as Incomplete</p>
         </span>
       ) : (
         <span className="completion-text" data-completion-status="incomplete">
-          <p className="text-2xl font-semibold">Incomplete Lesson</p>
-          <p className="text-gray-400">Click to Mark as Complete</p>
+          <p className="text-sm sm:text-xl font-semibold">Incomplete Lesson</p>
+          <p className="text-sm text-gray-400">Click to Mark as Complete</p>
         </span>
       )}
     </button>
@@ -688,13 +688,11 @@ export default function EduProLessonDetail() {
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
-        <div className="mt-4 mb-4 flex items-center justify-between">
+        <div className="mt-4 mb-4 grid grid-cols-3">
           {topic && (
-            <Link href={`/account/edupro/${slug}/topic/${topicSlug}`}>
-              <span className="flex sm:hidden items-center justify-center w-6 h-6 bg-sky-600 text-white text-xs font-medium rounded-full cursor-pointer">
-                {topic.order}
-              </span>
-            </Link>
+          <Link href={`/account/edupro/${slug}/topic/${topicSlug}`} className="flex sm:justify-start justify-center items-center text-gray-600 hover:text-sky-600">
+            <ArrowUpIcon className='h-5 w-5'/>
+          </Link>
           )}
           <div className="flex-1 flex justify-center items-center space-x-3">
             <span className="text-md text-sm sm:text-base font-semibold sm:py-1" aria-label="Current Lesson Section">
@@ -716,7 +714,7 @@ export default function EduProLessonDetail() {
               </span>
             )}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex justify-center sm:justify-end items-center space-x-2">
             <button
               onClick={() => previousLesson && navigateToLesson(previousLesson.id)}
               disabled={!previousLesson}
@@ -784,7 +782,7 @@ export default function EduProLessonDetail() {
                   )}
                 </div>
               ) : activeTab === 'theory' || activeTab === 'practice' ? (
-                <div className="my-16  text-center">
+                <div className="mb-16  text-center bg-gray-50 px-4 rounded-lg shadow-sm">
                   {latestQuizResult ? (
                     <ProgressStatisticsCurrent quizId={latestQuizResult.quiz_id} lessonId={lessonId} />
                   ) : (
