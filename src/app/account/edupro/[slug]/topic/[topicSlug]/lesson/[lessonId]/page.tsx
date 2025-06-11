@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
-import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
-import TabNavigation from '@/components/TheoryPracticeBooksTabs/TabNavigation';
+import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
+import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
 import EpubViewer from '@/components/EpubViewer';
 import LessonContent from '@/components/edupro/LessonContent';
@@ -236,7 +236,7 @@ const CompletionControls = ({
   session: any;
   isToggling: boolean;
 }) => (
-  <div className="fixed bottom-0 left-0 right-0 bg-white z-10 p-4 shadow-lg">
+  <div className="fixed bottom-10 sm:bottom-0 left-0 right-0 bg-white z-10 p-4 shadow-lg">
     <button
       onClick={toggleLessonCompletion}
       className={`w-full py-4 shadow px-4 border-2 ${
@@ -276,6 +276,7 @@ export default function EduProLessonDetail() {
   const [totalPages, setTotalPages] = useState<number>(0);
   const [currentSection, setCurrentSection] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [courseTitle, setCourseTitle] = useState<string>('Loading...');
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -680,7 +681,7 @@ export default function EduProLessonDetail() {
   };
 
   return (
-    <div className="min-h-screen pb-20 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pb-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} aria-live="polite" />}
         <div className="pt-0">
@@ -783,7 +784,7 @@ export default function EduProLessonDetail() {
                   )}
                 </div>
               ) : activeTab === 'theory' || activeTab === 'practice' ? (
-                <div className="my-16 mt-8 text-center">
+                <div className="my-16  text-center">
                   {latestQuizResult ? (
                     <ProgressStatisticsCurrent quizId={latestQuizResult.quiz_id} lessonId={lessonId} />
                   ) : (

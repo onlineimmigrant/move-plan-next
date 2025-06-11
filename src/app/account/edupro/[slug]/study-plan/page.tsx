@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
-import AccountTabEduProCourse from '@/components/AccountTabEduProCourse';
+import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import StudyPlanHeader from '@/components/study-plan/StudyPlanHeader';
 import ProgressBars from '@/components/study-plan/ProgressBars';
 import TopicSection from '@/components/study-plan/TopicSection';
@@ -534,7 +534,7 @@ export default function EduProCourseStudyPlan() {
 
   if (isLoading || studentLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen  flex items-center justify-center bg-gray-50">
         <div className="flex items-center space-x-2">
           <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
           <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
@@ -555,7 +555,7 @@ export default function EduProCourseStudyPlan() {
   }
 
   return (
-    <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8 bg-white">
+    <div className="min-h-screen pb-16 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-5xl mx-auto">
         <ToastWrapper toast={toast} setToast={setToast} />
         <div className="">

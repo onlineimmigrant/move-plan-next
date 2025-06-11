@@ -217,15 +217,15 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
   return (
     <div className="space-y-8 text-left">
         <div className='mt-2 mb-4 text-center'>
-            <span className=" text-md text-sm sm:text-base font-semibold sm:py-1">Test</span>
+            <span className="sr-only text-md text-sm sm:text-base font-semibold sm:py-1">Test</span>
         </div>
       {/* Mode Selection */}
       <div>
         <div className="hidden sm:block mb-2 text-sm font-semibold text-gray-700">Mode</div>
         <div className="select-none flex justify-center">
-          <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-gray-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
+          <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-slate-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
             <div
-              className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-gray-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
+              className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-slate-500 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
             ></div>
             <div className="relative flex h-full" role="tablist" aria-label="Practice Modes">
               {modes.map((mode, index) => (
@@ -352,7 +352,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </div>
         )}
 
-        <div className="mb-2">
+        <div className="mb-16 sm:mb-2">
           <button
             type="button"
             className={`${styles.buttonPrimary} ${isQuizStartDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
