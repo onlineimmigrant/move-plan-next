@@ -790,15 +790,17 @@ export default function EduProLessonDetail() {
                     <p className="text-gray-600 mb-4"></p>
                   )}
                   {lesson.link_to_practice && (
+                    <div className='mx-auto max-w-lg'>
                     <Link
                       href={`${lesson.link_to_practice}&lessonId=${lessonId}`}
                       className='mt-8'
                       onClick={() => console.log('Navigating to quiz with lessonId:', lessonId)}
                     >
-                      <Button variant='primary'>
-                      Start
+                      <Button variant='start'>
+                      Start Training
                       </Button>
                     </Link>
+                    </div>
                   )}
                   {isAdmin && <LessonContent lesson={lesson} />}
                 </div>

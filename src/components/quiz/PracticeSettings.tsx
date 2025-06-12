@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { styles } from '@/lib/styles';
 import { useAuth } from '@/context/AuthContext';
+import Button from '@/ui/Button';
 
 interface EduProTopic {
   id: number;
@@ -356,17 +357,18 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
           </div>
         )}
 
-        <div className="mb-16 sm:mb-2">
-          <button
+        <div className="mb-16 mt-8 sm:mb-2">
+          <Button
+            variant='start'
             type="button"
-            className={`${styles.buttonPrimary} ${isQuizStartDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={` ${isQuizStartDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleQuizStart}
             disabled={isQuizStartDisabled}
             aria-label="Start quiz"
             aria-disabled={isQuizStartDisabled}
           >
             Start
-          </button>
+          </Button>
         </div>
       </div>
 
