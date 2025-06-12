@@ -6,6 +6,11 @@ export const styles = {
         ? 'bg-sky-600 text-white shadow-md'
         : 'text-sky-600 hover:bg-sky-100 active:bg-sky-200 focus:ring-2 focus:ring-sky-400'
     }`,
+
+    buttonStart:
+    'w-full bg-sky-600 cursor-pointer text-white font-semibold py-3 rounded-lg hover:bg-sky-700 active:bg-sky-800 focus:ring-2 focus:ring-sky-500 transition-all duration-200 shadow-md hover:shadow-lg',
+
+
   buttonPrimary:
     'w-full bg-sky-600 cursor-pointer text-white font-semibold py-3 rounded-lg hover:bg-sky-700 active:bg-sky-800 focus:ring-2 focus:ring-sky-500 transition-all duration-200 shadow-md hover:shadow-lg',
   checkbox:
