@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
         <h1 className="text-2xl sm:text-3xl text-center font-bold mb-8 bg-gradient-to-r from-sky-400 to-sky-600 bg-clip-text text-transparent">
           Admin Dashboard
         </h1>
-        <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3">
+        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 px-16">
           {dashboardLinks.map((item) => (
             <Link
               key={item.href}

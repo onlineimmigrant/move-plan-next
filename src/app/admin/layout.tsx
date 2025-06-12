@@ -74,7 +74,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <AdminProvider> {/* Add AdminProvider here */}
         <BasketProvider>
           <ModalProvider>
-            <div className="pt-12 min-h-screen flex bg-gray-50">
+            <div className="min-h-screen flex bg-gray-50">
               <ParentMenu
                 isCollapsed={isParentMenuCollapsed}
                 setIsCollapsed={setIsParentMenuCollapsed}

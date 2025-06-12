@@ -32,6 +32,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
   const pathname = usePathname();
   const { settings } = useSettings();
   const { setIsPaletteModalOpen } = useModal();
+  const companyLogo = settings?.image;
 
   const menuItemsTop = [
     { label: "Dashboard", icon: <HomeIcon className="h-4 w-4" />, href: "/admin" },
@@ -102,7 +103,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
     <div
       className={cn(
         "z-50 bg-gray-50 border-r border-gray-200 h-screen flex flex-col transition-all duration-300 text-base",
-        isCollapsed ? "w-14" : "w-48",
+        isCollapsed ? "w-14" : "w-48 pl-8",
       )}
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
@@ -123,19 +124,22 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
                   : "justify-self-start",
               )}
             >
+              <Link
+                href="/admin">
               <Image
-                 src={isCollapsed ? "/images/logo_collapsed.svg" : "/images/logo.svg"}
+                 src={isCollapsed ? "/images/logo_collapsed.svg" : `${companyLogo}`}
                 alt="Logo"
                 width={20}
                 height={20}
                 className="h-6 w-auto"
               />
+              </Link>
             </span>
             {!isCollapsed && (
               <Link
                 href="/"
                 className=
-                  "ml-4 tracking-tight text-sm sm:text-base font-bold text-sky-600"
+                  "hidden ml-4 tracking-tight text-sm sm:text-base font-bold text-sky-600"
                
               >
                 {settings?.site || ''}
@@ -179,7 +183,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
                 {!isCollapsed && (
                   <span
                     className=
-                       "text-gray-900 font-semibold text-left pl-4 text-base"
+                       "text-gray-900 font-semibold text-left pl-4 text-xs"
                    
                   >
                     {item.label}
