@@ -175,21 +175,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
     return `translate-x-[${activeIndex * 100}%]`;
   };
 
-  if (studentLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="flex justify-center gap-2">
-          {[0, 0.2, 0.4].map((delay) => (
-            <div
-              key={delay}
-              className="w-4 h-4 bg-sky-600 rounded-full animate-bounce"
-              style={{ animationDelay: `${delay}s` }}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
+
 
   if (error) {
     return (

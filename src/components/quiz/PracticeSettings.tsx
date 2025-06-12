@@ -292,6 +292,7 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
                 htmlFor={`topic_${topic.id}`}
                 className="flex cursor-pointer items-center justify-between p-3 hover:bg-gray-50 transition-all duration-300 group"
               >
+                {topic.title !== 'FLK 1' && topic.title !== 'FLK 2' && (
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -302,8 +303,11 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
                     aria-label={`Select ${topic.title}`}
                     aria-checked={selectedTopics.includes(topic.id)}
                   />
-                  <span className="ml-3 text-sm font-medium text-gray-800">{topic.title}</span>
+                            
+                    <span className="ml-3 text-sm font-medium text-gray-800">{topic.title}</span>
+                 
                 </div>
+                 )}
                 {topic.description && (
                   <div className="absolute left-1/2 transform -translate-x-1/2 -mt-12 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-2 px-3 shadow-lg z-20">
                     {topic.description}

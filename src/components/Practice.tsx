@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import PracticeSettings from './PracticeSettings';
-import PracticePassRateVisual from './PracticePassRateVisual';
-import PracticeSettingsStatisticsVisuals from './PracticeSettingsStatisticsVisuals';
-import PracticeStatistics from './PracticeStatistics';
+import PracticeSettings from './quiz/PracticeSettings';
+import PracticePassRateVisual from './quiz/PracticePassRateVisual';
+import PracticeSettingsStatisticsVisuals from './quiz/PracticeSettingsStatisticsVisuals';
+import PracticeStatistics from './quiz/PracticeStatistics';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

@@ -7,11 +7,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
 import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import Toast from '@/components/Toast';
-import PracticeStatistics from '@/components/PracticeStatistics';
-import PracticePassRateVisual from '@/components/PracticePassRateVisual';
-import PracticeSettingsStatisticsVisuals from '@/components/PracticeSettingsStatisticsVisuals';
-import ProgressStatisticsTopics from '@/components/ProgressStatisticsTopics'; // New import
-import ProgressStatisticsCurrent from '@/components/ProgressStatisticsCurrent'; // New import
+import PracticeStatistics from '@/components/quiz/PracticeStatistics';
+import PracticePassRateVisual from '@/components/quiz/PracticePassRateVisual';
+import PracticeSettingsStatisticsVisuals from '@/components/quiz/PracticeSettingsStatisticsVisuals';
+import ProgressStatisticsTopics from '@/components/quiz/ProgressStatisticsTopics'; // New import
+import ProgressStatisticsCurrent from '@/components/quiz/ProgressStatisticsCurrent'; // New import
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

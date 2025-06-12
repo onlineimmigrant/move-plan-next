@@ -22,7 +22,8 @@ import {
   Tab,
   ToastState,
 } from '@/types/edupro';
-import ProgressStatisticsCurrent from '@/components/ProgressStatisticsCurrent';
+import ProgressStatisticsCurrent from '@/components/quiz/ProgressStatisticsCurrent';
+import Button from '@/ui/Button';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -782,7 +783,7 @@ export default function EduProLessonDetail() {
                   )}
                 </div>
               ) : activeTab === 'theory' || activeTab === 'practice' ? (
-                <div className="mb-16  text-center bg-gray-50 px-4 rounded-lg shadow-sm">
+                <div className="mb-16 py-8  text-center bg-gray-50 px-4 rounded-lg shadow-sm">
                   {latestQuizResult ? (
                     <ProgressStatisticsCurrent quizId={latestQuizResult.quiz_id} lessonId={lessonId} />
                   ) : (
@@ -791,10 +792,12 @@ export default function EduProLessonDetail() {
                   {lesson.link_to_practice && (
                     <Link
                       href={`${lesson.link_to_practice}&lessonId=${lessonId}`}
-                      className="inline-block text-base my-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white px-36 py-3 font-medium rounded-md shadow-md hover:from-sky-700 hover:to-sky-800 transition-all duration-200 cursor-pointer"
+                      className='mt-8'
                       onClick={() => console.log('Navigating to quiz with lessonId:', lessonId)}
                     >
+                      <Button variant='primary'>
                       Start
+                      </Button>
                     </Link>
                   )}
                   {isAdmin && <LessonContent lesson={lesson} />}
@@ -814,7 +817,7 @@ export default function EduProLessonDetail() {
               )}
             </div>
           ) : (
-            <p className="mt-4 text-gray-600 text-center">No lesson details available.</p>
+            <p className="mt-4 text-gray-600 text-center">.</p>
           )}
         </div>
       </div>
