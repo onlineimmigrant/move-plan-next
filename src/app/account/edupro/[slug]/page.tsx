@@ -55,7 +55,7 @@ const AccountHeader = () => (
 // CourseHeader component (modeled after TopicHeader from topic level)
 const CourseHeader = ({ course }: { course?: { title: string; slug: string } | null }) => (
   <div
-    className="sm:ml-2 relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 border-sky-600 bg-blue-50 min-h-[100px] sm:min-h-[120px] flex items-center"
+    className="sm:ml-2 relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 border-sky-600 bg-blue-50 min-h-[40px] sm:min-h-[120px] flex items-center"
   >
     <div className="flex flex-col space-y-0 flex-1">
       <div className="my-4">
@@ -73,19 +73,19 @@ const TopicHeader = ({ topics, slug, topicCompletion }: { topics: Topic[]; slug:
       <span className="text-md text-sm sm:text-base font-semibold sm:py-1">Topics</span>
     </div>
     {topics.length > 0 ? (
-      <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-x-16">
+      <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-x-16 px-4">
         {topics.map((topic) => {
           const isCompleted = topicCompletion[topic.id];
           const topicBackground = isCompleted ? 'teal-600' : 'sky-600';
           return (
             <li
               key={topic.id}
-              className={`relative border-l-4 border-${topicBackground} pl-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+              className={`relative border-l-4 border-${topicBackground} pl-4 py-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
                 isCompleted ? 'bg-teal-100' : 'bg-white'
               }`}
             >
               <span
-                className={`absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-${topicBackground} text-white text-xs font-medium rounded-full`}
+                className={`absolute top-4 right-4 flex items-center justify-center w-5 h-5 bg-${topicBackground} text-white text-xs font-medium rounded-full`}
               >
                 {topic.order}
               </span>

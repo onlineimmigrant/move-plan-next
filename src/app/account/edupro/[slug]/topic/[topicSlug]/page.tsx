@@ -172,7 +172,7 @@ const TopicHeader = ({
   session: any;
 }) => (
   <div
-    className={`sm:ml-2 relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 group min-h-[100px] sm:min-h-[120px] flex items-center ${
+    className={`sm:ml-2 relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 group min-h-[40px] sm:min-h-[120px] flex items-center ${
       isTopicCompleted ? 'border-teal-600 bg-teal-50' : 'border-sky-600 bg-blue-50'
     }`}
   >
@@ -205,15 +205,15 @@ const LessonsList = ({
       <span className="text-md text-sm sm:text-base font-semibold sm:py-1">Lessons</span>
     </div>
     {lessons.length > 0 ? (
-      <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-x-16">
+      <ul className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-x-16 px-8">
         {lessons.map((lesson) => (
           <li
             key={lesson.id}
-            className={`relative border-l-4 border-sky-600 pl-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+            className={`relative border-l-4 border-sky-600 pl-4 py-4 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
               lessonProgress[lesson.id] ? 'bg-teal-100' : 'bg-white'
             }`}
           >
-            <span className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
+            <span className="absolute top-4 right-4 flex items-center justify-center w-5 h-5 border border-sky-600 text-sky-600 text-xs font-medium rounded-full">
               {lesson.order}
             </span>
             <Link href={`/account/edupro/${slug}/topic/${topicSlug}/lesson/${lesson.id}`}>

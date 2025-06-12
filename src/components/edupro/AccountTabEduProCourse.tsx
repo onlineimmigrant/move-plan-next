@@ -204,7 +204,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
       {/* Top Navbar */}
       <div
         className={`bg-white sm:rounded-lg z-50 transition-all duration-200 ${
-          isScrolled ? 'fixed top-0 left-0 right-0 shadow-md sm:px-4' : 'relative'
+          isScrolled ? 'fixed top-0 left-0 right-0 shadow-md px-4' : 'relative'
         } ${className}`}
       >
         <div className="max-w-7xl mx-auto  sm:px-6 lg:px-8 py-2">

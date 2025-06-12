@@ -150,7 +150,7 @@ const LessonHeader = ({
   navigateToLesson: (lessonId: number) => void;
 }) => (
   <div
-    className={`sm:ml-2 relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 group min-h-[100px] sm:min-h-[120px] flex items-center ${
+    className={`sm:ml-2 relative sm:pl-4 py-2 sm:py-4 mb-4 rounded-lg border-r-4 group min-h-[40px] sm:min-h-[120px] flex items-center ${
       isLessonCompleted ? 'border-teal-600 bg-teal-50' : 'border-sky-600 bg-sky-50'
     }`}
   >
