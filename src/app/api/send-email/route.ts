@@ -259,6 +259,7 @@ ${emailHtml}
 
     const command = new SendRawEmailCommand({
       RawMessage: { Data: Buffer.from(rawMessage) },
+      ConfigurationSetName: 'NoTrackingConfig',
     });
 
     console.log('Sending raw email to:', to, 'with From:', fromEmail, 'and Subject:', dynamicSubject);

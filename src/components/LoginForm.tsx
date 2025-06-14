@@ -80,86 +80,98 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
     if (onSuccess) onSuccess();
   };
 
-const handleForgotPassword = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
-  setResetSuccess('');
-  setIsLoading(true);
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setResetSuccess('');
+    setIsLoading(true);
 
-  if (!resetEmail) {
-    setError('Please enter your email to reset your password.');
-    setIsLoading(false);
-    return;
-  }
-
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const { getOrganizationId } = await import('@/lib/supabase');
-    const organizationId = await getOrganizationId(baseUrl);
-    if (!organizationId) {
-      throw new Error('Unable to identify organization.');
+    if (!resetEmail) {
+      setError('Please enter your email to reset your password.');
+      setIsLoading(false);
+      return;
     }
 
-    const resetToken = uuidv4();
-    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const { getOrganizationId } = await import('@/lib/supabase');
+      const organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        throw new Error('Unable to identify organization.');
+      }
 
-    console.log('Inserting reset token for email:', resetEmail.trim()); // Debug log
-    const { error: insertError } = await supabase
-      .from('password_resets')
-      .insert({
-        email: resetEmail.trim(),
-        token: resetToken,
-        expiry: resetExpiry,
-        organization_id: organizationId,
-      });
+      // Fetch the domain from settings
+      const { data: settings, error: settingsError } = await supabase
+        .from('settings')
+        .select('domain')
+        .eq('organization_id', organizationId)
+        .single();
 
-    if (insertError) {
-      console.error('Insert error details:', insertError);
-      throw new Error(`Failed to store reset token: ${insertError.message || JSON.stringify(insertError)}`);
-    }
+      if (settingsError || !settings) {
+        throw new Error(`Failed to fetch domain for organization ${organizationId}: ${settingsError?.message}`);
+      }
 
-    const emailDomainRedirection = `${baseUrl}/reset-password?token=${resetToken}`;
-    console.log('Sending email payload:', {
-      type: 'reset_email',
-      to: resetEmail.trim(),
-      organization_id: organizationId,
-      user_id: null,
-      name: resetEmail.split('@')[0],
-      emailDomainRedirection,
-    });
-    const response = await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      const domain = settings.domain; // e.g., 'metexam.com'
+      const resetToken = uuidv4();
+      const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+      console.log('Inserting reset token for email:', resetEmail.trim()); // Debug log
+      const { error: insertError } = await supabase
+        .from('password_resets')
+        .insert({
+          email: resetEmail.trim(),
+          token: resetToken,
+          expiry: resetExpiry,
+          organization_id: organizationId,
+        });
+
+      if (insertError) {
+        console.error('Insert error details:', insertError);
+        throw new Error(`Failed to store reset token: ${insertError.message || JSON.stringify(insertError)}`);
+      }
+
+      const emailDomainRedirection = `https://${domain}/reset-password?token=${resetToken}`; // Use dynamic domain
+      console.log('Sending email payload:', {
         type: 'reset_email',
         to: resetEmail.trim(),
         organization_id: organizationId,
         user_id: null,
         name: resetEmail.split('@')[0],
         emailDomainRedirection,
-      }),
-    });
+      });
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'reset_email',
+          to: resetEmail.trim(),
+          organization_id: organizationId,
+          user_id: null,
+          name: resetEmail.split('@')[0],
+          emailDomainRedirection,
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Failed to send reset email:', errorData.error, errorData.details || '');
-      throw new Error('Failed to send reset email.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to send reset email:', errorData.error, errorData.details || '');
+        throw new Error('Failed to send reset email.');
+      }
+
+      setResetSuccess('Password reset email sent. Check your inbox.');
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setResetEmail('');
+        setResetSuccess('');
+        if (onSuccess) onSuccess();
+      }, 2000);
+    } catch (err: any) {
+      console.error('Password reset failed:', err);
+      setError('Failed to send password reset email. Please try again or contact support.');
+    } finally {
+      setIsLoading(false);
     }
-
-    setResetSuccess('Password reset email sent. Check your inbox.');
-    setTimeout(() => {
-      setShowForgotPassword(false);
-      setResetEmail('');
-      setResetSuccess('');
-      if (onSuccess) onSuccess();
-    }, 2000);
-  } catch (err: any) {
-    console.error('Password reset failed:', err);
-    setError('Failed to send password reset email. Please try again or contact support.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="space-y-6">
