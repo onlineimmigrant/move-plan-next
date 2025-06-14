@@ -77,6 +77,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
     seo_og_image: null,
     seo_twitter_card: null,
     seo_structured_data: null,
+    domain: ''
   };
 
   // Skip Supabase query only during Vercel build (not at runtime)
@@ -118,7 +119,8 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
         seo_keywords,
         seo_og_image,
         seo_twitter_card,
-        seo_structured_data
+        seo_structured_data,
+        domain
       `)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
@@ -145,6 +147,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       seo_og_image: data.seo_og_image ?? null,
       seo_twitter_card: data.seo_twitter_card ?? null,
       seo_structured_data: data.seo_structured_data ?? null,
+      domain: data.domain ?? null,
     };
 
     console.log('Settings fetched successfully:', settings);

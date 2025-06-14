@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { useSettings } from '@/context/SettingsContext';
-import { UserResponse, AuthError } from '@supabase/supabase-js';
+import Button from '@/ui/Button';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState<string>('');
@@ -18,16 +20,39 @@ export default function ResetPasswordPage() {
   const { settings } = useSettings();
   const router = useRouter();
 
-  // Check auth state on mount
+  // Extract token from URL query parameters
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('Reset Password Session:', session, 'Error:', error);
-      if (error || !session) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    const validateToken = async () => {
+      if (!token) {
+        setError('No token provided. Please request a new password reset link.');
+        return;
+      }
+
+      try {
+        console.log('Validating token:', token);
+        const { data, error, status } = await supabase
+          .from('password_resets')
+          .select('*')
+          .eq('token', token)
+          .gte('expiry', new Date().toISOString())
+          .single();
+
+        console.log('Token validation result:', { data, error, status });
+        if (error || !data) {
+          setError('Invalid or expired reset link. Please request a new password reset link.');
+        } else {
+          console.log('Valid reset token found:', data);
+        }
+      } catch (err) {
+        console.error('Token validation failed:', err);
         setError('Invalid or expired reset link. Please request a new password reset link.');
       }
     };
-    checkSession();
+
+    validateToken();
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -56,26 +81,28 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      // Use UserResponse for updateUser
-      const response: UserResponse = await supabase.auth.updateUser({
-        password: newPassword,
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+
+      if (!token) {
+        throw new Error('No token provided.');
+      }
+
+      // Send password reset request to API route
+      const response = await fetch('/api/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword }),
       });
-      const { data, error: authError } = response;
 
-      if (authError) {
-        setError(authError.message);
-        setIsLoading(false);
-        return;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to reset password.');
       }
 
-      if (data.user) {
-        // updateUser does not return a session, so we don't set it here
-        // Session is already validated via getSession in useEffect
-        setSuccess('Password reset successfully. Redirecting to login...');
-        setTimeout(() => router.push('/login'), 2000);
-      } else {
-        setError('Failed to reset password. Please try again.');
-      }
+      setSuccess('Password reset successfully. Redirecting to login...');
+      setTimeout(() => router.push('/login'), 2000);
     } catch (err: any) {
       console.error('Password reset failed:', err);
       setError(err.message || 'Failed to reset password. Please request a new link.');
@@ -100,8 +127,24 @@ export default function ResetPasswordPage() {
 
       {/* Right side: Reset password form */}
       <div className="w-full md:w-1/2 transparent flex items-center justify-center">
+        <Link href="/">
+          <span className="absolute top-4 right-4 mb-16 flex justify-center hover:bg-gray-50">
+            {settings.image ? (
+              <Image
+                src={settings.image}
+                alt="Logo"
+                width={60}
+                height={60}
+                className="h-8 w-auto"
+                onError={() => console.error('Failed to load logo:')}
+              />
+            ) : (
+              <span className="text-gray-500"></span>
+            )}
+          </span>
+        </Link>
         <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
-          <h1 className="my-8 text-center tracking-tight text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
+          <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold">
             Reset Password
           </h1>
 
@@ -119,13 +162,13 @@ export default function ResetPasswordPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-10 text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
+                  className="absolute right-3 top-8 text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? 'Hide' : 'Show'}
@@ -140,27 +183,24 @@ export default function ResetPasswordPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
                   required
                 />
               </div>
             </div>
 
             <div className="mt-16 space-y-4">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="text-xl w-full px-4 py-4 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer disabled:bg-sky-400 disabled:cursor-not-allowed"
-              >
+              <Button variant="start" type="submit" disabled={isLoading}>
                 {isLoading ? 'Resetting...' : 'Reset Password'}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="start"
                 type="button"
                 onClick={() => router.push('/login')}
-                className="text-xl w-full px-4 py-4 bg-amber-300 text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer mt-2"
+                className="bg-yellow-200 text-gray-400"
               >
                 Back to Login
-              </button>
+              </Button>
             </div>
           </form>
         </div>

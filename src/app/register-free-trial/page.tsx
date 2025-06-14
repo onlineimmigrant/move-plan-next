@@ -115,17 +115,17 @@ export default function RegisterPage() {
           return;
         }
 
-        // Trigger welcome email with organization_id
+        // Trigger free trial email with organization_id
         try {
           const response = await fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              type: 'welcome',
+              type: 'free_trial',
               to: email.trim(),
               organization_id: organizationId,
               user_id: userId,
-              name: username, // Pass username as name for welcome email
+              name: username, // Pass username as name for free trial email
             }),
           });
 
@@ -201,14 +201,14 @@ export default function RegisterPage() {
               )}
             </span>
           </Link>
-          <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold text-gray-900">
-            Create Account
+          <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
+            Register and Start Free 7-day Trial  with {settings?.site || ''} 
           </h1>
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           {success && <p className="text-teal-500 text-center mb-4">{success}</p>}
 
-            <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-4">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700">

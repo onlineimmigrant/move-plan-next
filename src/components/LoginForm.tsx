@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
+import Button from '@/ui/Button';
+import { v4 as uuidv4 } from 'uuid'; // For generating unique reset tokens
 
 interface LoginFormProps {
   onShowPrivacy?: () => void;
@@ -78,40 +80,86 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
     if (onSuccess) onSuccess();
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setResetSuccess('');
-    setIsLoading(true);
+const handleForgotPassword = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  setResetSuccess('');
+  setIsLoading(true);
 
-    if (!resetEmail) {
-      setError('Please enter your email to reset your password.');
-      setIsLoading(false);
-      return;
+  if (!resetEmail) {
+    setError('Please enter your email to reset your password.');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const { getOrganizationId } = await import('@/lib/supabase');
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      throw new Error('Unable to identify organization.');
     }
 
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+    const resetToken = uuidv4();
+    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    console.log('Inserting reset token for email:', resetEmail.trim()); // Debug log
+    const { error: insertError } = await supabase
+      .from('password_resets')
+      .insert({
+        email: resetEmail.trim(),
+        token: resetToken,
+        expiry: resetExpiry,
+        organization_id: organizationId,
       });
-      if (error) {
-        setError(error.message);
-      } else {
-        setResetSuccess('Password reset email sent. Check your inbox.');
-        setTimeout(() => {
-          setShowForgotPassword(false);
-          setResetEmail('');
-          setResetSuccess('');
-          if (onSuccess) onSuccess();
-        }, 2000);
-      }
-    } catch (err: any) {
-      console.error('Password reset failed:', err);
-      setError('Failed to send password reset email. Please try again.');
-    } finally {
-      setIsLoading(false);
+
+    if (insertError) {
+      console.error('Insert error details:', insertError);
+      throw new Error(`Failed to store reset token: ${insertError.message || JSON.stringify(insertError)}`);
     }
-  };
+
+    const emailDomainRedirection = `${baseUrl}/reset-password?token=${resetToken}`;
+    console.log('Sending email payload:', {
+      type: 'reset_email',
+      to: resetEmail.trim(),
+      organization_id: organizationId,
+      user_id: null,
+      name: resetEmail.split('@')[0],
+      emailDomainRedirection,
+    });
+    const response = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'reset_email',
+        to: resetEmail.trim(),
+        organization_id: organizationId,
+        user_id: null,
+        name: resetEmail.split('@')[0],
+        emailDomainRedirection,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Failed to send reset email:', errorData.error, errorData.details || '');
+      throw new Error('Failed to send reset email.');
+    }
+
+    setResetSuccess('Password reset email sent. Check your inbox.');
+    setTimeout(() => {
+      setShowForgotPassword(false);
+      setResetEmail('');
+      setResetSuccess('');
+      if (onSuccess) onSuccess();
+    }, 2000);
+  } catch (err: any) {
+    console.error('Password reset failed:', err);
+    setError('Failed to send password reset email. Please try again or contact support.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="space-y-6">
@@ -130,27 +178,24 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
                 type="email"
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
-                className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
                 required
               />
             </div>
           </div>
 
           <div className="mt-16 space-y-4">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="text-xl w-full px-4 py-4 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer disabled:bg-sky-400 disabled:cursor-not-allowed"
-            >
+            <Button variant="start" type="submit" disabled={isLoading}>
               {isLoading ? 'Sending...' : 'Send Reset Email'}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="start"
               onClick={() => setShowForgotPassword(false)}
-              className="text-xl w-full px-4 py-4 bg-amber-300 text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer mt-2"
+              className="bg-yellow-200 text-gray-400"
             >
               Back to Login
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -165,7 +210,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
                 required
               />
             </div>
@@ -178,13 +223,13 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-10 text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
+                className="absolute right-3 top-8 text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? 'Hide' : 'Show'}
@@ -193,20 +238,17 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
           </div>
 
           <div className="mt-16 space-y-4 text-base">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full px-4 py-4 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer disabled:bg-sky-400 disabled:cursor-not-allowed"
-            >
+            <Button variant="start" type="submit" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="start"
               onClick={handleRegister}
-                className=" w-full px-4 py-4 bg-yellow-200 text-gray-600 hover:text-white rounded-full hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold cursor-pointer"
+              className="bg-yellow-200 text-gray-400"
             >
               Register
-            </button>
+            </Button>
           </div>
 
           <div className="mt-4 flex justify-center space-x-4">
