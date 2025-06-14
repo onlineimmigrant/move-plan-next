@@ -9,6 +9,7 @@ import Toast from '@/components/Toast';
 import AccountTab from '@/components/AccountTab';
 import { supabase } from '@/lib/supabaseClient';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import Button from '@/ui/Button';
 
 // Define the Purchase interface based on the purchases table with joined data
 interface Purchase {
@@ -229,13 +230,7 @@ const usePurchases = (accessToken: string | null, userId: string | null, itemsPe
   return { groupedPurchases, totalCount, isLoading, error, fetchPurchases };
 };
 
-// Reusable Button Component
-const Button = ({ className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button
-    className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 ${className}`}
-    {...props}
-  />
-);
+
 
 export default function PurchasesPage() {
   const { accessToken, userId, isLoading: authLoading, error: authError } = useAuth();
@@ -333,9 +328,9 @@ export default function PurchasesPage() {
             <p className="text-red-600 font-medium">{error}</p>
             {accessToken && (
               <Button
+              variant='start'
                 onClick={fetchPurchases}
-                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
-                aria-label="Retry fetching purchases"
+
               >
                 Retry
               </Button>
@@ -572,7 +567,11 @@ export default function PurchasesPage() {
             </div>
           </>
         ) : (
-          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+          <div className="bg-white p-6 space-y-16 text-center">
+                        {/* Tabs Section */}
+            <div className="pt-8">
+              <AccountTab />
+            </div>
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
               fill="none"
@@ -591,11 +590,11 @@ export default function PurchasesPage() {
             <p className="mt-1 text-sm text-gray-500">
               It looks like you haven't made any purchases yet.
             </p>
-            <div className="mt-4">
+            <div className="mt-4 max-w-sm mx-auto">
               <Button
+              variant='start'
                 onClick={fetchPurchases}
-                className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-full px-6"
-              >
+                            >
                 Refresh Purchases
               </Button>
             </div>

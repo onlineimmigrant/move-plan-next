@@ -7,6 +7,7 @@ import Toast from '@/components/Toast';
 import Tooltip from '@/components/Tooltip';
 import AccountTab from '@/components/AccountTab';
 import { supabase } from '@/lib/supabaseClient';
+import Button from '@/ui/Button';
 
 
 import Link from 'next/link';
@@ -136,13 +137,7 @@ const useTransactions = (accessToken: string | null, itemsPerPage: number, curre
   return { transactions, totalCount, isLoading, error, fetchTransactions, syncAndFetchTransactions };
 };
 
-// Reusable Button Component (unchanged)
-const Button = ({ className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button
-    className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 ${className}`}
-    {...props}
-  />
-);
+
 
 export default function PaymentsPage() {
   const { accessToken, isLoading: authLoading, error: authError } = useAuth();
@@ -233,9 +228,9 @@ export default function PaymentsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
         </div>
       </div>
     );
@@ -261,7 +256,7 @@ export default function PaymentsPage() {
             {accessToken && (
               <Button
                 onClick={fetchTransactions}
-                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
+                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-sky-600"
                 aria-label="Retry fetching transactions"
               >
                 Retry
@@ -381,7 +376,7 @@ export default function PaymentsPage() {
                     currentPage === 1
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  } focus:ring-blue-500 rounded-md px-4`}
+                  } focus:ring-sky-600 rounded-md px-4`}
                   aria-label="Previous page"
                 >
                   Previous
@@ -396,7 +391,7 @@ export default function PaymentsPage() {
                     currentPage === totalPages
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  } focus:ring-blue-500 rounded-md px-4`}
+                  } focus:ring-sky-600 rounded-md px-4`}
                   aria-label="Next page"
                 >
                   Next
@@ -424,7 +419,11 @@ export default function PaymentsPage() {
             </div>
           </>
         ) : (
-          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+          <div className="space-y-16 bg-white p-6 text-center">
+                        {/* Tabs Section */}
+            <div className="pt-8">
+              <AccountTab />
+            </div>
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
               fill="none"
@@ -444,11 +443,11 @@ export default function PaymentsPage() {
             <p className="mt-1 text-sm text-gray-500">
               It looks like you haven't made any payments yet.
             </p>
-            <div className="mt-4">
+            <div className="mt-4 max-w-sm mx-auto flex justify-center">
               <Button
+              variant='start'
                 onClick={syncAndFetchTransactions}
-                className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-full px-6"
-              >
+                        >
                 Refresh Transactions
               </Button>
             </div>
@@ -459,7 +458,7 @@ export default function PaymentsPage() {
         {/* Link to Stripe Billing */}
         <div className="mt-16 flex justify-center">
           <Link
-            href="https://billing.stripe.com/p/login/test_9B63cv84e11kb94ee76sw00"
+            href="https://billing.stripe.com/p/login/14k6oScoJ4Hv4rS5kk"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center space-x-2 text-sky-600 font-medium text-base underline hover:text-sky-800 transition-colors duration-150"
