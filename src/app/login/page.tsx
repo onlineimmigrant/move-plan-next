@@ -8,6 +8,7 @@ import { useSettings } from '@/context/SettingsContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
+
 export default function LoginPage() {
   const { settings } = useSettings();
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
@@ -36,7 +37,7 @@ export default function LoginPage() {
       
         <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
           <Link href='/'>
-          <span className="mb-16 flex justify-center " >
+          <span className="absolute top-4 right-4 mb-16 flex justify-center " >
                      {logoCompany? (
                        <Image
                          src={logoCompany}
@@ -51,8 +52,8 @@ export default function LoginPage() {
                      )}
           </span>
           </Link>
-          <h1 className={`my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold text-${backgroundColor}`}>
-            Login
+          <h1 className={`my-8 text-center tracking-wide text-xl sm:text-2xl font-extrabold text-${backgroundColor}`}>
+            Sign In
           </h1>
 
           <LoginForm

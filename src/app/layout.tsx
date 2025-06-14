@@ -49,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     seo_og_image: null,
     seo_twitter_card: null,
     seo_structured_data: [],
+    domain: '',
   };
 
   // Fetch settings
