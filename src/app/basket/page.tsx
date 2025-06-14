@@ -7,6 +7,7 @@ import BasketItemComponent from '../../components/BasketItem';
 import { HiTrash } from 'react-icons/hi';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import Button from '@/ui/Button';
 
 // Interface for a feature (aligned with BasketItemComponent)
 interface Feature {
@@ -154,9 +155,10 @@ export default function BasketPage() {
           <div className="bg-transparent rounded-lg mb-6">
 
             <Link href="/checkout">
-              <button className="w-full py-3 px-4 mt-8 text-sm font-semibold rounded-lg text-white bg-sky-600 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-sky-200 focus:ring-opacity-50 shadow-sm hover:bg-sky-700 hover:scale-105">
-                Proceed to Checkout
-              </button>
+              <Button 
+              variant='start'>
+                    Proceed to Checkout
+              </Button>
             </Link>
           </div>
         </>

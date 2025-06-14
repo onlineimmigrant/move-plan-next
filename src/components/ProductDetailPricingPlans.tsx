@@ -1,4 +1,3 @@
-// /src/components/ProductDetailPricingPlans.tsx
 'use client';
 
 import { useState, useEffect, useCallback, memo } from 'react';
@@ -6,6 +5,7 @@ import { ShoppingCartIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useBasket } from '../context/BasketContext';
 import PricingPlanFeatures from './PricingPlanFeatures';
+import Button from '@/ui/Button';
 
 // Define types for pricing plans and props
 interface Feature {
@@ -47,7 +47,6 @@ interface Toast {
   type: 'success' | 'error' | 'warn';
   onRetry?: () => void;
 }
-
 
 // Custom Toast Component
 const CustomToast = memo(
@@ -157,7 +156,7 @@ export default function ProductDetailPricingPlans({
   };
 
   const removeToast = (id: number) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== toast.id));
   };
 
   const handlePlanSelect = useCallback((plan: PricingPlan) => {
@@ -215,6 +214,11 @@ export default function ProductDetailPricingPlans({
   const totalItems = isMounted
     ? basket.reduce((sum, item) => sum + item.quantity, 0)
     : 0; // Default to 0 during SSR
+
+  // Count active pricing plans (not out of stock)
+  const activePlanCount = pricingPlans.filter(
+    (plan) => getStatus(plan).toLowerCase() !== 'out of stock'
+  ).length;
 
   const isSelectedPlanActive = pricingPlans.some(
     (plan) => plan.slug === selectedPlan?.slug && getStatus(plan).toLowerCase() !== 'out of stock'
@@ -318,7 +322,7 @@ export default function ProductDetailPricingPlans({
                     </div>
                   ) : (
                     <div className="flex justify-between items-baseline ">
-                       <span className='text-xs font-light text-gray-500'>{plan.measure}</span>
+                      <span className='text-xs font-light text-gray-500'>{plan.measure}</span>
                       <span
                         className={`text-sm md:text-xl font-bold ${
                           isOutOfStock ? 'text-gray-500' : 'text-gray-900'
@@ -337,49 +341,61 @@ export default function ProductDetailPricingPlans({
       </div>
 
       <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
-        <button
-          onClick={handleAddToBasket}
-          disabled={selectedPlanStatus === 'out of stock' || isLoading}
-          className={`group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-200 focus:ring-opacity-50 shadow-md transform transition-transform
-            ${
-              selectedPlanStatus !== 'out of stock' && !isLoading
-                ? isSelectedPlanActive
-                  ? isAdded
-                    ? 'bg-sky-500 text-white scale-105'
-                    : 'bg-sky-500 text-white hover:bg-sky-600 hover:scale-105'
-                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200 hover:scale-105'
-                : 'bg-gray-200 text-gray-700 cursor-not-allowed'
-            }`}
-          aria-disabled={selectedPlanStatus === 'out of stock' || isLoading}
-          aria-label={isLoading ? 'Adding to cart' : isAdded ? 'Added to cart' : 'Add to cart'}
-        >
-          {isLoading ? (
-            <span>Loading...</span>
-          ) : (
-            <>
-              <ShoppingCartIcon
-                className="w-4 md:w-5 h-4 md:h-5 mr-1.5 md:mr-2 transition-transform duration-300 group-hover:scale-110"
-                aria-hidden="true"
-              />
-              <span>{isAdded ? 'Added' : 'Add to Cart'}</span>
-            </>
-          )}
-        </button>
-
-        {/* Delay rendering of the "Proceed to Checkout" button until after hydration */}
-        {isMounted ? (
-          totalItems > 0 ? (
-            <Link href="/checkout">
-              <button
-                className="group relative flex items-center justify-center w-full py-4 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-200 focus:ring-opacity-50 shadow-md bg-gray-600 text-white hover:bg-gray-700 hover:scale-105"
-                aria-label="Proceed to checkout"
-              >
-                <span>Proceed to Checkout</span>
-              </button>
-            </Link>
-          ) : null
+        {activePlanCount === 0 || (selectedPlan && (selectedPlan.price === 0 || (selectedPlan.is_promotion && selectedPlan.promotion_price === 0))) ? (
+          <Link href="/register-free-trial">
+            <Button variant="start" className="bg-sky-700 text-white hover:bg-sky-800" aria-label="Register for free trial">
+              Register
+            </Button>
+          </Link>
         ) : (
-          <div className="h-14 w-full" /> // Placeholder to match button height
+          <>
+            <Button
+              variant="start"
+              onClick={handleAddToBasket}
+              disabled={selectedPlanStatus === 'out of stock' || isLoading}
+              className={`
+                ${
+                  selectedPlanStatus !== 'out of stock' && !isLoading
+                    ? isSelectedPlanActive
+                      ? isAdded
+                        ? 'bg-sky-500 text-white scale-105'
+                        : 'bg-sky-500 text-white hover:bg-sky-600 hover:scale-105'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200 hover:scale-105'
+                    : 'bg-gray-200 text-gray-700 cursor-not-allowed'
+                }`}
+              aria-disabled={selectedPlanStatus === 'out of stock' || isLoading}
+              aria-label={isLoading ? 'Adding to cart' : isAdded ? 'Added to cart' : 'Add to cart'}
+            >
+              {isLoading ? (
+                <span>Loading...</span>
+              ) : (
+                <>
+                  <ShoppingCartIcon
+                    className="w-4 md:w-5 h-4 md:h-5 mr-1.5 md:mr-2 transition-transform duration-300 group-hover:scale-110"
+                    aria-hidden="true"
+                  />
+                  <span>{isAdded ? 'Added' : 'Add to Cart'}</span>
+                </>
+              )}
+            </Button>
+
+            {/* Delay rendering of the "Proceed to Checkout" button until after hydration */}
+            {isMounted ? (
+              totalItems > 0 ? (
+                <Link href="/checkout">
+                  <Button
+                    variant="start"
+                    className="bg-sky-700"
+                    aria-label="Proceed to checkout"
+                  >
+                    <span>Proceed to Checkout</span>
+                  </Button>
+                </Link>
+              ) : null
+            ) : (
+              <div className="h-14 w-full" /> // Placeholder to match button height
+            )}
+          </>
         )}
       </div>
 
@@ -390,25 +406,26 @@ export default function ProductDetailPricingPlans({
             title="Get it on Amazon Kindle"
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative flex items-center justify-center w-full py-2 px-3 md:px-4 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-yellow-200 focus:ring-opacity-50 shadow-md bg-[#FF9900] text-[#111] hover:bg-[#F5C146] hover:scale-105"
             aria-label="Buy on Amazon"
           >
-            <svg
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
-              className="w-5 h-5 mr-2"
-              aria-hidden="true"
-            >
-              <g id="SVGRepo_bgCarrier"></g>
-              <g id="SVGRepo_tracerCarrier"></g>
-              <g id="SVGRepo_iconCarrier">
-                <title>amazon</title>
-                <rect width="24" height="24" fill="none"></rect>
-                <path d="M15.93,17.09a.54.54,0,0,1-.63.06,6.55,6.55,0,0,1-1.54-1.79,5.31,5.31,0,0,1-4.42,1.95,3.8,3.8,0,0,1-4-4.17A4.55,4.55,0,0,1,8.19,8.76a18.39,18.39,0,0,1,5-.93V7.5a3.42,3.42,0,0,0-.33-2,1.79,1.79,0,0,0-1.5-.7A2,2,0,0,0,9.25,6.45a.6.6,0,0,1-.47.49l-2.6-.28a.47.47,0,0,1-.40-.56C6.38,3,9.23,2,11.78,2a6.1,6.1,0,0,1,4,1.33C17.11,4.55,17,6.18,17,8v4.17a3.6,3.6,0,0,0,1,2.48c.17.25.21.54,0,.71l-2.06,1.78h0m-2.7-6.53V10c-1.94,0-4,.39-4,2.67,0,1.16.61,1.95,1.63,1.95a2.19,2.19,0,0,0,1.86-1.22,5.32,5.32,0,0,0,.5-2.84m6.93,9A14.29,14.29,0,0,1,12.1,22a14.59,14.59,0,0,1-9.85-3.76c-.20-.18,0-.43.25-.29a19.68,19.68,0,0,0,9.83,2.61A19.69,19.69,0,0,0,19.84,19c.37-.16.66.24.32.51m.91-1c-.28-.36-1.85-.17-2.57-.08-.19,0-.22-.16,0-.30A3.92,3.92,0,0,1,22,17.79a3.86,3.86,0,0,1-1.24,3.32c-.18.16-.35.07-.26-.11C20.76,20.33,21.35,18.86,21.07,18.5Z"></path>
-              </g>
-            </svg>
-            <span>Buy on Amazon</span>
+            <Button variant="start" className="flex items-center bg-[#FF9900] text-gray-900 hover:text-white">
+              <svg
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                className="w-4 h-4 mr-4"
+                aria-hidden="true"
+              >
+                <g id="SVGRepo_bgCarrier"></g>
+                <g id="SVGRepo_tracerCarrier"></g>
+                <g id="SVGRepo_iconCarrier">
+                  <title>amazon</title>
+                  <rect width="24" height="24" fill="none"></rect>
+                  <path d="M15.93,17.09a.54.54,0,0,1-.63.06,6.55,6.55,0,0,1-1.54-1.79,5.31,5.31,0,0,1-4.42,1.95,3.8,3.8,0,0,1-4-4.17A4.55,4.55,0,0,1,8.19,8.76a18.39,18.39,0,0,1,5-.93V7.5a3.42,3.42,0,0,0-.33-2,1.79,1.79,0,0,0-1.5-.7A2,2,0,0,0,9.25,6.45a.6.6,0,0,1-.47.49l-2.6-.28a.47.47,0,0,1-.40-.56C6.38,3,9.23,2,11.78,2a6.1,6.1,0,0,1,4,1.33C17.11,4.55,17,6.18,17,8v4.17a3.6,3.6,0,0,0,1,2.48c.17.25.21.54,0,.71l-2.06,1.78h0m-2.7-6.53V10c-1.94,0-4,.39-4,2.67,0,1.16.61,1.95,1.63,1.95a2.19,2.19,0,0,0,1.86-1.22,5.32,5.32,0,0,0,.5-2.84m6.93,9A14.29,14.29,0,0,1,12.1,22a14.59,14.59,0,0,1-9.85-3.76c-.20-.18,0-.43.25-.29a19.68,19.68,0,0,0,9.83,2.61A19.69,19.69,0,0,0,19.84,19c.37-.16.66.24.32.51m.91-1c-.28-.36-1.85-.17-2.57-.08-.19,0-.22-.16,0-.30A3.92,3.92,0,0,1,22,17.79a3.86,3.86,0,0,1-1.24,3.32c-.18.16-.35.07-.26-.11C20.76,20.33,21.35,18.86,21.07,18.5Z"></path>
+                </g>
+              </svg>
+              Buy on Amazon
+            </Button>
           </a>
         </div>
       )}
