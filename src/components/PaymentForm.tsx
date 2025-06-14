@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Stripe, StripeElements } from '@stripe/stripe-js';
+import Button from '@/ui/Button';
 
 interface PaymentFormProps {
   onSuccess: (email?: string) => void; // Update to accept email parameter
@@ -321,19 +322,18 @@ export default function PaymentForm({
         </div>
       )}
 
-      <button
+      <Button
+      variant='start'
         type="submit"
         disabled={isLoading || !stripe || !elements || isApplyingPromo}
         className={`
-          w-full py-3 px-4 text-sm font-semibold rounded-lg 
-          text-white bg-gray-600 transition-all duration-200 
-          focus:outline-none focus:ring-4 focus:ring-gray-200 focus:ring-opacity-50 
-          shadow-sm hover:bg-gray-700 hover:scale-105 
+ bg-sky-500 
+   
           ${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}
         `}
       >
         {isLoading ? 'Processing...' : isApplyingPromo ? 'Applying Discount...' : 'Pay Now'}
-      </button>
+      </Button>
     </form>
   );
 }
