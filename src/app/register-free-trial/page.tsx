@@ -13,6 +13,7 @@ import ContactModal from '@/components/ContactModal';
 import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/ui/Button';
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 
 // Define constants using Next.js environment variables
 const DOMAIN_CUSTOM = process.env.NEXT_PUBLIC_DOMAIN_CUSTOM || 'http://localhost:3000';
@@ -307,6 +308,7 @@ export default function RegisterPage() {
                 disabled={isLoading}
               >
                 {isLoading ? 'Registering...' : 'Register'}
+                <RightArrowDynamic />
               </Button>
               <Button
                 variant="start"
@@ -315,6 +317,7 @@ export default function RegisterPage() {
                 className="bg-yellow-200 text-gray-400"
               >
                 Back to Login
+                <RightArrowDynamic />
               </Button>
             </div>
 

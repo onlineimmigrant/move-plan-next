@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import Button from '@/ui/Button';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique reset tokens
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 
 interface LoginFormProps {
   onShowPrivacy?: () => void;
@@ -245,6 +246,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? 'Hide' : 'Show'}
+                
               </button>
             </div>
           </div>
@@ -252,6 +254,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
           <div className="mt-16 space-y-4 text-base">
             <Button variant="start" type="submit" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
+              <RightArrowDynamic />
             </Button>
             <Button
               type="button"
@@ -260,6 +263,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
               className="bg-yellow-200 text-gray-400"
             >
               Register
+              <RightArrowDynamic />
             </Button>
           </div>
 
