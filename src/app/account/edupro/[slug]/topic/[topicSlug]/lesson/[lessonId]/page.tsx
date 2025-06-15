@@ -9,7 +9,7 @@ import { useStudentStatus } from '@/lib/StudentContext';
 import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
-import EpubViewer from '@/components/EpubViewer';
+import EpubViewer from '@/components/edupro/EpubViewer';
 import LessonContent from '@/components/edupro/LessonContent';
 import { CheckIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import {

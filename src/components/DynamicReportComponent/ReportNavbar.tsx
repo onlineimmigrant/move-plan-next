@@ -1,6 +1,6 @@
 // components/ReportNavbar.tsx
 import React, { useState, useEffect } from "react";
-import IconButton from "./DynamicTableComponents/IconButton";
+import IconButton from "../DynamicTableComponents/IconButton";
 import {
   TableCellsIcon,
   ViewColumnsIcon,
@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils";
 
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import SelectReportTable from "./DynamicReportComponent/SelectReportTable";
-import SelectReportFields from "./DynamicReportComponent/SelectReportFields";
+import SelectReportTable from "./SelectReportTable";
+import SelectReportFields from "./SelectReportFields";
 
 interface ReportNavbarProps {
   tables: string[];

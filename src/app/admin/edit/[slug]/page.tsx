@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import PostEditor from '@/components/PostEditor';
+import PostEditor from '@/components/PostPage/PostEditor';
 import { useRouter } from 'next/navigation';
 
 

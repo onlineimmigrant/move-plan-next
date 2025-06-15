@@ -3,15 +3,15 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { supabase, getOrganizationId } from '../../../lib/supabase';
 import { getBaseUrl } from '../../../lib/utils';
-import ProductDetailPricingPlans from '../../../components/ProductDetailPricingPlans';
-import CategoryBarProductDetailPage from '../../../components/CategoryBarProductDetailPage';
+import ProductDetailPricingPlans from '../../../components/product/ProductDetailPricingPlans';
+import CategoryBarProductDetailPage from '../../../components/product/CategoryBarProductDetailPage';
 import FAQSection from '../../../components/HomePageSections/FAQSection';
 import FeedbackAccordion from '../../../components/FeedbackAccordion';
 import parse from 'html-react-parser';
-import ProgressBar from '../../../components/ProgressBar';
+import ProgressBar from '../../../components/product/ProgressBar';
 import { getBasket } from '../../../lib/basketUtils';
-import ProductDetailMediaDisplay from '../../../components/ProductDetailMediaDisplay';
-import ProductHeader from '../../../components/ProductHeader';
+import ProductDetailMediaDisplay from '../../../components/product/ProductDetailMediaDisplay';
+import ProductHeader from '../../../components/product/ProductHeader';
 
 interface MediaItem {
   id: number;

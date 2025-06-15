@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { generateSlug } from "./DynamicTableComponents/utils";
-import { Item, FilterCriteria, SortCriteria, ForeignKeyOption, EditingCell } from "./DynamicTableComponents/types";
-import { AddNewModal, DeleteConfirmationModal, FilterMenu, SortMenu, ColumnsMenu, TableNavbar, SelectedRowsNavbar, TableHeader, TableBody, ExpandRowModal, PageSorting, ImportCSVModal, ExportCSVModal, AddColumnModal, EditColumnModal, DeleteColumnModal, SchemaModal } from "./DynamicTableComponents/index";
+import { generateSlug } from "./utils";
+import { Item, FilterCriteria, SortCriteria, ForeignKeyOption, EditingCell } from "./types";
+import { AddNewModal, DeleteConfirmationModal, FilterMenu, SortMenu, ColumnsMenu, TableNavbar, SelectedRowsNavbar, TableHeader, TableBody, ExpandRowModal, PageSorting, ImportCSVModal, ExportCSVModal, AddColumnModal, EditColumnModal, DeleteColumnModal, SchemaModal } from "./index";
 
 export default function DynamicTable({ tableName, apiEndpoint }: { tableName: string; apiEndpoint: string }) {
   const [foreignKeys, setForeignKeys] = useState<{ [key: string]: { relatedTable: string; relatedColumn: string } }>({});

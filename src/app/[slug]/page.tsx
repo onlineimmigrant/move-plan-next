@@ -6,7 +6,7 @@ import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
 import { notFound, redirect } from 'next/navigation';
-import '@/components/PostEditor.css';
+import '@/components/PostPage/PostEditor.css';
 import { getPostUrl } from '@/lib/postUtils';
 import { useSEO } from '@/context/SEOContext';
 import { getOrganizationId } from '@/lib/supabase';

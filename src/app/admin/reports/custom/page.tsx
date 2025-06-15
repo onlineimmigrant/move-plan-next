@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
 import { useModal } from "@/context/ModalContext";
 import ColorsModal from "@/components/ColorsModal";
-import ReportNavbar from "@/components/ReportNavbar";
-import DynamicReportBody from "@/components/DynamicReportBody";
+import ReportNavbar from "@/components/DynamicReportComponent/ReportNavbar";
+import DynamicReportBody from "@/components/DynamicReportComponent/DynamicReportBody";
 
 const tableNameMapping: { [key: string]: string } = {
   products: "product",

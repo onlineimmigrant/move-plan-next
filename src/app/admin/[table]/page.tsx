@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import DynamicTable from "@/components/DynamicTable";
+import DynamicTable from "@/components/DynamicTableComponents/DynamicTable";
 import { getTableToDisclosure } from "@/lib/sidebarLinks";
 import { useSettings } from "@/context/SettingsContext";
 import { useParams } from "next/navigation";

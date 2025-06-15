@@ -5,6 +5,7 @@ import Image from 'next/image';
 import ContactForm from '@/components/ContactForm';
 import { useSettings } from '@/context/SettingsContext';
 
+
 export default function ContactPage() {
   const { settings } = useSettings();
   const logoImage = settings.image;
@@ -17,12 +18,12 @@ export default function ContactPage() {
       <div className={`hidden md:flex w-1/2 bg-${backgroundColor} items-center justify-center`}>
         <div className="text-white text-center">
                                 <Link href='/'>
-                      <span className="my-4 flex justify-center " >
+                      <span className="absolute top-4 right-4 my-4 flex justify-center " >
                        <Image src={logoImage} alt="Logo" width={40} height={40} className="h-8 w-auto"/>
                       </span>
                       </Link>
             <Link href='/'>
-                <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
+                <h1 className=" text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
                     Contact Us
                 </h1>
           </Link>

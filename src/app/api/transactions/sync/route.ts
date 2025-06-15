@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { calculateEndDate } from '@/utils/CalculateEndDate'; // Import the utility function
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -20,43 +21,6 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
     persistSession: false,
   },
 });
-
-// Function to calculate end_date based on measure (day, week, month, year)
-const calculateEndDate = (startDate: Date, measure: string): Date | null => {
-  if (measure.toLowerCase().includes('one-time')) {
-    return null; // Indefinite access for one-time products
-  }
-
-  const durationMatch = measure.toLowerCase().match(/(\d+)-(day|week|month|year)/);
-  if (!durationMatch) {
-    console.warn(`Unrecognized measure format: ${measure}`);
-    return null; // Default to null if format is unrecognized
-  }
-
-  const [, durationStr, unit] = durationMatch;
-  const duration = parseInt(durationStr, 10);
-  const endDate = new Date(startDate);
-
-  switch (unit) {
-    case 'day':
-      endDate.setDate(endDate.getDate() + duration);
-      break;
-    case 'week':
-      endDate.setDate(endDate.getDate() + duration * 7); // 1 week = 7 days
-      break;
-    case 'month':
-      endDate.setMonth(endDate.getMonth() + duration);
-      break;
-    case 'year':
-      endDate.setFullYear(endDate.getFullYear() + duration);
-      break;
-    default:
-      console.warn(`Unsupported duration unit: ${unit}`);
-      return null;
-  }
-
-  return endDate;
-};
 
 export async function POST() {
   try {

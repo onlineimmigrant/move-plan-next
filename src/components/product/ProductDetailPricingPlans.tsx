@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { ShoppingCartIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { useBasket } from '../context/BasketContext';
+import { useBasket } from '../../context/BasketContext';
 import PricingPlanFeatures from './PricingPlanFeatures';
 import Button from '@/ui/Button';
 
