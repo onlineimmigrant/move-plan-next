@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import Button from '@/ui/Button';
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -333,26 +335,13 @@ export default function ProgressStatisticsTopics({ quizId }: ProgressStatisticsT
                   {/* Spacer to push button to the bottom */}
                   <div className="flex-grow"></div>
                   {/* Improve Button */}
-                  <button
+                  <Button
+                  variant='start'
                     onClick={() => handleImproveClick(stat.topic_id)}
-                    className="cursor-pointer mt-4 flex items-center justify-center w-full bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-all duration-300 group"
-                  >
+                   className='mt-4'                  >
                     <span>Improve</span>
-                    <svg
-                      className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
+                    <RightArrowDynamic />
+                  </Button>
                 </div>
               );
             })}

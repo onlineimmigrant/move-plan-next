@@ -6,6 +6,7 @@ import { supabase, getOrganizationId } from '@/lib/supabase';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { v4 as uuidv4 } from 'uuid';
 import FeedbackForm from './FeedbackForm';
+import Loading from '@/ui/Loading';
 
 // Interfaces
 interface User {
@@ -280,7 +281,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
     setShowForm(false);
   };
 
-  if (isLoading) return <p className="text-center text-gray-500 py-12">Loading feedback...</p>;
+  if (isLoading) return <div className="text-center text-gray-500 py-12"><Loading /></div>;
   if (error) return <p className="text-center text-red-500 py-12">{error}</p>;
 
   return (

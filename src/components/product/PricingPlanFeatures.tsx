@@ -5,6 +5,7 @@ import parse from 'html-react-parser';
 import Link from 'next/link';
 import { ChevronDownIcon, ChevronDoubleUpIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect, useRef } from 'react';
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 
 interface Feature {
   id: string;
@@ -113,9 +114,10 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
                   <h3 className="text-sm font-semibold text-gray-900">
                     <Link
                       href={`/features/${feature.slug}`}
-                      className="text-sky-600 hover:underline focus:outline-none focus:ring-2 focus:ring-sky-300"
+                      className="flex items-center transition-all duration-300  group text-sky-600 hover:underline focus:outline-none focus:ring-2 focus:ring-sky-300"
                     >
                       {feature.name}
+                      <RightArrowDynamic />
                     </Link>
                   </h3>
                   <div className="text-sm text-gray-600 font-light line-clamp-2">
@@ -131,7 +133,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
             {isExpanded ? (
               <button
                 onClick={collapseFeatures}
-                className="p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
+                className="cursor-pointer p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
                 aria-label="Collapse features list"
               >
                 <ChevronDoubleUpIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
@@ -139,7 +141,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
             ) : (
               <button
                 onClick={toggleExpand}
-                className="p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
+                className="cursor-pointer  group p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
                 aria-label="Expand features list"
               >
                 <ChevronDownIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />

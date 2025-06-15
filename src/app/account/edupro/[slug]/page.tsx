@@ -13,6 +13,7 @@ import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNaviga
 import { useCourseAndTopics } from '@/lib/hooks/useCourseAndTopics';
 import { useAuth } from '@/context/AuthContext';
 import { ArrowUpIcon } from '@heroicons/react/24/outline';
+import Loading from '@/ui/Loading';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -194,11 +195,7 @@ export default function EduProCourseDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
+          <Loading />
       </div>
     );
   }

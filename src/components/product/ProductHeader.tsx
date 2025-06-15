@@ -1,8 +1,10 @@
 // /src/components/ProductHeader.tsx
 'use client';
 
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import Button from '@/ui/Button';
 
 interface ProductHeaderProps {
   productSubType: { name: string } | null; // Revert to null to match Product type
@@ -51,10 +53,12 @@ export default function ProductHeader({ productSubType, productName }: ProductHe
       `}    >
       <div className="flex flex-col bg-sky-50 sm:bg-transparent p-4 -mx-4 px-8">
         <Link
+        
           href="/products"
-          className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
+          className="flex items-center transition-all duration-300  group font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
         >
           {productSubType?.name || 'Unknown Sub-Type'}
+          <RightArrowDynamic />
         </Link>
         <h1 className="text-base md:text-lg font-semibold tracking-tight leading-tight">
           {productName}

@@ -15,7 +15,7 @@ export const FIELD_LABELS: Record<string, string> = {
 export const EDITABLE_FIELDS = [
   'username',
   'full_name',
-  'email',
+  
   'city',
   'postal_code',
   'country',

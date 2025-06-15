@@ -80,7 +80,7 @@ const LoadingSpinner = () => (
       {[0, 0.2, 0.4].map((delay) => (
         <div
           key={delay}
-          className="w-4 h-4 bg-sky-600 rounded-full animate-bounce cursor-pointer"
+          className="w-4 h-4 bg-yellow-600 rounded-full animate-bounce cursor-pointer"
           style={{ animationDelay: `${delay}s` }}
         />
       ))}

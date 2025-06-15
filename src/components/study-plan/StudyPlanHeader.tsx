@@ -1,7 +1,7 @@
 // src/components/study-plan/StudyPlanHeader.tsx
 import { Dispatch, SetStateAction } from 'react';
 import { HiCog, HiX } from 'react-icons/hi';
-import Button from './Button';
+import Button from '@/ui/Button';
 import DateInput from './DateInput';
 import RadioGroup from './RadioGroup';
 import { StudyPlanPreference } from './types';
@@ -50,7 +50,7 @@ const StudyPlanHeader = ({
     <>
       <div className=" flex justify-between items-start">
         <div className=" p-2 rounded-md flex justify-start space-x-2 items-center cursor-pointer">
-          <Button
+          <button
             onClick={() => setIsSettingsModalOpen(true)}
             className="text-left flex items-center text-sm text-sky-600 cursor-pointer font-medium hover:text-sky-500"
             title="Edit Study Plan Period"
@@ -58,26 +58,26 @@ const StudyPlanHeader = ({
             
             <HiCog className="w-6 h-6 mr-4" />
             {studyPlanPeriod}
-          </Button>
+          </button>
         </div>
         <div className="flex justify-end  p-2 space-x-2 items-center cursor-pointer">
           {preference.style === 'flexible' && (
             <>
-              <Button
+              <button
                 onClick={() => setIsEditingDates(!isEditingDates)}
                 className="text-sm text-sky-600 font-medium cursor-pointer hover:text-sky-500"
                 title={isEditingDates ? 'Cancel Editing Dates' : 'Edit Lesson Dates'}
               >
                 {isEditingDates ? 'Cancel' : 'Dates'}
-              </Button>
+              </button>
               {isEditingDates && (
-                <Button
+                <button
                   onClick={handleSaveDates}
                   className="text-sm text-sky-600 font-medium cursor-pointer hover:text-sky-500"
                   title="Save Lesson Dates"
                 >
                   Save Dates
-                </Button>
+                </button>
               )}
             </>
           )}
@@ -92,13 +92,13 @@ const StudyPlanHeader = ({
           />
           <div className="fixed inset-y-0 right-0 w-full sm:w-96 bg-gradient-to-br from-white to-gray-50 shadow-2xl sm:rounded-l-2xl overflow-auto transform transition-transform duration-300 translate-x-0">
             <div className="relative p-6 sm:p-8">
-              <Button
+              <button
                 onClick={() => setIsSettingsModalOpen(false)}
                 className="absolute top-4 right-4 sm:left-4  text-gray-600 hover:text-gray-800 transition-colors duration-200"
                 aria-label="Close settings modal"
               >
                 <HiX className="w-8 h-8 bg-gray-100 hover:bg-gray-50 rounded-full p-1" />
-              </Button>
+              </button>
               <h2 className="text-lg font-bold text-gray-800 mb-6 text-center">
                 Settings
               </h2>
@@ -138,8 +138,8 @@ const StudyPlanHeader = ({
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-sky-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200"
-                >
+                  variant="start"
+                      >
                   Save
                 </Button>
               </form>
