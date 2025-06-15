@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     });
 
     additionalStaticPages = (staticPagesData || []).map((page) => ({
-      url: `${baseUrl}${page.url_path}`,
+      url: `${actualBaseUrl}${page.url_path}`,
       lastmod: page.last_modified ? new Date(page.last_modified).toISOString() : new Date().toISOString(),
       priority: page.priority || 1.0,
     }));
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     });
 
     dynamicFeaturePages = (features || []).map((feature) => ({
-      url: `${baseUrl}/features/${feature.slug}`,
+      url: `${actualBaseUrl}/features/${feature.slug}`,
       lastmod: feature.created_at || new Date().toISOString(),
       priority: 0.8,
     }));
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
     });
 
     dynamicProductsPages = (products || []).map((product) => ({
-      url: `${baseUrl}/products/${product.slug}`,
+      url: `${actualBaseUrl}/products/${product.slug}`,
       lastmod: product.updated_at || new Date().toISOString(),
       priority: 0.8,
     }));
@@ -278,9 +278,9 @@ function generateSitemap(pages: { url: string; lastmod: string; priority: number
 }
 
 // Helper function to generate sitemap with default homepage
-function generateSitemapWithDefault(baseUrl: string) {
+function generateSitemapWithDefault(actualBaseUrl: string) {
   const defaultPage = [{
-    url: `${baseUrl}/`,
+    url: `${actualBaseUrl}/`,
     lastmod: new Date().toISOString(),
     priority: 1.0,
   }];
