@@ -6,6 +6,7 @@ import ClientProductsPage from './ClientProductsPage';
 type Product = {
   id: number;
   slug?: string;
+  is_displayed: boolean;
   organization_id: string;
   product_name: string | null;
   product_sub_type_id: number;
@@ -36,6 +37,7 @@ async function fetchProducts(baseUrl: string) {
     .from('product')
     .select('*')
     .eq('organization_id', organizationId)
+    .eq('is_displayed', true)
     .order('order', { ascending: true });
 
   console.log('Fetched products:', data, 'for organization_id:', organizationId);

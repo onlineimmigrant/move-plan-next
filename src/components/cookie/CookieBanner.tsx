@@ -6,6 +6,7 @@ import { setCookie, getCookie, sendConsentToBackend } from '@/utils/cookieUtils'
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { useAuth } from '@/context/AuthContext'; 
 import Link from 'next/link';
+import Button from '@/ui/Button';
 
 
 interface CookieBannerProps {
@@ -92,7 +93,7 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
   return (
     <>
       {isVisible && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 px-8 sm:px-16 z-52 flex justify-between items-center bg-white text-gray-800 opacity-90">
+        <div className="fixed bottom-0 left-0 right-0 p-4 px-8 sm:px-16 z-200 flex justify-between items-center bg-white text-gray-800 opacity-90">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:flex-grow mr-5 text-center md:text-left">
               For your best experience, we use Cookies. See{' '}
@@ -108,19 +109,21 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
                 <strong>Privacy Settings</strong>
               </button>
             </div>
-            <div className="flex justify-end items-center w-full sm:w-auto">
-              <button
+            <div className="flex justify-center sm:justify-end items-center w-full space-x-16 sm:space-x-4">
+              <Button
+              variant="primary"
                 onClick={handleRejectAll}
-                className="mr-4 bg-gray-700 text-white py-1 px-5 rounded-md hover:bg-gray-300 text-sm md:w-auto w-full mt-2 md:mt-0"
+                className="py-1 sm:py-1 bg-sky-400"
               >
                 Reject All
-              </button>
-              <button
+              </Button>
+              <Button
+              variant="primary"
                 onClick={handleAcceptAll}
-                className="bg-gray-700 text-white py-1 px-5 rounded-md hover:bg-gray-300 text-sm md:w-auto w-full mt-2 md:mt-0"
+                className="py-1 sm:py-1"
               >
                 Accept All
-              </button>
+              </Button>
             </div>
           </div>
         </div>

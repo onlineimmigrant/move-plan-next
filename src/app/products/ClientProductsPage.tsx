@@ -12,6 +12,7 @@ type Product = {
   id: number;
   slug?: string;
   organization_id: string;
+  is_displayed: boolean;
   product_name: string | null;
   product_sub_type_id: number; // Removed duplicate
   product_sub_type_additional_id: number;

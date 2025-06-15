@@ -344,8 +344,9 @@ export default function ProductDetailPricingPlans({
       <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
         {activePlanCount === 0 || (selectedPlan && (selectedPlan.price === 0 || (selectedPlan.is_promotion && selectedPlan.promotion_price === 0))) ? (
           <Link href="/register-free-trial">
-            <Button variant="start" className="bg-sky-700 text-white hover:bg-sky-800" aria-label="Register for free trial">
+            <Button variant="start"  aria-label="Register for free trial">
               Register
+              <RightArrowDynamic />
             </Button>
           </Link>
         ) : (
