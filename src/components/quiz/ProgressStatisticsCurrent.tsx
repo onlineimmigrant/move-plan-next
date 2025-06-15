@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
+import Loading from '@/ui/Loading';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -164,13 +165,9 @@ export default function ProgressStatisticsCurrent({ quizId, lessonId }: Progress
 
   if (isLoading) {
     return (
-      <div className="py-4">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
-      </div>
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+<Loading />
+  </div>
     );
   }
 

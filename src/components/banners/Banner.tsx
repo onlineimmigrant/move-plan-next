@@ -1,9 +1,11 @@
 import { useBanner } from '../../context/BannerContext';
 import { Banner as BannerType, BannerOpenState } from './types';
 import Image from 'next/image';
-import Link from 'next/link';
 import { TbChevronCompactDown, TbChevronCompactUp, TbChevronCompactLeft, TbChevronCompactRight } from 'react-icons/tb';
 import { useEffect } from 'react';
+import Button from '@/ui/Button';
+import CloseButton from '@/ui/CloseButton';
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 
 interface BannerProps {
   banner: BannerType;
@@ -97,11 +99,11 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
 
   return (
     <div
-      className={`shadow-sm transition-all duration-300 ${
+      className={`transition-all duration-300 ${
         banner.isOpen && banner.openState !== 'absent'
           ? openStateStyles[banner.openState as Exclude<BannerOpenState, 'absent'>]
           : positionStyles[banner.position]
-      } flex ${banner.position === 'left' || banner.position === 'right' ? 'flex-row sm:flex-col' : 'flex-col'} items-center justify-center p-4 min-h-[48px] ${
+      } flex ${banner.position === 'left' || banner.position === 'right' ? 'flex-row sm:flex-col' : 'flex-col'} items-center justify-center p-2 min-h-[48px] ${
         banner.content?.banner_background || 'bg-gray-50'
       }`}
       role="banner"
@@ -127,7 +129,7 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
           }`}
         >
           <div
-            className={`flex flex-row sm:grid sm:grid-cols-3 justify-left items-center space-y-0 ${
+            className={`flex flex-row text-xs sm:text-sm justify-left items-center space-y-0 ${
               banner.content?.banner_content_style || 'space-x-4'
             }`}
           >
@@ -145,16 +147,23 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
             <p id={`banner-${banner.id}-text`} className="break-words">
               {banner.content.text}
             </p>
+
             {banner.content.link && (
-              <Link
-                href={banner.content.link.url}
-                className="text-sky-600 hover:underline focus:outline-none focus:ring-2 focus:ring-sky-500"
-                target={banner.content.link.isExternal ? '_blank' : undefined}
-                rel={banner.content.link.isExternal ? 'noopener noreferrer' : undefined}
+              <Button
+                variant="link"
+                onClick={() => {
+                  if (banner.content.link!.isExternal) {
+                    window.open(banner.content.link!.url, '_blank', 'noopener,noreferrer');
+                  } else {
+                    window.location.href = banner.content.link!.url;
+                  }
+                }}
               >
                 {banner.content.link.label}
-              </Link>
+                <RightArrowDynamic />
+              </Button>
             )}
+
             {banner.content.customContent && (
               <div className="mt-4" dangerouslySetInnerHTML={{ __html: banner.content.customContent }} />
             )}
@@ -203,27 +212,23 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
       )}
 
       {banner.type === 'closed' && (
-        <button
+        <Button
+          variant="close"
           onClick={() => dismissBanner(banner.id)}
-          className="absolute top-2 right-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
           aria-label="Close banner"
         >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+          <CloseButton />
+        </Button>
       )}
 
       {banner.isOpen && (
-        <button
+        <Button
+          variant="close"
           onClick={() => closeBanner(banner.id)}
-          className="absolute top-2 right-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
           aria-label="Close expanded banner"
         >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+          <CloseButton />
+        </Button>
       )}
     </div>
   );

@@ -9,6 +9,7 @@ import { FaTimes } from 'react-icons/fa';
 import AccountTab from '@/components/AccountTab';
 import { FiRefreshCw } from 'react-icons/fi';
 import { useStudentStatus } from '@/lib/StudentContext';
+import Button from '@/ui/Button';
 
 // Constants
 import { FIELD_LABELS, EDITABLE_FIELDS } from '@/components/constants/profile';
@@ -31,17 +32,12 @@ interface Profile {
 // Reusable Components
 const Input = ({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement> & RefAttributes<HTMLInputElement>) => (
   <input
-    className={`block w-full border border-gray-200 rounded-md py-3 px-4 text-gray-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out placeholder-gray-400 text-sm ${className}`}
+    className={`block w-full border border-gray-200 rounded-md py-3 px-4 text-gray-900 focus:ring-1 focus:ring-sky-600 focus:border-sky-600 transition duration-150 ease-in-out placeholder-gray-400 text-sm ${className}`}
     {...props}
   />
 );
 
-const Button = ({ className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button
-    className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 ${className}`}
-    {...props}
-  />
-);
+
 
 // Custom Hook for Authentication
 const useAuth = () => {
@@ -277,9 +273,9 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
         </div>
       </div>
     );
@@ -310,7 +306,7 @@ export default function ProfilePage() {
             {accessToken && (
               <Button
                 onClick={fetchProfile}
-                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
+                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-sky-600"
                 aria-label="Retry fetching profile"
               >
                 Retry
@@ -392,7 +388,7 @@ export default function ProfilePage() {
             <div className="mt-4">
               <Button
                 onClick={fetchProfile}
-                className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-full px-6"
+                className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-sky-600 rounded-full px-6"
               >
                 Refresh Profile
               </Button>
@@ -404,14 +400,14 @@ export default function ProfilePage() {
         {isModalOpen && editingField && (
           <FocusTrap>
             <div
-              className="fixed inset-0 z-50"
+              className="fixed bg-transparent inset-0 z-50"
               onKeyDown={handleKeyDown}
               role="dialog"
               aria-labelledby="modal-title"
               aria-modal="true"
             >
               <div
-                className="fixed inset-0 bg-gray-500 bg-opacity-75"
+                className=" fixed inset-0 bg-transparent bg-opacity-75"
                 onClick={closeModal}
                 aria-hidden="true"
               />
@@ -424,13 +420,13 @@ export default function ProfilePage() {
                     <h2 id="modal-title" className="text-lg font-semibold text-gray-900">
                       Edit {FIELD_LABELS[editingField] || editingField}
                     </h2>
-                    <Button
+                    <button
                       onClick={closeModal}
                       className="text-gray-500 hover:text-gray-700"
                       aria-label="Close modal"
                     >
                       <FaTimes className="h-5 w-5" />
-                    </Button>
+                    </button>
                   </div>
                   {formError && <p className="text-red-600 text-sm mb-4">{formError}</p>}
                   <form onSubmit={handleSubmit} className="space-y-4">
@@ -455,11 +451,10 @@ export default function ProfilePage() {
                           : 'Provide the updated value for this field.'}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <Button
                         type="submit"
-                        className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
-                        disabled={isSubmitting}
+                                  disabled={isSubmitting}
                         aria-label="Save changes"
                       >
                         {isSubmitting ? 'Saving...' : 'Save'}

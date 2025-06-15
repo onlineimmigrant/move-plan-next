@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import parse from 'html-react-parser';
 import Link from 'next/link';
 import Image from 'next/image'; // Import next/image
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 
 interface HeroProps {
   hero: {
@@ -135,9 +136,10 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
                 <Link
                   href="/blog"
                   aria-label={`Explore ${hero.seo_title}`}
-                  className="ml-2 flex items-center font-semibold text-gray-700 hover:text-gray-300"
+                  className="ml-2 flex items-center transition-all duration-300 group font-semibold text-gray-700 hover:text-gray-300"
                 >
-                  Explore <span className="ml-1">→</span>
+                  Explore 
+                   <RightArrowDynamic />
                 </Link>
               </div>
             </div>
@@ -170,9 +172,10 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
               </Link>
               <Link
                 href="/blog"
-                className={`flex items-center text-sm font-semibold leading-6 text-gray-900 hover:text-gray-600 animate-hero-button-explore ${isVisible ? 'animate' : ''}`}
+                className={`flex items-center text-sm transition-all duration-300 group font-semibold leading-6 text-gray-900 hover:text-gray-300 animate-hero-button-explore ${isVisible ? 'animate' : ''}`}
               >
-                {labelsDefault?.button_explore || 'Explore'} <span className="ml-1">→</span>
+                {labelsDefault?.button_explore || 'Explore'}
+                 <RightArrowDynamic />
               </Link>
             </div>
           </div>

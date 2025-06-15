@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <title>{{subject}}</title>
+    <style type="text/css">
+      @media only screen and (max-width: 600px) {
+        body {
+          background-color: #FFFFFF !important;
+          padding: 16px 8px !important;
+        }
+        div {
+          max-width: 100% !important;
+          margin: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          padding: 16px !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="background-color: #F5F7FA; font-family: Arial, sans-serif; margin: 0; padding: 32px; color: #1A202C;">
+    <!-- HiddenВП: Hidden preview text for Gmail -->
+    <div style="display: none;">🎓 Your Free Trial at MetExam Starts Now!</div>
+    <div style="max-width: 500px; margin: 0 auto; background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+
+      <!-- Video Placeholder -->
+      <section style="text-align: center; margin-bottom: 32px;">
+        <a href="https://www.youtube.com/watch?v=F5tidQVVwcE" style="text-decoration: none;">
+          <img src="https://codedharmony.blob.core.windows.net/email-photo/free-trial-guide-image.jpg" alt="How it works?" style="width: 100%; max-width: 100%; margin: 0 auto; display: block; border-radius: 4px;" onerror="this.src='https://via.placeholder.com/500x315?text=Watch+Our+Welcome+Video';" />
+        </a>
+        <p style="font-size: 14px; color: #718096; margin-top: 8px;">
+          <a href="https://www.youtube.com/watch?v=F5tidQVVwcE" style="color: #0284C7; text-decoration: underline;">Watch our welcome video</a>
+        </p>
+      </section>
+
+
+
+      <div style="padding: 24px;">
+      <!-- Welcome Message -->
+      <section style="text-align: center; margin-bottom: 24px;">
+        <h1 style="font-size: 20px; font-weight: bold; color: #1A202C; margin-bottom: 24px;">SQE1 Prep Trial Starts Now!</h1>
+
+            <!-- Call to Action -->
+      <section style="text-align: center; margin-bottom: 64px;">
+        <a href="{{emailDomainRedirection}}" style="background-color: #0284C7; color: #FFFFFF; padding: 8px 28px; border-radius: 8px; font-size: 16px; font-weight: 500; text-decoration: none; display: inline-block; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#0369A1'" onmouseout="this.style.backgroundColor='#0284C7'">Start Learning Now</a>
+      </section>
+
+
+
+        <p style="font-size: 16px; color: #718096; margin-top: 8px; line-height: 24px;">
+          Hi {{name}},
+        </p>
+      </section>
+
+      <section style="text-align: center; margin-bottom: 64px;">
+        <p style="font-size: 16px; color: #718096; line-height: 24px;">
+          Welcome to your 7-day free trial at MetExam! Get ready to boost your skills and explore our learning platform.
+        </p>
+      </section>
+
+
+
+      <!-- Course Scheme Image -->
+      <!-- <section style="text-align: center; margin-bottom: 60px;">
+        <img src="https://codedharmony.blob.core.windows.net/product-images/metexam_course_scheme.png" alt="MetExam course scheme" style="width: 100%; max-width: 100%; margin: 0 auto; display: block; border-radius: 4px;" onerror="this.src='https://via.placeholder.com/500x150?text=MetExam+Course+Scheme';" />
+      </section> -->
+
+      <!-- Trial Steps -->
+      <section style=" margin-bottom: 64px;">
+        <h2 style="text-align: center; font-size: 18px; font-weight: bold; color: #1A202C; margin-bottom: 16px;">What to Do During Your Trial:</h2>
+        <ul style="font-size: 16px; color: #718096; line-height: 24px; padding-left: 20px; margin: 0;">
+          <li style="margin-bottom: 8px;">Check out our course offerings.</li>
+          <li style="margin-bottom: 8px;">Try our interactive quizzes.</li>
+          <li style="margin-bottom: 8px;">Track your learning progress.</li>
+        </ul>
+      </section>
+
+      <!-- Support Section -->
+      <section style="text-align: center; margin-bottom: 32px;">
+        <p style="font-size: 16px; color: #718096; line-height: 24px;">
+          Need help? Connect with us via our <a href="https://metexam.co.uk/contact/" style="color: #0284C7; text-decoration: underline;">Connect Hub</a>.
+        </p>
+      </section>
+
+      <!-- Security Footer -->
+      <hr style="border-color: #E5E7EB; margin: 16px 0;" />
+      <section style="text-align: center; font-size: 12px; color: #9CA3AF;">
+        <p style="margin-bottom: 8px; color: #9CA3AF; line-height: 1.5;">
+          You're receiving this email because you signed up for a MetExam free trial.<br />
+          <a href="{{unsubscribeUrl}}" style="color: #9CA3AF; text-decoration: underline;">Unsubscribe</a> | <a href="{{privacyPolicyUrl}}" style="color: #9CA3AF; text-decoration: underline;">Privacy Policy</a> | <a href="mailto:{{company_profile.transactional_email_address}}" style="color: #9CA3AF; text-decoration: underline;">Contact Us</a><br />
+          <span style="color: #9CA3AF;">{{address}}</span><br />
+          <span style="color: #9CA3AF;">© 2025 {{site}} All rights reserved.</span>
+        </p>
+      </section>
+      <section style="text-align: center; margin-top: 60px;">
+        <img src="{{email_main_logo_image}}" alt="MetExam Logo" style="height: 32px; margin: 0 auto; display: block;" onerror="this.src='https://via.placeholder.com/150x50?text=MetExam+Logo';" />
+      </section>
+      </div>
+    </div>
+  </body>
+</html>

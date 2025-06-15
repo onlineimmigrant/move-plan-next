@@ -149,7 +149,7 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
     const fixedBanners = banners.filter(
       (b) => b.isFixedAboveNavbar && !b.isDismissed && b.position === 'top'
     );
-    const height = fixedBanners.length * 72; // 3rem = 48px
+    const height = fixedBanners.length * 56; // 3rem = 48px
     console.log('Fixed banners for height calc:', JSON.stringify(fixedBanners, null, 2));
     console.log('Calculated fixed banners height:', height);
     return height;

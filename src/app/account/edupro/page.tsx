@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import AccountTab from '@/components/AccountTab';
 import Toast from '@/components/Toast';
 import { useStudentStatus } from '@/lib/StudentContext';
+import Loading from '@/ui/Loading';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -237,11 +238,7 @@ export default function EduPro() {
   if (isLoading || studentLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
+            <Loading />
       </div>
     );
   }

@@ -12,6 +12,7 @@ import { useSEO } from '@/context/SEOContext';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import Loading from '@/ui/Loading';
 
 interface TOCItem {
   tag_name: string;
@@ -349,7 +350,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     }
   };
 
-  if (loading) return <div className="py-32 text-center text-gray-500">Loading...</div>;
+  if (loading) return <div className="py-32 text-center text-gray-500"><Loading /></div>;
   if (!post || !post.display_this_post) notFound();
 
   const shouldShowMainContent = (!post.section || post.section !== 'Landing') && post.content?.length > 0;

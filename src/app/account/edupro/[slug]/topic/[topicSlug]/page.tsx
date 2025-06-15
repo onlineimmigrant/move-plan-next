@@ -11,6 +11,7 @@ import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
 import { CheckIcon, ArrowUpIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import Loading from '@/ui/Loading';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -110,15 +111,8 @@ const isPurchaseActive = (purchase: Purchase): boolean => {
 // Components
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="flex items-center space-x-2">
-      {[0, 0.2, 0.4].map((delay) => (
-        <div
-          key={delay}
-          className="w-4 h-4 bg-sky-600 rounded-full animate-bounce"
-          style={{ animationDelay: `${delay}s` }}
-        />
-      ))}
-    </div>
+  <Loading />
+    
   </div>
 );
 

@@ -234,7 +234,7 @@ export default function ClientProductsPage({
                     </div>
                   </div>
                   <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end relative">
-                    <span className="text-sky-400">
+                    <span className="text-sky-400 transition-all duration-300  group ">
                       <ArrowRightIcon className="h-5 w-5" />
                     </span>
                   </div>
