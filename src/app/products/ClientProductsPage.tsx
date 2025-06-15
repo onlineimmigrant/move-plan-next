@@ -4,8 +4,8 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react'; // Added useRef
 import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
-import CategoriesBar from '@/components/CategoriesBar';
-import IconButton from '@/components/IconButton';
+import CategoriesBar from '@/components/product/CategoriesBar';
+import IconButton from '@/ui/IconButton';
 import FeedbackAccordion from '@/components/FeedbackAccordion';
 
 type Product = {

@@ -3,12 +3,12 @@
 
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { useBasket, BasketItem } from '../../context/BasketContext';
-import ProgressBar from '../../components/ProgressBar';
-import BasketItemComponent from '../../components/BasketItem';
+import ProgressBar from '../../components/product/ProgressBar';
+import BasketItemComponent from '@/components/product/BasketItem';
 import Link from 'next/link';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import PaymentForm from '../../components/PaymentForm';
+import PaymentForm from '../../components/product/PaymentForm';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 

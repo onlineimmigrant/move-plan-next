@@ -1,3 +1,5 @@
+// /app/register-free-trial/page.tsx
+
 'use client';
 
 import { useState } from 'react';
@@ -59,19 +61,22 @@ export default function RegisterPage() {
     try {
       // Fetch organization ID based on current domain
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      console.log('Fetching organization ID for baseUrl:', baseUrl);
       const organizationId = await getOrganizationId(baseUrl);
       if (!organizationId) {
+        console.error('Organization ID not found for baseUrl:', baseUrl);
         setError('Unable to identify organization. Please contact support.');
         setIsLoading(false);
         return;
       }
+      console.log('Organization ID:', organizationId);
 
+      // Attempt sign-up with Supabase
       const options = {
         data: { username },
         emailRedirectTo: `${DOMAIN_CUSTOM}/login`,
       };
-
-      // Attempt sign-up with Supabase
+      console.log('Attempting Supabase sign-up for email:', email);
       const { data, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -90,10 +95,36 @@ export default function RegisterPage() {
         setIsLoading(false);
         return;
       }
+      console.log('Supabase sign-up successful. User:', data.user?.id);
 
-      // Insert or update a profile row if user is created
+      // Call the register-user-free-trial API to handle server-side logic
       if (data.user) {
+        console.log('Calling /api/register-user-free-trial for user:', data.user.id);
+        const registerResponse = await fetch('/api/register-user-free-trial', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email.trim(),
+          }),
+        });
+
+        if (!registerResponse.ok) {
+          const errorText = await registerResponse.text();
+          console.error('Failed to register user. Status:', registerResponse.status, 'Response:', errorText);
+          try {
+            const errorData = JSON.parse(errorText);
+            setError(errorData.error || 'Failed to complete registration. Please try again.');
+          } catch {
+            setError('Unexpected response from registration API. Please try again.');
+          }
+          setIsLoading(false);
+          return;
+        }
+        console.log('Registration API call successful');
+
+        // Insert or update a profile row
         const userId = data.user.id;
+        console.log('Upserting profile for user:', userId);
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert(
@@ -114,9 +145,11 @@ export default function RegisterPage() {
           setIsLoading(false);
           return;
         }
+        console.log('Profile upserted successfully');
 
         // Trigger free trial email with organization_id
         try {
+          console.log('Sending free trial email to:', email);
           const response = await fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -125,44 +158,52 @@ export default function RegisterPage() {
               to: email.trim(),
               organization_id: organizationId,
               user_id: userId,
-              name: username, // Pass username as name for free trial email
+              name: username,
             }),
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Failed to send welcome email:', errorData.error, errorData.details || '');
-            setError((prev) => prev || 'Registration successful, but failed to send welcome email. Please contact support.');
+            const errorText = await response.text();
+            console.error('Failed to send welcome email. Status:', response.status, 'Response:', errorText);
+            try {
+              const errorData = JSON.parse(errorText);
+              setError((prev) => prev || `Registration successful, but failed to send welcome email: ${errorData.error || 'Unknown error'}. Please contact support.`);
+            } catch {
+              setError((prev) => prev || 'Registration successful, but failed to send welcome email due to an unexpected response. Please contact support.');
+            }
           } else {
             console.log('Welcome email sent successfully');
           }
-        } catch (emailError) {
-          console.error('Error triggering welcome email:', emailError);
+        } catch (emailError: any) {
+          console.error('Error triggering welcome email:', emailError.message, emailError.stack);
           setError((prev) => prev || 'Registration successful, but failed to send welcome email. Please contact support.');
-          // Non-blocking: Email failure doesn't affect signup
         }
       }
 
       // Handle session or email confirmation
       if (data.session) {
+        console.log('Setting session and redirecting to profile');
         setSession(data.session);
         setSuccess('Registration successful! Redirecting to profile...');
         setTimeout(() => router.push('/account/profile'), 2000);
       } else if (EMAIL_CONFIRM_REQUIRED) {
+        console.log('Email confirmation required, redirecting to login');
         setSuccess('Please check your email to confirm your account.');
         setTimeout(() => router.push('/login'), 2000);
       } else {
+        console.log('No session, redirecting to login');
         setSuccess('Registration successful! Redirecting to login...');
         setTimeout(() => router.push('/login'), 2000);
       }
     } catch (err: any) {
-      console.error('Registration failed:', err);
+      console.error('Registration failed:', err.message, err.stack);
       setError(err.message || 'Registration failed. Please try again.');
       setIsLoading(false);
     }
   };
 
   const handleLogin = () => {
+    console.log('Navigating to login page');
     router.push('/login');
   };
 
@@ -202,7 +243,7 @@ export default function RegisterPage() {
             </span>
           </Link>
           <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
-            Register and Start Free 7-day Trial  with {settings?.site || ''} 
+            Register and Start Free 7-day Trial with {settings?.site || ''}
           </h1>
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -261,18 +302,17 @@ export default function RegisterPage() {
 
             <div className="mt-16 space-y-4 text-base">
               <Button
-              variant='start'
+                variant="start"
                 type="submit"
                 disabled={isLoading}
-                
               >
                 {isLoading ? 'Registering...' : 'Register'}
               </Button>
               <Button
-              variant='start'
+                variant="start"
                 type="button"
                 onClick={handleLogin}
-                className=" bg-yellow-200 text-gray-400 "
+                className="bg-yellow-200 text-gray-400"
               >
                 Back to Login
               </Button>

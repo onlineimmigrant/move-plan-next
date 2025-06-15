@@ -5,7 +5,7 @@ import { FiCalendar, FiUser } from 'react-icons/fi';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import Link from 'next/link';
-import IconButton from '@/components/IconButton';
+import IconButton from '@/ui/IconButton';
 
 // Utility function to convert subsection to slug
 const generateSlug = (subsection: string): string => {

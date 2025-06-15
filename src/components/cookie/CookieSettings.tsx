@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { TfiWorld } from 'react-icons/tfi';
-import Tabs from './cookie-settings/Tabs';
-import FooterButtons from './cookie-settings/FooterButtons';
+import Tabs from './Tabs';
+import FooterButtons from './FooterButtons';
 import { setCookie, sendConsentToBackend } from '@/utils/cookieUtils';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
 
 interface CookieSettingsProps {

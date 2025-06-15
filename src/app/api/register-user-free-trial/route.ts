@@ -1,5 +1,7 @@
+// /app/api/register-user-free-trial/route.ts
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
+import { calculateEndDate } from '../../../utils/CalculateEndDate';
 
 export async function POST(request: Request) {
   try {
@@ -12,9 +14,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    if (!stripeCustomerId || typeof stripeCustomerId !== 'string') {
-      console.error('Validation failed: Invalid Stripe customer ID');
-      return NextResponse.json({ error: 'Invalid Stripe customer ID' }, { status: 400 });
+    // Verify Supabase configuration
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase environment variables');
+      return NextResponse.json({ error: 'Server configuration error: Missing Supabase keys' }, { status: 500 });
     }
 
     // Check if user already exists in auth.users
@@ -32,7 +35,6 @@ export async function POST(request: Request) {
       userId = existingUser.id;
       console.log('Found existing user in auth.users:', userId);
     } else {
-      // Create a new user
       console.log('Creating new user in auth.users with email:', email);
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
         email: email,
@@ -62,13 +64,12 @@ export async function POST(request: Request) {
       .eq('id', userId)
       .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (fetchError && fetchError.code !== 'PGRST116') {
       console.error('Error fetching profile:', fetchError);
       throw new Error(`Failed to fetch profile: ${fetchError.message}`);
     }
 
     if (!existingProfile) {
-      // Create a new profile
       console.log('Creating new profile for user:', userId);
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
@@ -91,27 +92,72 @@ export async function POST(request: Request) {
       }
     }
 
-    // Link the stripeCustomerId to the customers table
-    console.log('Linking Stripe customer ID to customers table:', stripeCustomerId);
-    const { error: customerError } = await supabaseAdmin
-      .from('customers')
-      .upsert({
-        user_id: userId,
-        stripe_customer_id: stripeCustomerId,
-      });
+    // Link the stripeCustomerId to the customers table if provided
+    if (stripeCustomerId && typeof stripeCustomerId === 'string') {
+      console.log('Linking Stripe customer ID to customers table:', stripeCustomerId);
+      const { error: customerError } = await supabaseAdmin
+        .from('customers')
+        .upsert({
+          user_id: userId,
+          stripe_customer_id: stripeCustomerId,
+        });
 
-    if (customerError) {
-      console.error('Error updating customer in database:', customerError);
-      throw new Error(`Failed to update customer in database: ${customerError.message}`);
+      if (customerError) {
+        console.error('Error updating customer in database:', customerError);
+        throw new Error(`Failed to update customer in database: ${customerError.message}`);
+      }
+    } else {
+      console.log('No Stripe customer ID provided, skipping customers table upsert');
     }
 
-    console.log('Linked Stripe customer ID:', { user_id: userId, stripe_customer_id: stripeCustomerId });
+    // Check for existing active purchase to prevent duplicates
+    const purchasedItemId = '2389918c-edfe-4e05-9595-0f990b408468';
+    console.log('Checking for existing purchase for user:', userId);
+    const { data: existingPurchase, error: fetchPurchaseError } = await supabaseAdmin
+      .from('purchases')
+      .select('id')
+      .eq('purchased_item_id', purchasedItemId)
+      .eq('profiles_id', userId)
+      .eq('is_active', true)
+      .single();
 
+    if (fetchPurchaseError && fetchPurchaseError.code !== 'PGRST116') {
+      console.error('Error checking existing purchase:', fetchPurchaseError);
+      throw new Error(`Failed to check existing purchase: ${fetchPurchaseError.message}`);
+    }
+
+    if (existingPurchase) {
+      console.log('Active purchase already exists for user:', userId, 'skipping purchase creation');
+    } else {
+      console.log('Creating purchase record for free trial for user:', userId);
+      const startDate = new Date();
+      const endDate = calculateEndDate(startDate, '7-day');
+
+      const { error: purchaseError } = await supabaseAdmin
+        .from('purchases')
+        .insert({
+          purchased_item_id: purchasedItemId,
+          profiles_id: userId,
+          transaction_id: null,
+          start_date: startDate.toISOString(),
+          end_date: endDate ? endDate.toISOString() : null,
+          is_active: true,
+        });
+
+      if (purchaseError) {
+        console.error('Error creating purchase record:', purchaseError);
+        throw new Error(`Failed to create purchase record: ${purchaseError.message}`);
+      }
+
+      console.log('Created purchase record for free trial:', { userId, purchasedItemId });
+    }
+
+    console.log('User registration completed:', { user_id: userId });
     return NextResponse.json({ success: true, userId });
   } catch (error: any) {
-    console.error('Error registering user:', error);
+    console.error('Error registering user:', error.message, error.stack);
     return NextResponse.json(
-      { error: 'User registration failed: ' + (error.message || 'Unknown error') },
+      { error: `User registration failed: ${error.message || 'Unknown error'}` },
       { status: 500 }
     );
   }

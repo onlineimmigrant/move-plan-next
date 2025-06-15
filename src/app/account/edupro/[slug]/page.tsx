@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import CourseTabEduPro from '@/components/edupro/CourseTabEduPro';
-import StudyBooks from '@/components/StudyBooks';
+import StudyBooks from '@/components/edupro/StudyBooks';
 import Practice from '@/components/Practice';
 import Toast from '@/components/Toast';
 import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';

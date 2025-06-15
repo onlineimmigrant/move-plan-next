@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation'; // Add usePathname
 import { useBasket } from '../context/BasketContext';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
-import ProgressBar from './ProgressBar';
+import ProgressBar from './product/ProgressBar';
 
 // Heroicons
 import {

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FaEnvelope, FaPhone, FaTelegramPlane, FaWhatsapp } from 'react-icons/fa';
 //import emailjs from '@emailjs/browser';
 import Toast from './Toast';
+import Button from '@/ui/Button';
 
 interface ContactFormProps {
   onSuccess?: () => void;
@@ -427,15 +428,13 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
         </div>
 
         <div className="text-center">
-          <button
+          <Button
             type="submit"
+            variant='start'
             disabled={isSubmitting}
-            className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white ${
-              isSubmitting ? 'bg-sky-400 cursor-not-allowed' : 'bg-sky-600 hover:bg-sky-700'
-            } focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer`}
-          >
+                     >
             {isSubmitting ? 'Sending...' : 'Send Message'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

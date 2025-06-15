@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useBasket, BasketItem } from '../../context/BasketContext';
-import ProgressBar from '../../components/ProgressBar';
-import BasketItemComponent from '../../components/BasketItem';
+import ProgressBar from '../../components/product/ProgressBar';
+import BasketItemComponent from '@/components/product/BasketItem';
 import { HiTrash } from 'react-icons/hi';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
