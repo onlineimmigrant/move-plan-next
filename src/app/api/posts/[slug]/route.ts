@@ -1,3 +1,4 @@
+//posts/[slug]/route.ts
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 import { getOrganizationId } from '@/lib/supabase';

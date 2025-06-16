@@ -1,13 +1,16 @@
-// app/sqe-2/[slug]/page.tsx
+//sqe-2/[slug]/page.tsx
+
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { useSettings } from '@/context/SettingsContext';
+import { useSEO } from '@/context/SEOContext';
 import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
-
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { getPostUrl } from '@/lib/postUtils';
+import { getOrganizationId } from '@/lib/supabase';
+import { isAdminClient } from '@/lib/auth';
 
 interface TOCItem {
   tag_name: string;
@@ -15,21 +18,67 @@ interface TOCItem {
   tag_id: string;
 }
 
+interface Post {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  content: string;
+  section?: string;
+  subsection?: string;
+  created_on: string;
+  is_with_author: boolean;
+  is_company_author: boolean;
+  author?: { first_name: string; last_name: string };
+  excerpt?: string;
+  main_photo?: string;
+  keywords?: string;
+  section_id?: string | null;
+  last_modified: string;
+  display_this_post: boolean;
+  reviews?: { rating: number; author: string; comment: string }[];
+  faqs?: { question: string; answer: string }[];
+  organization_id?: string;
+}
+
 const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
   const { slug } = React.use(params);
- // const { settings } = useSettings();
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(true); // Replace with real admin check later
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const { setSEOData } = useSEO();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const activeLanguages = ['en', 'es', 'fr'];
 
+  // Check admin status client-side
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const adminStatus = await isAdminClient();
+      console.log('Admin status:', adminStatus);
+      setIsAdmin(adminStatus);
+    };
+    checkAdminStatus();
+  }, []);
+
+  // Fetch post data
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await fetch(`/api/sqe-2/${slug}`); // Updated API route
+        const organizationId = await getOrganizationId(baseUrl);
+        if (!organizationId) {
+          throw new Error('Organization not found');
+        }
+
+        const response = await fetch(`/api/sqe-2/${slug}?organization_id=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
+          console.log('Fetched post:', data);
+          const postUrl = getPostUrl({ section_id: data.section_id, slug });
+          if (postUrl !== `/sqe-2/${slug}`) {
+            redirect(postUrl);
+          }
           setPost(data);
         } else if (response.status === 404 || response.status === 403) {
           notFound();
@@ -44,8 +93,114 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
       }
     };
     fetchPost();
-  }, [slug]);
+  }, [slug, baseUrl]);
 
+  // Set SEO data
+  useEffect(() => {
+    if (!post) return;
+
+    const postUrl = `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`;
+    setSEOData({
+      title: post.title || 'Default Title',
+      description: post.description || post.excerpt || 'Default description for the post.',
+      keywords: post.keywords || 'default, keywords',
+      image: post.main_photo || undefined,
+      canonicalUrl: postUrl,
+      noindex: !post.display_this_post,
+      faqs: post.faqs || [],
+      hreflang: activeLanguages.map((lang) => ({
+        href: `${baseUrl}/${lang}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
+        hreflang: lang,
+      })),
+      structuredData: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: post.title || 'Default Title',
+          description: post.description || post.excerpt || 'Default description',
+          image: post.main_photo || '/default-og-image.jpg',
+          datePublished: post.created_on || post.last_modified || new Date().toISOString(),
+          dateModified: post.last_modified || new Date().toISOString(),
+          author: post.is_with_author
+            ? post.is_company_author
+              ? {
+                  '@type': 'Organization',
+                  name: 'Your Site Name',
+                }
+              : {
+                  '@type': 'Person',
+                  name: post.author
+                    ? `${post.author.first_name} ${post.author.last_name}`
+                    : 'Unknown Author',
+                }
+            : {
+                '@type': 'Organization',
+                name: 'Your Site Name',
+              },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Your Site Name',
+            logo: {
+              '@type': 'ImageObject',
+              url: `${baseUrl}/images/logo.svg`,
+            },
+          },
+          url: postUrl,
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: `${baseUrl}/`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'SQE2',
+              item: `${baseUrl}/sqe-2`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: post.title,
+              item: postUrl,
+            },
+          ],
+        },
+        ...(post.reviews?.length
+          ? [
+              {
+                '@context': 'https://schema.org',
+                '@type': 'Review',
+                reviewRating: {
+                  '@type': 'Rating',
+                  ratingValue: post.reviews[0].rating,
+                  bestRating: 5,
+                },
+                author: {
+                  '@type': 'Person',
+                  name: post.reviews[0].author,
+                },
+                reviewBody: post.reviews[0].comment,
+                itemReviewed: {
+                  '@type': 'Article',
+                  headline: post.title,
+                  url: postUrl,
+                },
+              },
+            ]
+          : []),
+      ],
+    });
+
+    return () => setSEOData(null);
+  }, [post, setSEOData, baseUrl, slug]);
+
+  // Generate TOC
   const toc: TOCItem[] = useMemo(() => {
     if (!post || !post.content) return [];
     const tocItems: TOCItem[] = [];
@@ -71,7 +226,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
 
     const updatedContent = doc.body.innerHTML;
     if (updatedContent !== post?.content) {
-      setPost((prev: any) => (prev ? { ...prev, content: updatedContent } : prev));
+      setPost((prev: Post | null) => (prev ? { ...prev, content: updatedContent } : prev));
     }
 
     console.log('Generated TOC:', tocItems);
@@ -91,21 +246,27 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   };
 
   const handleContentUpdate = async () => {
-    if (!contentRef.current || !post) return;
+    if (!contentRef.current || !post || !isAdmin) return;
 
     const updatedContent = contentRef.current.innerHTML;
     console.log('Original content:', post.content);
     console.log('Updated content:', updatedContent);
 
     try {
-      const response = await fetch(`/api/sqe-2/${slug}`, { // Updated API route
+      const organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        throw new Error('Organization not found');
+      }
+
+      const response = await fetch(`/api/sqe-2/${slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: updatedContent }),
+        body: JSON.stringify({ content: updatedContent, organization_id: organizationId }),
       });
 
       if (response.ok) {
         setPost({ ...post, content: updatedContent });
+        console.log('Content updated successfully');
       } else {
         console.error('Failed to update content:', await response.json());
       }
@@ -141,14 +302,13 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   };
 
   if (loading) return <div className="py-32 text-center text-gray-500">Loading...</div>;
-  if (!post) notFound();
+  if (!post || !post.display_this_post) notFound();
 
-  const shouldShowMainContent = post.section !== 'Landing' && post.content?.length > 0;
- // const path = `/sqe-2/${post.slug}`;
+  const shouldShowMainContent = (!post.section || post.section !== 'Landing') && post.content?.length > 0;
 
   return (
-    <div className=" px-4 sm:pt-4 sm:pb-16">
-      {post.section !== 'Landing' ? (
+    <div className="px-4 sm:pt-4 sm:pb-16">
+      {(!post.section || post.section !== 'Landing') ? (
         <div className="grid lg:grid-cols-8 gap-x-4">
           <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
             {toc.length > 0 && (
@@ -166,7 +326,16 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                   className="relative"
                 >
                   <PostHeader
-                    post={post}
+                    post={{
+                      section: post.section || '',
+                      subsection: post.subsection || '',
+                      title: post.title,
+                      created_on: post.created_on,
+                      is_with_author: post.is_with_author,
+                      is_company_author: post.is_company_author,
+                      author: post.author,
+                      description: post.description,
+                    }}
                     isAdmin={isAdmin}
                     showMenu={isHeaderHovered}
                     editHref={`/admin/edit/${slug}`}
@@ -189,7 +358,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               <span></span>
             )}
           </main>
-          <aside className="lg:col-span-2"></aside> {/* Empty right column */}
+          <aside className="lg:col-span-2"></aside>
         </div>
       ) : (
         <LandingPostContent post={post} />
