@@ -46,7 +46,8 @@ interface Post {
   product_2_id?: number | null;
   created_on: string;
   organization_id?: string;
-  faqs?: { question: string; answer: string }[]; // Added faqs property
+  faqs?: { question: string; answer: string }[];
+  reviews?: { rating: number; author: string; comment: string }[]; // Added reviews property
 }
 
 interface AdjacentPost {
@@ -105,7 +106,8 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
             is_company_author: data.is_company_author ?? false,
             author: data.author || undefined,
             organization_id: data.organization_id || organizationId,
-            faqs: data.faqs || [], // Ensure faqs is included
+            faqs: data.faqs || [],
+            reviews: data.reviews || [], // Ensure reviews is included
           });
         } else {
           console.error('Post fetch failed:', response.status, await response.text());
@@ -252,7 +254,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
             },
           ],
         },
-       {/* ...(post.reviews?.length
+        ...(post.reviews?.length
           ? [
               {
                 '@context': 'https://schema.org',
@@ -274,7 +276,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                 },
               },
             ]
-          : []),*/}
+          : []),
       ],
     });
 

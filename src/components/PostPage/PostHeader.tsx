@@ -112,7 +112,7 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
 
       {/* Optional Divider */}
       <hr className="border-gray-200 mb-8" />
-         {/* Hover Menu for Admins
+         {/* Hover Menu for Admins*/}
       {isAdmin && showMenu && (
         <div className="absolute top-0 right-0 flex space-x-2 z-51">
           <Link href={createHref}>
@@ -130,7 +130,7 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
             />
           </Link>
         </div>
-      )} */}
+      )} 
     </div>
   );
 };
