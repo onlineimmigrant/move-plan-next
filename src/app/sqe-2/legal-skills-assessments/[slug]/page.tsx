@@ -1,4 +1,4 @@
-// app/sqe-2/[slug]/page.tsx
+// app/sqe-2/legal-skills-assessments/[slug]/page.tsx
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
@@ -24,7 +24,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await fetch(`/api/sqe-2/${slug}`);
+        const response = await fetch(`/api/sqe-2/legal-skills-assessments/${slug}`);
         if (response.ok) {
           const data = await response.json();
           setPost(data);
@@ -95,7 +95,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     console.log('Updated content:', updatedContent);
 
     try {
-      const response = await fetch(`/api/sqe-2/${slug}`, {
+      const response = await fetch(`/api/sqe-2/legal-skills-assessments/${slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: updatedContent }),
@@ -140,11 +140,11 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   if (loading) return <div className="py-32 text-center text-gray-500">Loading...</div>;
   if (!post) notFound();
 
-  const shouldShowMainContent = post.section_id !== 'Landing' && post.content?.length > 0;
+  const shouldShowMainContent = post.section_id !== 'Landing' && post.content?.length > 0; // Changed from post.section to post.section_id
 
   return (
     <div className="post-page-container px-4 sm:pt-4 sm:pb-16">
-      {post.section_id !== 'Landing' ? (
+      {post.section_id !== 'Landing' ? ( // Changed from post.section to post.section_id
         <div className="grid lg:grid-cols-8 gap-x-4">
           <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
             {toc.length > 0 && (

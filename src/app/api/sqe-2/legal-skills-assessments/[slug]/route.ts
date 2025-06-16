@@ -1,6 +1,6 @@
-// app/api/sqe-2/legal-skills-assessments/[slug]/route.ts
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
+import { getOrganizationId } from '@/lib/supabase';
 
 type BlogPostBody = {
   title: string;
@@ -10,7 +10,7 @@ type BlogPostBody = {
   display_this_post?: boolean;
   display_as_blog_post?: boolean;
   main_photo?: string | null;
-  section_id?: string | null; // Changed from number to string
+  section_id?: string | null;
   subsection?: string | null;
   is_with_author?: boolean;
   is_company_author?: boolean;
@@ -23,6 +23,7 @@ type BlogPostBody = {
   product_1_id?: number | null;
   product_2_id?: number | null;
   created_on?: string;
+  organization_id?: string;
 };
 
 const supabase = createClient(
@@ -40,17 +41,38 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export async function GET(_request: NextRequest, context: any) {
+export async function GET(request: NextRequest, context: { params: { slug: string } }) {
   if (!hasEnvVars) return envErrorResponse();
 
   const { slug } = context.params;
-  console.log('Received GET request for /api/sqe-2/legal-skills-assessments/[slug]:', slug);
+  const { searchParams } = new URL(request.url);
+  const organizationId = searchParams.get('organization_id');
+  console.log('Received GET request for /api/sqe-2/legal-skills-assessments/[slug]:', slug, 'organization_id:', organizationId);
+
+  let effectiveOrgId = organizationId;
+  if (!organizationId) {
+    console.warn('Missing organization_id in query parameters, attempting fallback');
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = `${protocol}://${host}`;
+    effectiveOrgId = await getOrganizationId(baseUrl);
+    if (!effectiveOrgId) {
+      console.error('Could not resolve organization_id');
+      return NextResponse.json(
+        { error: 'Organization ID is required and could not be resolved' },
+        { status: 400 }
+      );
+    }
+    console.log('Using fallback organization_id:', effectiveOrgId);
+  }
 
   try {
+    console.log('Fetching post from Supabase for slug:', slug, 'organization_id:', effectiveOrgId);
     const { data: postData, error: postError } = await supabase
       .from('blog_post')
       .select('*')
       .eq('slug', slug)
+      .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`)
       .single();
 
     if (postError) {
@@ -62,11 +84,11 @@ export async function GET(_request: NextRequest, context: any) {
     }
 
     if (!postData) {
-      console.log('No post found for slug:', slug);
+      console.log('No post found for slug:', slug, 'organization_id:', effectiveOrgId);
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (postData.section_id !== 'Legal Skills Assessments') { // Changed from 40 to string
+    if (postData.section_id !== 'Legal Skills Assessments') {
       console.log('Post does not belong to section_id Legal Skills Assessments:', slug);
       return NextResponse.json(
         { error: 'This route is only for posts with section_id Legal Skills Assessments' },
@@ -108,7 +130,7 @@ export async function POST(request: NextRequest) {
       display_this_post = true,
       display_as_blog_post = false,
       main_photo = null,
-      section_id = null,
+      section_id = 'Legal Skills Assessments', // Default to Legal Skills Assessments
       subsection = null,
       is_with_author = false,
       is_company_author = false,
@@ -120,6 +142,7 @@ export async function POST(request: NextRequest) {
       cta_card_four_id = null,
       product_1_id = null,
       product_2_id = null,
+      organization_id,
     } = body;
 
     if (!title || !slug || !content) {
@@ -129,7 +152,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (section_id !== 'Legal Skills Assessments') { // Changed from 40 to string
+    if (section_id !== 'Legal Skills Assessments') {
       console.log('Invalid section_id for this route:', section_id);
       return NextResponse.json(
         { error: 'This route requires section_id to be Legal Skills Assessments' },
@@ -137,15 +160,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Checking if slug exists:', slug);
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = `${protocol}://${host}`;
+    const effectiveOrgId = organization_id || (await getOrganizationId(baseUrl));
+    if (!effectiveOrgId) {
+      console.error('Could not resolve organization_id');
+      return NextResponse.json({ error: 'Organization ID is required and could not be resolved' }, { status: 400 });
+    }
+
+    console.log('Checking if slug exists:', slug, 'organization_id:', effectiveOrgId);
     const { data: existingPost, error: slugCheckError } = await supabase
       .from('blog_post')
       .select('slug')
       .eq('slug', slug)
+      .eq('organization_id', effectiveOrgId)
       .single();
 
     if (existingPost) {
-      return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'Slug already exists for this organization' }, { status: 409 });
     }
     if (slugCheckError && slugCheckError.code !== 'PGRST116') {
       console.error('Slug check error:', slugCheckError);
@@ -176,6 +209,7 @@ export async function POST(request: NextRequest) {
         cta_card_four_id,
         product_1_id,
         product_2_id,
+        organization_id: effectiveOrgId,
       })
       .select('*')
       .single();
@@ -199,7 +233,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest, context: any) {
+export async function PATCH(request: NextRequest, context: { params: { slug: string } }) {
   if (!hasEnvVars) return envErrorResponse();
 
   const { slug } = context.params;
@@ -227,21 +261,32 @@ export async function PATCH(request: NextRequest, context: any) {
       cta_card_four_id,
       product_1_id,
       product_2_id,
+      organization_id,
     } = body;
 
-    console.log('Checking if post exists for slug:', slug);
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = `${protocol}://${host}`;
+    const effectiveOrgId = organization_id || (await getOrganizationId(baseUrl));
+    if (!effectiveOrgId) {
+      console.error('Could not resolve organization_id');
+      return NextResponse.json({ error: 'Organization ID is required and could not be resolved' }, { status: 400 });
+    }
+
+    console.log('Checking if post exists for slug:', slug, 'organization_id:', effectiveOrgId);
     const { data: existingPost, error: fetchError } = await supabase
       .from('blog_post')
       .select('id, section_id')
       .eq('slug', slug)
+      .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`)
       .single();
 
     if (fetchError || !existingPost) {
-      console.error('Post not found or fetch error:', fetchError);
+      console.error('Post not found or fetch error:', fetchError?.message || 'No post found');
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (existingPost.section_id !== 'Legal Skills Assessments') { // Changed from 40 to string
+    if (existingPost.section_id !== 'Legal Skills Assessments') {
       console.log('Post does not belong to section_id Legal Skills Assessments:', slug);
       return NextResponse.json(
         { error: 'This route is only for posts with section_id Legal Skills Assessments' },
@@ -249,7 +294,7 @@ export async function PATCH(request: NextRequest, context: any) {
       );
     }
 
-    if (section_id !== undefined && section_id !== 'Legal Skills Assessments') { // Changed from 40 to string
+    if (section_id !== undefined && section_id !== 'Legal Skills Assessments') {
       console.log('Attempt to change section_id to non-Legal Skills Assessments value:', section_id);
       return NextResponse.json(
         { error: 'This route requires section_id to remain Legal Skills Assessments' },
@@ -258,15 +303,16 @@ export async function PATCH(request: NextRequest, context: any) {
     }
 
     if (newSlug && newSlug !== slug) {
-      console.log('Checking if new slug exists:', newSlug);
+      console.log('Checking if new slug exists:', newSlug, 'organization_id:', effectiveOrgId);
       const { data: slugCheck, error: slugCheckError } = await supabase
         .from('blog_post')
         .select('slug')
         .eq('slug', newSlug)
+        .eq('organization_id', effectiveOrgId)
         .single();
 
       if (slugCheck) {
-        return NextResponse.json({ error: 'New slug already exists' }, { status: 409 });
+        return NextResponse.json({ error: 'New slug already exists for this organization' }, { status: 409 });
       }
       if (slugCheckError && slugCheckError.code !== 'PGRST116') {
         console.error('Slug check error:', slugCheckError);
@@ -296,10 +342,16 @@ export async function PATCH(request: NextRequest, context: any) {
     if (product_1_id !== undefined) updateData.product_1_id = product_1_id;
     if (product_2_id !== undefined) updateData.product_2_id = product_2_id;
 
+    if (Object.keys(updateData).length === 0) {
+      console.warn('No fields provided to update');
+      return NextResponse.json({ error: 'No fields provided to update' }, { status: 400 });
+    }
+
     const { data: updatedPost, error: updateError } = await supabase
       .from('blog_post')
       .update(updateData)
       .eq('slug', slug)
+      .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`)
       .select('*')
       .single();
 

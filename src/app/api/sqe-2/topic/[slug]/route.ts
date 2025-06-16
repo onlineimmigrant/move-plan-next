@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
+import { getOrganizationId } from '@/lib/supabase';
 
 type BlogPostBody = {
   title: string;
@@ -23,6 +24,7 @@ type BlogPostBody = {
   product_1_id?: number | null;
   product_2_id?: number | null;
   created_on?: string;
+  organization_id?: string;
 };
 
 const supabase = createClient(
@@ -48,17 +50,38 @@ const VALID_SECTION_IDS = [
   'Dispute Resolution',
 ];
 
-export async function GET(_request: NextRequest, context: any) {
+export async function GET(request: NextRequest, context: { params: { slug: string } }) {
   if (!hasEnvVars) return envErrorResponse();
 
   const { slug } = context.params;
-  console.log('Received GET request for /api/sqe-2/topic/[slug]:', slug);
+  const { searchParams } = new URL(request.url);
+  const organizationId = searchParams.get('organization_id');
+  console.log('Received GET request for /api/sqe-2/topic/[slug]:', slug, 'organization_id:', organizationId);
+
+  let effectiveOrgId = organizationId;
+  if (!organizationId) {
+    console.warn('Missing organization_id in query parameters, attempting fallback');
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = `${protocol}://${host}`;
+    effectiveOrgId = await getOrganizationId(baseUrl);
+    if (!effectiveOrgId) {
+      console.error('Could not resolve organization_id');
+      return NextResponse.json(
+        { error: 'Organization ID is required and could not be resolved' },
+        { status: 400 }
+      );
+    }
+    console.log('Using fallback organization_id:', effectiveOrgId);
+  }
 
   try {
+    console.log('Fetching post from Supabase for slug:', slug, 'organization_id:', effectiveOrgId);
     const { data: postData, error: postError } = await supabase
       .from('blog_post')
       .select('*')
       .eq('slug', slug)
+      .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`)
       .single();
 
     if (postError) {
@@ -70,7 +93,7 @@ export async function GET(_request: NextRequest, context: any) {
     }
 
     if (!postData) {
-      console.log('No post found for slug:', slug);
+      console.log('No post found for slug:', slug, 'organization_id:', effectiveOrgId);
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
@@ -116,8 +139,8 @@ export async function POST(request: NextRequest) {
       display_this_post = true,
       display_as_blog_post = false,
       main_photo = null,
-      section_id = null,
       order = null,
+      section_id = null,
       subsection = null,
       is_with_author = false,
       is_company_author = false,
@@ -129,6 +152,7 @@ export async function POST(request: NextRequest) {
       cta_card_four_id = null,
       product_1_id = null,
       product_2_id = null,
+      organization_id,
     } = body;
 
     if (!title || !slug || !content) {
@@ -146,15 +170,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Checking if slug exists:', slug);
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = `${protocol}://${host}`;
+    const effectiveOrgId = organization_id || (await getOrganizationId(baseUrl));
+    if (!effectiveOrgId) {
+      console.error('Could not resolve organization_id');
+      return NextResponse.json({ error: 'Organization ID is required and could not be resolved' }, { status: 400 });
+    }
+
+    console.log('Checking if slug exists:', slug, 'organization_id:', effectiveOrgId);
     const { data: existingPost, error: slugCheckError } = await supabase
       .from('blog_post')
       .select('slug')
       .eq('slug', slug)
+      .eq('organization_id', effectiveOrgId)
       .single();
 
     if (existingPost) {
-      return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'Slug already exists for this organization' }, { status: 409 });
     }
     if (slugCheckError && slugCheckError.code !== 'PGRST116') {
       console.error('Slug check error:', slugCheckError);
@@ -186,6 +220,7 @@ export async function POST(request: NextRequest) {
         cta_card_four_id,
         product_1_id,
         product_2_id,
+        organization_id: effectiveOrgId,
       })
       .select('*')
       .single();
@@ -209,7 +244,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest, context: any) {
+export async function PATCH(request: NextRequest, context: { params: { slug: string } }) {
   if (!hasEnvVars) return envErrorResponse();
 
   const { slug } = context.params;
@@ -238,17 +273,28 @@ export async function PATCH(request: NextRequest, context: any) {
       cta_card_four_id,
       product_1_id,
       product_2_id,
+      organization_id,
     } = body;
 
-    console.log('Checking if post exists for slug:', slug);
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = `${protocol}://${host}`;
+    const effectiveOrgId = organization_id || (await getOrganizationId(baseUrl));
+    if (!effectiveOrgId) {
+      console.error('Could not resolve organization_id');
+      return NextResponse.json({ error: 'Organization ID is required and could not be resolved' }, { status: 400 });
+    }
+
+    console.log('Checking if post exists for slug:', slug, 'organization_id:', effectiveOrgId);
     const { data: existingPost, error: fetchError } = await supabase
       .from('blog_post')
       .select('id, section_id')
       .eq('slug', slug)
+      .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`)
       .single();
 
     if (fetchError || !existingPost) {
-      console.error('Post not found or fetch error:', fetchError);
+      console.error('Post not found or fetch error:', fetchError?.message || 'No post found');
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
@@ -263,21 +309,22 @@ export async function PATCH(request: NextRequest, context: any) {
     if (section_id !== undefined && section_id !== null && !VALID_SECTION_IDS.includes(section_id)) {
       console.log('Attempt to change section_id to invalid value:', section_id);
       return NextResponse.json(
-        { error: `This route requires section_id to remain one of ${VALID_SECTION_IDS.join(', ')}` },
+        { error: `This route requires section_id to be one of ${VALID_SECTION_IDS.join(', ')}` },
         { status: 400 }
       );
     }
 
     if (newSlug && newSlug !== slug) {
-      console.log('Checking if new slug exists:', newSlug);
+      console.log('Checking if new slug exists:', newSlug, 'organization_id:', effectiveOrgId);
       const { data: slugCheck, error: slugCheckError } = await supabase
         .from('blog_post')
         .select('slug')
         .eq('slug', newSlug)
+        .eq('organization_id', effectiveOrgId)
         .single();
 
       if (slugCheck) {
-        return NextResponse.json({ error: 'New slug already exists' }, { status: 409 });
+        return NextResponse.json({ error: 'New slug already exists for this organization' }, { status: 409 });
       }
       if (slugCheckError && slugCheckError.code !== 'PGRST116') {
         console.error('Slug check error:', slugCheckError);
@@ -308,10 +355,16 @@ export async function PATCH(request: NextRequest, context: any) {
     if (product_1_id !== undefined) updateData.product_1_id = product_1_id;
     if (product_2_id !== undefined) updateData.product_2_id = product_2_id;
 
+    if (Object.keys(updateData).length === 0) {
+      console.warn('No fields provided to update');
+      return NextResponse.json({ error: 'No fields provided to update' }, { status: 400 });
+    }
+
     const { data: updatedPost, error: updateError } = await supabase
       .from('blog_post')
       .update(updateData)
       .eq('slug', slug)
+      .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`)
       .select('*')
       .single();
 

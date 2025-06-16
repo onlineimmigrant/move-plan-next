@@ -16,7 +16,7 @@ import StructuredDataInjector from '@/components/seo/StructuredDataInjector';
 import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
-import SkeletonLoader from '@/components/seo/SkeletonLoader';
+import SkeletonLoader from '@/components/SkeletonLoader';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
