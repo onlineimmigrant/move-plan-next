@@ -1,12 +1,10 @@
-// app/sqe-2/practice-area/[slug]/page.tsx
+// app/sqe-2/[slug]/page.tsx
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { useSettings } from '@/context/SettingsContext';
 import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
-
 import { notFound } from 'next/navigation';
 
 interface TOCItem {
@@ -17,7 +15,6 @@ interface TOCItem {
 
 const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
   const { slug } = React.use(params);
- // const { settings } = useSettings();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(true); // Replace with real admin check later
@@ -27,7 +24,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await fetch(`/api/sqe-2/legal-skills-assessments/${slug}`); // Updated API route
+        const response = await fetch(`/api/sqe-2/${slug}`);
         if (response.ok) {
           const data = await response.json();
           setPost(data);
@@ -98,7 +95,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     console.log('Updated content:', updatedContent);
 
     try {
-      const response = await fetch(`/api/sqe-2/legal-skills-assessments/${slug}`, { // Updated API route
+      const response = await fetch(`/api/sqe-2/${slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: updatedContent }),
@@ -143,12 +140,11 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   if (loading) return <div className="py-32 text-center text-gray-500">Loading...</div>;
   if (!post) notFound();
 
-  const shouldShowMainContent = post.section !== 'Landing' && post.content?.length > 0;
- // const path = `/sqe-2/legal-skills-assessments/${post.slug}`;
+  const shouldShowMainContent = post.section_id !== 'Landing' && post.content?.length > 0;
 
   return (
     <div className="post-page-container px-4 sm:pt-4 sm:pb-16">
-      {post.section !== 'Landing' ? (
+      {post.section_id !== 'Landing' ? (
         <div className="grid lg:grid-cols-8 gap-x-4">
           <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
             {toc.length > 0 && (
@@ -162,7 +158,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               <>
                 <div
                   onMouseEnter={() => setIsHeaderHovered(true)}
-         
                   onMouseLeave={() => setIsHeaderHovered(false)}
                   className="relative"
                 >
@@ -190,7 +185,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               <span></span>
             )}
           </main>
-          <aside className="lg:col-span-2"></aside> {/* Empty right column */}
+          <aside className="lg:col-span-2"></aside>
         </div>
       ) : (
         <LandingPostContent post={post} />
