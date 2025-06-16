@@ -1,3 +1,4 @@
+//lib/getSettings.ts
 import { supabase } from './supabase';
 import { Settings } from '@/types/settings';
 

@@ -16,8 +16,21 @@ export async function GET(request: NextRequest) {
   const protocol = request.headers.get('x-forwarded-proto') || 'http';
   const actualBaseUrl = `${protocol}://${host}`;
 
-  // Get the organization ID
-  const organizationId = await getOrganizationId();
+  // Log request context for debugging
+  console.log('Sitemap - Request context:', {
+    host,
+    protocol,
+    actualBaseUrl,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+      NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
+      NEXT_PUBLIC_TENANT_ID: process.env.NEXT_PUBLIC_TENANT_ID,
+    },
+  });
+
+  // Get the organization ID, passing the host string directly
+  const organizationId = await getOrganizationId(actualBaseUrl);
   let baseUrl = actualBaseUrl;
 
   if (organizationId) {
@@ -36,20 +49,16 @@ export async function GET(request: NextRequest) {
       orgError: orgError?.message || null,
       orgErrorCode: orgError?.code || null,
       orgErrorDetails: orgError?.details || null,
-      requestHeaders: Object.fromEntries(request.headers.entries()),
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + '...',
     });
 
     if (!orgError && orgData?.base_url) {
       try {
         const url = new URL(orgData.base_url);
-        if (!url.hostname.includes('vercel.app')) {
-          baseUrl = orgData.base_url;
-        }
+        baseUrl = orgData.base_url;
       } catch (e) {
         console.warn('Sitemap - Invalid base_url in Supabase, using actualBaseUrl:', {
           baseUrl: orgData.base_url,
+          error: e instanceof Error ? e.message : 'Unknown error',
         });
       }
     } else if (orgError) {
@@ -57,11 +66,13 @@ export async function GET(request: NextRequest) {
         message: orgError?.message || 'No error message',
         code: orgError?.code || 'No code',
         details: orgError?.details || 'No details',
-        host,
       });
     }
   } else {
-    console.error('Sitemap - No organization found for sitemap generation', { host });
+    console.error('Sitemap - No organization found, falling back to default tenant ID:', {
+      tenantId: process.env.NEXT_PUBLIC_TENANT_ID || 'none',
+      host,
+    });
   }
 
   // Define common static pages with priority 1.0 (always included)
@@ -82,13 +93,15 @@ export async function GET(request: NextRequest) {
   let dynamicFeaturePages: { url: string; lastmod: string; priority: number }[] = [];
   let dynamicProductsPages: { url: string; lastmod: string; priority: number }[] = [];
 
-  // Only fetch dynamic pages if organizationId exists
-  if (organizationId) {
+  // Use fallback tenant ID if organizationId is not found
+  const effectiveOrgId = organizationId || process.env.NEXT_PUBLIC_TENANT_ID;
+
+  if (effectiveOrgId) {
     // Fetch additional static pages from sitemap_static_pages
     const { data: staticPagesData, error: staticPagesError } = await supabase
       .from('sitemap_static_pages')
       .select('url_path, priority, last_modified')
-      .eq('organization_id', organizationId);
+      .eq('organization_id', effectiveOrgId);
 
     console.log('Sitemap - Static pages query:', {
       staticPagesCount: staticPagesData?.length || 0,
@@ -96,7 +109,7 @@ export async function GET(request: NextRequest) {
       staticPagesError: staticPagesError?.message || null,
       staticPagesErrorCode: staticPagesError?.code || null,
       staticPagesErrorDetails: staticPagesError?.details || null,
-      organizationId,
+      organizationId: effectiveOrgId,
     });
 
     additionalStaticPages = (staticPagesData || []).map((page) => ({
@@ -105,11 +118,12 @@ export async function GET(request: NextRequest) {
       priority: page.priority || 1.0,
     }));
 
-    // Fetch blog posts (removed display_this_post filter for debugging)
+    // Fetch blog posts
     const { data: posts, error: postError } = await supabase
       .from('blog_post')
       .select('slug, last_modified, display_this_post, section_id')
-      .eq('organization_id', organizationId);
+      .eq('organization_id', effectiveOrgId)
+      .eq('display_this_post', true);
 
     console.log('Sitemap - Blog posts query:', {
       postsCount: posts?.length || 0,
@@ -117,7 +131,7 @@ export async function GET(request: NextRequest) {
       postError: postError?.message || null,
       postErrorCode: postError?.code || null,
       postErrorDetails: postError?.details || null,
-      organizationId,
+      organizationId: effectiveOrgId,
     });
 
     dynamicPages = (posts || []).map((post) => ({
@@ -130,7 +144,7 @@ export async function GET(request: NextRequest) {
     const { data: features, error: featureError } = await supabase
       .from('feature')
       .select('slug, created_at')
-      .eq('organization_id', organizationId);
+      .eq('organization_id', effectiveOrgId);
 
     console.log('Sitemap - Features query:', {
       featuresCount: features?.length || 0,
@@ -138,11 +152,11 @@ export async function GET(request: NextRequest) {
       featureError: featureError?.message || null,
       featureErrorCode: featureError?.code || null,
       featureErrorDetails: featureError?.details || null,
-      organizationId,
+      organizationId: effectiveOrgId,
     });
 
     dynamicFeaturePages = (features || []).map((feature) => ({
-      url: `${actualBaseUrl}/features/${feature.slug}`,
+      url: `${baseUrl}/features/${feature.slug}`,
       lastmod: feature.created_at || new Date().toISOString(),
       priority: 0.8,
     }));
@@ -151,7 +165,7 @@ export async function GET(request: NextRequest) {
     const { data: products, error: productError } = await supabase
       .from('product')
       .select('slug, updated_at')
-      .eq('organization_id', organizationId);
+      .eq('organization_id', effectiveOrgId);
 
     console.log('Sitemap - Products query:', {
       productsCount: products?.length || 0,
@@ -159,16 +173,19 @@ export async function GET(request: NextRequest) {
       productError: productError?.message || null,
       productErrorCode: productError?.code || null,
       productErrorDetails: productError?.details || null,
-      organizationId,
+      organizationId: effectiveOrgId,
     });
 
     dynamicProductsPages = (products || []).map((product) => ({
-      url: `${actualBaseUrl}/products/${product.slug}`,
+      url: `${baseUrl}/products/${product.slug}`,
       lastmod: product.updated_at || new Date().toISOString(),
       priority: 0.8,
     }));
   } else {
-    console.log('Sitemap - Skipping dynamic pages: No organizationId available');
+    console.error('Sitemap - Skipping dynamic pages: No organizationId or NEXT_PUBLIC_TENANT_ID available', {
+      host,
+      tenantId: process.env.NEXT_PUBLIC_TENANT_ID || 'none',
+    });
   }
 
   // Combine all pages
@@ -187,7 +204,7 @@ export async function GET(request: NextRequest) {
     additionalStaticPages: additionalStaticPages.length,
     dynamicPages: dynamicPages.length,
     dynamicFeaturePages: dynamicFeaturePages.length,
-    dynamicProductsPages: dynamicProductsPages.length,
+
     host,
     baseUrl,
     pageUrls: pages.map((p) => p.url),
@@ -203,16 +220,17 @@ export async function GET(request: NextRequest) {
 // Debug endpoint to test Supabase queries
 export async function POST(request: NextRequest) {
   if (request.nextUrl.pathname.includes('debug')) {
-    const organizationId = await getOrganizationId();
     const host = request.headers.get('host') || 'localhost:3000';
+    const organizationId = await getOrganizationId(`https://${host}`);
     const debugData: any = { organizationId, host };
 
-    if (organizationId) {
+    if (organizationId || process.env.NEXT_PUBLIC_TENANT_ID) {
+      const effectiveOrgId = organizationId || process.env.NEXT_PUBLIC_TENANT_ID;
       // Test organizations query
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('base_url')
-        .eq('id', organizationId)
+        .eq('id', effectiveOrgId)
         .single();
       debugData.organizations = { data: orgData, error: orgError?.message };
 
@@ -220,28 +238,29 @@ export async function POST(request: NextRequest) {
       const { data: staticPagesData, error: staticPagesError } = await supabase
         .from('sitemap_static_pages')
         .select('url_path, priority, last_modified')
-        .eq('organization_id', organizationId);
+        .eq('organization_id', effectiveOrgId);
       debugData.staticPages = { count: staticPagesData?.length || 0, data: staticPagesData, error: staticPagesError?.message };
 
       // Test blog posts
       const { data: posts, error: postError } = await supabase
         .from('blog_post')
         .select('slug, last_modified, display_this_post, section_id')
-        .eq('organization_id', organizationId);
+        .eq('organization_id', effectiveOrgId)
+        .eq('display_this_post', true);
       debugData.blogPosts = { count: posts?.length || 0, data: posts, error: postError?.message };
 
       // Test features
       const { data: features, error: featureError } = await supabase
         .from('feature')
         .select('slug, created_at')
-        .eq('organization_id', organizationId);
+        .eq('organization_id', effectiveOrgId);
       debugData.features = { count: features?.length || 0, data: features, error: featureError?.message };
 
       // Test products
       const { data: products, error: productError } = await supabase
         .from('product')
         .select('slug, updated_at')
-        .eq('organization_id', organizationId);
+        .eq('organization_id', effectiveOrgId);
       debugData.products = { count: products?.length || 0, data: products, error: productError?.message };
     }
 
@@ -263,31 +282,6 @@ function generateSitemap(pages: { url: string; lastmod: string; priority: number
   return `<?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       ${finalPages
-        .map(
-          (page) => `
-            <url>
-              <loc>${page.url}</loc>
-              <lastmod>${page.lastmod}</lastmod>
-              <changefreq>weekly</changefreq>
-              <priority>${page.priority}</priority>
-            </url>
-          `
-        )
-        .join('')}
-    </urlset>`;
-}
-
-// Helper function to generate sitemap with default homepage
-function generateSitemapWithDefault(actualBaseUrl: string) {
-  const defaultPage = [{
-    url: `${actualBaseUrl}/`,
-    lastmod: new Date().toISOString(),
-    priority: 1.0,
-  }];
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      ${defaultPage
         .map(
           (page) => `
             <url>
