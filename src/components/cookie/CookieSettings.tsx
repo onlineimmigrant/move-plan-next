@@ -337,9 +337,9 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
           <Button onClick={closeSettings} variant='close'> <CloseButton/></Button>
    
         </div>
-        <div className="px-6 py-2">
-          <h2 className="text-xl font-extrabold text-gray-800 tracking-widest">Privacy Settings</h2>
-          <div className="flex space-x-4 mb-3">
+        <div className="text-center px-6 py-4">
+          <h2 className="text-2xl font-extrabold text-gray-800 tracking-wide">Privacy Settings</h2>
+          <div className="space-x-4 mb-3">
             <Link
               href="/privacy-policy"
               className="font-medium text-sky-600 hover:text-sky-700 text-sm tracking-wide transition-colors duration-300 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
@@ -373,7 +373,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
           />
         </div>
         <div className="flex justify-between px-6 py-1">
-          <TfiWorld className="text-gray-500 h-6 w-6" />
+          <TfiWorld className="text-gray-500 h-4 w-4" />
         </div>
       </div>
     </div>

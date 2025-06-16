@@ -15,8 +15,8 @@ const FooterButtons: React.FC<FooterButtonsProps> = ({
   t = (key: string) => key,
 }) => {
   return (
-    <div className="my-6">
-      <div className="flex flex-wrap justify-center items-center gap-4 space-y-2 sm:space-y-0 font-medium">
+    <div className="my-2">
+      <div className="flex flex-wrap justify-center items-center gap-4  sm:space-y-0 font-medium">
         <Button
         variant='start'
           onClick={saveConsentSettings}
