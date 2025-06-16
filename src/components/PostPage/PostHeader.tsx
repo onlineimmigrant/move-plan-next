@@ -6,6 +6,7 @@ import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import Link from 'next/link';
 import IconButton from '@/ui/IconButton';
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 
 // Utility function to convert subsection to slug
 const generateSlug = (subsection: string): string => {
@@ -64,9 +65,11 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
         </Link>
       </div>
       <Link href={subsectionUrl}>
-        <span className="mt-2 font-medium text-xs text-sky-500 tracking-widest hover:underline">
+        <span className="flex transition-all transition-300 group items-center mt-2 font-medium text-xs text-sky-500 tracking-widest hover:underline">
           {post.subsection}
+          <RightArrowDynamic />
         </span>
+
       </Link>
 
       {/* Title */}
@@ -105,7 +108,11 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
       {/* Description */}
       <p className="text-xl sm:text-2xl text-gray-700 mt-6 mb-8">{post.description}</p>
 
-      {/* Hover Menu for Admins */}
+   
+
+      {/* Optional Divider */}
+      <hr className="border-gray-200 mb-8" />
+         {/* Hover Menu for Admins
       {isAdmin && showMenu && (
         <div className="absolute top-0 right-0 flex space-x-2 z-51">
           <Link href={createHref}>
@@ -123,10 +130,7 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
             />
           </Link>
         </div>
-      )}
-
-      {/* Optional Divider */}
-      <hr className="border-gray-200 mb-8" />
+      )} */}
     </div>
   );
 };

@@ -374,6 +374,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                   onMouseLeave={() => setIsHeaderHovered(false)}
                   className="relative"
                 >
+                  
                   <PostHeader
                     post={{
                       section: post.section || '',

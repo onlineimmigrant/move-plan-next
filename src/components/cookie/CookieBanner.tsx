@@ -104,12 +104,12 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
               and{' '}
               <button
                 onClick={() => setShowSettings(true)}
-                className="text-gray-800 hover:text-gray-500"
+                className="cursor-pointer text-gray-800 hover:text-gray-500"
               >
                 <strong>Privacy Settings</strong>
               </button>
             </div>
-            <div className="flex justify-center sm:justify-end items-center w-full space-x-16 sm:space-x-4">
+            <div className="cursor-pointer flex justify-center sm:justify-end items-center w-full space-x-16 sm:space-x-4">
               <Button
               variant="primary"
                 onClick={handleRejectAll}
