@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
+import Loading from '@/ui/Loading';
 
 interface BlogPost {
   id: number;
@@ -88,7 +89,7 @@ const BlogListPage: React.FC = () => {
   if (loading) {
     return (
       <div className="py-32 text-center text-gray-500">
-        <div className="animate-pulse">Loading...</div>
+       <Loading />
       </div>
     );
   }

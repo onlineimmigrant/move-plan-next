@@ -7,6 +7,8 @@ import FooterButtons from './FooterButtons';
 import { setCookie, sendConsentToBackend } from '@/utils/cookieUtils';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
+import Button from '@/ui/Button';
+import CloseButton from '@/ui/CloseButton';
 
 interface CookieSettingsProps {
   activeLanguages: string[];
@@ -279,7 +281,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
     return (
       <div className="fixed inset-0 flex items-center justify-center !bg-gray-50 z-[1000]">
         <div className="flex justify-center items-center h-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-teal-500 border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-sky-500 border-t-transparent"></div>
         </div>
       </div>
     );
@@ -330,27 +332,23 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
                 alt="Company"
               />
             )}
-            <h2 className="ml-4 text-xl font-bold text-gray-400">{headerData?.site}</h2>
+            <h2 className="sr-only ml-4 text-xl font-bold text-gray-400">{headerData?.site}</h2>
           </div>
-          <button
-            onClick={closeSettings}
-            className="text-gray-600 hover:text-gray-800 hover:bg-gray-50 text-2xl font-semibold p-1 rounded-md transition-colors duration-300 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-          >
-            ×
-          </button>
+          <Button onClick={closeSettings} variant='close'> <CloseButton/></Button>
+   
         </div>
         <div className="px-6 py-2">
           <h2 className="text-xl font-extrabold text-gray-800 tracking-widest">Privacy Settings</h2>
           <div className="flex space-x-4 mb-3">
             <Link
               href="/privacy-policy"
-              className="font-medium text-teal-600 hover:text-teal-700 text-sm tracking-wide transition-colors duration-300 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              className="font-medium text-sky-600 hover:text-sky-700 text-sm tracking-wide transition-colors duration-300 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
             >
               Privacy Policy
             </Link>
             <a
               href="/cookie-policy"
-              className="font-medium text-teal-600 hover:text-teal-700 text-sm tracking-wide transition-colors duration-300 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              className="font-medium text-sky-600 hover:text-sky-700 text-sm tracking-wide transition-colors duration-300 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
             >
               Cookie Policy
             </a>
