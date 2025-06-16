@@ -1,3 +1,4 @@
+// app/api/sqe-2/[slug]/route.ts
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 
@@ -9,7 +10,7 @@ type BlogPostBody = {
   display_this_post?: boolean;
   display_as_blog_post?: boolean;
   main_photo?: string | null;
-  section_id?: number | null;
+  section_id?: string | null;
   subsection?: string | null;
   is_with_author?: boolean;
   is_company_author?: boolean;
@@ -65,10 +66,10 @@ export async function GET(_request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (postData.section_id !== 3) {
-      console.log('Post does not belong to section_id 3:', slug);
+    if (postData.section_id !== 'SQE2') { // Changed to 'SQE2'
+      console.log('Post does not belong to section_id SQE2:', slug);
       return NextResponse.json(
-        { error: 'This route is only for posts with section_id 3' },
+        { error: 'This route is only for posts with section_id SQE2' },
         { status: 403 }
       );
     }
@@ -128,10 +129,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (section_id !== 3) {
+    if (section_id !== 'SQE2') { // Changed to 'SQE2'
       console.log('Invalid section_id for this route:', section_id);
       return NextResponse.json(
-        { error: 'This route requires section_id to be 3' },
+        { error: 'This route requires section_id to be SQE2' },
         { status: 400 }
       );
     }
@@ -240,18 +241,18 @@ export async function PATCH(request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (existingPost.section_id !== 3) {
-      console.log('Post does not belong to section_id 3:', slug);
+    if (existingPost.section_id !== 'SQE2') { // Changed to 'SQE2'
+      console.log('Post does not belong to section_id SQE2:', slug);
       return NextResponse.json(
-        { error: 'This route is only for posts with section_id 3' },
+        { error: 'This route is only for posts with section_id SQE2' },
         { status: 403 }
       );
     }
 
-    if (section_id !== undefined && section_id !== 3) {
-      console.log('Attempt to change section_id to non-3 value:', section_id);
+    if (section_id !== undefined && section_id !== 'SQE2') { // Changed to 'SQE2'
+      console.log('Attempt to change section_id to non-SQE2 value:', section_id);
       return NextResponse.json(
-        { error: 'This route requires section_id to remain 3' },
+        { error: 'This route requires section_id to remain SQE2' },
         { status: 400 }
       );
     }

@@ -9,7 +9,8 @@ type BlogPostBody = {
   display_this_post?: boolean;
   display_as_blog_post?: boolean;
   main_photo?: string | null;
-  section_id?: number | null;
+  order?: number | null;
+  section_id?: string | null;
   subsection?: string | null;
   is_with_author?: boolean;
   is_company_author?: boolean;
@@ -39,6 +40,14 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+const VALID_SECTION_IDS = [
+  'Criminal Litigation',
+  'Business organisations, rules and procedures',
+  'Wills and Intestacy, Probate Administration and Practice',
+  'Property Practice',
+  'Dispute Resolution',
+];
+
 export async function GET(_request: NextRequest, context: any) {
   if (!hasEnvVars) return envErrorResponse();
 
@@ -65,10 +74,10 @@ export async function GET(_request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (postData.section_id !== 38) {
-      console.log('Post does not belong to section_id 38:', slug);
+    if (!VALID_SECTION_IDS.includes(postData.section_id)) {
+      console.log(`Post does not belong to valid section_ids: ${VALID_SECTION_IDS.join(', ')}`, slug);
       return NextResponse.json(
-        { error: 'This route is only for posts with section_id 38' },
+        { error: `This route is only for posts with section_id in ${VALID_SECTION_IDS.join(', ')}` },
         { status: 403 }
       );
     }
@@ -108,6 +117,7 @@ export async function POST(request: NextRequest) {
       display_as_blog_post = false,
       main_photo = null,
       section_id = null,
+      order = null,
       subsection = null,
       is_with_author = false,
       is_company_author = false,
@@ -128,10 +138,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (section_id !== 38) {
+    if (!section_id || !VALID_SECTION_IDS.includes(section_id)) {
       console.log('Invalid section_id for this route:', section_id);
       return NextResponse.json(
-        { error: 'This route requires section_id to be 38' },
+        { error: `This route requires section_id to be one of ${VALID_SECTION_IDS.join(', ')}` },
         { status: 400 }
       );
     }
@@ -163,6 +173,7 @@ export async function POST(request: NextRequest) {
         display_as_blog_post,
         main_photo,
         created_on: new Date().toISOString(),
+        order,
         section_id,
         subsection,
         is_with_author,
@@ -214,6 +225,7 @@ export async function PATCH(request: NextRequest, context: any) {
       display_this_post,
       display_as_blog_post,
       main_photo,
+      order,
       section_id,
       subsection,
       is_with_author,
@@ -240,18 +252,18 @@ export async function PATCH(request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (existingPost.section_id !== 38) {
-      console.log('Post does not belong to section_id 38:', slug);
+    if (!VALID_SECTION_IDS.includes(existingPost.section_id)) {
+      console.log(`Post does not belong to valid section_ids: ${VALID_SECTION_IDS.join(', ')}`, slug);
       return NextResponse.json(
-        { error: 'This route is only for posts with section_id 38' },
+        { error: `This route is only for posts with section_id in ${VALID_SECTION_IDS.join(', ')}` },
         { status: 403 }
       );
     }
 
-    if (section_id !== undefined && section_id !== 38) {
-      console.log('Attempt to change section_id to non-38 value:', section_id);
+    if (section_id !== undefined && section_id !== null && !VALID_SECTION_IDS.includes(section_id)) {
+      console.log('Attempt to change section_id to invalid value:', section_id);
       return NextResponse.json(
-        { error: 'This route requires section_id to remain 38' },
+        { error: `This route requires section_id to remain one of ${VALID_SECTION_IDS.join(', ')}` },
         { status: 400 }
       );
     }
@@ -282,7 +294,8 @@ export async function PATCH(request: NextRequest, context: any) {
     if (display_as_blog_post !== undefined) updateData.display_as_blog_post = display_as_blog_post;
     if (content !== undefined) updateData.content = content;
     if (main_photo !== undefined) updateData.main_photo = main_photo;
-    if (section_id !== undefined) updateData.section_id = section_id;
+    if (order !== undefined) updateData.order = order;
+    if (section_id !== undefined && section_id !== null) updateData.section_id = section_id;
     if (subsection !== undefined) updateData.subsection = subsection;
     if (is_with_author !== undefined) updateData.is_with_author = is_with_author;
     if (is_company_author !== undefined) updateData.is_company_author = is_company_author;

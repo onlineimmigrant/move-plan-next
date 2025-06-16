@@ -35,7 +35,7 @@ interface Post {
   excerpt?: string;
   featured_image?: string;
   keywords?: string;
-  section_id?: number | null;
+  section_id?: string | null;
   last_modified: string;
   display_this_post: boolean;
   reviews?: { rating: number; author: string; comment: string }[];

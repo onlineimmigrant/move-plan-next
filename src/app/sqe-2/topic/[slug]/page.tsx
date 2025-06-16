@@ -1,13 +1,14 @@
-// app/sqe-2/topic/[slug]/page.tsx
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-
 import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
-
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import  Button  from '@/ui/Button'; // Corrected import path
+import RightArrowDynamic from '@/ui/RightArrowDynamic'; // Corrected import path
+import LeftArrowDynamic from '@/ui/LeftArrowDynamic'; // Corrected import path
 
 interface TOCItem {
   tag_name: string;
@@ -15,29 +16,74 @@ interface TOCItem {
   tag_id: string;
 }
 
+interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  description: string; // Made required
+  display_this_post?: boolean;
+  display_as_blog_post?: boolean;
+  main_photo?: string | null;
+  order?: number | null;
+  section: string; // Renamed from section_id to match PostHeader
+  subsection: string; // Made required
+  is_with_author: boolean; // Made required
+  is_company_author: boolean; // Made required
+  faq_section_is_title?: boolean;
+  author?: { first_name: string; last_name: string }; // Added to match PostHeader
+  author_id?: number | null;
+  cta_card_one_id?: number | null;
+  cta_card_two_id?: number | null;
+  cta_card_three_id?: number | null;
+  cta_card_four_id?: number | null;
+  product_1_id?: number | null;
+  product_2_id?: number | null;
+  created_on: string; // Made required
+}
+
+interface AdjacentPost {
+  slug: string;
+  title: string;
+}
+
 const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
   const { slug } = React.use(params);
 
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<Post | null>(null);
+  const [prevPost, setPrevPost] = useState<AdjacentPost | null>(null);
+  const [nextPost, setNextPost] = useState<AdjacentPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(true); // Replace with real admin check later
-  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  const [isHeaderHovered, setHeaderHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchPost = async () => {
+      console.log('Fetching post for slug:', slug);
       try {
-        const response = await fetch(`/api/sqe-2/topic/${slug}`); // Updated API route
+        const response = await fetch(`/api/sqe-2/topic/${slug}`);
         if (response.ok) {
           const data = await response.json();
-          setPost(data);
-        } else if (response.status === 404 || response.status === 403) {
-          notFound();
+          console.log('Fetched post:', data);
+          // Map section_id to section and provide defaults
+          setPost({
+            ...data,
+            section: data.section_id || 'Criminal Litigation', // Default or map
+            subsection: data.subsection || '', // Default
+            description: data.description || '', // Default
+            created_on: data.created_on || new Date().toISOString(), // Default
+            is_with_author: data.is_with_author ?? false, // Default
+            is_company_author: data.is_company_author ?? false, // Default
+            // Author may need to be fetched separately or included in API response
+            author: data.author || undefined,
+          });
         } else {
+          console.error('Post fetch failed:', response.status, await response.text());
           notFound();
         }
       } catch (error) {
-        console.error('An error occurred:', error);
+        console.error('Error fetching post:', error);
         notFound();
       } finally {
         setLoading(false);
@@ -45,6 +91,53 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     };
     fetchPost();
   }, [slug]);
+
+  useEffect(() => {
+    const fetchAdjacentPosts = async () => {
+      if (!post?.section || post?.order === undefined || post?.order === null) {
+        console.log('Skipping adjacent posts fetch: missing section or order', {
+          section: post?.section,
+          order: post?.order,
+        });
+        return;
+      }
+
+      console.log('Fetching posts for section:', post.section);
+
+      try {
+        const response = await fetch(
+          `/api/sqe-2/topics?section_id=${encodeURIComponent(post.section)}&limit=100`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Fetched posts response:', data);
+
+          const posts = data.posts
+            .filter((p: Post) => p.order !== null && Number.isInteger(p.order))
+            .sort((a: Post, b: Post) => (a.order || 0) - (b.order || 0));
+
+          const currentIndex = posts.findIndex((p: Post) => p.order === post.order && p.slug === post.slug);
+
+          console.log('Posts:', posts, 'Current index:', currentIndex);
+
+          setPrevPost(
+            currentIndex > 0 ? { slug: posts[currentIndex - 1].slug, title: posts[currentIndex - 1].title } : null
+          );
+          setNextPost(
+            currentIndex < posts.length - 1
+              ? { slug: posts[currentIndex + 1].slug, title: posts[currentIndex + 1].title }
+              : null
+          );
+        } else {
+          console.error('Failed to fetch posts:', response.status, await response.text());
+        }
+      } catch (error) {
+        console.error('Error fetching adjacent posts:', error);
+      }
+    };
+
+    fetchAdjacentPosts();
+  }, [post?.section, post?.order, post?.slug]);
 
   const toc: TOCItem[] = useMemo(() => {
     if (!post || !post.content) return [];
@@ -71,7 +164,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
 
     const updatedContent = doc.body.innerHTML;
     if (updatedContent !== post?.content) {
-      setPost((prev: any) => (prev ? { ...prev, content: updatedContent } : prev));
+      setPost((prev) => (prev ? { ...prev, content: updatedContent } : prev));
     }
 
     console.log('Generated TOC:', tocItems);
@@ -98,7 +191,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     console.log('Updated content:', updatedContent);
 
     try {
-      const response = await fetch(`/api/sqe-2/topic/${slug}`, { // Updated API route
+      const response = await fetch(`/api/sqe-2/topic/${slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: updatedContent }),
@@ -144,7 +237,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   if (!post) notFound();
 
   const shouldShowMainContent = post.section !== 'Landing' && post.content?.length > 0;
-//  const path = `/sqe-2/topic/${post.slug}`;
 
   return (
     <div className="post-page-container px-4 sm:pt-4 sm:pb-16">
@@ -161,9 +253,8 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
             {shouldShowMainContent ? (
               <>
                 <div
-                  onMouseEnter={() => setIsHeaderHovered(true)}
-                
-                  onMouseLeave={() => setIsHeaderHovered(false)}
+                  onMouseEnter={() => setHeaderHovered(true)}
+                  onMouseLeave={() => setHeaderHovered(false)}
                   className="relative"
                 >
                   <PostHeader
@@ -189,8 +280,71 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
             ) : (
               <span></span>
             )}
+            {/* Pagination Navigation */}
+            <div className="flex justify-between items-start mt-12 border-t border-gray-200 pt-6 space-x-4">
+              <div className="flex flex-col items-start space-y-2 group">
+                {prevPost ? (
+                  <Button
+                
+                    variant="primary"
+                    className="px-6 py-2 flex items-center"
+                    aria-label={`Go to previous post: ${prevPost.title}`}
+                  >
+                    <Link href={`/sqe-2/topic/${prevPost.slug}`} className='flex items-center'>
+                      <LeftArrowDynamic />
+                      Prev
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className=" cursor-not-allowed"
+                    disabled
+                    aria-label="No previous post available"
+                  >
+                    <LeftArrowDynamic className="text-gray-400" />
+                    Prev
+                  </Button>
+                )}
+                {prevPost && (
+                  <span className="text-base font-light text-gray-400 line-clamp-2">
+                    {prevPost.title}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col items-end space-y-2 group">
+                {nextPost ? (
+                  <Button
+                   
+                    variant="primary"
+                    className="px-6 py-2 flex items-center"
+                    aria-label={`Go to next post: ${nextPost.title}`}
+                  >
+                    <Link href={`/sqe-2/topic/${nextPost.slug}`} className='flex items-center'>
+                      Next
+                      <RightArrowDynamic />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className=" cursor-not-allowed flex items-center"
+                    disabled
+                    aria-label="No next post available"
+                  >
+                    Next
+                    <RightArrowDynamic className="text-gray-400" />
+                  </Button>
+                )}
+                {nextPost && (
+                  <span className="text-base font-light text-gray-400 line-clamp-2 text-right">
+                    {nextPost.title}
+                  </span>
+                )}
+              </div>
+            </div>
           </main>
-          <aside className="lg:col-span-2"></aside> {/* Empty right column */}
+          <aside className="lg:col-span-2"></aside>
         </div>
       ) : (
         <LandingPostContent post={post} />

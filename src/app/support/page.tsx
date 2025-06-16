@@ -16,7 +16,7 @@ interface Post {
   display_as_blog_post?: boolean;
   main_photo?: string | null;
   subsection?: string | null;
-  section_id?: number | null;
+  section_id?: string | null;
   organization_id?: string;
 }
 
