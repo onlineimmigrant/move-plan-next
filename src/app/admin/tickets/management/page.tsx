@@ -284,7 +284,6 @@ export default function AdminTicketsPage() {
             </ul>
           )}
         </div>
-
         {/* Ticket Details - 2/3 width on desktop */}
         <div className="lg:col-span-2">
           {selectedTicket ? (
