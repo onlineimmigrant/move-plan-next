@@ -233,7 +233,7 @@ export default function AdminTicketsPage() {
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{selectedTicket.subject}</h3>
-                <p className="text-sm text-gray-600">{selectedTicket.email}</p>
+                           {/* <p className="text-sm text-gray-600">{selectedTicket.email}</p>*/} 
               </div>
               <Listbox
                 value={selectedTicket.status}
@@ -298,7 +298,33 @@ export default function AdminTicketsPage() {
                 placeholder="Type your response..."
                 className="w-full border border-gray-200 bg-white rounded p-2 text-sm mb-2"
               />
-              <div className="text-right">
+              <div className="flex justify-between">
+           <Listbox
+                value={selectedTicket.status}
+                onChange={(status) => handleStatusChange(selectedTicket.id, status)}
+              >
+                <div className="relative">
+                  <Listbox.Button className="flex items-center px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300">
+                    {selectedTicket.status}
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Listbox.Button>
+                  <Listbox.Options className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded shadow-lg text-sm">
+                    {statuses.map((status) => (
+                      <Listbox.Option
+                        key={status}
+                        value={status}
+                        className={({ active }) =>
+                          `px-4 py-2 cursor-pointer ${
+                            active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
+                          }`
+                        }
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </Listbox.Option>
+                    ))}
+                  </Listbox.Options>
+                </div>
+              </Listbox>
                 <Button
                   onClick={handleRespond}
                   disabled={isSubmitting}
