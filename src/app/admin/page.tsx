@@ -92,10 +92,16 @@ export default function AdminDashboardPage() {
       icon: <ChartBarIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: "/admin/reports/custom",
     },
+
     {
       label: "Settings",
       icon: <Cog6ToothIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: "/admin/settings",
+    },
+        {
+      label: "Tickets",
+      icon: <ChartBarIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: "/admin/tickets/management",
     },
   ];
 
