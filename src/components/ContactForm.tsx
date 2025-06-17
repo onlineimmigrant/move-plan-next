@@ -2,15 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { FaEnvelope, FaPhone, FaTelegramPlane, FaWhatsapp } from 'react-icons/fa';
-//import emailjs from '@emailjs/browser';
 import Toast from './Toast';
 import Button from '@/ui/Button';
+import { supabase } from '@/lib/supabase';
+import { useSettings } from '@/context/SettingsContext'; // For tenant settings
 
 interface ContactFormProps {
   onSuccess?: () => void;
 }
 
 export default function ContactForm({ onSuccess }: ContactFormProps) {
+
+  const { settings } = useSettings();
+  const organizationId = settings.organization_id; // Tenant ID from settings
+
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const defaultTomorrowDate = tomorrow.toISOString().split('T')[0];
@@ -19,6 +24,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
     name: '',
     email: '',
     phone: '',
+    subject: '', // Added for ticket subject
     message: '',
     honeypot: '',
     mathAnswer: '',
@@ -62,6 +68,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
     } else if (!/^\+?\d{10,15}$/.test(formData.phone.replace(/\s/g, ''))) {
       newErrors.phone = 'Invalid phone number format';
     }
+    if (!formData.subject.trim()) newErrors.subject = 'Subject is required';
     if (!formData.message.trim()) newErrors.message = 'Message is required';
     if (formData.honeypot) newErrors.honeypot = 'Bot detected';
     if (!formData.mathAnswer || parseInt(formData.mathAnswer) !== mathQuestion.answer) {
@@ -108,63 +115,42 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
 
     setIsSubmitting(true);
     try {
-      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
-      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
-      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
-      const recipientEmail = process.env.NEXT_PUBLIC_EMAILJS_RECIPIENT_EMAIL || 'support@metexam.co.uk';
+      // Get current user (if authenticated)
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (!serviceId || !templateId || !publicKey) {
-        throw new Error('EmailJS environment variables are not defined');
-      }
-
-      const formattedDate = selectedDate
-        ? new Date(selectedDate).toLocaleDateString('en-US', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          })
-        : 'No preference';
-      const timeRange = selectedTimeRange || 'No preference';
-
-      const enhancedMessage = `${formData.message}\n\nPreferred Contact Method: ${formData.preferredContact}\nPreferred Date: ${formattedDate}\nPreferred Time Range: ${timeRange}`;
-
-      const templateParams = {
-        from_name: formData.name,
-        from_email: formData.email,
-        phone: formData.phone,
-        message: enhancedMessage,
-        to_email: recipientEmail,
-        preferredContact: formData.preferredContact, // Added for template
-        formattedDate: formattedDate, // Added for template
-        timeRange: timeRange, // Added for template
-      };
-
-      console.log('Sending EmailJS request with params:', {
-        serviceId,
-        templateId,
-        publicKey,
-        templateParams,
-      });
-
-      const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      const response = await fetch('/api/tickets/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          service_id: serviceId,
-          template_id: templateId,
-          user_id: publicKey,
-          template_params: templateParams,
+          organization_id: organizationId,
+          customer_id: user?.id || null,
+          full_name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject,
+          message: formData.message,
+          preferred_contact_method: formData.preferredContact,
+          preferred_date: selectedDate || null,
+          preferred_time_range: selectedTimeRange || null,
         }),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('EmailJS API error:', errorText);
-        throw new Error(errorText || 'Failed to send email');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create ticket');
       }
 
       setShowSuccessToast(true);
-      setFormData({ name: '', email: '', phone: '', message: '', honeypot: '', mathAnswer: '', preferredContact: 'email' });
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+        honeypot: '',
+        mathAnswer: '',
+        preferredContact: 'email',
+      });
       setSelectedDate('');
       setDateMode('any');
       setShowDatePicker(false);
@@ -174,17 +160,8 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
       setMathQuestion({ num1, num2, answer: num1 + num2 });
       if (onSuccess) onSuccess();
     } catch (error: any) {
-      console.error('Error sending email:', {
-        message: error.message,
-        stack: error.stack,
-      });
-      let errorMessage = 'An error occurred while sending. Please try again.';
-      if (error.message.includes('Service not found')) errorMessage = 'Invalid Service ID.';
-      else if (error.message.includes('Template not found')) errorMessage = 'Invalid Template ID.';
-      else if (error.message.includes('User not found')) errorMessage = 'Invalid Public Key.';
-      else if (error.message.includes('Rate limit')) errorMessage = 'Rate limit exceeded. Try later.';
-      else if (error.message.includes('recipients address')) errorMessage = 'Recipient email is missing. Please contact support.';
-      setErrors({ submit: errorMessage });
+      console.error('Error creating ticket:', error);
+      setErrors({ submit: error.message || 'An error occurred while submitting. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -195,7 +172,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
       {errors.submit && <p className="text-red-500 text-center">{errors.submit}</p>}
       {showSuccessToast && (
         <Toast
-          message="Message sent successfully! We’ll get back to you soon."
+          message="Ticket submitted successfully! We’ll get back to you soon."
           type="success"
           onClose={() => setShowSuccessToast(false)}
           duration={5000}
@@ -258,11 +235,29 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
         </div>
 
         <div>
+          <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+            Subject
+          </label>
+          <input
+            type="text"
+            id="subject"
+            name="subject"
+            value={formData.subject}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border ${
+              errors.subject ? 'border-red-500' : 'border-gray-300'
+            } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
+            placeholder="Briefly describe your issue"
+          />
+          {errors.subject && <p className="mt-1 text-sm text-red-500">{errors.subject}</p>}
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Preferred Contact Method (Optional)
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {contactMethods.map((method, index) => (
+            {contactMethods.map((method) => (
               <label
                 key={method.value}
                 className={`flex items-center justify-center px-4 py-2 border ${
@@ -350,7 +345,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             Preferred Time Range (Optional)
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {timeRanges.map((range, index) => (
+            {timeRanges.map((range) => (
               <label
                 key={range}
                 className={`flex items-center justify-center px-4 py-2 border ${
@@ -386,7 +381,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             name="message"
             value={formData.message}
             onChange={handleChange}
-            rows={2}
+            rows={4}
             className={`w-full px-4 py-2 border ${
               errors.message ? 'border-red-500' : 'border-gray-300'
             } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
@@ -428,12 +423,8 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
         </div>
 
         <div className="text-center">
-          <Button
-            type="submit"
-            variant='start'
-            disabled={isSubmitting}
-                     >
-            {isSubmitting ? 'Sending...' : 'Send Message'}
+          <Button type="submit" variant="start" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit Ticket'}
           </Button>
         </div>
       </form>

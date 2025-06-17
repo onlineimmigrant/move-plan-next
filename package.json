@@ -38,6 +38,7 @@
     "@tiptap/extension-text-align": "^2.11.7",
     "@tiptap/react": "^2.11.7",
     "@tiptap/starter-kit": "^2.11.7",
+    "@twilio/conversations": "^2.6.2",
     "braces": "^3.0.3",
     "chart.js": "^4.4.8",
     "class-variance-authority": "^0.7.1",
@@ -95,6 +96,7 @@
     "supabase": "^2.23.4",
     "tailwind-merge": "^3.0.2",
     "tiptap-extension-resize-image": "^1.2.1",
+    "twilio": "^5.7.1",
     "uuid": "^11.1.0",
     "validator": "^13.15.0",
     "xmldom": "^0.6.0"
