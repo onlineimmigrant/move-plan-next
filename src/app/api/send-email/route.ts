@@ -15,14 +15,18 @@ const sesClient = new SESClient({
 });
 
 // Function to generate plain-text content based on email type
-const generatePlainText = (type: string, name: string, siteValue: string, emailDomainRedirection: string, unsubscribeUrl: string, privacyPolicyUrl: string, address: string, domain: string): string => {
-  const templates: { [key: string]: string } & {
-    welcome: string;
-    reset_email: string;
-    email_confirmation: string;
-    order_confirmation: string;
-    free_trial_registration: string;
-  } = {
+const generatePlainText = (
+  type: string,
+  name: string,
+  siteValue: string,
+  emailDomainRedirection: string,
+  unsubscribeUrl: string,
+  privacyPolicyUrl: string,
+  address: string,
+  domain: string,
+  placeholders: Record<string, string> = {}
+): string => {
+  const templates: { [key: string]: string } = {
     welcome: `
 Welcome, ${name}!
 
@@ -87,6 +91,43 @@ Address: ${address}
 © 2025 ${siteValue}
 All rights reserved.
     `.trim(),
+    ticket_confirmation: `
+Hi ${name},
+
+Your ticket has been submitted successfully!
+
+Ticket ID: ${placeholders.ticket_id || 'N/A'}
+Subject: ${placeholders.ticket_subject || 'No Subject'}
+Message: ${placeholders.ticket_message || ''}
+Preferred Contact: ${placeholders.preferred_contact_method || 'Not specified'}
+Preferred Date: ${placeholders.preferred_date || 'Not specified'}
+Preferred Time: ${placeholders.preferred_time_range || 'Not specified'}
+
+View your ticket: ${emailDomainRedirection}
+
+---
+Unsubscribe: ${unsubscribeUrl} | Privacy Policy: ${privacyPolicyUrl}
+Address: ${address}
+© 2025 ${siteValue}
+All rights reserved.
+    `.trim(),
+    ticket_response: `
+Hi ${name},
+
+You have a new response on your ticket:
+
+Ticket ID: ${placeholders.ticket_id || 'N/A'}
+Subject: ${placeholders.ticket_subject || 'No Subject'}
+Response: ${placeholders.response_message || ''}
+
+View your ticket: ${emailDomainRedirection}
+
+---
+Unsubscribe: ${unsubscribeUrl} | Privacy Policy: ${privacyPolicyUrl}
+Address: ${address}
+© 2025 ${siteValue}
+All rights reserved.
+    `.trim(),
   };
 
   return templates[type] || `
@@ -99,24 +140,54 @@ Unsubscribe: ${unsubscribeUrl} | Privacy Policy: ${privacyPolicyUrl}
 Address: ${address}
 © 2025 ${siteValue}
 All rights reserved.
-  `.trim(); // Default template for unknown types
+  `.trim();
 };
 
 export async function POST(request: Request) {
   try {
-    const { type, to, organization_id, user_id, name, emailDomainRedirection } = await request.json();
+    const { type, to, organization_id, user_id, name, emailDomainRedirection, placeholders = {} } = await request.json();
 
-    // Allow user_id to be null for certain types (e.g., reset_email)
     if (!type || !to || !organization_id) {
-      console.error('Invalid request body:', { type, to, organization_id, user_id, name, emailDomainRedirection });
+      console.error('Invalid request body:', { type, to, organization_id, user_id, name, emailDomainRedirection, placeholders });
       return NextResponse.json(
         { error: 'Missing required fields: type, to, or organization_id' },
         { status: 400 }
       );
     }
 
-    console.log('Received request body:', { type, to, organization_id, user_id, name, emailDomainRedirection });
-    console.log('Fetching settings for organization_id:', organization_id);
+    console.log('Received request body:', { type, to, organization_id, user_id, name, emailDomainRedirection, placeholders });
+
+    // Fetch ticket data for ticket_confirmation
+    let ticketData = {};
+    if (type === 'ticket_confirmation' && placeholders.ticket_id) {
+      const { data: ticket, error: ticketError } = await supabase
+        .from('tickets')
+        .select('preferred_contact_method, preferred_date, preferred_time_range, subject, message')
+        .eq('id', placeholders.ticket_id)
+        .eq('organization_id', organization_id)
+        .single();
+
+      if (ticketError || !ticket) {
+        console.error('Error fetching ticket data:', ticketError);
+      } else {
+        ticketData = {
+          preferred_contact_method: ticket.preferred_contact_method || 'Not specified',
+          preferred_date: ticket.preferred_date || 'Not specified',
+          preferred_time_range: ticket.preferred_time_range || 'Not specified',
+          ticket_subject: ticket.subject || 'No Subject',
+          ticket_message: ticket.message || '',
+        };
+        console.log('Fetched ticket data:', ticketData);
+      }
+    }
+
+    // Merge ticket data with provided placeholders (ticket data takes precedence)
+    const finalPlaceholders = {
+      ...placeholders,
+      ...ticketData,
+    };
+    console.log('Final placeholders:', finalPlaceholders);
+
     const { data: settings, error: settingsError } = await supabase
       .from('settings')
       .select('transactional_email, marketing_email, transactional_email_2, marketing_email_2, domain, address, site')
@@ -124,26 +195,20 @@ export async function POST(request: Request) {
       .single();
 
     if (settingsError || !settings) {
-      console.error('Error fetching settings:', {
-        error: settingsError?.message,
-        organization_id,
-        details: settingsError?.details,
-      });
+      console.error('Error fetching settings:', { error: settingsError?.message, organization_id });
       return NextResponse.json(
         { error: 'Failed to fetch organization email settings', details: settingsError?.message },
         { status: 500 }
       );
     }
 
-    console.log('Fetched settings:', settings);
-    console.log('Fetching profile for user_id:', user_id);
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('full_name')
-      .eq('id', user_id || '') // Handle null user_id by passing empty string
+      .eq('id', user_id || '')
       .single();
 
-    if (profileError && user_id) { // Only log error if user_id is provided
+    if (profileError && user_id) {
       console.error('Error fetching profile:', { error: profileError?.message, user_id });
       return NextResponse.json(
         { error: 'Failed to fetch user full_name', details: profileError?.message },
@@ -151,7 +216,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('Fetching email template for organization_id:', organization_id, 'type:', type);
     const { data: template, error: templateError } = await supabase
       .from('email_template')
       .select('html_code, email_main_logo_image, subject, from_email_address_type')
@@ -162,12 +226,7 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (templateError || !template || !template.length) {
-      console.error('Error fetching email template:', {
-        error: templateError?.message,
-        organization_id,
-        type,
-        details: templateError?.details,
-      });
+      console.error('Error fetching email template:', { error: templateError?.message, organization_id, type });
       return NextResponse.json(
         { error: 'Failed to fetch email template', details: templateError?.message },
         { status: 500 }
@@ -175,39 +234,41 @@ export async function POST(request: Request) {
     }
 
     const htmlCode = template[0].html_code;
-    const effectiveEmailDomainRedirection = emailDomainRedirection || `https://${settings.domain}/account`; // Use provided redirection or default
+    const effectiveEmailDomainRedirection = emailDomainRedirection || `https://${settings.domain}/account`;
     const privacyPolicyUrl = `https://${settings.domain}/privacy`;
     const unsubscribeUrl = `https://${settings.domain}/unsubscribe?user_id=${user_id || ''}&type=${type}`;
     const dynamicSubject = template[0].subject || 'Message from Our Platform';
     const siteValue = settings.site || 'Metexam';
     const fromEmailAddressType = template[0].from_email_address_type || 'transactional_email';
-    const effectiveName = name || to.split('@')[0]; // Fallback to email local part if name is not provided
+    const effectiveName = name || profile?.full_name || to.split('@')[0];
 
-    // First pass: Replace placeholders with dynamic data
+    // Replace standard placeholders
     let emailHtml = htmlCode
-      .replace('{{name}}', effectiveName) // Use effectiveName instead of resetEmail
-      .replace('{{email_main_logo_image}}', template[0].email_main_logo_image || 'https://via.placeholder.com/150x50?text=Brand+Logo')
-      .replace('{{emailDomainRedirection}}', effectiveEmailDomainRedirection)
-      .replace('{{privacyPolicyUrl}}', privacyPolicyUrl)
-      .replace('{{unsubscribeUrl}}', unsubscribeUrl)
-      .replace('{{address}}', settings.address)
-      .replace('{{site}}', siteValue)
-      .replace('{{subject}}', dynamicSubject);
+      .replace(/{{name}}/g, effectiveName)
+      .replace(/{{email_main_logo_image}}/g, template[0].email_main_logo_image || 'https://via.placeholder.com/150x50?text=Brand+Logo')
+      .replace(/{{emailDomainRedirection}}/g, effectiveEmailDomainRedirection)
+      .replace(/{{privacyPolicyUrl}}/g, privacyPolicyUrl)
+      .replace(/{{unsubscribeUrl}}/g, unsubscribeUrl)
+      .replace(/{{address}}/g, settings.address || '')
+      .replace(/{{site}}/g, siteValue)
+      .replace(/{{subject}}/g, dynamicSubject);
 
-    // Second pass: Use regex to catch any missed {{site}} instances
-    emailHtml = emailHtml.replace(/{{site}}/g, siteValue);
+    // Replace ticket-specific placeholders
+    Object.entries(finalPlaceholders).forEach(([key, value]) => {
+      const placeholder = `{{${key}}}`;
+      const regex = new RegExp(placeholder, 'g');
+      console.log(`Replacing ${placeholder} with ${value}`);
+      emailHtml = emailHtml.replace(regex, value || 'N/A');
+    });
 
     console.log('Original htmlCode:', htmlCode);
-    console.log('After first replace emailHtml:', emailHtml);
-    console.log('After second replace emailHtml:', emailHtml);
+    console.log('Final emailHtml:', emailHtml);
     console.log('Dynamic subject:', dynamicSubject);
     console.log('Site value:', siteValue);
     console.log('From email address type:', fromEmailAddressType);
 
-    // Generate plain-text version based on email type
-    const emailText = generatePlainText(type, effectiveName, siteValue, effectiveEmailDomainRedirection, unsubscribeUrl, privacyPolicyUrl, settings.address, settings.domain);
+    const emailText = generatePlainText(type, effectiveName, siteValue, effectiveEmailDomainRedirection, unsubscribeUrl, privacyPolicyUrl, settings.address, settings.domain, finalPlaceholders);
 
-    // Determine From email based on from_email_address_type
     let fromEmail: string;
     switch (fromEmailAddressType) {
       case 'transactional_email':
@@ -223,7 +284,7 @@ export async function POST(request: Request) {
         fromEmail = `"${siteValue}" <${settings.marketing_email_2 || settings.marketing_email}>`;
         break;
       default:
-        fromEmail = `"${siteValue} Team" <${settings.transactional_email}>`; // Default fallback
+        fromEmail = `"${siteValue} Team" <${settings.transactional_email}>`;
     }
 
     if (!fromEmail) {
@@ -233,7 +294,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Construct raw MIME message
     const rawMessage = `
 From: ${fromEmail}
 To: ${to}

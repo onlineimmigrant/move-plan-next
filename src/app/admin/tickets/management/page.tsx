@@ -5,8 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { useSettings } from '@/context/SettingsContext';
 import Button from '@/ui/Button';
 import Toast from '@/components/Toast';
-import { Listbox } from '@headlessui/react';
-import { Menu, X, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { Listbox, Popover } from '@headlessui/react';
+import { Menu, X, ChevronDown, MoreHorizontal, Info } from 'lucide-react';
 
 interface TicketResponse {
   id: string;
@@ -25,6 +25,8 @@ interface Ticket {
   preferred_contact_method: string | null;
   email: string;
   full_name?: string;
+  preferred_date?: string | null;
+  preferred_time_range?: string | null;
   ticket_responses: TicketResponse[];
 }
 
@@ -67,7 +69,7 @@ export default function AdminTicketsPage() {
 
     const { data: ticketsData, error } = await supabase
       .from('tickets')
-      .select('*, ticket_responses(*)')
+      .select('id, subject, status, customer_id, created_at, message, preferred_contact_method, email, full_name, preferred_date, preferred_time_range, ticket_responses(*)')
       .eq('organization_id', settings.organization_id)
       .order('created_at', { ascending: false });
 
@@ -189,13 +191,10 @@ export default function AdminTicketsPage() {
     const end = textarea.selectionEnd;
     const currentValue = responseMessage;
 
-    // Insert text at cursor or append if no selection
-    const newValue =
-      currentValue.slice(0, start) + text + currentValue.slice(end);
+    const newValue = currentValue.slice(0, start) + text + currentValue.slice(end);
 
     setResponseMessage(newValue);
 
-    // Move cursor to end of inserted text
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + text.length, start + text.length);
@@ -272,7 +271,7 @@ export default function AdminTicketsPage() {
     <div className="flex h-screen">
       {toast && <Toast {...toast} onClose={() => setToast(null)} duration={5000} />}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-sky-600 text-white rounded-full flex items-center justify-center relative"
+        className="md:hidden absolute top-2 right-4 z-50 w-10 h-10 bg-sky-600 text-white rounded-full flex items-center justify-center"
         onClick={() => setIsSidebarOpen(true)}
       >
         <Menu className="w-6 h-6" />
@@ -370,7 +369,44 @@ export default function AdminTicketsPage() {
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
               <div className="bg-gray-100 p-4 rounded shadow-sm text-sm">
-                <div className="text-xs text-gray-500 mb-2">Initial message</div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-gray-500">Initial message</div>
+                  <Popover className="relative">
+                    <Popover.Button className="text-gray-500 hover:text-gray-700">
+                      <Info className="w-4 h-4" />
+                    </Popover.Button>
+                    <Popover.Panel className="absolute z-10 right-0 mt-2 w-64 bg-white border border-gray-200 rounded shadow-lg p-4 text-sm">
+                      <div className="space-y-2">
+                        <div>
+                          <span className="font-medium">Subject:</span> {selectedTicket.subject}
+                        </div>
+                        <div>
+                          <span className="font-medium">Full Name:</span> {selectedTicket.full_name || 'N/A'}
+                        </div>
+                        {selectedTicket.customer_id && (
+                          <div>
+                            <span className="font-medium">Customer ID:</span> {selectedTicket.customer_id}
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-medium">Email:</span> {selectedTicket.email}
+                        </div>
+                        <div>
+                          <span className="font-medium">Preferred Contact Method:</span>{' '}
+                          {selectedTicket.preferred_contact_method || 'N/A'}
+                        </div>
+                        <div>
+                          <span className="font-medium">Preferred Date:</span>{' '}
+                          {selectedTicket.preferred_date || 'N/A'}
+                        </div>
+                        <div>
+                          <span className="font-medium">Preferred Time Range:</span>{' '}
+                          {selectedTicket.preferred_time_range || 'N/A'}
+                        </div>
+                      </div>
+                    </Popover.Panel>
+                  </Popover>
+                </div>
                 {selectedTicket.message}
               </div>
               {selectedTicket.ticket_responses.map((res) => (
@@ -383,7 +419,7 @@ export default function AdminTicketsPage() {
                   }`}
                 >
                   <div className="text-xs text-gray-500 mb-1">
-                    {res.is_admin ? 'Support' : selectedTicket.email} •{' '}
+                    {res.is_admin ? 'Support' : 'Customer'} •{' '}
                     {new Date(res.created_at).toLocaleString()}
                   </div>
                   <div>{res.message}</div>
