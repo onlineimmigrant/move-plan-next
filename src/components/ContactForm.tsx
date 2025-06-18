@@ -1,433 +1,339 @@
-'use client';
+'use client'
 
-import { useState, useEffect, useRef } from 'react';
-import { FaEnvelope, FaPhone, FaTelegramPlane, FaWhatsapp } from 'react-icons/fa';
-import Toast from './Toast';
-import Button from '@/ui/Button';
-import { supabase } from '@/lib/supabase';
-import { useSettings } from '@/context/SettingsContext'; // For tenant settings
+import { useState, useEffect, useRef } from 'react'
+import { FaEnvelope, FaPhone, FaTelegramPlane, FaWhatsapp } from 'react-icons/fa'
+import Toast from './Toast'
+import Button from '@/ui/Button'
+import { supabase } from '@/lib/supabase'
+import { useSettings } from '@/context/SettingsContext'
 
-interface ContactFormProps {
-  onSuccess?: () => void;
+type ContactFormProps = {
+  onSuccess?: () => void
 }
 
 export default function ContactForm({ onSuccess }: ContactFormProps) {
+  const { settings } = useSettings()
+  const orgId = settings.organization_id
 
-  const { settings } = useSettings();
-  const organizationId = settings.organization_id; // Tenant ID from settings
-
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const defaultTomorrowDate = tomorrow.toISOString().split('T')[0];
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '', // Added for ticket subject
-    message: '',
-    honeypot: '',
-    mathAnswer: '',
-    preferredContact: 'email',
-  });
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTimeRange, setSelectedTimeRange] = useState('');
-  const [dateMode, setDateMode] = useState('any');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [mathQuestion, setMathQuestion] = useState({ num1: 0, num2: 0, answer: 0 });
-  const datePickerRef = useRef<HTMLInputElement>(null);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', subject: '', message: '',
+    honeypot: '', mathAnswer: '', preferredContact: 'email'
+  })
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
+  const [dateMode, setDateMode] = useState('any')
+  const [showDate, setShowDate] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [math, setMath] = useState({ num1: 0, num2: 0, answer: 0 })
+  const dateRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const num1 = Math.floor(Math.random() * 10) + 1;
-    const num2 = Math.ceil(Math.random() * 8) + 1;
-    setMathQuestion({ num1, num2, answer: num1 + num2 });
-  }, []);
+    const num1 = Math.floor(Math.random() * 10) + 1
+    const num2 = Math.ceil(Math.random() * 8) + 1
+    setMath({ num1, num2, answer: num1 + num2 })
+  }, [])
 
-  const timeRanges = ['8:00 AM - 12:00 PM', '12:00 PM - 4:00 PM', '4:00 PM - 8:00 PM', '8:00 PM - 12:00 AM'];
+  const timeRanges = ['8:00 AM - 12:00 PM', '12:00 PM - 4:00 PM', '4:00 PM - 8:00 PM', '8:00 PM - 12:00 AM']
+  const contacts = [
+    { value: 'email', label: 'Email', icon: <FaEnvelope /> },
+    { value: 'phone', label: 'Phone', icon: <FaPhone /> },
+    { value: 'telegram', label: 'Telegram', icon: <FaTelegramPlane /> },
+    { value: 'whatsapp', label: 'WhatsApp', icon: <FaWhatsapp /> },
+  ]
 
-  const contactMethods = [
-    { value: 'email', label: 'Email', icon: <FaEnvelope className="text-lg" /> },
-    { value: 'phone', label: 'Phone', icon: <FaPhone className="text-lg" /> },
-    { value: 'telegram', label: 'Telegram', icon: <FaTelegramPlane className="text-lg" /> },
-    { value: 'whatsapp', label: 'WhatsApp', icon: <FaWhatsapp className="text-lg" /> },
-  ];
+  const validate = () => {
+    const err: Record<string, string> = {}
+    if (!form.name.trim()) err.name = 'Name required'
+    if (!form.email.trim()) err.email = 'Email required'
+    else if (!/\S+@\S+\.\S+/.test(form.email)) err.email = 'Invalid email'
+    if (!form.phone.trim()) err.phone = 'Phone required'
+    else if (!/^\+?\d{10,15}$/.test(form.phone.replace(/\s/g, ''))) err.phone = 'Invalid phone'
+    if (!form.subject.trim()) err.subject = 'Subject required'
+    if (!form.message.trim()) err.message = 'Message required'
+    if (form.honeypot) err.honeypot = 'Bot detected'
+    if (!form.mathAnswer || parseInt(form.mathAnswer) !== math.answer) err.mathAnswer = 'Incorrect answer'
+    return err
+  }
 
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^\+?\d{10,15}$/.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = 'Invalid phone number format';
-    }
-    if (!formData.subject.trim()) newErrors.subject = 'Subject is required';
-    if (!formData.message.trim()) newErrors.message = 'Message is required';
-    if (formData.honeypot) newErrors.honeypot = 'Bot detected';
-    if (!formData.mathAnswer || parseInt(formData.mathAnswer) !== mathQuestion.answer) {
-      newErrors.mathAnswer = 'Incorrect answer. Please try again.';
-    }
-    return newErrors;
-  };
+  const updateForm = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
+    setErrors(prev => ({ ...prev, [name]: '' }))
+  }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
-  };
-
-  const handleDateModeChange = (mode: string) => {
-    setDateMode(mode);
+  const toggleDate = (mode: string) => {
+    setDateMode(mode)
     if (mode === 'any') {
-      setSelectedDate('');
-      setShowDatePicker(false);
-    } else if (mode === 'choose') {
-      setSelectedDate(defaultTomorrowDate);
-      setShowDatePicker(true);
-      setTimeout(() => datePickerRef.current?.focus(), 0);
+      setDate('')
+      setShowDate(false)
+    } else {
+      setDate(tomorrow)
+      setShowDate(true)
+      dateRef.current?.focus()
     }
-  };
+  }
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(e.target.value);
-    setShowDatePicker(false);
-    if (errors.date) setErrors((prev) => ({ ...prev, date: '' }));
-  };
+  const updateDate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDate(e.target.value)
+    setShowDate(false)
+    setErrors(prev => ({ ...prev, date: '' }))
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    setShowSuccessToast(false);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrors({})
+    setSuccess(false)
 
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      if (validationErrors.honeypot) console.log('Bot detected via honeypot');
-      return;
+    const validationErrors = validate()
+    if (Object.keys(validationErrors).length) {
+      setErrors(validationErrors)
+      if (validationErrors.honeypot) console.log('Bot detected')
+      return
     }
 
-    setIsSubmitting(true);
+    setSubmitting(true)
     try {
-      // Get current user (if authenticated)
-      const { data: { user } } = await supabase.auth.getUser();
-
-      const response = await fetch('/api/tickets/create', {
+      const { data: { user } } = await supabase.auth.getUser()
+      const res = await fetch('/api/tickets/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organization_id: organizationId,
+          organization_id: orgId,
           customer_id: user?.id || null,
-          full_name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          subject: formData.subject,
-          message: formData.message,
-          preferred_contact_method: formData.preferredContact,
-          preferred_date: selectedDate || null,
-          preferred_time_range: selectedTimeRange || null,
-        }),
-      });
+          full_name: form.name,
+          email: form.email,
+          phone: form.phone,
+          subject: form.subject,
+          message: form.message,
+          preferred_contact_method: form.preferredContact,
+          preferred_date: date || null,
+          preferred_time_range: time || null,
+        })
+      })
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create ticket');
-      }
+      if (!res.ok) throw new Error((await res.json()).error || 'Ticket creation failed')
 
-      setShowSuccessToast(true);
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: '',
-        honeypot: '',
-        mathAnswer: '',
-        preferredContact: 'email',
-      });
-      setSelectedDate('');
-      setDateMode('any');
-      setShowDatePicker(false);
-      setSelectedTimeRange('');
-      const num1 = Math.floor(Math.random() * 10) + 1;
-      const num2 = Math.ceil(Math.random() * 8) + 1;
-      setMathQuestion({ num1, num2, answer: num1 + num2 });
-      if (onSuccess) onSuccess();
-    } catch (error: any) {
-      console.error('Error creating ticket:', error);
-      setErrors({ submit: error.message || 'An error occurred while submitting. Please try again.' });
+      setSuccess(true)
+      setForm({ name: '', email: '', phone: '', subject: '', message: '', honeypot: '', mathAnswer: '', preferredContact: 'email' })
+      setDate('')
+      setTime('')
+      setDateMode('any')
+      setShowDate(false)
+      setMath({ num1: Math.floor(Math.random() * 10) + 1, num2: Math.ceil(Math.random() * 8) + 1, answer: 0 })
+      onSuccess?.()
+    } catch (err) {
+      console.error('Ticket error:', err)
+      setErrors({ submit: (err as Error).message || 'Submission error' })
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
       {errors.submit && <p className="text-red-500 text-center">{errors.submit}</p>}
-      {showSuccessToast && (
+      {success && (
         <Toast
-          message="Ticket submitted successfully! We’ll get back to you soon."
+          message="Ticket submitted successfully!"
           type="success"
-          onClose={() => setShowSuccessToast(false)}
+          onClose={() => setSuccess(false)}
           duration={5000}
         />
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-2">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-            Name
-          </label>
+          <label className="block text-sm text-gray-700">Name</label>
           <input
             type="text"
-            id="name"
             name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${
-              errors.name ? 'border-red-500' : 'border-gray-300'
-            } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
+            value={form.name}
+            onChange={updateForm}
+            className={`w-full px-3 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
             placeholder="Your name"
           />
-          {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+          {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email
-          </label>
+          <label className="block text-sm text-gray-700">Email</label>
           <input
             type="email"
-            id="email"
             name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${
-              errors.email ? 'border-red-500' : 'border-gray-300'
-            } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
+            value={form.email}
+            onChange={updateForm}
+            className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
             placeholder="example@email.com"
           />
-          {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+          {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
         </div>
 
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-            Phone
-          </label>
+          <label className="block text-sm text-gray-700">Phone</label>
           <input
             type="tel"
-            id="phone"
             name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${
-              errors.phone ? 'border-red-500' : 'border-gray-300'
-            } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
+            value={form.phone}
+            onChange={updateForm}
+            className={`w-full px-3 py-2 border ${errors.phone ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
             placeholder="+44 123 456 7890"
           />
-          {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+          {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
         </div>
 
         <div>
-          <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-            Subject
-          </label>
+          <label className="block text-sm text-gray-700">Subject</label>
           <input
             type="text"
-            id="subject"
             name="subject"
-            value={formData.subject}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${
-              errors.subject ? 'border-red-500' : 'border-gray-300'
-            } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
-            placeholder="Briefly describe your issue"
+            value={form.subject}
+            onChange={updateForm}
+            className={`w-full px-3 py-2 border ${errors.subject ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            placeholder="Your issue"
           />
-          {errors.subject && <p className="mt-1 text-sm text-red-500">{errors.subject}</p>}
+          {errors.subject && <p className="text-xs text-red-500">{errors.subject}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Preferred Contact Method (Optional)
-          </label>
+          <label className="block text-sm text-gray-700">Preferred Contact</label>
           <div className="grid grid-cols-2 gap-2">
-            {contactMethods.map((method) => (
+            {contacts.map(({ value, label, icon }) => (
               <label
-                key={method.value}
-                className={`flex items-center justify-center px-4 py-2 border ${
-                  errors[method.value] ? 'border-red-500' : 'border-gray-300'
-                } rounded-md cursor-pointer transition-colors ${
-                  formData.preferredContact === method.value
-                    ? 'bg-sky-100 border-sky-500'
-                    : 'bg-white hover:bg-sky-50'
-                }`}
+                key={value}
+                className={`flex items-center justify-center p-2 border ${form.preferredContact === value ? 'border-blue-500 bg-blue-50' : 'border-gray-200'} rounded-lg cursor-pointer hover:bg-blue-50`}
               >
                 <input
                   type="radio"
                   name="preferredContact"
-                  value={method.value}
-                  checked={formData.preferredContact === method.value}
-                  onChange={handleChange}
-                  className="sr-only"
+                  value={value}
+                  checked={form.preferredContact === value}
+                  onChange={updateForm}
+                  className="hidden"
                 />
-                <div className="flex items-center space-x-2">
-                  {method.icon}
-                  <span className="text-sm text-gray-700">{method.label}</span>
-                </div>
+                <span className="flex items-center gap-2 text-sm text-gray-700">
+                  {icon} {label}
+                </span>
               </label>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Preferred Date (Optional)
-          </label>
+          <label className="block text-sm text-gray-700">Preferred Date</label>
           <div className="grid grid-cols-2 gap-2">
             <label
-              className={`flex items-center justify-center px-4 py-2 border ${
-                errors['any'] ? 'border-red-500' : 'border-gray-300'
-              } rounded-md cursor-pointer transition-colors ${
-                dateMode === 'any' ? 'bg-sky-100 border-sky-500' : 'bg-white hover:bg-sky-50'
-              }`}
+              className={`flex items-center justify-center p-2 border ${dateMode === 'any' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'} rounded-lg cursor-pointer hover:bg-blue-50`}
             >
               <input
                 type="radio"
                 name="dateMode"
                 value="any"
                 checked={dateMode === 'any'}
-                onChange={() => handleDateModeChange('any')}
-                className="sr-only"
+                onChange={() => toggleDate('any')}
+                className="hidden"
               />
               <span className="text-sm text-gray-700">Any Date</span>
             </label>
             <label
-              className={`flex items-center justify-center px-4 py-2 border ${
-                errors['choose'] ? 'border-red-500' : 'border-gray-300'
-              } rounded-md cursor-pointer transition-colors ${
-                dateMode === 'choose' ? 'bg-sky-100 border-sky-500' : 'bg-white hover:bg-sky-50'
-              }`}
+              className={`flex items-center justify-center p-2 border ${dateMode === 'choose' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'} rounded-lg cursor-pointer hover:bg-blue-50`}
             >
               <input
                 type="radio"
                 name="dateMode"
                 value="choose"
                 checked={dateMode === 'choose'}
-                onChange={() => handleDateModeChange('choose')}
-                className="sr-only"
+                onChange={() => toggleDate('choose')}
+                className="hidden"
               />
               <span className="text-sm text-gray-700">Choose Date</span>
             </label>
           </div>
-          {showDatePicker && (
+          {showDate && (
             <input
               type="date"
-              ref={datePickerRef}
-              value={selectedDate}
-              onChange={handleDateChange}
-              onBlur={() => setShowDatePicker(false)}
+              ref={dateRef}
+              value={date}
+              onChange={updateDate}
+              onBlur={() => setShowDate(false)}
               min={new Date().toISOString().split('T')[0]}
-              className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
               autoFocus
             />
           )}
-          {errors.date && <p className="mt-1 text-sm text-red-500">{errors.date}</p>}
+          {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Preferred Time Range (Optional)
-          </label>
+          <label className="block text-sm text-gray-700">Preferred Time</label>
           <div className="grid grid-cols-2 gap-2">
-            {timeRanges.map((range) => (
+            {timeRanges.map(range => (
               <label
                 key={range}
-                className={`flex items-center justify-center px-4 py-2 border ${
-                  errors[range] ? 'border-red-500' : 'border-gray-300'
-                } rounded-md cursor-pointer transition-colors ${
-                  selectedTimeRange === range ? 'bg-sky-100 border-sky-500' : 'bg-white hover:bg-sky-50'
-                }`}
+                className={`flex items-center justify-center p-2 border ${time === range ? 'border-blue-500 bg-blue-50' : 'border-gray-200'} rounded-lg cursor-pointer hover:bg-blue-50`}
               >
                 <input
                   type="radio"
                   name="timeRange"
                   value={range}
-                  checked={selectedTimeRange === range}
-                  onChange={(e) => {
-                    setSelectedTimeRange(e.target.value);
-                    if (errors.timeRange) setErrors((prev) => ({ ...prev, timeRange: '' }));
+                  checked={time === range}
+                  onChange={e => {
+                    setTime(e.target.value)
+                    setErrors(prev => ({ ...prev, timeRange: '' }))
                   }}
-                  className="sr-only"
+                  className="hidden"
                 />
                 <span className="text-sm text-gray-700">{range}</span>
               </label>
             ))}
           </div>
-          {errors.timeRange && <p className="mt-1 text-sm text-red-500">{errors.timeRange}</p>}
+          {errors.timeRange && <p className="text-xs text-red-500">{errors.timeRange}</p>}
         </div>
 
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-            Message
-          </label>
+          <label className="block text-sm text-gray-700">Message</label>
           <textarea
-            id="message"
             name="message"
-            value={formData.message}
-            onChange={handleChange}
-            rows={4}
-            className={`w-full px-4 py-2 border ${
-              errors.message ? 'border-red-500' : 'border-gray-300'
-            } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
-            placeholder="Tell us how we can help..."
+            value={form.message}
+            onChange={updateForm}
+            rows={2}
+            className={`w-full px-3 py-2 border ${errors.message ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            placeholder="How can we help?"
           />
-          {errors.message && <p className="mt-1 text-sm text-red-500">{errors.message}</p>}
+          {errors.message && <p className="text-xs text-red-500">{errors.message}</p>}
         </div>
 
         <div className="hidden">
-          <label htmlFor="honeypot" className="sr-only">
-            Leave this field empty
-          </label>
           <input
             type="text"
-            id="honeypot"
             name="honeypot"
-            value={formData.honeypot}
-            onChange={handleChange}
+            value={form.honeypot}
+            onChange={updateForm}
             className="hidden"
           />
         </div>
 
         <div>
-          <label htmlFor="mathAnswer" className="block text-sm font-medium text-gray-700">
-            What is {mathQuestion.num1} + {mathQuestion.num2}?
+          <label className="block text-sm text-gray-700">
+            What is {math.num1} + {math.num2}?
           </label>
           <input
             type="number"
-            id="mathAnswer"
             name="mathAnswer"
-            value={formData.mathAnswer}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${
-              errors.mathAnswer ? 'border-red-500' : 'border-gray-300'
-            } rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500`}
-            placeholder="Enter answer"
+            value={form.mathAnswer}
+            onChange={updateForm}
+            className={`w-full px-3 py-2 border ${errors.mathAnswer ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            placeholder="Answer"
           />
-          {errors.mathAnswer && <p className="mt-1 text-sm text-red-500">{errors.mathAnswer}</p>}
+          {errors.mathAnswer && <p className="text-xs text-red-500">{errors.mathAnswer}</p>}
         </div>
 
-        <div className="text-center">
-          <Button type="submit" variant="start" disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Submit Ticket'}
-          </Button>
-        </div>
+        <Button variant='start' type="submit" disabled={submitting} className="w-full">
+          {submitting ? 'Submitting...' : 'Submit'}
+        </Button>
       </form>
     </div>
-  );
+  )
 }

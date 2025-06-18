@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{subject}} {{ticket_id}}</title>
+    <style type="text/css">
+      * { margin: 0; padding: 0; }
+      @media only screen and (max-width: 600px) {
+        body { background-color: #FFFFFF !important; padding: 16px 8px !important; }
+        div { max-width: 100% !important; margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 16px !important; }
+      }
+    </style>
+  </head>
+  <body style="background-color: #F5F7FA; font-family: Arial, sans-serif; margin: 0; padding: 32px; color: #1A202C;">
+    <div style="max-width: 500px; margin: 0 auto; background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 24px;">
+      <section style="text-align: center; margin-bottom: 24px;">
+        <img src="{{email_main_logo_image}}" alt="{{site}} Logo" style="height: 32px; margin: 0 auto; display: block;" onerror="this.src='https://via.placeholder.com/150x50?text=Brand+Logo';" />
+      </section>
+      <section style="margin-bottom: 24px;">
+        <h1 style="font-size: 16px; font-weight: bold; color: #1A202C; margin-bottom: 8px;">Hi {{name}},</h1>
+        <p style="font-size: 14px; color: #718096; margin-top: 8px; line-height: 24px;">
+          Your ticket has been submitted successfully!
+        </p>
+        <p style="font-size: 14px; color: #1A202C; margin-top: 4px !important; margin-bottom: 0 !important; padding-top: 4px !important; line-height: 20px;">
+          <strong>Ticket ID:</strong> {{ticket_id}}
+        </p>
+        <p style="font-size: 14px; color: #1A202C; margin-top: 4px !important; margin-bottom: 0 !important; padding-top: 4px !important; line-height: 20px;">
+          <strong>Subject:</strong> {{ticket_subject}}
+        </p>
+        <p style="font-size: 14px; color: #1A202C; margin-top: 4px !important; margin-bottom: 0 !important; padding-top: 4px !important; line-height: 20px;">
+          <strong>Message:</strong> {{ticket_message}}
+        </p>
+        <p style="font-size: 14px; color: #1A202C; margin-top: 4px !important; margin-bottom: 0 !important; padding-top: 4px !important; line-height: 20px;">
+          <strong>Preferred Contact:</strong> {{preferred_contact_method}}
+        </p>
+        <p style="font-size: 14px; color: #1A202C; margin-top: 4px !important; margin-bottom: 0 !important; padding-top: 4px !important; line-height: 20px;">
+          <strong>Preferred Date:</strong> {{preferred_date}}
+        </p>
+        <p style="font-size: 14px; color: #1A202C; margin-top: 4px !important; margin-bottom: 0 !important; padding-top: 4px !important; line-height: 20px;">
+          <strong>Preferred Time:</strong> {{preferred_time_range}}
+        </p>
+      </section>
+      <section style="text-align: center; margin-bottom: 24px;">
+        <a href="{{emailDomainRedirection}}" style="background-color: #0284C7; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 500; text-decoration: none; display: inline-block;">View Ticket</a>
+      </section>
+      <hr style="border-color: #E5E7EB; margin: 16px 0;" />
+      <section style="text-align: center; font-size: 12px; color: #9CA3AF;">
+        <p style="margin-bottom: 8px; color: #9CA3AF;">
+          You're receiving this email because you submitted a ticket.<br />
+          <a href="{{unsubscribeUrl}}" style="color: #9CA3AF; text-decoration: underline;">Unsubscribe</a> | <a href="{{privacyPolicyUrl}}" style="color: #9CA3AF; text-decoration: underline;">Privacy Policy</a><br />
+          <span style="color: #9CA3AF;">{{address}}</span><br />
+          <span style="color: #9CA3AF;">© 2025 {{site}}</span><br />
+          <span style="color: #9CA3AF;">All rights reserved.</span>
+        </p>
+      </section>
+    </div>
+  </body>
+</html>
