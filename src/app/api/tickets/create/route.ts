@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-const sesClient = new SESClient({
-  region: process.env.AWS_SES_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_SES_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SES_SECRET_ACCESS_KEY!,
-  },
-});
 
 export async function POST(request: Request) {
   try {
@@ -33,17 +24,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-      // Check for existing user by email
     let effectiveCustomerId = customer_id;
     if (!customer_id) {
       const { data: existingUser, error: userError } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', email)
-        .eq('organization_id', organization_id) // Ensure tenant-specific
+        .eq('organization_id', organization_id)
         .single();
 
-      if (userError && userError.code !== 'PGRST116') { // PGRST116: No rows found
+      if (userError && userError.code !== 'PGRST116') {
         console.error('Error checking existing user:', userError);
         return NextResponse.json({ error: 'Failed to check user existence' }, { status: 500 });
       }
@@ -51,14 +41,13 @@ export async function POST(request: Request) {
       effectiveCustomerId = existingUser?.id || null;
     }
 
-    // Create ticket in Supabase
     const { data: ticket, error: ticketError } = await supabase
       .from('tickets')
       .insert({
         organization_id,
-        customer_id: effectiveCustomerId, // Use resolved customer_id
-        email, 
-        full_name, 
+        customer_id: effectiveCustomerId,
+        email,
+        full_name,
         subject,
         message,
         preferred_contact_method,
@@ -73,10 +62,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create ticket' }, { status: 500 });
     }
 
-    // Fetch organization settings
     const { data: settings, error: settingsError } = await supabase
       .from('settings')
-      .select('transactional_email, domain, site, address')
+      .select('domain, site')
       .eq('organization_id', organization_id)
       .single();
 
@@ -85,98 +73,46 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch organization settings' }, { status: 500 });
     }
 
-    // Fetch email template for ticket confirmation
-    const { data: template, error: templateError } = await supabase
-      .from('email_template')
-      .select('html_code, email_main_logo_image, subject, from_email_address_type')
-      .eq('organization_id', organization_id)
-      .eq('type', 'ticket_confirmation')
-      .eq('is_active', true)
-      .order('id', { ascending: false })
-      .limit(1);
+    const ticketUrl = `https://${settings.domain}/account/profile/tickets/${ticket.id}`;
 
-    if (templateError || !template?.length) {
-      console.error('Error fetching email template:', templateError);
-      return NextResponse.json({ error: 'Failed to fetch email template' }, { status: 500 });
+    // Validate BASE URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+    if (!baseUrl) {
+      console.error('NEXT_PUBLIC_BASE_URL is not defined');
+      return NextResponse.json({ error: 'Server configuration error: BASE URL not defined' }, { status: 500 });
     }
 
-    const htmlCode = template[0].html_code;
-    const dynamicSubject = template[0].subject || `New Ticket: ${subject}`;
-    const siteValue = settings.site || 'Your Platform';
-    const fromEmailAddressType = template[0].from_email_address_type || 'transactional_email';
-    const privacyPolicyUrl = `https://${settings.domain}/privacy`;
-    const unsubscribeUrl = `https://${settings.domain}/unsubscribe?user_id=${customer_id || ''}&type=ticket_confirmation`;
-    const ticketUrl = `https://${settings.domain}/tickets/${ticket.id}`;
+    // Prepare placeholders
+    const placeholders = {
+      ticket_id: ticket.id,
+      ticket_subject: subject || 'No Subject',
+      ticket_message: message || '',
+      preferred_contact_method: preferred_contact_method || 'Not specified',
+      preferred_date: preferred_date || 'Not specified',
+      preferred_time_range: preferred_time_range || 'Not specified',
+    };
+    console.log('Sending ticket confirmation with placeholders:', placeholders);
 
-    // Replace placeholders in email template
-    let emailHtml = htmlCode
-      .replace('{{name}}', full_name)
-      .replace('{{email_main_logo_image}}', template[0].email_main_logo_image || 'https://via.placeholder.com/150x50?text=Brand+Logo')
-      .replace('{{emailDomainRedirection}}', ticketUrl)
-      .replace('{{privacyPolicyUrl}}', privacyPolicyUrl)
-      .replace('{{unsubscribeUrl}}', unsubscribeUrl)
-      .replace('{{address}}', settings.address)
-      .replace('{{site}}', siteValue)
-      .replace('{{subject}}', dynamicSubject)
-      .replace('{{ticket_subject}}', subject)
-      .replace('{{ticket_message}}', message)
-      .replace('{{ticket_id}}', ticket.id);
-
-    // Generate plain-text version
-    const emailText = `
-Hi ${full_name},
-
-Your ticket has been submitted successfully!
-
-Ticket ID: ${ticket.id}
-Subject: ${subject}
-Message: ${message}
-Preferred Contact: ${preferred_contact_method || 'Not specified'}
-Preferred Date: ${preferred_date || 'Not specified'}
-Preferred Time: ${preferred_time_range || 'Not specified'}
-
-View your ticket: ${ticketUrl}
-
----
-Unsubscribe: ${unsubscribeUrl} | Privacy Policy: ${privacyPolicyUrl}
-Address: ${settings.address}
-© 2025 ${siteValue}
-All rights reserved.
-    `.trim();
-
-    // Determine From email
-    const fromEmail = `"${siteValue} Team" <${settings.transactional_email}>`;
-
-    // Send confirmation email to customer
-    const customerRawMessage = `
-From: ${fromEmail}
-To: ${email}
-Subject: ${dynamicSubject}
-List-Unsubscribe: <${unsubscribeUrl}>
-MIME-Version: 1.0
-Content-Type: multipart/alternative; boundary="boundary-string-${Date.now()}"
-
---boundary-string-${Date.now()}
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-${emailText}
-
---boundary-string-${Date.now()}
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-${emailHtml}
-
---boundary-string-${Date.now()}--
-    `.trim();
-
-    const customerCommand = new SendRawEmailCommand({
-      RawMessage: { Data: Buffer.from(customerRawMessage) },
-      ConfigurationSetName: 'NoTrackingConfig',
+    // Send customer confirmation email
+    const customerEmailResponse = await fetch(`${baseUrl}/api/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'ticket_confirmation',
+        to: email,
+        organization_id,
+        user_id: effectiveCustomerId,
+        name: full_name,
+        emailDomainRedirection: ticketUrl,
+        placeholders,
+      }),
     });
 
-    await sesClient.send(customerCommand);
+    if (!customerEmailResponse.ok) {
+      const errorData = await customerEmailResponse.json();
+      console.error('Error sending customer email:', errorData);
+      return NextResponse.json({ error: 'Failed to send customer email', details: errorData }, { status: 500 });
+    }
 
     // Notify admins
     const { data: admins, error: adminsError } = await supabase
@@ -188,39 +124,28 @@ ${emailHtml}
     if (adminsError) {
       console.error('Error fetching admins:', adminsError);
     } else if (admins?.length) {
-      const adminSubject = `New Ticket Submitted: ${subject}`;
-      const adminHtml = emailHtml.replace('Your ticket has been submitted', 'A new ticket has been submitted');
-      const adminText = emailText.replace('Your ticket has been submitted', 'A new ticket has been submitted');
-
       for (const admin of admins) {
-        const adminRawMessage = `
-From: ${fromEmail}
-To: ${admin.email}
-Subject: ${adminSubject}
-MIME-Version: 1.0
-Content-Type: multipart/alternative; boundary="boundary-admin-${Date.now()}"
-
---boundary-admin-${Date.now()}
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-${adminText}
-
---boundary-admin-${Date.now()}
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-${adminHtml}
-
---boundary-admin-${Date.now()}--
-        `.trim();
-
-        const adminCommand = new SendRawEmailCommand({
-          RawMessage: { Data: Buffer.from(adminRawMessage) },
-          ConfigurationSetName: 'NoTrackingConfig',
+        console.log('Sending admin notification to:', admin.email);
+        const adminEmailResponse = await fetch(`${baseUrl}/api/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'ticket_confirmation',
+            to: admin.email,
+            organization_id,
+            user_id: null,
+            name: 'Admin',
+            emailDomainRedirection: ticketUrl,
+            placeholders: {
+              ...placeholders,
+              admin_message: 'A new ticket has been submitted',
+            },
+          }),
         });
 
-        await sesClient.send(adminCommand);
+        if (!adminEmailResponse.ok) {
+          console.error('Error sending admin email to:', admin.email, await adminEmailResponse.json());
+        }
       }
     }
 
