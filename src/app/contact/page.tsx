@@ -17,11 +17,7 @@ export default function ContactPage() {
       {/* Left side: Gradient background */}
       <div className={`hidden md:flex w-1/2 bg-${backgroundColor} items-center justify-center`}>
         <div className="text-white text-center">
-                                <Link href='/'>
-                      <span className="absolute top-4 right-4 my-4 flex justify-center " >
-                       <Image src={logoImage} alt="Logo" width={40} height={40} className="h-8 w-auto"/>
-                      </span>
-                      </Link>
+    
             <Link href='/'>
                 <h1 className=" text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
                     Contact Us
@@ -34,10 +30,10 @@ export default function ContactPage() {
       </div>
 
       {/* Right side: Contact form */}
-      <div className="w-full md:w-1/2 transparent flex items-center justify-center py-12">
-        <div className="w-full max-w-lg p-6 bg-transparent">
+      <div className="w-full md:w-1/2 transparent flex items-center justify-center ">
+        <div className="w-full max-w-lg px-6 bg-transparent">
                                 <Link href='/'>
-                      <span className="my-4 flex sm:hidden justify-center " >
+                      <span className="my-4 flex justify-right " >
                        <Image src={logoImage} alt="Logo" width={40} height={40} className="h-8 w-auto"/>
                       </span>
                       </Link>
@@ -47,7 +43,7 @@ export default function ContactPage() {
 
           <ContactForm />
 
-          <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-gray-600">
+          <div className="mt-4 flex flex-wrap justify-center gap-x-4 text-sm text-gray-600">
             <Link href="/terms" className="text-sky-600 hover:text-sky-500 cursor-pointer">
               Terms of Service
             </Link>

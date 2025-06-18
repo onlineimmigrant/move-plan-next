@@ -235,7 +235,7 @@ export async function POST(request: Request) {
 
     const htmlCode = template[0].html_code;
     const effectiveEmailDomainRedirection = emailDomainRedirection || `https://${settings.domain}/account`;
-    const privacyPolicyUrl = `https://${settings.domain}/privacy`;
+    const privacyPolicyUrl = `https://${settings.domain}/privacy-policy`;
     const unsubscribeUrl = `https://${settings.domain}/unsubscribe?user_id=${user_id || ''}&type=${type}`;
     const dynamicSubject = template[0].subject || 'Message from Our Platform';
     const siteValue = settings.site || 'Metexam';
