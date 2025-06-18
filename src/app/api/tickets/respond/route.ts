@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized to respond to this ticket' }, { status: 403 });
     }
 
-    // Create response
+    // Create response with created_at to ensure real-time event consistency
     const { data: response, error: responseError } = await supabase
       .from('ticket_responses')
       .insert({
@@ -60,8 +60,9 @@ export async function POST(request: Request) {
         user_id,
         message,
         is_admin: isAdmin,
+        created_at: new Date().toISOString(),
       })
-      .select()
+      .select('id, ticket_id, user_id, message, is_admin, created_at')
       .single();
 
     if (responseError || !response) {
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create response' }, { status: 500 });
     }
 
-    // Fetch ticket details
+    // Fetch ticket details for email
     const { data: ticketDetails, error: ticketDetailsError } = await supabase
       .from('tickets')
       .select('subject, customer_id, preferred_contact_method, email')
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
     }
 
     if (!customerEmail) {
-      customerEmail = ticketDetails.email; // Fallback to ticket email
+      customerEmail = ticketDetails.email;
       if (!customerEmail) {
         console.error('No customer email found');
         return NextResponse.json({ error: 'No customer email found' }, { status: 400 });
@@ -201,7 +202,8 @@ ${emailHtml}
 
     await sesClient.send(command);
 
-    return NextResponse.json({ message: 'Response sent successfully' }, { status: 200 });
+    // Return the inserted response to match client-side expectations
+    return NextResponse.json(response, { status: 200 });
   } catch (error: any) {
     console.error('Error in /api/tickets/respond:', error);
     return NextResponse.json(

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useSettings } from '@/context/SettingsContext';
 import Button from '@/ui/Button';
 import Toast from '@/components/Toast';
+import { Menu, X } from 'lucide-react';
+import AccountTab from '@/components/AccountTab';
 
-// Interfaces for type safety
 interface TicketResponse {
   id: string;
   message: string;
@@ -27,17 +28,7 @@ interface Ticket {
   ticket_responses: TicketResponse[];
 }
 
-// Utility function to map status to Tailwind classes
-const getStatusStyles = (status: string) => {
-  switch (status) {
-    case 'open':
-      return 'bg-green-100 text-green-800';
-    case 'in_progress':
-      return 'bg-yellow-100 text-yellow-800';
-    default:
-      return 'bg-red-100 text-red-800';
-  }
-};
+const statuses = ['open', 'in progress', 'closed'];
 
 export default function CustomerTicketsPage() {
   const { settings } = useSettings();
@@ -46,13 +37,18 @@ export default function CustomerTicketsPage() {
   const [responseMessage, setResponseMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [activeTab, setActiveTab] = useState(statuses[0]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch tickets on mount
   useEffect(() => {
     fetchTickets();
   }, []);
 
-  // Fetch tickets from Supabase
+  useEffect(() => {
+    scrollToBottom();
+  }, [selectedTicket]);
+
   const fetchTickets = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -63,7 +59,7 @@ export default function CustomerTicketsPage() {
 
       const { data: ticketsData, error: ticketsError } = await supabase
         .from('tickets')
-        .select('id, subject, status, customer_id, created_at, message, preferred_contact_method, email, full_name')
+        .select('id, subject, status, customer_id, created_at, message, preferred_contact_method, email, full_name, ticket_responses(*)')
         .eq('organization_id', settings.organization_id)
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false });
@@ -74,42 +70,19 @@ export default function CustomerTicketsPage() {
         return;
       }
 
-      if (!ticketsData?.length) {
-        setTickets([]);
-        return;
-      }
-
-      const ticketIds = ticketsData.map((t) => t.id);
-      const { data: responsesData, error: responsesError } = await supabase
-        .from('ticket_responses')
-        .select('id, ticket_id, message, is_admin, created_at')
-        .in('ticket_id', ticketIds)
-        .order('created_at', { ascending: true });
-
-      if (responsesError) {
-        console.error('Error fetching responses:', responsesError);
-        setToast({ message: 'Failed to load responses', type: 'error' });
-        return;
-      }
-
-      const ticketsWithResponses = ticketsData.map((ticket) => ({
-        ...ticket,
-        ticket_responses: responsesData?.filter((r) => r.ticket_id === ticket.id) || [],
-      }));
-
-      setTickets(ticketsWithResponses);
+      setTickets(ticketsData || []);
     } catch (error) {
       console.error('Unexpected error in fetchTickets:', error);
       setToast({ message: 'An unexpected error occurred', type: 'error' });
     }
   };
 
-  // Handle ticket response submission
-  const handleRespond = async (ticketId: string) => {
-    if (!responseMessage.trim()) {
-      setToast({ message: 'Response message is required', type: 'error' });
-      return;
-    }
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleRespond = async () => {
+    if (!responseMessage.trim() || !selectedTicket) return;
 
     setIsSubmitting(true);
     try {
@@ -118,7 +91,7 @@ export default function CustomerTicketsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ticket_id: ticketId,
+          ticket_id: selectedTicket.id,
           message: responseMessage,
           user_id: user?.id,
           organization_id: settings.organization_id,
@@ -130,24 +103,26 @@ export default function CustomerTicketsPage() {
         throw new Error(errorData.error || 'Failed to submit response');
       }
 
-      const newResponse: TicketResponse = {
-        id: crypto.randomUUID(),
-        message: responseMessage,
-        is_admin: false,
-        created_at: new Date().toISOString(),
-      };
-
-      setSelectedTicket((prev) =>
-        prev
-          ? {
-              ...prev,
-              ticket_responses: [...prev.ticket_responses, newResponse],
-            }
-          : prev
-      );
       setResponseMessage('');
+      await fetchTickets();
+      setSelectedTicket((t) =>
+        t && t.id === selectedTicket.id
+          ? {
+              ...t,
+              ticket_responses: [
+                ...t.ticket_responses,
+                {
+                  id: crypto.randomUUID(),
+                  message: responseMessage,
+                  is_admin: false,
+                  created_at: new Date().toISOString(),
+                },
+              ],
+            }
+          : t
+      );
+      scrollToBottom();
       setToast({ message: 'Response sent successfully', type: 'success' });
-      await fetchTickets(); // Sync with server
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to submit response', type: 'error' });
     } finally {
@@ -155,124 +130,222 @@ export default function CustomerTicketsPage() {
     }
   };
 
+  const handleTicketSelect = (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setIsSidebarOpen(false);
+  };
+
+  const groupedTickets = statuses.reduce(
+    (acc, status) => ({
+      ...acc,
+      [status]: tickets.filter((ticket) => ticket.status === status),
+    }),
+    {} as Record<string, Ticket[]>
+  );
+
+  const isWaitingForResponse = (ticket: Ticket) => {
+    if (ticket.ticket_responses.length === 0) return false;
+    const latestResponse = ticket.ticket_responses[ticket.ticket_responses.length - 1];
+    return latestResponse.is_admin; // Customer should respond if Support sent last
+  };
+
+  const getTabCount = (status: string) => {
+    if (status === 'in progress') {
+      const count = groupedTickets[status].filter(isWaitingForResponse).length;
+      return count > 0 ? count : null;
+    }
+    if (status === 'open') {
+      const count = groupedTickets[status].length;
+      return count > 0 ? count : null;
+    }
+    return null; // No circle for closed
+  };
+
+  const getTicketCount = (status: string) => {
+    return groupedTickets[status].length;
+  };
+
+  const totalActiveTickets =
+    groupedTickets['open'].length + groupedTickets['in progress'].filter(isWaitingForResponse).length;
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'open':
+        return 'bg-green-100 text-green-800';
+      case 'in progress':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'closed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTabCircleClass = (status: string) => {
+    switch (status) {
+      case 'open':
+        return 'outline outline-1 outline-red-500 text-red-500 bg-transparent';
+      case 'in progress':
+        return 'bg-red-600 text-white';
+      case 'closed':
+        return 'bg-gray-200 text-gray-800';
+      default:
+        return 'bg-gray-200 text-gray-800';
+    }
+  };
+
   return (
-    <div className="min-h-screen max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-          duration={5000}
-        />
-      )}
-      <h1 className="mb-6 text-3xl font-bold text-gray-900">My Support Tickets</h1>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Ticket List - 1/3 width on desktop */}
-        <div className="space-y-4 lg:col-span-1">
-          <h2 className="text-xl font-semibold text-gray-800">Your Tickets</h2>
-          {tickets.length === 0 ? (
-            <p className="text-gray-500">No tickets found.</p>
-          ) : (
-            <ul className="space-y-3">
-              {tickets.map((ticket) => (
-                <li
-                  key={ticket.id}
-                  className={`cursor-pointer rounded-lg border border-gray-200 p-3 transition-shadow hover:shadow-md ${
-                    selectedTicket?.id === ticket.id ? 'bg-blue-50 shadow-md' : 'bg-white'
-                  }`}
-                  onClick={() => setSelectedTicket(ticket)}
-                >
-                  <span className="sm:text-right text-xs text-gray-500 block mb-2">ID: {ticket.id}</span>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-gray-900">
-                      <span className="text-xs font-medium text-gray-500">Subject: </span>
-                      {ticket.subject}
-                    </h3>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getStatusStyles(
-                        ticket.status
-                      )}`}
-                    >
-                      {ticket.status.replace('_', ' ')}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    <span className="font-medium">Created: </span>
-                    {new Date(ticket.created_at).toLocaleDateString()}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
+    
+    <div className="flex  py-4 pt-16 h-screen mx-auto max-w-5xl">
+     
+      {toast && <Toast {...toast} onClose={() => setToast(null)} duration={5000} />}
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-sky-600 text-white rounded-full flex items-center justify-center relative"
+        onClick={() => setIsSidebarOpen(true)}
+      >
+        <Menu className="w-6 h-6" />
+        {totalActiveTickets > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 text-xs font-semibold text-white bg-red-500 rounded-full flex items-center justify-center">
+            {totalActiveTickets}
+          </span>
+        )}
+      </button>
+      <aside
+        className={`sm:pr-8 fixed inset-y-0 left-0 w-full sm:w-120 z-51 bg-gray-50 border-r border-gray-200 overflow-y-auto p-4 transition-transform duration-300 md:static md:translate-x-0 ${
+          isSidebarOpen ? 'translate-x-0 z-40' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">My Tickets</h2>
+          <button
+            className="md:hidden text-gray-500"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
-
-        {/* Ticket Details - 2/3 width on desktop */}
-        <div className="lg:col-span-2">
-          {selectedTicket ? (
-            <div className="flex h-[80vh] flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <span className="sm:text-right text-xs text-gray-500">ID: {selectedTicket.id}</span>
-              {/* Fixed Top Section - Refined Design */}
-              <div className="sticky top-0 z-10 bg-white border-b border-gray-200 pb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-semibold text-gray-900">
-                    <span className="text-xs font-medium text-gray-500">Subject: </span>
-                    {selectedTicket.subject}
-                  </h2>
-                </div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Initial Message:</p>
-                <div className="rounded-md bg-gray-50 p-3">
-                  <p className="text-sm text-gray-800">{selectedTicket.message}</p>
-                </div>
-              </div>
-
-              {/* Scrollable Messages Section */}
-              <div className="flex-1 space-y-3 overflow-y-auto py-4 px-2 sm:px-4">
-                {selectedTicket.ticket_responses.map((response) => (
-                  <div
-                    key={response.id}
-                    className={`rounded-md p-3 ${
-                      response.is_admin
-                        ? 'ml-auto bg-blue-50 text-right'
-                        : 'bg-gray-50 text-left'
-                    } max-w-[60%]`}
+        <div className="flex border-b border-gray-200 mb-4">
+          {statuses.map((status) => {
+            const tabCount = getTabCount(status);
+            return (
+              <button
+                key={status}
+                className={`cursor-pointer flex-1 py-2 px-4 text-sm font-medium text-center flex items-center justify-center space-x-2 ${
+                  activeTab === status
+                    ? 'border-b-2 border-sky-600 text-sky-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setActiveTab(status)}
+              >
+                <span className="text-gray-300">{getTicketCount(status)}</span>
+                <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                {tabCount !== null && (
+                  <span
+                    className={`inline-flex items-center justify-center w-5 h-5 text-xs font-semibold rounded-full ${getTabCircleClass(
+                      status
+                    )}`}
                   >
-                    <p className="text-[10px] text-gray-500 mb-1">
-                      {response.is_admin
-                        ? 'Admin'
-                        : `You: ${selectedTicket.email || selectedTicket.full_name || 'Unknown'}`}{' '}
-                      • {new Date(response.created_at).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-800">{response.message}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Fixed Response Input Section */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 pt-4">
-                <textarea
-                  value={responseMessage}
-                  onChange={(e) => setResponseMessage(e.target.value)}
-                  placeholder="Type your response..."
-                  rows={4}
-                  className="mb-4 w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <Button
-                  onClick={() => handleRespond(selectedTicket.id)}
-                  variant="start"
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  {isSubmitting ? 'Sending...' : 'Send Response'}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex h-[80vh] items-center justify-center rounded-lg border border-gray-200 bg-white p-6">
-              <p className="text-gray-500">Select a ticket to view details</p>
-            </div>
-          )}
+                    {tabCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
-      </div>
+        {groupedTickets[activeTab].length === 0 ? (
+          <p className="text-sm text-gray-500">No {activeTab} tickets found.</p>
+        ) : (
+          <ul className="space-y-2">
+            {groupedTickets[activeTab].map((ticket) => (
+              <li
+                key={ticket.id}
+                className={`p-3 rounded cursor-pointer hover:bg-blue-100 relative ${
+                  selectedTicket?.id === ticket.id ? 'bg-blue-200' : 'bg-white'
+                }`}
+                onClick={() => handleTicketSelect(ticket)}
+              >
+                {isWaitingForResponse(ticket) && (
+                  <span className="absolute top-1 right-1 text-xs italic text-sky-500">
+                    Waiting for Response
+                  </span>
+                )}
+                <div className="text-sm font-medium text-gray-800 mt-3">{ticket.subject}</div>
+                <div className="text-xs text-gray-500">{ticket.email}</div>
+                <span
+                  className={`inline-block mt-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
+                    ticket.status
+                  )}`}
+                >
+                  {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                </span>
+                <div className="text-[10px] text-gray-400 mt-1">ID: {ticket.id}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </aside>
+      <main className="flex-1 flex flex-col">
+        {!selectedTicket ? (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-gray-500">Select a ticket to view details</p>
+          </div>
+        ) : (
+          <>
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-600">{selectedTicket.subject}</h3>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
+              <div className="bg-gray-100 p-4 rounded shadow-sm text-sm">
+                <div className="text-xs text-gray-500 mb-2">Initial message</div>
+                {selectedTicket.message}
+              </div>
+              {selectedTicket.ticket_responses.map((res) => (
+                <div
+                  key={res.id}
+                  className={`max-w-[75%] p-3 text-sm rounded-lg shadow ${
+                    res.is_admin
+                      ? 'ml-auto bg-blue-50 border border-blue-200'
+                      : 'bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  <div className="text-xs text-gray-500 mb-1">
+                    {res.is_admin ? 'Support' : selectedTicket.email} •{' '}
+                    {new Date(res.created_at).toLocaleString()}
+                  </div>
+                  <div>{res.message}</div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+            <div className="border-t border-gray-200 p-4 bg-gray-50">
+              {selectedTicket.status === 'closed' ? (
+                <div className="text-sm text-gray-500">This ticket is closed.</div>
+              ) : (
+                <>
+                  <textarea
+                    value={responseMessage}
+                    onChange={(e) => setResponseMessage(e.target.value)}
+                    rows={3}
+                    placeholder="Type your response..."
+                    className="w-full border border-gray-200 bg-white rounded p-2 text-sm mb-2"
+                  />
+                  <div className="flex justify-end mt-2">
+                    <Button
+                      onClick={handleRespond}
+                      disabled={isSubmitting || !responseMessage.trim()}
+                      variant="primary"
+                    >
+                      {isSubmitting ? 'Sending...' : 'Send Response'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </main>
     </div>
   );
 }
