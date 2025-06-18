@@ -1,6 +1,7 @@
 // lib/postUtils.ts
 export const SECTION_ROUTES: { [key: string]: string } = {
   'SQE2': '/sqe-2',
+'Course':'/course',
   'Criminal Litigation': '/sqe-2/topic',
   'Business organisations, rules and procedures': '/sqe-2/topic',
   'Wills and Intestacy, Probate Administration and Practice': '/sqe-2/topic',
