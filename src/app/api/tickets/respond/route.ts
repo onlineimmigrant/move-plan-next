@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: Request) {
   try {
-    const { ticket_id, message, user_id, organization_id } = await request.json();
+    const { ticket_id, message, user_id, organization_id, avatar_id } = await request.json();
 
     if (!ticket_id || !message || !user_id || !organization_id) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -49,8 +49,9 @@ export async function POST(request: Request) {
         message,
         is_admin: isAdmin,
         created_at: new Date().toISOString(),
+        avatar_id, // Add avatar_id to the insert query
       })
-      .select('id, ticket_id, user_id, message, is_admin, created_at')
+      .select('id, ticket_id, user_id, message, is_admin, created_at, avatar_id') // Include avatar_id in the select
       .single();
 
     if (responseError || !response) {

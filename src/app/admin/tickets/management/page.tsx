@@ -6,13 +6,17 @@ import { useSettings } from '@/context/SettingsContext';
 import Button from '@/ui/Button';
 import Toast from '@/components/Toast';
 import { Listbox, Popover } from '@headlessui/react';
-import { Menu, X, ChevronDown, MoreHorizontal, Info } from 'lucide-react';
+import { Menu, X, ChevronDown, MoreHorizontal, Info, User } from 'lucide-react';
 
 interface TicketResponse {
   id: string;
+  ticket_id: string;
+  user_id: string;
   message: string;
   is_admin: boolean;
   created_at: string;
+  avatar_id?: string;
+  updated_at?: string;
 }
 
 interface Ticket {
@@ -30,6 +34,13 @@ interface Ticket {
   ticket_responses: TicketResponse[];
 }
 
+interface Avatar {
+  id: string;
+  title: string;
+  full_name?: string;
+  image?: string;
+}
+
 interface PredefinedResponse {
   id: string;
   order: number;
@@ -37,8 +48,11 @@ interface PredefinedResponse {
   text: string;
 }
 
-const statuses = ['open', 'in progress', 'closed'];
+const statuses = ['in progress', 'open', 'closed'];
 const BADGES_PER_PAGE = 5;
+
+// Default "Support" avatar
+const defaultSupportAvatar = { id: 'default', title: 'Support', full_name: undefined, image: undefined };
 
 export default function AdminTicketsPage() {
   const { settings } = useSettings();
@@ -51,13 +65,16 @@ export default function AdminTicketsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [predefinedResponses, setPredefinedResponses] = useState<PredefinedResponse[]>([]);
   const [visibleBadgesPage, setVisibleBadgesPage] = useState(1);
+  const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(defaultSupportAvatar); // Persistent selection
+  const [avatars, setAvatars] = useState<Avatar[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     fetchTickets();
     fetchPredefinedResponses();
-  }, []);
+    fetchAvatars();
+  }, [settings.organization_id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -69,15 +86,52 @@ export default function AdminTicketsPage() {
 
     const { data: ticketsData, error } = await supabase
       .from('tickets')
-      .select('id, subject, status, customer_id, created_at, message, preferred_contact_method, email, full_name, preferred_date, preferred_time_range, ticket_responses(*)')
+      .select(`
+        id,
+        subject,
+        status,
+        customer_id,
+        created_at,
+        message,
+        preferred_contact_method,
+        email,
+        full_name,
+        preferred_date,
+        preferred_time_range,
+        ticket_responses!inner (
+          id,
+          ticket_id,
+          user_id,
+          message,
+          is_admin,
+          created_at,
+          avatar_id,
+          updated_at
+        )
+      `)
       .eq('organization_id', settings.organization_id)
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error(error);
-      setToast({ message: 'Failed to fetch tickets', type: 'error' });
+      console.error('Fetch tickets error:', error.message, error.details);
+      setToast({ message: `Failed to fetch tickets: ${error.message}`, type: 'error' });
     } else {
       setTickets(ticketsData || []);
+    }
+  };
+
+  const fetchAvatars = async () => {
+    const { data, error } = await supabase
+      .from('ticket_avatars')
+      .select('id, title, full_name, image')
+      .eq('organization_id', settings.organization_id)
+      .order('title', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching avatars:', error);
+    } else {
+      // Combine with default "Support" avatar
+      setAvatars([defaultSupportAvatar, ...data]);
     }
   };
 
@@ -144,6 +198,7 @@ export default function AdminTicketsPage() {
         message: responseMessage,
         user_id: user?.id,
         organization_id: settings.organization_id,
+        avatar_id: selectedAvatar?.id === 'default' ? null : selectedAvatar?.id,
       }),
     });
 
@@ -151,23 +206,27 @@ export default function AdminTicketsPage() {
       const error = await res.json();
       setToast({ message: error.error || 'Failed to respond', type: 'error' });
     } else {
+      const responseData = await res.json(); // Get the response from the API
       setResponseMessage('');
-      await fetchTickets();
-      setSelectedTicket((t) =>
-        t && t.id === selectedTicket.id
+      await fetchTickets(); // Refresh tickets to get the new response with avatar_id
+      setSelectedTicket((prevTicket) =>
+        prevTicket && prevTicket.id === selectedTicket.id
           ? {
-              ...t,
+              ...prevTicket,
               ticket_responses: [
-                ...t.ticket_responses,
+                ...prevTicket.ticket_responses,
                 {
-                  id: crypto.randomUUID(),
+                  id: responseData.id || crypto.randomUUID(), // Use the ID from the API if available
+                  ticket_id: selectedTicket.id,
+                  user_id: user?.id || '',
                   message: responseMessage,
                   is_admin: true,
                   created_at: new Date().toISOString(),
-                },
+                  avatar_id: selectedAvatar?.id === 'default' ? null : selectedAvatar?.id,
+                } as TicketResponse,
               ],
             }
-          : t
+          : prevTicket
       );
       scrollToBottom();
     }
@@ -199,6 +258,10 @@ export default function AdminTicketsPage() {
       textarea.focus();
       textarea.setSelectionRange(start + text.length, start + text.length);
     }, 0);
+  };
+
+  const handleAvatarSelect = (avatar: Avatar) => {
+    setSelectedAvatar(avatar);
   };
 
   const handleLoadMoreBadges = () => {
@@ -282,16 +345,13 @@ export default function AdminTicketsPage() {
         )}
       </button>
       <aside
-        className={`sm:pr-8 fixed inset-y-0 left-0 w-full sm:w-120 z-51 bg-gray-50 border-r border-gray-200 overflow-y-auto p-4 transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`sm:pr-8 fixed inset-y-0 left-0 w-full sm:w-128 z-51 bg-gray-50 border-r border-gray-200 transition-transform duration-300 md:static md:translate-x-0 ${
           isSidebarOpen ? 'translate-x-0 z-40' : '-translate-x-full'
         }`}
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Tickets</h2>
-          <button
-            className="md:hidden text-gray-500"
-            onClick={() => setIsSidebarOpen(false)}
-          >
+          <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(false)}>
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -323,37 +383,65 @@ export default function AdminTicketsPage() {
             );
           })}
         </div>
-        {groupedTickets[activeTab].length === 0 ? (
-          <p className="text-sm text-gray-500">No {activeTab} tickets found.</p>
-        ) : (
-          <ul className="space-y-2">
-            {groupedTickets[activeTab].map((ticket) => (
-              <li
-                key={ticket.id}
-                className={`p-3 rounded cursor-pointer hover:bg-blue-100 relative ${
-                  selectedTicket?.id === ticket.id ? 'bg-blue-200' : 'bg-white'
-                }`}
-                onClick={() => handleTicketSelect(ticket)}
-              >
-                {isWaitingForResponse(ticket) && (
-                  <span className="absolute top-1 right-1 text-xs italic text-sky-500">
-                    Waiting for Response
-                  </span>
-                )}
-                <div className="text-sm font-medium text-gray-800 mt-3">{ticket.subject}</div>
-                <div className="text-xs text-gray-500">{ticket.email}</div>
-                <span
-                  className={`inline-block mt-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
-                    ticket.status
-                  )}`}
+        <div className="h-1/2 overflow-y-auto pr-8">
+          {groupedTickets[activeTab].length === 0 ? (
+            <p className="text-sm text-gray-500">No {activeTab} tickets found.</p>
+          ) : (
+            <ul className="space-y-2">
+              {groupedTickets[activeTab].map((ticket) => (
+                <li
+                  key={ticket.id}
+                  className={`p-3 rounded cursor-pointer hover:bg-blue-100 relative ${
+                    selectedTicket?.id === ticket.id ? 'bg-blue-200' : 'bg-white'
+                  }`}
+                  onClick={() => handleTicketSelect(ticket)}
                 >
-                  {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
-                </span>
-                <div className="text-[10px] text-gray-400 mt-1">ID: {ticket.id}</div>
-              </li>
+                  {isWaitingForResponse(ticket) && (
+                    <span className="absolute top-1 right-4 text-xs italic text-sky-500">
+                      Waiting for Response
+                    </span>
+                  )}
+                  <div className="text-sm font-medium text-gray-800 mt-3">{ticket.subject}</div>
+                  <div className="text-xs text-gray-500">{ticket.email}</div>
+                  <span
+                    className={`inline-block mt-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
+                      ticket.status
+                    )}`}
+                  >
+                    {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                  </span>
+                  <div className="text-[10px] text-gray-400 mt-1">ID: {ticket.id}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="h-1/2 overflow-y-auto mt-2">
+          <h3 className="text-lg font-semibold mb-2">Avatars</h3>
+          <div className="space-y-2">
+            {avatars.map((avatar) => (
+              <div
+                key={avatar.id}
+                className={`p-3 border rounded-lg cursor-pointer flex items-center space-x-3 ${
+                  selectedAvatar?.id === avatar.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:bg-gray-50'
+                }`}
+                onClick={() => handleAvatarSelect(avatar)}
+              >
+                {avatar.image ? (
+                  <img src={avatar.image} alt={avatar.title} className="w-10 h-10 rounded-full" />
+                ) : (
+                  <User className="w-10 h-10 text-gray-400" />
+                )}
+                <div>
+                  <p className="text-sm font-medium">{avatar.title}</p>
+                  {avatar.full_name && <p className="text-xs text-gray-500">{avatar.full_name}</p>}
+                </div>
+              </div>
             ))}
-          </ul>
-        )}
+          </div>
+        </div>
       </aside>
       <main className="flex-1 flex flex-col">
         {!selectedTicket ? (
@@ -362,13 +450,11 @@ export default function AdminTicketsPage() {
           </div>
         ) : (
           <>
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-600">{selectedTicket.subject}</h3>
-              </div>
+            <div className="p-4 border-b border-gray-200 w-full">
+              <h3 className="text-sm font-semibold text-gray-600">{selectedTicket.subject}</h3>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
-              <div className="bg-gray-100 p-4 rounded shadow-sm text-sm">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white w-full">
+              <div className="bg-gray-100 p-4 rounded shadow-sm text-sm w-full">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-xs text-gray-500">Initial message</div>
                   <Popover className="relative">
@@ -409,25 +495,52 @@ export default function AdminTicketsPage() {
                 </div>
                 {selectedTicket.message}
               </div>
-              {selectedTicket.ticket_responses.map((res) => (
-                <div
-                  key={res.id}
-                  className={`max-w-[75%] p-3 text-sm rounded-lg shadow ${
-                    res.is_admin
-                      ? 'ml-auto bg-blue-50 border border-blue-200'
-                      : 'bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  <div className="text-xs text-gray-500 mb-1">
-                    {res.is_admin ? 'Support' : 'Customer'} •{' '}
-                    {new Date(res.created_at).toLocaleString()}
+              {selectedTicket.ticket_responses.map((res) => {
+                const avatar = res.avatar_id
+                  ? avatars.find((a) => a.id === res.avatar_id)
+                  : null;
+                return (
+                  <div
+                    key={res.id}
+                    className={`max-w-[75%] p-3 text-sm rounded-lg shadow ${
+                      res.is_admin
+                        ? 'ml-auto bg-blue-50 border border-blue-200'
+                        : 'bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    <div className="text-xs text-gray-500 mb-1">
+                      {new Date(res.created_at).toLocaleString()}
+                    </div>
+                    <div>{res.message}</div>
+                    {res.is_admin && avatar && (
+                      <div className="mt-2 flex items-center space-x-2">
+                        {avatar.image ? (
+                          <img
+                            src={avatar.image || '/default-avatar.png'}
+                            alt={avatar.title}
+                            className="w-6 h-6 rounded-full"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-gray-400" />
+                        )}
+                        <div>
+                          <p className="text-xs font-medium">{avatar.title}</p>
+                          {avatar.full_name && <p className="text-xs text-gray-500">{avatar.full_name}</p>}
+                        </div>
+                      </div>
+                    )}
+                    {res.is_admin && !avatar && (
+                      <div className="mt-2 flex items-center space-x-2">
+                        <User className="w-6 h-6 text-gray-400" />
+                        <p className="text-xs font-medium">Support</p>
+                      </div>
+                    )}
                   </div>
-                  <div>{res.message}</div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
-            <div className="border-t border-gray-200 p-4 bg-gray-50">
+            <div className="border-t border-gray-200 p-4 bg-gray-50 w-full">
               {selectedTicket.status === 'closed' ? (
                 <div className="text-sm text-gray-500">
                   This ticket is closed. Change the status to "In Progress" to send a response.
