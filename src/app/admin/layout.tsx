@@ -3,7 +3,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { AuthProvider } from '@/context/AuthContext';
-import { AdminProvider } from '@/context/AdminContext'; // Corrected import path
+import { AdminProvider } from '@/context/AdminContext';
 import { BasketProvider } from '@/context/BasketContext';
 import { ModalProvider } from '@/context/ModalContext';
 import ParentMenu from './components/ParentMenu';
@@ -63,15 +63,26 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       setActiveSection('');
     }
     console.log('pathname:', pathname, 'activeSection:', activeSection);
-  }, [pathname, activeSection]);
+  }, [pathname]);
 
+  // Define paths where TablesChildMenu should NOT be shown
+  const excludedPaths = [
+    '/admin', // Exact match for /admin
+    '/admin/tickets/management', // Specific path
+    '/admin/products/management',
+    '/admin/pricingplans/management',
+  ];
+
+  // Logic: Show TablesChildMenu by default unless on excluded paths or reports section
   const shouldShowTablesChildMenu =
-    (isDesktop && !pathname.startsWith('/admin/reports') && pathname !== '/admin') ||
+    (isDesktop &&
+      !excludedPaths.includes(pathname) &&
+      !pathname.startsWith('/admin/reports')) ||
     (!isDesktop && activeSection === 'tables');
 
   return (
     <AuthProvider>
-      <AdminProvider> {/* Add AdminProvider here */}
+      <AdminProvider>
         <BasketProvider>
           <ModalProvider>
             <div className="min-h-screen flex bg-gray-50">
