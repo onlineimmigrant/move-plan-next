@@ -1,3 +1,4 @@
+// app/api/tickets/respond/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -8,6 +9,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function POST(request: Request) {
   try {
     const { ticket_id, message, user_id, organization_id, avatar_id } = await request.json();
+
+    console.log('Received request:', { ticket_id, user_id, organization_id, avatar_id, message });
 
     if (!ticket_id || !message || !user_id || !organization_id) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -49,15 +52,17 @@ export async function POST(request: Request) {
         message,
         is_admin: isAdmin,
         created_at: new Date().toISOString(),
-        avatar_id, // Add avatar_id to the insert query
+        avatar_id: avatar_id === 'default' ? null : avatar_id, // Handle default avatar
       })
-      .select('id, ticket_id, user_id, message, is_admin, created_at, avatar_id') // Include avatar_id in the select
+      .select('id, ticket_id, user_id, message, is_admin, created_at, avatar_id')
       .single();
 
     if (responseError || !response) {
       console.error('Error creating response:', responseError);
-      return NextResponse.json({ error: 'Failed to create response' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to create response', details: responseError.message }, { status: 500 });
     }
+
+    console.log('Response inserted:', response);
 
     const { data: settings, error: settingsError } = await supabase
       .from('settings')
@@ -95,7 +100,6 @@ export async function POST(request: Request) {
 
     const ticketUrl = `https://${settings.domain}/account/profile/tickets/${ticket_id}`;
 
-    // Send email via /api/send-email
     const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

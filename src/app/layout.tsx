@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import { supabase } from '@/lib/supabase';
 import { headers } from 'next/headers';
@@ -9,26 +8,23 @@ import { Settings } from '@/types/settings';
 import { SEOData } from '@/types/seo';
 import { SubMenuItem, MenuItem, ReactIcon } from '@/types/menu';
 
-// No need for local ReactIcon definition
-// interface ReactIcon {
-//   icon_name: string;
-// }
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let currentDomain = 'http://localhost:3000';
   let pathname = '/';
+
   try {
-    const headersList = headers();
-    const host = headersList.get('host') || 'localhost:3000';
+    const headersList = await headers(); // Await headers()
+    const host = (await headersList.get('host')) || 'localhost:3000'; // Await get()
     const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
     currentDomain = `${protocol}://${host}`;
-    pathname = headersList.get('x-invoke-path') || headersList.get('x-pathname') || '/';
+    pathname = (await headersList.get('x-invoke-path')) || (await headersList.get('x-pathname')) || '/'; // Await get()
     console.log('Headers:', { host, pathname, isHeadersInstance: headersList instanceof Headers });
   } catch (error) {
     console.error('Failed to get headers:', error);
     const fallbackHost = process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
     currentDomain = `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${fallbackHost}`;
   }
+
   const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
 
   console.log(`${isBuild ? 'Build-time' : 'Runtime'} domain: ${currentDomain}, pathname: ${pathname}`);

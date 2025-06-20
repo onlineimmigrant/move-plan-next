@@ -77,8 +77,39 @@ export default function AdminTicketsPage() {
   }, [settings.organization_id]);
 
   useEffect(() => {
-    scrollToBottom();
+    if (selectedTicket) {
+      console.log('Subscribing to channel:', `ticket_responses_${selectedTicket.id}`);
+      const channel = supabase
+        .channel(`ticket_responses_${selectedTicket.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'ticket_responses', filter: `ticket_id=eq.${selectedTicket.id}` },
+          (payload) => {
+            console.log('New message received:', payload.new);
+            const newResponse = payload.new as TicketResponse; // Explicitly type the payload
+            setSelectedTicket((prev) => {
+            if (prev && prev.id === selectedTicket.id) {
+                return { ...prev, ticket_responses: [...prev.ticket_responses, newResponse], _update: Date.now() };
+            }
+            return prev;
+            });
+            scrollToBottom();
+          }
+        )
+        .subscribe((status) => {
+          console.log('Channel subscription status:', status);
+        });
+
+      return () => {
+        console.log('Unsubscribing from channel:', `ticket_responses_${selectedTicket.id}`);
+        supabase.removeChannel(channel);
+      };
+    }
   }, [selectedTicket]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [selectedTicket?.ticket_responses]);
 
   const fetchTickets = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -187,50 +218,35 @@ export default function AdminTicketsPage() {
     if (!responseMessage.trim() || !selectedTicket) return;
 
     setIsSubmitting(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const res = await fetch('/api/tickets/respond', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from('ticket_responses').insert({
         ticket_id: selectedTicket.id,
-        message: responseMessage,
         user_id: user?.id,
-        organization_id: settings.organization_id,
+        message: responseMessage,
+        is_admin: true,
+        created_at: new Date().toISOString(),
         avatar_id: selectedAvatar?.id === 'default' ? null : selectedAvatar?.id,
-      }),
-    });
+      }).select();
 
-    if (!res.ok) {
-      const error = await res.json();
-      setToast({ message: error.error || 'Failed to respond', type: 'error' });
-    } else {
-      const responseData = await res.json();
+      if (error) throw new Error(error.message);
+
       setResponseMessage('');
-      await fetchTickets();
       setSelectedTicket((prevTicket) =>
         prevTicket && prevTicket.id === selectedTicket.id
           ? {
               ...prevTicket,
-              ticket_responses: [
-                ...prevTicket.ticket_responses,
-                {
-                  id: responseData.id || crypto.randomUUID(),
-                  ticket_id: selectedTicket.id,
-                  user_id: user?.id || '',
-                  message: responseMessage,
-                  is_admin: true,
-                  created_at: new Date().toISOString(),
-                  avatar_id: selectedAvatar?.id === 'default' ? null : selectedAvatar?.id,
-                } as TicketResponse,
-              ],
+              ticket_responses: [...prevTicket.ticket_responses, data[0]],
             }
           : prevTicket
       );
       scrollToBottom();
+      setToast({ message: 'Response sent successfully', type: 'success' });
+    } catch (error: any) {
+      setToast({ message: error.message || 'Failed to respond', type: 'error' });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   const handleTicketSelect = async (ticket: Ticket) => {
@@ -407,7 +423,11 @@ export default function AdminTicketsPage() {
                       ticket.status
                     )}`}
                   >
-                    {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                    {ticket.status === 'in progress'
+                      ? 'In Progress'
+                      : ticket.status === 'closed'
+                      ? 'Closed'
+                      : 'Open'}
                   </span>
                   <div className="text-[10px] text-gray-400 mt-1">ID: {ticket.id}</div>
                 </li>
@@ -427,7 +447,7 @@ export default function AdminTicketsPage() {
               <h3 className="text-sm font-semibold text-gray-600">{selectedTicket.subject}</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white w-full">
-              <div className="bg-gray-100 p-4 rounded shadow-sm text-sm w-full">
+              <div className="bg-gray-100 p-4 rounded-lg shadow-sm text-sm mb-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-xs text-gray-500">Initial message</div>
                   <Popover className="relative">
@@ -482,7 +502,7 @@ export default function AdminTicketsPage() {
                     }`}
                   >
                     <div className="text-xs text-gray-500 mb-1">
-                      {res.is_admin && avatar ? `${avatar.title} • ` : res.is_admin ? 'Support • ' : ''}
+                      {res.is_admin && avatar ? `${avatar.title} • ` : res.is_admin ? 'Support • ' : 'Customer • '}
                       {new Date(res.created_at).toLocaleString()}
                     </div>
                     <div>{res.message}</div>
@@ -497,12 +517,16 @@ export default function AdminTicketsPage() {
                         ) : (
                           <User className="w-5 h-5 text-gray-400 rounded-full" />
                         )}
-                        {avatar.full_name && <p className="text-xs text-gray-500">{avatar.full_name}</p>}
+                        <div>
+                          <p className="text-xs font-medium">{avatar.title}</p>
+                          {avatar.full_name && <p className="text-xs text-gray-500">{avatar.full_name}</p>}
+                        </div>
                       </div>
                     )}
                     {res.is_admin && !avatar && (
                       <div className="mt-2 flex items-center justify-end space-x-2">
                         <User className="w-5 h-5 text-gray-400 rounded-full" />
+                        <p className="text-xs font-medium">Support</p>
                       </div>
                     )}
                     {!res.is_admin && (
@@ -582,14 +606,13 @@ export default function AdminTicketsPage() {
                 </div>
               ) : (
                 <>
-                  <textarea
-                    ref={textareaRef}
-                    value={responseMessage}
-                    onChange={(e) => setResponseMessage(e.target.value)}
-                    rows={3}
-                    placeholder="Type your response..."
-                    className="w-full border border-gray-200 bg-white rounded p-2 text-sm mb-2"
-                  />
+   <textarea
+  ref={textareaRef}
+  value={responseMessage}
+  onChange={(e) => setResponseMessage(e.target.value)}
+  placeholder="Type your response..."
+  className="w-full border border-gray-200 bg-white rounded-lg p-2 text-sm mb-2"
+/>
                   <div className="flex flex-wrap gap-2 mb-2">
                     {visibleBadges.map((response) => (
                       <button
@@ -627,9 +650,7 @@ export default function AdminTicketsPage() {
                           key={status}
                           value={status}
                           className={({ active }) =>
-                            `px-4 py-2 cursor-pointer ${
-                              active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
-                            }`
+                            `px-4 py-2 cursor-pointer ${active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'}`
                           }
                         >
                           {status.charAt(0).toUpperCase() + status.slice(1)}
