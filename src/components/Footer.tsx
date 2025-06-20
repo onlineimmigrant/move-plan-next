@@ -1,29 +1,30 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
-import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu'; // Import shared types
+import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu';
 
 interface FooterProps {
-  companyLogo?: string;
-  menuItems?: MenuItem[]; // Use shared MenuItem type
+  menuItems?: MenuItem[];
   error?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuItems = [], error }) => {
-  const { session, logout } = useAuth();
+const Footer: React.FC<FooterProps> = ({ menuItems = [], error = '' }) => {
+  const [isMounted, setIsMounted] = useState(false);
+  const { session, logout = () => {} } = useAuth();
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
   const router = useRouter();
   const isLoggedIn = !!session;
   const maxItemsPerColumn = 8;
 
-  console.log('Menu items in Footer:', JSON.stringify(menuItems, null, 2));
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
     const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
@@ -53,8 +54,6 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
     };
   }, [menuItems]);
 
-  const totalColumns = itemsWithSubitems.length + groupedItemsWithoutSubitems.length + 1;
-
   const handleLogout = () => {
     logout();
     router.push('/login');
@@ -64,181 +63,117 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
 
   const footerBackground = settings?.footer_color || 'gray-800';
 
-  if (error) {
-    return (
-      <footer className={`bg-${footerBackground} py-12 text-sm text-white min-h-[300px]`}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-red-300 min-h-[160px] flex items-center justify-center">
-            <p>{error}</p>
-          </div>
-          <div className="mt-12 border-t border-gray-100 pt-8 text-center">
-            <p className="text-xs font-medium tracking-widest text-gray-300">
-              © 2025 {settings?.site || 'Company'}. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
-    );
-  }
-
-  if (itemsWithSubitems.length === 0 && groupedItemsWithoutSubitems.length === 0) {
-    return (
-      <footer className={`bg-${footerBackground} py-12 text-sm text-white min-h-[300px]`}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            {settings?.image ? (
-              <Image
-                src={settings.image}
-                alt="Logo"
-                width={32}
-                height={32}
-                className="h-8 w-auto mb-4"
-                priority={false}
-                onError={(e) => {
-                  console.error('Failed to load logo:', settings.image);
-                  e.currentTarget.src = companyLogo;
-                }}
-              />
-            ) : (
-              <div className="h-8 w-8 bg-gray-600 rounded animate-pulse mb-4" aria-busy="true" />
-            )}
-            <button
-              onClick={() => setShowSettings(true)}
-              className="hover:text-gray-300"
-              aria-label="Privacy Settings"
-            >
-              <strong>Privacy Settings</strong>
-            </button>
-          </div>
-          <div className="mt-12 border-t border-gray-100 pt-8 text-center">
-            <p className="text-xs font-medium tracking-widest text-gray-300">
-              © 2025 {settings?.site || 'Company'}. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
-    );
+  if (!isMounted) {
+    return null;
   }
 
   return (
-    <footer className={`bg-${footerBackground} py-12 text-sm text-white min-h-[300px]`}>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          {settings?.image ? (
-            <Image
-              src={settings.image}
-              alt="Logo"
-              width={32}
-              height={32}
-              className="h-8 w-auto mb-4"
-              priority={false}
-              onError={(e) => {
-                console.error('Failed to load logo:', settings.image);
-                e.currentTarget.src = companyLogo;
-              }}
-            />
-          ) : (
-            <div className="h-8 w-8 bg-gray-600 rounded animate-pulse mb-4" aria-busy="true" />
-          )}
+    <footer className={`bg-${footerBackground} py-8 text-sm text-white px-4`}>
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-4 flex items-center">
           <button
             onClick={() => setShowSettings(true)}
-            className="hover:text-gray-300"
+            className="text-gray-300 hover:text-white whitespace-nowrap"
             aria-label="Privacy Settings"
           >
-            <strong>Privacy Settings</strong>
+            Privacy Settings
           </button>
         </div>
 
-        <div
-          className={`grid grid-cols-2 gap-8 md:grid-cols-2 lg:grid-cols-${Math.min(totalColumns, 4)}`}
-        >
-          {itemsWithSubitems.map((item) => (
-            <div key={item.id}>
-              <h3 className="mb-4 font-semibold">
-                <Link href={item.url_name} className="hover:text-gray-300">
-                  {item.display_name}
-                </Link>
-              </h3>
-              <ul className="space-y-2">
-                {item.website_submenuitem
-                  ?.filter((subItem) => subItem.is_displayed !== false)
-                  .map((subItem) => (
-                    <li key={subItem.id}>
-                      <Link href={subItem.url_name} className="text-gray-300 hover:text-white">
-                        {subItem.name}
-                      </Link>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ))}
-
-          {groupedItemsWithoutSubitems.map((group, index) => (
-            <div key={`group-${index}`}>
-              <h3 className="mb-4 text-sm font-semibold">
-                <Link
-                  className="text-white hover:text-gray-300"
-                  href={group[0]?.url_name || '#'}
-                >
-                  {itemsWithSubitems.length ? '' : 'Links'}
-                </Link>
-              </h3>
-              <ul className="space-y-2">
-                {group.map((item) => (
-                  <li key={item.id}>
-                    <Link href={item.url_name} className="text-gray-300 hover:text-white">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-min">
+          {menuItems.length === 0 ? (
+            <span className="text-gray-500">No menu items available</span>
+          ) : (
+            <>
+              {itemsWithSubitems.map((item) => (
+                <div key={item.id}>
+                  <h3 className="mb-2 font-medium text-white">
+                    <Link href={item.url_name} className="hover:text-gray-300">
                       {item.display_name}
                     </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                  </h3>
+                  <ul className="space-y-1">
+                    {item.website_submenuitem
+                      ?.filter((subItem) => subItem.is_displayed !== false)
+                      .map((subItem) => (
+                        <li key={subItem.id}>
+                          <Link href={subItem.url_name} className="text-gray-300 hover:text-white">
+                            {subItem.name}
+                          </Link>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ))}
 
-          <div>
-            <h3 className="mb-4 text-sm font-semibold">Profile</h3>
-            <ul className="space-y-2">
-              {isLoggedIn ? (
-                <li>
-                  <button
-                    onClick={handleLogout}
-                    type="button"
-                    className="text-gray-300 hover:text-white"
-                    aria-label="Logout"
-                  >
-                    Logout
-                  </button>
-                </li>
-              ) : (
-                <>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={handleNavigation('/login')}
-                      className="text-gray-300 hover:text-white"
-                      aria-label="Login"
+              {groupedItemsWithoutSubitems.map((group, index) => (
+                <div key={`group-${index}`}>
+                  <h3 className="mb-2 font-medium text-white">
+                    <Link
+                      className="hover:text-gray-300"
+                      href={group[0]?.url_name || '#'}
                     >
-                      Login
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={handleNavigation('/register')}
-                      className="text-gray-300 hover:text-white"
-                      aria-label="Register"
-                    >
-                      Register
-                    </button>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
+                      {itemsWithSubitems.length ? '' : 'Links'}
+                    </Link>
+                  </h3>
+                  <ul className="space-y-1">
+                    {group.map((item) => (
+                      <li key={item.id}>
+                        <Link href={item.url_name} className="text-gray-300 hover:text-white">
+                          {item.display_name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+
+              <div>
+                <h3 className="mb-2 font-medium text-white">Profile</h3>
+                <ul className="space-y-1">
+                  {isLoggedIn ? (
+                    <li>
+                      <button
+                        onClick={handleLogout}
+                        type="button"
+                        className="text-gray-300 hover:text-white"
+                        aria-label="Logout"
+                      >
+                        Logout
+                      </button>
+                    </li>
+                  ) : (
+                    <>
+                      <li>
+                        <button
+                          type="button"
+                          onClick={handleNavigation('/login')}
+                          className="text-gray-300 hover:text-white"
+                          aria-label="Login"
+                        >
+                          Login
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          onClick={handleNavigation('/register')}
+                          className="text-gray-300 hover:text-white"
+                          aria-label="Register"
+                        >
+                          Register
+                        </button>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="mt-12 border-t border-gray-100 pt-8 text-center">
-          <p className="text-xs font-medium tracking-widest text-gray-300">
+        <div className="mt-4 border-t border-gray-600 pt-4 text-center">
+          <p className="text-xs text-gray-300">
             © 2025 {settings?.site || 'Company'}. All rights reserved.
           </p>
         </div>
@@ -247,4 +182,4 @@ const Footer: React.FC<FooterProps> = ({ companyLogo = '/images/logo.svg', menuI
   );
 };
 
-export default Footer;
+export default React.memo(Footer);

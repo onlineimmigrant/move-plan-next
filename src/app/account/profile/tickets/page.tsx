@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useSettings } from '@/context/SettingsContext';
 import Button from '@/ui/Button';
 import Toast from '@/components/Toast';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, Users } from 'lucide-react';
 import AccountTab from '@/components/AccountTab';
 
 interface TicketResponse {
@@ -13,6 +13,7 @@ interface TicketResponse {
   message: string;
   is_admin: boolean;
   created_at: string;
+  avatar_id?: string;
 }
 
 interface Ticket {
@@ -28,7 +29,14 @@ interface Ticket {
   ticket_responses: TicketResponse[];
 }
 
-const statuses = ['open', 'in progress', 'closed'];
+interface Avatar {
+  id: string;
+  title: string;
+  full_name?: string;
+  image?: string;
+}
+
+const statuses = ['in progress', 'open', 'closed'];
 
 export default function CustomerTicketsPage() {
   const { settings } = useSettings();
@@ -39,10 +47,12 @@ export default function CustomerTicketsPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [activeTab, setActiveTab] = useState(statuses[0]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [avatars, setAvatars] = useState<Avatar[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchTickets();
+    fetchAvatars();
   }, []);
 
   useEffect(() => {
@@ -77,58 +87,58 @@ export default function CustomerTicketsPage() {
     }
   };
 
+  const fetchAvatars = async () => {
+    const { data, error } = await supabase
+      .from('ticket_avatars')
+      .select('id, title, full_name, image')
+      .eq('organization_id', settings.organization_id)
+      .order('title', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching avatars:', error);
+    } else {
+      setAvatars([{ id: 'default', title: 'Support', full_name: undefined, image: undefined }, ...data]);
+    }
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleRespond = async () => {
-    if (!responseMessage.trim() || !selectedTicket) return;
+// In CustomerTicketsPage, replace handleRespond
+const handleRespond = async () => {
+  if (!responseMessage.trim() || !selectedTicket) return;
 
-    setIsSubmitting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const response = await fetch('/api/tickets/respond', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ticket_id: selectedTicket.id,
-          message: responseMessage,
-          user_id: user?.id,
-          organization_id: settings.organization_id,
-        }),
-      });
+  setIsSubmitting(true);
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase.from('ticket_responses').insert({
+      ticket_id: selectedTicket.id,
+      user_id: user?.id,
+      message: responseMessage,
+      is_admin: false,
+      created_at: new Date().toISOString(),
+    }).select();
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit response');
-      }
+    if (error) throw new Error(error.message);
 
-      setResponseMessage('');
-      await fetchTickets();
-      setSelectedTicket((t) =>
-        t && t.id === selectedTicket.id
-          ? {
-              ...t,
-              ticket_responses: [
-                ...t.ticket_responses,
-                {
-                  id: crypto.randomUUID(),
-                  message: responseMessage,
-                  is_admin: false,
-                  created_at: new Date().toISOString(),
-                },
-              ],
-            }
-          : t
-      );
-      scrollToBottom();
-      setToast({ message: 'Response sent successfully', type: 'success' });
-    } catch (error: any) {
-      setToast({ message: error.message || 'Failed to submit response', type: 'error' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    setResponseMessage('');
+    setSelectedTicket((t) =>
+      t && t.id === selectedTicket.id
+        ? {
+            ...t,
+            ticket_responses: [...t.ticket_responses, data[0]],
+          }
+        : t
+    );
+    scrollToBottom();
+    setToast({ message: 'Response sent successfully', type: 'success' });
+  } catch (error: any) {
+    setToast({ message: error.message || 'Failed to submit response', type: 'error' });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleTicketSelect = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -144,6 +154,7 @@ export default function CustomerTicketsPage() {
   );
 
   const isWaitingForResponse = (ticket: Ticket) => {
+    if (ticket.status === 'closed') return false; // Do not mark closed tickets as waiting
     if (ticket.ticket_responses.length === 0) return false;
     const latestResponse = ticket.ticket_responses[ticket.ticket_responses.length - 1];
     return latestResponse.is_admin; // Customer should respond if Support sent last
@@ -195,9 +206,7 @@ export default function CustomerTicketsPage() {
   };
 
   return (
-    
-    <div className="flex  py-4 pt-16 h-screen mx-auto max-w-5xl">
-     
+    <div className="flex py-4 pt-16 h-screen mx-auto max-w-5xl">
       {toast && <Toast {...toast} onClose={() => setToast(null)} duration={5000} />}
       <button
         className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-sky-600 text-white rounded-full flex items-center justify-center relative"
@@ -217,10 +226,7 @@ export default function CustomerTicketsPage() {
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">My Tickets</h2>
-          <button
-            className="md:hidden text-gray-500"
-            onClick={() => setIsSidebarOpen(false)}
-          >
+          <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(false)}>
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -276,7 +282,11 @@ export default function CustomerTicketsPage() {
                     ticket.status
                   )}`}
                 >
-                  {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                  {ticket.status === 'in progress'
+                    ? 'In Progress'
+                    : ticket.status === 'closed'
+                    ? 'Closed'
+                    : 'Open'}
                 </span>
                 <div className="text-[10px] text-gray-400 mt-1">ID: {ticket.id}</div>
               </li>
@@ -297,26 +307,61 @@ export default function CustomerTicketsPage() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
-              <div className="bg-gray-100 p-4 rounded shadow-sm text-sm">
+              <div className="bg-gray-100 p-4 rounded-lg shadow-sm text-sm mb-4">
                 <div className="text-xs text-gray-500 mb-2">Initial message</div>
                 {selectedTicket.message}
               </div>
-              {selectedTicket.ticket_responses.map((res) => (
-                <div
-                  key={res.id}
-                  className={`max-w-[75%] p-3 text-sm rounded-lg shadow ${
-                    res.is_admin
-                      ? 'ml-auto bg-blue-50 border border-blue-200'
-                      : 'bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  <div className="text-xs text-gray-500 mb-1">
-                    {res.is_admin ? 'Support' : selectedTicket.email} •{' '}
-                    {new Date(res.created_at).toLocaleString()}
+              {selectedTicket.ticket_responses.map((res) => {
+                const avatar = res.avatar_id
+                  ? avatars.find((a) => a.id === res.avatar_id)
+                  : null;
+                return (
+                  <div
+                    key={res.id}
+                    className={`max-w-[75%] p-3 text-sm rounded-lg shadow ${
+                      res.is_admin
+                        ? 'ml-auto bg-blue-50 border border-blue-200'
+                        : 'bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    <div className="text-xs text-gray-500 mb-1">
+                      {res.is_admin ? (avatar ? avatar.title : 'Support') : 'You'} •{' '}
+                      {new Date(res.created_at).toLocaleString()}
+                    </div>
+                    <div>{res.message}</div>
+                    {res.is_admin && avatar && (
+                      <div className="mt-2 flex items-center justify-end space-x-2">
+                        {avatar.image ? (
+                          <img
+                            src={avatar.image || '/default-avatar.png'}
+                            alt={avatar.title}
+                            className="w-5 h-5 rounded-full"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-gray-400 rounded-full" />
+                        )}
+                        {avatar.full_name && <p className="text-xs text-gray-500">{avatar.full_name}</p>}
+                      </div>
+                    )}
+                    {res.is_admin && !avatar && (
+                      <div className="mt-2 flex items-center justify-end space-x-2">
+                        <User className="w-5 h-5 text-gray-400 rounded-full" />
+                      </div>
+                    )}
+                    {!res.is_admin && selectedTicket.full_name && (
+                      <div className="mt-2 flex items-center justify-end space-x-2">
+                        <Users className="w-5 h-5 text-green-500 rounded-full" />
+                        <p className="text-xs font-medium">{selectedTicket.full_name}</p>
+                      </div>
+                    )}
+                    {!res.is_admin && !selectedTicket.full_name && (
+                      <div className="mt-2 flex items-center justify-end">
+                        <Users className="w-5 h-5 text-green-500 rounded-full" />
+                      </div>
+                    )}
                   </div>
-                  <div>{res.message}</div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
             <div className="border-t border-gray-200 p-4 bg-gray-50">
@@ -329,9 +374,9 @@ export default function CustomerTicketsPage() {
                     onChange={(e) => setResponseMessage(e.target.value)}
                     rows={3}
                     placeholder="Type your response..."
-                    className="w-full border border-gray-200 bg-white rounded p-2 text-sm mb-2"
+                    className="w-full border border-gray-200 bg-white rounded-lg p-2 text-sm mb-4"
                   />
-                  <div className="flex justify-end mt-2">
+                  <div className="flex justify-end">
                     <Button
                       onClick={handleRespond}
                       disabled={isSubmitting || !responseMessage.trim()}
