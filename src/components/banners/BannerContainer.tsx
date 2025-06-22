@@ -1,14 +1,16 @@
+// src/components/banners/BannerContainer.tsx
 import { usePathname } from 'next/navigation';
 import { useBanner } from '@/context/BannerContext';
 import { Banner } from './Banner';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { BannerType } from './types';
+import React from 'react';
 
 interface BannerContainerProps {
   banners?: BannerType[];
 }
 
-export const BannerContainer = ({ banners }: BannerContainerProps) => {
+export const BannerContainer = React.memo(function BannerContainer({ banners }: BannerContainerProps) {
   const { banners: contextBanners } = useBanner();
   const pathname = usePathname();
   const bannersToRender = banners || contextBanners;
@@ -28,6 +30,6 @@ export const BannerContainer = ({ banners }: BannerContainerProps) => {
         ))}
     </div>
   );
-};
+});
 
 export default BannerContainer;
