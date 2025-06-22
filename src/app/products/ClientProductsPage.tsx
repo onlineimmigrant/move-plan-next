@@ -223,7 +223,7 @@ export default function ClientProductsPage({
                     </div>
                   )}
                   <div className="p-4 flex flex-col flex-grow">
-                    <h2 className="tracking-tight text-sm sm:text-lg line-clamp-1 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
+                    <h2 className="tracking-tight text-sm sm:text-lg line-clamp-2 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
                       {product.product_name ?? 'Unnamed Product'}
                     </h2>
                   </div>

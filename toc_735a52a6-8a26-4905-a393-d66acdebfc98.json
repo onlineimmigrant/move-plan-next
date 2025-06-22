@@ -1,0 +1,107 @@
+[
+  {
+    "topic": "CHAPTER 1. ESSENTIAL PRINCIPLES",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "CHAPTER 2. ENSURING TRUST AND FAIR CONDUCT",
+    "href": "chapter-2.xhtml",
+    "order": 1
+  },
+  {
+    "topic": "2.1. Non-Discrimination",
+    "href": "chapter-2.xhtml#chapter-2-52",
+    "order": 2
+  },
+  {
+    "topic": "2.1.1. Accommodations for Disabled Clients or Employees",
+    "href": "chapter-3.xhtml",
+    "order": 3
+  },
+  {
+    "topic": "2.2. Avoidance of Abuse of Position",
+    "href": "chapter-3.xhtml#chapter-3-66",
+    "order": 4
+  },
+  {
+    "topic": "2.3. Honesty toward all Parties",
+    "href": "chapter-3.xhtml#chapter-3-73",
+    "order": 5
+  },
+  {
+    "topic": "2.4. Fulfilling Undertakings",
+    "href": "chapter-3.xhtml#chapter-3-79",
+    "order": 6
+  },
+  {
+    "topic": "2.4.1. Definition of an Undertaking",
+    "href": "chapter-4.xhtml",
+    "order": 7
+  },
+  {
+    "topic": "2.4.2. Recommended Practices for Undertakings",
+    "href": "chapter-5.xhtml",
+    "order": 8
+  },
+  {
+    "topic": "2.4.3. Common Pitfalls in Undertakings",
+    "href": "chapter-6.xhtml",
+    "order": 9
+  },
+  {
+    "topic": "2.4.4. Undertakings Based on Future Events",
+    "href": "chapter-7.xhtml",
+    "order": 10
+  },
+  {
+    "topic": "2.4.5. Recording Undertakings",
+    "href": "chapter-8.xhtml",
+    "order": 11
+  },
+  {
+    "topic": "2.4.6. Implications of Failing to Honour an Undertaking",
+    "href": "chapter-9.xhtml",
+    "order": 12
+  },
+  {
+    "topic": "CHAPTER 3. DISPUTE RESOLUTION AND LEGAL PROCEEDINGS",
+    "href": "chapter-10.xhtml",
+    "order": 13
+  },
+  {
+    "topic": "3.1. Handling Evidence and Witness Testimony",
+    "href": "chapter-10.xhtml#chapter-10-130",
+    "order": 14
+  },
+  {
+    "topic": "3.1.1. Proper Treatment of Evidence",
+    "href": "chapter-11.xhtml",
+    "order": 15
+  },
+  {
+    "topic": "3.1.2. Guidelines for Witness Compensation",
+    "href": "chapter-12.xhtml",
+    "order": 16
+  },
+  {
+    "topic": "3.2. Courtroom Duties",
+    "href": "chapter-12.xhtml#chapter-12-140",
+    "order": 17
+  },
+  {
+    "topic": "3.2.1. Efficiency in Court",
+    "href": "chapter-13.xhtml",
+    "order": 18
+  },
+  {
+    "topic": "3.2.2. Adherence to Court Orders",
+    "href": "chapter-14.xhtml",
+    "order": 19
+  },
+  {
+    "topic": "3.2.3. Disclosure of Laws and Irregularities",
+    "href": "chapter-15.xhtml",
+    "order": 20
+  }
+]
