@@ -54,52 +54,82 @@ export default function ClientProviders({
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [headings, setHeadings] = useState<TemplateHeadingSection[]>([]);
   const [loading, setLoading] = useState(true);
+  const cache = useMemo(() => new Map<string, { sections: TemplateSection[]; headings: TemplateHeadingSection[] }>(), []);
 
   useEffect(() => {
     const fetchTemplateData = async () => {
       try {
         setLoading(true);
         const urlPage = pathname === '/' ? '/home' : pathname;
+        const cacheKey = urlPage;
+
+        if (cache.has(cacheKey)) {
+          const cachedData = cache.get(cacheKey)!;
+          setSections(cachedData.sections);
+          setHeadings(cachedData.headings);
+          console.log('Using cached template data for:', cacheKey);
+          setLoading(false);
+          return;
+        }
+
         const clientBaseUrl = getBaseUrl(false);
         console.log('Client baseUrl:', clientBaseUrl);
 
-        const sectionsResponse = await fetch(
-          `${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`,
-          { cache: 'no-store' }
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Fetch timeout')), 5000)
         );
+
+        const sectionsStart = Date.now();
+        const sectionsResponse = await Promise.race([
+          fetch(`${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`, {
+            cache: 'no-store',
+          }),
+          timeoutPromise,
+        ]) as Response;
+        console.log('Sections fetch duration:', Date.now() - sectionsStart, 'ms');
         if (!sectionsResponse.ok) {
           const errorData = await sectionsResponse.json();
+          console.error('Sections fetch error:', errorData);
           throw new Error(errorData.error || 'Failed to fetch template sections');
         }
         const sectionsData = await sectionsResponse.json();
         console.log('Sections data:', sectionsData);
-        setSections(sectionsData || []);
 
-        const headingsResponse = await fetch(
-          `${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`,
-          { cache: 'no-store' }
-        );
+        const headingsStart = Date.now();
+        const headingsResponse = await Promise.race([
+          fetch(`${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`, {
+            cache: 'no-store',
+          }),
+          timeoutPromise,
+        ]) as Response;
+        console.log('Headings fetch duration:', Date.now() - headingsStart, 'ms');
         if (!headingsResponse.ok) {
           const errorData = await headingsResponse.json();
+          console.error('Headings fetch error:', errorData);
           throw new Error(errorData.error || 'Failed to fetch template headings');
         }
         const headingsData = await headingsResponse.json();
         console.log('Headings data:', headingsData);
+
+        cache.set(cacheKey, { sections: sectionsData || [], headings: headingsData || [] });
+        setSections(sectionsData || []);
         setHeadings(headingsData || []);
       } catch (error) {
-        console.error('Error fetching template data:', error);
+        console.error('Error fetching template data:');
         setSections([]);
         setHeadings([]);
       } finally {
         setLoading(false);
+        console.log('Loading state set to false at:', new Date().toISOString());
       }
     };
 
     fetchTemplateData();
-  }, [pathname]);
+  }, [pathname, cache]);
 
-  const showNavbarFooter = !hideNavbarFooterPrefixes.some((prefix) =>
-    pathname.startsWith(prefix)
+  const showNavbarFooter = useMemo(
+    () => !hideNavbarFooterPrefixes.some((prefix) => pathname.startsWith(prefix)),
+    [pathname]
   );
 
   return (
@@ -147,8 +177,14 @@ function BannerAwareContent({
     () => banners.filter((b) => !b.isFixedAboveNavbar || b.isDismissed || b.position !== 'top'),
     [banners]
   );
-  const fixedBannersHeight = getFixedBannersHeight();
+  const fixedBannersHeight = useMemo(() => getFixedBannersHeight(), [getFixedBannersHeight]);
 
+  useEffect(() => {
+    console.log('BannerAwareContent re-rendered at:', new Date().toISOString());
+    console.log('Banners reference changed:', banners);
+  }, [banners]);
+
+  console.log('Loading state:', loading);
   console.log('All banners:', JSON.stringify(banners, null, 2));
   console.log('Fixed banners:', JSON.stringify(fixedBanners, null, 2));
   console.log('Non-fixed banners:', JSON.stringify(nonFixedBanners, null, 2));
