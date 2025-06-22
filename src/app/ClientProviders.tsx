@@ -1,3 +1,4 @@
+// src/app/ClientProviders.tsx
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -23,7 +24,7 @@ import { TemplateSection } from '@/types/template_section';
 import { TemplateHeadingSection } from '@/types/template_heading_section';
 import { useBanner } from '@/context/BannerContext';
 import { Banner } from '@/components/banners/types';
-import { MenuItem } from '@/types/menu'; // Import MenuItem from shared types
+import { MenuItem } from '@/types/menu';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -79,7 +80,7 @@ export default function ClientProviders({
           { cache: 'no-store' }
         );
         if (!headingsResponse.ok) {
-          const errorData = await sectionsResponse.json();
+          const errorData = await headingsResponse.json();
           throw new Error(errorData.error || 'Failed to fetch template headings');
         }
         const headingsData = await headingsResponse.json();
@@ -175,7 +176,6 @@ function BannerAwareContent({
               {children}
               <TemplateHeadingSections />
               <TemplateSections />
-              
               <BannerContainer banners={nonFixedBanners} />
             </main>
           )}
