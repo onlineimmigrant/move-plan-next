@@ -1,6 +1,8 @@
+// src/context/BannerContext.tsx
 'use client';
-import { Banner } from '@/components/banners/types';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+
+import { Banner, BannerContent, BannerOpenState, BannerPosition } from '@/components/banners/types';
+import { createContext, useCallback, useContext, useEffect, useState, useRef, useMemo } from 'react';
 import { fetchBanners, dismissBanner as supabaseDismissBanner } from '@/lib/supabase';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthContext';
@@ -54,6 +56,7 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
   const [banners, setBanners] = useState<Banner[]>([]);
   const pathname = usePathname();
   const { session } = useAuth();
+  const bannerRefs = useRef<Map<string, HTMLElement>>(new Map());
 
   const getDismissedBannerIds = () => {
     if (!session?.user) {
@@ -88,17 +91,27 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
       const fetchedBanners = await fetchBanners(pathname, session?.user?.id);
       console.log('Fetched banners in context:', JSON.stringify(fetchedBanners, null, 2));
       const dismissedBannerIds = getDismissedBannerIds();
+      console.log('Dismissed Banner IDs in context:', dismissedBannerIds);
       const mappedBanners: Banner[] = fetchedBanners.map((banner) => {
-        const isFixed = banner.is_fixed_above_navbar;
+        const isFixed = Boolean(banner.is_fixed_above_navbar ?? false);
+        const content: BannerContent = banner.content ?? { text: '' };
         const mappedBanner: Banner = {
-          ...banner,
-          isOpen: banner.isOpen,
+          id: banner.id,
+          position: banner.position ?? 'top',
+          type: banner.type ?? 'permanent',
+          is_enabled: banner.is_enabled ?? true,
+          content,
+           landing_content: (banner as any).landing_content ?? null, // Temporary type assertion
+          openState: banner.openState ?? 'full',
+          dismissal_duration: banner.dismissal_duration,
+          page_paths: banner.page_paths ?? null,
+          isOpen: banner.isOpen ?? false,
           isDismissed: dismissedBannerIds.includes(banner.id) || banner.isDismissed,
-        //  isFixedAboveNavbar: isFixed,
+          isFixedAboveNavbar: isFixed,
           is_fixed_above_navbar: isFixed,
         };
         console.log(
-          `Mapped banner ${banner.id}: is_fixed_above_navbar=${banner.is_fixed_above_navbar}, isFixedAboveNavbar=${isFixed}`,
+          `Mapped banner ${banner.id}: isFixedAboveNavbar=${isFixed}, isDismissed=${mappedBanner.isDismissed}`,
           JSON.stringify(mappedBanner, null, 2)
         );
         return mappedBanner;
@@ -115,23 +128,23 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
     fetchAndSetBanners();
   }, [fetchAndSetBanners]);
 
-  const openBanner = (bannerId: string, openState: Banner['openState']) => {
+  const openBanner = useCallback((bannerId: string, openState: Banner['openState']) => {
     setBanners((prevBanners) =>
       prevBanners.map((banner) =>
         banner.id === bannerId ? { ...banner, isOpen: true, openState } : banner
       )
     );
-  };
+  }, []);
 
-  const closeBanner = (bannerId: string) => {
+  const closeBanner = useCallback((bannerId: string) => {
     setBanners((prevBanners) =>
       prevBanners.map((banner) =>
         banner.id === bannerId ? { ...banner, isOpen: false } : banner
       )
     );
-  };
+  }, []);
 
-  const dismissBanner = async (bannerId: string) => {
+  const dismissBanner = useCallback(async (bannerId: string) => {
     const banner = banners.find((b) => b.id === bannerId);
     if (session?.user?.id) {
       await supabaseDismissBanner(bannerId, session.user.id, banner?.dismissal_duration);
@@ -143,20 +156,45 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
         banner.id === bannerId ? { ...banner, isDismissed: true } : banner
       )
     );
-  };
+  }, [banners, session]);
+
+  const setBannerRef = useCallback((bannerId: string, element: HTMLElement | null) => {
+    if (element) {
+      bannerRefs.current.set(bannerId, element);
+    } else {
+      bannerRefs.current.delete(bannerId);
+    }
+  }, []);
 
   const getFixedBannersHeight = useCallback(() => {
     const fixedBanners = banners.filter(
-      (b) => b.isFixedAboveNavbar && !b.isDismissed && b.position === 'top'
+      (b) => b.isFixedAboveNavbar && !b.isDismissed && b.position === 'top' && b.is_enabled
     );
-    const height = fixedBanners.length * 56; // 3rem = 48px
+    let totalHeight = 0;
+    fixedBanners.forEach((banner) => {
+      const element = bannerRefs.current.get(banner.id);
+      if (element) {
+        totalHeight += element.offsetHeight || 0;
+      }
+    });
     console.log('Fixed banners for height calc:', JSON.stringify(fixedBanners, null, 2));
-    console.log('Calculated fixed banners height:', height);
-    return height;
+    console.log('Calculated fixed banners height:', totalHeight);
+    return totalHeight;
   }, [banners]);
 
+  const contextValue = useMemo(
+    () => ({
+      banners,
+      openBanner,
+      closeBanner,
+      dismissBanner,
+      getFixedBannersHeight,
+    }),
+    [banners, openBanner, closeBanner, dismissBanner, getFixedBannersHeight]
+  );
+
   return (
-    <BannerContext.Provider value={{ banners, openBanner, closeBanner, dismissBanner, getFixedBannersHeight }}>
+    <BannerContext.Provider value={contextValue}>
       {children}
     </BannerContext.Provider>
   );
