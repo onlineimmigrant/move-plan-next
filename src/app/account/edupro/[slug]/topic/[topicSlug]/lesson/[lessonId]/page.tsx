@@ -47,9 +47,21 @@ const isPurchaseActive = (purchase: Purchase): boolean => {
   return currentDate >= startDate && (!endDate || currentDate <= endDate);
 };
 
-const fetchSasUrl = async (filePath: string, lessonId: string, accessToken: string | undefined) => {
+// app/account/edupro/[slug]/topic/[topicSlug]/lesson/[lessonId]/page.tsx
+const fetchSasUrl = async (filePath: string, lessonId: string, accessToken: string | undefined): Promise<ArrayBuffer | null> => {
   try {
-    if (!accessToken) return null;
+    if (!accessToken) {
+      console.error('No access token provided');
+
+      return null;
+    }
+    if (!filePath || !lessonId) {
+      console.error('Invalid parameters:', { filePath, lessonId });
+      
+      return null;
+    }
+
+    console.log('Fetching SAS URL for:', { filePath, lessonId });
     const response = await fetch('/api/generate-sas', {
       method: 'POST',
       headers: {
@@ -60,15 +72,52 @@ const fetchSasUrl = async (filePath: string, lessonId: string, accessToken: stri
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('SAS URL fetch failed:', response.status, errorText);
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { error: await response.text() || 'Unknown error' };
+      }
+      console.error('SAS URL fetch failed:', response.status, errorData.error);
+
       return null;
     }
 
     const { sasUrl } = await response.json();
-    return sasUrl;
-  } catch (err) {
-    console.error('SAS URL fetch error:', err);
+    console.log('Received SAS URL:', sasUrl);
+
+    const fileResponse = await fetch(sasUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/epub+zip',
+      },
+    });
+
+    if (!fileResponse.ok) {
+      console.error('Failed to fetch EPUB file:', fileResponse.status, fileResponse.statusText);
+
+      return null;
+    }
+
+    const contentType = fileResponse.headers.get('Content-Type');
+    if (!contentType?.includes('application/epub+zip') && !contentType?.includes('application/octet-stream')) {
+      console.error('Unexpected Content-Type:', contentType);
+
+      return null;
+    }
+
+    const arrayBuffer = await fileResponse.arrayBuffer();
+    console.log('ArrayBuffer size:', arrayBuffer.byteLength, 'bytes');
+
+    if (arrayBuffer.byteLength === 0) {
+      console.error('Received empty ArrayBuffer');
+
+      return null;
+    }
+
+    return arrayBuffer;
+  } catch (err: any) {
+    console.error('SAS URL fetch error:', err.message, err.stack);
     return null;
   }
 };
@@ -272,7 +321,7 @@ export default function EduProLessonDetail() {
   const [allLessons, setAllLessons] = useState<EduProLesson[]>([]);
   const [materials, setMaterials] = useState<StudyMaterial[]>([]);
   const [toc, setToc] = useState<TocItem[]>([]);
-  const [sasUrl, setSasUrl] = useState<string | null>(null);
+  const [sasUrl, setSasUrl] = useState<string | ArrayBuffer | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [currentSection, setCurrentSection] = useState<string>('');

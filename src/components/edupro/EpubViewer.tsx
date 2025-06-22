@@ -14,8 +14,10 @@ interface TocItem {
   order: number;
 }
 
+
+
 interface EpubViewerProps {
-  epubUrl: string;
+ epubUrl: string | ArrayBuffer; // Allow both types
   currentPage: number;
   setCurrentPage: (page: number) => void;
   setTotalPages: (pages: number) => void;

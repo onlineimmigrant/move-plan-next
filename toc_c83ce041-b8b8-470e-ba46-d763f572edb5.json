@@ -1,0 +1,22 @@
+[
+  {
+    "topic": "Chapter 3. MANAGING VALUE ADDED TAX (VAT)",
+    "href": "chapter-1.xhtml",
+    "order": 0
+  },
+  {
+    "topic": "Essential Overview of VAT",
+    "href": "chapter-1.xhtml#chapter-1-10",
+    "order": 1
+  },
+  {
+    "topic": "Understanding Disbursements and VAT",
+    "href": "chapter-1.xhtml#chapter-1-40",
+    "order": 2
+  },
+  {
+    "topic": "Treatment of Invoices Addressed to Client or Firm",
+    "href": "chapter-1.xhtml#chapter-1-113",
+    "order": 3
+  }
+]
