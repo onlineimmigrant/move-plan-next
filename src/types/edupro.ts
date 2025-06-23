@@ -5,6 +5,7 @@ export interface EduProCourse {
   slug: string;
   title: string;
   description: string;
+  quiz_common_id?: number;
 }
 
 export interface EduProTopic {

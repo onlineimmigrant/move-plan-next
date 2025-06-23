@@ -25,6 +25,8 @@ import {
 import ProgressStatisticsCurrent from '@/components/quiz/ProgressStatisticsCurrent';
 import Button from '@/ui/Button';
 
+
+
 // Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -541,7 +543,7 @@ export default function EduProLessonDetail() {
       const courseIds = courseTopicData.map((ct) => ct.course_id);
       const { data: courseData, error: courseError } = await supabase
         .from('edu_pro_course')
-        .select('id, slug, title, description')
+        .select('id, slug, title, description,  quiz_common_id')
         .eq('slug', slug)
         .in('id', courseIds)
         .single();
@@ -609,6 +611,8 @@ export default function EduProLessonDetail() {
       } else {
         setQuizzes(quizzesData ?? []);
       }
+
+
 
       // Fetch latest quiz attempt for this lesson's quiz, using lesson_id
       if (session?.user?.id && lessonData?.link_to_practice && quizzesData?.length) {
@@ -730,6 +734,20 @@ export default function EduProLessonDetail() {
     return true;
   };
 
+const getQuizSlug = (): string | null => {
+  if (!course?.quiz_common_id) {
+    console.warn(`No quiz_common_id found for course: ${course?.slug}`);
+    return null;
+  }
+  // Find the quiz in the quizzes array where id matches quiz_common_id
+  const quiz = quizzes.find((q) => q.id === course.quiz_common_id);
+  if (!quiz) {
+    console.warn(`No quiz found with id: ${course.quiz_common_id}`);
+    return null;
+  }
+  return quiz.slug;
+};
+
   return (
     <div className="min-h-screen pb-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -838,19 +856,19 @@ export default function EduProLessonDetail() {
                   ) : (
                     <p className="text-gray-600 mb-4"></p>
                   )}
-                  {lesson.link_to_practice && (
-                    <div className='mx-auto max-w-lg'>
-                    <Link
-                      href={`${lesson.link_to_practice}&lessonId=${lessonId}`}
-                      className='mt-8'
-                      onClick={() => console.log('Navigating to quiz with lessonId:', lessonId)}
-                    >
-                      <Button variant='start'>
-                      Start Training
-                      </Button>
-                    </Link>
-                    </div>
-                  )}
+{lesson.link_to_practice && getQuizSlug() && (
+  <div className='mx-auto max-w-lg'>
+    <Link
+      href={`/account/edupro/${slug}/quiz/${getQuizSlug()}/?${lesson.link_to_practice}&lessonId=${lessonId}`}
+      className='mt-8'
+      onClick={() => console.log('Navigating to quiz with lessonId:', lessonId)}
+    >
+      <Button variant='start'>
+        Start Training
+      </Button>
+    </Link>
+  </div>
+)}
                   {isAdmin && <LessonContent lesson={lesson} />}
                 </div>
               ) : (
