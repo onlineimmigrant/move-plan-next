@@ -24,6 +24,12 @@ const nextConfig: NextConfig = {
         port: '3000',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
   },
   webpack: (config) => {
@@ -34,11 +40,9 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
-  // Optional: Expose specific environment variables to client-side if needed
   env: {
-    // If you need these on the client, prefix with NEXT_PUBLIC_ (not recommended for service role key)
-     NEXT_PUBLIC_SUPABASE_URL: process.env.SUPABASE_URL,
-     NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY, // Avoid this for security
+    NEXT_PUBLIC_SUPABASE_URL: process.env.SUPABASE_URL || '',
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
   },
 };
 

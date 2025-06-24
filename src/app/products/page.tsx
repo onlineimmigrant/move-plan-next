@@ -1,4 +1,3 @@
-// /app/products/page.tsx
 import { supabase, getOrganizationId } from '../../lib/supabase';
 import { getBaseUrl } from '../../lib/utils';
 import ClientProductsPage from './ClientProductsPage';
@@ -26,21 +25,27 @@ type ProductSubType = {
   [key: string]: any;
 };
 
-async function fetchProducts(baseUrl: string) {
+async function fetchProducts(baseUrl: string, categoryId?: string) {
   const organizationId = await getOrganizationId(baseUrl);
   if (!organizationId) {
     console.error('Organization not found for fetchProducts, baseUrl:', baseUrl);
     throw new Error('Organization not found');
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('product')
     .select('*')
     .eq('organization_id', organizationId)
-    .eq('is_displayed', true)
-    .order('order', { ascending: true });
+    .eq('is_displayed', true);
 
-  console.log('Fetched products:', data, 'for organization_id:', organizationId);
+  // Filter by category if provided
+  if (categoryId) {
+    query = query.or(`product_sub_type_id.eq.${categoryId},product_sub_type_additional_id.eq.${categoryId}`);
+  }
+
+  const { data, error } = await query.order('order', { ascending: true });
+
+  console.log('Fetched products:', data, 'for organization_id:', organizationId, 'category:', categoryId);
   if (error) throw new Error('Failed to load products: ' + error.message);
   return data || [];
 }
@@ -62,7 +67,11 @@ async function fetchProductSubTypes(baseUrl: string) {
   return data || [];
 }
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: { category?: string };
+}) {
   // Skip Supabase queries during Vercel static build
   const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
   if (isBuild) {
@@ -85,9 +94,10 @@ export default async function ProductsPage() {
   let productSubTypes: ProductSubType[] = [];
   let error: string | null = null;
   const isAdmin = false;
+  const categoryId = searchParams.category; // Get category from query params
 
   try {
-    allProducts = await fetchProducts(baseUrl);
+    allProducts = await fetchProducts(baseUrl, categoryId);
     productSubTypes = await fetchProductSubTypes(baseUrl);
   } catch (err: any) {
     console.error('Error fetching data with getBaseUrl, trying NEXT_PUBLIC_BASE_URL fallback:', err.message);
@@ -95,7 +105,7 @@ export default async function ProductsPage() {
     baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     console.log('Falling back to baseUrl:', baseUrl);
     try {
-      allProducts = await fetchProducts(baseUrl);
+      allProducts = await fetchProducts(baseUrl, categoryId);
       productSubTypes = await fetchProductSubTypes(baseUrl);
     } catch (fallbackErr: any) {
       error = fallbackErr.message;

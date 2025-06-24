@@ -41,7 +41,8 @@ interface Product {
   price_manual?: number;
   currency_manual?: string;
   product_sub_type_id: number;
-  product_sub_type: { name: string } | null;
+  //product_sub_type: { name: string } | null;
+  product_sub_type: { id: number; name: string } | null; // Updated to include id
   pricing_plans?: PricingPlan[];
   amazon_books_url?: string;
   product_media?: MediaItem[];
@@ -108,11 +109,13 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
     console.warn('Product missing product_sub_type_id:', productData.id);
   }
 
-  let productSubType: { name: string } | null = null;
+  let productSubType: { id: number; name: string } | null = null; // Updated to include id
+  //let productSubType: { name: string } | null = null;
   if (productData.product_sub_type_id) {
     const { data: subTypeData, error: subTypeError } = await supabase
       .from('product_sub_type')
-      .select('name')
+       .select('id, name') 
+      //.select('name')
       .eq('id', productData.product_sub_type_id)
       .eq('organization_id', organizationId)
       .single();
