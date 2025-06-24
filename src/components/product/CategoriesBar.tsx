@@ -1,4 +1,5 @@
-// app/components/CategoriesBar.tsx
+import Link from 'next/link';
+
 type ProductSubType = {
   id: number;
   name: string;
@@ -9,7 +10,7 @@ type ProductSubType = {
 
 interface CategoriesBarProps {
   productSubTypes: ProductSubType[];
-  onCategoryChange: (subType: ProductSubType | null) => void;
+  onCategoryChange: (subType: ProductSubType | null) => void; // Keep for compatibility
   activeSubTypeName: string | null;
 }
 
@@ -24,28 +25,30 @@ export default function CategoriesBar({
   return (
     <div className="flex space-x-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent py-2">
       {/* "All" button */}
-      <button
-        onClick={() => onCategoryChange(null)}
+      <Link
+        href="/products"
+        onClick={() => onCategoryChange(null)} // Trigger client-side callback for compatibility
         className={`cursor-pointer px-3 py-1 text-sm font-semibold rounded transition-colors ${
           activeSubTypeName === null ? 'bg-sky-100 text-sky-500' : 'bg-gray-50 text-gray-800'
         } hover:bg-sky-200`}
       >
         All
-      </button>
+      </Link>
 
-      {/* Buttons for each filtered sub-type */}
+      {/* Links for each filtered sub-type */}
       {visibleSubTypes.map((subType) => {
         const isActive = subType.name === activeSubTypeName;
         return (
-          <button
+          <Link
             key={subType.id}
-            onClick={() => onCategoryChange(subType)}
+            href={`/products?category=${subType.id}`}
+            onClick={() => onCategoryChange(subType)} // Trigger client-side callback
             className={`cursor-pointer px-3 py-1 text-sm font-medium rounded transition-colors ${
               isActive ? 'bg-sky-100 text-sky-500' : 'bg-gray-50 text-gray-800'
             } hover:bg-sky-200`}
           >
             {subType.title_english || subType.name}
-          </button>
+          </Link>
         );
       })}
     </div>

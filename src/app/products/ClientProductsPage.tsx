@@ -1,8 +1,8 @@
-// /app/products/ClientProductsPage.tsx
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react'; // Added useRef
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import CategoriesBar from '@/components/product/CategoriesBar';
 import IconButton from '@/ui/IconButton';
@@ -14,7 +14,7 @@ type Product = {
   organization_id: string;
   is_displayed: boolean;
   product_name: string | null;
-  product_sub_type_id: number; // Removed duplicate
+  product_sub_type_id: number;
   product_sub_type_additional_id: number;
   order: number;
   price_manual?: string | null;
@@ -35,13 +35,14 @@ export default function ClientProductsPage({
   initialProducts,
   initialSubTypes,
   initialError,
-  isAdmin = true, // Temporarily true for testing, adjust later
+  isAdmin = true,
 }: {
   initialProducts: Product[];
   initialSubTypes: ProductSubType[];
   initialError: string | null;
   isAdmin?: boolean;
 }) {
+  const searchParams = useSearchParams();
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubType, setActiveSubType] = useState<ProductSubType | null>(null);
@@ -51,6 +52,17 @@ export default function ClientProductsPage({
   const [searchHeight, setSearchHeight] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
   const productsRef = useRef<HTMLDivElement>(null);
+
+  // Initialize activeSubType based on query parameter
+  useEffect(() => {
+    const categoryId = searchParams.get('category');
+    if (categoryId) {
+      const subType = initialSubTypes.find((st) => st.id === parseInt(categoryId));
+      setActiveSubType(subType || null);
+    } else {
+      setActiveSubType(null);
+    }
+  }, [searchParams, initialSubTypes]);
 
   useEffect(() => {
     let result = initialProducts;
@@ -79,19 +91,15 @@ export default function ClientProductsPage({
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      const threshold = 30; // Fix after 30px
-      console.log('ScrollY:', scrollY, 'IsFixed:', scrollY > threshold); // Debug
+      const threshold = 30;
       setIsFixed(scrollY > threshold);
     };
 
     const measureSearchHeight = () => {
       if (searchRef.current) {
-        const height = searchRef.current.offsetHeight;
-        console.log('Search Height:', height); // Debug
-        setSearchHeight(height);
+        setSearchHeight(searchRef.current.offsetHeight);
       } else {
-        console.log('Search Ref Not Found, Using Fallback Height');
-        setSearchHeight(60); // Fallback
+        setSearchHeight(60);
       }
     };
 
@@ -109,9 +117,8 @@ export default function ClientProductsPage({
     if (isFixed && searchQuery && productsRef.current && window.innerWidth < 640) {
       const rect = productsRef.current.getBoundingClientRect();
       const scrollTop = window.scrollY;
-      const searchBottom = 30 + searchHeight; // top-[80px] + searchHeight
-      const targetScroll = scrollTop + rect.top - searchBottom - 16; // 16px buffer
-      console.log('Scrolling to:', targetScroll); // Debug
+      const searchBottom = 30 + searchHeight;
+      const targetScroll = scrollTop + rect.top - searchBottom - 16;
       window.scrollTo({ top: targetScroll, behavior: 'smooth' });
     }
   }, [searchQuery, isFixed, searchHeight]);
@@ -139,7 +146,7 @@ export default function ClientProductsPage({
             <div className="relative group">
               <h1 className="text-center text-xl font-bold text-gray-900 tracking-wide mb-6 sm:mb-0">
                 Products
-                          <span className="absolute bottom-4 sm:-bottom-2 left-1/2 sm:left-1/3 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+                <span className="absolute bottom-4 sm:-bottom-2 left-1/2 sm:left-1/3 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
               {isAdmin && (
                 <div className="absolute -top-8 left-0 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
@@ -235,7 +242,7 @@ export default function ClientProductsPage({
                     </div>
                   </div>
                   <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end relative">
-                    <span className="text-sky-400 transition-all duration-300  group ">
+                    <span className="text-sky-400 transition-all duration-300 group">
                       <ArrowRightIcon className="h-5 w-5" />
                     </span>
                   </div>
@@ -249,7 +256,7 @@ export default function ClientProductsPage({
           <div className="flex justify-end px-4 mt-8 max-w-7xl mx-auto">
             <button
               type="button"
-              onClick={loadMoreItems}
+              onClick={loadMoreItems} // Ensure this references the defined function
               className="text-gray-500 font-medium hover:text-sky-400"
             >
               Load more...

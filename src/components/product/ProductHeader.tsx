@@ -1,13 +1,11 @@
-// /src/components/ProductHeader.tsx
 'use client';
 
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import Button from '@/ui/Button';
 
 interface ProductHeaderProps {
-  productSubType: { name: string } | null; // Revert to null to match Product type
+  productSubType: { id: number; name: string } | null; // Updated to include id
   productName: string;
 }
 
@@ -40,22 +38,23 @@ export default function ProductHeader({ productSubType, productName }: ProductHe
 
   return (
     <div
-    className={`
+      className={`
         w-full
         px-4 mx-auto max-w-7xl
         will-change-transform
         transition-all duration-800 ease-in-out
         md:static md:bg-transparent md:shadow-none
-        ${isFixed
-          ? 'fixed top-0 left-0 right-0 z-[51] bg-sky-50 shadow-md translate-y-0 opacity-100'
-          : 'relative translate-y-0 opacity-100'
+        ${
+          isFixed
+            ? 'fixed top-0 left-0 right-0 z-[51] bg-sky-50 shadow-md translate-y-0 opacity-100'
+            : 'relative translate-y-0 opacity-100'
         }
-      `}    >
+      `}
+    >
       <div className="flex flex-col bg-sky-50 sm:bg-transparent p-4 -mx-4 px-8">
         <Link
-        
-          href="/products"
-          className="flex items-center transition-all duration-300  group font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
+          href={productSubType ? `/products?category=${productSubType.id}` : '/products'} // Use category query param
+          className="flex items-center transition-all duration-300 group font-medium text-xs text-sky-500 tracking-widest hover:underline mb-0"
         >
           {productSubType?.name || 'Unknown Sub-Type'}
           <RightArrowDynamic />
