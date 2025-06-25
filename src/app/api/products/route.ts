@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     let organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
       console.log('Falling back to NEXT_PUBLIC_BASE_URL for POST /api/products');
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000' || 'https://metexam.co.uk';
       console.log('Retry with baseUrl:', baseUrl);
       organizationId = await getOrganizationId(baseUrl);
       if (!organizationId) {
@@ -109,7 +109,7 @@ export async function PUT(request: Request) {
     let organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
       console.log('Falling back to NEXT_PUBLIC_BASE_URL for PUT /api/products');
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000' || 'https://metexam.co.uk';
       console.log('Retry with baseUrl:', baseUrl);
       organizationId = await getOrganizationId(baseUrl);
       if (!organizationId) {
@@ -272,7 +272,7 @@ export async function DELETE(request: Request) {
     let organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
       console.log('Falling back to NEXT_PUBLIC_BASE_URL for DELETE /api/products');
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'  || 'https://metexam.co.uk';
       console.log('Retry with baseUrl:', baseUrl);
       organizationId = await getOrganizationId(baseUrl);
       if (!organizationId) {
