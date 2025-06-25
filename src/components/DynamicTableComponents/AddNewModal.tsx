@@ -1,12 +1,12 @@
 'use client';
 
-import React, { RefObject } from "react";
-import IconButton from "./IconButton";
+import React, { RefObject } from 'react';
+import IconButton from './IconButton';
 
 interface AddNewModalProps {
   isModalOpen: boolean;
   setIsModalOpen: (open: boolean) => void;
-  modalRef: RefObject<HTMLDivElement | null>;
+  modalRef: RefObject<HTMLDivElement>; // Changed from RefObject<HTMLDivElement | null>
   modalPosition: { x: number; y: number };
   handleDragStart: (e: React.MouseEvent<HTMLDivElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
@@ -14,7 +14,7 @@ interface AddNewModalProps {
   unchangeableFields: string[];
   hiddenFields: string[];
   newItem: { [key: string]: string };
-  handleFormInputChange: ( precautionsfield: string, value: string) => void;
+  handleFormInputChange: (field: string, value: string) => void;
   primaryButtonClass: string;
   grayButtonClass: string;
   greenButtonClass: string;
@@ -68,7 +68,7 @@ const AddNewModal: React.FC<AddNewModalProps> = ({
             !unchangeableFields.includes(field) && !hiddenFields.includes(field) && (
               <input
                 key={field}
-                value={newItem[field] || ""}
+                value={newItem[field] || ''}
                 onChange={(e) => handleFormInputChange(field, e.target.value)}
                 placeholder={field}
                 className="border border-gray-300 bg-white p-2 text-xs rounded-md focus:ring-2 focus:ring-gray-400 focus:outline-none transition-all duration-200 w-full mb-2"

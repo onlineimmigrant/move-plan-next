@@ -1,12 +1,5 @@
-import type { NextConfig } from 'next';
-import dotenv from 'dotenv';
-
-if (process.env.NODE_ENV !== 'production') {
-  // Load .env.local only in development to avoid exposing secrets in production builds
-  dotenv.config({ path: '.env' });
-}
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   experimental: {
     optimizeCss: false,
   },
@@ -15,7 +8,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'codedharmony.blob.core.windows.net',
-        port: '',
         pathname: '/**',
       },
       {
@@ -27,7 +19,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
-        port: '',
         pathname: '/storage/v1/object/public/**',
       },
     ],
@@ -40,10 +31,6 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
-  env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.SUPABASE_URL || '',
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
-  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

@@ -1,0 +1,145 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { writeFileSync } from 'fs';
+
+export const runtime = 'nodejs';
+
+console.error('[Middleware] File loaded at', new Date().toISOString());
+try {
+  writeFileSync('middleware.log', `[Middleware] File loaded at ${new Date().toISOString()}\n`, { flag: 'a' });
+} catch (error: unknown) {
+  console.error('[Middleware] File write error:', (error as Error).message);
+}
+
+export const config = {
+  matcher: ['/admin', '/admin/:path*'],
+};
+
+export async function middleware(req: NextRequest) {
+  const logPrefix = `[Middleware] [${new Date().toISOString()}] ${req.nextUrl.pathname}`;
+  console.error(`${logPrefix} Middleware triggered`);
+  try {
+    writeFileSync('middleware.log', `${logPrefix} Middleware triggered\n`, { flag: 'a' });
+  } catch (error: unknown) {
+    console.error(`${logPrefix} File write error:`, (error as Error).message);
+  }
+
+  try {
+    console.error(`${logPrefix} Environment variables:`, {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'MISSING',
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING',
+      NEXT_PUBLIC_SUPABASE_PROJECT_ID: process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID || 'MISSING',
+    });
+
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      !process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID
+    ) {
+      console.error(`${logPrefix} Missing environment variables`);
+      try {
+        writeFileSync('middleware.log', `${logPrefix} Missing environment variables\n`, { flag: 'a' });
+      } catch (error: unknown) {
+        console.error(`${logPrefix} File write error:`, (error as Error).message);
+      }
+      return redirectToLogin(req);
+    }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    console.error(`${logPrefix} Supabase client initialized`);
+
+    const cookieName = `sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`;
+    const authCookie = req.cookies.get(cookieName);
+    console.error(`${logPrefix} Auth cookie:`, { cookieName, exists: !!authCookie, value: authCookie?.value?.slice(0, 20) });
+    try {
+      writeFileSync('middleware.log', `${logPrefix} Auth cookie: ${JSON.stringify({ cookieName, exists: !!authCookie })}\n`, { flag: 'a' });
+    } catch (error: unknown) {
+      console.error(`${logPrefix} File write error:`, (error as Error).message);
+    }
+
+    if (!authCookie) {
+      console.error(`${logPrefix} No auth cookie`);
+      try {
+        writeFileSync('middleware.log', `${logPrefix} No auth cookie\n`, { flag: 'a' });
+      } catch (error: unknown) {
+        console.error(`${logPrefix} File write error:`, (error as Error).message);
+      }
+      return redirectToLogin(req);
+    }
+
+    let parsedCookie;
+    try {
+      parsedCookie = JSON.parse(authCookie.value);
+      console.error(`${logPrefix} Parsed cookie:`, {
+        access_token: parsedCookie.access_token?.slice(0, 10),
+      });
+    } catch (error: unknown) {
+      console.error(`${logPrefix} Cookie parse error:`, (error as Error).message);
+      try {
+        writeFileSync('middleware.log', `${logPrefix} Cookie parse error: ${(error as Error).message}\n`, { flag: 'a' });
+      } catch (error: unknown) {
+        console.error(`${logPrefix} File write error:`, (error as Error).message);
+      }
+      return redirectToLogin(req);
+    }
+
+    const accessToken = parsedCookie.access_token;
+    if (!accessToken) {
+      console.error(`${logPrefix} No access token`);
+      try {
+        writeFileSync('middleware.log', `${logPrefix} No access token\n`, { flag: 'a' });
+      } catch (error: unknown) {
+        console.error(`${logPrefix} File write error:`, (error as Error).message);
+      }
+      return redirectToLogin(req);
+    }
+
+    const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
+    console.error(`${logPrefix} User fetch:`, { userId: userData?.user?.id, email: userData?.user?.email, error: userError?.message });
+    try {
+      writeFileSync('middleware.log', `${logPrefix} User fetch: ${JSON.stringify({ userId: userData?.user?.id, error: userError?.message })}\n`, { flag: 'a' });
+    } catch (error: unknown) {
+      console.error(`${logPrefix} File write error:`, (error as Error).message);
+    }
+    if (userError || !userData.user) {
+      console.error(`${logPrefix} User fetch error:`, userError?.message || 'No user data');
+      try {
+        writeFileSync('middleware.log', `${logPrefix} User fetch error: ${userError?.message || 'No user data'}\n`, { flag: 'a' });
+      } catch (error: unknown) {
+        console.error(`${logPrefix} File write error:`, (error as Error).message);
+      }
+      return redirectToLogin(req);
+    }
+
+    console.error(`${logPrefix} User authenticated:`, { id: userData.user.id, email: userData.user.email });
+    try {
+      writeFileSync('middleware.log', `${logPrefix} User authenticated: ${JSON.stringify({ id: userData.user.id, email: userData.user.email })}\n`, { flag: 'a' });
+    } catch (error: unknown) {
+      console.error(`${logPrefix} File write error:`, (error as Error).message);
+    }
+    return NextResponse.next();
+  } catch (error: unknown) {
+    console.error(`${logPrefix} Unexpected error:`, (error as Error).message, (error as Error).stack);
+    try {
+      writeFileSync('middleware.log', `${logPrefix} Unexpected error: ${(error as Error).message}\n`, { flag: 'a' });
+    } catch (error: unknown) {
+      console.error(`${logPrefix} File write error:`, (error as Error).message);
+    }
+    return redirectToLogin(req);
+  }
+}
+
+function redirectToLogin(req: NextRequest): NextResponse {
+  const redirectUrl = new URL('/login', req.url);
+  redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
+  console.error(`[Middleware] Redirecting to: ${redirectUrl}`);
+  try {
+    writeFileSync('middleware.log', `[Middleware] Redirecting to: ${redirectUrl}\n`, { flag: 'a' });
+  } catch (error: unknown) {
+    console.error('[Middleware] File write error:', (error as Error).message);
+  }
+  return NextResponse.redirect(redirectUrl, 307);
+}

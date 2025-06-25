@@ -1,19 +1,15 @@
-// src/app/ClientProviders.tsx
 'use client';
 
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
-import { SEOProvider } from '@/context/SEOContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { BasketProvider } from '@/context/BasketContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { CookieSettingsProvider } from '@/context/CookieSettingsContext';
 import { BannerProvider } from '@/context/BannerContext';
-import SEOWrapper from '@/components/seo/SEOWrapper';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/cookie/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import StructuredDataInjector from '@/components/seo/StructuredDataInjector';
 import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
@@ -28,7 +24,6 @@ import { MenuItem } from '@/types/menu';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
-  defaultSEOData: any;
   settings: any;
   headerData: any;
   activeLanguages: string[];
@@ -42,7 +37,6 @@ interface ClientProvidersProps {
 
 export default function ClientProviders({
   children,
-  defaultSEOData,
   settings,
   headerData,
   activeLanguages,
@@ -50,7 +44,7 @@ export default function ClientProviders({
   baseUrl,
   menuItems,
 }: ClientProvidersProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '/'; // Fallback to '/' if usePathname returns null
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [headings, setHeadings] = useState<TemplateHeadingSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,54 +67,51 @@ export default function ClientProviders({
         }
 
         const clientBaseUrl = getBaseUrl(false);
-        console.log('Client baseUrl:', clientBaseUrl);
-
-        const timeoutPromise = new Promise((_, reject) =>
+        const timeoutPromise: Promise<never> = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Fetch timeout')), 5000)
         );
 
-        const sectionsStart = Date.now();
-        const sectionsResponse = await Promise.race([
-          fetch(`${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`, {
-            cache: 'no-store',
-          }),
-          timeoutPromise,
-        ]) as Response;
-        console.log('Sections fetch duration:', Date.now() - sectionsStart, 'ms');
+        const [sectionsResult, headingsResult] = await Promise.all([
+          Promise.race([
+            fetch(`${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`, {
+              cache: 'no-store',
+            }),
+            timeoutPromise,
+          ]),
+          Promise.race([
+            fetch(`${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`, {
+              cache: 'no-store',
+            }),
+            timeoutPromise,
+          ]),
+        ]);
+
+        const sectionsResponse = sectionsResult as Response;
+        const headingsResponse = headingsResult as Response;
+
         if (!sectionsResponse.ok) {
           const errorData = await sectionsResponse.json();
           console.error('Sections fetch error:', errorData);
           throw new Error(errorData.error || 'Failed to fetch template sections');
         }
         const sectionsData = await sectionsResponse.json();
-        console.log('Sections data:', sectionsData);
 
-        const headingsStart = Date.now();
-        const headingsResponse = await Promise.race([
-          fetch(`${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`, {
-            cache: 'no-store',
-          }),
-          timeoutPromise,
-        ]) as Response;
-        console.log('Headings fetch duration:', Date.now() - headingsStart, 'ms');
         if (!headingsResponse.ok) {
           const errorData = await headingsResponse.json();
           console.error('Headings fetch error:', errorData);
           throw new Error(errorData.error || 'Failed to fetch template headings');
         }
         const headingsData = await headingsResponse.json();
-        console.log('Headings data:', headingsData);
 
         cache.set(cacheKey, { sections: sectionsData || [], headings: headingsData || [] });
         setSections(sectionsData || []);
         setHeadings(headingsData || []);
-      } catch (error) {
-        console.error('Error fetching template data:');
+      } catch (error: any) {
+        console.error('Error fetching template data:', error.message);
         setSections([]);
         setHeadings([]);
       } finally {
         setLoading(false);
-        console.log('Loading state set to false at:', new Date().toISOString());
       }
     };
 
@@ -133,27 +124,25 @@ export default function ClientProviders({
   );
 
   return (
-    <SEOProvider>
-      <AuthProvider>
-        <BasketProvider>
-          <SettingsProvider initialSettings={settings}>
-            <CookieSettingsProvider>
-              <BannerProvider>
-                <SEOWrapper defaultSEOData={defaultSEOData} />
-                <StructuredDataInjector />
-                <BannerAwareContent
-                  children={children}
-                  showNavbarFooter={showNavbarFooter}
-                  menuItems={menuItems}
-                  loading={loading}
-                />
-                <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
-              </BannerProvider>
-            </CookieSettingsProvider>
-          </SettingsProvider>
-        </BasketProvider>
-      </AuthProvider>
-    </SEOProvider>
+    <AuthProvider>
+      <BasketProvider>
+        <SettingsProvider initialSettings={settings}>
+          <CookieSettingsProvider>
+            <BannerProvider>
+              <BannerAwareContent
+                children={children}
+                showNavbarFooter={showNavbarFooter}
+                menuItems={menuItems}
+                loading={loading}
+                headerData={headerData}
+                activeLanguages={activeLanguages}
+              />
+              <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+            </BannerProvider>
+          </CookieSettingsProvider>
+        </SettingsProvider>
+      </BasketProvider>
+    </AuthProvider>
   );
 }
 
@@ -162,33 +151,26 @@ function BannerAwareContent({
   showNavbarFooter,
   menuItems,
   loading,
+  headerData,
+  activeLanguages,
 }: {
   children: React.ReactNode;
   showNavbarFooter: boolean;
   menuItems: MenuItem[] | undefined;
   loading: boolean;
+  headerData: any;
+  activeLanguages: string[];
 }) {
-  const { banners, getFixedBannersHeight } = useBanner();
+  const { banners, getFixedBannersHeight } = useBanner() || { banners: [], getFixedBannersHeight: () => 0 }; // Fallback for null context
   const fixedBanners = useMemo(
-    () => banners.filter((b) => b.isFixedAboveNavbar && !b.isDismissed && b.position === 'top'),
+    () => (banners || []).filter((b: Banner) => b.isFixedAboveNavbar && !b.isDismissed && b.position === 'top'),
     [banners]
   );
   const nonFixedBanners = useMemo(
-    () => banners.filter((b) => !b.isFixedAboveNavbar || b.isDismissed || b.position !== 'top'),
+    () => (banners || []).filter((b: Banner) => !b.isFixedAboveNavbar || b.isDismissed || b.position !== 'top'),
     [banners]
   );
-  const fixedBannersHeight = useMemo(() => getFixedBannersHeight(), [getFixedBannersHeight]);
-
-  useEffect(() => {
-    console.log('BannerAwareContent re-rendered at:', new Date().toISOString());
-    console.log('Banners reference changed:', banners);
-  }, [banners]);
-
-  console.log('Loading state:', loading);
-  console.log('All banners:', JSON.stringify(banners, null, 2));
-  console.log('Fixed banners:', JSON.stringify(fixedBanners, null, 2));
-  console.log('Non-fixed banners:', JSON.stringify(nonFixedBanners, null, 2));
-  console.log('Fixed banners height applied:', fixedBannersHeight);
+  const fixedBannersHeight = useMemo(() => getFixedBannersHeight?.() || 0, [getFixedBannersHeight]);
 
   return (
     <>
@@ -212,6 +194,7 @@ function BannerAwareContent({
               {children}
               <TemplateHeadingSections />
               <TemplateSections />
+              <Breadcrumbs />
               <BannerContainer banners={nonFixedBanners} />
             </main>
           )}
