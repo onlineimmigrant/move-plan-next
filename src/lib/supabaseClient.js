@@ -1,35 +1,51 @@
 import { createClient } from '@supabase/supabase-js';
 
-// In Next.js, environment variables are accessed via process.env
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Debug environment variables
 console.log('supabaseClient - NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
 console.log('supabaseClient - NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey);
+console.log('supabaseClient - NEXT_PUBLIC_SUPABASE_PROJECT_ID:', process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID);
 
-// Validate that the environment variables are defined
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseAnonKey || !process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID) {
   throw new Error(
-    'Missing Supabase environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
+    'Missing Supabase environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_SUPABASE_PROJECT_ID are set.'
   );
 }
 
-// Client-side Supabase client (for general use)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: true, // Explicitly enable session persistence
-    autoRefreshToken: true, // Automatically refresh the token
-    detectSessionInUrl: true, // Detect session in URL for OAuth flows
-    storage: typeof window !== 'undefined' ? localStorage : undefined, // Use localStorage in the browser
-    flowType: 'pkce', // Use PKCE for secure auth flows
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? {
+      getItem: (key) => localStorage.getItem(key),
+      setItem: (key, value) => {
+        localStorage.setItem(key, value);
+        console.log('Storage set:', key, value.slice(0, 20));
+      },
+      removeItem: (key) => {
+        localStorage.removeItem(key);
+        console.log('Storage removed:', key);
+      },
+    } : undefined,
+    flowType: 'pkce',
+    cookieOptions: {
+      name: `sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`,
+      lifetime: 60 * 60 * 24 * 7,
+      domain: 'localhost',
+      path: '/',
+      sameSite: 'Lax',
+      secure: false,
+    },
   },
 });
 
-// Debug session changes
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('supabaseClient - Auth state changed:', event, 'Session:', session ? {
     access_token: session.access_token?.substring(0, 10) + '...',
     user_id: session.user?.id,
   } : null);
+  console.log('Cookies after auth change:', document.cookie);
+  console.log('LocalStorage:', localStorage.getItem(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`));
 });

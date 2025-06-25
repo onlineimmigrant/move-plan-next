@@ -53,7 +53,7 @@ export function getBreadcrumbStructuredData({
 
     pathSegments.forEach((segment, index) => {
       accumulatedPath += `/${segment}`;
-      let formattedLabel = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+      let formattedLabel = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ') || 'Unknown';
 
       const override = overrides.find((o) => o.segment === segment);
       if (override) {

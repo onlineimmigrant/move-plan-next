@@ -1,18 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import Button from '@/ui/Button';
-import { v4 as uuidv4 } from 'uuid'; // For generating unique reset tokens
+import { v4 as uuidv4 } from 'uuid';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 
 interface LoginFormProps {
   onShowPrivacy?: () => void;
   onShowTerms?: () => void;
   onSuccess?: () => void;
-  redirectUrl?: string; // Optional prop for custom redirect
+  redirectUrl?: string;
 }
 
 export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redirectUrl: propRedirectUrl }: LoginFormProps) {
@@ -24,19 +24,29 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState('');
-  const { setSession } = useAuth();
+  const { setSession, isAdmin, login } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // Determine redirect URL: prefer prop, else use pathname, exclude /login or /register
+  useEffect(() => {
+    console.log('searchParams:', searchParams.toString());
+    console.log('redirectTo:', searchParams.get('redirectTo'));
+  }, [searchParams]);
+
   const getRedirectUrl = () => {
+    const redirectTo = searchParams.get('redirectTo');
+    console.log('getRedirectUrl - redirectTo:', redirectTo, 'pathname:', pathname, 'isAdmin:', isAdmin);
+    if (redirectTo && redirectTo !== '' && !['/login', '/register', '/reset-password'].includes(decodeURIComponent(redirectTo))) {
+      console.log('Using redirectTo from query:', decodeURIComponent(redirectTo));
+      return decodeURIComponent(redirectTo);
+    }
     if (propRedirectUrl && !['/login', '/register', '/reset-password'].includes(propRedirectUrl)) {
+      console.log('Using propRedirectUrl:', propRedirectUrl);
       return propRedirectUrl;
     }
-    if (pathname && !['/login', '/register', '/reset-password'].includes(pathname)) {
-      return pathname;
-    }
-    return '/account'; // Fallback
+    console.log('Falling back to:', isAdmin ? '/admin' : '/account', { isAdmin });
+    return isAdmin ? '/admin' : '/account';
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -51,25 +61,31 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
     }
 
     try {
-      const { data, error: supaError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      const data = await login(email.trim(), password);
+      console.log('Login data:', data);
 
-      if (supaError) {
-        throw new Error(supaError.message);
+      const { data: sessionData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !sessionData.session) {
+        console.error('Session refresh failed:', refreshError?.message);
+        throw new Error('Failed to refresh session.');
       }
+      setSession(sessionData.session);
+      console.log('Session refreshed:', sessionData.session.user.id);
+      console.log('Cookies after login:', document.cookie);
 
-      if (data.session) {
-        setSession(data.session);
-        const redirectTo = getRedirectUrl();
+      const redirectTo = getRedirectUrl();
+      console.log('Redirecting to:', redirectTo);
+      try {
         router.push(redirectTo);
-        if (onSuccess) onSuccess(); // Close modal if applicable
-      } else {
-        setError('No session data returned. Login failed.');
+        console.log('Navigation completed to:', redirectTo);
+      } catch (navError: unknown) {
+        console.error('Navigation error:', (navError as Error).message);
+        console.log('Falling back to window.location.href:', redirectTo);
+        window.location.href = redirectTo;
       }
-    } catch (err: any) {
-      console.error('Login failed:', err);
+      if (onSuccess) onSuccess();
+    } catch (err: unknown) {
+      console.error('Login failed:', (err as Error).message);
       setError('Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
@@ -77,7 +93,13 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
   };
 
   const handleRegister = () => {
-    router.push('/register');
+    try {
+      router.push('/register');
+      console.log('Navigation to /register');
+    } catch (navError: unknown) {
+      console.error('Register navigation error:', (navError as Error).message);
+      window.location.href = '/register';
+    }
     if (onSuccess) onSuccess();
   };
 
@@ -101,7 +123,6 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
         throw new Error('Unable to identify organization.');
       }
 
-      // Fetch the domain from settings
       const { data: settings, error: settingsError } = await supabase
         .from('settings')
         .select('domain')
@@ -109,14 +130,14 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
         .single();
 
       if (settingsError || !settings) {
-        throw new Error(`Failed to fetch domain for organization ${organizationId}: ${settingsError?.message}`);
+        throw new Error(`Failed to fetch domain: ${settingsError?.message}`);
       }
 
-      const domain = settings.domain; // e.g., 'metexam.com'
+      const domain = settings.domain;
       const resetToken = uuidv4();
       const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-      console.log('Inserting reset token for email:', resetEmail.trim()); // Debug log
+      console.log('Inserting reset token for email:', resetEmail.trim());
       const { error: insertError } = await supabase
         .from('password_resets')
         .insert({
@@ -127,19 +148,12 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
         });
 
       if (insertError) {
-        console.error('Insert error details:', insertError);
-        throw new Error(`Failed to store reset token: ${insertError.message || JSON.stringify(insertError)}`);
+        console.error('Insert error:', insertError);
+        throw new Error(`Failed to store reset token: ${insertError.message}`);
       }
 
-      const emailDomainRedirection = `https://${domain}/reset-password?token=${resetToken}`; // Use dynamic domain
-      console.log('Sending email payload:', {
-        type: 'reset_email',
-        to: resetEmail.trim(),
-        organization_id: organizationId,
-        user_id: null,
-        name: resetEmail.split('@')[0],
-        emailDomainRedirection,
-      });
+      const emailDomainRedirection = `https://${domain}/reset-password?token=${resetToken}`;
+      console.log('Sending email payload:', { type: 'reset_email', to: resetEmail.trim(), organization_id: organizationId });
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -155,7 +169,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Failed to send reset email:', errorData.error, errorData.details || '');
+        console.error('Failed to send reset email:', errorData.error);
         throw new Error('Failed to send reset email.');
       }
 
@@ -166,9 +180,9 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
         setResetSuccess('');
         if (onSuccess) onSuccess();
       }, 2000);
-    } catch (err: any) {
-      console.error('Password reset failed:', err);
-      setError('Failed to send password reset email. Please try again or contact support.');
+    } catch (err: unknown) {
+      console.error('Password reset failed:', (err as Error).message);
+      setError('Failed to send password reset email. Try again or contact support.');
     } finally {
       setIsLoading(false);
     }
@@ -196,7 +210,6 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
               />
             </div>
           </div>
-
           <div className="mt-16 space-y-4">
             <Button variant="start" type="submit" disabled={isLoading}>
               {isLoading ? 'Sending...' : 'Send Reset Email'}
@@ -246,11 +259,9 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? 'Hide' : 'Show'}
-                
               </button>
             </div>
           </div>
-
           <div className="mt-16 space-y-4 text-base">
             <Button variant="start" type="submit" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
@@ -266,7 +277,6 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
               <RightArrowDynamic />
             </Button>
           </div>
-
           <div className="mt-4 flex justify-center space-x-4">
             <button
               type="button"

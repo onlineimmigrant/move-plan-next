@@ -2,8 +2,7 @@
 
 import { ReactNode, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { AuthProvider } from '@/context/AuthContext';
-import { AdminProvider } from '@/context/AdminContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { BasketProvider } from '@/context/BasketContext';
 import { ModalProvider } from '@/context/ModalContext';
 import ParentMenu from './components/ParentMenu';
@@ -14,7 +13,8 @@ import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  console.log('[AdminLayout] Rendering for path:', pathname);
+  const { isAdmin } = useAuth();
+  console.log('[AdminLayout] Rendering for path:', pathname, 'isAdmin:', isAdmin);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isParentMenuCollapsed, setIsParentMenuCollapsed] = useState(true);
@@ -65,61 +65,61 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     console.log('pathname:', pathname, 'activeSection:', activeSection);
   }, [pathname]);
 
-  // Define paths where TablesChildMenu should NOT be shown
   const excludedPaths = [
-    '/admin', // Exact match for /admin
-    '/admin/tickets/management', // Specific path
+    '/admin',
+    '/admin/tickets/management',
     '/admin/products/management',
     '/admin/pricingplans/management',
   ];
 
-  // Logic: Show TablesChildMenu by default unless on excluded paths or reports section
   const shouldShowTablesChildMenu =
     (isDesktop &&
       !excludedPaths.includes(pathname) &&
       !pathname.startsWith('/admin/reports')) ||
     (!isDesktop && activeSection === 'tables');
 
+  if (!isAdmin) {
+    return null; // Redirect handled by AuthProvider
+  }
+
   return (
     <AuthProvider>
-      <AdminProvider>
-        <BasketProvider>
-          <ModalProvider>
-            <div className="min-h-screen flex bg-gray-50">
-              <ParentMenu
-                isCollapsed={isParentMenuCollapsed}
-                setIsCollapsed={setIsParentMenuCollapsed}
-                setActiveSection={setActiveSection}
+      <BasketProvider>
+        <ModalProvider>
+          <div className="min-h-screen flex bg-gray-50">
+            <ParentMenu
+              isCollapsed={isParentMenuCollapsed}
+              setIsCollapsed={setIsParentMenuCollapsed}
+              setActiveSection={setActiveSection}
+            />
+            {shouldShowTablesChildMenu && (
+              <TablesChildMenu
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                sidebarLinks={sidebarLinks}
+                openSections={openTablesSections}
+                setOpenSections={setOpenTablesSections}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
               />
-              {shouldShowTablesChildMenu && (
-                <TablesChildMenu
-                  isSidebarOpen={isSidebarOpen}
-                  setIsSidebarOpen={setIsSidebarOpen}
-                  sidebarLinks={sidebarLinks}
-                  openSections={openTablesSections}
-                  setOpenSections={setOpenTablesSections}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                />
-              )}
-              {activeSection === 'reports' && (
-                <ReportsChildMenu
-                  isSidebarOpen={isSidebarOpen}
-                  setIsSidebarOpen={setIsSidebarOpen}
-                  sidebarLinks={reportSidebarLinks}
-                  openSections={openReportsSections}
-                  setOpenSections={setOpenReportsSections}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                />
-              )}
-              <main className="flex-1 overflow-y-auto min-h-screen">
-                <div className="max-w-7xl mx-auto px-0 sm:px-6 md:px-8">{children}</div>
-              </main>
-            </div>
-          </ModalProvider>
-        </BasketProvider>
-      </AdminProvider>
+            )}
+            {activeSection === 'reports' && (
+              <ReportsChildMenu
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                sidebarLinks={reportSidebarLinks}
+                openSections={openReportsSections}
+                setOpenSections={setOpenReportsSections}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+              />
+            )}
+            <main className="flex-1 overflow-y-auto min-h-screen">
+              <div className="max-w-7xl mx-auto px-0 sm:px-6 md:px-8">{children}</div>
+            </main>
+          </div>
+        </ModalProvider>
+      </BasketProvider>
     </AuthProvider>
   );
 }

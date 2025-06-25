@@ -15,16 +15,10 @@
     "incremental": true,
     "downlevelIteration": true,
     "forceConsistentCasingInFileNames": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "types": ["node", "next", "@types/node", "@types/react", "@types/react-dom"]
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./src/*"] },
+    "types": ["node", "next"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", ".next/types/**/*.ts", "middleware.ts", "src/types/**/*.d.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", ".next/types/**/*.ts", "src/middleware.ts", "src/types/**/*.d.ts"],
   "exclude": ["node_modules", "dist", ".next"]
 }
