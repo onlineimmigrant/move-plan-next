@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import { stripe } from '@/lib/stripe-supabase';
-import { getBaseUrl } from '@/lib/utils';
 
 function validateImageUrl(url: string): string | undefined {
   if (!url || typeof url !== 'string') {
@@ -18,19 +17,14 @@ function validateImageUrl(url: string): string | undefined {
 
 export async function POST(request: Request) {
   try {
-    let baseUrl = getBaseUrl(true);
+    // Use environment variable with a single fallback for local dev
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     console.log('POST /api/products baseUrl:', baseUrl);
 
-    let organizationId = await getOrganizationId(baseUrl);
+    const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
-      console.log('Falling back to NEXT_PUBLIC_BASE_URL for POST /api/products');
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000' || 'https://metexam.co.uk';
-      console.log('Retry with baseUrl:', baseUrl);
-      organizationId = await getOrganizationId(baseUrl);
-      if (!organizationId) {
-        console.error('Organization not found after fallback');
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
+      console.error('Organization not found for baseUrl:', baseUrl);
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -100,22 +94,16 @@ export async function POST(request: Request) {
   }
 }
 
-// /app/api/products/route.ts (partial update to PUT handler)
 export async function PUT(request: Request) {
   try {
-    let baseUrl = getBaseUrl(true);
+    // Use environment variable with a single fallback for local dev
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     console.log('PUT /api/products baseUrl:', baseUrl);
 
-    let organizationId = await getOrganizationId(baseUrl);
+    const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
-      console.log('Falling back to NEXT_PUBLIC_BASE_URL for PUT /api/products');
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000' || 'https://metexam.co.uk';
-      console.log('Retry with baseUrl:', baseUrl);
-      organizationId = await getOrganizationId(baseUrl);
-      if (!organizationId) {
-        console.error('Organization not found after fallback');
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
+      console.error('Organization not found for baseUrl:', baseUrl);
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
     console.log('PUT /api/products organizationId:', organizationId);
 
@@ -146,7 +134,6 @@ export async function PUT(request: Request) {
     console.log('Fetched product:', product);
     console.log('Type of fetched product.id:', typeof product.id, 'Value:', product.id);
 
-    // Explicitly assign variables instead of destructuring to avoid scoping issues
     console.log('Updates object:', updates);
     const product_name = updates.product_name;
     const is_displayed = updates.is_displayed;
@@ -266,19 +253,14 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    let baseUrl = getBaseUrl(true);
+    // Use environment variable with a single fallback for local dev
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     console.log('DELETE /api/products baseUrl:', baseUrl);
 
-    let organizationId = await getOrganizationId(baseUrl);
+    const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
-      console.log('Falling back to NEXT_PUBLIC_BASE_URL for DELETE /api/products');
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'  || 'https://metexam.co.uk';
-      console.log('Retry with baseUrl:', baseUrl);
-      organizationId = await getOrganizationId(baseUrl);
-      if (!organizationId) {
-        console.error('Organization not found after fallback');
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
+      console.error('Organization not found for baseUrl:', baseUrl);
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     const body = await request.json();
