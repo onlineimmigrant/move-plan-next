@@ -62,6 +62,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [], error = '' }) => {
   const handleNavigation = (path: string) => () => router.push(path);
 
   const footerBackground = settings?.footer_color || 'neutral-900';
+  const settingsBillingPanelStripe = settings?.billing_panel_stripe;
 
   if (!isMounted) {
     return null;

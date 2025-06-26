@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { FiRefreshCw, FiDownload, FiArrowRightCircle } from 'react-icons/fi';
 import { MdOutlineLocalShipping } from 'react-icons/md';
 import Toast from '@/components/Toast';
-import AccountTab from '@/components/AccountTab';
+import AccountPurchasesTab from '@/components/AccountPurchasesTab';
 import { supabase } from '@/lib/supabaseClient';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
@@ -382,7 +382,7 @@ export default function PurchasesPage() {
 
         {/* Tabs Section */}
         <div className="pt-8">
-          <AccountTab />
+          <AccountPurchasesTab />
         </div>
 
         <div className="mt-6 flex justify-between items-center">
@@ -391,7 +391,7 @@ export default function PurchasesPage() {
             <Tooltip content="Sync Purchases">
               <button
                 onClick={handleSync}
-                className="text-sky-600 hover:text-gray-700 transition duration-150"
+                className="cursor-pointer text-sky-600 hover:text-gray-700 transition duration-150"
                 aria-label="Sync purchases"
                 disabled={isLoading}
               >
@@ -437,7 +437,7 @@ export default function PurchasesPage() {
               <Button
                 variant="start"
                 onClick={handleSync}
-                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-md px-4"
+                className="cursor-pointer mt-4 bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 rounded-md px-4"
                 aria-label="Retry syncing purchases"
               >
                 Retry
@@ -604,13 +604,15 @@ export default function PurchasesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 align-top">
+                        <Tooltip content='View receipt for transaction'>
                         <button
                           onClick={() => handleViewReceipt(group.transaction_id)}
-                          className="text-sm text-gray-800 hover:text-sky-500 hover:underline transition duration-150"
+                          className="cursor-pointer text-sm text-gray-800 hover:text-sky-500 hover:underline transition duration-150"
                           aria-label={`View receipt for transaction ${group.transaction_id}`}
                         >
                           {formatDateTime(group.purchase_date)}
                         </button>
+                        </Tooltip>
                         <br />
                         <span className="text-xs text-gray-400 font-light" style={{ fontSize: '8px' }}>
                           {group.transaction_id}
@@ -647,7 +649,7 @@ export default function PurchasesPage() {
                     currentPage === 1
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  } focus:ring-blue-500 rounded-md px-4`}
+                  } focus:ring-sky-500 rounded-md px-4`}
                   aria-label="Previous page"
                 >
                   Previous
@@ -662,7 +664,7 @@ export default function PurchasesPage() {
                     currentPage === totalPages
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  } focus:ring-blue-500 rounded-md px-4`}
+                  } focus:ring-sky-500 rounded-md px-4`}
                   aria-label="Next page"
                 >
                   Next
@@ -673,7 +675,7 @@ export default function PurchasesPage() {
         ) : (
           <div className="bg-white p-6 space-y-16 text-center">
             <div className="pt-8">
-              <AccountTab />
+              <AccountPurchasesTab />
             </div>
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -701,7 +703,7 @@ export default function PurchasesPage() {
               <Button
                 variant="start"
                 onClick={handleSync}
-                className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-md px-4"
+                className="bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 rounded-md px-4"
                 aria-label="Sync purchases"
               >
                 Sync Purchases

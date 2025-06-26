@@ -38,4 +38,5 @@ export interface Settings {
   seo_twitter_card: string | null;
   seo_structured_data: any[] | null; // Use any[] for flexibility; can be typed stricter if needed
   domain: string;
+ billing_panel_stripe: string;
 }
