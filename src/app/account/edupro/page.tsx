@@ -377,7 +377,7 @@ export default function EduPro() {
             <Tooltip content="Sync Courses with Stripe">
               <button
                 onClick={handleSync}
-                className="text-sky-600 hover:text-gray-700 transition duration-150"
+                className="cursor-pointer text-sky-600 hover:text-gray-700 transition duration-150"
                 aria-label="Sync courses"
                 disabled={isLoading}
               >

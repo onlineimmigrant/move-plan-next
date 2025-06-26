@@ -91,6 +91,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     seo_twitter_card: null,
     seo_structured_data: [],
     domain: '',
+    billing_panel_stripe: '',
+
   };
 
   let settings = defaultSettings;
