@@ -712,19 +712,6 @@ export default function PurchasesPage() {
           </div>
         )}
 
-        {/* Link to Stripe Billing */}
-        <div className="mt-16 flex justify-center">
-          <Link
-            href="/account/payments"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-2 text-sky-600 font-medium text-base underline hover:text-sky-800 transition-colors duration-150"
-            aria-label="View payments page (opens in a new tab)"
-          >
-            <span>Payments</span>
-            <ArrowRightIcon className="h-5 w-5" />
-          </Link>
-        </div>
       </div>
     </div>
   );

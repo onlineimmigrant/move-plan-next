@@ -9,6 +9,9 @@ interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
   organizationId: string | null;
+  fullName: string | null;
+  isLoading: boolean;
+  error: string | null;
   setSession: React.Dispatch<React.SetStateAction<Session | null>>;
   login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
@@ -21,6 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const fetchProfile = async (userId: string) => {
@@ -28,33 +34,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, organization_id')
+        .select('role, organization_id, full_name')
         .eq('id', userId)
         .single();
       if (error || !data) {
         console.error('Profile fetch error:', error?.message || 'No profile found');
         setIsAdmin(false);
         setOrganizationId(null);
+        setFullName(null);
         return false;
       }
-      console.log('Profile fetched:', data.role, 'organization_id:', data.organization_id);
+      console.log('Profile fetched:', { role: data.role, organization_id: data.organization_id, full_name: data.full_name });
       setIsAdmin(data.role === 'admin');
       setOrganizationId(data.organization_id || null);
+      setFullName(data.full_name || null);
       return data.role === 'admin';
     } catch (err: unknown) {
       console.error('Profile fetch failed:', (err as Error).message);
       setIsAdmin(false);
       setOrganizationId(null);
+      setFullName(null);
       return false;
     }
   };
 
   useEffect(() => {
     const initializeSession = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error('getSession error:', error.message);
+          setError(error.message);
           return;
         }
         setSession(data.session);
@@ -68,6 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err: unknown) {
         console.error('Session fetch failed:', (err as Error).message);
+        setError((err as Error).message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -89,6 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setIsAdmin(false);
         setOrganizationId(null);
+        setFullName(null);
+        setError('No session found');
         if (window.location.pathname.startsWith('/admin')) {
           console.log('No session, redirecting to /login');
           router.push('/login?redirectTo=%2Fadmin');
@@ -100,36 +117,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   async function login(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      console.error('Login error:', error.message);
-      throw error;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        console.error('Login error:', error.message);
+        setError(error.message);
+        throw error;
+      }
+      console.log('Login successful:', data.user?.email);
+      setSession(data.session);
+      if (data.session?.user?.id) {
+        await fetchProfile(data.session.user.id);
+      }
+      console.log('Cookies after login:', document.cookie);
+      return data;
+    } finally {
+      setIsLoading(false);
     }
-    console.log('Login successful:', data.user?.email);
-    setSession(data.session);
-    if (data.session?.user?.id) {
-      await fetchProfile(data.session.user.id);
-    }
-    console.log('Cookies after login:', document.cookie);
-    return data;
   }
 
   async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Logout error:', error.message);
-      throw error;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error.message);
+        setError(error.message);
+        throw error;
+      }
+      setSession(null);
+      setIsAdmin(false);
+      setOrganizationId(null);
+      setFullName(null);
+      console.log('Cookies after logout:', document.cookie);
+      router.push('/login');
+    } finally {
+      setIsLoading(false);
     }
-    setSession(null);
-    setIsAdmin(false);
-    setOrganizationId(null);
-    console.log('Cookies after logout:', document.cookie);
-    router.push('/login');
   }
 
   const contextValue = useMemo(
-    () => ({ session, isAdmin, organizationId, setSession, login, logout, supabase }),
-    [session, isAdmin, organizationId]
+    () => ({ session, isAdmin, organizationId, fullName, isLoading, error, setSession, login, logout, supabase }),
+    [session, isAdmin, organizationId, fullName, isLoading, error]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
