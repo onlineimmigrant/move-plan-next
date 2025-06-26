@@ -5,6 +5,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { jsPDF } from 'jspdf';
 import AccountPaymentsReceiptTab from '@/components/AccountPaymentsReceiptTab';
+import Loading from '@/ui/Loading';
+import { useSettings } from '@/context/SettingsContext';
+import { Settings } from '@/types/settings';
+
+// Define the context type
+interface SettingsContextType {
+  settings: Settings;
+  setSettings: React.Dispatch<React.SetStateAction<Settings>>;
+}
+
+
 
 // Define the Transaction interface based on the Supabase transactions table
 interface Transaction {
@@ -165,12 +176,8 @@ function ReceiptContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Loading />
       </div>
     );
   }
@@ -191,13 +198,15 @@ function ReceiptContent() {
     );
   }
 
+
+
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-4xl space-y-8">
-                {/* Tabs Section */}
+                {/* Tabs Section 
                 <div className="pt-8">
                   <AccountPaymentsReceiptTab />
-                </div>
+                </div>*/}
         {/* Header */}
         <div className="mt-16 text-center">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight sm:text-3xl">
@@ -214,7 +223,7 @@ function ReceiptContent() {
               <h2 className="text-2xl font-semibold text-gray-900">Transaction Details</h2>
               <button
                 onClick={downloadPDF}
-                className="mt-4 sm:mt-0 px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 transition duration-200"
+                className="cursor-pointer mt-4 sm:mt-0 px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 transition duration-200"
               >
                 Download PDF
               </button>

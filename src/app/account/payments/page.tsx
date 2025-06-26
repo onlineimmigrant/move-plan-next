@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabaseClient';
 import Button from '@/ui/Button';
 import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import Loading from '@/ui/Loading';
 
 // Define the Transaction interface based on the Supabase transactions table
 interface Transaction {
@@ -282,11 +283,7 @@ export default function PaymentsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-        </div>
+          <Loading />
       </div>
     );
   }

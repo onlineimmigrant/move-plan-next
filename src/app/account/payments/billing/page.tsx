@@ -9,6 +9,7 @@ import Toast from '@/components/Toast';
 import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
+import Loading from '@/ui/Loading';
 
 
 export interface Settings {
@@ -87,11 +88,7 @@ export default function BillingPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-        </div>
+          <Loading />
       </div>
     );
   }

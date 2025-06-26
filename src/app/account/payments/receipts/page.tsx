@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import Button from '@/ui/Button';
 import AccountPaymentsReceiptTab from '@/components/AccountPaymentsReceiptTab';
 import Toast from '@/components/Toast';
+import Loading from '@/ui/Loading';
 
 // Transaction interface (same as PaymentsPage)
 interface Transaction {
@@ -213,11 +214,7 @@ export default function ReceiptsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-        </div>
+          <Loading />
       </div>
     );
   }
