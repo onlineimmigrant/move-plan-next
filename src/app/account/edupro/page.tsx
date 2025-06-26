@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
@@ -9,6 +9,8 @@ import AccountTab from '@/components/AccountTab';
 import Toast from '@/components/Toast';
 import { useStudentStatus } from '@/lib/StudentContext';
 import Loading from '@/ui/Loading';
+import Tooltip from '@/components/Tooltip';
+import { FiRefreshCw } from 'react-icons/fi';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -72,7 +74,7 @@ export default function EduPro() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [courseTitle, setCourseTitle] = useState<string>('Loading...');
+  const [showAllCourses, setShowAllCourses] = useState(false); // State for toggling active/all courses
   const router = useRouter();
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
   const { session } = useAuth();
@@ -96,6 +98,116 @@ export default function EduPro() {
     return currentDate >= startDate && (!endDate || currentDate <= endDate);
   };
 
+  // Sync purchases with Stripe
+  const syncAndFetchPurchases = useCallback(async () => {
+    if (!session) return;
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Sync transactions with Stripe
+      const syncResponse = await fetch('/api/transactions/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!syncResponse.ok) {
+        const errorData = await syncResponse.json();
+        throw new Error(errorData.error || 'Failed to sync transactions with Stripe');
+      }
+
+      // Fetch updated purchases after sync
+      const { data: purchases, error: purchaseError } = await supabase
+        .from('purchases')
+        .select(`
+          id,
+          profiles_id,
+          is_active,
+          start_date,
+          end_date,
+          purchased_item_id,
+          pricingplan (
+            product_id,
+            package,
+            measure,
+            product (
+              id,
+              product_name,
+              slug,
+              links_to_image,
+              course_connected_id,
+              product_sub_type (
+                product_type_name,
+                product_type (
+                  name
+                )
+              ),
+              edu_pro_course!course_connected_id (
+                id,
+                slug
+              )
+            )
+          )
+        `)
+        .eq('profiles_id', session.user.id) as { data: Purchase[] | null; error: any };
+
+      if (purchaseError) {
+        throw new Error(`Error fetching purchases: ${purchaseError.message}`);
+      }
+
+      if (!purchases || purchases.length === 0) {
+        setToast({ message: 'No purchases found.', type: 'error' });
+        setCourses([]);
+        return;
+      }
+
+      const coursePurchases = purchases.filter((purchase) => {
+        const productTypeName = purchase.pricingplan?.product?.product_sub_type?.product_type?.name;
+        return productTypeName === 'Course';
+      });
+
+      if (!coursePurchases || coursePurchases.length === 0) {
+        setToast({ message: 'No Course purchases found.', type: 'error' });
+        setCourses([]);
+        return;
+      }
+
+      const mappedCourses: Course[] = coursePurchases.map((purchase) => {
+        const pricingplan = purchase.pricingplan;
+        const product = pricingplan?.product;
+        const eduProCourse = product?.edu_pro_course;
+        if (!pricingplan || !product || !eduProCourse) {
+          throw new Error(`Pricing plan, product, or edu_pro_course not found for purchase ${purchase.id}`);
+        }
+        return {
+          purchaseId: purchase.id,
+          id: product.id,
+          product_name: product.product_name,
+          product_slug: product.slug,
+          product_image: product.links_to_image,
+          pricing_plan: `${pricingplan.package} (${pricingplan.measure})`,
+          purchased_item_id: purchase.purchased_item_id,
+          is_active: purchase.is_active,
+          start_date: purchase.start_date,
+          end_date: purchase.end_date,
+          eduProCourseSlug: eduProCourse.slug,
+        };
+      });
+
+      setCourses(mappedCourses);
+      setToast({ message: 'Courses synced successfully', type: 'success' });
+    } catch (err) {
+      console.error('EduPro: Error:', err);
+      setError((err as Error).message);
+      setToast({ message: (err as Error).message || 'Failed to sync courses', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session]);
+
   useEffect(() => {
     const checkStudentStatus = async () => {
       if (studentLoading) return;
@@ -114,7 +226,7 @@ export default function EduPro() {
           return;
         }
 
-        const { data: activePurchases, error: purchaseError } = await supabase
+        const { data: purchases, error: purchaseError } = await supabase
           .from('purchases')
           .select(`
             id,
@@ -146,46 +258,21 @@ export default function EduPro() {
               )
             )
           `)
-          .eq('profiles_id', session.user.id)
-          .eq('is_active', true) as { data: Purchase[] | null; error: any };
+          .eq('profiles_id', session.user.id) as { data: Purchase[] | null; error: any };
 
         if (purchaseError) {
-          throw new Error(`Error fetching active purchases: ${purchaseError.message}`);
+          throw new Error(`Error fetching purchases: ${purchaseError.message}`);
         }
 
-        if (!activePurchases || activePurchases.length === 0) {
-          setToast({ message: 'No active purchases found.', type: 'error' });
+        if (!purchases || purchases.length === 0) {
+          setToast({ message: 'No purchases found.', type: 'error' });
           setCourses([]);
           return;
         }
 
-        console.log('Raw active purchases:', JSON.stringify(activePurchases, null, 2));
+        console.log('Raw purchases:', JSON.stringify(purchases, null, 2));
 
-        activePurchases.forEach((purchase, index) => {
-          const productTypeName = purchase.pricingplan?.product?.product_sub_type?.product_type?.name;
-          const eduProCourseSlug = purchase.pricingplan?.product?.edu_pro_course?.slug;
-          console.log(
-            `Purchase ${index + 1}:`,
-            {
-              purchaseId: purchase.id,
-              productTypeName: productTypeName || 'Not found',
-              productName: purchase.pricingplan?.product?.product_name,
-              productSlug: purchase.pricingplan?.product?.slug,
-              productImage: purchase.pricingplan?.product?.links_to_image,
-              pricingPlan: purchase.pricingplan
-                ? `${purchase.pricingplan.package} (${purchase.pricingplan.measure})`
-                : 'Not found',
-              eduProCourseSlug: eduProCourseSlug || 'Not found',
-              pricingplan: purchase.pricingplan,
-              product: purchase.pricingplan?.product,
-              productSubType: purchase.pricingplan?.product?.product_sub_type,
-              productType: purchase.pricingplan?.product?.product_sub_type?.product_type,
-              eduProCourse: purchase.pricingplan?.product?.edu_pro_course,
-            }
-          );
-        });
-
-        const coursePurchases = activePurchases.filter((purchase) => {
+        const coursePurchases = purchases.filter((purchase) => {
           const productTypeName = purchase.pricingplan?.product?.product_sub_type?.product_type?.name;
           return productTypeName === 'Course';
         });
@@ -193,7 +280,7 @@ export default function EduPro() {
         console.log('Filtered Course purchases:', JSON.stringify(coursePurchases, null, 2));
 
         if (!coursePurchases || coursePurchases.length === 0) {
-          setToast({ message: 'No active Course purchases found.', type: 'error' });
+          setToast({ message: 'No Course purchases found.', type: 'error' });
           setCourses([]);
           return;
         }
@@ -235,10 +322,27 @@ export default function EduPro() {
     checkStudentStatus();
   }, [router, isStudent, studentLoading, session]);
 
+  // Handle sync and show toast
+  const handleSync = async () => {
+    try {
+      await syncAndFetchPurchases();
+    } catch (error) {
+      setToast({ message: (error as Error).message || 'Failed to sync courses', type: 'error' });
+    }
+  };
+
+  // Filter courses based on showAllCourses state
+  const displayedCourses = showAllCourses
+    ? courses
+    : courses.filter((course) => isPurchaseActive(course));
+
+  // Check if there are any expired courses
+  const hasExpiredCourses = courses.some((course) => !isPurchaseActive(course));
+
   if (isLoading || studentLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <Loading />
+        <Loading />
       </div>
     );
   }
@@ -268,22 +372,94 @@ export default function EduPro() {
           <AccountTab />
         </div>
 
-        {courses.length === 0 ? (
-          <p className="mt-4 text-gray-600">No active courses available at this time.</p>
+        <div className="mt-6 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <Tooltip content="Sync Courses with Stripe">
+              <button
+                onClick={handleSync}
+                className="text-sky-600 hover:text-gray-700 transition duration-150"
+                aria-label="Sync courses"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z" />
+                  </svg>
+                ) : (
+                  <FiRefreshCw className="h-6 w-6" />
+                )}
+              </button>
+            </Tooltip>
+            <h2 className="text-lg font-medium text-gray-900">
+              {showAllCourses ? 'All Courses' : 'Active Courses'}
+            </h2>
+          </div>
+          {hasExpiredCourses && (
+            <Tooltip content="Show Active/All Courses">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showAllCourses}
+                  onChange={() => setShowAllCourses(!showAllCourses)}
+                  className="sr-only peer"
+                  aria-label="Toggle between active and all courses"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+              </label>
+            </Tooltip>
+          )}
+        </div>
+
+        {displayedCourses.length === 0 ? (
+          <div className="mt-4 text-center">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              {showAllCourses ? 'No courses found' : 'No active courses found'}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {showAllCourses
+                ? 'You haven’t purchased any courses yet.'
+                : 'You don’t have any active courses at this time.'}
+            </p>
+            <div className="mt-4 max-w-sm mx-auto">
+              <button
+                onClick={handleSync}
+                className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-md px-4 py-2 text-sm font-medium transition duration-150"
+                aria-label="Sync courses"
+                disabled={isLoading}
+              >
+                Sync Courses
+              </button>
+            </div>
+          </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-8 sm:gap-x-16  sm:grid-cols-2 lg:grid-cols-4">
-            {courses.map((course) => (
+          <div className="mt-6 grid grid-cols-1 gap-8 sm:gap-x-16 sm:grid-cols-2 lg:grid-cols-4">
+            {displayedCourses.map((course) => (
               <Link
                 key={course.purchaseId}
                 href={`/account/edupro/${course.eduProCourseSlug}`}
-                className="group flex flex-col items-center justify-center p-6 bgфин-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300"
+                className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300"
                 title={course.product_name}
               >
                 <div className="transform group-hover:scale-110 transition-transform">
                   <img
                     src={course.product_image}
                     alt={course.product_name}
-                    className="w-16 h-16 object-cover rounded-md"
+                    className="w-auto h-16 object-cover rounded-md"
                     onError={(e) => {
                       e.currentTarget.src = '/placeholder-image.jpg';
                     }}
