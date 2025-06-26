@@ -4,12 +4,27 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FiRefreshCw, FiDownload, FiArrowRightCircle } from 'react-icons/fi';
-import { MdOutlineLocalShipping } from "react-icons/md";
+import { MdOutlineLocalShipping } from 'react-icons/md';
 import Toast from '@/components/Toast';
 import AccountTab from '@/components/AccountTab';
 import { supabase } from '@/lib/supabaseClient';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
+import Tooltip from '@/components/Tooltip';
+
+// Define the Transaction interface (needed for syncAndFetchTransactions)
+interface Transaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  created_at: string;
+  stripe_transaction_id: string;
+  payment_method: string;
+  refunded_date: string | null;
+  metadata: { [key: string]: string };
+}
 
 // Define the Purchase interface based on the purchases table with joined data
 interface Purchase {
@@ -215,7 +230,7 @@ const usePurchases = (accessToken: string | null, userId: string | null, itemsPe
 
       const groupedPurchasesArray = Object.values(groupedByTransaction);
       setGroupedPurchases(groupedPurchasesArray);
-      setTotalCount(totalPurchasesCount || 0); // Use the total count from the count query
+      setTotalCount(totalPurchasesCount || 0);
     } catch (error) {
       setError((error as Error).message);
     } finally {
@@ -223,20 +238,47 @@ const usePurchases = (accessToken: string | null, userId: string | null, itemsPe
     }
   }, [accessToken, userId, itemsPerPage, currentPage]);
 
+  const syncAndFetchPurchases = useCallback(async () => {
+    if (!accessToken || !userId) return;
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Sync transactions with Stripe
+      const syncResponse = await fetch('/api/transactions/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!syncResponse.ok) {
+        const errorData = await syncResponse.json();
+        throw new Error(errorData.error || 'Failed to sync transactions with Stripe');
+      }
+
+      // Fetch updated purchases after sync
+      await fetchPurchases();
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken, userId, fetchPurchases]);
+
   useEffect(() => {
     if (accessToken && userId) fetchPurchases();
   }, [accessToken, userId, itemsPerPage, currentPage, fetchPurchases]);
 
-  return { groupedPurchases, totalCount, isLoading, error, fetchPurchases };
+  return { groupedPurchases, totalCount, isLoading, error, fetchPurchases, syncAndFetchPurchases };
 };
-
-
 
 export default function PurchasesPage() {
   const { accessToken, userId, isLoading: authLoading, error: authError } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { groupedPurchases, totalCount, isLoading: purchasesLoading, error: purchasesError, fetchPurchases } = usePurchases(accessToken, userId, itemsPerPage, currentPage);
+  const { groupedPurchases, totalCount, isLoading: purchasesLoading, error: purchasesError, fetchPurchases, syncAndFetchPurchases } = usePurchases(accessToken, userId, itemsPerPage, currentPage);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const router = useRouter();
 
@@ -297,6 +339,16 @@ export default function PurchasesPage() {
     router.push(`/account/payments/receipt?transaction_id=${stripeTransactionId}`);
   };
 
+  // Handle sync and show toast
+  const handleSync = async () => {
+    try {
+      await syncAndFetchPurchases();
+      setToast({ message: 'Purchases synced successfully', type: 'success' });
+    } catch (error) {
+      setToast({ message: (error as Error).message || 'Failed to sync purchases', type: 'error' });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -311,7 +363,7 @@ export default function PurchasesPage() {
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Toast Notification */}
         {toast && (
           <Toast
@@ -322,15 +374,37 @@ export default function PurchasesPage() {
           />
         )}
 
+        <div className="flex justify-end md:pr-32 lg:pr-64 pr-16">
+          
+          <Tooltip content="Sync Purchases">
+            <button
+              onClick={handleSync}
+              className="cursor-pointer text-sky-600 hover:text-gray-700 transition duration-150 absolute  mt-12  sm:mt-24 sm:pt-2"
+              aria-label="Sync purchases"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z" />
+                </svg>
+              ) : (
+                <FiRefreshCw className="h-6 w-6" />
+              )}
+            </button>
+          </Tooltip>
+        </div>
+
         {/* Purchases Table */}
         {error ? (
           <div className="bg-white p-6 rounded-lg shadow-md text-center">
             <p className="text-red-600 font-medium">{error}</p>
             {accessToken && (
               <Button
-              variant='start'
-                onClick={fetchPurchases}
-
+                variant="start"
+                onClick={handleSync}
+                className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-md px-4"
+                aria-label="Retry syncing purchases"
               >
                 Retry
               </Button>
@@ -418,10 +492,11 @@ export default function PurchasesPage() {
                                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                       Active
                                     </span>
-                                  ) : 
-                                  (<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-400">
-                                  Expired
-                                </span>)}
+                                  ) : (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-400">
+                                      Expired
+                                    </span>
+                                  )}
                                 </div>
                                 <span className="text-gray-500 font-thin">{item.pricing_plan}</span>
                                 <br />
@@ -568,7 +643,7 @@ export default function PurchasesPage() {
           </>
         ) : (
           <div className="bg-white p-6 space-y-16 text-center">
-                        {/* Tabs Section */}
+            {/* Tabs Section */}
             <div className="pt-8">
               <AccountTab />
             </div>
@@ -592,15 +667,16 @@ export default function PurchasesPage() {
             </p>
             <div className="mt-4 max-w-sm mx-auto">
               <Button
-              variant='start'
-                onClick={fetchPurchases}
-                            >
-                Refresh Purchases
+                variant="start"
+                onClick={handleSync}
+                className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-md px-4"
+                aria-label="Sync purchases"
+              >
+                Sync Purchases
               </Button>
             </div>
           </div>
         )}
-
 
         {/* Link to Stripe Billing */}
         <div className="mt-16 flex justify-center">
@@ -609,7 +685,7 @@ export default function PurchasesPage() {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center space-x-2 text-sky-600 font-medium text-base underline hover:text-sky-800 transition-colors duration-150"
-            aria-label="Manage your billing account on Stripe (opens in a new tab)"
+            aria-label="View payments page (opens in a new tab)"
           >
             <span>Payments</span>
             <ArrowRightIcon className="h-5 w-5" />
