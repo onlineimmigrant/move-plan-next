@@ -12,7 +12,7 @@ import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import Tooltip from '@/components/Tooltip';
 
-// Define the Transaction interface (needed for syncAndFetchTransactions)
+// Define the Transaction interface (needed for syncAndFetchPurchases)
 interface Transaction {
   id: string;
   user_id: string;
@@ -277,6 +277,7 @@ const usePurchases = (accessToken: string | null, userId: string | null, itemsPe
 export default function PurchasesPage() {
   const { accessToken, userId, isLoading: authLoading, error: authError } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
+  const [showAllPurchases, setShowAllPurchases] = useState(false); // State for toggling active/all purchases
   const itemsPerPage = 5;
   const { groupedPurchases, totalCount, isLoading: purchasesLoading, error: purchasesError, fetchPurchases, syncAndFetchPurchases } = usePurchases(accessToken, userId, itemsPerPage, currentPage);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -349,6 +350,11 @@ export default function PurchasesPage() {
     }
   };
 
+  // Filter purchases based on showAllPurchases state
+  const displayedPurchases = showAllPurchases
+    ? groupedPurchases
+    : groupedPurchases.filter((group) => group.items.some((item) => isPurchaseActive(item)));
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -363,7 +369,7 @@ export default function PurchasesPage() {
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Toast Notification */}
         {toast && (
           <Toast
@@ -374,30 +380,58 @@ export default function PurchasesPage() {
           />
         )}
 
-        <div className="flex justify-end md:pr-32 lg:pr-64 pr-16">
-          
-          <Tooltip content="Sync Purchases">
-            <button
-              onClick={handleSync}
-              className="cursor-pointer text-sky-600 hover:text-gray-700 transition duration-150 absolute  mt-12  sm:mt-24 sm:pt-2"
-              aria-label="Sync purchases"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z" />
-                </svg>
-              ) : (
-                <FiRefreshCw className="h-6 w-6" />
-              )}
-            </button>
-          </Tooltip>
+        {/* Tabs Section */}
+        <div className="pt-8">
+          <AccountTab />
+        </div>
+
+        <div className="mt-6 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+
+            <Tooltip content="Sync Purchases">
+              <button
+                onClick={handleSync}
+                className="text-sky-600 hover:text-gray-700 transition duration-150"
+                aria-label="Sync purchases"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z" />
+                  </svg>
+                ) : (
+                  <FiRefreshCw className="h-6 w-6" />
+                )}
+              </button>
+            </Tooltip>
+            <h2 className="text-lg font-medium text-gray-900">
+            {showAllPurchases ? 'All Purchases' : 'Active Purchases'}
+          </h2>
+            </div>
+          <div className="flex items-center space-x-4">
+            <Tooltip  content="Show Active/All Purchases">
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showAllPurchases}
+                onChange={() => setShowAllPurchases(!showAllPurchases)}
+                className="sr-only peer"
+                aria-label="Toggle between active and all purchases"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-sky-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+              
+               
+             
+            </label>
+             </Tooltip>
+    
+          </div>
         </div>
 
         {/* Purchases Table */}
         {error ? (
-          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+          <div className="mt-8 bg-white p-6 rounded-lg shadow-md text-center">
             <p className="text-red-600 font-medium">{error}</p>
             {accessToken && (
               <Button
@@ -410,14 +444,9 @@ export default function PurchasesPage() {
               </Button>
             )}
           </div>
-        ) : groupedPurchases.length > 0 ? (
+        ) : displayedPurchases.length > 0 ? (
           <>
-            {/* Tabs Section */}
-            <div className="pt-8">
-              <AccountTab />
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto shadow-md">
+            <div className="mt-8 bg-white rounded-lg border border-gray-200 overflow-x-auto shadow-md">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
@@ -466,7 +495,7 @@ export default function PurchasesPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {groupedPurchases.map((group, index) => (
+                  {displayedPurchases.map((group, index) => (
                     <tr key={group.transaction_id} className="hover:bg-gray-50 transition duration-150">
                       <td className="border-r border-gray-200 sm:min-w-xs min-w-48 px-6 py-8 text-sm text-gray-900 sticky left-0 z-10 bg-white">
                         <div className="space-y-4">
@@ -643,7 +672,6 @@ export default function PurchasesPage() {
           </>
         ) : (
           <div className="bg-white p-6 space-y-16 text-center">
-            {/* Tabs Section */}
             <div className="pt-8">
               <AccountTab />
             </div>
@@ -661,9 +689,13 @@ export default function PurchasesPage() {
                 d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No purchases found</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              {showAllPurchases ? 'No purchases found' : 'No active purchases found'}
+            </h3>
             <p className="mt-1 text-sm text-gray-500">
-              It looks like you haven't made any purchases yet.
+              {showAllPurchases
+                ? 'It looks like you haven’t made any purchases yet.'
+                : 'You don’t have any active purchases at this time.'}
             </p>
             <div className="mt-4 max-w-sm mx-auto">
               <Button
