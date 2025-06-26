@@ -1,122 +1,65 @@
-// app/account/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Toast from '@/components/Toast';
-import { supabase, getOrganizationId } from '@/lib/supabase'; // Import getOrganizationId
 import { useStudentStatus } from '@/lib/StudentContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   UserIcon,
   ShoppingBagIcon,
   AcademicCapIcon,
   CreditCardIcon,
+  CogIcon,
+  DocumentTextIcon,
+  ReceiptPercentIcon,
 } from '@heroicons/react/24/outline';
 
-interface Profile {
-  full_name: string | null;
-  organization_id: string | null; // Add organization_id to Profile interface
-}
-
-const useAuth = () => {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    const fetchSession = async () => {
-      setIsLoading(true);
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw new Error(`Failed to fetch session: ${error.message}`);
-
-        if (!session) {
-          throw new Error('No active session found. Please log in.');
-        }
-
-        setAccessToken(session.access_token);
-
-        // Fetch the organization_id for the current context
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const organizationId = await getOrganizationId(baseUrl);
-        if (!organizationId) {
-          throw new Error('Organization not found');
-        }
-
-        // Verify user's profile has matching organization_id
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('organization_id')
-          .eq('id', session.user.id)
-          .eq('organization_id', organizationId)
-          .single();
-
-        if (profileError || !profile) {
-          throw new Error('User is not authorized for this organization');
-        }
-      } catch (error) {
-        console.error('useAuth: Error:', error);
-        setError((error as Error).message);
-        router.push('/login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSession();
-  }, [router]);
-
-  return { accessToken, isLoading, error };
-};
-
-const useUserName = (accessToken: string | null) => {
-  const [fullName, setFullName] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchUserName = useCallback(async () => {
-    if (!accessToken) return;
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/profiles', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch user name');
-      }
-      const data: Profile = await response.json();
-      setFullName(data.full_name);
-    } catch (error) {
-      console.error('useUserName: Error:', error);
-      setError((error as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (accessToken) fetchUserName();
-  }, [accessToken, fetchUserName]);
-
-  return { fullName, isLoading, error, fetchUserName };
-};
-
 export default function AccountPage() {
-  const { accessToken, isLoading: authLoading, error: authError } = useAuth();
-  const { fullName, isLoading: nameLoading, error: nameError } = useUserName(accessToken);
+  const { session, isAdmin, fullName, isLoading, error } = useAuth();
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const pathname = usePathname();
 
-  const isLoading = authLoading || nameLoading || studentLoading;
-  const error = authError || nameError;
+  const combinedLoading = isLoading || studentLoading;
+
+  useEffect(() => {
+    if (error) {
+      setToast({ message: error, type: 'error' });
+    }
+  }, [error]);
+
+  if (combinedLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex gap-2">
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-600 font-medium">Please log in to access your account.</p>
+      </div>
+    );
+  }
 
   const dashboardLinks = [
+    ...(isAdmin
+      ? [
+          {
+            label: 'Admin',
+            icon: <CogIcon className="h-10 w-10 text-sky-600 group-hover:text-sky-600 transition-colors" />,
+            href: '/admin',
+          },
+        ]
+      : []),
     ...(isStudent
       ? [
           {
@@ -141,27 +84,17 @@ export default function AccountPage() {
       icon: <CreditCardIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/payments',
     },
+    {
+      label: 'Billing',
+      icon: <DocumentTextIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: '/account/payments/billing',
+    },
+    {
+      label: 'Receipts',
+      icon: <ReceiptPercentIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: '/account/payments/receipts',
+    },
   ];
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex gap-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-600 font-medium">{error}</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
