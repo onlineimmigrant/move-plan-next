@@ -29,7 +29,7 @@ const IconButton: React.FC<IconButtonProps> = ({ onClick, disabled, icon: Icon, 
   );
 
   const iconClasses = cn(
-    "h-4 w-4",
+    "cursor-pointer h-4 w-4",
     isActive 
       ? "text-sky-600" // Fallback when active and no primary_color
       : "text-gray-500" // Default inactive color
@@ -53,8 +53,9 @@ const IconButton: React.FC<IconButtonProps> = ({ onClick, disabled, icon: Icon, 
       {isHovered && (
         <span
           className={cn(
+           
             "absolute left-1/2 -translate-x-1/2 top-11",
-            "bg-white border border-gray-300 text-gray-700 text-[10px] font-medium",
+            "cursor-pointer bg-white border border-gray-300 text-gray-700 text-[10px] font-medium",
             "px-1 py-0.5 rounded z-50",
             "w-max min-w-[40px] text-center"
           )}

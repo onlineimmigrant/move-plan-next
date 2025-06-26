@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import Tooltip from '@/components/Tooltip';
+import Loading from '@/ui/Loading';
 
 // Define the Transaction interface (needed for syncAndFetchPurchases)
 interface Transaction {
@@ -358,11 +359,7 @@ export default function PurchasesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-        </div>
+          <Loading />
       </div>
     );
   }

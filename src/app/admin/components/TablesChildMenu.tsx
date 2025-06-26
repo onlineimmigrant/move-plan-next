@@ -130,7 +130,7 @@ const MenuItem = ({
     <div className="flex flex-col">
       <button
         className={cn(
-          "flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium rounded-md transition-all hover:bg-gray-50",
+          "cursor-pointer flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium rounded-md transition-all hover:bg-gray-50",
           effectiveIsOpen ? "bg-gray-50" : "text-gray-600",
           isTopLevel
             ? "text-gray-900 font-semibold py-1 focus:outline-none focus:ring-1 focus:ring-gray-300"
@@ -366,6 +366,7 @@ export default function TablesChildMenu({
               isTopLevel
               isOpen={openSections[key as DisclosureKey]}
               toggleOpen={() => toggleSection(key as DisclosureKey)}
+              
             />
           ))}
         </nav>

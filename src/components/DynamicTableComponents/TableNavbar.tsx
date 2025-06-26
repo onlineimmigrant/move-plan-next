@@ -96,7 +96,7 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
         closeAllOthers('add');
         setIsModalOpen(true);
       },
-      className: primaryButtonClass,
+     
     },
     {
       key: 'add-column',
@@ -182,7 +182,7 @@ const TableNavbar: React.FC<TableNavbarProps> = ({
   ];
 
   const renderButtonGroup = (buttons: ButtonConfig[]) => (
-    <div className="flex gap-1 sm:gap-4">
+    <div className=" flex gap-1 sm:gap-4">
       {buttons.map((button) => (
         <IconButton
           key={button.key}

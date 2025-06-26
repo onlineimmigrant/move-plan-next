@@ -10,6 +10,7 @@ import AccountTab from '@/components/AccountTab';
 import { FiRefreshCw } from 'react-icons/fi';
 import { useStudentStatus } from '@/lib/StudentContext';
 import Button from '@/ui/Button';
+import Loading from '@/ui/Loading';
 
 // Constants
 import { FIELD_LABELS, EDITABLE_FIELDS } from '@/components/constants/profile';
@@ -272,11 +273,7 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-        </div>
+          <Loading />
       </div>
     );
   }

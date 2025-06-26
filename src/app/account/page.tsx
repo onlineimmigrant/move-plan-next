@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Toast from '@/components/Toast';
 import { useStudentStatus } from '@/lib/StudentContext';
 import { useAuth } from '@/context/AuthContext';
+import Loading from '@/ui/Loading';
 import {
   UserIcon,
   ShoppingBagIcon,
@@ -33,11 +34,7 @@ export default function AccountPage() {
   if (combinedLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex gap-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
+          <Loading />
       </div>
     );
   }
