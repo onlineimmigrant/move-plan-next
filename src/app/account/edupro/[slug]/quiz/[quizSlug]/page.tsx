@@ -16,6 +16,7 @@ import ExplanationModal from '@/components/quiz/ExplanationModal';
 import { courseIdFromSlug, shuffleArray } from '@/lib/quizUtils';
 import { Quiz, Question, UserSession, Choice } from '@/components/quiz/Types';
 import NavbarEduPro from '@/components/quiz/NavbarEduProQuiz';
+import ChatWidget from '@/components/ChatWidget';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -539,6 +540,7 @@ export default function QuizPage({ params }: QuizPageProps) {
             closeModal={closeModal}
             isOpen={openModalId === `question-${currentQuestion.id}`}
           />
+           {session && <ChatWidget />}
         </div>
         <div className="col-span-1"></div>
       </div>

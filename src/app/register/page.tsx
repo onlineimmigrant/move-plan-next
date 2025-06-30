@@ -12,6 +12,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/ui/Button';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
+import Tooltip from '@/components/Tooltip';
 
 // Define constants using Next.js environment variables
 const DOMAIN_CUSTOM = process.env.NEXT_PUBLIC_DOMAIN_CUSTOM || 'http://localhost:3000';
@@ -171,6 +172,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex">
       {/* Left side: Gradient background */}
       <div className="hidden md:flex w-1/2 bg-gradient-to-b from-sky-400 to-sky-700 items-center justify-center">
+       
         <div className="text-white text-center">
           <Link href="/">
             <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
@@ -186,22 +188,7 @@ export default function RegisterPage() {
       {/* Right side: Register form */}
       <div className="w-full md:w-1/2 transparent flex items-center justify-center">
         <div className="w-full max-w-sm p-6">
-          <Link href="/">
-            <span className="absolute top-4 right-4 mb-16 flex justify-center hover:bg-gray-50">
-              {settings.image ? (
-                <Image
-                  src={settings.image}
-                  alt="Logo"
-                  width={60}
-                  height={60}
-                  className="h-8 w-auto"
-                  onError={() => console.error('Failed to load logo:')}
-                />
-              ) : (
-                <span className="text-gray-500"></span>
-              )}
-            </span>
-          </Link>
+
           <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold text-gray-900">
             Create Account
           </h1>
@@ -310,8 +297,35 @@ export default function RegisterPage() {
           <Privacy isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
           <Terms isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
           <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+       
+      
+            <Link href="/" >
+            <span className="my-16 flex justify-center hover:bg-gray-50">
+              {settings.image ? (
+                 <Tooltip content="Home" >
+                <Image
+                  src={settings.image}
+                  alt="Logo"
+                  width={60}
+                  height={60}
+                  className="h-8 w-auto"
+                  onError={() => console.error('Failed to load logo:')}
+                />
+                 </Tooltip>
+              ) : (
+                <span className="text-gray-500"></span>
+              )}
+            </span>
+          </Link>
+         
+       
+       
+       
+       
         </div>
+        
       </div>
+      
     </div>
   );
 }

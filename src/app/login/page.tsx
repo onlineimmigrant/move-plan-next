@@ -7,6 +7,7 @@ import Terms from '@/components/Terms';
 import { useSettings } from '@/context/SettingsContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import Tooltip from '@/components/Tooltip';
 
 
 export default function LoginPage() {
@@ -36,22 +37,7 @@ export default function LoginPage() {
       <div className="w-full md:w-1/2 transparent flex items-center justify-center">
       
         <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
-          <Link href='/'>
-          <span className="absolute top-4 right-4 mb-16 flex justify-center " >
-                     {logoCompany? (
-                       <Image
-                         src={logoCompany}
-                         alt="Logo"
-                         width={40}
-                         height={40}
-                         className="h-8 w-auto"
-                         onError={() => console.error('Failed to load logo:')}
-                       />
-                     ) : (
-                       <span className="text-gray-500"></span>
-                     )}
-          </span>
-          </Link>
+
           <h1 className={`my-8 text-center tracking-wide text-xl sm:text-2xl font-extrabold text-${backgroundColor}`}>
             Sign In
           </h1>
@@ -63,6 +49,25 @@ export default function LoginPage() {
 
           <Privacy isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
           <Terms isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
+
+                        <Link href="/" >
+            <span className="my-16 flex justify-center hover:bg-gray-50">
+              {settings.image ? (
+                 <Tooltip content="Home" >
+                <Image
+                  src={settings.image}
+                  alt="Logo"
+                  width={60}
+                  height={60}
+                  className="h-8 w-auto"
+                  onError={() => console.error('Failed to load logo:')}
+                />
+                 </Tooltip>
+              ) : (
+                <span className="text-gray-500"></span>
+              )}
+            </span>
+          </Link>
         </div>
       </div>
     </div>

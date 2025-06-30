@@ -8,7 +8,6 @@ import TOC from '@/components/PostPage/TOC';
 import { notFound, redirect } from 'next/navigation';
 import '@/components/PostPage/PostEditor.css';
 import { getPostUrl } from '@/lib/postUtils';
-import { useSEO } from '@/context/SEOContext';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -50,7 +49,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   const [isAdmin, setIsAdmin] = useState(false); // State for admin status
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const { setSEOData } = useSEO();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const activeLanguages = ['en', 'es', 'fr'];
 
@@ -129,127 +127,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     };
     fetchPost();
   }, [slug, baseUrl]);
-
-  // Set SEO data
-  useEffect(() => {
-    if (!post) return;
-
-    const postUrl = `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`;
-    setSEOData({
-      title: post.title || 'Default Title',
-      description: post.description || post.excerpt || 'Default description for the post.',
-      keywords: post.keywords || 'default, keywords',
-      image: post.featured_image || undefined,
-      canonicalUrl: postUrl,
-      noindex: !post.display_this_post,
-      faqs: post.faqs || [],
-      hreflang: activeLanguages.map((lang) => ({
-        href: `${baseUrl}/${lang}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
-        hreflang: lang,
-      })),
-      structuredData: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'Article',
-          headline: post.title || 'Default Title',
-          description: post.description || post.excerpt || 'Default description',
-          image: post.featured_image || '/default-og-image.jpg',
-          datePublished: post.created_on || post.last_modified || new Date().toISOString(),
-          dateModified: post.last_modified || new Date().toISOString(),
-          author: post.is_with_author
-            ? post.is_company_author
-              ? {
-                  '@type': 'Organization',
-                  name: 'Your Site Name',
-                }
-              : {
-                  '@type': 'Person',
-                  name: post.author
-                    ? `${post.author.first_name} ${post.author.last_name}`
-                    : 'Unknown Author',
-                }
-            : {
-                '@type': 'Organization',
-                name: 'Your Site Name',
-              },
-          publisher: {
-            '@type': 'Organization',
-            name: 'Your Site Name',
-            logo: {
-              '@type': 'ImageObject',
-              url: `${baseUrl}/images/logo.svg`,
-            },
-          },
-          url: postUrl,
-        },
-        {
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            {
-              '@type': 'ListItem',
-              position: 1,
-              name: 'Home',
-              item: `${baseUrl}/`,
-            },
-            ...(post.section
-              ? [
-                  {
-                    '@type': 'ListItem',
-                    position: 2,
-                    name: post.section,
-                    item:
-                      post.subsection === 'SQE2'
-                        ? `${baseUrl}/sqe-2/specification`
-                        : `${baseUrl}/${post.section.toLowerCase()}`,
-                  },
-                ]
-              : []),
-            {
-              '@type': 'ListItem',
-              position: post.section ? 3 : 2,
-              name: post.subsection,
-              item:
-                post.subsection === 'SQE2'
-                  ? `${baseUrl}/sqe-2/specification`
-                  : `${baseUrl}/${post.subsection?.toLowerCase()}`,
-            },
-            {
-              '@type': 'ListItem',
-              position: post.section ? 4 : 3,
-              name: post.title,
-              item: postUrl,
-            },
-          ],
-        },
-        ...(post.reviews?.length
-          ? [
-              {
-                '@context': 'https://schema.org',
-                '@type': 'Review',
-                reviewRating: {
-                  '@type': 'Rating',
-                  ratingValue: post.reviews[0].rating,
-                  bestRating: 5,
-                },
-                author: {
-                  '@type': 'Person',
-                  name: post.reviews[0].author,
-                },
-                reviewBody: post.reviews[0].comment,
-                itemReviewed: {
-                  '@type': 'Article',
-                  headline: post.title,
-                  url: postUrl,
-                },
-              },
-            ]
-          : []),
-      ],
-    });
-
-    return () => setSEOData(null);
-  }, [post, setSEOData, baseUrl, slug]);
 
   // Generate TOC
   const toc: TOCItem[] = useMemo(() => {
@@ -374,7 +251,6 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                   onMouseLeave={() => setIsHeaderHovered(false)}
                   className="relative"
                 >
-                  
                   <PostHeader
                     post={{
                       section: post.section || '',

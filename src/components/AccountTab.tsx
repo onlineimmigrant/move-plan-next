@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStudentStatus } from '@/lib/StudentContext';
+import Loading from '@/ui/Loading';
 
 interface Tab {
   label: string;
@@ -46,15 +47,9 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="flex justify-center gap-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Loading />
       </div>
-    );
   }
 
   return (
@@ -77,7 +72,7 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-base mona-sans px-0.5 ${
+                className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-sm  font-medium mona-sans px-0.5 ${
                   pathname === tab.href ? 'font-semibold text-white z-10' : ''
                 }`}
                 role="tab"

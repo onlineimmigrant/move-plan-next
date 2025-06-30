@@ -216,7 +216,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
                     <Link
                       key={tab.href}
                       href={tab.href}
-                      className={`flex-1 px-0.5 flex justify-center items-center text-sky-600 text-sm sm:text-base font-mona-sans ${
+                      className={`flex-1 px-0.5 flex justify-center items-center text-sky-600 text-sm sm:text-sm font-medium font-mona-sans ${
                         isTabActive(tab) ? 'font-semibold text-white z-10' : ''
                       }`}
                     >

@@ -12,6 +12,7 @@ import ProgressBars from '@/components/study-plan/ProgressBars';
 import TopicSection from '@/components/study-plan/TopicSection';
 import ToastWrapper from '@/components/study-plan/ToastWrapper';
 import { CourseProgress, Purchase, StudyPlanPreference, TopicProgress, LessonProgress } from '@/components/study-plan/types';
+import Loading from '@/ui/Loading';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -535,11 +536,7 @@ export default function EduProCourseStudyPlan() {
   if (isLoading || studentLoading) {
     return (
       <div className="min-h-screen  flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-          <div className="w-4 h-4 bg-sky-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-        </div>
+      <Loading />
       </div>
     );
   }
