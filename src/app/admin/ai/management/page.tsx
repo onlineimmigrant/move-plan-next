@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ChevronDownIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Combobox, Disclosure, Transition } from '@headlessui/react';
 import Tooltip from '@/components/Tooltip';
 import InfoCards from '@/components/ai/InfoCards';
@@ -12,7 +12,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Predefined models and endpoints (same as user page)
+// Predefined models and endpoints (unchanged)
 const popularModels = [
   'grok-3',
   'grok-3-mini',
@@ -306,104 +306,12 @@ export default function AIManagement() {
 
         {error && <div className="text-red-500 mb-4">{error}</div>}
 
-        <div className="my-8">
-          <Disclosure defaultOpen>
-            {({ open }: { open: boolean }) => (
-              <div>
-                <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-base px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <span>Default Models</span>
-                  <ChevronDownIcon className={`h-5 w-5 text-sky-500 transition-transform ${open ? 'rotate-180' : ''}`} />
-                </Disclosure.Button>
-                <Transition
-                  enter="transition ease-out duration-100"
-                  enterFrom="opacity-0 scale-95"
-                  enterTo="opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="opacity-100 scale-100"
-                  leaveTo="opacity-0 scale-95"
-                >
-                  <Disclosure.Panel className="border border-gray-200 rounded-xl py-4 px-4">
-                    <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
-                      {defaultModels.length === 0 ? (
-                        <li className="py-2 px-4 text-gray-700">No default models available.</li>
-                      ) : (
-                        defaultModels.map((model) => (
-                          <li
-                            key={model.id}
-                            className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
-                          >
-                            <span className="flex-grow text-xs sm:text-sm font-medium">
-                              {model.name} <span className='sm:ml-4 font-thin text-xs'>{model.user_role_to_access}</span>
-                            </span>
-                            <div className="flex items-center space-x-2">
-                              <Tooltip content="Edit Model">
-                                <button
-                                  onClick={() => selectModelForEdit(model)}
-                                  className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all"
-                                  aria-label="Edit model"
-                                >
-                                  <PencilIcon className="h-5 w-5" />
-                                </button>
-                              </Tooltip>
-                              <Tooltip content="Delete Model">
-                                <button
-                                  onClick={() => deleteModel(model.id)}
-                                  className="cursor-pointer p-2 rounded-full bg-gray-300 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
-                                  aria-label="Delete model"
-                                >
-                                  <TrashIcon className="h-5 w-5" />
-                                </button>
-                              </Tooltip>
-                              <Tooltip content={model.is_active ? 'Deactivate' : 'Activate'}>
-                                <button
-                                  onClick={() => toggleModelActive(model.id, !model.is_active)}
-                                  className={`cursor-pointer p-2 rounded-full ${
-                                    model.is_active
-                                      ? 'bg-gray-300 text-white hover:bg-gray-400'
-                                      : 'bg-teal-100 text-white hover:bg-teal-600'
-                                  } transition-colors`}
-                                >
-                                  {model.is_active ? (
-                                    <svg
-                                      className="h-5 w-5"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  ) : (
-                                    <svg
-                                      className="h-5 w-5"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  )}
-                                </button>
-                              </Tooltip>
-                            </div>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </Disclosure.Panel>
-                </Transition>
-              </div>
-            )}
-          </Disclosure>
-        </div>
-
         <Disclosure>
           {({ open }: { open: boolean }) => (
             <div>
-              <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-base px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                <span>Add Default AI Model</span>
-                <ChevronDownIcon className={`h-5 w-5 text-sky-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+              <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2">
+                <span>Add</span>
+                <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
               </Disclosure.Button>
               <Transition
                 enter="transition ease-out duration-100"
@@ -559,9 +467,9 @@ export default function AIManagement() {
             <Disclosure defaultOpen>
               {({ open }: { open: boolean }) => (
                 <div>
-                  <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-base px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <span>Edit Model: {selectedEditModel.name}</span>
-                    <ChevronDownIcon className={`h-5 w-5 text-sky-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+                  <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2">
+                    <span>Edit: {selectedEditModel.name}</span>
+                    <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
                   </Disclosure.Button>
                   <Transition
                     enter="transition ease-out duration-100"
@@ -666,7 +574,6 @@ export default function AIManagement() {
                                 </svg>
                               </button>
                             </Tooltip>
-
                           </div>
                         </>
                       )}
@@ -677,6 +584,98 @@ export default function AIManagement() {
             </Disclosure>
           </div>
         )}
+
+        <div className="my-8">
+          <Disclosure defaultOpen>
+            {({ open }: { open: boolean }) => (
+              <div>
+                <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2">
+                  <span>Models</span>
+                  <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
+                </Disclosure.Button>
+                <Transition
+                  enter="transition ease-out duration-100"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Disclosure.Panel className="border border-gray-200 rounded-xl py-4 px-4">
+                    <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
+                      {defaultModels.length === 0 ? (
+                        <li className="py-2 px-4 text-gray-700">No default models available.</li>
+                      ) : (
+                        defaultModels.map((model) => (
+                          <li
+                            key={model.id}
+                            className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
+                          >
+                            <span className={model.user_role_to_access === 'admin' ? 'flex-grow text-sky-500 text-xs sm:text-sm font-medium' : 'flex-grow text-xs sm:text-sm font-medium'}>
+                              {model.name} <p className='font-thin text-gray-700 italic'>{model.user_role_to_access === 'admin' ? 'admin access' : ''}</p>
+                            </span>
+                            <div className="flex items-center space-x-2">
+                              <Tooltip content="Edit Model">
+                                <button
+                                  onClick={() => selectModelForEdit(model)}
+                                  className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all"
+                                  aria-label="Edit model"
+                                >
+                                  <PencilIcon className="h-5 w-5" />
+                                </button>
+                              </Tooltip>
+                              <Tooltip content="Delete Model">
+                                <button
+                                  onClick={() => deleteModel(model.id)}
+                                  className="cursor-pointer p-2 rounded-full bg-gray-300 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
+                                  aria-label="Delete model"
+                                >
+                                  <TrashIcon className="h-5 w-5" />
+                                </button>
+                              </Tooltip>
+                              <Tooltip content={model.is_active ? 'Deactivate' : 'Activate'}>
+                                <button
+                                  onClick={() => toggleModelActive(model.id, !model.is_active)}
+                                  className={`cursor-pointer p-2 rounded-full ${
+                                    model.is_active
+                                      ? 'bg-gray-300 text-white hover:bg-gray-400'
+                                      : 'bg-teal-100 text-white hover:bg-teal-600'
+                                  } transition-colors`}
+                                >
+                                  {model.is_active ? (
+                                    <svg
+                                      className="h-5 w-5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  ) : (
+                                    <svg
+                                      className="h-5 w-5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </button>
+                              </Tooltip>
+                            </div>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </Disclosure.Panel>
+                </Transition>
+              </div>
+            )}
+          </Disclosure>
+        </div>
       </div>
 
       <div className="sm:col-span-1">

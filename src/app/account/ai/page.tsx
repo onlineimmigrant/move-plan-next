@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import { ArrowLeftIcon, ChevronDownIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Combobox, Disclosure, Transition } from '@headlessui/react';
 import Tooltip from '@/components/Tooltip';
 import Link from 'next/link';
@@ -15,7 +15,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Predefined models and endpoints
+// Predefined models and endpoints (unchanged)
 const popularModels = [
   'grok-3',
   'grok-3-mini',
@@ -532,152 +532,12 @@ export default function AISettings() {
 
         {error && <div className="text-red-500 mb-4">{error}</div>}
 
-        <div className="my-8">
-          <Disclosure defaultOpen>
-            {({ open }: { open: boolean }) => (
-              <div>
-                <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-lg px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <span>Available Models</span>
-                  <ChevronDownIcon className={`h-5 w-5 text-sky-500 transition-transform ${open ? 'rotate-180' : ''}`} />
-                </Disclosure.Button>
-                <Transition
-                  enter="transition ease-out duration-100"
-                  enterFrom="opacity-0 scale-95"
-                  enterTo="opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="opacity-100 scale-100"
-                  leaveTo="opacity-0 scale-95"
-                >
-                  <Disclosure.Panel className="border border-gray-200 rounded-xl py-4 px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-800 mb-1">Default Models</h3>
-                        <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
-                          {defaultModels.length === 0 ? (
-                            <li className="py-2 px-4 text-gray-700">No default models available.</li>
-                          ) : (
-                            defaultModels.map((model) => (
-                              <li
-                                key={model.id}
-                                className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
-                                onClick={() => selectModel(model.id, 'default')}
-                              >
-                                <span className="flex-grow">
-                                  {model.name} {model.user_role_to_access ? `(${model.user_role_to_access})` : ''}
-                                </span>
-                                <Tooltip
-                                  content={selectedModel?.id === model.id && selectedModel.type === 'default' ? 'Selected' : 'Select'}
-                                >
-                                  <button
-                                    className={`p-2 rounded-full ${
-                                      selectedModel?.id === model.id && selectedModel.type === 'default'
-                                        ? 'bg-sky-500 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    } transition-colors`}
-                                  >
-                                    {selectedModel?.id === model.id && selectedModel.type === 'default' ? (
-                                      <svg
-                                        className="h-5 w-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    ) : (
-                                      <svg
-                                        className="h-5 w-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                      </svg>
-                                    )}
-                                  </button>
-                                </Tooltip>
-                              </li>
-                            ))
-                          )}
-                        </ul>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-800 mb-1">Your Models</h3>
-                        <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
-                          {userModels.length === 0 ? (
-                            <li className="py-2 px-4 text-gray-700">No user models available.</li>
-                          ) : (
-                            userModels.map((model) => (
-                              <li
-                                key={model.id}
-                                className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
-                              >
-                                <span className="flex-grow">{model.name}</span>
-                                <div className="flex items-center space-x-2">
-                                  <Tooltip content="Remove Model">
-                                    <button
-                                      onClick={() => deleteUserModel(model.id)}
-                                      className="p-2 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
-                                      aria-label="Remove model"
-                                    >
-                                      <TrashIcon className="h-5 w-5" />
-                                    </button>
-                                  </Tooltip>
-                                  <Tooltip
-                                    content={selectedModel?.id === model.id && selectedModel.type === 'user' ? 'Selected' : 'Select'}
-                                  >
-                                    <button
-                                      onClick={() => selectModel(model.id, 'user')}
-                                      className={`p-2 rounded-full ${
-                                        selectedModel?.id === model.id && selectedModel.type === 'user'
-                                          ? 'bg-sky-500 text-white'
-                                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                      } transition-colors`}
-                                    >
-                                      {selectedModel?.id === model.id && selectedModel.type === 'user' ? (
-                                        <svg
-                                          className="h-5 w-5"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      ) : (
-                                        <svg
-                                          className="h-5 w-5"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                        </svg>
-                                      )}
-                                    </button>
-                                  </Tooltip>
-                                </div>
-                              </li>
-                            ))
-                          )}
-                        </ul>
-                      </div>
-                    </div>
-                  </Disclosure.Panel>
-                </Transition>
-              </div>
-            )}
-          </Disclosure>
-        </div>
         <Disclosure>
           {({ open }: { open: boolean }) => (
             <div>
-              <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-lg px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2">
                 <span>Add Custom AI Model</span>
-                <ChevronDownIcon className={`h-5 w-5 text-sky-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+                <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
               </Disclosure.Button>
               <Transition
                 enter="transition ease-out duration-100"
@@ -806,6 +666,148 @@ export default function AISettings() {
             </div>
           )}
         </Disclosure>
+
+        <div className="my-8">
+          <Disclosure defaultOpen>
+            {({ open }: { open: boolean }) => (
+              <div>
+                <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2">
+                  <span>Available Models</span>
+                  <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
+                </Disclosure.Button>
+                <Transition
+                  enter="transition ease-out duration-100"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Disclosure.Panel className="border border-gray-200 rounded-xl py-4 px-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-800 mb-1">Default</h3>
+                        <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
+                          {defaultModels.length === 0 ? (
+                            <li className="py-2 px-4 text-gray-700">No default models available.</li>
+                          ) : (
+                            defaultModels.map((model) => (
+                              <li
+                                key={model.id}
+                                className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
+                                onClick={() => selectModel(model.id, 'default')}
+                              >
+                                <span className="flex-grow text-xs sm:text-sm">
+                                  {model.name} <span className='sm:ml-4 text-xs font-thin'>{model.user_role_to_access === "admin" ? 'admin' : ''}</span>
+                                </span>
+                                <Tooltip
+                                  content={selectedModel?.id === model.id && selectedModel.type === 'default' ? 'Selected' : 'Select'}
+                                >
+                                  <button
+                                    className={`p-2 rounded-full ${
+                                      selectedModel?.id === model.id && selectedModel.type === 'default'
+                                        ? 'bg-sky-500 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    } transition-colors`}
+                                  >
+                                    {selectedModel?.id === model.id && selectedModel.type === 'default' ? (
+                                      <svg
+                                        className="h-5 w-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    ) : (
+                                      <svg
+                                        className="h-5 w-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path strokeLinecap="round" stroke稽
+                                        strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                </Tooltip>
+                              </li>
+                            ))
+                          )}
+                        </ul>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-800 mb-1">Custom</h3>
+                        <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
+                          {userModels.length === 0 ? (
+                            <li className="py-2 px-4 text-gray-700">No user models available.</li>
+                          ) : (
+                            userModels.map((model) => (
+                              <li
+                                key={model.id}
+                                className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
+                              >
+                                <span className="flex-grow text-xs sm:text-sm">{model.name}</span>
+                                <div className="flex items-center space-x-2">
+                                  <Tooltip content="Remove Model">
+                                    <button
+                                      onClick={() => deleteUserModel(model.id)}
+                                      className="p-2 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
+                                      aria-label="Remove model"
+                                    >
+                                      <TrashIcon className="h-5 w-5" />
+                                    </button>
+                                  </Tooltip>
+                                  <Tooltip
+                                    content={selectedModel?.id === model.id && selectedModel.type === 'user' ? 'Selected' : 'Select'}
+                                  >
+                                    <button
+                                      onClick={() => selectModel(model.id, 'user')}
+                                      className={`p-2 rounded-full ${
+                                        selectedModel?.id === model.id && selectedModel.type === 'user'
+                                          ? 'bg-sky-500 text-white'
+                                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                      } transition-colors`}
+                                    >
+                                      {selectedModel?.id === model.id && selectedModel.type === 'user' ? (
+                                        <svg
+                                          className="h-5 w-5"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      ) : (
+                                        <svg
+                                          className="h-5 w-5"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                      )}
+                                    </button>
+                                  </Tooltip>
+                                </div>
+                              </li>
+                            ))
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </Disclosure.Panel>
+                </Transition>
+              </div>
+            )}
+          </Disclosure>
+        </div>
       </div>
 
       <InfoCards setOpenDialog={setOpenDialog} />
