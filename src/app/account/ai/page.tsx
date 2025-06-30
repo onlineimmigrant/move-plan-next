@@ -9,6 +9,7 @@ import Link from 'next/link';
 import InfoCards from '@/components/ai/InfoCards';
 import DialogModals from '@/components/ai/DialogModals';
 import ChatWidget from '@/components/ChatWidget';
+import Image from 'next/image';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -60,6 +61,7 @@ interface Model {
   user_role_to_access?: string;
   max_tokens?: number;
   icon?: string | null;
+  src?: string | undefined;
 }
 
 interface SelectedModel {
@@ -694,9 +696,17 @@ export default function AISettings() {
                             defaultModels.map((model) => (
                               <li
                                 key={model.id}
-                                className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
+                                className="space-x-4 bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
                                 onClick={() => selectModel(model.id, 'default')}
                               >
+                                {model.icon && (
+                            <img
+                                className="h-4 w-4 mr-4"
+                                src={model.icon}
+                                alt={`${model.name} icon`}
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
+                            )}
                                 <span className="flex-grow text-xs sm:text-sm">
                                   {model.name} <span className='sm:ml-4 text-xs font-thin'>{model.user_role_to_access === "admin" ? 'admin' : ''}</span>
                                 </span>

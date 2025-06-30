@@ -61,6 +61,7 @@ interface DefaultModel {
   is_active: boolean;
   system_message: string;
   icon: string | null;
+  src?: string;
 }
 
 export default function AIManagement() {
@@ -601,7 +602,7 @@ export default function AIManagement() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Disclosure.Panel className="border border-gray-200 rounded-xl py-4 px-4">
+                  <Disclosure.Panel className="border border-gray-200 rounded-xl">
                     <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
                       {defaultModels.length === 0 ? (
                         <li className="py-2 px-4 text-gray-700">No default models available.</li>
@@ -611,6 +612,15 @@ export default function AIManagement() {
                             key={model.id}
                             className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
                           >
+                            {model.icon && (
+                            <img
+                                className="h-4 w-4 mr-4"
+                                src={model.icon}
+                                alt={`${model.name} icon`}
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
+                            )}
+                          
                             <span className={model.user_role_to_access === 'admin' ? 'flex-grow text-sky-500 text-xs sm:text-sm font-medium' : 'flex-grow text-xs sm:text-sm font-medium'}>
                               {model.name} <p className='font-thin text-gray-700 italic'>{model.user_role_to_access === 'admin' ? 'admin access' : ''}</p>
                             </span>
