@@ -310,7 +310,7 @@ export default function AIManagement() {
           <Disclosure defaultOpen>
             {({ open }: { open: boolean }) => (
               <div>
-                <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-lg px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-base px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
                   <span>Default Models</span>
                   <ChevronDownIcon className={`h-5 w-5 text-sky-500 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </Disclosure.Button>
@@ -332,14 +332,14 @@ export default function AIManagement() {
                             key={model.id}
                             className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
                           >
-                            <span className="flex-grow">
-                              {model.name} ({model.user_role_to_access}, {model.is_active ? 'Active' : 'Inactive'})
+                            <span className="flex-grow text-xs sm:text-sm font-medium">
+                              {model.name} <span className='sm:ml-4 font-thin text-xs'>{model.user_role_to_access}</span>
                             </span>
                             <div className="flex items-center space-x-2">
                               <Tooltip content="Edit Model">
                                 <button
                                   onClick={() => selectModelForEdit(model)}
-                                  className="p-2 rounded-full bg-gray-100 text-gray-600 opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all"
+                                  className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all"
                                   aria-label="Edit model"
                                 >
                                   <PencilIcon className="h-5 w-5" />
@@ -360,7 +360,7 @@ export default function AIManagement() {
                                   className={`cursor-pointer p-2 rounded-full ${
                                     model.is_active
                                       ? 'bg-gray-300 text-white hover:bg-gray-400'
-                                      : 'bg-green-500 text-white hover:bg-green-600'
+                                      : 'bg-teal-100 text-white hover:bg-teal-600'
                                   } transition-colors`}
                                 >
                                   {model.is_active ? (
@@ -401,7 +401,7 @@ export default function AIManagement() {
         <Disclosure>
           {({ open }: { open: boolean }) => (
             <div>
-              <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-lg px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-base px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
                 <span>Add Default AI Model</span>
                 <ChevronDownIcon className={`h-5 w-5 text-sky-500 transition-transform ${open ? 'rotate-180' : ''}`} />
               </Disclosure.Button>
@@ -559,7 +559,7 @@ export default function AIManagement() {
             <Disclosure defaultOpen>
               {({ open }: { open: boolean }) => (
                 <div>
-                  <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-lg px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Disclosure.Button className="flex items-center border border-gray-200 justify-between w-full text-base px-2 font-medium text-gray-800 mb-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
                     <span>Edit Model: {selectedEditModel.name}</span>
                     <ChevronDownIcon className={`h-5 w-5 text-sky-500 transition-transform ${open ? 'rotate-180' : ''}`} />
                   </Disclosure.Button>
@@ -624,36 +624,14 @@ export default function AIManagement() {
                             placeholder="System Message"
                             className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 mb-2 resize-y min-h-[100px] max-h-[300px] overflow-y-auto"
                           />
-                          <div className="flex space-x-2">
-                            <Tooltip content="Save Changes">
-                              <button
-                                onClick={updateModel}
-                                disabled={
-                                  loading ||
-                                  !editModel.name ||
-                                  !editModel.api_key ||
-                                  !editModel.endpoint
-                                }
-                                className="bg-teal-500 text-white p-2 rounded-full disabled:bg-gray-200 hover:bg-teal-600 transition-colors"
-                              >
-                                <svg
-                                  className="h-5 w-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </button>
-                            </Tooltip>
+                          <div className="flex justify-between space-x-2">
                             <Tooltip content="Cancel">
                               <button
                                 onClick={() => {
                                   setSelectedEditModel(null);
                                   setEditModel(null);
                                 }}
-                                className="bg-gray-500 text-white p-2 rounded-full hover:bg-gray-600 transition-colors"
+                                className="cursor-pointer bg-gray-500 text-white p-2 rounded-full hover:bg-gray-600 transition-colors"
                               >
                                 <svg
                                   className="h-5 w-5"
@@ -666,6 +644,29 @@ export default function AIManagement() {
                                 </svg>
                               </button>
                             </Tooltip>
+                            <Tooltip content="Save Changes">
+                              <button
+                                onClick={updateModel}
+                                disabled={
+                                  loading ||
+                                  !editModel.name ||
+                                  !editModel.api_key ||
+                                  !editModel.endpoint
+                                }
+                                className="cursor-pointer bg-teal-500 text-white p-2 rounded-full disabled:bg-gray-200 hover:bg-teal-600 transition-colors"
+                              >
+                                <svg
+                                  className="h-5 w-5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                            </Tooltip>
+
                           </div>
                         </>
                       )}

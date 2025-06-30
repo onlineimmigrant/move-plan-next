@@ -67,7 +67,7 @@ export default function ChatWidget() {
       if (event instanceof CustomEvent && event.detail) {
         console.log('ChatWidget: Received addToChat event with text:', event.detail);
         setInput((prev) => (prev ? `${prev}\n${event.detail}` : event.detail));
-        setIsOpen(true); // Open chat if closed
+        setIsOpen(true);
       }
     };
 
@@ -75,7 +75,25 @@ export default function ChatWidget() {
     return () => window.removeEventListener('addToChat', handleAddToChat);
   }, []);
 
-  // Fetch chat histories and model details
+  // Listen for modelChanged event
+  useEffect(() => {
+    const handleModelChanged = (event: Event) => {
+      if (event instanceof CustomEvent && event.detail) {
+        console.log('ChatWidget: Received modelChanged event:', event.detail);
+        const { name, max_tokens, icon } = event.detail;
+        setFullModelName(name);
+        setModelName(name.split('-').slice(0, -1).join(' '));
+        setMaxTokens(max_tokens || 4096);
+        setModelIcon(icon);
+        setError(null); // Clear any previous model-related errors
+      }
+    };
+
+    window.addEventListener('modelChanged', handleModelChanged);
+    return () => window.removeEventListener('modelChanged', handleModelChanged);
+  }, []);
+
+  // Fetch chat histories and initial model details
   useEffect(() => {
     const fetchData = async () => {
       if (!isAuthenticated || !accessToken) return;
@@ -346,14 +364,14 @@ export default function ChatWidget() {
 
   return (
     <div className="z-62">
- 
+      <Tooltip content={isOpen ? 'Close Chat' : 'Open Chat'}>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="cursor-pointer fixed bottom-4 right-4 bg-sky-500 text-white p-4 rounded-full shadow-lg z-61 hover:bg-sky-600 transition-colors"
         >
           <RocketLaunchIcon className="h-6 w-6" />
         </button>
-      
+      </Tooltip>
       {isOpen && (
         <div
           className={`fixed bottom-24 right-4 bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}

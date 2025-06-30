@@ -1,4 +1,3 @@
-// app/ai/page.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
@@ -59,6 +58,8 @@ interface Model {
   id: number;
   name: string;
   user_role_to_access?: string;
+  max_tokens?: number;
+  icon?: string | null;
 }
 
 interface SelectedModel {
@@ -111,7 +112,7 @@ export default function AISettings() {
       // Fetch default models
       const { data: defaults, error: defaultsError } = await supabase
         .from('ai_models_default')
-        .select('id, name, user_role_to_access')
+        .select('id, name, user_role_to_access, max_tokens, icon')
         .eq('organization_id', profile.organization_id)
         .eq('is_active', true);
       if (defaultsError) {
@@ -124,7 +125,7 @@ export default function AISettings() {
       // Fetch user models
       const { data: userModels, error: userModelsError } = await supabase
         .from('ai_models')
-        .select('id, name')
+        .select('id, name, max_tokens')
         .eq('user_id', user.id);
       if (userModelsError) {
         setError('Failed to load user models.');
@@ -139,7 +140,7 @@ export default function AISettings() {
         .select('default_model_id, user_model_id, selected_model_type')
         .eq('user_id', user.id)
         .single();
-      if (settingsError && settingsError.code !== 'PGRST116') { // PGRST116: no rows found
+      if (settingsError && settingsError.code !== 'PGRST116') {
         console.error('Settings error:', settingsError.message);
         setError('Failed to load settings.');
       } else if (settings) {
@@ -151,7 +152,6 @@ export default function AISettings() {
           setSelectedModel(null);
         }
       } else {
-        // Initialize ai_user_settings if no row exists
         await supabase.from('ai_user_settings').insert({
           user_id: user.id,
           default_model_id: null,
@@ -215,7 +215,7 @@ export default function AISettings() {
           system_message: 'You are a helpful assistant for [Your Site’s Purpose].',
           is_active: true,
         })
-        .select('id, name')
+        .select('id, name, max_tokens')
         .single();
 
       if (error) {
@@ -223,7 +223,7 @@ export default function AISettings() {
       }
 
       if (data) {
-        setUserModels([...userModels, { id: data.id, name: data.name }]);
+        setUserModels([...userModels, { id: data.id, name: data.name, max_tokens: data.max_tokens }]);
         const { error: upsertError } = await supabase
           .from('ai_user_settings')
           .upsert(
@@ -240,10 +240,22 @@ export default function AISettings() {
           throw new Error('Failed to update settings: ' + upsertError.message);
         }
         setSelectedModel({ id: data.id, type: 'user' });
+        // Dispatch modelChanged event
+        window.dispatchEvent(
+          new CustomEvent('modelChanged', {
+            detail: {
+              type: 'user',
+              id: data.id,
+              name: data.name,
+              max_tokens: data.max_tokens,
+              icon: null, // User models have no icon
+            },
+          })
+        );
+        console.log('Dispatched modelChanged event:', { id: data.id, type: 'user', name: data.name });
         setNewModel({ name: '', api_key: '', endpoint: '', max_tokens: 200 });
         setModelQuery('');
         setEndpointQuery('');
-        console.log('Added and selected model:', { id: data.id, type: 'user' });
       }
     } catch (error: any) {
       setError(error.message || 'Failed to add model.');
@@ -292,8 +304,47 @@ export default function AISettings() {
         throw new Error('Failed to update selected model: ' + upsertError.message);
       }
 
+      // Fetch model details for event
+      let modelDetails: { name: string; max_tokens?: number; icon?: string | null } = {
+        name: 'grok-3-latest',
+        max_tokens: 4096,
+        icon: null,
+      };
+      if (type === 'default') {
+        const { data: defaultModel } = await supabase
+          .from('ai_models_default')
+          .select('name, max_tokens, icon')
+          .eq('id', id)
+          .single();
+        if (defaultModel) {
+          modelDetails = defaultModel;
+        }
+      } else {
+        const { data: userModel } = await supabase
+          .from('ai_models')
+          .select('name, max_tokens')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+        if (userModel) {
+          modelDetails = { ...userModel, icon: null };
+        }
+      }
+
       setSelectedModel({ id, type });
-      console.log('Model selected:', { id, type });
+      // Dispatch modelChanged event
+      window.dispatchEvent(
+        new CustomEvent('modelChanged', {
+          detail: {
+            type,
+            id,
+            name: modelDetails.name,
+            max_tokens: modelDetails.max_tokens || 4096,
+            icon: modelDetails.icon,
+          },
+        })
+      );
+      console.log('Dispatched modelChanged event:', { id, type, name: modelDetails.name });
     } catch (error: any) {
       setError(error.message || 'Failed to select model.');
       console.error('Select model error:', error.message);
@@ -317,7 +368,6 @@ export default function AISettings() {
     console.log('Deleting model ID:', modelId, 'for user:', user.id);
 
     try {
-      // Delete the model
       const { error: deleteError } = await supabase
         .from('ai_models')
         .delete()
@@ -327,10 +377,8 @@ export default function AISettings() {
         throw new Error('Failed to delete model: ' + deleteError.message);
       }
 
-      // Update user models in state
       setUserModels(userModels.filter((model) => model.id !== modelId));
 
-      // Get profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
@@ -340,12 +388,10 @@ export default function AISettings() {
         throw new Error('Profile not found');
       }
 
-      // Update ai_user_settings if the deleted model was selected
       if (selectedModel?.id === modelId && selectedModel.type === 'user') {
-        // Try another user model
         const { data: remainingUserModel } = await supabase
           .from('ai_models')
-          .select('id')
+          .select('id, name, max_tokens')
           .eq('user_id', user.id)
           .limit(1)
           .single();
@@ -366,12 +412,22 @@ export default function AISettings() {
             throw new Error('Failed to update settings: ' + upsertError.message);
           }
           setSelectedModel({ id: remainingUserModel.id, type: 'user' });
-          console.log('Switched to user model:', remainingUserModel.id);
+          window.dispatchEvent(
+            new CustomEvent('modelChanged', {
+              detail: {
+                type: 'user',
+                id: remainingUserModel.id,
+                name: remainingUserModel.name,
+                max_tokens: remainingUserModel.max_tokens || 4096,
+                icon: null,
+              },
+            })
+          );
+          console.log('Dispatched modelChanged event:', { id: remainingUserModel.id, type: 'user' });
         } else {
-          // Try a default model
           const { data: defaultModel } = await supabase
             .from('ai_models_default')
-            .select('id')
+            .select('id, name, max_tokens, icon')
             .eq('organization_id', profile.organization_id)
             .eq('is_active', true)
             .limit(1)
@@ -393,7 +449,18 @@ export default function AISettings() {
               throw new Error('Failed to update settings: ' + upsertError.message);
             }
             setSelectedModel({ id: defaultModel.id, type: 'default' });
-            console.log('Switched to default model:', defaultModel.id);
+            window.dispatchEvent(
+              new CustomEvent('modelChanged', {
+                detail: {
+                  type: 'default',
+                  id: defaultModel.id,
+                  name: defaultModel.name,
+                  max_tokens: defaultModel.max_tokens || 4096,
+                  icon: defaultModel.icon,
+                },
+              })
+            );
+            console.log('Dispatched modelChanged event:', { id: defaultModel.id, type: 'default' });
           } else {
             const { error: upsertError } = await supabase
               .from('ai_user_settings')
@@ -411,7 +478,18 @@ export default function AISettings() {
               throw new Error('Failed to update settings: ' + upsertError.message);
             }
             setSelectedModel(null);
-            console.log('No models available, cleared selection');
+            window.dispatchEvent(
+              new CustomEvent('modelChanged', {
+                detail: {
+                  type: null,
+                  id: null,
+                  name: 'grok-3-latest',
+                  max_tokens: 4096,
+                  icon: null,
+                },
+              })
+            );
+            console.log('Dispatched modelChanged event: No models available');
           }
         }
       }
@@ -470,7 +548,7 @@ export default function AISettings() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Disclosure.Panel className="border border-gray-200 rounded-xl  py-4 px-4">
+                  <Disclosure.Panel className="border border-gray-200 rounded-xl py-4 px-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <h3 className="text-sm font-medium text-gray-800 mb-1">Default Models</h3>
