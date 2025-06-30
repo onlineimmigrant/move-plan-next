@@ -5,11 +5,7 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'codedharmony.blob.core.windows.net',
-        pathname: '/**',
-      },
+
       {
         protocol: 'http',
         hostname: 'localhost',

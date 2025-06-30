@@ -226,9 +226,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <head>
-   
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href={faviconUrl} />
-
+        <meta name="title" content={seoData.title || 'Default Title'} />
+        <meta name="description" content={seoData.description || 'Default Description'} />
+        {seoData.keywords && (
+          <meta
+            name="keywords"
+            content={Array.isArray(seoData.keywords) ? seoData.keywords.join(', ') : seoData.keywords}
+          />
+        )}
+        {seoData.canonicalUrl && <link rel="canonical" href={seoData.canonicalUrl} />}
+        {seoData.title && <meta property="og:title" content={seoData.title} />}
+        {seoData.description && <meta property="og:description" content={seoData.description} />}
+        {seoData.seo_og_url && <meta property="og:url" content={seoData.seo_og_url} />}
+        {seoData.seo_og_image && <meta property="og:image" content={seoData.seo_og_image} />}
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        {seoData.title && <meta name="twitter:title" content={seoData.title} />}
+        {seoData.description && <meta name="twitter:description" content={seoData.description} />}
+        {seoData.seo_og_image && <meta name="twitter:image" content={seoData.seo_og_image} />}
         {(seoData.structuredData || []).map((data, index) => (
           <script
             key={`structured-data-${index}`}

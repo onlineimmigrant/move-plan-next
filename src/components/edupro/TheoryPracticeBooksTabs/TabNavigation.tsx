@@ -37,7 +37,7 @@ export default function TabNavigation({ tabs, activeTab, setActiveTab }: TabNavi
               aria-selected={activeTab === tab.value}
               aria-controls={`${tab.value}-panel`}
               onClick={() => setActiveTab(tab.value)}
-              className={`flex-1 flex justify-center cursor-pointer items-center text-slate-500 text-sm sm:text-base mona-sans px-0.5 ${
+              className={`flex-1 flex justify-center cursor-pointer items-center text-slate-500 text-sm sm:text-sm font-medium mona-sans px-0.5 ${
                 activeTab === tab.value ? 'font-semibold text-white z-10' : ''
               }`}
             >

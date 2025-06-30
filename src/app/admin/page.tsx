@@ -12,8 +12,18 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   UserCircleIcon,
+  CogIcon, ChatBubbleLeftIcon, ArrowsRightLeftIcon,RocketLaunchIcon
+
+
+
+
+
+
+
+
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
+import Tooltip from '@/components/Tooltip';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -50,27 +60,29 @@ export default function AdminDashboardPage() {
   }
 
   const dashboardLinks = [
-    { href: '/admin/relocation_plans', label: 'App', icon: DevicePhoneMobileIcon },
-    { href: '/admin/products/management', label: 'Products', icon: ArchiveBoxIcon },
-    { href: '/admin/pricingplans/management', label: 'Pricing Plans', icon: CurrencyDollarIcon },
-    { href: '/admin/cookie_category', label: 'Cookies', icon: ShieldCheckIcon },
-    { href: '/admin/reports/custom', label: 'Reports', icon: ChartBarIcon },
-    { href: '/admin/settings', label: 'Settings', icon: Cog6ToothIcon },
-    { href: '/admin/tickets/management', label: 'Tickets', icon: ChartBarIcon },
-    { href: '/account', label: 'Profile', icon: UserCircleIcon },
+    { href: '/admin/relocation_plans', label: 'App', icon: DevicePhoneMobileIcon, tooltip: 'Customers App' },
+    { href: '/admin/products/management', label: 'Products', icon: ArchiveBoxIcon, tooltip: 'Product Management' },
+    { href: '/admin/pricingplans/management', label: 'Pricing Plans', icon: CurrencyDollarIcon, tooltip: 'Price Management' },
+    { href: '/admin/cookie_category', label: 'Cookies', icon: ShieldCheckIcon, tooltip: 'Consent Management' },
+    //{ href: '/admin/reports/custom', label: 'Reports', icon: ChartBarIcon, tooltip: 'Standard and Custom' },
+    { href: '/admin/ai/management', label: 'AI', icon: RocketLaunchIcon, tooltip: 'AI Models' },
+    { href: '/admin/settings', label: 'Settings', icon: Cog6ToothIcon, tooltip:'Website Management' },
+    { href: '/admin/tickets/management', label: 'Tickets', icon: ChatBubbleLeftIcon, tooltip: 'Contact Management' },
+    { href: '/account', label: 'Account', icon: ArrowsRightLeftIcon, tooltip: 'Personal' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="mt-16 sm:mt-18 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
-          Admin Dashboard
+    <div className="min-h-screen bg-gray py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="mt-8  mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
+          Admin 
           <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
         </h1>
         <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {dashboardLinks.map((item) => {
             const isActive = pathname === item.href;
             return (
+              <Tooltip key={item.href} content={item.tooltip}>
               <Link
                 key={item.href}
                 href={item.href}
@@ -93,9 +105,13 @@ export default function AdminDashboardPage() {
                   {item.label}
                 </span>
               </Link>
+              </Tooltip>
             );
           })}
         </div>
+              <div className='my-16 sm:my-32 flex justify-center'>
+      <CogIcon className='h-16 w-16 text-sky-600'/>
+      </div>
       </div>
     </div>
   );

@@ -2,6 +2,8 @@ import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import HomePage from './HomePage';
 import { supabase } from '@/lib/supabase';
 import { HomePageData } from '@/types/home_page_data';
+import { MetaTags } from '@/components/MetaTags';
+import { StructuredData } from '@/components/StructuredData';
 
 async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   const defaultData: HomePageData = {
@@ -122,11 +124,16 @@ export default async function Page() {
   const settings = await getSettings(baseUrl);
   const homePageData = await fetchHomePageData(baseUrl);
 
+   
+
   return (
+    <>
+
     <div>
       <h1 className="sr-only">{settings.site || 'Welcome'}</h1>
       <HomePage data={homePageData} />
     </div>
+    </>
   );
 }
 

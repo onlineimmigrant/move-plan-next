@@ -438,7 +438,7 @@ export default function EduPro() {
             <div className="mt-4 max-w-sm mx-auto">
               <button
                 onClick={handleSync}
-                className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-md px-4 py-2 text-sm font-medium transition duration-150"
+                className="bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 rounded-md px-4 py-2 text-sm font-medium transition duration-150"
                 aria-label="Sync courses"
                 disabled={isLoading}
               >

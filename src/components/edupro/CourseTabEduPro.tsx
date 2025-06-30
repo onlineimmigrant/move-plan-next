@@ -15,8 +15,6 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 
-
-
 interface AccountTabEduProCourseProps {
   className?: string;
 }
@@ -139,11 +137,6 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
   }, [slug, session]);
 
 
-
-
- 
-
-
   return (
     <>
       {/* Top Navbar */}
@@ -154,8 +147,6 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
       >
         <div className="max-w-7xl mx-auto px-8 sm:px-6 lg:px-8 py-2">
           <div className="flex items-center justify-center">
-   
-
             {/* Course Header */}
             <div className="flex flex-col items-center">
               <span className="hidden sm:block text-white font-semibold text-xs  bg-slate-500 py-0 px-2">{duration}</span>
@@ -164,12 +155,9 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
             </div>
-
-
           </div>
         </div>
       </div>
-
 
     </>
   );

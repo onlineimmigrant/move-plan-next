@@ -15,12 +15,18 @@ import {
   CogIcon,
   DocumentTextIcon,
   ReceiptPercentIcon,
+  UserCircleIcon, ArrowsRightLeftIcon, RocketLaunchIcon
+
+
 } from '@heroicons/react/24/outline';
+import Tooltip from '@/components/Tooltip';
+import ChatWidget from '@/components/ChatWidget';
 
 export default function AccountPage() {
   const { session, isAdmin, fullName, isLoading, error } = useAuth();
   const { isStudent, isLoading: studentLoading } = useStudentStatus();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
   const pathname = usePathname();
 
   const combinedLoading = isLoading || studentLoading;
@@ -31,10 +37,16 @@ export default function AccountPage() {
     }
   }, [error]);
 
-  if (combinedLoading) {
+  const handleLinkClick = (href: string) => {
+    setNavigatingTo(href);
+    // Reset after 1.5 seconds to cover typical navigation delay
+    setTimeout(() => setNavigatingTo(null), 1500);
+  };
+
+  if (combinedLoading || navigatingTo) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <Loading />
+        <Loading />
       </div>
     );
   }
@@ -48,21 +60,14 @@ export default function AccountPage() {
   }
 
   const dashboardLinks = [
-    ...(isAdmin
-      ? [
-          {
-            label: 'Admin',
-            icon: <CogIcon className="h-10 w-10 text-sky-600 group-hover:text-sky-600 transition-colors" />,
-            href: '/admin',
-          },
-        ]
-      : []),
+
     ...(isStudent
       ? [
           {
             label: 'Student',
             icon: <AcademicCapIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
             href: '/account/edupro',
+            tooltip: 'Learning Platform',
           },
         ]
       : []),
@@ -70,32 +75,53 @@ export default function AccountPage() {
       label: 'Profile',
       icon: <UserIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/profile',
+      tooltip: 'Personal Info',
+    },
+        {
+      label: 'AI',
+      icon: <RocketLaunchIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      href: '/account/ai',
+      tooltip: 'Define your AI Model',
     },
     {
       label: 'Purchases',
       icon: <ShoppingBagIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/purchases',
+      tooltip: 'List',
     },
     {
       label: 'Payments',
       icon: <CreditCardIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/payments',
+      tooltip: 'List',
     },
     {
       label: 'Billing',
       icon: <DocumentTextIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/payments/billing',
+      tooltip: 'Billing Account Management',
     },
     {
       label: 'Receipts',
       icon: <ReceiptPercentIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/payments/receipts',
+      tooltip: 'List',
     },
+        ...(isAdmin
+      ? [
+          {
+            label: 'Admin',
+            icon: <ArrowsRightLeftIcon className="h-10 w-10 text-sky-600 group-hover:text-sky-600 transition-colors" />,
+            href: '/admin',
+            tooltip: 'Dashboard',
+          },
+        ]
+      : []),
   ];
 
   return (
     <div className="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {toast && (
           <Toast
             message={toast.message}
@@ -114,23 +140,29 @@ export default function AccountPage() {
           {dashboardLinks.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300 ${
-                  isActive ? 'bg-sky-50 shadow-md' : ''
-                }`}
-                title={item.label}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <div className="transform group-hover:scale-110 transition-transform">{item.icon}</div>
-                <span className="mt-3 text-sm font-medium text-gray-800 group-hover:text-sky-600 text-center sm:text-base">
-                  {item.label}
-                </span>
-              </Link>
+              <Tooltip content={item.tooltip} key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={() => handleLinkClick(item.href)}
+                  className={`group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300 ${
+                    isActive ? 'bg-sky-50 shadow-md' : ''
+                  }`}
+                  title={item.label}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <div className="transform group-hover:scale-110 transition-transform">{item.icon}</div>
+                  <span className="mt-3 text-sm font-medium text-gray-800 group-hover:text-sky-600 text-center sm:text-base">
+                    {item.label}
+                  </span>
+                </Link>
+              </Tooltip>
             );
           })}
         </div>
+        <div className="my-16 sm:my-32 flex justify-center">
+          <UserCircleIcon className="h-16 w-16 text-sky-600" />
+        </div>
+       {session && <ChatWidget />}
         {pathname === '/account' && (
           <div className="mt-24 sm:mt-32 text-gray-600 text-sm text-center">
             <h2 className="font-semibold text-gray-800">Hello, {fullName || 'User'}!</h2>
