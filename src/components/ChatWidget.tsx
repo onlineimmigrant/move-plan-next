@@ -3,10 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import { RocketLaunchIcon, XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, MagnifyingGlassIcon, BookmarkIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
-import { Combobox, Popover, Transition } from '@headlessui/react';
+import { RocketLaunchIcon, XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, MagnifyingGlassIcon, BookmarkIcon, ArrowUpIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { Combobox, Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from '@headlessui/react';
 import Tooltip from '@/components/Tooltip';
-import Link from 'next/link';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +21,14 @@ interface ChatHistory {
   id: number;
   name: string;
   messages: Message[];
+}
+
+interface Model {
+  id: number;
+  name: string;
+  max_tokens?: number;
+  icon?: string | null;
+  type: 'default' | 'user';
 }
 
 export default function ChatWidget() {
@@ -43,6 +50,8 @@ export default function ChatWidget() {
   const [fullModelName, setFullModelName] = useState('grok-3-latest');
   const [maxTokens, setMaxTokens] = useState(4096);
   const [modelIcon, setModelIcon] = useState<string | null>(null);
+  const [models, setModels] = useState<Model[]>([]);
+  const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
@@ -80,20 +89,21 @@ export default function ChatWidget() {
     const handleModelChanged = (event: Event) => {
       if (event instanceof CustomEvent && event.detail) {
         console.log('ChatWidget: Received modelChanged event:', event.detail);
-        const { name, max_tokens, icon } = event.detail;
+        const { name, max_tokens, icon, id, type } = event.detail;
         setFullModelName(name);
         setModelName(name.split('-').slice(0, -1).join(' '));
         setMaxTokens(max_tokens || 4096);
         setModelIcon(icon);
-        setError(null); // Clear any previous model-related errors
+        setSelectedModel(models.find((m) => m.id === id && m.type === type) || null);
+        setError(null);
       }
     };
 
     window.addEventListener('modelChanged', handleModelChanged);
     return () => window.removeEventListener('modelChanged', handleModelChanged);
-  }, []);
+  }, [models]);
 
-  // Fetch chat histories and initial model details
+  // Fetch chat histories and models
   useEffect(() => {
     const fetchData = async () => {
       if (!isAuthenticated || !accessToken) return;
@@ -105,7 +115,7 @@ export default function ChatWidget() {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, organization_id')
         .eq('id', user.id)
         .single();
 
@@ -115,6 +125,7 @@ export default function ChatWidget() {
         return;
       }
 
+      // Fetch chat histories
       const { data: histories, error: historiesError } = await supabase
         .from('ai_chat_histories')
         .select('id, name, messages')
@@ -127,9 +138,43 @@ export default function ChatWidget() {
         setChatHistories(histories || []);
       }
 
+      // Fetch default models
+      const { data: defaultModels, error: defaultModelsError } = await supabase
+        .from('ai_models_default')
+        .select('id, name, max_tokens, icon')
+        .eq('organization_id', profile.organization_id)
+        .eq('is_active', true);
+
+      if (defaultModelsError) {
+        console.error('Default models fetch error:', defaultModelsError.message);
+        setError('Failed to load default models.');
+      }
+
+      // Fetch user models
+      const { data: userModels, error: userModelsError } = await supabase
+        .from('ai_models')
+        .select('id, name, max_tokens')
+        .eq('user_id', user.id);
+
+      if (userModelsError) {
+        console.error('User models fetch error:', userModelsError.message);
+        setError('Failed to load user models.');
+      }
+
+      // Combine and sort models
+      const combinedModels: Model[] = [
+        ...(defaultModels || []).map((m) => ({ ...m, type: 'default' as const })),
+        ...(userModels || []).map((m) => ({ ...m, type: 'user' as const, icon: null })),
+      ];
+      setModels(combinedModels);
+
+      // Fetch and set initial selected model
       let name = 'grok-3-latest';
       let maxTokensValue = 4096;
       let icon: string | null = null;
+      let selectedModelId: number | null = null;
+      let selectedModelType: 'default' | 'user' | null = null;
+
       const { data: settingsData, error: settingsError } = await supabase
         .from('ai_user_settings')
         .select('default_model_id, user_model_id, selected_model_type')
@@ -144,7 +189,7 @@ export default function ChatWidget() {
         if (settings.selected_model_type === 'default' && settings.default_model_id) {
           const { data: defaultModel, error: defaultError } = await supabase
             .from('ai_models_default')
-            .select('name, max_tokens, icon')
+            .select('id, name, max_tokens, icon')
             .eq('id', settings.default_model_id)
             .single();
 
@@ -152,6 +197,8 @@ export default function ChatWidget() {
             name = defaultModel.name;
             maxTokensValue = defaultModel.max_tokens || maxTokensValue;
             icon = defaultModel.icon;
+            selectedModelId = defaultModel.id;
+            selectedModelType = 'default';
           } else {
             console.error('Default model fetch error:', defaultError?.message);
             setError('Default model not found. Using fallback model.');
@@ -159,7 +206,7 @@ export default function ChatWidget() {
         } else if (settings.selected_model_type === 'user' && settings.user_model_id) {
           const { data: userModel, error: userModelError } = await supabase
             .from('ai_models')
-            .select('name, max_tokens')
+            .select('id, name, max_tokens')
             .eq('id', settings.user_model_id)
             .eq('user_id', user.id)
             .single();
@@ -167,6 +214,8 @@ export default function ChatWidget() {
           if (!userModelError && userModel?.name) {
             name = userModel.name;
             maxTokensValue = userModel.max_tokens || maxTokensValue;
+            selectedModelId = userModel.id;
+            selectedModelType = 'user';
           } else {
             console.error('User model fetch error:', userModelError?.message);
             setError('User model not found. Using fallback model.');
@@ -181,6 +230,9 @@ export default function ChatWidget() {
       setModelName(name.split('-').slice(0, -1).join(' '));
       setMaxTokens(maxTokensValue);
       setModelIcon(icon);
+      setSelectedModel(
+        combinedModels.find((m) => m.id === selectedModelId && m.type === selectedModelType) || null
+      );
     };
     fetchData();
   }, [isAuthenticated, accessToken]);
@@ -334,6 +386,68 @@ export default function ChatWidget() {
     setHistoryName('');
   };
 
+  const selectModel = async (model: Model | null) => {
+    if (!model || !isAuthenticated || !accessToken) return;
+    setError(null);
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      setError('Please log in to select a model.');
+      console.error('Auth error:', authError?.message);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .single();
+    if (profileError || !profile) {
+      setError('Profile not found. Please contact support.');
+      console.error('Profile error:', profileError?.message);
+      return;
+    }
+
+    try {
+      const updateData = {
+        user_id: user.id,
+        default_model_id: model.type === 'default' ? model.id : null,
+        user_model_id: model.type === 'user' ? model.id : null,
+        selected_model_type: model.type,
+        organization_id: profile.organization_id,
+      };
+      const { error: upsertError } = await supabase
+        .from('ai_user_settings')
+        .upsert(updateData, { onConflict: 'user_id' });
+      if (upsertError) {
+        throw new Error('Failed to update selected model: ' + upsertError.message);
+      }
+
+      setSelectedModel(model);
+      setFullModelName(model.name);
+      setModelName(model.name.split('-').slice(0, -1).join(' '));
+      setMaxTokens(model.max_tokens || 4096);
+      setModelIcon(model.icon || null);
+
+      // Dispatch modelChanged event
+      window.dispatchEvent(
+        new CustomEvent('modelChanged', {
+          detail: {
+            type: model.type,
+            id: model.id,
+            name: model.name,
+            max_tokens: model.max_tokens || 4096,
+            icon: model.icon,
+          },
+        })
+      );
+      console.log('Dispatched modelChanged event:', { id: model.id, type: model.type, name: model.name });
+    } catch (error: any) {
+      setError(error.message || 'Failed to select model.');
+      console.error('Select model error:', error.message);
+    }
+  };
+
   const goToSettings = () => {
     router.push('/account/ai');
   };
@@ -361,6 +475,14 @@ export default function ChatWidget() {
         history.name.toLowerCase().includes(query.toLowerCase())
       )
     : chatHistories;
+
+  // Sort models to put selected model at the top
+  const sortedModels = selectedModel
+    ? [
+        selectedModel,
+        ...models.filter((m) => m.id !== selectedModel.id || m.type !== selectedModel.type),
+      ]
+    : models;
 
   return (
     <div className="z-62">
@@ -398,53 +520,72 @@ export default function ChatWidget() {
               </button>
             </Tooltip>
             <div className="flex items-center space-x-2">
-              <Popover className="relative">
-                <Tooltip content="Model Info">
-                  <Popover.Button className="cursor-pointer border-2 border-gray-50 rounded-full p-2">
-                    {modelIcon ? (
-                      <img
-                        src={modelIcon}
-                        alt="Model Icon"
-                        className="h-8 w-8 object-contain"
-                        onError={() => setModelIcon(null)}
-                      />
-                    ) : (
-                      <RocketLaunchIcon className="h-6 w-6 text-gray-400 font-bold" />
-                    )}
-                  </Popover.Button>
-                </Tooltip>
-                <Transition
-                  enter="transition ease-out duration-100"
-                  enterFrom="opacity-0 scale-95"
-                  enterTo="opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="opacity-100 scale-100"
-                  leaveTo="opacity-0 scale-95"
-                >
-                  <Popover.Panel className="absolute z-10 left-full sm:right-full ml-2 top-1/2 transform -translate-y-1/2 w-48 bg-white rounded-md shadow-lg ring-1 ring-gray-200 focus:outline-none">
-                    <div className="p-4">
-                      <div className="text-sm text-gray-800">
-                        <p>Model: {fullModelName}</p>
-                        <p>Tokens: {maxTokens}</p>
-                      </div>
-                      <hr className="border-gray-200 my-4" />
-                      <Link
-                        href="/account/ai"
-                        className="text-sm text-sky-500 hover:underline block"
-                      >
-                        Model Settings
-                      </Link>
-                      <hr className="border-gray-200 my-4" />
-                      <Link
-                        href="/account/ai"
-                        className="text-sm text-sky-500 hover:underline block"
-                      >
-                        Change Model
-                      </Link>
-                    </div>
-                  </Popover.Panel>
-                </Transition>
-              </Popover>
+              <Listbox value={selectedModel} onChange={selectModel}>
+                {({ open }) => (
+                  <>
+                    <Tooltip content="Select Model">
+                      <ListboxButton className="cursor-pointer border-2 border-gray-50 rounded-full p-2 relative">
+                        {modelIcon ? (
+                          <img
+                            src={modelIcon}
+                            alt="Model Icon"
+                            className="h-8 w-8 object-contain"
+                            onError={() => setModelIcon(null)}
+                          />
+                        ) : (
+                          <RocketLaunchIcon className="h-6 w-6 text-gray-400 font-bold" />
+                        )}
+              
+                      </ListboxButton>
+                    </Tooltip>
+                    <Transition
+                      enter="transition ease-out duration-100"
+                      enterFrom="opacity-0 scale-95"
+                      enterTo="opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="opacity-100 scale-100"
+                      leaveTo="opacity-0 scale-95"
+                    >
+                      <ListboxOptions className="absolute z-10 right-0 mt-1 w-48 max-h-60 overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
+                        {sortedModels.length === 0 ? (
+                          <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                            No models available
+                          </div>
+                        ) : (
+                          sortedModels.map((model) => (
+                            <ListboxOption
+                              key={`${model.type}-${model.id}`}
+                              value={model}
+                              className={({ active }) =>
+                                `relative cursor-pointer select-none py-2 px-4 ${
+                                  active ? 'bg-sky-100 text-sky-900' : 'text-gray-900'
+                                }`
+                              }
+                            >
+                              <div className="flex items-center">
+                                <span className="flex-grow">{model.name}</span>
+                                {selectedModel?.id === model.id && selectedModel?.type === model.type && (
+                                  <CheckIcon className="h-5 w-5 text-sky-500" />
+                                )}
+                              </div>
+                              <p className="text-xs font-thin text-gray-600 capitalize">{model.type}</p>
+                            </ListboxOption>
+                          ))
+                        )}
+                        <hr className='text-gray-200' />
+                        <div className="p-2">
+                          <button
+                            onClick={goToSettings}
+                            className="cursor-pointer pl-2 w-full text-left text-sm text-sky-500 hover:underline"
+                          >
+                            Manage Models
+                          </button>
+                        </div>
+                      </ListboxOptions>
+                    </Transition>
+                  </>
+                )}
+              </Listbox>
             </div>
             <Tooltip content="Close">
               <button
@@ -456,7 +597,7 @@ export default function ChatWidget() {
             </Tooltip>
           </div>
           {error && (
-            <div className="text-red-500 mb-2">
+            <div className="text-red-500 mb-2 px-4">
               {error}
               {error.includes('No AI model selected') && (
                 <button
@@ -477,7 +618,7 @@ export default function ChatWidget() {
             </div>
           )}
           {!isAuthenticated && (
-            <div className="text-red-500 mb-2">Please log in to use the chat.</div>
+            <div className="text-red-500 mb-2 px-4">Please log in to use the chat.</div>
           )}
           <div className="flex-1 overflow-y-auto mb-4 p-4">
             {messages.map((msg, index) => (
