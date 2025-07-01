@@ -70,6 +70,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     '/admin/tickets/management',
     '/admin/products/management',
     '/admin/pricingplans/management',
+    '/admin/ai/management',
   ];
 
   const shouldShowTablesChildMenu =

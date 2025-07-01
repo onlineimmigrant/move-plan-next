@@ -294,9 +294,8 @@ export default function AIManagement() {
     : popularEndpoints;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-4 mx-auto p-4 rounded-lg min-h-screen gap-8">
-      <div className="sm:col-span-3">
-        <div className="mt-8 flex flex-col items-center">
+    <div>
+            <div className="mt-8 flex flex-col items-center">
           <Tooltip content="AI Management">
             <h1 className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
               AI Management
@@ -304,6 +303,9 @@ export default function AIManagement() {
             </h1>
           </Tooltip>
         </div>
+    <div className="grid grid-cols-1 sm:grid-cols-7  p-4 rounded-lg min-h-screen gap-8">
+      <div className="sm:col-span-5">
+
 
         {error && <div className="text-red-500 mb-4">{error}</div>}
 
@@ -311,7 +313,7 @@ export default function AIManagement() {
           {({ open }: { open: boolean }) => (
             <div>
               <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2">
-                <span>Add</span>
+                <span>Add Agent</span>
                 <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
               </Disclosure.Button>
               <Transition
@@ -688,9 +690,10 @@ export default function AIManagement() {
         </div>
       </div>
 
-      <div className="sm:col-span-1">
+      <div className="sm:col-span-2">
         <InfoCards setOpenDialog={setOpenDialog} />
         <DialogModals openDialog={openDialog} setOpenDialog={setOpenDialog} />
+      </div>
       </div>
     </div>
   );

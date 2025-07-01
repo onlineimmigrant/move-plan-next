@@ -486,14 +486,14 @@ export default function ChatWidget() {
 
   return (
     <div className="z-62">
-      <Tooltip content={isOpen ? 'Close Chat' : 'Open Chat'}>
+      
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="cursor-pointer fixed bottom-4 right-4 bg-sky-500 text-white p-4 rounded-full shadow-lg z-61 hover:bg-sky-600 transition-colors"
         >
           <RocketLaunchIcon className="h-6 w-6" />
         </button>
-      </Tooltip>
+   
       {isOpen && (
         <div
           className={`fixed bottom-24 right-4 bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
@@ -522,7 +522,7 @@ export default function ChatWidget() {
             <div className="flex items-center space-x-2">
               <Listbox value={selectedModel} onChange={selectModel}>
                 {({ open }) => (
-                  <>
+                  <div>
                     <Tooltip content="Select Model">
                       <ListboxButton className="cursor-pointer border-2 border-gray-50 rounded-full p-2 relative">
                         {modelIcon ? (
@@ -583,7 +583,7 @@ export default function ChatWidget() {
                         </div>
                       </ListboxOptions>
                     </Transition>
-                  </>
+                  </div>
                 )}
               </Listbox>
             </div>
