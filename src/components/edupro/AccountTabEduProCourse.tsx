@@ -227,18 +227,18 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
               </div>
             </div>
             {/* Empty div to balance flex on desktop */}
-            <div className="hidden sm:block text-transparent px-12 py-2">ChatSA</div>
+            <div className="hidden sm:block  pl-12  py-2 "><Link className="text-sm font-medium bg-amber-200 p-2 ring-amber-400 rounded-full" href="/account/edupro/memory-hub">Memory Hub</Link></div>
           </div>
         </div>
       </div>
 
       {/* Fixed Bottom Navbar with Logo on Mobile */}
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-white shadow-md z-50 sm:hidden transition-transform duration-300 ${
+        className={`fixed bottom-0 left-0 right-0 bg-white shadow-md z-61 sm:hidden transition-transform duration-300 ${
           showBottomNavbar ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 py-2 flex justify-center">
+        <div className="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
           <Link href="/account">
             <Image
               src={companyLogo}
@@ -248,6 +248,7 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
               className="h-10 w-auto rounded-full hover:scale-110 transition-transform duration-200"
             />
           </Link>
+          <Link href="/account/edupro/memory-hub"  className="text-sm font-medium bg-amber-200 p-2 ring-amber-400 rounded-full">Memory Hub</Link>
         </div>
       </div>
     </>
