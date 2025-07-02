@@ -46,7 +46,7 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
   const [hasMore, setHasMore] = useState(true);
   const [totalFlashcards, setTotalFlashcards] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeStatus, setActiveStatus] = useState<string>('all');
+  const [activeStatus, setActiveStatus] = useState<string>('status');
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [topics, setTopics] = useState<string[]>([]);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
@@ -131,7 +131,7 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
       });
     }
 
-    if (activeStatus !== 'all') {
+    if (activeStatus !== 'status') {
       result = result.filter((flashcard) => flashcard.status === activeStatus);
     }
 
@@ -402,6 +402,18 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
     }
   };
 
+const getStatusBackgroundClass = (status?: string) => {
+    switch (status) {
+      case 'learning': return 'bg-sky-50';
+      case 'review': return 'bg-yellow-50';
+      case 'mastered': return 'bg-teal-50';
+      case 'suspended': return 'bg-gray-50';
+      case 'lapsed': return 'bg-red-50';
+      default: return 'border-2 border-gray-200';
+    }
+  };
+  
+
   const getStatusTextClass = (status?: string) => {
     switch (status) {
       case 'learning': return 'text-sky-100';
@@ -420,7 +432,7 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
       case 'mastered': return 'Mastered';
       case 'suspended': return 'Suspended';
       case 'lapsed': return 'Lapsed';
-      case 'all': return 'All';
+      case 'status': return 'Status';
       default: return status;
     }
   };
@@ -496,7 +508,7 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
                         <button
                           onClick={toggleStatusMenu}
                           className={`flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer ${
-                            activeStatus === 'all' ? 'bg-gray-100 text-gray-800' : 'bg-gray-500 text-gray-100'
+                            activeStatus === 'status' ? 'bg-gray-100 text-gray-800' : 'bg-gray-500 text-gray-100'
                           } hover:bg-gray-200 transition-colors`}
                         >
                           <span className="mr-2 cursor-pointer bg-gray-50 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-gray-200 transition-colors">
@@ -507,7 +519,7 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
                       </Tooltip>
                       {isStatusMenuOpen && (
                         <div className="absolute z-10 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg">
-                          {['all', 'learning', 'review', 'mastered', 'suspended', 'lapsed'].map((status) => (
+                          {['status', 'learning', 'review', 'mastered', 'suspended', 'lapsed'].map((status) => (
                             <button
                               key={status}
                               onClick={() => handleStatusSelect(status)}
@@ -525,14 +537,14 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
                       <Tooltip content="Edit Topic">
                         <button
                           onClick={toggleTopicMenu}
-                          className={`flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer ${
+                          className={`flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer  ${
                             activeTopic === null ? 'bg-sky-100 text-sky-600' : 'bg-sky-100 text-sky-600'
                           } hover:bg-gray-200 transition-colors`}
                         >
                           <span className="mr-2 cursor-pointer bg-gray-50 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-gray-200 transition-colors">
                             <PencilIcon className="h-4 w-4" />
                           </span>
-                          <span>{activeTopic || 'All Topics'}</span>
+                          <span className='line-clamp-1'>{activeTopic || 'All Topics'}</span>
                         </button>
                       </Tooltip>
                       {isTopicMenuOpen && (
@@ -574,7 +586,7 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
                       {filteredFlashcards.slice(0, page * flashcardsPerPage).map((flashcard, index) => (
                         <li
                           key={flashcard.id}
-                          className={`my-1 rounded group cursor-pointer ${getStatusBorderClass(flashcard.status)}`}
+                          className={`my-1 ${getStatusBackgroundClass(flashcard.status)} rounded group cursor-pointer ${getStatusBorderClass(flashcard.status)}`}
                           onClick={() => openCard(index)}
                         >
                           <div className="flex flex-col py-2 px-4 hover:bg-sky-50 hover:text-sky-900 min-h-[80px]">
@@ -670,51 +682,24 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
           onClick={closeCard}
         >
           <div
-            className={`relative w-full md:w-[48rem] h-full md:h-[48rem] md:bg-white rounded-lg shadow-lg transform transition-all duration-300 ${getStatusBorderClass(filteredFlashcards[selectedCardIndex].status)} ${
+            className={`relative w-full md:w-[28rem] h-full md:h-[28rem] rounded-lg shadow-lg transform transition-all duration-300 ${getStatusBackgroundClass(filteredFlashcards[selectedCardIndex].status)} ${getStatusBorderClass(filteredFlashcards[selectedCardIndex].status)} ${
               isFlipped ? 'rotate-y-180' : ''
             }`}
             style={{ transformStyle: 'preserve-3d' }}
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={flipCard}
           >
-            <div className="absolute inset-0 flex flex-col p-6 py-16 overflow-y-auto bg-gray-50">
+            <div className="absolute inset-0 flex flex-col p-6 py-8 overflow-y-auto ">
               {!isFlipped ? (
                 <div className="flex flex-col items-center justify-center flex-grow text-center">
-                  <p className="px-3 py-1 rounded-full text-sm font-medium bg-teal-100 text-teal-600 my-2 mb-16">
+                  <p className="px-3 py-1 rounded-full text-sm font-medium  text-gray-400 my-2">
                     {filteredFlashcards[selectedCardIndex].topic || ''}
                   </p>
-                  <p className="text-sm text-gray-600">{filteredFlashcards[selectedCardIndex].section || ''}</p>
+                  <p className="text-base text-gray-600">{filteredFlashcards[selectedCardIndex].section || ''}</p>
                   <h2 className="text-2xl font-semibold text-gray-800 whitespace-normal">
                     {filteredFlashcards[selectedCardIndex].name || 'Untitled'}
                   </h2>
-                  <div className="mt-4">
-                    <Tooltip
-                      content={
-                        filteredFlashcards[selectedCardIndex].status === 'learning'
-                          ? 'Change to Review'
-                          : filteredFlashcards[selectedCardIndex].status === 'review'
-                          ? 'Change to Mastered'
-                          : 'Change to Learning'
-                      }
-                    >
-                      <button
-                        onClick={() => handleStatusTransition(filteredFlashcards[selectedCardIndex])}
-                        className="p-2 rounded-full text-sky-600 hover:bg-gray-100 cursor-pointer"
-                      >
-                        {['suspended', 'lapsed', 'mastered'].includes(
-                          filteredFlashcards[selectedCardIndex].status || ''
-                        ) ? (
-                          <span className="text-sm font-medium">
-                            Change to Learning
-                          </span>
-                        ) : (
-                          <span className="text-sm font-medium">
-                            Change to {getStatusLabel(getNextStatus(filteredFlashcards[selectedCardIndex].status))}
-                          </span>
-                        )}
-                      </button>
-                    </Tooltip>
-                  </div>
+
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-start flex-grow text-center overflow-y-auto transform rotate-y-180">
@@ -758,6 +743,25 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
               >
                 <ChevronLeftIcon className="h-6 w-6" />
               </button>
+
+                      <button
+                        onClick={() => handleStatusTransition(filteredFlashcards[selectedCardIndex])}
+                        className="p-2 rounded-full text-sky-600 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {['suspended', 'lapsed', 'mastered'].includes(
+                          filteredFlashcards[selectedCardIndex].status || ''
+                        ) ? (
+                          <span className="text-sm font-medium">
+                            Change to Learning
+                          </span>
+                        ) : (
+                          <span className="text-sm font-medium">
+                            Change to {getStatusLabel(getNextStatus(filteredFlashcards[selectedCardIndex].status))}
+                          </span>
+                        )}
+                      </button>
+
+
               <button
                 onClick={nextCard}
                 className="p-2 rounded-full text-sky-500 text-sm font-medium hover:shadow-sm disabled:bg-gray-300 transition-colors cursor-pointer"

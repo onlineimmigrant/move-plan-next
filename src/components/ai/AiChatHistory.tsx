@@ -27,6 +27,7 @@ interface ChatHistory {
   messages: { role: string; content: string }[];
   created_at: string;
   updated_at: string;
+  is_default_flashcard: boolean;
 }
 
 interface AiChatHistoryProps {
@@ -46,10 +47,29 @@ export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
   const [searchHeight, setSearchHeight] = useState(0);
   const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number | null>(null);
   const [editingHistory, setEditingHistory] = useState<ChatHistory | null>(null);
-  const [editForm, setEditForm] = useState({ name: '' });
+  const [editForm, setEditForm] = useState({ name: '', is_default_flashcard: false });
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const historiesPerPage = 3;
+  const [role, setRole] = useState<string | null>(null);
+  const historiesPerPage = 5;
   const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (userId) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+        if (!error && data) {
+          setRole(data.role);
+        } else {
+          console.error('Role fetch error:', error?.message);
+        }
+      }
+    };
+    fetchRole();
+  }, [userId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,7 +92,7 @@ export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
 
         const { data: histories, error: historiesError } = await supabase
           .from('ai_chat_histories')
-          .select('id, user_id, name, messages, created_at, updated_at')
+          .select('id, user_id, name, messages, created_at, updated_at, is_default_flashcard')
           .eq('user_id', userId)
           .order('updated_at', { ascending: false });
 
@@ -178,7 +198,7 @@ export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
     }
   };
 
-  const updateChatHistory = async (historyId: number, updatedData: { name: string }) => {
+  const updateChatHistory = async (historyId: number, updatedData: { name: string; is_default_flashcard: boolean }) => {
     if (!updatedData.name.trim()) {
       onError('Chat history name cannot be empty.');
       return;
@@ -190,6 +210,7 @@ export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
         .from('ai_chat_histories')
         .update({
           name: updatedData.name.trim(),
+          is_default_flashcard: role === 'admin' ? updatedData.is_default_flashcard : false,
           updated_at: new Date().toISOString(),
         })
         .eq('id', historyId)
@@ -202,12 +223,12 @@ export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
       setChatHistories(
         chatHistories.map((h) =>
           h.id === historyId && h.user_id === userId
-            ? { ...h, name: updatedData.name.trim() }
+            ? { ...h, name: updatedData.name.trim(), is_default_flashcard: role === 'admin' ? updatedData.is_default_flashcard : false }
             : h
         )
       );
       setEditingHistory(null);
-      setEditForm({ name: '' });
+      setEditForm({ name: '', is_default_flashcard: false });
     } catch (error: any) {
       onError(error.message || 'Failed to update chat history.');
       console.error('Update error:', error.message);
@@ -216,14 +237,45 @@ export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
     }
   };
 
+  const createFlashcard = async (historyId: number) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        onError('User not authenticated');
+        return;
+      }
+      console.log('Creating flashcard for chat_history_id:', historyId);
+      const response = await fetch('/api/flashcards/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          chat_history_id: historyId,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        console.error('Flashcard creation failed:', result.error, { chat_history_id: historyId });
+        throw new Error(result.error || 'Failed to create flashcard');
+      }
+      onError(result.message || 'Flashcard created successfully');
+    } catch (error: any) {
+      console.error('Flashcard creation error in UI:', error.message);
+      onError(error.message || 'Failed to create flashcard');
+    }
+  };
+
   const openEditModal = (history: ChatHistory) => {
     setEditingHistory(history);
-    setEditForm({ name: history.name || '' });
+    setEditForm({ name: history.name || '', is_default_flashcard: history.is_default_flashcard || false });
   };
 
   const closeEditModal = () => {
     setEditingHistory(null);
-    setEditForm({ name: '' });
+    setEditForm({ name: '', is_default_flashcard: false });
   };
 
   const handleEditSubmit = () => {
@@ -336,6 +388,19 @@ export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
                             </div>
                             <span className="text-sm font-semibold text-gray-900 truncate mt-1">{history.name || 'Untitled'}</span>
                             <div className="flex justify-end items-center gap-2 mt-2">
+                              <Tooltip content="Create Flashcard">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    createFlashcard(history.id);
+                                  }}
+                                  className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-sky-200 transition-colors"
+                                >
+                                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                  </svg>
+                                </button>
+                              </Tooltip>
                               <Tooltip content="Edit Chat History">
                                 <button
                                   onClick={(e) => {
@@ -475,6 +540,19 @@ export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
                   placeholder="Enter chat history name"
                 />
               </div>
+              {role === 'admin' && (
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={editForm.is_default_flashcard}
+                      onChange={(e) => setEditForm({ ...editForm, is_default_flashcard: e.target.checked })}
+                      className="mr-2"
+                    />
+                    Save as Default Flashcard (Organization-wide)
+                  </label>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Content</label>
                 <div
