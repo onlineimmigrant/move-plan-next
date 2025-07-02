@@ -88,9 +88,9 @@ export default function MemoryHub() {
       </Tooltip>
       <div className="flex flex-col items-center">
         <Tooltip content="Memory Hub">
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 relative">
+          <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 relative">
             Memory Hub
-            <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-blue rounded-full" />
+                 <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
           </h1>
         </Tooltip>
         {message && (
@@ -106,7 +106,7 @@ export default function MemoryHub() {
           </div>
         )}
       </div>
-
+    <div className='flex mx-auto '>
       <div className="grid grid-cols-1 sm:grid-cols-9 mx-auto p-4 rounded-lg min-h-screen gap-8">
         <div className="order-2 sm:order-1 sm:col-span-3">
           <AiChatHistory
@@ -131,6 +131,7 @@ export default function MemoryHub() {
       </div>
 
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
+    </div>
     </div>
   );
 }
