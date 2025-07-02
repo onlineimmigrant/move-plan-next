@@ -94,7 +94,7 @@ export default function FlashcardList({
               )}
               onClick={() => openCard(index)}
             >
-              <div className="flex flex-col py-3 px-4 hover:bg-sky-50 hover:text-sky-900 min-h-[80px]">
+              <div className="flex flex-col py-3 px-4 hover:opacity-95 hover:text-sky-900 min-h-[80px]">
                 <div className="flex justify-between items-center gap-2">
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm">
                     {getStatusLabel(flashcard.status || 'learning')}
