@@ -1,14 +1,19 @@
-// AiChatHistory.tsx
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import {
+  MagnifyingGlassIcon,
+  TrashIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  XMarkIcon,
+  PencilIcon,
+  QuestionMarkCircleIcon,
+} from '@heroicons/react/24/outline';
 import { Disclosure, Transition } from '@headlessui/react';
-import { format, subDays, isAfter, startOfWeek, endOfWeek, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import Tooltip from '@/components/Tooltip';
 import HelpModal from './HelpModal';
-import ChatHistoryList from './AiChatHistoryComponents/ChatHistoryList';
-import ChatHistorySearch from './AiChatHistoryComponents/ChatHistorySearch';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,28 +30,19 @@ interface ChatHistory {
   is_default_flashcard: boolean;
 }
 
-interface NewMessages {
-  historyId: number;
-  messages: { role: string; content: string }[];
-}
-
 interface AiChatHistoryProps {
   userId: string | null;
   onError: (error: string) => void;
-  onFlashcardCreated?: () => void;
-  onNewMessages?: (data: NewMessages) => void;
 }
 
-export default function AiChatHistory({ userId, onError, onFlashcardCreated, onNewMessages }: AiChatHistoryProps) {
+export default function AiChatHistory({ userId, onError }: AiChatHistoryProps) {
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [filteredHistories, setFilteredHistories] = useState<ChatHistory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creatingFlashcard, setCreatingFlashcard] = useState(false); // New state for flashcard creation
-  const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalHistories, setTotalHistories] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDateRange, setSelectedDateRange] = useState<string>('all');
   const [isFixed, setIsFixed] = useState(false);
   const [searchHeight, setSearchHeight] = useState(0);
   const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number | null>(null);
@@ -54,45 +50,8 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
   const [editForm, setEditForm] = useState({ name: '', is_default_flashcard: false });
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+  const historiesPerPage = 3;
   const searchRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    const channel = supabase
-      .channel('chat-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'ai_chat_histories',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          setChatHistories((prev) =>
-            prev
-              .map((h) =>
-                h.id === payload.new.id
-                  ? { ...h, messages: payload.new.messages, updated_at: payload.new.updated_at }
-                  : h
-              )
-              .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-          );
-          if (onNewMessages) {
-            onNewMessages({
-              historyId: payload.new.id,
-              messages: payload.new.messages.slice(-1),
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId, onNewMessages]);
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -105,12 +64,12 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
         if (!error && data) {
           setRole(data.role);
         } else {
-          onError('Failed to fetch user role.');
+          console.error('Role fetch error:', error?.message);
         }
       }
     };
     fetchRole();
-  }, [userId, onError]);
+  }, [userId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -160,7 +119,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
         });
 
         setChatHistories(validHistories);
-        setHasMore(page * 3 < (count || 0));
+        setHasMore(page * historiesPerPage < (count || 0));
       } catch (error: any) {
         onError(error.message || 'Failed to load chat histories.');
         console.error('Fetch error:', error.message);
@@ -169,7 +128,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
       }
     };
     fetchData();
-  }, [userId, onError]);
+  }, [userId]);
 
   useEffect(() => {
     let result = chatHistories;
@@ -180,47 +139,13 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
         return historyName.toLowerCase().includes(query);
       });
     }
-    if (selectedDateRange !== 'all') {
-      const now = new Date();
-      let startDate: Date;
-      let endDate: Date | undefined;
-      switch (selectedDateRange) {
-        case 'today':
-          startDate = startOfDay(now);
-          break;
-        case 'yesterday':
-          startDate = startOfDay(subDays(now, 1));
-          endDate = startOfDay(now);
-          break;
-        case 'thisweek':
-          startDate = startOfWeek(now, { weekStartsOn: 1 });
-          break;
-        case 'lastweek':
-          startDate = startOfWeek(subDays(now, 7), { weekStartsOn: 1 });
-          endDate = endOfWeek(subDays(now, 7), { weekStartsOn: 1 });
-          break;
-        case '7days':
-          startDate = subDays(now, 7);
-          break;
-        case '30days':
-          startDate = subDays(now, 30);
-          break;
-        default:
-          startDate = new Date(0);
-      }
-      result = result.filter((history) => {
-        const updatedAt = new Date(history.updated_at);
-        return isAfter(updatedAt, startDate) && (!endDate || updatedAt <= endDate);
-      });
-    }
     setFilteredHistories(result);
-    setTotalHistories(result.length);
     setPage(1);
-    setHasMore(result.length > 3);
+    setHasMore(result.length > historiesPerPage);
     if (selectedHistoryIndex !== null && (selectedHistoryIndex >= result.length || result.length === 0)) {
       setSelectedHistoryIndex(null);
     }
-  }, [searchQuery, selectedDateRange, chatHistories]);
+  }, [searchQuery, chatHistories]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -304,7 +229,6 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
       );
       setEditingHistory(null);
       setEditForm({ name: '', is_default_flashcard: false });
-      onError(`Chat history "${updatedData.name.trim()}" updated successfully.`);
     } catch (error: any) {
       onError(error.message || 'Failed to update chat history.');
       console.error('Update error:', error.message);
@@ -314,21 +238,14 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
   };
 
   const createFlashcard = async (historyId: number) => {
-    setCreatingFlashcard(true); // Set loading state
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (!token) {
-        onError('User not authenticated.');
+        onError('User not authenticated');
         return;
       }
-
-      const history = chatHistories.find((h) => h.id === historyId);
-      if (!history) {
-        onError('Chat history not found.');
-        return;
-      }
-
+      console.log('Creating flashcard for chat_history_id:', historyId);
       const response = await fetch('/api/flashcards/create', {
         method: 'POST',
         headers: {
@@ -339,26 +256,15 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
           chat_history_id: historyId,
         }),
       });
-
       const result = await response.json();
       if (!response.ok) {
         console.error('Flashcard creation failed:', result.error, { chat_history_id: historyId });
         throw new Error(result.error || 'Failed to create flashcard');
       }
-
-      // Updated success message to exclude numFlashcards
-      onError(`Flashcard successfully created from the chat: "${history.name}"`);
-      if (onFlashcardCreated) {
-        onFlashcardCreated();
-      }
-      // Optional: If you want to include the correct number of flashcards, ensure the API returns an array
-      // const numFlashcards = result.flashcards?.length || 1;
-      // onError(`${numFlashcards} Flashcard${numFlashcards > 1 ? 's' : ''} successfully created from the chat: "${history.name}"`);
+      onError(result.message || 'Flashcard created successfully');
     } catch (error: any) {
-      onError(error.message || 'Failed to create flashcard.');
-      console.error('Flashcard creation error:', error.message);
-    } finally {
-      setCreatingFlashcard(false); // Reset loading state
+      console.error('Flashcard creation error in UI:', error.message);
+      onError(error.message || 'Failed to create flashcard');
     }
   };
 
@@ -375,6 +281,12 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
   const handleEditSubmit = () => {
     if (editingHistory) {
       updateChatHistory(editingHistory.id, editForm);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loading) {
+      setPage((prev) => prev + 1);
     }
   };
 
@@ -410,7 +322,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
           <div>
             <div className="flex justify-between items-center">
               <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2 cursor-pointer">
-                <span>Memory Hub</span>
+                <span>Chat Histories</span>
                 <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
               </Disclosure.Button>
               <Tooltip content="Chat History Help Guide">
@@ -432,34 +344,107 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
               leaveTo="opacity-0 scale-95"
             >
               <Disclosure.Panel className="border-2 border-gray-200 rounded-xl py-4 px-4 bg-gray-50">
-                <ChatHistorySearch
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  selectedDateRange={selectedDateRange}
-                  setSelectedDateRange={setSelectedDateRange}
-                  searchRef={searchRef}
-                />
+                <div
+                  ref={searchRef}
+                  className="relative w-full md:w-80 px-4 md:px-0 transition-all duration-200 mb-4"
+                >
+                  <span className="absolute inset-y-0 left-2 md:left-0 flex items-center pl-6 md:pl-3">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search chat histories..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 text-base font-light border bg-white border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
                 {isFixed && <div style={{ height: searchHeight ? `${searchHeight}px` : '60px' }} className="md:hidden" />}
-                {filteredHistories.length === 0 ? (
+                {loading ? (
+                  <div className="text-gray-700">Loading...</div>
+                ) : filteredHistories.length === 0 ? (
                   <div className="text-gray-700">
-                    {searchQuery || selectedDateRange !== 'all'
-                      ? `No chat histories found matching the current filters`
-                      : 'No chat histories available'}
+                    {searchQuery ? `No chat histories found matching "${searchQuery}"` : 'No chat histories available'}
                   </div>
                 ) : (
-                  <ChatHistoryList
-                    histories={filteredHistories}
-                    openHistory={openHistory}
-                    openEditModal={openEditModal}
-                    deleteChatHistory={deleteChatHistory}
-                    createFlashcard={createFlashcard}
-                    page={page}
-                    setPage={setPage}
-                    hasMore={hasMore}
-                    totalHistories={totalHistories}
-                    loading={loading}
-                    creatingFlashcard={creatingFlashcard} // Pass new state
-                  />
+                  <div>
+                    <ul className="bg-white rounded-md ring-2 ring-gray-200 p-2 grid grid-cols-1 gap-y-2">
+                      {filteredHistories.slice(0, page * historiesPerPage).map((history, index) => (
+                        <li
+                          key={history.id}
+                          className="my-1 rounded group cursor-pointer border-2 border-gray-200"
+                          onClick={() => openHistory(index)}
+                        >
+                          <div className="flex flex-col py-2 px-4 hover:bg-sky-50 hover:text-sky-900 min-h-[80px]">
+                            <div className="flex justify-between items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-50 text-gray-900">
+                                Updated
+                              </span>
+                              <span className="text-xs font-thin text-gray-600">
+                                {history.updated_at
+                                  ? format(new Date(history.updated_at), 'HH:mm:ss, dd MMMM yyyy')
+                                  : 'N/A'}
+                              </span>
+                            </div>
+                            <span className="text-sm font-semibold text-gray-900 truncate mt-1">{history.name || 'Untitled'}</span>
+                            <div className="flex justify-end items-center gap-2 mt-2">
+                              <Tooltip content="Create Flashcard">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    createFlashcard(history.id);
+                                  }}
+                                  className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-sky-200 transition-colors"
+                                >
+                                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                  </svg>
+                                </button>
+                              </Tooltip>
+                              <Tooltip content="Edit Chat History">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditModal(history);
+                                  }}
+                                  className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-gray-200 transition-colors"
+                                >
+                                  <PencilIcon className="h-5 w-5" />
+                                </button>
+                              </Tooltip>
+                              <Tooltip content="Delete Chat History">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteChatHistory(history.id);
+                                  }}
+                                  className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-red-200 transition-colors"
+                                >
+                                  <TrashIcon className="h-5 w-5" />
+                                </button>
+                              </Tooltip>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-4 flex justify-center gap-4">
+                      <button
+                        onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={page === 1}
+                        className="px-4 py-2 rounded-full bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition-colors disabled:bg-gray-300 shadow-md cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={loadMore}
+                        disabled={!hasMore || loading}
+                        className="px-4 py-2 rounded-full bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition-colors disabled:bg-gray-300 shadow-md cursor-pointer"
+                      >
+                        {loading ? 'Loading...' : 'Load More'}
+                      </button>
+                    </div>
+                  </div>
                 )}
               </Disclosure.Panel>
             </Transition>
@@ -510,7 +495,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
             </div>
             <button
               onClick={closeHistory}
-              className="absolute top-4 right-2 p-2 rounded-full bg-transparent text-gray-800 hover:bg-gray-200 cursor-pointer"
+              className="absolute top-4 right-2 p-2 rounded-full bg-transparent text-gray-800 hover:bg-gray-100 cursor-pointer"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
@@ -610,7 +595,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
             </div>
             <button
               onClick={closeEditModal}
-              className="absolute top-4 right-4 p-2 rounded-full bg-transparent text-gray-800 hover:bg-gray-200 cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-full bg-transparent text-gray-800 hover:bg-gray-100 cursor-pointer"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>

@@ -1,3 +1,4 @@
+// MemoryHub.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
@@ -20,7 +21,17 @@ export default function MemoryHub() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [flashcardRefreshKey, setFlashcardRefreshKey] = useState(0);
   const router = useRouter();
+
+  // Auto-dismiss messages after 5 seconds
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -28,7 +39,7 @@ export default function MemoryHub() {
       try {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-          setError('Please log in to access your memory hub.');
+          setMessage({ type: 'error', text: 'Please log in to access your memory hub.' });
           router.push('/login');
           return;
         }
@@ -38,13 +49,13 @@ export default function MemoryHub() {
           .eq('id', user.id)
           .single();
         if (profileError || !profile) {
-          setError('User profile not found.');
+          setMessage({ type: 'error', text: 'User profile not found.' });
           router.push('/login');
           return;
         }
         setUserId(user.id);
       } catch (error: any) {
-        setError(error.message || 'Failed to authenticate user.');
+        setMessage({ type: 'error', text: error.message || 'Failed to authenticate user.' });
         console.error('Auth error:', error.message);
       } finally {
         setLoading(false);
@@ -53,8 +64,17 @@ export default function MemoryHub() {
     fetchUser();
   }, [router]);
 
+  const handleFlashcardCreated = () => {
+    setFlashcardRefreshKey((prev) => prev + 1); // Trigger AiFlashcards refresh
+  };
+
+  const handleNewMessages = (data: { historyId: number; messages: { role: string; content: string }[] }) => {
+    // Trigger new messages in AiChatHistory (e.g., from ChatWidget)
+    console.log('New messages received:', data);
+  };
+
   if (loading) {
-    return <div className="text-gray text-center">Loading...</div>;
+    return <div className="text-gray-700 text-center">Loading...</div>;
   }
 
   return (
@@ -68,27 +88,44 @@ export default function MemoryHub() {
       </Tooltip>
       <div className="flex flex-col items-center">
         <Tooltip content="Memory Hub">
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray relative">
+          <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 relative">
             Memory Hub
             <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-blue rounded-full" />
           </h1>
         </Tooltip>
+        {message && (
+          <div
+            className={`p-3 border-l-4 rounded-r text-sm font-medium animate-fadeIn !animate-none mt-4 mx-4 max-w-2xl ${
+              message.type === 'success'
+                ? 'bg-teal-100 border-teal-500 text-teal-800'
+                : 'bg-red-100 border-red-500 text-red-800'
+            }`}
+            aria-live="polite"
+          >
+            {message.text}
+          </div>
+        )}
       </div>
-
-      {error && <div className="text-red mb-4 text-center">{error}</div>}
 
       <div className="grid grid-cols-1 sm:grid-cols-9 mx-auto p-4 rounded-lg min-h-screen gap-8">
         <div className="order-2 sm:order-1 sm:col-span-3">
-          <AiChatHistory userId={userId} onError={setError} />
+          <AiChatHistory
+            userId={userId}
+            onError={(msg) => setMessage({ type: msg.includes('successfully') ? 'success' : 'error', text: msg })}
+            onFlashcardCreated={handleFlashcardCreated}
+            onNewMessages={handleNewMessages}
+          />
         </div>
 
         <div className="order-1 sm:order-2 sm:col-span-4">
-          <AiFlashcards userId={userId} onError={setError} />
-   
+          <AiFlashcards
+            userId={userId}
+            onError={(msg) => setMessage({ type: msg.includes('successfully') ? 'success' : 'error', text: msg })}
+            key={flashcardRefreshKey} // Force re-render on flashcard creation
+          />
         </div>
 
         <div className="order-3 sm:col-span-2">
-
           <ChatWidget />
         </div>
       </div>
