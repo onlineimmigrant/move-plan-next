@@ -8,6 +8,7 @@ import { useStudentStatus } from '@/lib/StudentContext';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
+import Tooltip from '../Tooltip';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -196,13 +197,13 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
         <div className="max-w-7xl mx-auto  sm:px-6 lg:px-8 py-2">
           <div className="flex items-center justify-center sm:justify-between">
             {/* Logo on Desktop */}
-            <Link href="/account" className="hidden sm:block">
+            <Link href="/account" className="hidden sm:block pr-10">
               <Image
                 src={companyLogo}
                 alt="Company Logo"
                 width={40}
                 height={40}
-                className="h-10 w-auto rounded-full hover:scale-110 transition-transform duration-200"
+                className="h-8 w-auto rounded-full hover:scale-110 transition-transform duration-200"
               />
             </Link>
             {/* Navigation Tabs */}
@@ -227,7 +228,14 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
               </div>
             </div>
             {/* Empty div to balance flex on desktop */}
-            <div className="hidden sm:block  pl-12  py-2 "><Link className="text-sm font-medium bg-amber-200 p-2 ring-amber-400 rounded-full" href="/account/edupro/memory-hub">Memory Hub</Link></div>
+            <div className="hidden sm:block  pl-12  py-2 ">
+              <Link className="rounded-full" href="/account/edupro/memory-hub">
+                                  <Tooltip content="Memory Hub">
+                      <div className="text-sm sm:text-lg font-bold text-center text-gray-800 relative">
+                        Memory Hub
+                             <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+                      </div>
+                    </Tooltip></Link></div>
           </div>
         </div>
       </div>
@@ -244,11 +252,19 @@ export default function AccountTabEduProCourse({ className = '' }: AccountTabEdu
               src={companyLogo}
               alt="Company Logo"
               width={40}
-              height={40}
+              height={30}
               className="h-10 w-auto rounded-full hover:scale-110 transition-transform duration-200"
             />
           </Link>
-          <Link href="/account/edupro/memory-hub"  className="text-sm font-medium bg-amber-200 p-2 ring-amber-400 rounded-full">Memory Hub</Link>
+          <Link href="/account/edupro/memory-hub"  
+          >
+                    <Tooltip content="Memory Hub">
+                      <div className="text-lg sm:text-lg font-bold text-center text-gray-800 relative">
+                        Memory Hub
+                             <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+                      </div>
+                    </Tooltip>
+            </Link>
         </div>
       </div>
     </>
