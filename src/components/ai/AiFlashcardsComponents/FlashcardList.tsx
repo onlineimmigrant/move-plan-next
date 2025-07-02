@@ -79,16 +79,16 @@ export default function FlashcardList({
   return (
     <div className="flex flex-col gap-4">
       <div
-        className="overflow-y-auto rounded-md bg-white ring-2 ring-gray-200 p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+        className="overflow-y-auto rounded-md bg-white sm:ring-2 ring-gray-200 p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
         style={{ height: `${containerHeight}px` }}
       >
-        <ul className="grid grid-cols-1 gap-y-2 divide-y divide-gray-100">
+        <ul className="grid grid-cols-1 gap-y-4 divide-y divide-gray-100">
           {visibleFlashcards.map((flashcard, index) => (
             <li
               key={flashcard.id}
               ref={index === 0 ? cardRef : null}
               className={cn(
-                'my-1 rounded group cursor-pointer transform transition-transform hover:scale-[1.02] hover:shadow-sm',
+                'my-1 rounded-2xl min-h-48 group cursor-pointer transform transition-transform hover:scale-[1.02] hover:shadow-sm',
                 getStatusBackgroundClass(flashcard.status),
                 getStatusBorderClass(flashcard.status)
               )}
@@ -101,10 +101,10 @@ export default function FlashcardList({
                   </span>
                   <span className="text-sm font-light text-gray-600">{flashcard.topic || ''}</span>
                 </div>
-                <span className="text-base font-semibold text-gray-900 line-clamp-2 mt-2">
+                <span className="text-center mt-8 text-base font-semibold text-gray-900 line-clamp-2 ">
                   {flashcard.name || 'Untitled'}
                 </span>
-                <div className="flex flex-col md:flex-row md:items-center gap-2 mt-3">
+                <div className="hidden sm:flex flex-col md:flex-row md:items-center gap-2 mt-3">
                   <div className="flex flex-wrap items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     {['learning', 'review', 'mastered', 'suspended', 'lapsed']
                       .filter((status) => status !== flashcard.status)

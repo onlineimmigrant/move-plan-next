@@ -211,6 +211,9 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
               </Tooltip>
               <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
             </div>
+
+
+            
             <Transition
               enter="transition ease-out duration-100"
               enterFrom="opacity-0 scale-95"
@@ -219,7 +222,7 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Disclosure.Panel className="p-4 bg-gray-50 border-2 border-gray-200 rounded-xl">
+              <Disclosure.Panel className="sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl">
 <FlashcardSearch
   searchQuery={searchQuery}
   setSearchQuery={setSearchQuery}

@@ -29,7 +29,7 @@ export default function FlashcardSearch({
 
   return (
     <div className="flex flex-col gap-4 mt-2 mb-4 md:flex-row md:items-center">
-      <div className="relative w-full px-4 transition-all duration-200 md:w-80 md:px-0">
+      <div className="md:py-0 py-4 relative w-full px-4 transition-all duration-200 md:w-80 md:px-0">
         <span className="absolute inset-y-0 left-0 flex items-center pl-6 md:pl-3">
           <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
         </span>
@@ -38,10 +38,10 @@ export default function FlashcardSearch({
           placeholder="Search by name or topic..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full py-2 pl-10 pr-3 text-base font-light bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+          className="w-full py-4 sm:py-2 pl-10 pr-3 text-base font-light bg-white border-2 border-gray-200 rounded-2xl sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
         />
       </div>
-      <div className="flex items-center gap-2 px-4 md:px-0">
+      <div className="flex justify-center items-center gap-4 px-4 md:px-0">
         {/* Status Listbox */}
         <Listbox value={activeStatus} onChange={handleStatusSelect}>
           {({ open }) => (
