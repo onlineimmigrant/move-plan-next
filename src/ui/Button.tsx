@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils'; // Utility for merging Tailwind classes
 
-type Variant = 'primary' | 'secondary' | 'start' | 'close' | 'link' | 'outline'; // Added 'outline'
+type Variant = 'primary' | 'secondary' | 'start' | 'close' | 'link' | 'outline' | 'badge_primary' | 'badge_primary_circle'; // Added 'outline'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -16,6 +16,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants: Record<Variant, string> = {
       primary: 'shadow-lg bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500',
+      badge_primary: 'py-0.5 sm:py-1 px-1 sm:px-1.5 shadow hover:shadow-lg rounded-full text-[10px] sm:text-xs font-medium cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-300 flex items-center gap-1',
+       badge_primary_circle: 'py-2 sm:py-2 px-2 sm:px-2 shadow hover:shadow-lg rounded-full text-[10px] sm:text-xs font-medium cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-300 flex items-center gap-1',
+
       secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
       start:
         'w-full font-medium bg-sky-600 text-white font-semibold py-2 rounded-lg hover:bg-sky-700 active:bg-sky-800 focus:ring-2 focus:ring-sky-500 transition-all duration-200 shadow-md hover:shadow-lg',
@@ -40,5 +43,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
+
+
+
+// Disclosure
 
 export default Button;

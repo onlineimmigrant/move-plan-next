@@ -96,51 +96,56 @@ export default function ChatHistoryList({
                 className="shadow-lg my-1 rounded-xl group cursor-pointer border-2 border-gray-200 transform transition-transform hover:scale-[1.02] hover:shadow-sm"
                 onClick={() => openHistory(index)}
               >
-                <div className="flex flex-col py-3 px-4 hover:bg-sky-50 hover:text-sky-900 min-h-[80px]">
-                  <div className="flex justify-between items-center gap-2">
+                <div className="flex flex-col py-2 px-2 hover:bg-sky-50 hover:text-sky-900 min-h-[80px]">
+                  <div className="flex justify-between items-center gap-2 p-1">
                     <span className="text-sm font-light text-gray-600">
                       {history.updated_at
                         ? format(new Date(history.updated_at), 'HH:mm:ss, dd MMMM yyyy')
                         : 'N/A'}
                     </span>
                   </div>
-                  <span className="text-base font-semibold text-gray-900 line-clamp-2 mt-2">
+                  <span className="text-base font-semibold text-gray-900 line-clamp-2 mt-2 p-1">
                     {history.name || 'Untitled'}
                   </span>
-                  <div className="flex justify-end flex-col md:flex-row md:items-center gap-2 mt-3">
+                  <div className="bottom-0 flex justify-between flex-col md:flex-row md:items-center gap-2 mt-3">
 
                     <div className='hidden space-x-2 sm:flex opacity-0 group-hover:opacity-100 transition-opacity'>
-                      <Tooltip content="Edit Chat History">
-                        <button
+                     
+                        <Button
+                        title='Edit Chat History'
+                        variant="badge_primary_circle"
                           onClick={(e) => {
                             e.stopPropagation();
                             openEditModal(history);
                           }}
-                          className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-gray-300 hover:shadow-md transition-all"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                      </Tooltip>
-                      <Tooltip content="Delete Chat History">
-                        <button
+                                     >
+                          <PencilIcon className="h-3 w-3" />
+                        </Button>
+                   
+                   
+                        <Button
+                        title="Delete Chat History"
+                        variant="badge_primary_circle"
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteChatHistory(history.id);
                           }}
                           className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-red-300 hover:shadow-md transition-all"
                         >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </Tooltip>
-                    </div>
-                                        <div className="flex items-center gap-2">
-                      <Tooltip content="Create Flashcard">
-                        <button
+                          <TrashIcon className="h-3 w-3" />
+                        </Button>
+                  
+                      </div>
+                      <div className="flex items-center gap-2">
+                   
+                        <Button
+                          title="Create Flashcard"
+                          variant="badge_primary_circle"
                           onClick={(e) => {
                             e.stopPropagation();
                             createFlashcard(history.id);
                           }}
-                          className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-sky-300 hover:shadow-md transition-all"
+                          
                           disabled={creatingFlashcard} // Disable button during creation
                         >
                           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -151,8 +156,8 @@ export default function ChatHistoryList({
                               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                             />
                           </svg>
-                        </button>
-                      </Tooltip>
+                        </Button>
+                     
                     </div>
                   </div>
                 </div>

@@ -13,6 +13,7 @@ import { cn } from '../../utils/cn';
 import { PlannerContext } from '../../lib/context';
 import { Flashcard } from '../../lib/types';
 import Button from '@/ui/Button';
+import DisclosureButton from '@/ui/DisclosureButton';
 
 interface AiFlashcardsProps {
   userId: string | null;
@@ -217,15 +218,12 @@ export default function AiFlashcards({
         {({ open }) => (
           <div>
             <div className="flex  justify-between space-x-2 items-center mb-4">
-              <Disclosure.Button
-                className={cn(
-                  'inline-flex items-center  py-1'
-                )}
+              <DisclosureButton
               >
-                <Button className='shadow-xl'>Flashcards
+                Flashcards
                 <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
-              </Button>
-              </Disclosure.Button>
+              
+              </DisclosureButton>
               <div className="flex items-center ">
                 <Button
                 variant='outline'
