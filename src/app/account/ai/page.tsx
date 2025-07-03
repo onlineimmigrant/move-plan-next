@@ -516,7 +516,7 @@ export default function AISettings() {
       <div className="flex justify-center sm:justify-start">
         <Tooltip content="Account">
           <Link href="/account">
-            <button className="cursor-pointer bg-sky-200 text-white p-2 rounded-full hover:bg-sky-500 transition-colors mt-16">
+            <button className="cursor-pointer  text-sky-600 p-2 rounded-full hover:bg-gray-100 transition-colors mt-16">
               <ArrowLeftIcon className="h-5 w-5" />
             </button>
           </Link>

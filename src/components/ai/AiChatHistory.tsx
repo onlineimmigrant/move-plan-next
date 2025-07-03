@@ -442,7 +442,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
   };
 
   return (
-    <div className="relative">
+    <div className="relative pb-24 ">
       <Disclosure defaultOpen>
         {({ open }) => (
           <div>
