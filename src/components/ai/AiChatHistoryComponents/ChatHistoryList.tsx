@@ -5,6 +5,8 @@ import { format } from 'date-fns';
 import Tooltip from '@/components/Tooltip';
 import { cn } from '../../../utils/cn';
 import Loading from '@/ui/Loading';
+import Button from '@/ui/Button';
+import { PlusIcon } from 'lucide-react';
 
 interface ChatHistory {
   id: number;
@@ -91,7 +93,7 @@ export default function ChatHistoryList({
               <li
                 key={history.id}
                 ref={index === 0 ? cardRef : null}
-                className="my-1 rounded group cursor-pointer border-2 border-gray-200 transform transition-transform hover:scale-[1.02] hover:shadow-sm"
+                className="shadow-lg my-1 rounded-xl group cursor-pointer border-2 border-gray-200 transform transition-transform hover:scale-[1.02] hover:shadow-sm"
                 onClick={() => openHistory(index)}
               >
                 <div className="flex flex-col py-3 px-4 hover:bg-sky-50 hover:text-sky-900 min-h-[80px]">
@@ -105,36 +107,16 @@ export default function ChatHistoryList({
                   <span className="text-base font-semibold text-gray-900 line-clamp-2 mt-2">
                     {history.name || 'Untitled'}
                   </span>
-                  <div className="flex flex-col md:flex-row md:items-center gap-2 mt-3">
-                    <div className="flex items-center gap-2">
-                      <Tooltip content="Create Flashcard">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            createFlashcard(history.id);
-                          }}
-                          className="cursor-pointer bg-gray-100 text-gray-600 p-2.5 rounded-full disabled:bg-gray-200 hover:bg-sky-300 hover:shadow-md transition-all"
-                          disabled={creatingFlashcard} // Disable button during creation
-                        >
-                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                          </svg>
-                        </button>
-                      </Tooltip>
-                    </div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex justify-end flex-col md:flex-row md:items-center gap-2 mt-3">
+
+                    <div className='hidden space-x-2 sm:flex opacity-0 group-hover:opacity-100 transition-opacity'>
                       <Tooltip content="Edit Chat History">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             openEditModal(history);
                           }}
-                          className="cursor-pointer bg-gray-100 text-gray-600 p-2.5 rounded-full disabled:bg-gray-200 hover:bg-gray-300 hover:shadow-md transition-all"
+                          className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-gray-300 hover:shadow-md transition-all"
                         >
                           <PencilIcon className="h-5 w-5" />
                         </button>
@@ -145,9 +127,30 @@ export default function ChatHistoryList({
                             e.stopPropagation();
                             deleteChatHistory(history.id);
                           }}
-                          className="cursor-pointer bg-gray-100 text-gray-600 p-2.5 rounded-full disabled:bg-gray-200 hover:bg-red-300 hover:shadow-md transition-all"
+                          className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-red-300 hover:shadow-md transition-all"
                         >
                           <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </Tooltip>
+                    </div>
+                                        <div className="flex items-center gap-2">
+                      <Tooltip content="Create Flashcard">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            createFlashcard(history.id);
+                          }}
+                          className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-sky-300 hover:shadow-md transition-all"
+                          disabled={creatingFlashcard} // Disable button during creation
+                        >
+                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                            />
+                          </svg>
                         </button>
                       </Tooltip>
                     </div>
@@ -183,26 +186,28 @@ export default function ChatHistoryList({
           </ul>
         )}
       </div>
-      <div className="mt-4 flex flex-col items-center gap-4">
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-            disabled={page === 1 || loading || creatingFlashcard}
-            className="px-4 py-2 rounded-full bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition-colors disabled:bg-gray-300 shadow-md cursor-pointer"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => setPage((prev) => prev + 1)}
-            disabled={!hasMore || loading || creatingFlashcard}
-            className="px-4 py-2 rounded-full bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition-colors disabled:bg-gray-300 shadow-md cursor-pointer"
-          >
-            {loading || creatingFlashcard ? 'Loading...' : 'Load More'}
-          </button>
-        </div>
-        <div className="text-base font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-full">
+      <div className=" items-center gap-4">
+                <div className="text-base font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-full">
           Showing {visibleHistories.length} of {totalHistories} chat histories
         </div>
+        <div className="flex justify-between gap-4 my-4">
+          <Button
+            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+            disabled={page === 1 || loading || creatingFlashcard}
+            variant='outline'
+                   >
+            Previous
+          </Button>
+          <Button
+            onClick={() => setPage((prev) => prev + 1)}
+            disabled={!hasMore || loading || creatingFlashcard}
+                     >
+                      <PlusIcon className='w-5 h-5 mr-2' />
+            {loading || creatingFlashcard ? 'Loading...' : 'Load More'}
+            
+          </Button>
+        </div>
+
       </div>
     </div>
   );

@@ -1,39 +1,36 @@
-// AiFlashcards.tsx
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useContext } from 'react';
 import { Disclosure, Transition } from '@headlessui/react';
-import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { QuestionMarkCircleIcon, PlusIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
-import HelpModal from './HelpModal';
+
 import FlashcardSearch from './AiFlashcardsComponents/FlashcardSearch';
 import FlashcardList from './AiFlashcardsComponents/FlashcardList';
 import FlashcardModal from './AiFlashcardsComponents/FlashcardModal';
 import EditFlashcardModal from './AiFlashcardsComponents/EditFlashcardModal';
 import { useFlashcards } from '../../lib/hooks/useFlashcards';
 import { cn } from '../../utils/cn';
-
-interface Flashcard {
-  id: number;
-  name: string;
-  messages: { role: string; content: string }[];
-  created_at: string;
-  updated_at: string;
-  topic: string;
-  section: string;
-  user_id?: string;
-  organization_id?: string;
-  status?: string;
-}
+import { PlannerContext } from '../../lib/context';
+import { Flashcard } from '../../lib/types';
+import Button from '@/ui/Button';
 
 interface AiFlashcardsProps {
   userId: string | null;
   onError: (error: string) => void;
+  onFilteredFlashcards: (flashcardIds: number[]) => void;
+  setFlashcards: (flashcards: Flashcard[]) => void;
 }
 
 const FLASHCARDS_PER_PAGE = 4;
 
-export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
+export default function AiFlashcards({
+  userId,
+  onError,
+  onFilteredFlashcards,
+  setFlashcards,
+}: AiFlashcardsProps) {
   const { flashcards, loading, error, topics, deleteFlashcard, updateFlashcardStatus, updateFlashcard } = useFlashcards(userId);
+  const { addFlashcardToPlanner, newPlanFlashcardIds } = useContext(PlannerContext);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeStatus, setActiveStatus] = useState<string>('status');
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
@@ -42,6 +39,14 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    if (flashcards) {
+      console.log('Flashcards updated in AiFlashcards:', flashcards.length);
+      setFlashcards(flashcards);
+      onFilteredFlashcards(flashcards.map((f) => f.id));
+    }
+  }, [flashcards, setFlashcards, onFilteredFlashcards]);
 
   useEffect(() => {
     if (error) {
@@ -138,7 +143,7 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
       case 'lapsed':
         return 'bg-red-50';
       default:
-        return 'border-2 border-gray-200';
+        return 'bg-gray-200';
     }
   };
 
@@ -187,33 +192,54 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
     updateFlashcardStatus(flashcard.id, !!flashcard.user_id, nextStatus);
   };
 
+  const handleAddAllToPlanner = () => {
+    const added: number[] = [];
+    const skipped: string[] = [];
+    filteredFlashcards.forEach((f) => {
+      if (newPlanFlashcardIds.some((pf) => pf.id === f.id)) {
+        skipped.push(f.name || `Flashcard ID: ${f.id}`);
+      } else {
+        addFlashcardToPlanner(f.id, !!f.user_id);
+        added.push(f.id);
+      }
+    });
+    if (skipped.length > 0) {
+      onError(`Skipped ${skipped.length} duplicate flashcards: ${skipped.join(', ')}`);
+    }
+    if (added.length > 0) {
+      console.log(`Added ${added.length} flashcards to planner:`, added);
+    }
+  };
+
   return (
     <div className="relative">
       <Disclosure defaultOpen>
         {({ open }) => (
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex  justify-between space-x-2 items-center mb-4">
               <Disclosure.Button
                 className={cn(
-                  'inline-flex items-center px-3 py-1 mb-2 text-sm font-medium text-gray-800 bg-gray-100 border border-gray-200 rounded-full shadow-sm hover:bg-gray-200 transition-colors'
+                  'inline-flex items-center  py-1'
                 )}
               >
-                <span>Flashcards</span>
+                <Button className='shadow-xl'>Flashcards
                 <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
+              </Button>
               </Disclosure.Button>
-              <Tooltip content="Flashcard Help Guide">
-                <button
-                  onClick={() => setIsHelpModalOpen(true)}
-                  className="p-2 mb-4 text-gray-400 rounded-full hover:bg-sky-600 transition-colors"
+              <div className="flex items-center ">
+                <Button
+                variant='outline'
+                  onClick={handleAddAllToPlanner}
+                  className="flex justify-between line-clamp-1"
+                  disabled={filteredFlashcards.length === 0}
                 >
-                  <QuestionMarkCircleIcon className="w-5 h-5" />
-                </button>
-              </Tooltip>
-              <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
+                  
+                   Add <span>{filteredFlashcards.length} to Planner</span>
+                </Button>
+   
+              </div>
+              
             </div>
-
-
-            
             <Transition
               enter="transition ease-out duration-100"
               enterFrom="opacity-0 scale-95"
@@ -223,16 +249,16 @@ export default function AiFlashcards({ userId, onError }: AiFlashcardsProps) {
               leaveTo="opacity-0 scale-95"
             >
               <Disclosure.Panel className="sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl">
-<FlashcardSearch
-  searchQuery={searchQuery}
-  setSearchQuery={setSearchQuery}
-  activeStatus={activeStatus}
-  handleStatusSelect={setActiveStatus}
-  activeTopic={activeTopic}
-  handleTopicSelect={setActiveTopic}
-  topics={topics}
-  getStatusLabel={getStatusLabel}
-/>
+                <FlashcardSearch
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  activeStatus={activeStatus}
+                  handleStatusSelect={setActiveStatus}
+                  activeTopic={activeTopic}
+                  handleTopicSelect={setActiveTopic}
+                  topics={topics}
+                  getStatusLabel={getStatusLabel}
+                />
                 {loading ? (
                   <div className="text-gray-700">Loading...</div>
                 ) : filteredFlashcards.length === 0 ? (

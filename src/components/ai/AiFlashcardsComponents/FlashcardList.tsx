@@ -1,20 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+'use client';
+import { useState, useEffect, useRef, useContext } from 'react';
+import { PencilIcon, TrashIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import { cn } from '../../../utils/cn';
+import { Flashcard, PlanFlashcard } from '../../../lib/types';
+import { PlannerContext } from '../../../lib/context';
+import Button from '@/ui/Button';
 
-interface Flashcard {
-  id: number;
-  name: string;
-  messages: { role: string; content: string }[];
-  created_at: string;
-  updated_at: string;
-  topic: string;
-  section: string;
-  user_id?: string;
-  organization_id?: string;
-  status?: string;
-}
 
 interface FlashcardListProps {
   flashcards: Flashcard[];
@@ -47,11 +39,12 @@ export default function FlashcardList({
   hasMore,
   totalFlashcards,
 }: FlashcardListProps) {
+  const { addFlashcardToPlanner } = useContext(PlannerContext);
   const cardsPerPage = 4;
   const visibleFlashcards = flashcards.slice(0, page * cardsPerPage);
-  const [containerHeight, setContainerHeight] = useState(400); // Default height
+  const [containerHeight, setContainerHeight] = useState(400);
   const cardRef = useRef<HTMLLIElement>(null);
-  const [cardHeight, setCardHeight] = useState(88); // Default card height (80px content + 8px margins)
+  const [cardHeight, setCardHeight] = useState(88);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -76,10 +69,15 @@ export default function FlashcardList({
     };
   }, []);
 
+  const handleAddToPlanner = (flashcard: Flashcard) => {
+    console.log('Adding flashcard to planner:', { id: flashcard.id, isUserFlashcard: !!flashcard.user_id });
+    addFlashcardToPlanner(flashcard.id, !!flashcard.user_id);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div
-        className="overflow-y-auto rounded-md bg-white sm:ring-2 ring-gray-200 p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+        className="overflow-y-auto rounded-md bg-white sm:ring-2  ring-gray-200 p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
         style={{ height: `${containerHeight}px` }}
       >
         <ul className="grid grid-cols-1 gap-y-4 divide-y divide-gray-100">
@@ -88,7 +86,7 @@ export default function FlashcardList({
               key={flashcard.id}
               ref={index === 0 ? cardRef : null}
               className={cn(
-                'my-1 rounded-2xl min-h-48 group cursor-pointer transform transition-transform hover:scale-[1.02] hover:shadow-sm',
+                'my-1 shadow-lg rounded-2xl min-h-48 group cursor-pointer transform transition-transform hover:scale-[1.02] hover:shadow-sm relative',
                 getStatusBackgroundClass(flashcard.status),
                 getStatusBorderClass(flashcard.status)
               )}
@@ -99,9 +97,9 @@ export default function FlashcardList({
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm">
                     {getStatusLabel(flashcard.status || 'learning')}
                   </span>
-                  <span className="text-sm font-light text-gray-600">{flashcard.topic || ''}</span>
+                  <span className="text-sm font-light text-gray-600">{flashcard.topic || 'No topic'}</span>
                 </div>
-                <span className="text-center mt-8 text-base font-semibold text-gray-900 line-clamp-2 ">
+                <span className="px-8 text-center mt-8 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
                   {flashcard.name || 'Untitled'}
                 </span>
                 <div className="hidden sm:flex flex-col md:flex-row md:items-center gap-2 mt-3">
@@ -128,37 +126,49 @@ export default function FlashcardList({
                         </Tooltip>
                       ))}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {flashcard.user_id ? (
-                      <>
-                        <Tooltip content="Edit Flashcard">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditModal(flashcard);
-                            }}
-                            className="cursor-pointer bg-gray-100 text-gray-600 p-2.5 rounded-full disabled:bg-gray-200 hover:bg-gray-300 hover:shadow-md transition-all"
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Delete Flashcard">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteFlashcard(flashcard.id);
-                            }}
-                            className="cursor-pointer bg-gray-100 text-gray-600 p-2.5 rounded-full disabled:bg-gray-200 hover:bg-red-300 hover:shadow-md transition-all"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </Tooltip>
-                      </>
-                    ) : (
-                      <div className="h-8 w-16 md:w-20" /> // Adjusted for larger buttons and layout
-                    )}
-                  </div>
                 </div>
+              </div>
+              <div className="absolute bottom-2 right-2 flex items-center gap-2 ">
+                {flashcard.user_id && (
+                  <>
+                  <div className='hidden space-x-2 sm:flex opacity-0 group-hover:opacity-100 transition-opacity'>
+                    <Tooltip content="Edit Flashcard">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(flashcard);
+                        }}
+                        className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full hover:bg-gray-200 hover:shadow-md transition-all"
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete Flashcard">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteFlashcard(flashcard.id);
+                        }}
+                        className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full hover:bg-red-200 hover:shadow-md transition-all"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                      
+                    </Tooltip>
+                    </div>
+                  </>
+                )}
+                <Tooltip content="Add to Planner">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToPlanner(flashcard);
+                    }}
+                    className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full hover:bg-sky-200 hover:shadow-md transition-all"
+                  >
+                    <CalendarIcon className="h-5 w-5" />
+                  </button>
+                </Tooltip>
               </div>
             </li>
           ))}
@@ -187,26 +197,27 @@ export default function FlashcardList({
           )}
         </ul>
       </div>
-      <div className="mt-4 flex flex-col items-center gap-4">
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={() => setPage(Math.max(page - 1, 1))}
-            disabled={page === 1}
-            className="px-4 py-2 rounded-full bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition-colors disabled:bg-gray-300 shadow-md"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={!hasMore}
-            className="px-4 py-2 rounded-full bg-sky-500 text-white text-sm font-medium hover:bg-sky-600 transition-colors disabled:bg-gray-300 shadow-md"
-          >
-            Load More
-          </button>
-        </div>
-        <div className="text-base font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-full">
+      <div className="flex flex-col items-between gap-4">
+                <div className="hidden sm:flex text-base font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-full">
           Showing {visibleFlashcards.length} of {totalFlashcards} flashcards
         </div>
+        <div className="flex justify-between mb-4">
+          <Button
+          variant='outline'
+            onClick={() => setPage(Math.max(page - 1, 1))}
+            disabled={page === 1}
+           >
+            Previous
+          </Button>
+          <Button
+            onClick={() => setPage(page + 1)}
+            disabled={!hasMore}
+                     >
+            <PlusIcon className="mr-2 h-5 w-5" />
+            Load More
+          </Button>
+        </div>
+
       </div>
     </div>
   );
