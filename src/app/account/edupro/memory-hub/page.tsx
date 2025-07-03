@@ -256,7 +256,7 @@ export default function MemoryHub() {
         </div>
         <div className="flex mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-10 mx-auto p-4 lg:px-8 rounded-lg min-h-screen gap-8 lg:gap-16">
-            <div className="order-2 sm:order-1 sm:col-span-3">
+            <div className="order-3 sm:order-1 sm:col-span-3">
               <AiChatHistory
                 userId={userId}
                 onError={handleError}
@@ -272,7 +272,7 @@ export default function MemoryHub() {
                 setFlashcards={setFlashcards}
               />
             </div>
-            <div className="order-3 sm:col-span-3">
+            <div className="order-2 sm:order-3 sm:col-span-3">
               <CardSyncPlanner
                 userId={userId}
                 onError={handleError}

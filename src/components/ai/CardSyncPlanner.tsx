@@ -353,8 +353,8 @@ export default function CardSyncPlanner({
   };
 
   return (
-    <div className="relative">
-      <div className="block items-center justify-between">
+    <div className="relative  ">
+      <div className="block items-center justify-between sm:py-0 py-16 ">
         <Disclosure defaultOpen>
           {({ open }) => (
             <div>
@@ -373,7 +373,7 @@ export default function CardSyncPlanner({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Disclosure.Panel className=" w-full sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl min-h-[700px] max-h-[700px] overflow-y-auto">
+                <Disclosure.Panel className=" w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl sm:min-h-[700px] sm:max-h-[700px] overflow-y-auto pb-16 ">
                   {loading ? (
                     <div className="text-gray-700">Loading...</div>
                   ) : (
@@ -583,7 +583,7 @@ export default function CardSyncPlanner({
                           </div>
                         </div>
                       )}
-                      <div className="absolute bottom-8 right-4 mt-4 text-center gap-4">
+                      <div className="absolute sm:bottom-8 sm:right-4 right-2 mt-4  gap-4">
                         <div className='text-center'>
                         <Button
                           onClick={handleNewPlanClick}

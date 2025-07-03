@@ -75,7 +75,7 @@ export default function FlashcardList({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 border-t  border-gray-200">
       <div
         className="overflow-y-auto rounded-md bg-white sm:ring-2  ring-gray-200 p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
         style={{ height: `${containerHeight}px` }}
@@ -122,6 +122,7 @@ export default function FlashcardList({
                             {getStatusLabel(status)}
                           </Button>
                         </Tooltip>
+                        
                       ))}
                   </div>
                 </div>
@@ -203,17 +204,19 @@ export default function FlashcardList({
                 <div className="hidden sm:flex text-base font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-full">
           Showing {visibleFlashcards.length} of {totalFlashcards} flashcards
         </div>
-        <div className="flex justify-between mb-4">
+        <div className="flex justify-end sm:justify-between mb-4">
           <Button
           variant='outline'
             onClick={() => setPage(Math.max(page - 1, 1))}
             disabled={page === 1}
+            className='sm:flex hidden'
            >
             Previous
           </Button>
           <Button
             onClick={() => setPage(page + 1)}
             disabled={!hasMore}
+
                      >
             <PlusIcon className="mr-2 h-5 w-5" />
             Load More

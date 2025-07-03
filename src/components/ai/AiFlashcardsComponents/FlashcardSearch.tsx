@@ -105,6 +105,7 @@ export default function FlashcardSearch({
                </Button>
                 </Listbox.Button>
               </Tooltip>
+              
               <Transition
                 show={open}
                 enter="transition ease-out duration-100"
