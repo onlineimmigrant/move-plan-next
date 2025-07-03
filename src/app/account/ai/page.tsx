@@ -10,6 +10,7 @@ import InfoCards from '@/components/ai/InfoCards';
 import DialogModals from '@/components/ai/DialogModals';
 import ChatWidget from '@/components/ChatWidget';
 import Image from 'next/image';
+import DisclosureButton from '@/ui/DisclosureButton';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -537,10 +538,10 @@ export default function AISettings() {
         <Disclosure>
           {({ open }: { open: boolean }) => (
             <div>
-              <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2">
-                <span>Add Custom AI Model</span>
-                <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
-              </Disclosure.Button>
+              <DisclosureButton>
+                            <span>Add Custom AI Model</span>
+                <span className="ml-2 text-sky-300 font-bold">{open ? '−' : '+'}</span>
+              </DisclosureButton>
               <Transition
                 enter="transition ease-out duration-100"
                 enterFrom="opacity-0 scale-95"
@@ -549,7 +550,7 @@ export default function AISettings() {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Disclosure.Panel className="border border-gray-200 rounded-xl bg-white p-4">
+                <Disclosure.Panel className="mt-2 border border-gray-200 rounded-xl bg-white p-4">
                   <div className="relative">
                     <Combobox
                       value={newModel.name}
@@ -673,10 +674,9 @@ export default function AISettings() {
           <Disclosure defaultOpen>
             {({ open }: { open: boolean }) => (
               <div>
-                <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2">
-                  <span>Available Models</span>
-                  <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
-                </Disclosure.Button>
+                <DisclosureButton>     <span>Available Models</span>
+                  <span className="ml-2 text-sky-300 font-bold">{open ? '−' : '+'}</span>
+                </DisclosureButton>
                 <Transition
                   enter="transition ease-out duration-100"
                   enterFrom="opacity-0 scale-95"
@@ -685,7 +685,7 @@ export default function AISettings() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Disclosure.Panel className="border border-gray-200 rounded-xl py-4 px-4">
+                  <Disclosure.Panel className="mt-2 border border-gray-200 rounded-xl py-4 px-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <h3 className="text-sm font-medium text-gray-800 mb-1">Default</h3>

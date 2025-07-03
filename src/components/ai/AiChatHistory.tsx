@@ -9,6 +9,7 @@ import HelpModal from './HelpModal';
 import ChatHistoryList from './AiChatHistoryComponents/ChatHistoryList';
 import ChatHistorySearch from './AiChatHistoryComponents/ChatHistorySearch';
 import Button from '@/ui/Button';
+import DisclosureButton from '@/ui/DisclosureButton';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -446,12 +447,12 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
         {({ open }) => (
           <div>
             <div className="mt-1 flex justify-between items-center mb-4 ">
-              <Disclosure.Button >
-                         <Button>
+              <DisclosureButton >
+                        
                 <span>Chats</span>
                 <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
-                </Button>
-              </Disclosure.Button>
+               
+              </DisclosureButton>
 
             </div>
             <Transition

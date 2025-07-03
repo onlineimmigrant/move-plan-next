@@ -108,67 +108,69 @@ export default function FlashcardList({
                       .filter((status) => status !== flashcard.status)
                       .map((status) => (
                         <Tooltip key={status} content={`Change to ${getStatusLabel(status)}`}>
-                          <button
+                          <Button
+                            variant='badge_primary'
                             onClick={(e) => {
                               e.stopPropagation();
                               updateFlashcardStatus(flashcard.id, !!flashcard.user_id, status);
                             }}
-                            className={cn(
-                              'px-2 py-1 rounded-full text-xs font-medium cursor-pointer text-gray-800 hover:bg-gray-300 flex items-center gap-1',
-                              getStatusBgClass(status)
-                            )}
+                
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                             </svg>
                             {getStatusLabel(status)}
-                          </button>
+                          </Button>
                         </Tooltip>
                       ))}
                   </div>
                 </div>
               </div>
-              <div className="absolute bottom-2 right-2 flex items-center gap-2 ">
+              <div className="p-2 bottom-2 flex items-center justify-between  gap-2 ">
                 {flashcard.user_id && (
                   <>
-                  <div className='hidden space-x-2 sm:flex opacity-0 group-hover:opacity-100 transition-opacity'>
-                    <Tooltip content="Edit Flashcard">
-                      <button
+                  <div className='hidden  sm:flex space-x-2  opacity-0 group-hover:opacity-100 transition-opacity'>
+                    
+                      <Button
+                      title='Edit Flashcard'
+                      variant='badge_primary_circle'
                         onClick={(e) => {
                           e.stopPropagation();
                           openEditModal(flashcard);
                         }}
-                        className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full hover:bg-gray-200 hover:shadow-md transition-all"
-                      >
-                        <PencilIcon className="h-5 w-5" />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="Delete Flashcard">
-                      <button
+                              >
+                        <PencilIcon className="h-3 w-3" />
+                      </Button>
+                 
+                    
+                      <Button
+                      title="Delete Flashcard"
+                      variant='badge_primary_circle'
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteFlashcard(flashcard.id);
                         }}
-                        className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full hover:bg-red-200 hover:shadow-md transition-all"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
+                                         >
+                        <TrashIcon className="h-3 w-3" />
+                      </Button>
                       
-                    </Tooltip>
+                  
                     </div>
                   </>
                 )}
-                <Tooltip content="Add to Planner">
-                  <button
+               
+                  
+                  <Button
+                  title="Add to Planner"
+                  variant='badge_primary_circle'
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddToPlanner(flashcard);
                     }}
-                    className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full hover:bg-sky-200 hover:shadow-md transition-all"
-                  >
+                               >
                     <CalendarIcon className="h-5 w-5" />
-                  </button>
-                </Tooltip>
+                  </Button>
+               
               </div>
             </li>
           ))}

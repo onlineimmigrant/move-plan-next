@@ -11,6 +11,7 @@ import { cn } from '../../utils/cn';
 import { PlannerContext } from '../../lib/context';
 import { Flashcard, PlanFlashcard } from '../../lib/types';
 import Button from '@/ui/Button';
+import DisclosureButton from '@/ui/DisclosureButton';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -137,9 +138,9 @@ export default function CardSyncPlanner({
     const today = new Date();
     const startDate = new Date(plan.start_date);
     const endDate = plan.end_date ? new Date(plan.end_date) : startDate;
-    if (endDate < today) return 'bg-red-50 text-red-700';
-    if (endDate.toDateString() === today.toDateString()) return 'bg-yellow-50 text-yellow-700';
-    return 'bg-green-50 text-green-700';
+    if (endDate < today) return 'bg-red-50 text-red-700 hover:bg-red-100 ring-red-700';
+    if (endDate.toDateString() === today.toDateString()) return 'bg-yellow-50 text-yellow-700 ring-yellow-700 hover:bg-yellow-100';
+    return 'bg-green-50 text-green-700 ring-green-700 hover:bg-green-100';
   }, []);
 
   const handleCreatePlan = useCallback(async () => {
@@ -358,14 +359,10 @@ export default function CardSyncPlanner({
           {({ open }) => (
             <div>
               <div className="mt-1 flex items-center justify-between mb-4 ">
-                <Disclosure.Button
-      
-                >
-                    <Button>
+                <DisclosureButton>
                   <span>CardSync Planner</span>
                   <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
-                  </Button>
-                </Disclosure.Button>
+                </DisclosureButton>
 
               </div>
               <Transition
@@ -376,7 +373,7 @@ export default function CardSyncPlanner({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Disclosure.Panel className="w-full sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl min-h-[700px] max-h-[700px] overflow-y-auto">
+                <Disclosure.Panel className=" w-full sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl min-h-[700px] max-h-[700px] overflow-y-auto">
                   {loading ? (
                     <div className="text-gray-700">Loading...</div>
                   ) : (
@@ -386,23 +383,25 @@ export default function CardSyncPlanner({
   <Disclosure
     key={plan.id}
     as="div"
-    className="mb-2"
+    className="mb-4"
     defaultOpen={openPlanId === plan.id} // Use defaultOpen instead of open
   >
     {({ open }) => (
       <>
-        <Disclosure.Button
+        <DisclosureButton
+        variant='card-sync-planner'
           className={cn(
-            'w-full px3 py1 text-sm font-medium rounded-full shadow-sm hover:opacity-90 transition-opacity',
+            "flex justify-between items-center py-1 space-x-4",
             getPlanStyles(plan)
           )}
-          onClick={() => handleDisclosureToggle(plan.id)} // Move onChange logic to onClick
+          onClick={() => handleDisclosureToggle(plan.id)} // Change "Contract" 
         >
-          <div className="flex justify-between items-center">
+            <span className="font-bold">Contract</span> 
             <span>{plan.name}</span>
+            
             <span>{open ? '−' : '+'}</span>
-          </div>
-        </Disclosure.Button>
+         
+        </DisclosureButton>
         <Transition
           enter="transition ease-out duration-100"
           enterFrom="opacity-0 scale-95"
@@ -484,9 +483,13 @@ export default function CardSyncPlanner({
                           <div className="flex items-center gap-2">
                             <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
                               <div className="relative flex-1">
-                                <Listbox.Button className="w-full p-2 border border-gray-200 rounded-md text-left bg-white text-gray-700 shadow-sm hover:bg-gray-50">
+                                <Listbox.Button>     
+                                    <Button
+                                  variant='outline'
+                                  >
                                   <span>{selectedPeriod.label}</span>
-                                  <ChevronDownIcon className="h-5 w-5 absolute right-2 top-2.5" />
+                                  <ChevronDownIcon className="ml-2 h-3 w-3" />
+                                  </Button>
                                 </Listbox.Button>
                                 <Transition
                                   enter="transition ease-out duration-100"
@@ -496,22 +499,28 @@ export default function CardSyncPlanner({
                                   leaveFrom="opacity-100 scale-100"
                                   leaveTo="opacity-0 scale-95"
                                 >
-                                  <Listbox.Options className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-10">
-                                    {periods.map((period) => (
-                                      <Listbox.Option
-                                        key={period.value}
-                                        value={period}
-                                        className={({ active }) =>
-                                          cn(
-                                            'cursor-pointer select-none p-2 text-sm',
-                                            active ? 'bg-sky-100 text-sky-900' : 'text-gray-700'
-                                          )
-                                        }
-                                      >
-                                        {period.label}
-                                      </Listbox.Option>
-                                    ))}
-                                  </Listbox.Options>
+                            <Listbox.Options className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-10">
+                            {periods.map((period) => (
+                                <Listbox.Option
+                                key={period.value}
+                                value={period}
+                                className={({ active, selected }) =>
+                                    cn(
+                                    'relative cursor-pointer select-none py-2 px-4',
+                                    active ? 'bg-sky-100 text-sky-900' : 'text-gray-700',
+                                    selected ? 'bg-sky-50 font-semibold' : ''
+                                    )
+                                }
+                                >
+                                {({ selected }) => (
+                                    <div className="flex items-center justify-between text-sm">
+                                    <span>{period.label}</span>
+                                    {selected && <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />}
+                                    </div>
+                                )}
+                                </Listbox.Option>
+                            ))}
+                            </Listbox.Options>
                                 </Transition>
                               </div>
                             </Listbox>
