@@ -1,4 +1,3 @@
-
 import { useReducer, useEffect, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -13,8 +12,8 @@ interface Flashcard {
   messages: { role: string; content: string }[];
   created_at: string;
   updated_at: string;
-  topic: string;
-  section: string;
+  topic: string | null; // Updated to allow null
+  section: string | null; // Updated to allow null
   user_id?: string;
   organization_id?: string;
   status?: string;
@@ -117,19 +116,23 @@ export const useFlashcards = (userId: string | null) => {
 
       const userFlashcardsWithStatus = (userFlashcards || []).map((fc) => ({
         ...fc,
+        topic: fc.topic || null,
+        section: fc.section || null,
         status: statuses?.find((s) => s.ai_user_flashcards_id === fc.id)?.status || 'learning',
         messages: fc.messages || [],
       }));
 
       const defaultFlashcardsWithStatus = (defaultFlashcards || []).map((fc) => ({
         ...fc,
+        topic: fc.topic || null,
+        section: fc.section || null,
         status: statuses?.find((s) => s.ai_default_flashcards_id === fc.id)?.status || 'learning',
         messages: fc.messages || [],
       }));
 
       const allFlashcards = [...userFlashcardsWithStatus, ...defaultFlashcardsWithStatus];
       const uniqueTopics = Array.from(
-        new Set([...(userFlashcards || []), ...(defaultFlashcards || [])].map((fc) => fc.topic).filter(Boolean))
+        new Set(allFlashcards.map((fc) => fc.topic).filter((t): t is string => !!t))
       );
 
       dispatch({ type: 'FETCH_SUCCESS', payload: { flashcards: allFlashcards, topics: uniqueTopics } });
@@ -184,23 +187,24 @@ export const useFlashcards = (userId: string | null) => {
     }
   };
 
-  const updateFlashcard = async (flashcardId: number, updatedData: { name: string; topic: string; section: string }) => {
+  const updateFlashcard = async (flashcardId: number, updatedData: { name: string; topic: string | null; section: string | null }) => {
     try {
       const { data, error } = await supabase
         .from('ai_user_flashcards')
         .update({
           name: updatedData.name.trim(),
-          topic: updatedData.topic.trim() || null,
-          section: updatedData.section.trim() || null,
+          topic: updatedData.topic?.trim() || null,
+          section: updatedData.section?.trim() || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', flashcardId)
         .eq('user_id', userId)
-        .select();
+        .select()
+        .single();
 
       if (error) throw new Error(`Failed to update flashcard: ${error.message}`);
       if (data) {
-        dispatch({ type: 'UPDATE_FLASHCARD_SUCCESS', payload: data[0] });
+        dispatch({ type: 'UPDATE_FLASHCARD_SUCCESS', payload: { ...data, topic: data.topic || null, section: data.section || null } });
       }
     } catch (error: any) {
       dispatch({ type: 'FETCH_ERROR', payload: error.message || 'Failed to update flashcard.' });

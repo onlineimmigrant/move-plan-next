@@ -1,6 +1,5 @@
-// AiChatHistory.tsx
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import { Disclosure, Transition } from '@headlessui/react';
@@ -9,6 +8,7 @@ import Tooltip from '@/components/Tooltip';
 import HelpModal from './HelpModal';
 import ChatHistoryList from './AiChatHistoryComponents/ChatHistoryList';
 import ChatHistorySearch from './AiChatHistoryComponents/ChatHistorySearch';
+import Button from '@/ui/Button';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,7 +41,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [filteredHistories, setFilteredHistories] = useState<ChatHistory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creatingFlashcard, setCreatingFlashcard] = useState(false); // New state for flashcard creation
+  const [creatingFlashcard, setCreatingFlashcard] = useState(false);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalHistories, setTotalHistories] = useState(0);
@@ -55,6 +55,16 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [role, setRole] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Memoize onNewMessages to prevent recreation
+  const memoizedOnNewMessages = useCallback(
+    (data: NewMessages) => {
+      if (onNewMessages) {
+        onNewMessages(data);
+      }
+    },
+    [onNewMessages]
+  );
 
   useEffect(() => {
     if (!userId) return;
@@ -70,21 +80,20 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          setChatHistories((prev) =>
-            prev
-              .map((h) =>
-                h.id === payload.new.id
-                  ? { ...h, messages: payload.new.messages, updated_at: payload.new.updated_at }
-                  : h
-              )
-              .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-          );
-          if (onNewMessages) {
-            onNewMessages({
-              historyId: payload.new.id,
-              messages: payload.new.messages.slice(-1),
-            });
-          }
+          setChatHistories((prev) => {
+            const updatedHistories = prev.map((h) =>
+              h.id === payload.new.id
+                ? { ...h, messages: payload.new.messages, updated_at: payload.new.updated_at }
+                : h
+            );
+            return updatedHistories.sort(
+              (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+            );
+          });
+          memoizedOnNewMessages({
+            historyId: payload.new.id,
+            messages: payload.new.messages.slice(-1),
+          });
         }
       )
       .subscribe();
@@ -92,30 +101,52 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, onNewMessages]);
+  }, [userId, memoizedOnNewMessages]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchRole = async () => {
-      if (userId) {
+      if (!userId || !isMounted) {
+        if (isMounted) setLoading(false);
+        return;
+      }
+
+      try {
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', userId)
           .single();
-        if (!error && data) {
-          setRole(data.role);
-        } else {
-          onError('Failed to fetch user role.');
+        if (error) {
+          throw new Error('Failed to fetch user role: ' + error.message);
+        }
+        if (isMounted) {
+          setRole(data?.role || null);
+        }
+      } catch (error: any) {
+        if (isMounted) {
+          onError(error.message || 'Failed to fetch user role.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
     };
     fetchRole();
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId, onError]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
-      if (!userId) {
-        setLoading(false);
+      if (!userId || !isMounted) {
+        if (isMounted) setLoading(false);
         return;
       }
 
@@ -129,7 +160,9 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
         if (countError) {
           throw new Error('Failed to count chat histories: ' + countError.message);
         }
-        setTotalHistories(count || 0);
+        if (isMounted) {
+          setTotalHistories(count || 0);
+        }
 
         const { data: histories, error: historiesError } = await supabase
           .from('ai_chat_histories')
@@ -159,16 +192,26 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
           return isValid;
         });
 
-        setChatHistories(validHistories);
-        setHasMore(page * 3 < (count || 0));
+        if (isMounted) {
+          setChatHistories(validHistories);
+          setHasMore(page * 3 < (count || 0));
+        }
       } catch (error: any) {
-        onError(error.message || 'Failed to load chat histories.');
-        console.error('Fetch error:', error.message);
+        if (isMounted) {
+          onError(error.message || 'Failed to load chat histories.');
+          console.error('Fetch error:', error.message);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId, onError]);
 
   useEffect(() => {
@@ -214,7 +257,6 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
       });
     }
     setFilteredHistories(result);
-    setTotalHistories(result.length);
     setPage(1);
     setHasMore(result.length > 3);
     if (selectedHistoryIndex !== null && (selectedHistoryIndex >= result.length || result.length === 0)) {
@@ -263,8 +305,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
       }
 
       setChatHistories(chatHistories.filter((history) => history.id !== historyId));
-      setTotalHistories((prev) => prev - 1);
-      setSelectedHistoryIndex(null);
+      setHasMore(page * 3 < totalHistories - 1);
     } catch (error: any) {
       onError(error.message || 'Failed to delete chat history.');
       console.error('Delete error:', error.message);
@@ -314,7 +355,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
   };
 
   const createFlashcard = async (historyId: number) => {
-    setCreatingFlashcard(true); // Set loading state
+    setCreatingFlashcard(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
@@ -346,19 +387,15 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
         throw new Error(result.error || 'Failed to create flashcard');
       }
 
-      // Updated success message to exclude numFlashcards
       onError(`Flashcard successfully created from the chat: "${history.name}"`);
       if (onFlashcardCreated) {
         onFlashcardCreated();
       }
-      // Optional: If you want to include the correct number of flashcards, ensure the API returns an array
-      // const numFlashcards = result.flashcards?.length || 1;
-      // onError(`${numFlashcards} Flashcard${numFlashcards > 1 ? 's' : ''} successfully created from the chat: "${history.name}"`);
     } catch (error: any) {
       onError(error.message || 'Failed to create flashcard.');
       console.error('Flashcard creation error:', error.message);
     } finally {
-      setCreatingFlashcard(false); // Reset loading state
+      setCreatingFlashcard(false);
     }
   };
 
@@ -408,20 +445,14 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
       <Disclosure defaultOpen>
         {({ open }) => (
           <div>
-            <div className="flex justify-between items-center">
-              <Disclosure.Button className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors shadow-sm mb-2 cursor-pointer">
-                <span>Memory Hub</span>
+            <div className="mt-1 flex justify-between items-center mb-4 ">
+              <Disclosure.Button >
+                         <Button>
+                <span>Chats</span>
                 <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
+                </Button>
               </Disclosure.Button>
-              <Tooltip content="Chat History Help Guide">
-                <button
-                  onClick={() => setIsHelpModalOpen(true)}
-                  className="mb-4 cursor-pointer text-gray-400 p-2 rounded-full hover:bg-sky-600 transition-colors"
-                >
-                  <QuestionMarkCircleIcon className="h-5 w-5" />
-                </button>
-              </Tooltip>
-              <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
+
             </div>
             <Transition
               enter="transition ease-out duration-100"
@@ -458,7 +489,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
                     hasMore={hasMore}
                     totalHistories={totalHistories}
                     loading={loading}
-                    creatingFlashcard={creatingFlashcard} // Pass new state
+                    creatingFlashcard={creatingFlashcard}
                   />
                 )}
               </Disclosure.Panel>

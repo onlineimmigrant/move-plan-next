@@ -1,19 +1,7 @@
 import React, { useState } from 'react';
 import { XMarkIcon, ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../../utils/cn';
-
-interface Flashcard {
-  id: number;
-  name: string;
-  messages: { role: string; content: string }[];
-  created_at: string;
-  updated_at: string;
-  topic: string;
-  section: string;
-  user_id?: string;
-  organization_id?: string;
-  status?: string;
-}
+import { Flashcard } from '../../../lib/types'; // Import from types.ts
 
 interface FlashcardModalProps {
   flashcard: Flashcard;
@@ -44,6 +32,21 @@ export default function FlashcardModal({
   flipCard,
   flashcards,
 }: FlashcardModalProps) {
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleSave = (flashcard: Flashcard) => {
+    setIsSaved(true);
+    handleStatusTransition(flashcard);
+
+    // Reset "Saved!" message and move to next card after 1.5 seconds
+    setTimeout(() => {
+      setIsSaved(false);
+      if (flashcards.length > 1) {
+        nextCard();
+      }
+    }, 1500);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80 p-4 sm:p-6"
@@ -66,9 +69,9 @@ export default function FlashcardModal({
             {!isFlipped ? (
               <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
                 <span className="inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-600 mb-2 sm:mb-3">
-                  {flashcard.topic || ''}
+                  {flashcard.topic || 'No Topic'}
                 </span>
-                <p className="text-sm sm:text-base text-gray-600 mb-2">{flashcard.section || ''}</p>
+                <p className="text-sm sm:text-base text-gray-600 mb-2">{flashcard.section || 'No Section'}</p>
                 <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 whitespace-normal px-2">
                   {flashcard.name || 'Untitled'}
                 </h2>
@@ -83,7 +86,7 @@ export default function FlashcardModal({
                     >
                       <span
                         className={cn(
-                          'inline-block p-3 sm:p-4 rounded-lg  max-w-[85%] text-sm sm:text-base',
+                          'inline-block p-3 sm:p-4 rounded-lg max-w-[85%] text-sm sm:text-base',
                           msg.role === 'user' ? 'bg-sky-100 text-gray-800' : 'bg-gray-100 text-gray-800'
                         )}
                         dangerouslySetInnerHTML={{
@@ -100,14 +103,14 @@ export default function FlashcardModal({
           {/* Control Buttons */}
           <button
             onClick={closeCard}
-            className="absolute top-3 right-3 p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            className="cursor-pointer absolute top-3 right-3 p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
             aria-label="Close"
           >
             <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
           </button>
           <button
             onClick={flipCard}
-            className="absolute top-3 left-3 p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            className="cursor-pointer absolute top-3 left-3 p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
             aria-label="Flip card"
           >
             <ArrowPathIcon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -117,27 +120,33 @@ export default function FlashcardModal({
           <div className="flex justify-between items-center p-4 sm:p-6 border-t border-gray-200 bg-white">
             <button
               onClick={prevCard}
-              className="p-2 rounded-full text-sky-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="cursor-pointer p-2 rounded-full text-sky-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               disabled={flashcards.length <= 1}
               aria-label="Previous card"
             >
               <ChevronLeftIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
 
-            <button
-              onClick={() => handleStatusTransition(flashcard)}
-              className="px-3 py-1.5 rounded-full text-sm sm:text-base font-medium text-sky-600 hover:bg-gray-100 transition-colors"
-            >
-              {['suspended', 'lapsed', 'mastered'].includes(flashcard.status || '') ? (
-                <span>Save to Learning</span>
-              ) : (
-                <span>Save to {getStatusLabel(getNextStatus(flashcard.status))}</span>
-              )}
-            </button>
+            {isSaved ? (
+              <span className="px-3 py-1.5 rounded-full text-sm sm:text-base font-medium text-teal-600 bg-teal-100">
+                Saved!
+              </span>
+            ) : (
+              <button
+                onClick={() => handleSave(flashcard)}
+                className="cursor-pointer px-3 py-1.5 rounded-full text-sm sm:text-base font-medium text-sky-600 hover:bg-gray-100 transition-colors"
+              >
+                {['suspended', 'lapsed', 'mastered'].includes(flashcard.status || '') ? (
+                  <span>Save to Learning</span>
+                ) : (
+                  <span>Save to {getStatusLabel(getNextStatus(flashcard.status))}</span>
+                )}
+              </button>
+            )}
 
             <button
               onClick={nextCard}
-              className="p-2 rounded-full text-sky-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="cursor-pointer p-2 rounded-full text-sky-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               disabled={flashcards.length <= 1}
               aria-label="Next card"
             >

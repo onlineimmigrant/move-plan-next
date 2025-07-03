@@ -3,6 +3,7 @@ import React from 'react';
 import { Listbox, Transition } from '@headlessui/react';
 import { MagnifyingGlassIcon, PencilIcon, CheckIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
+import Button from '@/ui/Button';
 
 interface FlashcardSearchProps {
   searchQuery: string;
@@ -31,14 +32,14 @@ export default function FlashcardSearch({
     <div className="flex flex-col gap-4 mt-2 mb-4 md:flex-row md:items-center">
       <div className="md:py-0 py-4 relative w-full px-4 transition-all duration-200 md:w-80 md:px-0">
         <span className="absolute inset-y-0 left-0 flex items-center pl-6 md:pl-3">
-          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+          <MagnifyingGlassIcon className="pl-2 w-8 h-8 text-gray-400" />
         </span>
         <input
           type="text"
           placeholder="Search by name or topic..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full py-4 sm:py-2 pl-10 pr-3 text-base font-light bg-white border-2 border-gray-200 rounded-2xl sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+          className="w-full py-2 pl-12 pr-3 text-base font-light bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
         />
       </div>
       <div className="flex justify-center items-center gap-4 px-4 md:px-0">
@@ -47,11 +48,13 @@ export default function FlashcardSearch({
           {({ open }) => (
             <div className="relative">
               <Tooltip content="Filter by Status">
-                <Listbox.Button className="relative flex items-center border-2 border-gray-50 rounded-full p-2 text-sm font-medium text-gray-800 bg-gray-100 hover:bg-gray-200 transition-colors">
-                  <span className="mr-2 bg-gray-50 text-gray-600 p-2 rounded-full hover:bg-gray-200 transition-colors">
-                    <PencilIcon className="w-4 h-4" />
+                <Listbox.Button className="relative flex items-center   p-2 text-sm font-medium text-gray-800  transition-colors">
+                  <Button variant='outline'>
+                  <span className="mr-2  rounded-full hover:bg-gray-200 transition-colors">
+                    <PencilIcon className="w-3 h-3" />
                   </span>
                   <span>{getStatusLabel(activeStatus)}</span>
+                  </Button>
                 </Listbox.Button>
               </Tooltip>
               <Transition
@@ -91,11 +94,15 @@ export default function FlashcardSearch({
           {({ open }) => (
             <div className="relative">
               <Tooltip content="Filter by Topic">
-                <Listbox.Button className="relative flex items-center border-2 border-gray-50 rounded-full p-2 text-sm font-medium text-sky-600 bg-sky-100 hover:bg-gray-200 transition-colors">
-                  <span className="mr-2 bg-gray-50 text-gray-600 p-2 rounded-full hover:bg-gray-200 transition-colors">
-                    <PencilIcon className="w-4 h-4" />
+                <Listbox.Button className="relative flex items-center  p-2 text-sm font-medium  transition-colors">
+                  <Button
+                  variant='outline'
+                  >
+                  <span className="mr-2  transition-colors">
+                    <PencilIcon className="w-3 h-3" />
                   </span>
                   <span className="line-clamp-1">{activeTopic || 'All Topics'}</span>
+               </Button>
                 </Listbox.Button>
               </Tooltip>
               <Transition

@@ -1,24 +1,12 @@
-
-import React, { useState, useEffect } from 'react';
+'use client';
+import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-
-interface Flashcard {
-  id: number;
-  name: string;
-  messages: { role: string; content: string }[];
-  created_at: string;
-  updated_at: string;
-  topic: string;
-  section: string;
-  user_id?: string;
-  organization_id?: string;
-  status?: string;
-}
+import { Flashcard } from '../../../lib/types';
 
 interface EditFlashcardModalProps {
   editingCard: Flashcard | null;
   closeEditModal: () => void;
-  updateFlashcard: (flashcardId: number, updatedData: { name: string; topic: string; section: string }) => void;
+  updateFlashcard: (flashcardId: number, updatedData: { name: string; topic: string | null; section: string | null }) => Promise<void>;
   onError: (error: string) => void;
 }
 
@@ -40,14 +28,22 @@ export default function EditFlashcardModal({
     }
   }, [editingCard]);
 
-  const handleEditSubmit = () => {
+  const handleEditSubmit = async () => {
     if (editingCard) {
       if (!editForm.name.trim()) {
         onError('Flashcard name cannot be empty.');
         return;
       }
-      updateFlashcard(editingCard.id, editForm);
-      closeEditModal();
+      try {
+        await updateFlashcard(editingCard.id, {
+          name: editForm.name,
+          topic: editForm.topic || null,
+          section: editForm.section || null,
+        });
+        closeEditModal();
+      } catch (error: any) {
+        onError(error.message || 'Failed to update flashcard.');
+      }
     }
   };
 

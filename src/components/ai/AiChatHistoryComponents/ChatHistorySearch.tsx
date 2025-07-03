@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
 import { MagnifyingGlassIcon, PencilIcon, CheckIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
+import Button from '@/ui/Button';
 
 interface ChatHistorySearchProps {
   searchQuery: string;
@@ -37,14 +38,14 @@ export default function ChatHistorySearch({
         className="relative w-full px-4 transition-all duration-200 md:w-80 md:px-0"
       >
         <span className="absolute inset-y-0 left-0 flex items-center pl-6 md:pl-3">
-          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+          <MagnifyingGlassIcon className="w-6 h-6 text-gray-400" />
         </span>
         <input
           type="text"
           placeholder="Search chat histories..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full py-2 pl-10 pr-3 text-base font-light bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+          className="w-full py-2 pl-12 pr-3 text-base font-light bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
         />
       </div>
       <div className="flex items-center gap-2 px-4 md:px-0">
@@ -53,11 +54,14 @@ export default function ChatHistorySearch({
           {({ open }) => (
             <div className="relative">
               <Tooltip content="Filter by Date Range">
-                <Listbox.Button className="relative flex items-center border-2 border-gray-50 rounded-full p-2 text-sm font-medium text-gray-800 bg-gray-100 hover:bg-gray-200 transition-colors">
-                  <span className="mr-2 bg-gray-50 text-gray-600 p-2 rounded-full hover:bg-gray-200 transition-colors">
+                
+                <Listbox.Button >
+                  <Button variant='outline'>
+                  <span className="mr-2">
                     <PencilIcon className="w-4 h-4" />
                   </span>
                   <span className='line-clamp-1'>{dateRanges.find((range) => range.value === selectedDateRange)?.label || 'All Time'}</span>
+                </Button>
                 </Listbox.Button>
               </Tooltip>
               <Transition
