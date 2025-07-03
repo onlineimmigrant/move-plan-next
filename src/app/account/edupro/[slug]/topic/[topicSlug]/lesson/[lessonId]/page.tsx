@@ -24,6 +24,7 @@ import {
 } from '@/types/edupro';
 import ProgressStatisticsCurrent from '@/components/quiz/ProgressStatisticsCurrent';
 import Button from '@/ui/Button';
+import ChatWidget from '@/components/ChatWidget';
 
 
 
@@ -756,6 +757,7 @@ const getQuizSlug = (): string | null => {
           <AccountTabEduProCourse />
           <TabNavigation tabs={TABS} activeTab={activeTab} setActiveTab={handleTabChange} />
         </div>
+        <ChatWidget />
         <div className="mt-4 mb-4 grid grid-cols-3">
           {topic && (
           <Link href={`/account/edupro/${slug}/topic/${topicSlug}`} className="flex sm:justify-start justify-center items-center text-gray-600 hover:text-sky-600">
@@ -869,6 +871,7 @@ const getQuizSlug = (): string | null => {
     </Link>
   </div>
 )}
+
                   {isAdmin && <LessonContent lesson={lesson} />}
                 </div>
               ) : (

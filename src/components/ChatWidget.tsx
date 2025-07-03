@@ -496,7 +496,7 @@ export default function ChatWidget() {
    
       {isOpen && (
         <div
-          className={`fixed bottom-24 right-4 bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
+          className={`z-51 fixed bottom-24 right-4 bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
         >
           <div className="flex justify-between items-center mb-2 bg-gray-50 px-4 shadow rounded-t-lg">
             <Tooltip
