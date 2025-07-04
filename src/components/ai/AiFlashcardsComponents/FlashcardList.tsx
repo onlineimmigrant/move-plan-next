@@ -1,12 +1,11 @@
 'use client';
 import { useState, useEffect, useRef, useContext } from 'react';
-import { PencilIcon, TrashIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, CalendarIcon, ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import { cn } from '../../../utils/cn';
 import { Flashcard, PlanFlashcard } from '../../../lib/types';
 import { PlannerContext } from '../../../lib/context';
 import Button from '@/ui/Button';
-
 
 interface FlashcardListProps {
   flashcards: Flashcard[];
@@ -22,6 +21,8 @@ interface FlashcardListProps {
   setPage: (page: number) => void;
   hasMore: boolean;
   totalFlashcards: number;
+  handleAddAllToPlanner: () => void; // Added prop
+  filteredFlashcards: Flashcard[]; // Added prop
 }
 
 export default function FlashcardList({
@@ -38,13 +39,16 @@ export default function FlashcardList({
   setPage,
   hasMore,
   totalFlashcards,
+  handleAddAllToPlanner,
+  filteredFlashcards,
 }: FlashcardListProps) {
   const { addFlashcardToPlanner } = useContext(PlannerContext);
   const cardsPerPage = 4;
   const visibleFlashcards = flashcards.slice(0, page * cardsPerPage);
   const [containerHeight, setContainerHeight] = useState(400);
   const cardRef = useRef<HTMLLIElement>(null);
-  const [cardHeight, setCardHeight] = useState(88);
+  const [flippedCards, setFlippedCards] = useState<{ [key: number]: boolean }>({});
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -52,20 +56,11 @@ export default function FlashcardList({
       setContainerHeight(newHeight);
     };
 
-    const updateCardHeight = () => {
-      if (cardRef.current) {
-        setCardHeight(cardRef.current.offsetHeight);
-      }
-    };
-
     updateHeight();
-    updateCardHeight();
     window.addEventListener('resize', updateHeight);
-    window.addEventListener('resize', updateCardHeight);
 
     return () => {
       window.removeEventListener('resize', updateHeight);
-      window.removeEventListener('resize', updateCardHeight);
     };
   }, []);
 
@@ -74,111 +69,174 @@ export default function FlashcardList({
     addFlashcardToPlanner(flashcard.id, !!flashcard.user_id);
   };
 
+  const toggleFlip = (flashcardId: number) => {
+    setFlippedCards((prev) => ({
+      ...prev,
+      [flashcardId]: !prev[flashcardId],
+    }));
+  };
+
+  const handlePrevCard = () => {
+    if (visibleFlashcards.length === 0) return;
+    setSelectedCardIndex((prev) => {
+      if (prev === null || prev === 0) {
+        return visibleFlashcards.length - 1;
+      }
+      return prev - 1;
+    });
+    setFlippedCards({});
+  };
+
+  const handleNextCard = () => {
+    if (visibleFlashcards.length === 0) return;
+    setSelectedCardIndex((prev) => {
+      if (prev === null || prev === visibleFlashcards.length - 1) {
+        return 0;
+      }
+      return prev + 1;
+    });
+    setFlippedCards({});
+  };
+
+  const displayedFlashcards = selectedCardIndex !== null ? [visibleFlashcards[selectedCardIndex]] : visibleFlashcards;
+
   return (
-    <div className="flex flex-col gap-4 border-t  border-gray-200">
+    <div className="flex flex-col gap-4 border-gray-200">
       <div
-        className="overflow-y-auto rounded-md bg-white sm:ring-2  ring-gray-200 p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+        className="overflow-y-auto rounded-md p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
         style={{ height: `${containerHeight}px` }}
       >
         <ul className="grid grid-cols-1 gap-y-4 divide-y divide-gray-100">
-          {visibleFlashcards.map((flashcard, index) => (
+          {displayedFlashcards.map((flashcard, index) => (
             <li
               key={flashcard.id}
               ref={index === 0 ? cardRef : null}
               className={cn(
-                'my-1 shadow-lg rounded-2xl min-h-48 group cursor-pointer transform transition-transform hover:scale-[1.02] hover:shadow-sm relative',
+                'my-1 shadow rounded-2xl group cursor-pointer transform transition-transform hover:scale-[1.02] hover:shadow-sm relative',
                 getStatusBackgroundClass(flashcard.status),
-                getStatusBorderClass(flashcard.status)
+                getStatusBorderClass(flashcard.status),
+                { 'rotate-y-180': flippedCards[flashcard.id] }
               )}
-              onClick={() => openCard(index)}
+              style={{
+                transformStyle: 'preserve-3d',
+                transition: 'transform 0.3s ease',
+                height: `${containerHeight - 24}px`,
+                overflowY: 'auto',
+              }}
+              onClick={() => openCard(selectedCardIndex !== null ? selectedCardIndex : index)}
             >
-              <div className="flex flex-col py-3 px-4 hover:opacity-95 hover:text-sky-900 min-h-[80px]">
-                <div className="flex justify-between items-center gap-2">
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm">
-                    {getStatusLabel(flashcard.status || 'learning')}
-                  </span>
-                  <span className="text-sm font-light text-gray-600">{flashcard.topic || 'No topic'}</span>
-                </div>
-                <span className="px-8 text-center mt-8 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
-                  {flashcard.name || 'Untitled'}
-                </span>
-                <div className="hidden sm:flex flex-col md:flex-row md:items-center gap-2 mt-3">
-                  <div className="flex flex-wrap items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {['learning', 'review', 'mastered', 'suspended', 'lapsed']
-                      .filter((status) => status !== flashcard.status)
-                      .map((status) => (
-                        <Tooltip key={status} content={`Change to ${getStatusLabel(status)}`}>
-                          <Button
-                            variant='badge_primary'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateFlashcardStatus(flashcard.id, !!flashcard.user_id, status);
-                            }}
-                
-                          >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            {getStatusLabel(status)}
-                          </Button>
-                        </Tooltip>
-                        
-                      ))}
-                  </div>
-                </div>
-              </div>
-              <div className="p-2 bottom-2 flex items-center justify-between  gap-2 ">
-                {flashcard.user_id && (
+              <div className="flex flex-col py-3 px-4 hover:opacity-95 hover:text-sky-900 min-h-full">
+                {!flippedCards[flashcard.id] ? (
                   <>
-                  <div className='hidden  sm:flex space-x-2  opacity-0 group-hover:opacity-100 transition-opacity'>
-                    
-                      <Button
-                      title='Edit Flashcard'
-                      variant='badge_primary_circle'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(flashcard);
-                        }}
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm">
+                        {getStatusLabel(flashcard.status || 'learning')}
+                      </span>
+                      <span className="text-sm font-medium text-gray-600">{flashcard.topic || 'No topic'}</span>
+                    </div>
+                    <span className="px-8 text-center mt-36 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
+                      {flashcard.name || 'Untitled'}
+                    </span>
+                    <div className="hidden sm:flex flex-col justify-center md:flex-row md:items-center gap-2 mt-3">
+                      <div className="flex flex-wrap items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {['learning', 'review', 'mastered', 'suspended', 'lapsed']
+                          .filter((status) => status !== flashcard.status)
+                          .map((status) => (
+                            <Tooltip key={status} content={`Change to ${getStatusLabel(status)}`}>
+                              <Button
+                                variant="badge_primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateFlashcardStatus(flashcard.id, !!flashcard.user_id, status);
+                                }}
                               >
-                        <PencilIcon className="h-3 w-3" />
-                      </Button>
-                 
-                    
-                      <Button
-                      title="Delete Flashcard"
-                      variant='badge_primary_circle'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteFlashcard(flashcard.id);
-                        }}
-                                         >
-                        <TrashIcon className="h-3 w-3" />
-                      </Button>
-                      
-                  
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                {getStatusLabel(status)}
+                              </Button>
+                            </Tooltip>
+                          ))}
+                      </div>
                     </div>
                   </>
+                ) : (
+                  <div className="flex flex-col items-center justify-start min-h-full text-center transform rotate-y-180">
+                    <div className="py-4 space-y-3 w-full">
+                      {(flashcard.messages || []).map((msg, index) => (
+                        <div
+                          key={index}
+                          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <span
+                            className={cn(
+                              'inline-block p-2 sm:p-3 rounded-lg max-w-[85%] text-sm sm:text-base',
+                              msg.role === 'user' ? 'bg-sky-100 text-gray-800' : 'bg-gray-100 text-gray-800'
+                            )}
+                            dangerouslySetInnerHTML={{
+                              __html: msg.content.replace(/\n/g, '<br>'),
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-               
-                  
+                {flashcard.user_id && (
+                  <div className="mt-4 hidden sm:flex space-x-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      title="Edit Flashcard"
+                      variant="badge_primary_circle"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(flashcard);
+                      }}
+                    >
+                      <PencilIcon className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      title="Delete Flashcard"
+                      variant="badge_primary_circle"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteFlashcard(flashcard.id);
+                      }}
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="p-2 bottom-2 items-center gap-2 absolute bottom-0 w-full">
+                <div className="flex items-center justify-between gap-2">
                   <Button
-                  title="Add to Planner"
-                  variant='badge_primary_circle'
+                    title="Flip Flashcard"
+                    variant="badge_primary_circle"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFlip(flashcard.id);
+                    }}
+                  >
+                    <ArrowPathIcon className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    title="Add to Planner"
+                    variant="badge_primary_circle"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddToPlanner(flashcard);
                     }}
-                               >
+                  >
                     <CalendarIcon className="h-5 w-5" />
                   </Button>
-               
+                </div>
               </div>
             </li>
           ))}
-          {visibleFlashcards.length < cardsPerPage && visibleFlashcards.length < totalFlashcards && (
+          {displayedFlashcards.length === 0 && visibleFlashcards.length < totalFlashcards && (
             <div
               className="flex flex-col items-center justify-center text-gray-500 text-sm bg-gray-50 border-2 border-dashed border-gray-200 rounded-md"
-              style={{ height: `${containerHeight - visibleFlashcards.length * cardHeight - 24}px` }}
+              style={{ height: `${containerHeight - 24}px` }}
               aria-live="polite"
               role="status"
             >
@@ -195,34 +253,67 @@ export default function FlashcardList({
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                 />
               </svg>
-              {visibleFlashcards.length === 0 ? 'No flashcards match the current filters' : 'More flashcards available, click Load More'}
+              No flashcards match the current filters
             </div>
           )}
         </ul>
       </div>
       <div className="flex flex-col items-between gap-4">
-                <div className="hidden sm:flex text-base font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-full">
-          Showing {visibleFlashcards.length} of {totalFlashcards} flashcards
+        <div className="flex justify-center text-base font-medium text-gray-800  px-3 py-1 rounded-full">
+       
+                    <div className="flex gap-2">
+            <Tooltip content="Previous Card">
+              <Button
+                variant="badge_primary_circle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevCard();
+                }}
+                disabled={visibleFlashcards.length <= 1}
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </Button>
+            </Tooltip>
+            <Tooltip content="Next Card">
+              <Button
+                variant="badge_primary_circle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextCard();
+                }}
+                disabled={visibleFlashcards.length <= 1}
+              >
+                <ChevronRightIcon className="h-5 w-5" />
+              </Button>
+            </Tooltip>
+          </div>
         </div>
-        <div className="flex justify-end sm:justify-between mb-4">
+        <div className="flex justify-between my-2 mb-4 items-center gap-2 ">
           <Button
-          variant='outline'
-            onClick={() => setPage(Math.max(page - 1, 1))}
-            disabled={page === 1}
-            className='sm:flex hidden'
-           >
-            Previous
-          </Button>
-          <Button
+            variant="primary"
             onClick={() => setPage(page + 1)}
             disabled={!hasMore}
+          >
+            <span className="hidden sm:flex ml-2">Load More</span>
+             <PlusIcon className='w-5 h-5 mx-2' />
+            {displayedFlashcards.length} of {totalFlashcards}
+            
+          </Button>
 
-                     >
-            <PlusIcon className="mr-2 h-5 w-5" />
-            Load More
+          <Button
+            variant="primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddAllToPlanner();
+            }}
+            disabled={filteredFlashcards.length === 0}
+            className="flex justify-between line-clamp-1"
+          >
+            
+            Add <span>{filteredFlashcards.length} to Planner</span>
+           
           </Button>
         </div>
-
       </div>
     </div>
   );

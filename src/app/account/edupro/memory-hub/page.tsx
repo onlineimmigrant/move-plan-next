@@ -212,7 +212,7 @@ export default function MemoryHub() {
 
         <div className="mx-auto  flex justify-between items-center p-4">
 
-                        <Tooltip content="Account">
+                        <Tooltip content="Account" variant='right'>
           <Link href="/account" className="">
             <button className="cursor-pointer  hover:bg-gray-200 text-sky-600 p-2 rounded-full hover:bg-sky-blue-dark transition-colors">
               <ArrowLeftIcon className="h-5 w-5" />
@@ -226,7 +226,7 @@ export default function MemoryHub() {
               <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
             </h1>
           </Tooltip>
-                          <Tooltip content="Guide">
+                          <Tooltip content="Guide" variant='left'>
                             <button
                               onClick={() => setIsHelpModalOpen(true)}
                               className="cursor-pointer  hover:bg-gray-200 text-sky-600 rounded-full hover:bg-sky-blue-dark transition-colors">

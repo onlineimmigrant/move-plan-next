@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useContext } from 'react';
 import { Disclosure, Transition } from '@headlessui/react';
-import { QuestionMarkCircleIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 
 import FlashcardSearch from './AiFlashcardsComponents/FlashcardSearch';
@@ -217,26 +217,14 @@ export default function AiFlashcards({
       <Disclosure defaultOpen>
         {({ open }) => (
           <div>
-            <div className="flex  justify-between space-x-2 items-center mb-4">
-              <DisclosureButton
-              >
+            <div className="flex justify-between space-x-2 items-center mb-4">
+              <DisclosureButton>
                 Flashcards
                 <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
-              
               </DisclosureButton>
-              <div className="flex items-center ">
-                <Button
-                variant='outline'
-                  onClick={handleAddAllToPlanner}
-                  className="flex justify-between line-clamp-1"
-                  disabled={filteredFlashcards.length === 0}
-                >
-                  
-                   Add <span>{filteredFlashcards.length} to Planner</span>
-                </Button>
-   
+              <div className="flex items-center">
+                {/* Removed "Add {filteredFlashcards.length} to Planner" button */}
               </div>
-              
             </div>
             <Transition
               enter="transition ease-out duration-100"
@@ -278,6 +266,8 @@ export default function AiFlashcards({
                     setPage={setPage}
                     hasMore={hasMore}
                     totalFlashcards={filteredFlashcards.length}
+                    handleAddAllToPlanner={handleAddAllToPlanner} // Pass function
+                    filteredFlashcards={filteredFlashcards} // Pass filtered flashcards
                   />
                 )}
               </Disclosure.Panel>

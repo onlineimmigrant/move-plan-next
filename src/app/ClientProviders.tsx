@@ -2,11 +2,11 @@
 
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
-import { AuthProvider } from '@/context/AuthContext';
-import { BasketProvider } from '@/context/BasketContext';
-import { SettingsProvider } from '@/context/SettingsContext';
-import { CookieSettingsProvider } from '@/context/CookieSettingsContext';
-import { BannerProvider } from '@/context/BannerContext';
+import { AuthProvider } from '@/context/AuthContext'; // Verify this export exists
+import { BasketProvider } from '@/context/BasketContext'; // Verify this export exists
+import { SettingsProvider } from '@/context/SettingsContext'; // Verify this export exists
+import { CookieSettingsProvider } from '@/context/CookieSettingsContext'; // Verify this export exists
+import { BannerProvider } from '@/context/BannerContext'; // Verify this export exists
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/cookie/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -52,66 +52,80 @@ export default function ClientProviders({
 
   useEffect(() => {
     const fetchTemplateData = async () => {
-      try {
-        setLoading(true);
-        const urlPage = pathname === '/' ? '/home' : pathname;
-        const cacheKey = urlPage;
+      const maxRetries = 3;
+      const timeout = 10000; // 10 seconds
+      let attempt = 0;
 
-        if (cache.has(cacheKey)) {
-          const cachedData = cache.get(cacheKey)!;
-          setSections(cachedData.sections);
-          setHeadings(cachedData.headings);
-          console.log('Using cached template data for:', cacheKey);
+      while (attempt < maxRetries) {
+        try {
+          setLoading(true);
+          const urlPage = pathname === '/' ? '/home' : pathname;
+          const cacheKey = urlPage;
+
+          if (cache.has(cacheKey)) {
+            const cachedData = cache.get(cacheKey)!;
+            setSections(cachedData.sections);
+            setHeadings(cachedData.headings);
+            console.log('Using cached template data for:', cacheKey);
+            setLoading(false);
+            return;
+          }
+
+          const clientBaseUrl = getBaseUrl(false);
+          const timeoutPromise: Promise<never> = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Fetch timeout')), timeout)
+          );
+
+          const [sectionsResult, headingsResult] = await Promise.all([
+            Promise.race([
+              fetch(`${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`, {
+                cache: 'no-store',
+              }),
+              timeoutPromise,
+            ]),
+            Promise.race([
+              fetch(`${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`, {
+                cache: 'no-store',
+              }),
+              timeoutPromise,
+            ]),
+          ]);
+
+          const sectionsResponse = sectionsResult as Response;
+          const headingsResponse = headingsResult as Response;
+
+          if (!sectionsResponse.ok) {
+            const errorData = await sectionsResponse.json();
+            console.error('Sections fetch error:', errorData);
+            throw new Error(errorData.error || 'Failed to fetch template sections');
+          }
+          const sectionsData = await sectionsResponse.json();
+
+          if (!headingsResponse.ok) {
+            const errorData = await headingsResponse.json();
+            console.error('Headings fetch error:', errorData);
+            throw new Error(errorData.error || 'Failed to fetch template headings');
+          }
+          const headingsData = await headingsResponse.json();
+
+          cache.set(cacheKey, { sections: sectionsData || [], headings: headingsData || [] });
+          setSections(sectionsData || []);
+          setHeadings(headingsData || []);
           setLoading(false);
-          return;
+          return; // Success, exit retry loop
+        } catch (error: any) {
+          attempt++;
+          console.error(`Attempt ${attempt} failed: Error fetching template data:`, error.message);
+          if (attempt === maxRetries) {
+            console.error('Max retries reached. Setting empty data.');
+            setSections([]);
+            setHeadings([]);
+            setLoading(false);
+          } else {
+            console.log(`Retrying... (${attempt + 1}/${maxRetries})`);
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s before retry
+          }
         }
-
-        const clientBaseUrl = getBaseUrl(false);
-        const timeoutPromise: Promise<never> = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Fetch timeout')), 5000)
-        );
-
-        const [sectionsResult, headingsResult] = await Promise.all([
-          Promise.race([
-            fetch(`${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`, {
-              cache: 'no-store',
-            }),
-            timeoutPromise,
-          ]),
-          Promise.race([
-            fetch(`${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`, {
-              cache: 'no-store',
-            }),
-            timeoutPromise,
-          ]),
-        ]);
-
-        const sectionsResponse = sectionsResult as Response;
-        const headingsResponse = headingsResult as Response;
-
-        if (!sectionsResponse.ok) {
-          const errorData = await sectionsResponse.json();
-          console.error('Sections fetch error:', errorData);
-          throw new Error(errorData.error || 'Failed to fetch template sections');
-        }
-        const sectionsData = await sectionsResponse.json();
-
-        if (!headingsResponse.ok) {
-          const errorData = await headingsResponse.json();
-          console.error('Headings fetch error:', errorData);
-          throw new Error(errorData.error || 'Failed to fetch template headings');
-        }
-        const headingsData = await headingsResponse.json();
-
-        cache.set(cacheKey, { sections: sectionsData || [], headings: headingsData || [] });
-        setSections(sectionsData || []);
-        setHeadings(headingsData || []);
-      } catch (error: any) {
-        console.error('Error fetching template data:', error.message);
-        setSections([]);
-        setHeadings([]);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -125,10 +139,10 @@ export default function ClientProviders({
 
   return (
     <AuthProvider>
-      <BasketProvider>
-        <SettingsProvider initialSettings={settings}>
-          <CookieSettingsProvider>
-            <BannerProvider>
+      <BannerProvider>
+        <BasketProvider>
+          <SettingsProvider initialSettings={settings}>
+            <CookieSettingsProvider>
               <BannerAwareContent
                 children={children}
                 showNavbarFooter={showNavbarFooter}
@@ -138,10 +152,10 @@ export default function ClientProviders({
                 activeLanguages={activeLanguages}
               />
               <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
-            </BannerProvider>
-          </CookieSettingsProvider>
-        </SettingsProvider>
-      </BasketProvider>
+            </CookieSettingsProvider>
+          </SettingsProvider>
+        </BasketProvider>
+      </BannerProvider>
     </AuthProvider>
   );
 }
@@ -172,24 +186,16 @@ function BannerAwareContent({
   );
   const fixedBannersHeight = useMemo(() => getFixedBannersHeight?.() || 0, [getFixedBannersHeight]);
 
+  if (loading) {
+    return <SkeletonLoader />;
+  }
+
   return (
     <>
       <BannerContainer banners={fixedBanners} />
-      {loading ? (
-        <SkeletonLoader />
-      ) : (
-        <div style={{ marginTop: `${fixedBannersHeight}px` }} className="w-full">
-          {showNavbarFooter ? (
-            <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
-              <main className="w-full">
-                {children}
-                <TemplateHeadingSections />
-                <TemplateSections />
-                <Breadcrumbs />
-                <BannerContainer banners={nonFixedBanners} />
-              </main>
-            </NavbarFooterWrapper>
-          ) : (
+      <div style={{ marginTop: `${fixedBannersHeight}px` }} className="w-full">
+        {showNavbarFooter ? (
+          <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
             <main className="w-full">
               {children}
               <TemplateHeadingSections />
@@ -197,9 +203,17 @@ function BannerAwareContent({
               <Breadcrumbs />
               <BannerContainer banners={nonFixedBanners} />
             </main>
-          )}
-        </div>
-      )}
+          </NavbarFooterWrapper>
+        ) : (
+          <main className="w-full">
+            {children}
+            <TemplateHeadingSections />
+            <TemplateSections />
+            <Breadcrumbs />
+            <BannerContainer banners={nonFixedBanners} />
+          </main>
+        )}
+      </div>
     </>
   );
 }
