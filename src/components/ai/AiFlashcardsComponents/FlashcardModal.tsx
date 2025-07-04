@@ -67,7 +67,7 @@ export default function FlashcardModal({
         <div className="relative flex flex-col h-full max-h-[90vh] touch-pan-y">
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {!isFlipped ? (
-              <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
+              <div className="flex flex-col items-center justify-center min-h-[480px] text-center">
                 <span className="inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-600 mb-2 sm:mb-3">
                   {flashcard.topic || 'No Topic'}
                 </span>

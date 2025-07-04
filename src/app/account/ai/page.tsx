@@ -525,7 +525,7 @@ export default function AISettings() {
       </div>
       <div className="sm:col-span-3">
         <div className="mt-8 flex flex-col items-center">
-          <Tooltip content="Settings">
+          <Tooltip content="Settings" variant='bottom'>
             <h1 className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
               AI
               <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />

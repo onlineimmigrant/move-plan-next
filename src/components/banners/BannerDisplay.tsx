@@ -8,11 +8,6 @@ export default function BannerDisplay() {
 
   console.log('BannerDisplay rendering with banners:', banners);
 
-  if (!banners.length) {
-    console.log('No banners to display');
-    return null;
-  }
-
   const fixedBanners = useMemo(
     () => banners.filter((banner) => banner.isFixedAboveNavbar && !banner.isOpen && !banner.isDismissed && banner.position === 'top'),
     [banners]
@@ -21,6 +16,11 @@ export default function BannerDisplay() {
     () => banners.filter((banner) => !banner.isFixedAboveNavbar || banner.isOpen || banner.position !== 'top'),
     [banners]
   );
+
+  if (!banners.length) {
+    console.log('No banners to display');
+    return null;
+  }
 
   return (
     <>

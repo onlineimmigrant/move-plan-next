@@ -1,9 +1,10 @@
 // AiFlashcardsComponents/FlashcardSearch.tsx
 import React from 'react';
-import { Listbox, Transition } from '@headlessui/react';
-import { MagnifyingGlassIcon, PencilIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { Listbox, Transition, ListboxOption, ListboxOptions } from '@headlessui/react';
+import { MagnifyingGlassIcon, PencilIcon, CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import Button from '@/ui/Button';
+import ListboxButton from '@/ui/ListboxButton';
 
 interface FlashcardSearchProps {
   searchQuery: string;
@@ -48,14 +49,13 @@ export default function FlashcardSearch({
           {({ open }) => (
             <div className="relative">
               <Tooltip content="Filter by Status">
-                <Listbox.Button className="relative flex items-center   p-2 text-sm font-medium text-gray-800  transition-colors">
-                  <Button variant='outline'>
-                  <span className="mr-2  rounded-full hover:bg-gray-200 transition-colors">
-                    <PencilIcon className="w-3 h-3" />
-                  </span>
+                <ListboxButton variant='outline' className='flex justify-between'>
+       
                   <span>{getStatusLabel(activeStatus)}</span>
-                  </Button>
-                </Listbox.Button>
+                            <span className="ml-2  rounded-full hover:bg-gray-200 transition-colors">
+                    <ChevronDownIcon className="w-3 h-3" />
+                  </span>
+                </ListboxButton>
               </Tooltip>
               <Transition
                 show={open}
@@ -66,9 +66,9 @@ export default function FlashcardSearch({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Listbox.Options className="absolute z-10 right-0 mt-1 w-48 max-h-60 overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
-                  {statuses.map((status) => (
-                    <Listbox.Option
+    <ListboxOptions className="absolute w-full mt-1 bg-white border border-gray-200 ring ring-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-10">
+                            {statuses.map((status) => (
+                    <ListboxOption
                       key={status}
                       value={status}
                       className={({ active }) =>
@@ -81,9 +81,9 @@ export default function FlashcardSearch({
                         <span className="flex-grow text-sm">{getStatusLabel(status)}</span>
                         {activeStatus === status && <CheckIcon className="h-5 w-5 text-sky-500" />}
                       </div>
-                    </Listbox.Option>
+                    </ListboxOption>
                   ))}
-                </Listbox.Options>
+                </ListboxOptions>
               </Transition>
             </div>
           )}
@@ -94,16 +94,17 @@ export default function FlashcardSearch({
           {({ open }) => (
             <div className="relative">
               <Tooltip content="Filter by Topic">
-                <Listbox.Button className="relative flex items-center  p-2 text-sm font-medium  transition-colors">
-                  <Button
+                <ListboxButton 
                   variant='outline'
+                  className='flex justify-between'
                   >
-                  <span className="mr-2  transition-colors">
-                    <PencilIcon className="w-3 h-3" />
+         
+                  <span className="line-clamp-1">{activeTopic || 'Topics'}</span>
+                           <span className="ml-2  transition-colors">
+                    <ChevronDownIcon className="w-3 h-3" />
                   </span>
-                  <span className="line-clamp-1">{activeTopic || 'All Topics'}</span>
-               </Button>
-                </Listbox.Button>
+              
+                </ListboxButton>
               </Tooltip>
               
               <Transition
@@ -115,37 +116,38 @@ export default function FlashcardSearch({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Listbox.Options className="absolute z-10 right-0 mt-1 w-48 max-h-60 overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
-                  <Listbox.Option
+                <ListboxOptions className="absolute w-full mt-1 bg-white border border-gray-200 ring ring-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-10">
+                  <ListboxOption
                     value={null}
                     className={({ active }) =>
-                      `relative cursor-pointer select-none py-2 px-4 ${
+                      `relative cursor-pointer select-none py-2 px-4 border-b border-gray-100 ${
                         active ? 'bg-sky-100 text-sky-900' : 'text-gray-900'
                       }`
                     }
                   >
                     <div className="flex items-center">
-                      <span className="flex-grow">All Topics</span>
-                      {activeTopic === null && <CheckIcon className="h-5 w-5 text-sky-500" />}
+                      <span className="flex-grow text-xs font-medium">Topics</span>
+                      {activeTopic === null && <CheckIcon className="h-4 w-4 text-sky-500" />}
                     </div>
-                  </Listbox.Option>
+                  </ListboxOption>
                   {topics.map((topic) => (
-                    <Listbox.Option
+                    <ListboxOption
                       key={topic}
                       value={topic}
                       className={({ active }) =>
-                        `relative cursor-pointer select-none py-2 px-4 ${
-                          active ? 'bg-sky-100 text-sky-900' : 'text-gray-900'
+                        `relative cursor-pointer select-none py-2 px-4 border-b border-gray-100 ${
+                          active ? 'bg-sky-100 text-sky-900 shadow' : 'text-gray-900'
                         }`
                       }
                     >
-                      <div className="flex items-center">
-                        <span className="flex-grow text-sm">{topic}</span>
-                        {activeTopic === topic && <CheckIcon className="h-5 w-5 text-sky-500" />}
+                      <div className="flex items-center justify-between space-x-2">
+                       
+                        <span className="flex-grow text-xs font-medium">{topic}</span>
+                         {activeTopic === topic && <CheckIcon className="h-4 w-4 text-sky-500" />}
                       </div>
-                    </Listbox.Option>
+                    </ListboxOption>
                   ))}
-                </Listbox.Options>
+                </ListboxOptions>
               </Transition>
             </div>
           )}

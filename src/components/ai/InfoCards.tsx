@@ -12,7 +12,7 @@ export default function InfoCards({ setOpenDialog }: InfoCardsProps) {
       <ul className="space-y-4 h-3/4 overflow-y-auto">
         {tutorialMaterials.map((item) => (
           <li key={item.dialogKey}>
-            
+            <Tooltip content={item.description.replace(/<[^>]+>/g, '').slice(0, 1000)} variant='info-bottom'>
               <button
                 onClick={() => setOpenDialog(item.dialogKey)}
                 className="cursor-pointer w-full flex space-x-4 items-center bg-gray-100 text-gray-600 p-3 rounded-lg hover:bg-gray-200 transition-colors"
@@ -23,6 +23,7 @@ export default function InfoCards({ setOpenDialog }: InfoCardsProps) {
                   <p className="text-xs text-gray-600">{item.description.replace(/<[^>]+>/g, '').slice(0, 50)}...</p>
                 </div>
               </button>
+              </Tooltip>
            
           </li>
         ))}

@@ -12,6 +12,7 @@ import { PlannerContext } from '../../lib/context';
 import { Flashcard, PlanFlashcard } from '../../lib/types';
 import Button from '@/ui/Button';
 import DisclosureButton from '@/ui/DisclosureButton';
+import ListboxButton from '@/ui/ListboxButton';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -483,14 +484,13 @@ export default function CardSyncPlanner({
                           <div className="flex items-center gap-2">
                             <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
                               <div className="relative flex-1">
-                                <Listbox.Button>     
-                                    <Button
+                                <ListboxButton
                                   variant='outline'
                                   >
                                   <span>{selectedPeriod.label}</span>
                                   <ChevronDownIcon className="ml-2 h-3 w-3" />
-                                  </Button>
-                                </Listbox.Button>
+                                  
+                                </ListboxButton>
                                 <Transition
                                   enter="transition ease-out duration-100"
                                   enterFrom="opacity-0 scale-95"

@@ -4,6 +4,7 @@ import { Listbox, Transition } from '@headlessui/react';
 import { MagnifyingGlassIcon, PencilIcon, CheckIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import Button from '@/ui/Button';
+import ListboxButton from '@/ui/ListboxButton';
 
 interface ChatHistorySearchProps {
   searchQuery: string;
@@ -55,14 +56,14 @@ export default function ChatHistorySearch({
             <div className="relative">
               <Tooltip content="Filter by Date Range">
                 
-                <Listbox.Button >
-                  <Button variant='outline'>
+                <ListboxButton 
+                   variant='outline'>
                   <span className="mr-2">
                     <PencilIcon className="w-4 h-4" />
                   </span>
                   <span className='line-clamp-1'>{dateRanges.find((range) => range.value === selectedDateRange)?.label || 'All Time'}</span>
-                </Button>
-                </Listbox.Button>
+               
+                </ListboxButton>
               </Tooltip>
               <Transition
                 show={open}
@@ -73,7 +74,7 @@ export default function ChatHistorySearch({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Listbox.Options className="absolute z-10 right-0 mt-1 w-48 max-h-60 overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
+                <Listbox.Options className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-10">
                   {dateRanges.map((range) => (
                     <Listbox.Option
                       key={range.value}
@@ -85,8 +86,8 @@ export default function ChatHistorySearch({
                       }
                     >
                       <div className="flex items-center line-clamp-1">
-                        <span className="flex-grow text-sm ">{range.label}</span>
-                        {selectedDateRange === range.value && <CheckIcon className="h-5 w-5 text-sky-500" />}
+                        <span className="flex-grow text-xs font-medium ">{range.label}</span>
+                        {selectedDateRange === range.value && <CheckIcon className="ml-1 h-3 w-3 text-sky-500" />}
                       </div>
                     </Listbox.Option>
                   ))}

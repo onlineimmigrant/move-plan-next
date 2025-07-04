@@ -1,8 +1,10 @@
-//lib/getSettings.ts
 import { supabase } from './supabase';
 import { Settings } from '@/types/settings';
 
 type UUID = string;
+
+// Cache for organization ID to reuse successful fetches
+const organizationIdCache = new Map<string, UUID>();
 
 function isValidUUID(id: string): boolean {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -23,16 +25,34 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
   const isLocal = process.env.NODE_ENV === 'development';
   console.log('Fetching organization for URL:', currentUrl, 'isLocal:', isLocal);
 
+  // Normalize URL: remove trailing slashes and convert to lowercase
+  if (currentUrl) {
+    currentUrl = currentUrl.replace(/\/+$/, '').toLowerCase();
+    // Normalize https:// to http:// for localhost:3000 in development
+    if (isLocal && currentUrl === 'https://localhost:3000') {
+      currentUrl = 'http://localhost:3000';
+      console.log('Normalized URL to:', currentUrl);
+    }
+  }
+
+  // Check cache first
+  if (currentUrl && organizationIdCache.has(currentUrl)) {
+    console.log('Using cached organization ID for URL:', currentUrl, 'ID:', organizationIdCache.get(currentUrl));
+    return organizationIdCache.get(currentUrl)!;
+  }
+
   if (!currentUrl) {
     const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
     if (tenantId && isValidUUID(tenantId)) {
       console.log('No URL provided, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
+      organizationIdCache.set('no-url', tenantId);
       return tenantId as UUID;
     }
     console.error('No URL or NEXT_PUBLIC_TENANT_ID provided');
     return null;
   }
 
+  console.log('Querying organization for URL:', currentUrl);
   const { data, error } = await supabase
     .from('organizations')
     .select('id')
@@ -40,10 +60,16 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
     .maybeSingle();
 
   if (error) {
-    console.error('Error fetching organization:', error, 'URL:', currentUrl);
+    console.error('Error fetching organization for URL:', currentUrl, 'Error:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
     const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
     if (tenantId && isValidUUID(tenantId)) {
       console.log('Query failed, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
+      organizationIdCache.set(currentUrl, tenantId);
       return tenantId as UUID;
     }
     return null;
@@ -54,11 +80,14 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
     const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
     if (tenantId && isValidUUID(tenantId)) {
       console.log('No organization found, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
+      organizationIdCache.set(currentUrl, tenantId);
       return tenantId as UUID;
     }
     return null;
   }
 
+  console.log('Organization found for URL:', currentUrl, 'ID:', data.id);
+  organizationIdCache.set(currentUrl, data.id);
   return data.id as UUID;
 }
 
@@ -82,7 +111,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
     billing_panel_stripe: '',
   };
 
-  // Skip Supabase query only during Vercel build (not at runtime)
+  // Skip Supabase query during Vercel build
   const isBuild = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' && process.env.NEXT_PUBLIC_VERCEL_URL === undefined;
   if (isBuild) {
     console.log('Skipping Supabase query during Vercel build');
@@ -131,7 +160,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       .maybeSingle();
 
     if (error || !data) {
-      console.error('Error fetching settings:', error || 'No settings found', 'organization_id:', organizationId);
+      console.error('Error fetching settings:', error?.message || 'No settings found', 'organization_id:', organizationId);
       return defaultSettings;
     }
 
