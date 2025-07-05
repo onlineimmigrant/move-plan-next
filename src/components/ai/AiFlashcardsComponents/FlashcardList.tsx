@@ -51,11 +51,12 @@ export default function FlashcardList({
   const cardsPerPage = 4;
   const visibleFlashcards = flashcards.slice(0, page * cardsPerPage);
   const [containerHeight, setContainerHeight] = useState(400);
-  const cardRef = useRef<HTMLLIElement>(null);
   const [flippedCards, setFlippedCards] = useState<{ [key: number]: boolean }>({});
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [toasts, setToasts] = useState<{ id: number; message: string; type: 'success' | 'error' }[]>([]);
   const toastIdRef = useRef(0);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -70,6 +71,50 @@ export default function FlashcardList({
       window.removeEventListener('resize', updateHeight);
     };
   }, []);
+
+  // Infinite scroll effect for multi-card view
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || selectedCardIndex !== null) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setPage(page + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observerRef.current.observe(sentinelRef.current);
+
+    return () => {
+      if (observerRef.current && sentinelRef.current) {
+        observerRef.current.unobserve(sentinelRef.current);
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, page, setPage, selectedCardIndex]);
+
+  // Handle page increment when reaching the end in single-card view
+  useEffect(() => {
+    if (
+      selectedCardIndex !== null &&
+      selectedCardIndex >= visibleFlashcards.length - 1 &&
+      hasMore
+    ) {
+      setPage(page + 1);
+    }
+  }, [selectedCardIndex, visibleFlashcards.length, hasMore, page, setPage]);
+
+  // Reset selectedCardIndex if it becomes invalid due to flashcards changes
+  useEffect(() => {
+    if (
+      selectedCardIndex !== null &&
+      (selectedCardIndex >= visibleFlashcards.length || visibleFlashcards[selectedCardIndex] === undefined)
+    ) {
+      setSelectedCardIndex(visibleFlashcards.length > 0 ? visibleFlashcards.length - 1 : null);
+    }
+  }, [visibleFlashcards.length, selectedCardIndex]);
 
   const addToast = (message: string, type: 'success' | 'error') => {
     const id = toastIdRef.current++;
@@ -100,14 +145,16 @@ export default function FlashcardList({
   const handleNextCard = () => {
     if (visibleFlashcards.length === 0) return;
     setSelectedCardIndex((prev) => {
-      if (prev === null || prev === visibleFlashcards.length - 1) {
-        if (hasMore) {
-          setPage(page + 1);
-          return 0;
-        }
+      if (prev === null) {
+        // From multi-card view, start at first card
         return 0;
       }
-      return prev + 1;
+      if (prev < visibleFlashcards.length - 1) {
+        // Move to next card in current page
+        return prev + 1;
+      }
+      // If at the end, rely on useEffect to increment page if hasMore
+      return prev;
     });
     setFlippedCards({});
   };
@@ -158,17 +205,19 @@ export default function FlashcardList({
     if (visibleFlashcards.length === 0) return;
     setSelectedCardIndex((prev) => {
       if (prev === null || prev === 0) {
-        return visibleFlashcards.length - 1;
+        return prev === null ? visibleFlashcards.length - 1 : 0;
       }
       return prev - 1;
     });
     setFlippedCards({});
   };
 
-  const displayedFlashcards = selectedCardIndex !== null ? [visibleFlashcards[selectedCardIndex]] : visibleFlashcards;
+  const displayedFlashcards = selectedCardIndex !== null && visibleFlashcards[selectedCardIndex]
+    ? [visibleFlashcards[selectedCardIndex]]
+    : visibleFlashcards;
 
   return (
-    <div className="flex flex-col gap-4 border-gray-200">
+    <div className="flex flex-col gap-4 border-gray-200 relative">
       <div
         className="overflow-y-auto rounded-md p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
         style={{ height: `${containerHeight}px` }}
@@ -177,11 +226,10 @@ export default function FlashcardList({
           {displayedFlashcards.map((flashcard) => (
             <li
               key={flashcard.id}
-              ref={cardRef}
               className={cn(
                 'my-1 shadow rounded-2xl group cursor-pointer transform transition-transform hover:scale-[1.02] hover:shadow-sm relative',
-                getStatusBackgroundClass(flashcard.status),
-                getStatusBorderClass(flashcard.status),
+                getStatusBackgroundClass(flashcard.status || 'learning'),
+                getStatusBorderClass(flashcard.status || 'learning'),
                 { 'rotate-y-180': flippedCards[flashcard.id] }
               )}
               style={{
@@ -195,7 +243,6 @@ export default function FlashcardList({
               <div className="flex flex-col py-3 px-4 hover:opacity-95 hover:text-sky-900 min-h-full">
                 {!flippedCards[flashcard.id] ? (
                   <>
-                  
                     <div className="flex justify-between items-center space-x-8">
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm">
                         {getStatusLabel(flashcard.status || 'learning')}
@@ -259,135 +306,131 @@ export default function FlashcardList({
                         e.stopPropagation();
                         openEditModal(flashcard);
                       }}
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </Button>
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        title="Delete Flashcard"
+                        variant="badge_primary_circle"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteFlashcard(flashcard.id);
+                        }}
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="p-2 bottom-2 items-center gap-2 absolute bottom-0 w-full">
+                  <div className="flex items-center justify-between gap-2">
                     <Button
-                      title="Delete Flashcard"
+                      title="Flip Flashcard"
                       variant="badge_primary_circle"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteFlashcard(flashcard.id);
+                        toggleFlip(flashcard.id);
                       }}
                     >
-                      <TrashIcon className="h-5 w-5" />
+                      <ArrowPathIcon className="h-5  w-5" />
+                    </Button>
+                    <Button
+                      title="Add to Planner"
+                      variant="badge_primary_circle"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToPlanner(flashcard);
+                      }}
+                    >
+                      <CalendarIcon className="h-5 w-5" />
                     </Button>
                   </div>
-                )}
-              </div>
-              <div className="p-2 bottom-2 items-center gap-2 absolute bottom-0 w-full">
-                <div className="flex items-center justify-between gap-2">
-                  <Button
-                    title="Flip Flashcard"
-                    variant="badge_primary_circle"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFlip(flashcard.id);
-                    }}
-                  >
-                    <ArrowPathIcon className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    title="Add to Planner"
-                    variant="badge_primary_circle"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToPlanner(flashcard);
-                    }}
-                  >
-                    <CalendarIcon className="h-5 w-5" />
-                  </Button>
                 </div>
+              </li>
+            ))}
+            {displayedFlashcards.length === 0 && visibleFlashcards.length < totalFlashcards && (
+              <div
+                className="flex flex-col items-center justify-center text-gray-500 text-sm bg-gray-50 border-2 border-dashed border-gray-200 rounded-md"
+                style={{ height: `${containerHeight - 24}px` }}
+                aria-live="polite"
+                role="status"
+              >
+                <svg
+                  className="h-6 w-6 text-gray-400 mb-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                No flashcards match the current filters
               </div>
-            </li>
-          ))}
-          {displayedFlashcards.length === 0 && visibleFlashcards.length < totalFlashcards && (
-            <div
-              className="flex flex-col items-center justify-center text-gray-500 text-sm bg-gray-50 border-2 border-dashed border-gray-200 rounded-md"
-              style={{ height: `${containerHeight - 24}px` }}
-              aria-live="polite"
-              role="status"
-            >
-              <svg
-                className="h-6 w-6 text-gray-400 mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              No flashcards match the current filters
-            </div>
-          )}
-        </ul>
-      </div>
-      <div className=" gap-4">
-        <div className=" text-base font-medium text-gray-800 px-3 py-1 rounded-full">
-          <div className="flex justify-between sm:justify-center gap-4">
-            <Tooltip content="Previous Card">
-              <Button
-                variant="badge_primary_circle"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrevCard();
-                }}
-                disabled={visibleFlashcards.length <= 1}
-              >
-                <ChevronLeftIcon className="h-5 w-5" />
-              </Button>
-            </Tooltip>
-            <Tooltip content="Next Card">
-              <Button
-                variant="badge_primary_circle"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNextCard();
-                }}
-                disabled={visibleFlashcards.length <= 1}
-              >
-                <ChevronRightIcon className="h-5 w-5" />
-              </Button>
-            </Tooltip>
-          </div>
+            )}
+            {/* Sentinel element for infinite scroll */}
+            {hasMore && selectedCardIndex === null && (
+              <div ref={sentinelRef} className="h-1 w-full"></div>
+            )}
+          </ul>
         </div>
-        <div className="flex justify-between my-2 mb-4 items-center gap-2">
+        {/* Navigation buttons positioned on the sides */}
+        <div className="absolute top-1/3 -translate-y-1/2 sm:-left-16 left-0 right-0 sm:-right-16 flex justify-between px-0">
+         
+            <Button
+            aria-label='Previous Card'
+              variant="badge_primary_circle"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevCard();
+              }}
+              disabled={visibleFlashcards.length <= 1}
+              className="shadow-md hover:shadow-lg"
+            >
+              <ChevronLeftIcon className="h-5 w-5" />
+            </Button>
+        
+         
+            <Button
+            aria-label='Next Card'
+              variant="badge_primary_circle"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextCard();
+              }}
+              disabled={visibleFlashcards.length <= 1}
+              className="shadow-md hover:shadow-lg"
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </Button>
+         
+        </div>
+        <div className="flex justify-center my-2 mb-4 items-center gap-2">
           <Button
-            variant="primary"
-            onClick={() => setPage(page + 1)}
-            disabled={!hasMore}
-          >
-            <span className="hidden sm:flex ml-2">Load More</span>
-            <PlusIcon className="w-5 h-5 mx-2" />
-            {visibleFlashcards.length} of {totalFlashcards}
-          </Button>
-          <Button
-            variant="primary"
+            variant="outline"
             onClick={(e) => {
               e.stopPropagation();
               handleAddAllToPlannerWithToast();
             }}
             disabled={filteredFlashcards.length === 0}
-            className="flex justify-between line-clamp-1"
+            className=""
           >
-           
-            Add <span>{filteredFlashcards.length} to Planner</span>
+             <PlusIcon className='w-5 h-5 mr-2' />
+            {filteredFlashcards.length} to Planner
           </Button>
         </div>
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+            duration={5000}
+          />
+        ))}
       </div>
-      {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          onClose={() => removeToast(toast.id)}
-          duration={5000}
-        />
-      ))}
-    </div>
-  );
-}
+    );
+  }
