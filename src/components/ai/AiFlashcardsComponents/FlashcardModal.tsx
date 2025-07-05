@@ -262,7 +262,7 @@ export default function FlashcardModal({
               <span className="font-medium text-gray-400">{planInfo.name}</span>
             </Tooltip>
           </div>
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-4 px-4 ">
             {statusOptions.map((status) => (
               <Button
                 variant="badge_primary"
@@ -274,7 +274,7 @@ export default function FlashcardModal({
                   setSelectedStatus(status);
                 }}
                 className={cn(
-                  'inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm',
+                  'inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm font-medium bg-gray-50 text-gray-900 shadow-sm',
                   selectedStatus === status ? 'bg-sky-100 text-sky-800' : 'hover:bg-sky-50'
                 )}
                 aria-label={`Filter by ${getStatusLabel(status)}`}
@@ -334,7 +334,7 @@ export default function FlashcardModal({
             ) : !localIsFlipped ? (
               <div className="flex flex-col items-center justify-center text-center">
                 <div className="flex justify-between items-center gap-2 w-full">
-                  <Button variant="badge_primary" className="bg-sky-50">
+                  <Button variant="badge_primary" className="bg-sky-50 py-1 sm:py-1 px-3 sm:px-3 text-sm sm:text-sm">
                     {getStatusLabel(currentFlashcard.status || 'learning')}
                   </Button>
                   <span className="text-base font-medium text-gray-600">{currentFlashcard.topic || 'No topic'}</span>
@@ -385,12 +385,12 @@ export default function FlashcardModal({
               <Button
                 variant="badge_primary"
                 onClick={() => handleSave(currentFlashcard)}
-                className="py-2"
+                className="sm:p-2 p-2 sm:px-4 px-4 text-sm sm:text-sm"
               >
                 {['suspended', 'lapsed', 'mastered'].includes(currentFlashcard.status || '') ? (
-                  <span>Reverse to Learning</span>
+                  <div><span className='text-sky-600'>Reverse</span><span> to Learning</span></div>
                 ) : (
-                  <span>Update to {getStatusLabel(getNextStatus(currentFlashcard.status))}</span>
+                  <div><span className='text-sky-600'>Update</span><span> to {getStatusLabel(getNextStatus(currentFlashcard.status))}</span></div>
                 )}
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />

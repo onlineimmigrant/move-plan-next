@@ -195,13 +195,14 @@ export default function FlashcardList({
               <div className="flex flex-col py-3 px-4 hover:opacity-95 hover:text-sky-900 min-h-full">
                 {!flippedCards[flashcard.id] ? (
                   <>
-                    <div className="flex justify-between items-center gap-2">
+                  
+                    <div className="flex justify-between items-center space-x-8">
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm">
                         {getStatusLabel(flashcard.status || 'learning')}
                       </span>
                       <span className="text-base font-medium text-gray-600">{flashcard.topic || 'No topic'}</span>
                     </div>
-                    <span className="px-8 text-center mt-36 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
+                    <span className="px-8 text-center mt-28 sm:mt-36 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
                       {flashcard.name || 'Untitled'}
                     </span>
                     <div className="hidden sm:flex flex-col justify-center md:flex-row md:items-center gap-2 mt-3">
@@ -325,9 +326,9 @@ export default function FlashcardList({
           )}
         </ul>
       </div>
-      <div className="flex flex-col items-between gap-4">
-        <div className="flex justify-center text-base font-medium text-gray-800 px-3 py-1 rounded-full">
-          <div className="flex gap-2">
+      <div className=" gap-4">
+        <div className=" text-base font-medium text-gray-800 px-3 py-1 rounded-full">
+          <div className="flex justify-between sm:justify-center gap-4">
             <Tooltip content="Previous Card">
               <Button
                 variant="badge_primary_circle"
