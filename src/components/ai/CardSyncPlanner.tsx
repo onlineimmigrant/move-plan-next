@@ -1,12 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback, useContext } from 'react';
 import { Disclosure, Transition } from '@headlessui/react';
-import { PlusIcon, CheckIcon, XMarkIcon, ChevronDownIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, CheckIcon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Listbox } from '@headlessui/react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { createClient } from '@supabase/supabase-js';
 import Tooltip from '@/components/Tooltip';
-//import HelpModal from './HelpModal';
 import { cn } from '../../utils/cn';
 import { PlannerContext } from '../../lib/context';
 import { Flashcard, PlanFlashcard } from '../../lib/types';
@@ -33,6 +32,7 @@ interface CardSyncPlannerProps {
   userId: string | null;
   onError: (error: string) => void;
   flashcards: Flashcard[];
+  openCard: (flashcardId: number) => void;
 }
 
 const periods = [
@@ -49,6 +49,7 @@ export default function CardSyncPlanner({
   userId,
   onError,
   flashcards,
+  openCard,
 }: CardSyncPlannerProps) {
   const { newPlanFlashcardIds, setNewPlanFlashcardIds } = useContext(PlannerContext);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -58,41 +59,43 @@ export default function CardSyncPlanner({
   const [customEndDate, setCustomEndDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openPlanId, setOpenPlanId] = useState<string | null>(null);
-  //const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   useEffect(() => {
     console.log('CardSyncPlanner rendered:', { userId, plansLength: plans.length, flashcardsLength: flashcards.length, newPlanFlashcardIds });
-  }, [userId, plans, flashcards, newPlanFlashcardIds]);
-
- const fetchPlans = useCallback(async (): Promise<Plan[]> => {
-  if (!userId) {
-    setLoading(false);
-    return [];
-  }
-  setLoading(true);
-  try {
-    const { data, error } = await supabase
-      .from('ai_card_sync_planner')
-      .select('id, name, start_date, end_date, flashcard_ids, status, user_id')
-      .eq('user_id', userId) as { data: Plan[] | null; error: any }; // Type assertion
-    if (error) {
-      throw new Error('Failed to fetch plans: ' + error.message);
+    if (newPlanFlashcardIds.length > 0 && !isCreatingPlan) {
+      setIsCreatingPlan(true);
     }
-    const validPlans = (data || []).map((plan) => ({
-      ...plan,
-      flashcard_ids: [...new Set(plan.flashcard_ids.filter((id) =>
-        flashcards.some((f) => f.id === id)
-      ))] as number[], // Ensure flashcard_ids is number[]
-    }));
-    return validPlans;
-  } catch (error: any) {
-    onError(error.message || 'Failed to fetch plans.');
-    console.error('Fetch plans error:', error);
-    return [];
-  } finally {
-    setLoading(false);
-  }
-}, [userId, onError, flashcards]);
+  }, [newPlanFlashcardIds, isCreatingPlan]);
+
+  const fetchPlans = useCallback(async (): Promise<Plan[]> => {
+    if (!userId) {
+      setLoading(false);
+      return [];
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ai_card_sync_planner')
+        .select('id, name, start_date, end_date, flashcard_ids, status, user_id')
+        .eq('user_id', userId) as { data: Plan[] | null; error: any };
+      if (error) {
+        throw new Error('Failed to fetch plans: ' + error.message);
+      }
+      const validPlans = (data || []).map((plan) => ({
+        ...plan,
+        flashcard_ids: [...new Set(plan.flashcard_ids.filter((id) =>
+          flashcards.some((f) => f.id === id)
+        ))] as number[],
+      }));
+      return validPlans;
+    } catch (error: any) {
+      onError(error.message || 'Failed to fetch plans.');
+      console.error('Fetch plans error:', error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, onError, flashcards]);
 
   useEffect(() => {
     let isMounted = true;
@@ -340,8 +343,9 @@ export default function CardSyncPlanner({
     [plans, flashcards, onError]
   );
 
-  const truncateName = useCallback((name: string) => {
-    return name.split(' ').slice(0, 3).join(' ') + (name.split(' ').length > 3 ? '...' : '');
+  const truncateTopic = useCallback((topic: string | null | undefined) => {
+    if (!topic) return 'No topic';
+    return topic.split(' ').slice(0, 3).join(' ') + (topic.split(' ').length > 3 ? '...' : '');
   }, []);
 
   const handleDisclosureToggle = (planId: string) => {
@@ -349,22 +353,21 @@ export default function CardSyncPlanner({
   };
 
   const handleNewPlanClick = () => {
-    setOpenPlanId(null); // Close all plan panels
+    setOpenPlanId(null);
     setIsCreatingPlan(true);
   };
 
   return (
-    <div className="relative  ">
-      <div className="block items-center justify-between sm:py-0 py-16 ">
+    <div className="relative">
+      <div className="block items-center justify-between sm:py-0 py-16">
         <Disclosure defaultOpen>
           {({ open }) => (
             <div>
-              <div className="mt-1 flex items-center justify-between mb-4 ">
+              <div className="mt-1 flex items-center justify-between mb-4">
                 <DisclosureButton>
                   <span>CardSync Planner</span>
                   <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
                 </DisclosureButton>
-
               </div>
               <Transition
                 enter="transition ease-out duration-100"
@@ -374,122 +377,19 @@ export default function CardSyncPlanner({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Disclosure.Panel className=" w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl sm:min-h-[700px] sm:max-h-[700px] overflow-y-auto pb-16 ">
+                <Disclosure.Panel className="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl sm:min-h-[700px] sm:max-h-[700px] overflow-y-auto pb-16">
                   {loading ? (
                     <div className="text-gray-700">Loading...</div>
                   ) : (
                     <>
-                      <DragDropContext onDragEnd={handleDragEnd}>
-{plans.map((plan) => (
-  <Disclosure
-    key={plan.id}
-    as="div"
-    className="mb-4"
-    defaultOpen={openPlanId === plan.id} // Use defaultOpen instead of open
-  >
-    {({ open }) => (
-      <>
-        <DisclosureButton
-        variant='card-sync-planner'
-          className={cn(
-            "flex justify-between items-center py-1 space-x-4",
-            getPlanStyles(plan)
-          )}
-          onClick={() => handleDisclosureToggle(plan.id)} // Change "Contract" 
-        >
-            <span className="font-bold">Contract</span> 
-            <span>{plan.name}</span>
-            
-            <span>{open ? '−' : '+'}</span>
-         
-        </DisclosureButton>
-        <Transition
-          enter="transition ease-out duration-100"
-          enterFrom="opacity-0 scale-95"
-          enterTo="opacity-100 scale-100"
-          leave="transition ease-in duration-75"
-          leaveFrom="opacity-100 scale-100"
-          leaveTo="opacity-0 scale-95"
-        >
-          <Disclosure.Panel className="mt-2 p-3 bg-white border-2 border-gray-200 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-800">{plan.name}</span>
-              <Button
-                variant="outline"
-                onClick={() => handleMarkDone(plan)}
-                disabled={plan.status === 'done'}
-              >
-                Mark Done
-              </Button>
-            </div>
-            <Droppable droppableId={plan.id}>
-              {(provided) => (
-                <div
-                  className="mt-2"
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                >
-                  {plan.flashcard_ids.length === 0 && (
-                    <p className="text-gray-500">No flashcards in this plan</p>
-                  )}
-                  {plan.flashcard_ids.map((id, index) => {
-                    const flashcard = flashcards.find((f) => f.id === id);
-                    return (
-                      <Draggable key={`${plan.id}-${id}`} draggableId={`${plan.id}-${id}`} index={index}>
-                        {(provided) => (
-                          <div
-                            className="inline-flex items-center gap-1 px-2 py-1 m-1 rounded-full bg-gray-100 text-gray-800 text-xs"
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <a
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                const index = flashcards.findIndex((f) => f.id === id);
-                                if (index !== -1) {
-                                  console.log('Open flashcard:', id);
-                                  // TODO: Implement openCard callback
-                                }
-                              }}
-                              className="hover:underline"
-                            >
-                              {flashcard ? truncateName(flashcard.name) : `Unknown (ID: ${id})`}
-                            </a>
-                            <button
-                              onClick={() => handleRemoveFlashcard(plan.id, id)}
-                              className="p-1 rounded-full hover:bg-red-200"
-                            >
-                              <XMarkIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
-                      </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </Disclosure.Panel>
-        </Transition>
-      </>
-    )}
-  </Disclosure>
-))}
-                      </DragDropContext>
                       {isCreatingPlan && (
-                        <div className="mt-4 p-4 bg-white border-2 border-gray-200 rounded-lg">
+                        <div className="mt-2 mb-4 p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first">
                           <div className="flex items-center gap-2">
                             <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
                               <div className="relative flex-1">
-                                <ListboxButton
-                                  variant='outline'
-                                  >
+                                <ListboxButton variant="outline">
                                   <span>{selectedPeriod.label}</span>
                                   <ChevronDownIcon className="ml-2 h-3 w-3" />
-                                  
                                 </ListboxButton>
                                 <Transition
                                   enter="transition ease-out duration-100"
@@ -499,39 +399,36 @@ export default function CardSyncPlanner({
                                   leaveFrom="opacity-100 scale-100"
                                   leaveTo="opacity-0 scale-95"
                                 >
-                            <Listbox.Options className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-10">
-                            {periods.map((period) => (
-                                <Listbox.Option
-                                key={period.value}
-                                value={period}
-                                className={({ active, selected }) =>
-                                    cn(
-                                    'relative cursor-pointer select-none py-2 px-4',
-                                    active ? 'bg-sky-100 text-sky-900' : 'text-gray-700',
-                                    selected ? 'bg-sky-50 font-semibold' : ''
-                                    )
-                                }
-                                >
-                                {({ selected }) => (
-                                    <div className="flex items-center justify-between text-sm">
-                                    <span>{period.label}</span>
-                                    {selected && <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />}
-                                    </div>
-                                )}
-                                </Listbox.Option>
-                            ))}
-                            </Listbox.Options>
+                                  <Listbox.Options className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-10">
+                                    {periods.map((period) => (
+                                      <Listbox.Option
+                                        key={period.value}
+                                        value={period}
+                                        className={({ active, selected }) =>
+                                          cn(
+                                            'relative cursor-pointer select-none py-2 px-4',
+                                            active ? 'bg-sky-100 text-sky-900' : 'text-gray-700',
+                                            selected ? 'bg-sky-50 font-semibold' : ''
+                                          )
+                                        }
+                                      >
+                                        {({ selected }) => (
+                                          <div className="flex items-center justify-between text-sm">
+                                            <span>{period.label}</span>
+                                            {selected && <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />}
+                                          </div>
+                                        )}
+                                      </Listbox.Option>
+                                    ))}
+                                  </Listbox.Options>
                                 </Transition>
                               </div>
                             </Listbox>
-                            <Button
-                              onClick={handleCreatePlan}
-
-                            >
+                            <Button onClick={handleCreatePlan}>
                               Save
                             </Button>
                             <Button
-                            variant='outline'
+                              variant="outline"
                               onClick={() => {
                                 setIsCreatingPlan(false);
                                 setNewPlanFlashcardIds([]);
@@ -539,7 +436,7 @@ export default function CardSyncPlanner({
                                 setCustomStartDate(null);
                                 setCustomEndDate(null);
                               }}
-                                      >
+                            >
                               Cancel
                             </Button>
                           </div>
@@ -559,7 +456,7 @@ export default function CardSyncPlanner({
                               />
                             </div>
                           )}
-                          <div className="mt-2">
+                          <div className="mt-2 flex flex-wrap gap-2 max-h-[4.5rem] sm:max-h-[18rem] overflow-y-auto">
                             {newPlanFlashcardIds.length === 0 && (
                               <p className="text-gray-500">No flashcards selected</p>
                             )}
@@ -568,12 +465,26 @@ export default function CardSyncPlanner({
                               return (
                                 <div
                                   key={pf.id}
-                                  className="inline-flex items-center gap-1 px-2 py-1 m-1 rounded-full bg-gray-100 text-gray-800 text-xs"
+                                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-gray-800 text-sm shadow-sm hover:bg-gray-100"
                                 >
-                                  <span>{flashcard ? truncateName(flashcard.name) : `Unknown (ID: ${pf.id})`}</span>
+                                  <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${pf.id})`} variant="info-top">
+                                    <a
+                                      href="#"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        openCard(pf.id);
+                                      }}
+                                      className="hover:underline font-medium"
+                                    >
+                                      {flashcard ? truncateTopic(flashcard.topic) : `Unknown (ID: ${pf.id})`}
+                                    </a>
+                                  </Tooltip>
+                                  <span className="flex items-center justify-center h-5 w-5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
+                                    {pf.id}
+                                  </span>
                                   <button
                                     onClick={() => setNewPlanFlashcardIds(newPlanFlashcardIds.filter((f) => f.id !== pf.id))}
-                                    className="p-1 rounded-full hover:bg-red-200"
+                                    className="p-1 rounded-full bg-gray-200 hover:bg-red-300 text-gray-600 hover:text-red-800 transition-colors"
                                   >
                                     <XMarkIcon className="h-4 w-4" />
                                   </button>
@@ -583,16 +494,112 @@ export default function CardSyncPlanner({
                           </div>
                         </div>
                       )}
-                      <div className="absolute sm:bottom-8 sm:right-4 right-2 mt-4  gap-4">
-                        <div className='text-center'>
-                        <Button
-                          onClick={handleNewPlanClick}
-                          
-                                         >
-                          <PlusIcon className="mr-2 h-5 w-5" />
-                          New Plan
-                        </Button>
-                      </div>
+                      <DragDropContext onDragEnd={handleDragEnd}>
+                        {plans.map((plan) => (
+                          <Disclosure
+                            key={plan.id}
+                            as="div"
+                            className="mb-4"
+                            defaultOpen={openPlanId === plan.id}
+                          >
+                            {({ open }) => (
+                              <>
+                                <DisclosureButton
+                                  variant="card-sync-planner"
+                                  className={cn(
+                                    'flex justify-between items-center py-1 space-x-4',
+                                    getPlanStyles(plan)
+                                  )}
+                                  onClick={() => handleDisclosureToggle(plan.id)}
+                                >
+                                  <span className="font-bold">Contract</span>
+                                  <span>{plan.name}</span>
+                                  <span>{open ? '−' : '+'}</span>
+                                </DisclosureButton>
+                                <Transition
+                                  enter="transition ease-out duration-100"
+                                  enterFrom="opacity-0 scale-95"
+                                  enterTo="opacity-100 scale-100"
+                                  leave="transition ease-in duration-75"
+                                  leaveFrom="opacity-100 scale-100"
+                                  leaveTo="opacity-0 scale-95"
+                                >
+                                  <Disclosure.Panel className="mt-2 p-3 bg-white border-2 border-gray-200 rounded-lg">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-sm font-medium text-gray-800">{plan.name}</span>
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => handleMarkDone(plan)}
+                                        disabled={plan.status === 'done'}
+                                      >
+                                        Mark Done
+                                      </Button>
+                                    </div>
+                                    <Droppable droppableId={plan.id}>
+                                      {(provided) => (
+                                        <div
+                                          className="mt-2"
+                                          ref={provided.innerRef}
+                                          {...provided.droppableProps}
+                                        >
+                                          {plan.flashcard_ids.length === 0 && (
+                                            <p className="text-gray-500">No flashcards in this plan</p>
+                                          )}
+                                          {plan.flashcard_ids.map((id, index) => {
+                                            const flashcard = flashcards.find((f) => f.id === id);
+                                            return (
+                                              <Draggable key={`${plan.id}-${id}`} draggableId={`${plan.id}-${id}`} index={index}>
+                                                {(provided) => (
+                                                  <div
+                                                    className="inline-flex items-center gap-2 px-3 py-1.5 m-1 rounded-full bg-gray-50 border border-gray-200 text-gray-800 text-sm shadow-sm hover:bg-gray-100"
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                  >
+                                                    <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${id})`} variant="info-top">
+                                                      <a
+                                                        href="#"
+                                                        onClick={(e) => {
+                                                          e.preventDefault();
+                                                          openCard(id);
+                                                        }}
+                                                        className="hover:underline font-medium"
+                                                      >
+                                                        {flashcard ? truncateTopic(flashcard.topic) : `Unknown (ID: ${id})`}
+                                                      </a>
+                                                    </Tooltip>
+                                                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
+                                                      {id}
+                                                    </span>
+                                                    <button
+                                                      onClick={() => handleRemoveFlashcard(plan.id, id)}
+                                                      className="p-1 rounded-full bg-gray-200 hover:bg-red-300 text-gray-600 hover:text-red-800 transition-colors"
+                                                    >
+                                                      <XMarkIcon className="h-4 w-4" />
+                                                    </button>
+                                                  </div>
+                                                )}
+                                              </Draggable>
+                                            );
+                                          })}
+                                          {provided.placeholder}
+                                        </div>
+                                      )}
+                                    </Droppable>
+                                  </Disclosure.Panel>
+                                </Transition>
+                              </>
+                            )}
+                          </Disclosure>
+                        ))}
+                      </DragDropContext>
+                      <div className="absolute sm:bottom-8 sm:right-4 right-2 mt-4 gap-4">
+                        <div className="text-center">
+                          <Button onClick={handleNewPlanClick}>
+                            <PlusIcon className="mr-2 h-5 w-5" />
+                            New Plan
+                          </Button>
+                        </div>
                       </div>
                     </>
                   )}
@@ -601,7 +608,6 @@ export default function CardSyncPlanner({
             </div>
           )}
         </Disclosure>
-      
       </div>
     </div>
   );
