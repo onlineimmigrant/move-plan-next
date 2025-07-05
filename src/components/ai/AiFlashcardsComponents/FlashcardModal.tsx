@@ -51,6 +51,14 @@ export default function FlashcardModal({
   const [filteredFlashcardIds, setFilteredFlashcardIds] = useState<number[]>([]);
   const [filterMessage, setFilterMessage] = useState<string | null>(null);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [statusCounts, setStatusCounts] = useState<{ [key: string]: number }>({
+    all: 0,
+    learning: 0,
+    review: 0,
+    mastered: 0,
+    suspended: 0,
+    lapsed: 0,
+  });
 
   // Status options for filtering
   const statusOptions = ['all', 'learning', 'review', 'mastered', 'suspended', 'lapsed'];
@@ -106,9 +114,9 @@ export default function FlashcardModal({
       }
     };
     fetchPlanInfo();
-  }, [currentPlanId, flashcards]);
+  }, [currentPlanId, flashcards, currentFlashcardId]);
 
-  // Update filtered flashcard IDs when status changes
+  // Update filtered flashcard IDs and status counts when status or plan changes
   useEffect(() => {
     const updateFilteredFlashcards = async () => {
       setIsFiltering(true);
@@ -143,6 +151,25 @@ export default function FlashcardModal({
         validIds = flashcards.map((f) => f.id);
       }
 
+      // Calculate status counts
+      const counts: { [key: string]: number } = {
+        all: validIds.length,
+        learning: 0,
+        review: 0,
+        mastered: 0,
+        suspended: 0,
+        lapsed: 0,
+      };
+      validIds.forEach((id) => {
+        const f = flashcards.find((f) => f.id === id);
+        if (f?.status) {
+          counts[f.status] = (counts[f.status] || 0) + 1;
+        } else {
+          counts.learning = (counts.learning || 0) + 1; // Default to 'learning' if status is undefined
+        }
+      });
+      setStatusCounts(counts);
+
       if (selectedStatus === 'all') {
         setFilteredFlashcardIds(validIds);
         console.log('Filtered IDs (all):', validIds);
@@ -159,7 +186,7 @@ export default function FlashcardModal({
         });
         setFilteredFlashcardIds(filteredIds);
         console.log(`Filtered IDs (${selectedStatus}):`, filteredIds);
-        if (filteredIds.length == 0) {
+        if (filteredIds.length === 0) {
           setFilterMessage(`No flashcards with status "${getStatusLabel(selectedStatus)}"`);
         } else if (!filteredIds.includes(currentFlashcardId)) {
           console.log('Setting currentFlashcardId to first filtered ID:', filteredIds[0]);
@@ -171,7 +198,7 @@ export default function FlashcardModal({
       setIsFiltering(false);
     };
     updateFilteredFlashcards();
-  }, [selectedStatus, currentPlanId, flashcards, getStatusLabel]);
+  }, [selectedStatus, currentPlanId, flashcards, getStatusLabel, currentFlashcardId]);
 
   const handleSave = (currentFlashcard: Flashcard) => {
     setIsSaved(true);
@@ -227,12 +254,12 @@ export default function FlashcardModal({
         <div className="fixed top-4 left-0 right-0 z-60 items-center gap-2">
           <div className="mb-2 sm:mb-4 px-4 sm:px-0 flex mx-auto max-w-xl items-center justify-between sm:justify-center text-base gap-8">
             <Tooltip content="Plan" variant='bottom'>
-            <span className="font-bold text-gray-900">
-              {planInfo.label.length > 12 ? planInfo.label.slice(0, 12) + '...' : planInfo.label}
-            </span>
+              <span className="font-bold text-gray-900">
+                {planInfo.label.length > 12 ? planInfo.label.slice(0, 12) + '...' : planInfo.label}
+              </span>
             </Tooltip>
             <Tooltip content="Dates To-Do" variant='bottom'>
-            <span className="font-medium text-gray-400">{planInfo.name}</span>
+              <span className="font-medium text-gray-400">{planInfo.name}</span>
             </Tooltip>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
@@ -247,7 +274,7 @@ export default function FlashcardModal({
                   setSelectedStatus(status);
                 }}
                 className={cn(
-                  'px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm',
+                  'inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm',
                   selectedStatus === status ? 'bg-sky-100 text-sky-800' : 'hover:bg-sky-50'
                 )}
                 aria-label={`Filter by ${getStatusLabel(status)}`}
@@ -256,6 +283,14 @@ export default function FlashcardModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
                 {getStatusLabel(status)}
+                <span
+                  className={cn(
+                    'flex items-center justify-center h-5 w-5 rounded-full text-xs font-semibold',
+                    selectedStatus === status ? 'bg-sky-200 text-sky-900' : 'bg-gray-200 text-gray-800'
+                  )}
+                >
+                  {statusCounts[status]}
+                </span>
               </Button>
             ))}
           </div>
