@@ -138,7 +138,7 @@ export default function AiFlashcards({
         {({ open }) => (
           <div>
             <div className="flex justify-between space-x-2 items-center mb-4">
-              <DisclosureButton>
+              <DisclosureButton  className='w-full sm:w-auto'>
                 Flashcards
                 <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
               </DisclosureButton>

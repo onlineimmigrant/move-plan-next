@@ -52,7 +52,7 @@ export default function FlashcardSearch({
             placeholder="Search ..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full py-2 pl-16 pr-3 text-base font-light bg-transparent border-none focus:outline-none"
+            className="w-full py-2 pl-16 sm:pl-20 pr-3 text-base font-light bg-transparent border-none focus:outline-none"
           />
           {/* Topic and Status Listboxes */}
           <div className="flex gap-2 items-center justify-end">

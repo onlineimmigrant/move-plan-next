@@ -446,11 +446,11 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
       <Disclosure defaultOpen>
         {({ open }) => (
           <div>
-            <div className="mt-1 flex justify-between items-center mb-4 ">
-              <DisclosureButton >
+            <div className="mt-1  mb-4 ">
+              <DisclosureButton className='w-full sm:w-auto'>
                         
                 <span>Chats</span>
-                <span className="ml-2 text-sky-500 font-bold">{open ? '−' : '+'}</span>
+                <span className="ml-2  text-sky-500 font-bold">{open ? '−' : '+'}</span>
                
               </DisclosureButton>
 

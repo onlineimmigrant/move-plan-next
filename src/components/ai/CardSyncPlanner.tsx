@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { Disclosure, Transition } from '@headlessui/react';
-import { PlusIcon, CheckIcon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { Listbox } from '@headlessui/react';
+import { PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Listbox, ListboxOption, ListboxOptions } from '@headlessui/react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { createClient } from '@supabase/supabase-js';
 import Tooltip from '@/components/Tooltip';
@@ -190,7 +190,7 @@ export default function CardSyncPlanner({
       const { error } = await supabase.from('ai_card_sync_planner').insert({
         user_id: userId,
         name,
-        label: planLabel.slice(0, 12),
+        label: planLabel.slice(0, 20),
         start_date: startDate.toISOString().split('T')[0],
         end_date: endDate ? endDate.toISOString().split('T')[0] : null,
         flashcard_ids: newPlanFlashcardIds.map((f) => f.id),
@@ -483,7 +483,7 @@ export default function CardSyncPlanner({
   }, []);
 
   const truncateLabel = useCallback((label: string) => {
-    return label.length > 12 ? label.slice(0, 12) + '...' : label;
+    return label.length > 20 ? label.slice(0, 20) + '...' : label;
   }, []);
 
   const handleDisclosureToggle = (planId: string) => {
@@ -502,7 +502,7 @@ export default function CardSyncPlanner({
           {({ open }) => (
             <div>
               <div className="mt-1 flex items-center justify-between mb-4">
-                <DisclosureButton>
+                <DisclosureButton  className='w-full sm:w-auto'>
                   <span>CardSync Planner</span>
                   <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
                 </DisclosureButton>
@@ -515,75 +515,85 @@ export default function CardSyncPlanner({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Disclosure.Panel className="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl sm:min-h-[700px] sm:max-h-[700px] overflow-y-auto pb-16">
+                <Disclosure.Panel className="w-full sm:p-4 sm:bg-gray-50 sm:border-2 border-gray-200 rounded-xl sm:min-h-[640px] sm:max-h-[640px] overflow-y-auto pb-16">
                   {loading ? (
                     <div className="text-gray-700">Loading...</div>
                   ) : (
                     <>
                       {isCreatingPlan && (
-                        <div className="mt-2 mb-4 p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
-                          <div className="flex items-center gap-2">
+                        <div className="mt-2 mb-4 sm:p-4 bg-white sm:border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
+                          {/* Combined Plan Label and Period Listbox */}
+                          <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-transparent transition-all duration-200">
                             <input
                               type="text"
                               value={planLabel}
-                              onChange={(e) => setPlanLabel(e.target.value.slice(0, 12))}
+                              onChange={(e) => setPlanLabel(e.target.value.slice(0, 20))}
                               placeholder="Enter plan label"
-                              className="w-32 p-2 border border-gray-200 rounded-md text-sm"
-                              maxLength={12}
+                              className="w-full py-2 pl-3 pr-3 text-base font-light bg-transparent border-none focus:outline-none"
+                              maxLength={20}
                             />
-                            <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
-                              <div className="relative flex-1">
-                                <ListboxButton variant="outline">
-                                  <span>{selectedPeriod.label}</span>
-                                  <ChevronDownIcon className="ml-2 h-3 w-3" />
-                                </ListboxButton>
-                                <Transition
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="opacity-0 scale-95"
-                                  enterTo="opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="opacity-100 scale-100"
-                                  leaveTo="opacity-0 scale-95"
-                                >
-                                  <Listbox.Options className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-10">
-                                    {periods.map((period) => (
-                                      <Listbox.Option
-                                        key={period.value}
-                                        value={period}
-                                        className={({ active, selected }) =>
-                                          cn(
-                                            'relative cursor-pointer select-none py-2 px-4',
-                                            active ? 'bg-sky-100 text-sky-900' : 'text-gray-700',
-                                            selected ? 'bg-sky-50 font-semibold' : ''
-                                          )
-                                        }
+                            <div className="flex items-center justify-end">
+                              <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
+                                {({ open }) => (
+                                  <div className="relative">
+                                    <Tooltip content="Select Period">
+                                      <ListboxButton
+                                        variant="outline"
+                                        className="flex justify-center h-full py-2 sm:px-4 px-0 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none rounded-l-lg focus:outline-none hover:bg-gray-100 min-w-[100px]"
                                       >
-                                        {({ selected }) => (
-                                          <div className="flex items-center justify-between text-sm">
-                                            <span>{period.label}</span>
-                                            {selected && <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />}
-                                          </div>
-                                        )}
-                                      </Listbox.Option>
-                                    ))}
-                                  </Listbox.Options>
-                                </Transition>
-                              </div>
-                            </Listbox>
+                                        <span className="line-clamp-1">{selectedPeriod.label}</span>
+                                      </ListboxButton>
+                                    </Tooltip>
+                                    <Transition
+                                      show={open}
+                                      enter="transition ease-out duration-100"
+                                      enterFrom="opacity-0 scale-95"
+                                      enterTo="opacity-100 scale-100"
+                                      leave="transition ease-in duration-75"
+                                      leaveFrom="opacity-100 scale-100"
+                                      leaveTo="opacity-0 scale-95"
+                                    >
+                                      <ListboxOptions className="absolute w-48 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-20">
+                                        {periods.map((period) => (
+                                          <ListboxOption
+                                            key={period.value}
+                                            value={period}
+                                            className={({ active }) =>
+                                              cn(
+                                                'relative cursor-pointer select-none py-3 px-4 border-gray-100',
+                                                active ? 'bg-sky-100 text-sky-900 font-semibold' : 'text-gray-900'
+                                              )
+                                            }
+                                          >
+                                            <div className="flex items-center justify-between">
+                                              <span className="flex-grow text-sm font-medium">{period.label}</span>
+                                              {selectedPeriod.value === period.value && (
+                                                <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
+                                              )}
+                                            </div>
+                                          </ListboxOption>
+                                        ))}
+                                      </ListboxOptions>
+                                    </Transition>
+                                  </div>
+                                )}
+                              </Listbox>
+                            </div>
                           </div>
+                          {/* Custom Date Inputs */}
                           {selectedPeriod.value === 'custom' && (
                             <div className="flex gap-2">
                               <input
                                 type="date"
                                 value={customStartDate || ''}
                                 onChange={(e) => setCustomStartDate(e.target.value)}
-                                className="w-full p-2 border border-gray-200 rounded-md"
+                                className="w-full p-2 border border-gray-200 rounded-md text-sm"
                               />
                               <input
                                 type="date"
                                 value={customEndDate || ''}
                                 onChange={(e) => setCustomEndDate(e.target.value)}
-                                className="w-full p-2 border border-gray-200 rounded-md"
+                                className="w-full p-2 border border-gray-200 rounded-md text-sm"
                               />
                             </div>
                           )}
@@ -757,9 +767,9 @@ export default function CardSyncPlanner({
                           </Disclosure>
                         ))}
                       </DragDropContext>
-                      <div className="absolute sm:bottom-8 sm:right-4 right-2 mt-4 gap-4">
-                        <div className="text-center">
-                          <Button onClick={handleNewPlanClick}>
+                      <div className="mt-16 gap-4">
+                        <div className="flex justify-center">
+                          <Button onClick={handleNewPlanClick} variant='outline'>
                             <PlusIcon className="mr-2 h-5 w-5" />
                             New Plan
                           </Button>
