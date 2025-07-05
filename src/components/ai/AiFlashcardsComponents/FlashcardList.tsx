@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { PencilIcon, TrashIcon, CalendarIcon, ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
+import Toast from '@/components/Toast';
 import { cn } from '../../../utils/cn';
 import { Flashcard, PlanFlashcard } from '../../../lib/types';
 import { PlannerContext } from '../../../lib/context';
@@ -9,7 +10,7 @@ import Button from '@/ui/Button';
 
 interface FlashcardListProps {
   flashcards: Flashcard[];
-  openCard: (index: number) => void;
+  openCard: (flashcardId: number) => void;
   openEditModal: (flashcard: Flashcard) => void;
   deleteFlashcard: (flashcardId: number) => void;
   updateFlashcardStatus: (flashcardId: number, isUserFlashcard: boolean, newStatus: string) => void;
@@ -21,8 +22,10 @@ interface FlashcardListProps {
   setPage: (page: number) => void;
   hasMore: boolean;
   totalFlashcards: number;
-  handleAddAllToPlanner: () => void; // Added prop
-  filteredFlashcards: Flashcard[]; // Added prop
+  handleAddAllToPlanner: () => void;
+  filteredFlashcards: Flashcard[];
+  onError: (error: string) => void;
+  setFlashcards: (flashcards: Flashcard[]) => void;
 }
 
 export default function FlashcardList({
@@ -41,14 +44,18 @@ export default function FlashcardList({
   totalFlashcards,
   handleAddAllToPlanner,
   filteredFlashcards,
+  onError,
+  setFlashcards,
 }: FlashcardListProps) {
-  const { addFlashcardToPlanner } = useContext(PlannerContext);
+  const { addFlashcardToPlanner, newPlanFlashcardIds } = useContext(PlannerContext);
   const cardsPerPage = 4;
   const visibleFlashcards = flashcards.slice(0, page * cardsPerPage);
   const [containerHeight, setContainerHeight] = useState(400);
   const cardRef = useRef<HTMLLIElement>(null);
   const [flippedCards, setFlippedCards] = useState<{ [key: number]: boolean }>({});
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+  const [toasts, setToasts] = useState<{ id: number; message: string; type: 'success' | 'error' }[]>([]);
+  const toastIdRef = useRef(0);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -64,9 +71,80 @@ export default function FlashcardList({
     };
   }, []);
 
+  const addToast = (message: string, type: 'success' | 'error') => {
+    const id = toastIdRef.current++;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
+  const moveFlashcardToEnd = (flashcardId: number) => {
+    console.log('Attempting to move flashcard to end:', flashcardId);
+    const flashcardIndex = flashcards.findIndex((f) => f.id === flashcardId);
+    if (flashcardIndex !== -1) {
+      const flashcard = flashcards[flashcardIndex];
+      const updatedFlashcards = [
+        ...flashcards.filter((f) => f.id !== flashcardId),
+        flashcard,
+      ];
+      console.log('Before setFlashcards:', updatedFlashcards.map(f => f.id));
+      setFlashcards(updatedFlashcards);
+      console.log('setFlashcards called with:', updatedFlashcards.map(f => f.id));
+    } else {
+      console.warn('Flashcard not found for ID:', flashcardId);
+    }
+  };
+
+  const handleNextCard = () => {
+    if (visibleFlashcards.length === 0) return;
+    setSelectedCardIndex((prev) => {
+      if (prev === null || prev === visibleFlashcards.length - 1) {
+        if (hasMore) {
+          setPage(page + 1);
+          return 0;
+        }
+        return 0;
+      }
+      return prev + 1;
+    });
+    setFlippedCards({});
+  };
+
   const handleAddToPlanner = (flashcard: Flashcard) => {
-    console.log('Adding flashcard to planner:', { id: flashcard.id, isUserFlashcard: !!flashcard.user_id });
-    addFlashcardToPlanner(flashcard.id, !!flashcard.user_id);
+    if (newPlanFlashcardIds.some((pf: PlanFlashcard) => pf.id === flashcard.id)) {
+      addToast(`Flashcard "${flashcard.name || `ID: ${flashcard.id}`}" is already in the planner`, 'error');
+      onError(`Flashcard "${flashcard.name || `ID: ${flashcard.id}`}" is already in the planner`);
+    } else {
+      addFlashcardToPlanner(flashcard.id, !!flashcard.user_id);
+      addToast(`Added "${flashcard.name || `ID: ${flashcard.id}`}" to planner`, 'success');
+      moveFlashcardToEnd(flashcard.id);
+      handleNextCard();
+    }
+  };
+
+  const handleAddAllToPlannerWithToast = () => {
+    const added: number[] = [];
+    const skipped: string[] = [];
+    filteredFlashcards.forEach((f) => {
+      if (newPlanFlashcardIds.some((pf: PlanFlashcard) => pf.id === f.id)) {
+        skipped.push(f.name || `Flashcard ID: ${f.id}`);
+      } else {
+        addFlashcardToPlanner(f.id, !!f.user_id);
+        added.push(f.id);
+      }
+    });
+    if (added.length > 0) {
+      addToast(`Added ${added.length} flashcard${added.length > 1 ? 's' : ''} to planner`, 'success');
+      added.forEach((id) => moveFlashcardToEnd(id));
+      handleNextCard();
+    }
+    if (skipped.length > 0) {
+      const errorMessage = `Skipped ${skipped.length} duplicate flashcard${skipped.length > 1 ? 's' : ''}: ${skipped.join(', ')}`;
+      addToast(errorMessage, 'error');
+      onError(errorMessage);
+    }
   };
 
   const toggleFlip = (flashcardId: number) => {
@@ -87,17 +165,6 @@ export default function FlashcardList({
     setFlippedCards({});
   };
 
-  const handleNextCard = () => {
-    if (visibleFlashcards.length === 0) return;
-    setSelectedCardIndex((prev) => {
-      if (prev === null || prev === visibleFlashcards.length - 1) {
-        return 0;
-      }
-      return prev + 1;
-    });
-    setFlippedCards({});
-  };
-
   const displayedFlashcards = selectedCardIndex !== null ? [visibleFlashcards[selectedCardIndex]] : visibleFlashcards;
 
   return (
@@ -107,10 +174,10 @@ export default function FlashcardList({
         style={{ height: `${containerHeight}px` }}
       >
         <ul className="grid grid-cols-1 gap-y-4 divide-y divide-gray-100">
-          {displayedFlashcards.map((flashcard, index) => (
+          {displayedFlashcards.map((flashcard) => (
             <li
               key={flashcard.id}
-              ref={index === 0 ? cardRef : null}
+              ref={cardRef}
               className={cn(
                 'my-1 shadow rounded-2xl group cursor-pointer transform transition-transform hover:scale-[1.02] hover:shadow-sm relative',
                 getStatusBackgroundClass(flashcard.status),
@@ -123,7 +190,7 @@ export default function FlashcardList({
                 height: `${containerHeight - 24}px`,
                 overflowY: 'auto',
               }}
-              onClick={() => openCard(selectedCardIndex !== null ? selectedCardIndex : index)}
+              onClick={() => openCard(flashcard.id)}
             >
               <div className="flex flex-col py-3 px-4 hover:opacity-95 hover:text-sky-900 min-h-full">
                 {!flippedCards[flashcard.id] ? (
@@ -259,9 +326,8 @@ export default function FlashcardList({
         </ul>
       </div>
       <div className="flex flex-col items-between gap-4">
-        <div className="flex justify-center text-base font-medium text-gray-800  px-3 py-1 rounded-full">
-       
-                    <div className="flex gap-2">
+        <div className="flex justify-center text-base font-medium text-gray-800 px-3 py-1 rounded-full">
+          <div className="flex gap-2">
             <Tooltip content="Previous Card">
               <Button
                 variant="badge_primary_circle"
@@ -288,33 +354,39 @@ export default function FlashcardList({
             </Tooltip>
           </div>
         </div>
-        <div className="flex justify-between my-2 mb-4 items-center gap-2 ">
+        <div className="flex justify-between my-2 mb-4 items-center gap-2">
           <Button
             variant="primary"
             onClick={() => setPage(page + 1)}
             disabled={!hasMore}
           >
             <span className="hidden sm:flex ml-2">Load More</span>
-             <PlusIcon className='w-5 h-5 mx-2' />
-            {displayedFlashcards.length} of {totalFlashcards}
-            
+            <PlusIcon className="w-5 h-5 mx-2" />
+            {visibleFlashcards.length} of {totalFlashcards}
           </Button>
-
           <Button
             variant="primary"
             onClick={(e) => {
               e.stopPropagation();
-              handleAddAllToPlanner();
+              handleAddAllToPlannerWithToast();
             }}
             disabled={filteredFlashcards.length === 0}
             className="flex justify-between line-clamp-1"
           >
-            
-            Add <span>{filteredFlashcards.length} to Planner</span>
            
+            Add <span>{filteredFlashcards.length} to Planner</span>
           </Button>
         </div>
       </div>
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+          duration={5000}
+        />
+      ))}
     </div>
   );
 }

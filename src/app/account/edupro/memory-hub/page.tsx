@@ -8,6 +8,7 @@ import Tooltip from '@/components/Tooltip';
 import AiChatHistory from '@/components/ai/AiChatHistory';
 import AiFlashcards from '@/components/ai/AiFlashcards';
 import CardSyncPlanner from '@/components/ai/CardSyncPlanner';
+import FlashcardModal from '@/components/ai/AiFlashcardsComponents/FlashcardModal';
 import HelpModal from '@/components/ai/HelpModal';
 import { Flashcard, PlanFlashcard } from '@/lib/types';
 import { PlannerContext } from '@/lib/context';
@@ -28,6 +29,8 @@ export default function MemoryHub() {
   const [filteredFlashcardIds, setFilteredFlashcardIds] = useState<number[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [newPlanFlashcardIds, setNewPlanFlashcardIds] = useState<PlanFlashcard[]>([]);
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const router = useRouter();
 
@@ -193,6 +196,138 @@ export default function MemoryHub() {
     });
   }, [flashcards, newPlanFlashcardIds, handleError]);
 
+  const openCardById = useCallback((flashcardId: number) => {
+    const index = flashcards.findIndex((f) => f.id === flashcardId);
+    if (index !== -1) {
+      setSelectedCardIndex(index);
+      setIsFlipped(false);
+    } else {
+      handleError(`Flashcard with ID ${flashcardId} not found`);
+    }
+  }, [flashcards, handleError]);
+
+  const closeCard = useCallback(() => {
+    setSelectedCardIndex(null);
+    setIsFlipped(false);
+  }, []);
+
+  const flipCard = useCallback(() => {
+    setIsFlipped((prev) => !prev);
+  }, []);
+
+  const prevCard = useCallback(() => {
+    if (flashcards.length === 0) return;
+    setSelectedCardIndex((prev) =>
+      prev === null || prev === 0 ? flashcards.length - 1 : prev - 1
+    );
+    setIsFlipped(false);
+  }, [flashcards]);
+
+  const nextCard = useCallback(() => {
+    if (flashcards.length === 0) return;
+    setSelectedCardIndex((prev) =>
+      prev === null || prev === flashcards.length - 1 ? 0 : prev + 1
+    );
+    setIsFlipped(false);
+  }, [flashcards]);
+
+  const getStatusLabel = (status: string): string => {
+    const statusLabels: { [key: string]: string } = {
+      learning: 'Learning',
+      review: 'Review',
+      mastered: 'Mastered',
+      suspended: 'Suspended',
+      lapsed: 'Lapsed',
+      status: 'Status',
+    };
+    return statusLabels[status] || status;
+  };
+
+  const getNextStatus = (currentStatus: string | undefined): string => {
+    const statusCycle: { [key: string]: string } = {
+      learning: 'review',
+      review: 'mastered',
+      mastered: 'learning',
+      suspended: 'learning',
+      lapsed: 'learning',
+    };
+    return statusCycle[currentStatus || 'learning'] || 'learning';
+  };
+
+  const getStatusBackgroundClass = (status?: string) => {
+    switch (status) {
+      case 'learning':
+        return 'bg-sky-50';
+      case 'review':
+        return 'bg-yellow-50';
+      case 'mastered':
+        return 'bg-teal-50';
+      case 'suspended':
+        return 'bg-gray-50';
+      case 'lapsed':
+        return 'bg-red-50';
+      default:
+        return 'bg-gray-200';
+    }
+  };
+
+  const getStatusBorderClass = (status?: string) => {
+    switch (status) {
+      case 'learning':
+        return 'border-2 border-sky-100';
+      case 'review':
+        return 'border-2 border-yellow-100';
+      case 'mastered':
+        return 'border-2 border-teal-100';
+      case 'suspended':
+        return 'border-2 border-gray-100';
+      case 'lapsed':
+        return 'border-2 border-red-100';
+      default:
+        return 'border-2 border-gray-200';
+    }
+  };
+
+  const handleStatusTransition = useCallback(
+    async (flashcard: Flashcard) => {
+      const nextStatus = getNextStatus(flashcard.status);
+      const tableName = flashcard.user_id ? 'ai_user_flashcards_id' : 'ai_default_flashcards_id';
+      try {
+        const { data: existingStatus, error: selectError } = await supabase
+          .from('ai_flashcard_status')
+          .select('id, status')
+          .eq(tableName, flashcard.id)
+          .eq('user_id', userId)
+          .single();
+
+        if (selectError && selectError.code !== 'PGRST116') {
+          throw new Error(`Failed to check existing status for flashcard ${flashcard.id}: ${selectError.message}`);
+        }
+
+        if (existingStatus) {
+          const { error: updateError } = await supabase
+            .from('ai_flashcard_status')
+            .update({ status: nextStatus, updated_at: new Date().toISOString() })
+            .eq('id', existingStatus.id);
+          if (updateError) throw new Error(`Failed to update flashcard status for ${flashcard.id}: ${updateError.message}`);
+        } else {
+          const { error: insertError } = await supabase
+            .from('ai_flashcard_status')
+            .insert({ [tableName]: flashcard.id, user_id: userId, status: nextStatus, updated_at: new Date().toISOString() });
+          if (insertError) throw new Error(`Failed to insert flashcard status for ${flashcard.id}: ${insertError.message}`);
+        }
+
+        setFlashcards((prev) =>
+          prev.map((f) => (f.id === flashcard.id ? { ...f, status: nextStatus } : f))
+        );
+      } catch (error: any) {
+        handleError(error.message || 'Failed to update flashcard status.');
+        console.error('Status transition error:', error);
+      }
+    },
+    [userId, handleError]
+  );
+
   const plannerContextValue = useMemo(
     () => ({
       newPlanFlashcardIds,
@@ -209,38 +344,29 @@ export default function MemoryHub() {
   return (
     <PlannerContext.Provider value={plannerContextValue}>
       <div>
-
-        <div className="mx-auto  flex justify-between items-center p-4">
-
-                        <Tooltip content="Account" variant='right'>
-          <Link href="/account" className="">
-            <button className="cursor-pointer  hover:bg-gray-200 text-sky-600 p-2 rounded-full hover:bg-sky-blue-dark transition-colors">
-              <ArrowLeftIcon className="h-5 w-5" />
-            </button>
-          </Link>
-        </Tooltip>                  
-
-         <Tooltip content="Memory Hub">
+        <div className="mx-auto flex justify-between items-center p-4">
+          <Tooltip content="Account" variant="right">
+            <Link href="/account" className="">
+              <button className="cursor-pointer hover:bg-gray-200 text-sky-600 p-2 rounded-full hover:bg-sky-blue-dark transition-colors">
+                <ArrowLeftIcon className="h-5 w-5" />
+              </button>
+            </Link>
+          </Tooltip>
+          <Tooltip content="Memory Hub">
             <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 relative">
               Memory Hub
               <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
             </h1>
           </Tooltip>
-                          <Tooltip content="Guide" variant='left'>
-                            <button
-                              onClick={() => setIsHelpModalOpen(true)}
-                              className="cursor-pointer  hover:bg-gray-200 text-sky-600 rounded-full hover:bg-sky-blue-dark transition-colors">
-                         
-                              <QuestionMarkCircleIcon className="w-5 h-5" />
-                            </button>
-                          </Tooltip>
-                       
+          <Tooltip content="Guide" variant="left">
+            <button
+              onClick={() => setIsHelpModalOpen(true)}
+              className="cursor-pointer hover:bg-gray-200 text-sky-600 rounded-full hover:bg-sky-blue-dark transition-colors"
+            >
+              <QuestionMarkCircleIcon className="w-5 w-5" />
+            </button>
+          </Tooltip>
           <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
-
-
-
- 
-
           {message && (
             <div
               className={`p-3 border-l-4 rounded-r text-sm font-medium animate-fadeIn !animate-none mt-4 mx-4 max-w-2xl ${
@@ -270,6 +396,16 @@ export default function MemoryHub() {
                 onError={handleError}
                 onFilteredFlashcards={handleFilteredFlashcards}
                 setFlashcards={setFlashcards}
+                openCardById={openCardById}
+                closeCard={closeCard}
+                prevCard={prevCard}
+                nextCard={nextCard}
+                flipCard={flipCard}
+                getStatusLabel={getStatusLabel}
+                getNextStatus={getNextStatus}
+                getStatusBackgroundClass={getStatusBackgroundClass}
+                getStatusBorderClass={getStatusBorderClass}
+                handleStatusTransition={handleStatusTransition}
               />
             </div>
             <div className="order-2 sm:order-3 sm:col-span-3">
@@ -277,12 +413,28 @@ export default function MemoryHub() {
                 userId={userId}
                 onError={handleError}
                 flashcards={flashcards}
+                openCard={openCardById}
               />
               <ChatWidget />
             </div>
           </div>
-
         </div>
+        {selectedCardIndex !== null && flashcards[selectedCardIndex] && (
+          <FlashcardModal
+            flashcard={flashcards[selectedCardIndex]}
+            closeCard={closeCard}
+            prevCard={prevCard}
+            nextCard={nextCard}
+            handleStatusTransition={handleStatusTransition}
+            getStatusLabel={getStatusLabel}
+            getNextStatus={getNextStatus}
+            getStatusBackgroundClass={getStatusBackgroundClass}
+            getStatusBorderClass={getStatusBorderClass}
+            isFlipped={isFlipped}
+            flipCard={flipCard}
+            flashcards={flashcards}
+          />
+        )}
       </div>
     </PlannerContext.Provider>
   );

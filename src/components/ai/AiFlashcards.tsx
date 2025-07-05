@@ -1,18 +1,13 @@
 'use client';
 import { useState, useEffect, useMemo, useContext } from 'react';
 import { Disclosure, Transition } from '@headlessui/react';
-import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
-import Tooltip from '@/components/Tooltip';
-
 import FlashcardSearch from './AiFlashcardsComponents/FlashcardSearch';
 import FlashcardList from './AiFlashcardsComponents/FlashcardList';
-import FlashcardModal from './AiFlashcardsComponents/FlashcardModal';
 import EditFlashcardModal from './AiFlashcardsComponents/EditFlashcardModal';
 import { useFlashcards } from '../../lib/hooks/useFlashcards';
 import { cn } from '../../utils/cn';
 import { PlannerContext } from '../../lib/context';
 import { Flashcard } from '../../lib/types';
-import Button from '@/ui/Button';
 import DisclosureButton from '@/ui/DisclosureButton';
 
 interface AiFlashcardsProps {
@@ -20,6 +15,16 @@ interface AiFlashcardsProps {
   onError: (error: string) => void;
   onFilteredFlashcards: (flashcardIds: number[]) => void;
   setFlashcards: (flashcards: Flashcard[]) => void;
+  openCardById: (flashcardId: number) => void;
+  closeCard: () => void;
+  prevCard: () => void;
+  nextCard: () => void;
+  flipCard: () => void;
+  getStatusLabel: (status: string) => string;
+  getNextStatus: (currentStatus: string | undefined) => string;
+  getStatusBackgroundClass: (status?: string) => string;
+  getStatusBorderClass: (status?: string) => string;
+  handleStatusTransition: (flashcard: Flashcard) => void;
 }
 
 const FLASHCARDS_PER_PAGE = 4;
@@ -29,21 +34,28 @@ export default function AiFlashcards({
   onError,
   onFilteredFlashcards,
   setFlashcards,
+  openCardById,
+  closeCard,
+  prevCard,
+  nextCard,
+  flipCard,
+  getStatusLabel,
+  getNextStatus,
+  getStatusBackgroundClass,
+  getStatusBorderClass,
+  handleStatusTransition,
 }: AiFlashcardsProps) {
   const { flashcards, loading, error, topics, deleteFlashcard, updateFlashcardStatus, updateFlashcard } = useFlashcards(userId);
   const { addFlashcardToPlanner, newPlanFlashcardIds } = useContext(PlannerContext);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeStatus, setActiveStatus] = useState<string>('status');
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
-  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
-  const [isFlipped, setIsFlipped] = useState(false);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
-  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (flashcards) {
-      console.log('Flashcards updated in AiFlashcards:', flashcards.length);
+      console.log('Flashcards updated in AiFlashcards:', flashcards.map(f => f.id));
       setFlashcards(flashcards);
       onFilteredFlashcards(flashcards.map((f) => f.id));
     }
@@ -56,6 +68,7 @@ export default function AiFlashcards({
   }, [error, onError]);
 
   const filteredFlashcards = useMemo(() => {
+    console.log('Recomputing filteredFlashcards, flashcards:', flashcards.map(f => f.id));
     let result = flashcards;
 
     if (searchQuery) {
@@ -78,29 +91,6 @@ export default function AiFlashcards({
 
   const hasMore = filteredFlashcards.length > page * FLASHCARDS_PER_PAGE;
 
-  const getStatusLabel = (status: string): string => {
-    const statusLabels: { [key: string]: string } = {
-      learning: 'Learning',
-      review: 'Review',
-      mastered: 'Mastered',
-      suspended: 'Suspended',
-      lapsed: 'Lapsed',
-      status: 'Status',
-    };
-    return statusLabels[status] || status;
-  };
-
-  const getNextStatus = (currentStatus: string | undefined): string => {
-    const statusCycle: { [key: string]: string } = {
-      learning: 'review',
-      review: 'mastered',
-      mastered: 'learning',
-      suspended: 'learning',
-      lapsed: 'learning',
-    };
-    return statusCycle[currentStatus || 'learning'] || 'learning';
-  };
-
   const getStatusBgClass = (status?: string) => {
     switch (status) {
       case 'learning':
@@ -114,71 +104,6 @@ export default function AiFlashcards({
     }
   };
 
-  const getStatusBorderClass = (status?: string) => {
-    switch (status) {
-      case 'learning':
-        return 'border-2 border-sky-100';
-      case 'review':
-        return 'border-2 border-yellow-100';
-      case 'mastered':
-        return 'border-2 border-teal-100';
-      case 'suspended':
-        return 'border-2 border-gray-100';
-      case 'lapsed':
-        return 'border-2 border-red-100';
-      default:
-        return 'border-2 border-gray-200';
-    }
-  };
-
-  const getStatusBackgroundClass = (status?: string) => {
-    switch (status) {
-      case 'learning':
-        return 'bg-sky-50';
-      case 'review':
-        return 'bg-yellow-50';
-      case 'mastered':
-        return 'bg-teal-50';
-      case 'suspended':
-        return 'bg-gray-50';
-      case 'lapsed':
-        return 'bg-red-50';
-      default:
-        return 'bg-gray-200';
-    }
-  };
-
-  const openCard = (index: number) => {
-    if (editingCard) return;
-    setSelectedCardIndex(index);
-    setIsFlipped(false);
-  };
-
-  const closeCard = () => {
-    setSelectedCardIndex(null);
-    setIsFlipped(false);
-  };
-
-  const flipCard = () => {
-    setIsFlipped((prev) => !prev);
-  };
-
-  const prevCard = () => {
-    if (filteredFlashcards.length === 0) return;
-    setSelectedCardIndex((prev) =>
-      prev === null || prev === 0 ? filteredFlashcards.length - 1 : prev - 1
-    );
-    setIsFlipped(false);
-  };
-
-  const nextCard = () => {
-    if (filteredFlashcards.length === 0) return;
-    setSelectedCardIndex((prev) =>
-      prev === null || prev === filteredFlashcards.length - 1 ? 0 : prev + 1
-    );
-    setIsFlipped(false);
-  };
-
   const openEditModal = (flashcard: Flashcard) => {
     if (!flashcard.user_id) return;
     setEditingCard(flashcard);
@@ -186,11 +111,6 @@ export default function AiFlashcards({
 
   const closeEditModal = () => {
     setEditingCard(null);
-  };
-
-  const handleStatusTransition = (flashcard: Flashcard) => {
-    const nextStatus = getNextStatus(flashcard.status);
-    updateFlashcardStatus(flashcard.id, !!flashcard.user_id, nextStatus);
   };
 
   const handleAddAllToPlanner = () => {
@@ -222,9 +142,6 @@ export default function AiFlashcards({
                 Flashcards
                 <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
               </DisclosureButton>
-              <div className="flex items-center">
-                {/* Removed "Add {filteredFlashcards.length} to Planner" button */}
-              </div>
             </div>
             <Transition
               enter="transition ease-out duration-100"
@@ -254,7 +171,7 @@ export default function AiFlashcards({
                 ) : (
                   <FlashcardList
                     flashcards={filteredFlashcards}
-                    openCard={openCard}
+                    openCard={openCardById}
                     openEditModal={openEditModal}
                     deleteFlashcard={deleteFlashcard}
                     updateFlashcardStatus={updateFlashcardStatus}
@@ -266,8 +183,10 @@ export default function AiFlashcards({
                     setPage={setPage}
                     hasMore={hasMore}
                     totalFlashcards={filteredFlashcards.length}
-                    handleAddAllToPlanner={handleAddAllToPlanner} // Pass function
-                    filteredFlashcards={filteredFlashcards} // Pass filtered flashcards
+                    handleAddAllToPlanner={handleAddAllToPlanner}
+                    filteredFlashcards={filteredFlashcards}
+                    onError={onError}
+                    setFlashcards={setFlashcards}
                   />
                 )}
               </Disclosure.Panel>
@@ -275,23 +194,6 @@ export default function AiFlashcards({
           </div>
         )}
       </Disclosure>
-
-      {selectedCardIndex !== null && filteredFlashcards[selectedCardIndex] && (
-        <FlashcardModal
-          flashcard={filteredFlashcards[selectedCardIndex]}
-          closeCard={closeCard}
-          prevCard={prevCard}
-          nextCard={nextCard}
-          handleStatusTransition={handleStatusTransition}
-          getStatusLabel={getStatusLabel}
-          getNextStatus={getNextStatus}
-          getStatusBackgroundClass={getStatusBackgroundClass}
-          getStatusBorderClass={getStatusBorderClass}
-          isFlipped={isFlipped}
-          flipCard={flipCard}
-          flashcards={filteredFlashcards}
-        />
-      )}
 
       {editingCard && (
         <EditFlashcardModal
