@@ -199,7 +199,7 @@ export default function FlashcardList({
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900 shadow-sm">
                         {getStatusLabel(flashcard.status || 'learning')}
                       </span>
-                      <span className="text-sm font-medium text-gray-600">{flashcard.topic || 'No topic'}</span>
+                      <span className="text-base font-medium text-gray-600">{flashcard.topic || 'No topic'}</span>
                     </div>
                     <span className="px-8 text-center mt-36 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
                       {flashcard.name || 'Untitled'}

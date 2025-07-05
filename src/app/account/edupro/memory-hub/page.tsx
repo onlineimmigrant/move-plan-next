@@ -31,6 +31,7 @@ export default function MemoryHub() {
   const [newPlanFlashcardIds, setNewPlanFlashcardIds] = useState<PlanFlashcard[]>([]);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null); // Track current plan for modal navigation
 
   const router = useRouter();
 
@@ -196,11 +197,12 @@ export default function MemoryHub() {
     });
   }, [flashcards, newPlanFlashcardIds, handleError]);
 
-  const openCardById = useCallback((flashcardId: number) => {
+  const openCardById = useCallback((flashcardId: number, planId: string | null = null) => {
     const index = flashcards.findIndex((f) => f.id === flashcardId);
     if (index !== -1) {
       setSelectedCardIndex(index);
       setIsFlipped(false);
+      setCurrentPlanId(planId); // Set the plan ID for navigation
     } else {
       handleError(`Flashcard with ID ${flashcardId} not found`);
     }
@@ -209,27 +211,82 @@ export default function MemoryHub() {
   const closeCard = useCallback(() => {
     setSelectedCardIndex(null);
     setIsFlipped(false);
+    setCurrentPlanId(null); // Reset plan ID when closing
   }, []);
 
   const flipCard = useCallback(() => {
     setIsFlipped((prev) => !prev);
   }, []);
 
-  const prevCard = useCallback(() => {
-    if (flashcards.length === 0) return;
-    setSelectedCardIndex((prev) =>
-      prev === null || prev === 0 ? flashcards.length - 1 : prev - 1
-    );
-    setIsFlipped(false);
-  }, [flashcards]);
+  const prevCard = useCallback(async () => {
+    if (flashcards.length === 0 || selectedCardIndex === null) return;
 
-  const nextCard = useCallback(() => {
-    if (flashcards.length === 0) return;
-    setSelectedCardIndex((prev) =>
-      prev === null || prev === flashcards.length - 1 ? 0 : prev + 1
-    );
-    setIsFlipped(false);
-  }, [flashcards]);
+    let planFlashcardIds: number[] = [];
+    if (currentPlanId) {
+      const { data: plan, error } = await supabase
+        .from('ai_card_sync_planner')
+        .select('flashcard_ids')
+        .eq('id', currentPlanId)
+        .single();
+      if (error) {
+        handleError(`Failed to fetch plan ${currentPlanId}: ${error.message}`);
+        return;
+      }
+      planFlashcardIds = plan.flashcard_ids || [];
+    } else {
+      planFlashcardIds = flashcards.map((f) => f.id);
+    }
+
+    if (planFlashcardIds.length === 0) return;
+
+    const currentFlashcardId = flashcards[selectedCardIndex].id;
+    const currentIndexInPlan = planFlashcardIds.indexOf(currentFlashcardId);
+    const prevIndexInPlan = currentIndexInPlan === 0 ? planFlashcardIds.length - 1 : currentIndexInPlan - 1;
+    const prevFlashcardId = planFlashcardIds[prevIndexInPlan];
+    const prevIndex = flashcards.findIndex((f) => f.id === prevFlashcardId);
+
+    if (prevIndex !== -1) {
+      setSelectedCardIndex(prevIndex);
+      setIsFlipped(false);
+    } else {
+      handleError(`Previous flashcard ID ${prevFlashcardId} not found`);
+    }
+  }, [flashcards, selectedCardIndex, currentPlanId, handleError]);
+
+  const nextCard = useCallback(async () => {
+    if (flashcards.length === 0 || selectedCardIndex === null) return;
+
+    let planFlashcardIds: number[] = [];
+    if (currentPlanId) {
+      const { data: plan, error } = await supabase
+        .from('ai_card_sync_planner')
+        .select('flashcard_ids')
+        .eq('id', currentPlanId)
+        .single();
+      if (error) {
+        handleError(`Failed to fetch plan ${currentPlanId}: ${error.message}`);
+        return;
+      }
+      planFlashcardIds = plan.flashcard_ids || [];
+    } else {
+      planFlashcardIds = flashcards.map((f) => f.id);
+    }
+
+    if (planFlashcardIds.length === 0) return;
+
+    const currentFlashcardId = flashcards[selectedCardIndex].id;
+    const currentIndexInPlan = planFlashcardIds.indexOf(currentFlashcardId);
+    const nextIndexInPlan = currentIndexInPlan === planFlashcardIds.length - 1 ? 0 : currentIndexInPlan + 1;
+    const nextFlashcardId = planFlashcardIds[nextIndexInPlan];
+    const nextIndex = flashcards.findIndex((f) => f.id === nextFlashcardId);
+
+    if (nextIndex !== -1) {
+      setSelectedCardIndex(nextIndex);
+      setIsFlipped(false);
+    } else {
+      handleError(`Next flashcard ID ${nextFlashcardId} not found`);
+    }
+  }, [flashcards, selectedCardIndex, currentPlanId, handleError]);
 
   const getStatusLabel = (status: string): string => {
     const statusLabels: { [key: string]: string } = {
@@ -433,6 +490,7 @@ export default function MemoryHub() {
             isFlipped={isFlipped}
             flipCard={flipCard}
             flashcards={flashcards}
+            currentPlanId={currentPlanId}
           />
         )}
       </div>

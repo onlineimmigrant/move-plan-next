@@ -1,11 +1,12 @@
 'use client';
-import { useState, useEffect, useCallback, useContext } from 'react';
+import { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { Disclosure, Transition } from '@headlessui/react';
 import { PlusIcon, CheckIcon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Listbox } from '@headlessui/react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { createClient } from '@supabase/supabase-js';
 import Tooltip from '@/components/Tooltip';
+import Toast from '@/components/Toast';
 import { cn } from '../../utils/cn';
 import { PlannerContext } from '../../lib/context';
 import { Flashcard, PlanFlashcard } from '../../lib/types';
@@ -21,6 +22,7 @@ const supabase = createClient(
 interface Plan {
   id: string;
   name: string;
+  label: string;
   start_date: string;
   end_date?: string | null;
   flashcard_ids: number[];
@@ -32,7 +34,7 @@ interface CardSyncPlannerProps {
   userId: string | null;
   onError: (error: string) => void;
   flashcards: Flashcard[];
-  openCard: (flashcardId: number) => void;
+  openCard: (flashcardId: number, planId: string | null) => void;
 }
 
 const periods = [
@@ -57,8 +59,20 @@ export default function CardSyncPlanner({
   const [selectedPeriod, setSelectedPeriod] = useState(periods[0]);
   const [customStartDate, setCustomStartDate] = useState<string | null>(null);
   const [customEndDate, setCustomEndDate] = useState<string | null>(null);
+  const [planLabel, setPlanLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [openPlanId, setOpenPlanId] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<{ id: number; message: string; type: 'success' | 'error' }[]>([]);
+  const toastIdRef = useRef(0);
+
+  const addToast = useCallback((message: string, type: 'success' | 'error') => {
+    const id = toastIdRef.current++;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
+
+  const removeToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
 
   useEffect(() => {
     console.log('CardSyncPlanner rendered:', { userId, plansLength: plans.length, flashcardsLength: flashcards.length, newPlanFlashcardIds });
@@ -76,26 +90,29 @@ export default function CardSyncPlanner({
     try {
       const { data, error } = await supabase
         .from('ai_card_sync_planner')
-        .select('id, name, start_date, end_date, flashcard_ids, status, user_id')
+        .select('id, name, label, start_date, end_date, flashcard_ids, status, user_id')
         .eq('user_id', userId) as { data: Plan[] | null; error: any };
       if (error) {
         throw new Error('Failed to fetch plans: ' + error.message);
       }
       const validPlans = (data || []).map((plan) => ({
         ...plan,
+        label: plan.label || 'Plan',
         flashcard_ids: [...new Set(plan.flashcard_ids.filter((id) =>
           flashcards.some((f) => f.id === id)
         ))] as number[],
       }));
+      console.log('Fetched plans:', validPlans);
       return validPlans;
     } catch (error: any) {
+      addToast(error.message || 'Failed to fetch plans.', 'error');
       onError(error.message || 'Failed to fetch plans.');
       console.error('Fetch plans error:', error);
       return [];
     } finally {
       setLoading(false);
     }
-  }, [userId, onError, flashcards]);
+  }, [userId, onError, flashcards, addToast]);
 
   useEffect(() => {
     let isMounted = true;
@@ -150,7 +167,13 @@ export default function CardSyncPlanner({
   const handleCreatePlan = useCallback(async () => {
     if (!userId || newPlanFlashcardIds.length === 0) {
       console.log('handleCreatePlan failed: No flashcards selected or no userId', { userId, newPlanFlashcardIds });
+      addToast('Please select at least one flashcard', 'error');
       onError('Please select at least one flashcard');
+      return;
+    }
+    if (!planLabel) {
+      addToast('Please enter a plan label', 'error');
+      onError('Please enter a plan label');
       return;
     }
 
@@ -163,10 +186,11 @@ export default function CardSyncPlanner({
         : `${new Date(startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })} - ${new Date(endDate!).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}`;
 
     try {
-      console.log('Creating plan with flashcard_ids:', newPlanFlashcardIds.map((f) => f.id));
+      console.log('Creating plan with flashcard_ids:', newPlanFlashcardIds.map((f) => f.id), 'label:', planLabel);
       const { error } = await supabase.from('ai_card_sync_planner').insert({
         user_id: userId,
         name,
+        label: planLabel.slice(0, 12),
         start_date: startDate.toISOString().split('T')[0],
         end_date: endDate ? endDate.toISOString().split('T')[0] : null,
         flashcard_ids: newPlanFlashcardIds.map((f) => f.id),
@@ -182,14 +206,16 @@ export default function CardSyncPlanner({
       setSelectedPeriod(periods[0]);
       setCustomStartDate(null);
       setCustomEndDate(null);
-
+      setPlanLabel('');
       const data = await fetchPlans();
       setPlans(data);
+      addToast('Plan created successfully', 'success');
     } catch (error: any) {
+      addToast(error.message || 'Failed to create plan.', 'error');
       onError(error.message || 'Failed to create plan.');
       console.error('Create plan error:', error);
     }
-  }, [userId, newPlanFlashcardIds, selectedPeriod, customStartDate, customEndDate, onError, fetchPlans]);
+  }, [userId, newPlanFlashcardIds, selectedPeriod, customStartDate, customEndDate, planLabel, onError, fetchPlans, addToast]);
 
   const handleMarkDone = useCallback(async (plan: Plan) => {
     console.log('handleMarkDone called for plan:', plan.id, 'with flashcard_ids:', plan.flashcard_ids);
@@ -252,11 +278,13 @@ export default function CardSyncPlanner({
       }
 
       setPlans((prev) => prev.filter((p) => p.id !== plan.id));
+      addToast('Plan marked as done', 'success');
     } catch (error: any) {
+      addToast(error.message || 'Failed to mark plan as done.', 'error');
       onError(error.message || 'Failed to mark plan as done.');
       console.error('Mark done error:', error);
     }
-  }, [flashcards, userId, onError]);
+  }, [flashcards, userId, onError, addToast]);
 
   const handleRemoveFlashcard = useCallback(
     async (planId: string, flashcardId: number) => {
@@ -277,75 +305,185 @@ export default function CardSyncPlanner({
         setPlans((prev) =>
           prev.map((p) => (p.id === planId ? { ...p, flashcard_ids: updatedFlashcardIds } : p))
         );
+        addToast('Flashcard removed from plan', 'success');
       } catch (error: any) {
+        addToast(error.message || 'Failed to remove flashcard from plan.', 'error');
         onError(error.message || 'Failed to remove flashcard from plan.');
         console.error('Remove flashcard error:', error);
       }
     },
-    [plans, onError]
+    [plans, onError, addToast]
   );
 
   const handleDragEnd = useCallback(
     async (result: DropResult) => {
-      if (!result.destination) return;
+      if (!result.destination) {
+        console.log('Drag cancelled: No destination');
+        return;
+      }
+
       const sourcePlanId = result.source.droppableId;
       const destPlanId = result.destination.droppableId;
-      if (sourcePlanId === destPlanId) return;
-
-      const sourcePlan = plans.find((p) => p.id === sourcePlanId);
-      const destPlan = plans.find((p) => p.id === destPlanId);
-      if (!sourcePlan || !destPlan) return;
-
       const flashcardId = parseInt(result.draggableId.split('-')[1]);
+      const sourceIndex = result.source.index;
+      const destIndex = result.destination.index;
+
+      console.log('handleDragEnd:', { sourcePlanId, destPlanId, flashcardId, sourceIndex, destIndex });
+
+      if (sourcePlanId === destPlanId) {
+        console.log('Same plan, reordering...');
+        try {
+          if (sourcePlanId === 'new-plan') {
+            const newIds = [...newPlanFlashcardIds];
+            const [moved] = newIds.splice(sourceIndex, 1);
+            if (!moved) {
+              console.error('No flashcard found at source index:', sourceIndex);
+              return;
+            }
+            newIds.splice(destIndex, 0, moved);
+            console.log('Reordered new plan:', newIds);
+            setNewPlanFlashcardIds(newIds);
+          } else {
+            const plan = plans.find((p) => p.id === sourcePlanId);
+            if (!plan) {
+              addToast('Source plan not found', 'error');
+              return;
+            }
+            const updatedFlashcardIds = [...plan.flashcard_ids];
+            const [moved] = updatedFlashcardIds.splice(sourceIndex, 1);
+            if (!moved) {
+              console.error('No flashcard found at source index:', sourceIndex);
+              return;
+            }
+            updatedFlashcardIds.splice(destIndex, 0, moved);
+            const { error } = await supabase
+              .from('ai_card_sync_planner')
+              .update({ flashcard_ids: updatedFlashcardIds })
+              .eq('id', sourcePlanId);
+            if (error) throw new Error(`Failed to reorder flashcards: ${error.message}`);
+            setPlans((prev) =>
+              prev.map((p) => (p.id === sourcePlanId ? { ...p, flashcard_ids: updatedFlashcardIds } : p))
+            );
+            addToast('Flashcard reordered', 'success');
+          }
+        } catch (error: any) {
+          addToast(error.message || 'Failed to reorder flashcard.', 'error');
+          console.error('Reorder error:', error);
+        }
+        return;
+      }
+
+      const sourcePlan = sourcePlanId === 'new-plan' ? null : plans.find((p) => p.id === sourcePlanId);
+      const destPlan = destPlanId === 'new-plan' ? null : plans.find((p) => p.id === destPlanId);
       const flashcard = flashcards.find((f) => f.id === flashcardId);
+
       if (!flashcard) {
-        console.warn(`Flashcard with id ${flashcardId} not found during drag`);
+        console.warn(`Flashcard with id ${flashcardId} not found`);
+        addToast(`Flashcard ID ${flashcardId} not found`, 'error');
         return;
       }
-
-      if (destPlan.flashcard_ids.includes(flashcardId)) {
-        onError(`Flashcard "${flashcard.name}" is already in the destination plan.`);
-        return;
-      }
-
-      const updatedSourceFlashcardIds = sourcePlan.flashcard_ids.filter((id) => id !== flashcardId);
-      const updatedDestFlashcardIds = [...destPlan.flashcard_ids, flashcardId];
 
       try {
-        const { error: sourceError } = await supabase
-          .from('ai_card_sync_planner')
-          .update({ flashcard_ids: updatedSourceFlashcardIds })
-          .eq('id', sourcePlanId);
-
-        const { error: destError } = await supabase
-          .from('ai_card_sync_planner')
-          .update({ flashcard_ids: updatedDestFlashcardIds })
-          .eq('id', destPlanId);
-
-        if (sourceError || destError) {
-          throw new Error('Failed to move flashcard between plans: ' + (sourceError || destError)?.message);
+        if (destPlanId === 'new-plan') {
+          if (newPlanFlashcardIds.some((pf) => pf.id === flashcardId)) {
+            addToast(`Flashcard "${flashcard.name}" is already in the new plan`, 'error');
+            return;
+          }
+          if (sourcePlan) {
+            const updatedSourceFlashcardIds = sourcePlan.flashcard_ids.filter((id) => id !== flashcardId);
+            const { error: sourceError } = await supabase
+              .from('ai_card_sync_planner')
+              .update({ flashcard_ids: updatedSourceFlashcardIds })
+              .eq('id', sourcePlanId);
+            if (sourceError) throw new Error(`Failed to update source plan: ${sourceError.message}`);
+            setPlans((prev) =>
+              prev.map((p) => (p.id === sourcePlanId ? { ...p, flashcard_ids: updatedSourceFlashcardIds } : p))
+            );
+          }
+          const newIds = [
+            ...newPlanFlashcardIds.slice(0, destIndex),
+            { id: flashcardId, isUserFlashcard: !!flashcard.user_id },
+            ...newPlanFlashcardIds.slice(destIndex),
+          ];
+          console.log('Moved to new plan:', newIds);
+          setNewPlanFlashcardIds(newIds);
+          addToast(`Moved "${flashcard.name}" to new plan`, 'success');
+        } else if (sourcePlanId === 'new-plan') {
+          if (!destPlan) {
+            console.warn(`Destination plan ${destPlanId} not found`);
+            addToast(`Destination plan not found`, 'error');
+            return;
+          }
+          if (destPlan.flashcard_ids.includes(flashcardId)) {
+            addToast(`Flashcard "${flashcard.name}" is already in the destination plan`, 'error');
+            return;
+          }
+          const updatedDestFlashcardIds = [...destPlan.flashcard_ids.slice(0, destIndex), flashcardId, ...destPlan.flashcard_ids.slice(destIndex)];
+          const { error: destError } = await supabase
+            .from('ai_card_sync_planner')
+            .update({ flashcard_ids: updatedDestFlashcardIds })
+            .eq('id', destPlanId);
+          if (destError) throw new Error(`Failed to update destination plan: ${destError.message}`);
+          const newIds = newPlanFlashcardIds.filter((pf) => pf.id !== flashcardId);
+          console.log('Moved from new plan to plan:', newIds);
+          setNewPlanFlashcardIds(newIds);
+          setPlans((prev) =>
+            prev.map((p) => (p.id === destPlanId ? { ...p, flashcard_ids: updatedDestFlashcardIds } : p))
+          );
+          addToast(`Moved "${flashcard.name}" to plan "${destPlan.label}"`, 'success');
+        } else {
+          if (!sourcePlan || !destPlan) {
+            console.warn(`Source plan ${sourcePlanId} or destination plan ${destPlanId} not found`);
+            addToast(`Source or destination plan not found`, 'error');
+            return;
+          }
+          if (destPlan.flashcard_ids.includes(flashcardId)) {
+            addToast(`Flashcard "${flashcard.name}" is already in the destination plan`, 'error');
+            return;
+          }
+          const updatedSourceFlashcardIds = sourcePlan.flashcard_ids.filter((id) => id !== flashcardId);
+          const updatedDestFlashcardIds = [...destPlan.flashcard_ids.slice(0, destIndex), flashcardId, ...destPlan.flashcard_ids.slice(destIndex)];
+          const [sourceUpdate, destUpdate] = await Promise.all([
+            supabase
+              .from('ai_card_sync_planner')
+              .update({ flashcard_ids: updatedSourceFlashcardIds })
+              .eq('id', sourcePlanId),
+            supabase
+              .from('ai_card_sync_planner')
+              .update({ flashcard_ids: updatedDestFlashcardIds })
+              .eq('id', destPlanId),
+          ]);
+          if (sourceUpdate.error || destUpdate.error) {
+            throw new Error(`Failed to move flashcard: ${sourceUpdate.error?.message || destUpdate.error?.message}`);
+          }
+          setPlans((prev) => {
+            const newPlans = prev.map((p) =>
+              p.id === sourcePlanId
+                ? { ...p, flashcard_ids: updatedSourceFlashcardIds }
+                : p.id === destPlanId
+                ? { ...p, flashcard_ids: updatedDestFlashcardIds }
+                : p
+            );
+            console.log('Moved between plans:', newPlans.map(p => ({ id: p.id, flashcard_ids: p.flashcard_ids })));
+            return newPlans;
+          });
+          addToast(`Moved "${flashcard.name}" from "${sourcePlan.label}" to "${destPlan.label}"`, 'success');
         }
-
-        setPlans((prev) =>
-          prev.map((p) =>
-            p.id === sourcePlanId
-              ? { ...p, flashcard_ids: updatedSourceFlashcardIds }
-              : p.id === destPlanId
-              ? { ...p, flashcard_ids: updatedDestFlashcardIds }
-              : p
-          )
-        );
       } catch (error: any) {
-        onError(error.message || 'Failed to move flashcard between plans.');
+        addToast(error.message || 'Failed to move flashcard between plans.', 'error');
         console.error('Drag end error:', error);
       }
     },
-    [plans, flashcards, onError]
+    [plans, flashcards, newPlanFlashcardIds, onError, addToast]
   );
 
   const truncateTopic = useCallback((topic: string | null | undefined) => {
     if (!topic) return 'No topic';
     return topic.split(' ').slice(0, 3).join(' ') + (topic.split(' ').length > 3 ? '...' : '');
+  }, []);
+
+  const truncateLabel = useCallback((label: string) => {
+    return label.length > 12 ? label.slice(0, 12) + '...' : label;
   }, []);
 
   const handleDisclosureToggle = (planId: string) => {
@@ -383,8 +521,16 @@ export default function CardSyncPlanner({
                   ) : (
                     <>
                       {isCreatingPlan && (
-                        <div className="mt-2 mb-4 p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first">
+                        <div className="mt-2 mb-4 p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
                           <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={planLabel}
+                              onChange={(e) => setPlanLabel(e.target.value.slice(0, 12))}
+                              placeholder="Enter plan label"
+                              className="w-32 p-2 border border-gray-200 rounded-md text-sm"
+                              maxLength={12}
+                            />
                             <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
                               <div className="relative flex-1">
                                 <ListboxButton variant="outline">
@@ -424,24 +570,9 @@ export default function CardSyncPlanner({
                                 </Transition>
                               </div>
                             </Listbox>
-                            <Button onClick={handleCreatePlan}>
-                              Save
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setIsCreatingPlan(false);
-                                setNewPlanFlashcardIds([]);
-                                setSelectedPeriod(periods[0]);
-                                setCustomStartDate(null);
-                                setCustomEndDate(null);
-                              }}
-                            >
-                              Cancel
-                            </Button>
                           </div>
                           {selectedPeriod.value === 'custom' && (
-                            <div className="flex gap-2 mt-2">
+                            <div className="flex gap-2">
                               <input
                                 type="date"
                                 value={customStartDate || ''}
@@ -456,45 +587,75 @@ export default function CardSyncPlanner({
                               />
                             </div>
                           )}
-                          <div className="mt-2 flex flex-wrap gap-2 max-h-[4.5rem] sm:max-h-[18rem] overflow-y-auto">
-                            {newPlanFlashcardIds.length === 0 && (
-                              <p className="text-gray-500">No flashcards selected</p>
-                            )}
-                            {newPlanFlashcardIds.map((pf) => {
-                              const flashcard = flashcards.find((f) => f.id === pf.id);
-                              return (
-                                <div
-                                  key={pf.id}
-                                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-gray-800 text-sm shadow-sm hover:bg-gray-100"
-                                >
-                                  <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${pf.id})`} variant="info-top">
-                                    <a
-                                      href="#"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        openCard(pf.id);
-                                      }}
-                                      className="hover:underline font-medium"
-                                    >
-                                      {flashcard ? truncateTopic(flashcard.topic) : `Unknown (ID: ${pf.id})`}
-                                    </a>
-                                  </Tooltip>
-                                  <span className="flex items-center justify-center h-5 w-5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
-                                    {pf.id}
-                                  </span>
-                                  <button
-                                    onClick={() => setNewPlanFlashcardIds(newPlanFlashcardIds.filter((f) => f.id !== pf.id))}
-                                    className="p-1 rounded-full bg-gray-200 hover:bg-red-300 text-gray-600 hover:text-red-800 transition-colors"
+                          <div className="flex flex-wrap gap-2 max-h-[9rem] overflow-y-auto">
+                            {newPlanFlashcardIds.length === 0 ? (
+                              <p className="text-gray-500 text-center w-full">No flashcards selected</p>
+                            ) : (
+                              newPlanFlashcardIds.map((pf) => {
+                                const flashcard = flashcards.find((f) => f.id === pf.id);
+                                return (
+                                  <div
+                                    key={pf.id}
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-gray-800 text-sm shadow-sm hover:bg-gray-100"
                                   >
-                                    <XMarkIcon className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              );
-                            })}
+                                    <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${pf.id})`} variant="info-top">
+                                      <a
+                                        href="#"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          openCard(pf.id, null);
+                                        }}
+                                        className="hover:underline font-medium"
+                                      >
+                                        {flashcard ? truncateTopic(flashcard.topic) : `Unknown (ID: ${pf.id})`}
+                                      </a>
+                                    </Tooltip>
+                                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
+                                      {pf.id}
+                                    </span>
+                                    <button
+                                      onClick={() => setNewPlanFlashcardIds(newPlanFlashcardIds.filter((f) => f.id !== pf.id))}
+                                      className="p-1 rounded-full bg-gray-200 hover:bg-red-300 text-gray-600 hover:text-red-800 transition-colors"
+                                    >
+                                      <XMarkIcon className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button onClick={handleCreatePlan}>
+                              Save
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setNewPlanFlashcardIds([]);
+                                setIsCreatingPlan(false);
+                                setSelectedPeriod(periods[0]);
+                                setCustomStartDate(null);
+                                setCustomEndDate(null);
+                                setPlanLabel('');
+                              }}
+                            >
+                              Cancel
+                            </Button>
                           </div>
                         </div>
                       )}
                       <DragDropContext onDragEnd={handleDragEnd}>
+                        <Droppable droppableId="new-plan">
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              className={isCreatingPlan ? 'min-h-[9rem]' : ''}
+                            >
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
                         {plans.map((plan) => (
                           <Disclosure
                             key={plan.id}
@@ -512,7 +673,7 @@ export default function CardSyncPlanner({
                                   )}
                                   onClick={() => handleDisclosureToggle(plan.id)}
                                 >
-                                  <span className="font-bold">Contract</span>
+                                  <span className="font-bold">{truncateLabel(plan.label)}</span>
                                   <span>{plan.name}</span>
                                   <span>{open ? '−' : '+'}</span>
                                 </DisclosureButton>
@@ -538,7 +699,7 @@ export default function CardSyncPlanner({
                                     <Droppable droppableId={plan.id}>
                                       {(provided) => (
                                         <div
-                                          className="mt-2"
+                                          className="mt-2 min-h-[2.5rem]"
                                           ref={provided.innerRef}
                                           {...provided.droppableProps}
                                         >
@@ -549,9 +710,12 @@ export default function CardSyncPlanner({
                                             const flashcard = flashcards.find((f) => f.id === id);
                                             return (
                                               <Draggable key={`${plan.id}-${id}`} draggableId={`${plan.id}-${id}`} index={index}>
-                                                {(provided) => (
+                                                {(provided, snapshot) => (
                                                   <div
-                                                    className="inline-flex items-center gap-2 px-3 py-1.5 m-1 rounded-full bg-gray-50 border border-gray-200 text-gray-800 text-sm shadow-sm hover:bg-gray-100"
+                                                    className={cn(
+                                                      'inline-flex items-center gap-2 px-3 py-1.5 m-1 rounded-full bg-gray-50 border border-gray-200 text-gray-800 text-sm shadow-sm hover:bg-gray-100',
+                                                      snapshot.isDragging && 'opacity-50'
+                                                    )}
                                                     ref={provided.innerRef}
                                                     {...provided.draggableProps}
                                                     {...provided.dragHandleProps}
@@ -561,7 +725,7 @@ export default function CardSyncPlanner({
                                                         href="#"
                                                         onClick={(e) => {
                                                           e.preventDefault();
-                                                          openCard(id);
+                                                          openCard(id, plan.id);
                                                         }}
                                                         className="hover:underline font-medium"
                                                       >
@@ -609,6 +773,15 @@ export default function CardSyncPlanner({
           )}
         </Disclosure>
       </div>
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+          duration={5000}
+        />
+      ))}
     </div>
   );
 }
