@@ -7,6 +7,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { createClient } from '@supabase/supabase-js';
 import Tooltip from '@/components/Tooltip';
 import Toast from '@/components/Toast';
+import FlashcardModal from '@/components/ai/AiFlashcardsComponents/FlashcardModal';
 import { cn } from '../../utils/cn';
 import { PlannerContext } from '../../lib/context';
 import { Flashcard, PlanFlashcard } from '../../lib/types';
@@ -34,6 +35,7 @@ interface CardSyncPlannerProps {
   userId: string | null;
   onError: (error: string) => void;
   flashcards: Flashcard[];
+  setFlashcards: React.Dispatch<React.SetStateAction<Flashcard[]>>;
   openCard: (flashcardId: number, planId: string | null) => void;
 }
 
@@ -51,6 +53,7 @@ export default function CardSyncPlanner({
   userId,
   onError,
   flashcards,
+  setFlashcards,
   openCard,
 }: CardSyncPlannerProps) {
   const { newPlanFlashcardIds, setNewPlanFlashcardIds } = useContext(PlannerContext);
@@ -63,6 +66,9 @@ export default function CardSyncPlanner({
   const [loading, setLoading] = useState(false);
   const [openPlanId, setOpenPlanId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<{ id: number; message: string; type: 'success' | 'error' }[]>([]);
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const toastIdRef = useRef(0);
 
   const addToast = useCallback((message: string, type: 'success' | 'error') => {
@@ -495,10 +501,204 @@ export default function CardSyncPlanner({
     setIsCreatingPlan(true);
   };
 
+  const closeCard = useCallback(() => {
+    setSelectedCardIndex(null);
+    setIsFlipped(false);
+    setCurrentPlanId(null);
+  }, []);
+
+  const flipCard = useCallback(() => {
+    setIsFlipped((prev) => !prev);
+  }, []);
+
+  const prevCard = useCallback(async () => {
+    if (flashcards.length === 0 || selectedCardIndex === null) return;
+
+    let planFlashcardIds: number[] = [];
+    if (currentPlanId) {
+      const { data: plan, error } = await supabase
+        .from('ai_card_sync_planner')
+        .select('flashcard_ids')
+        .eq('id', currentPlanId)
+        .single();
+      if (error) {
+        addToast(`Failed to fetch plan ${currentPlanId}: ${error.message}`, 'error');
+        onError(`Failed to fetch plan ${currentPlanId}: ${error.message}`);
+        return;
+      }
+      planFlashcardIds = plan.flashcard_ids || [];
+    } else {
+      planFlashcardIds = flashcards.map((f) => f.id);
+    }
+
+    if (planFlashcardIds.length === 0) return;
+
+    const currentFlashcardId = flashcards[selectedCardIndex].id;
+    const currentIndexInPlan = planFlashcardIds.indexOf(currentFlashcardId);
+    const prevIndexInPlan = currentIndexInPlan === 0 ? planFlashcardIds.length - 1 : currentIndexInPlan - 1;
+    const prevFlashcardId = planFlashcardIds[prevIndexInPlan];
+    const prevIndex = flashcards.findIndex((f) => f.id === prevFlashcardId);
+
+    if (prevIndex !== -1) {
+      setSelectedCardIndex(prevIndex);
+      setIsFlipped(false);
+    } else {
+      addToast(`Previous flashcard ID ${prevFlashcardId} not found`, 'error');
+      onError(`Previous flashcard ID ${prevFlashcardId} not found`);
+    }
+  }, [flashcards, selectedCardIndex, currentPlanId, addToast, onError]);
+
+  const nextCard = useCallback(async () => {
+    if (flashcards.length === 0 || selectedCardIndex === null) return;
+
+    let planFlashcardIds: number[] = [];
+    if (currentPlanId) {
+      const { data: plan, error } = await supabase
+        .from('ai_card_sync_planner')
+        .select('flashcard_ids')
+        .eq('id', currentPlanId)
+        .single();
+      if (error) {
+        addToast(`Failed to fetch plan ${currentPlanId}: ${error.message}`, 'error');
+        onError(`Failed to fetch plan ${currentPlanId}: ${error.message}`);
+        return;
+      }
+      planFlashcardIds = plan.flashcard_ids || [];
+    } else {
+      planFlashcardIds = flashcards.map((f) => f.id);
+    }
+
+    if (planFlashcardIds.length === 0) return;
+
+    const currentFlashcardId = flashcards[selectedCardIndex].id;
+    const currentIndexInPlan = planFlashcardIds.indexOf(currentFlashcardId);
+    const nextIndexInPlan = currentIndexInPlan === planFlashcardIds.length - 1 ? 0 : currentIndexInPlan + 1;
+    const nextFlashcardId = planFlashcardIds[nextIndexInPlan];
+    const nextIndex = flashcards.findIndex((f) => f.id === nextFlashcardId);
+
+    if (nextIndex !== -1) {
+      setSelectedCardIndex(nextIndex);
+      setIsFlipped(false);
+    } else {
+      addToast(`Next flashcard ID ${nextFlashcardId} not found`, 'error');
+      onError(`Next flashcard ID ${nextFlashcardId} not found`);
+    }
+  }, [flashcards, selectedCardIndex, currentPlanId, addToast, onError]);
+
+  const getStatusLabel = (status: string): string => {
+    const statusLabels: { [key: string]: string } = {
+      learning: 'Learning',
+      review: 'Review',
+      mastered: 'Mastered',
+      suspended: 'Suspended',
+      lapsed: 'Lapsed',
+      status: 'Status',
+    };
+    return statusLabels[status] || status;
+  };
+
+  const getNextStatus = (currentStatus: string | undefined): string => {
+    const statusCycle: { [key: string]: string } = {
+      learning: 'review',
+      review: 'mastered',
+      mastered: 'learning',
+      suspended: 'learning',
+      lapsed: 'learning',
+    };
+    return statusCycle[currentStatus || 'learning'] || 'learning';
+  };
+
+  const getStatusBackgroundClass = (status?: string) => {
+    switch (status) {
+      case 'learning':
+        return 'bg-sky-50';
+      case 'review':
+        return 'bg-yellow-50';
+      case 'mastered':
+        return 'bg-teal-50';
+      case 'suspended':
+        return 'bg-gray-50';
+      case 'lapsed':
+        return 'bg-red-50';
+      default:
+        return 'bg-gray-200';
+    }
+  };
+
+  const getStatusBorderClass = (status?: string) => {
+    switch (status) {
+      case 'learning':
+        return 'border-2 border-sky-100';
+      case 'review':
+        return 'border-2 border-yellow-100';
+      case 'mastered':
+        return 'border-2 border-teal-100';
+      case 'suspended':
+        return 'border-2 border-gray-100';
+      case 'lapsed':
+        return 'border-2 border-red-100';
+      default:
+        return 'border-2 border-gray-200';
+    }
+  };
+
+  const handleStatusTransition = useCallback(
+    async (flashcard: Flashcard) => {
+      const nextStatus = getNextStatus(flashcard.status);
+      const tableName = flashcard.user_id ? 'ai_user_flashcards_id' : 'ai_default_flashcards_id';
+      try {
+        const { data: existingStatus, error: selectError } = await supabase
+          .from('ai_flashcard_status')
+          .select('id, status')
+          .eq(tableName, flashcard.id)
+          .eq('user_id', userId)
+          .single();
+
+        if (selectError && selectError.code !== 'PGRST116') {
+          throw new Error(`Failed to check existing status for flashcard ${flashcard.id}: ${selectError.message}`);
+        }
+
+        if (existingStatus) {
+          const { error: updateError } = await supabase
+            .from('ai_flashcard_status')
+            .update({ status: nextStatus, updated_at: new Date().toISOString() })
+            .eq('id', existingStatus.id);
+          if (updateError) throw new Error(`Failed to update flashcard status for ${flashcard.id}: ${updateError.message}`);
+        } else {
+          const { error: insertError } = await supabase
+            .from('ai_flashcard_status')
+            .insert({ [tableName]: flashcard.id, user_id: userId, status: nextStatus, updated_at: new Date().toISOString() });
+          if (insertError) throw new Error(`Failed to insert flashcard status for ${flashcard.id}: ${insertError.message}`);
+        }
+
+        setFlashcards((prev) =>
+          prev.map((f) => (f.id === flashcard.id ? { ...f, status: nextStatus } : f))
+        );
+      } catch (error: any) {
+        addToast(error.message || 'Failed to update flashcard status.', 'error');
+        onError(error.message || 'Failed to update flashcard status.');
+        console.error('Status transition error:', error);
+      }
+    },
+    [userId, setFlashcards, addToast, onError]
+  );
+
+  const handleOpenCard = useCallback((flashcardId: number, planId: string | null) => {
+    const index = flashcards.findIndex((f) => f.id === flashcardId);
+    if (index !== -1) {
+      setSelectedCardIndex(index);
+      setIsFlipped(false);
+      setCurrentPlanId(planId);
+      openCard(flashcardId, planId);
+    } else {
+      addToast(`Flashcard with ID ${flashcardId} not found`, 'error');
+      onError(`Flashcard with ID ${flashcardId} not found`);
+    }
+  }, [flashcards, openCard, addToast, onError]);
+
   return (
     <div className="-mt-2 relative">
-      <div className="block items-center justify-between sm:py-0 ">
-
+      <div className="block items-center justify-between sm:py-0">
         <Disclosure defaultOpen>
           {({ open }) => (
             <div>
@@ -517,16 +717,12 @@ export default function CardSyncPlanner({
                 leaveTo="opacity-0 scale-95"
               >
                 <Disclosure.Panel className="w-full sm:p-4 p-2 sm:bg-gray-50 sm:border-2 border-gray-200 rounded-xl sm:min-h-[640px] sm:max-h-[640px] overflow-y-auto pb-16">
-   
-                  
                   {loading ? (
                     <div className="text-gray-700">Loading...</div>
                   ) : (
                     <>
-
                       {isCreatingPlan && (
                         <div className="mt-2 mb-4 p-2 sm:p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
-                          {/* Combined Plan Label, Period Listbox, and Buttons */}
                           <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-transparent transition-all duration-200">
                             <input
                               type="text"
@@ -583,9 +779,9 @@ export default function CardSyncPlanner({
                                 )}
                               </Listbox>
                               <Button
-                              variant='primary'
+                                variant='primary'
                                 onClick={handleCreatePlan}
-                                className="h-full py-2 px-2 sm:px-2 text-sm font-medium  border-none shadow-none focus:outline-none "
+                                className="h-full py-2 px-2 sm:px-2 text-sm font-medium border-none shadow-none focus:outline-none"
                               >
                                 Save
                               </Button>
@@ -605,7 +801,6 @@ export default function CardSyncPlanner({
                               </Button>
                             </div>
                           </div>
-                          {/* Custom Date Inputs */}
                           {selectedPeriod.value === 'custom' && (
                             <div className="flex gap-2">
                               <input
@@ -624,26 +819,27 @@ export default function CardSyncPlanner({
                           )}
                           <div className="flex flex-col gap-2 max-h-[9rem] overflow-y-auto">
                             {newPlanFlashcardIds.length === 0 ? (
-                             <p className="text-gray-500 text-center w-full">No flashcards selected</p>
+                              <p className="text-gray-500 text-center w-full">No flashcards selected</p>
                             ) : (
                               newPlanFlashcardIds.map((pf) => {
                                 const flashcard = flashcards.find((f) => f.id === pf.id);
                                 return (
-                                  <div
-                                    key={pf.id}
-                                    className=" flex items-center justify-between gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full"
-                                  >
-                                    <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${pf.id})`} variant="info-top">
-                                      <a
+                                                        <a
                                         href="#"
                                         onClick={(e) => {
                                           e.preventDefault();
-                                          openCard(pf.id, null);
+                                          handleOpenCard(pf.id, null);
                                         }}
                                         className="hover:underline font-medium flex-grow"
                                       >
+                                  <div
+                                    key={pf.id}
+                                    className="my-2 flex items-center justify-between gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full"
+                                  >
+                                    <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${pf.id})`} variant="info-top">
+                
                                         {flashcard ? truncateTopic(flashcard.topic) : `Unknown (ID: ${pf.id})`}
-                                      </a>
+                                      
                                     </Tooltip>
                                     <span className="flex items-center justify-center h-5 w-5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
                                       {pf.id}
@@ -655,6 +851,7 @@ export default function CardSyncPlanner({
                                       <XMarkIcon className="h-4 w-4" />
                                     </button>
                                   </div>
+                                  </a>
                                 );
                               })
                             )}
@@ -685,7 +882,7 @@ export default function CardSyncPlanner({
                                 <DisclosureButton
                                   variant="card-sync-planner"
                                   className={cn(
-                                    ' flex justify-between items-center py-1 space-x-4  w-full ',
+                                    'flex justify-between items-center py-1 space-x-4 w-full',
                                     getPlanStyles(plan)
                                   )}
                                   onClick={() => handleDisclosureToggle(plan.id)}
@@ -728,9 +925,17 @@ export default function CardSyncPlanner({
                                             return (
                                               <Draggable key={`${plan.id}-${id}`} draggableId={`${plan.id}-${id}`} index={index}>
                                                 {(provided, snapshot) => (
+                                                                                                        <a
+                                                        href="#"
+                                                        onClick={(e) => {
+                                                          e.preventDefault();
+                                                          handleOpenCard(id, plan.id);
+                                                        }}
+                                                        className="hover:underline font-medium flex-grow"
+                                                      >
                                                   <div
                                                     className={cn(
-                                                      'flex items-center justify-between gap-2 px-3 py-2 m-1 my-4  bg-gray-50 border border-gray-200 rounded-full text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full',
+                                                      'flex items-center justify-between gap-2 px-3 py-2 m-1 my-4 bg-gray-50 border border-gray-200 rounded-full text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full',
                                                       snapshot.isDragging && 'opacity-50'
                                                     )}
                                                     ref={provided.innerRef}
@@ -738,16 +943,9 @@ export default function CardSyncPlanner({
                                                     {...provided.dragHandleProps}
                                                   >
                                                     <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${id})`} variant="info-top">
-                                                      <a
-                                                        href="#"
-                                                        onClick={(e) => {
-                                                          e.preventDefault();
-                                                          openCard(id, plan.id);
-                                                        }}
-                                                        className="hover:underline font-medium flex-grow"
-                                                      >
+
                                                         {flashcard ? truncateTopic(flashcard.topic) : `Unknown (ID: ${id})`}
-                                                      </a>
+                                                      
                                                     </Tooltip>
                                                     <span className="flex items-center justify-center h-5 w-5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
                                                       {id}
@@ -759,12 +957,14 @@ export default function CardSyncPlanner({
                                                       <XMarkIcon className="h-4 w-4" />
                                                     </button>
                                                   </div>
+                                                  </a>
                                                 )}
                                               </Draggable>
                                             );
                                           })}
                                           {provided.placeholder}
                                         </div>
+                                        
                                       )}
                                     </Droppable>
                                   </Disclosure.Panel>
@@ -774,24 +974,19 @@ export default function CardSyncPlanner({
                           </Disclosure>
                         ))}
                       </DragDropContext>
-                                                        {/* "+ New Plan" Button at the Top */}
-        <div className="flex justify-center mb-4">
-          <Button onClick={handleNewPlanClick} variant="outline">
-            <PlusIcon className="mr-2 h-5 w-5" />
-            New Plan
-          </Button>
-        </div>
+                      <div className="flex justify-center mb-4">
+                        <Button onClick={handleNewPlanClick} variant="outline">
+                          <PlusIcon className="mr-2 h-5 w-5" />
+                          New Plan
+                        </Button>
+                      </div>
                     </>
                   )}
                 </Disclosure.Panel>
               </Transition>
-
-
             </div>
           )}
-          
         </Disclosure>
-
       </div>
       {toasts.map((toast) => (
         <Toast
@@ -802,6 +997,23 @@ export default function CardSyncPlanner({
           duration={5000}
         />
       ))}
+      {selectedCardIndex !== null && flashcards[selectedCardIndex] && (
+        <FlashcardModal
+          flashcard={flashcards[selectedCardIndex]}
+          closeCard={closeCard}
+          prevCard={prevCard}
+          nextCard={nextCard}
+          handleStatusTransition={handleStatusTransition}
+          getStatusLabel={getStatusLabel}
+          getNextStatus={getNextStatus}
+          getStatusBackgroundClass={getStatusBackgroundClass}
+          getStatusBorderClass={getStatusBorderClass}
+          isFlipped={isFlipped}
+          flipCard={flipCard}
+          flashcards={flashcards}
+          currentPlanId={currentPlanId}
+        />
+      )}
     </div>
   );
 }

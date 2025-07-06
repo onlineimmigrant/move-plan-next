@@ -16,3 +16,15 @@ export interface PlanFlashcard {
   id: number;
   isUserFlashcard: boolean;
 }
+
+
+export interface Plan {
+  id: string;
+  name: string;
+  label: string;
+  start_date: string;
+  end_date?: string | null;
+  flashcard_ids: number[];
+  status: string;
+  user_id: string;
+}
