@@ -77,6 +77,7 @@ export default function FlashcardModal({
 
   // Sync localIsFlipped with prop
   useEffect(() => {
+    console.log('Syncing localIsFlipped with isFlipped:', isFlipped);
     setLocalIsFlipped(isFlipped);
   }, [isFlipped]);
 
@@ -324,12 +325,25 @@ export default function FlashcardModal({
     setIsSwiping(false);
   };
 
-  // Get the current flashcard based on currentFlashcardId, ensuring it's from filteredFlashcards
+  // Handle flip action
+  const handleFlip = () => {
+    console.log('Handle flip called, current localIsFlipped:', localIsFlipped);
+    setLocalIsFlipped((prev) => {
+      const newFlipped = !prev;
+      console.log('Setting localIsFlipped to:', newFlipped);
+      flipCard();
+      return newFlipped;
+    });
+  };
+
+  // Get the current flashcard based on currentFlashcardId
   const currentFlashcard = filteredFlashcards.find((f) => f.id === currentFlashcardId) || flashcard;
   console.log(
     'Rendering flashcard:', currentFlashcard.id,
     'Name:', currentFlashcard.name,
-    'Is in filteredFlashcards:', filteredFlashcards.some(f => f.id === currentFlashcard.id)
+    'Is in filteredFlashcards:', filteredFlashcards.some(f => f.id === currentFlashcard.id),
+    'localIsFlipped:', localIsFlipped,
+    'isFlipped:', isFlipped
   );
 
   return (
@@ -408,7 +422,7 @@ export default function FlashcardModal({
         )}
         style={{ transformStyle: 'preserve-3d', touchAction: 'pan-y' }}
         onClick={(e) => e.stopPropagation()}
-        onDoubleClick={flipCard}
+        onDoubleClick={handleFlip}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -418,7 +432,7 @@ export default function FlashcardModal({
           {/* Close and Flip Buttons */}
           <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 bg-white">
             <button
-              onClick={flipCard}
+              onClick={handleFlip}
               className="z-10 cursor-pointer p-2 rounded-full bg-white text-sky-600 hover:bg-gray-100 transition-colors shadow-sm"
               aria-label="Flip card"
             >
