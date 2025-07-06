@@ -159,9 +159,9 @@ export default function CardSyncPlanner({
     const today = new Date();
     const startDate = new Date(plan.start_date);
     const endDate = plan.end_date ? new Date(plan.end_date) : startDate;
-    if (endDate < today) return 'bg-red-50 text-red-700 hover:bg-red-100 ring-red-700';
+    if (endDate < today) return 'border-2 border-red-300 bg-red-50 text-red-700 hover:bg-red-100 ring-red-700';
     if (endDate.toDateString() === today.toDateString()) return 'bg-yellow-50 text-yellow-700 ring-yellow-700 hover:bg-yellow-100';
-    return 'bg-green-50 text-green-700 ring-green-700 hover:bg-green-100';
+    return 'border-2 border-sky-300 bg-sky-50 text-sky-700 ring-sky-700 hover:bg-sky-100';
   }, []);
 
   const handleCreatePlan = useCallback(async () => {
@@ -497,12 +497,13 @@ export default function CardSyncPlanner({
 
   return (
     <div className="relative">
-      <div className="block items-center justify-between sm:py-0 py-16">
+      <div className="block items-center justify-between sm:py-0 ">
+
         <Disclosure defaultOpen>
           {({ open }) => (
             <div>
               <div className="mt-1 flex items-center justify-between mb-4">
-                <DisclosureButton  className='w-full sm:w-auto'>
+                <DisclosureButton className='w-full sm:w-auto'>
                   <span>CardSync Planner</span>
                   <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
                 </DisclosureButton>
@@ -520,9 +521,16 @@ export default function CardSyncPlanner({
                     <div className="text-gray-700">Loading...</div>
                   ) : (
                     <>
+                            {/* "+ New Plan" Button at the Top */}
+        <div className="flex justify-center mb-4">
+          <Button onClick={handleNewPlanClick} variant="outline">
+            <PlusIcon className="mr-2 h-5 w-5" />
+            New Plan
+          </Button>
+        </div>
                       {isCreatingPlan && (
-                        <div className="mt-2 mb-4 sm:p-4 bg-white sm:border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
-                          {/* Combined Plan Label and Period Listbox */}
+                        <div className="mt-2 mb-4 p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
+                          {/* Combined Plan Label, Period Listbox, and Buttons */}
                           <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-transparent transition-all duration-200">
                             <input
                               type="text"
@@ -532,14 +540,14 @@ export default function CardSyncPlanner({
                               className="w-full py-2 pl-3 pr-3 text-base font-light bg-transparent border-none focus:outline-none"
                               maxLength={20}
                             />
-                            <div className="flex items-center justify-end">
+                            <div className="flex items-center justify-end gap-2">
                               <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
                                 {({ open }) => (
                                   <div className="relative">
                                     <Tooltip content="Select Period">
                                       <ListboxButton
                                         variant="outline"
-                                        className="flex justify-center h-full py-2 sm:px-4 px-0 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none rounded-l-lg focus:outline-none hover:bg-gray-100 min-w-[100px]"
+                                        className="flex justify-center h-full py-2 sm:px-2 px-0 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none rounded-l-lg focus:outline-none hover:bg-gray-100 min-w-[80px]"
                                       >
                                         <span className="line-clamp-1">{selectedPeriod.label}</span>
                                       </ListboxButton>
@@ -578,6 +586,27 @@ export default function CardSyncPlanner({
                                   </div>
                                 )}
                               </Listbox>
+                              <Button
+                              variant='primary'
+                                onClick={handleCreatePlan}
+                                className="h-full py-2 px-2 sm:px-2 text-sm font-medium  border-none shadow-none focus:outline-none "
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setNewPlanFlashcardIds([]);
+                                  setIsCreatingPlan(false);
+                                  setSelectedPeriod(periods[0]);
+                                  setCustomStartDate(null);
+                                  setCustomEndDate(null);
+                                  setPlanLabel('');
+                                }}
+                                className="h-full py-2 px-2 sm:px-2 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none focus:outline-none hover:bg-gray-100"
+                              >
+                                <XMarkIcon className="h-5 w-5 text-gray-600" />
+                              </Button>
                             </div>
                           </div>
                           {/* Custom Date Inputs */}
@@ -597,16 +626,16 @@ export default function CardSyncPlanner({
                               />
                             </div>
                           )}
-                          <div className="flex flex-wrap gap-2 max-h-[9rem] overflow-y-auto">
+                          <div className="flex flex-col gap-2 max-h-[9rem] overflow-y-auto">
                             {newPlanFlashcardIds.length === 0 ? (
-                              <p className="text-gray-500 text-center w-full">No flashcards selected</p>
+                             <p className="text-gray-500 text-center w-full">No flashcards selected</p>
                             ) : (
                               newPlanFlashcardIds.map((pf) => {
                                 const flashcard = flashcards.find((f) => f.id === pf.id);
                                 return (
                                   <div
                                     key={pf.id}
-                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-gray-800 text-sm shadow-sm hover:bg-gray-100"
+                                    className="flex items-center justify-between gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full"
                                   >
                                     <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${pf.id})`} variant="info-top">
                                       <a
@@ -615,7 +644,7 @@ export default function CardSyncPlanner({
                                           e.preventDefault();
                                           openCard(pf.id, null);
                                         }}
-                                        className="hover:underline font-medium"
+                                        className="hover:underline font-medium flex-grow"
                                       >
                                         {flashcard ? truncateTopic(flashcard.topic) : `Unknown (ID: ${pf.id})`}
                                       </a>
@@ -633,24 +662,6 @@ export default function CardSyncPlanner({
                                 );
                               })
                             )}
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button onClick={handleCreatePlan}>
-                              Save
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setNewPlanFlashcardIds([]);
-                                setIsCreatingPlan(false);
-                                setSelectedPeriod(periods[0]);
-                                setCustomStartDate(null);
-                                setCustomEndDate(null);
-                                setPlanLabel('');
-                              }}
-                            >
-                              Cancel
-                            </Button>
                           </div>
                         </div>
                       )}
@@ -678,7 +689,7 @@ export default function CardSyncPlanner({
                                 <DisclosureButton
                                   variant="card-sync-planner"
                                   className={cn(
-                                    'flex justify-between items-center py-1 space-x-4',
+                                    'flex justify-between items-center py-1 space-x-4 w-full ',
                                     getPlanStyles(plan)
                                   )}
                                   onClick={() => handleDisclosureToggle(plan.id)}
@@ -723,7 +734,7 @@ export default function CardSyncPlanner({
                                                 {(provided, snapshot) => (
                                                   <div
                                                     className={cn(
-                                                      'inline-flex items-center gap-2 px-3 py-1.5 m-1 rounded-full bg-gray-50 border border-gray-200 text-gray-800 text-sm shadow-sm hover:bg-gray-100',
+                                                      'flex items-center justify-between gap-2 px-3 py-1.5 m-1 bg-gray-50 border border-gray-200 rounded-md text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full',
                                                       snapshot.isDragging && 'opacity-50'
                                                     )}
                                                     ref={provided.innerRef}
@@ -737,7 +748,7 @@ export default function CardSyncPlanner({
                                                           e.preventDefault();
                                                           openCard(id, plan.id);
                                                         }}
-                                                        className="hover:underline font-medium"
+                                                        className="hover:underline font-medium flex-grow"
                                                       >
                                                         {flashcard ? truncateTopic(flashcard.topic) : `Unknown (ID: ${id})`}
                                                       </a>
@@ -767,14 +778,7 @@ export default function CardSyncPlanner({
                           </Disclosure>
                         ))}
                       </DragDropContext>
-                      <div className="mt-16 gap-4">
-                        <div className="flex justify-center">
-                          <Button onClick={handleNewPlanClick} variant='outline'>
-                            <PlusIcon className="mr-2 h-5 w-5" />
-                            New Plan
-                          </Button>
-                        </div>
-                      </div>
+     
                     </>
                   )}
                 </Disclosure.Panel>

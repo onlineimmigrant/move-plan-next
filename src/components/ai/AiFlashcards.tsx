@@ -133,7 +133,7 @@ export default function AiFlashcards({
   };
 
   return (
-    <div className="relative">
+    <div className="-mt-2 sm:mt-0 relative">
       <Disclosure defaultOpen>
         {({ open }) => (
           <div>
@@ -151,18 +151,18 @@ export default function AiFlashcards({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Disclosure.Panel className="sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl">
-<FlashcardSearch
-  searchQuery={searchQuery}
-  setSearchQuery={setSearchQuery}
-  activeStatus={activeStatus}
-  handleStatusSelect={setActiveStatus}
-  activeTopic={activeTopic}
-  handleTopicSelect={setActiveTopic}
-  topics={topics}
-  getStatusLabel={getStatusLabel}
-  filteredFlashcards={filteredFlashcards}
-/>
+              <Disclosure.Panel className=" sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl">
+                <FlashcardSearch
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  activeStatus={activeStatus}
+                  handleStatusSelect={setActiveStatus}
+                  activeTopic={activeTopic}
+                  handleTopicSelect={setActiveTopic}
+                  topics={topics}
+                  getStatusLabel={getStatusLabel}
+                  filteredFlashcards={filteredFlashcards}
+                />
                 {loading ? (
                   <div className="text-gray-700">Loading...</div>
                 ) : filteredFlashcards.length === 0 ? (

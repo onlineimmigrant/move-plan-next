@@ -401,7 +401,7 @@ export default function MemoryHub() {
   return (
     <PlannerContext.Provider value={plannerContextValue}>
       <div>
-        <div className="mx-auto flex justify-between items-center p-4">
+        <div className="mx-auto flex justify-between items-center px-4 sm:py-4">
           <Tooltip content="Account" variant="right">
             <Link href="/account" className="">
               <button className="cursor-pointer hover:bg-gray-200 text-sky-600 p-2 rounded-full hover:bg-sky-blue-dark transition-colors">
@@ -410,7 +410,7 @@ export default function MemoryHub() {
             </Link>
           </Tooltip>
           <Tooltip content="Memory Hub">
-            <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 relative">
+            <h1 className="text-lg sm:text-xl font-bold text-center text-gray-800 relative">
               Memory Hub
               <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
             </h1>
@@ -420,7 +420,7 @@ export default function MemoryHub() {
               onClick={() => setIsHelpModalOpen(true)}
               className="cursor-pointer hover:bg-gray-200 text-sky-600 rounded-full hover:bg-sky-blue-dark transition-colors"
             >
-              <QuestionMarkCircleIcon className="w-5 w-5" />
+              <QuestionMarkCircleIcon className="w-5 h-5" />
             </button>
           </Tooltip>
           <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
