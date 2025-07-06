@@ -4,6 +4,7 @@ import { Disclosure, Transition } from '@headlessui/react';
 import FlashcardSearch from './AiFlashcardsComponents/FlashcardSearch';
 import FlashcardList from './AiFlashcardsComponents/FlashcardList';
 import EditFlashcardModal from './AiFlashcardsComponents/EditFlashcardModal';
+import FlashcardModal from './AiFlashcardsComponents/FlashcardModal';
 import { useFlashcards } from '../../lib/hooks/useFlashcards';
 import { cn } from '../../utils/cn';
 import { PlannerContext } from '../../lib/context';
@@ -17,14 +18,14 @@ interface AiFlashcardsProps {
   setFlashcards: (flashcards: Flashcard[]) => void;
   openCardById: (flashcardId: number) => void;
   closeCard: () => void;
-  prevCard: () => void;
-  nextCard: () => void;
+  prevCard: () => Promise<void>;
+  nextCard: () => Promise<void>;
   flipCard: () => void;
   getStatusLabel: (status: string) => string;
   getNextStatus: (currentStatus: string | undefined) => string;
   getStatusBackgroundClass: (status?: string) => string;
   getStatusBorderClass: (status?: string) => string;
-  handleStatusTransition: (flashcard: Flashcard) => void;
+  handleStatusTransition: (flashcard: Flashcard) => Promise<void>;
 }
 
 const FLASHCARDS_PER_PAGE = 4;
@@ -52,23 +53,11 @@ export default function AiFlashcards({
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
   const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    if (flashcards) {
-      console.log('Flashcards updated in AiFlashcards:', flashcards.map(f => f.id));
-      setFlashcards(flashcards);
-      onFilteredFlashcards(flashcards.map((f) => f.id));
-    }
-  }, [flashcards, setFlashcards, onFilteredFlashcards]);
-
-  useEffect(() => {
-    if (error) {
-      onError(error);
-    }
-  }, [error, onError]);
+  const [selectedFlashcardId, setSelectedFlashcardId] = useState<number | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const filteredFlashcards = useMemo(() => {
-    console.log('Recomputing filteredFlashcards, flashcards:', flashcards.map(f => f.id));
+    console.log('Recomputing filteredFlashcards, flashcards:', flashcards.map(f => ({ id: f.id, name: f.name })));
     let result = flashcards;
 
     if (searchQuery) {
@@ -86,23 +75,29 @@ export default function AiFlashcards({
       result = result.filter((flashcard) => flashcard.topic === activeTopic);
     }
 
+    console.log('Filtered flashcards:', result.map(f => ({ id: f.id, name: f.name })));
     return result;
   }, [searchQuery, activeStatus, activeTopic, flashcards]);
 
-  const hasMore = filteredFlashcards.length > page * FLASHCARDS_PER_PAGE;
-
-  const getStatusBgClass = (status?: string) => {
-    switch (status) {
-      case 'learning':
-      case 'review':
-      case 'mastered':
-      case 'suspended':
-      case 'lapsed':
-        return 'bg-gray-100';
-      default:
-        return 'bg-gray-100';
+  useEffect(() => {
+    if (flashcards) {
+      console.log('Flashcards updated in AiFlashcards:', flashcards.map(f => ({ id: f.id, name: f.name })));
+      setFlashcards(flashcards);
     }
-  };
+  }, [flashcards, setFlashcards]);
+
+  useEffect(() => {
+    console.log('Calling onFilteredFlashcards with:', filteredFlashcards.map(f => ({ id: f.id, name: f.name })));
+    onFilteredFlashcards(filteredFlashcards.map((f) => f.id));
+  }, [filteredFlashcards, onFilteredFlashcards]);
+
+  useEffect(() => {
+    if (error) {
+      onError(error);
+    }
+  }, [error, onError]);
+
+  const hasMore = filteredFlashcards.length > page * FLASHCARDS_PER_PAGE;
 
   const openEditModal = (flashcard: Flashcard) => {
     if (!flashcard.user_id) return;
@@ -132,13 +127,40 @@ export default function AiFlashcards({
     }
   };
 
+  const handleOpenCard = (flashcardId: number) => {
+    const isValidId = filteredFlashcards.some((f) => f.id === flashcardId);
+    const firstFilteredId = filteredFlashcards[0]?.id;
+    if (isValidId) {
+      console.log('Opening flashcard ID:', flashcardId, 'from filteredFlashcards:', filteredFlashcards.map(f => ({ id: f.id, name: f.name })));
+      setSelectedFlashcardId(flashcardId);
+      setIsFlipped(false);
+      openCardById(flashcardId);
+    } else if (firstFilteredId) {
+      console.log('Flashcard ID', flashcardId, 'not in filtered set, opening first filtered flashcard:', firstFilteredId);
+      setSelectedFlashcardId(firstFilteredId);
+      setIsFlipped(false);
+      openCardById(firstFilteredId);
+    } else {
+      console.log('No filtered flashcards available, not opening modal');
+      onError('No flashcards match the current filters');
+      setSelectedFlashcardId(null);
+    }
+  };
+
+  const handleCloseCard = () => {
+    console.log('Closing modal, setting selectedFlashcardId to null');
+    setSelectedFlashcardId(null);
+    setIsFlipped(false);
+    closeCard();
+  };
+
   return (
     <div className="-mt-2 sm:mt-0 relative">
       <Disclosure defaultOpen>
         {({ open }) => (
           <div>
             <div className="flex justify-between space-x-2 items-center mb-4">
-              <DisclosureButton  className='w-full sm:w-auto'>
+              <DisclosureButton className="w-full sm:w-auto">
                 Flashcards
                 <span className="ml-2 font-bold text-sky-500">{open ? '−' : '+'}</span>
               </DisclosureButton>
@@ -172,12 +194,12 @@ export default function AiFlashcards({
                 ) : (
                   <FlashcardList
                     flashcards={filteredFlashcards}
-                    openCard={openCardById}
+                    openCard={handleOpenCard}
                     openEditModal={openEditModal}
                     deleteFlashcard={deleteFlashcard}
                     updateFlashcardStatus={updateFlashcardStatus}
                     getStatusLabel={getStatusLabel}
-                    getStatusBgClass={getStatusBgClass}
+                    getStatusBgClass={getStatusBackgroundClass}
                     getStatusBorderClass={getStatusBorderClass}
                     getStatusBackgroundClass={getStatusBackgroundClass}
                     page={page}
@@ -202,6 +224,27 @@ export default function AiFlashcards({
           closeEditModal={closeEditModal}
           updateFlashcard={updateFlashcard}
           onError={onError}
+        />
+      )}
+
+      {selectedFlashcardId && (
+        <FlashcardModal
+          flashcard={filteredFlashcards.find((f) => f.id === selectedFlashcardId) || filteredFlashcards[0]}
+          closeCard={handleCloseCard}
+          prevCard={prevCard}
+          nextCard={nextCard}
+          handleStatusTransition={handleStatusTransition}
+          getStatusLabel={getStatusLabel}
+          getNextStatus={getNextStatus}
+          getStatusBackgroundClass={getStatusBackgroundClass}
+          getStatusBorderClass={getStatusBorderClass}
+          isFlipped={isFlipped}
+          flipCard={flipCard}
+          flashcards={flashcards}
+          currentPlanId={null}
+          filteredFlashcards={filteredFlashcards}
+          activeTopic={activeTopic}
+          updateFlashcardStatus={updateFlashcardStatus}
         />
       )}
     </div>
