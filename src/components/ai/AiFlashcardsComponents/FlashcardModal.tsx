@@ -15,9 +15,9 @@ const supabase = createClient(
 interface FlashcardModalProps {
   flashcard: Flashcard;
   closeCard: () => void;
-  prevCard: () => void;
-  nextCard: () => void;
-  handleStatusTransition: (flashcard: Flashcard) => void;
+  prevCard: () => Promise<void> | void;
+  nextCard: () => Promise<void> | void;
+  handleStatusTransition: (flashcard: Flashcard) => Promise<void> | void;
   getStatusLabel: (status: string) => string;
   getNextStatus: (status?: string) => string;
   getStatusBackgroundClass: (status?: string) => string;
@@ -26,6 +26,9 @@ interface FlashcardModalProps {
   flipCard: () => void;
   flashcards: Flashcard[];
   currentPlanId: string | null;
+  filteredFlashcards?: Flashcard[];
+  activeTopic?: string | null;
+  updateFlashcardStatus?: (flashcardId: number, isUserFlashcard: boolean, newStatus: string) => Promise<void>;
 }
 
 export default function FlashcardModal({
@@ -42,13 +45,18 @@ export default function FlashcardModal({
   flipCard,
   flashcards,
   currentPlanId,
+  filteredFlashcards = flashcards,
+  activeTopic = null,
+  updateFlashcardStatus,
 }: FlashcardModalProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [localIsFlipped, setLocalIsFlipped] = useState(isFlipped);
-  const [currentFlashcardId, setCurrentFlashcardId] = useState(flashcard.id);
+  const [currentFlashcardId, setCurrentFlashcardId] = useState<number>(
+    filteredFlashcards[0]?.id || flashcard.id
+  );
   const [planInfo, setPlanInfo] = useState<{ label: string; name: string } | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [filteredFlashcardIds, setFilteredFlashcardIds] = useState<number[]>([]);
+  const [filteredFlashcardIds, setFilteredFlashcardIds] = useState<number[]>(filteredFlashcards.map((f) => f.id));
   const [filterMessage, setFilterMessage] = useState<string | null>(null);
   const [isFiltering, setIsFiltering] = useState(false);
   const [statusCounts, setStatusCounts] = useState<{ [key: string]: number }>({
@@ -72,55 +80,85 @@ export default function FlashcardModal({
     setLocalIsFlipped(isFlipped);
   }, [isFlipped]);
 
-  // Fetch plan info and initialize filtered flashcard IDs
+  // Initialize filteredFlashcardIds and ensure currentFlashcardId is valid
   useEffect(() => {
-    const fetchPlanInfo = async () => {
-      if (!currentPlanId) {
-        setPlanInfo(null);
-        setFilteredFlashcardIds(flashcards.map((f) => f.id));
-        console.log('Initialized filteredFlashcardIds (no plan):', flashcards.map((f) => f.id));
-        if (flashcards.length > 0 && !flashcards.some((f) => f.id === currentFlashcardId)) {
-          console.log('Setting currentFlashcardId to first flashcard ID:', flashcards[0].id);
-          setCurrentFlashcardId(flashcards[0].id);
-        }
-        return;
-      }
+    const initializeFilteredFlashcards = async () => {
+      setIsFiltering(true);
+      setFilterMessage(null);
+      let validIds: number[] = [];
 
-      try {
-        const { data, error } = await supabase
-          .from('ai_card_sync_planner')
-          .select('label, name, flashcard_ids')
-          .eq('id', currentPlanId)
-          .single();
-        if (error) {
-          console.error(`Failed to fetch plan info for ID ${currentPlanId}: ${error.message}`);
-          setPlanInfo(null);
-          setFilteredFlashcardIds([]);
-          setFilterMessage('Failed to load plan data');
-        } else {
+      if (currentPlanId) {
+        try {
+          const { data, error } = await supabase
+            .from('ai_card_sync_planner')
+            .select('label, name, flashcard_ids')
+            .eq('id', currentPlanId)
+            .single();
+          if (error) {
+            console.error(`Failed to fetch plan info for ID ${currentPlanId}: ${error.message}`);
+            setPlanInfo(null);
+            setFilteredFlashcardIds([]);
+            setFilterMessage('Failed to load plan data');
+            setIsFiltering(false);
+            return;
+          }
           setPlanInfo({ label: data.label || 'Plan', name: data.name });
-          const planFlashcardIds = data.flashcard_ids || [];
-          const validIds = planFlashcardIds.filter((id: number) =>
+          validIds = (data.flashcard_ids || []).filter((id: number) =>
             flashcards.some((f) => f.id === id)
           );
-          setFilteredFlashcardIds(validIds);
-          console.log('Initialized filteredFlashcardIds:', validIds);
-          if (validIds.length > 0 && !validIds.includes(currentFlashcardId)) {
-            console.log('Setting currentFlashcardId to first valid ID:', validIds[0]);
-            setCurrentFlashcardId(validIds[0]);
-          }
+        } catch (error: any) {
+          console.error('Fetch plan info error:', error);
+          setPlanInfo(null);
+          setFilteredFlashcardIds([]);
+          setFilterMessage('Error loading plan data');
+          setIsFiltering(false);
+          return;
         }
-      } catch (error: any) {
-        console.error('Fetch plan info error:', error);
-        setPlanInfo(null);
-        setFilteredFlashcardIds([]);
-        setFilterMessage('Error loading plan data');
+      } else {
+        validIds = filteredFlashcards.map((f) => f.id);
       }
-    };
-    fetchPlanInfo();
-  }, [currentPlanId, flashcards, currentFlashcardId]);
 
-  // Update filtered flashcard IDs and status counts when status or plan changes
+      // Set filteredFlashcardIds
+      setFilteredFlashcardIds(validIds);
+      console.log(
+        'Initialized filteredFlashcardIds:', validIds,
+        'Filtered flashcards:', filteredFlashcards.map(f => ({ id: f.id, name: f.name })),
+        'Initial flashcard ID:', flashcard.id,
+        'Current flashcard ID:', currentFlashcardId
+      );
+
+      // Ensure currentFlashcardId is valid
+      if (validIds.length > 0 && !validIds.includes(currentFlashcardId)) {
+        console.log('Current flashcard ID', currentFlashcardId, 'not in filtered set, resetting to:', validIds[0]);
+        setCurrentFlashcardId(validIds[0]);
+      } else if (validIds.length === 0) {
+        setFilterMessage('No flashcards match the current filters');
+      }
+
+      // Calculate status counts
+      const counts: { [key: string]: number } = {
+        all: validIds.length,
+        learning: 0,
+        review: 0,
+        mastered: 0,
+        suspended: 0,
+        lapsed: 0,
+      };
+      validIds.forEach((id) => {
+        const f = flashcards.find((f) => f.id === id);
+        if (f?.status) {
+          counts[f.status] = (counts[f.status] || 0) + 1;
+        } else {
+          counts.learning = (counts.learning || 0) + 1;
+        }
+      });
+      setStatusCounts(counts);
+      setIsFiltering(false);
+    };
+    initializeFilteredFlashcards();
+  }, [currentPlanId, filteredFlashcards, flashcards, flashcard.id]);
+
+  // Update filteredFlashcardIds when selectedStatus changes
   useEffect(() => {
     const updateFilteredFlashcards = async () => {
       setIsFiltering(true);
@@ -152,7 +190,31 @@ export default function FlashcardModal({
           return;
         }
       } else {
-        validIds = flashcards.map((f) => f.id);
+        validIds = filteredFlashcards.map((f) => f.id);
+      }
+
+      // Apply status filter
+      if (selectedStatus !== 'all') {
+        validIds = validIds.filter((id: number) => {
+          const f = flashcards.find((f) => f.id === id);
+          return f?.status === selectedStatus;
+        });
+      }
+
+      // Set filteredFlashcardIds
+      setFilteredFlashcardIds(validIds);
+      console.log(
+        `Filtered IDs (${selectedStatus}):`, validIds,
+        'Filtered flashcards:', filteredFlashcards.map(f => ({ id: f.id, name: f.name })),
+        'Current flashcard ID:', currentFlashcardId
+      );
+
+      // Ensure currentFlashcardId is valid
+      if (validIds.length > 0 && !validIds.includes(currentFlashcardId)) {
+        console.log('Current flashcard ID', currentFlashcardId, 'not in filtered set, resetting to:', validIds[0]);
+        setCurrentFlashcardId(validIds[0]);
+      } else if (validIds.length === 0) {
+        setFilterMessage(`No flashcards with status "${getStatusLabel(selectedStatus)}"`);
       }
 
       // Calculate status counts
@@ -169,50 +231,24 @@ export default function FlashcardModal({
         if (f?.status) {
           counts[f.status] = (counts[f.status] || 0) + 1;
         } else {
-          counts.learning = (counts.learning || 0) + 1; // Default to 'learning' if status is undefined
+          counts.learning = (counts.learning || 0) + 1;
         }
       });
       setStatusCounts(counts);
-
-      if (selectedStatus === 'all') {
-        setFilteredFlashcardIds(validIds);
-        console.log('Filtered IDs (all):', validIds);
-        if (validIds.length > 0 && !validIds.includes(currentFlashcardId)) {
-          console.log('Setting currentFlashcardId to first valid ID (all):', validIds[0]);
-          setIsSaved(false);
-          setLocalIsFlipped(false);
-          setCurrentFlashcardId(validIds[0]);
-        }
-      } else {
-        const filteredIds = validIds.filter((id: number) => {
-          const f = flashcards.find((f) => f.id === id);
-          return f?.status === selectedStatus;
-        });
-        setFilteredFlashcardIds(filteredIds);
-        console.log(`Filtered IDs (${selectedStatus}):`, filteredIds);
-        if (filteredIds.length === 0) {
-          setFilterMessage(`No flashcards with status "${getStatusLabel(selectedStatus)}"`);
-        } else if (!filteredIds.includes(currentFlashcardId)) {
-          console.log('Setting currentFlashcardId to first filtered ID:', filteredIds[0]);
-          setIsSaved(false);
-          setLocalIsFlipped(false);
-          setCurrentFlashcardId(filteredIds[0]);
-        }
-      }
       setIsFiltering(false);
     };
     updateFilteredFlashcards();
-  }, [selectedStatus, currentPlanId, flashcards, getStatusLabel, currentFlashcardId]);
+  }, [selectedStatus, currentPlanId, filteredFlashcards, flashcards, getStatusLabel, currentFlashcardId]);
 
-  const handleSave = (currentFlashcard: Flashcard) => {
+  const handleSave = async (currentFlashcard: Flashcard) => {
     setIsSaved(true);
-    handleStatusTransition(currentFlashcard);
+    await handleStatusTransition(currentFlashcard);
     console.log('Status updated for flashcard:', currentFlashcard.id);
     setTimeout(() => {
       setIsSaved(false);
       if (filteredFlashcardIds.length > 1) {
         console.log('Triggering navigation to next card after status update');
-        handleNextCard();
+        nextCard();
       }
     }, 1500);
   };
@@ -221,28 +257,38 @@ export default function FlashcardModal({
   const isNavigationDisabled = filteredFlashcardIds.length <= 1;
 
   // Navigation handlers
-  const handlePrevCard = () => {
+  const handlePrevCard = async () => {
     if (isNavigationDisabled || isFiltering) return;
     const currentIndex = filteredFlashcardIds.indexOf(currentFlashcardId);
     const prevIndex = currentIndex === 0 ? filteredFlashcardIds.length - 1 : currentIndex - 1;
     const prevFlashcardId = filteredFlashcardIds[prevIndex];
-    console.log('Navigating to prev card:', prevFlashcardId);
+    console.log(
+      'Navigating to prev card:', prevFlashcardId,
+      'Filtered IDs:', filteredFlashcardIds,
+      'Current flashcard ID:', currentFlashcardId,
+      'Filtered flashcards:', filteredFlashcards.map(f => ({ id: f.id, name: f.name }))
+    );
     setIsSaved(false);
     setLocalIsFlipped(false);
     setCurrentFlashcardId(prevFlashcardId);
-    prevCard();
+    await prevCard();
   };
 
-  const handleNextCard = () => {
+  const handleNextCard = async () => {
     if (isNavigationDisabled || isFiltering) return;
     const currentIndex = filteredFlashcardIds.indexOf(currentFlashcardId);
     const nextIndex = currentIndex === filteredFlashcardIds.length - 1 ? 0 : currentIndex + 1;
     const nextFlashcardId = filteredFlashcardIds[nextIndex];
-    console.log('Navigating to next card:', nextFlashcardId);
+    console.log(
+      'Navigating to next card:', nextFlashcardId,
+      'Filtered IDs:', filteredFlashcardIds,
+      'Current flashcard ID:', currentFlashcardId,
+      'Filtered flashcards:', filteredFlashcards.map(f => ({ id: f.id, name: f.name }))
+    );
     setIsSaved(false);
     setLocalIsFlipped(false);
     setCurrentFlashcardId(nextFlashcardId);
-    nextCard();
+    await nextCard();
   };
 
   // Swipe navigation handlers
@@ -258,7 +304,7 @@ export default function FlashcardModal({
     setTouchEndX(e.touches[0].clientX);
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = async () => {
     if (!isSwiping || touchStartX === null || touchEndX === null) return;
     const swipeDistance = touchStartX - touchEndX;
     const minSwipeDistance = 50; // Minimum distance for a swipe to register
@@ -266,10 +312,10 @@ export default function FlashcardModal({
     if (Math.abs(swipeDistance) > minSwipeDistance) {
       if (swipeDistance > 0) {
         // Swipe left: go to next card
-        handleNextCard();
+        await handleNextCard();
       } else {
         // Swipe right: go to previous card
-        handlePrevCard();
+        await handlePrevCard();
       }
     }
 
@@ -278,17 +324,26 @@ export default function FlashcardModal({
     setIsSwiping(false);
   };
 
-  // Get the current flashcard based on currentFlashcardId
-  const currentFlashcard = flashcards.find((f) => f.id === currentFlashcardId) || flashcard;
+  // Get the current flashcard based on currentFlashcardId, ensuring it's from filteredFlashcards
+  const currentFlashcard = filteredFlashcards.find((f) => f.id === currentFlashcardId) || flashcard;
+  console.log(
+    'Rendering flashcard:', currentFlashcard.id,
+    'Name:', currentFlashcard.name,
+    'Is in filteredFlashcards:', filteredFlashcards.some(f => f.id === currentFlashcard.id)
+  );
 
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white bg-opacity-80 p-4 sm:p-6"
-      onClick={closeCard}
+      onClick={(e) => {
+        e.stopPropagation();
+        console.log('Clicked outside modal, triggering closeCard');
+        closeCard();
+      }}
     >
-      {/* Plan Label, Name, and Status Filters */}
-      {planInfo && (
-        <div className="fixed top-4 left-0 right-0 z-60 items-center gap-2">
+      {/* Header and Status Filters */}
+      <div className="fixed top-4 left-0 right-0 z-60 items-center gap-2">
+        {planInfo && (
           <div className="mb-2 sm:mb-4 px-4 sm:px-0 flex mx-auto max-w-xl items-center justify-between sm:justify-center text-base gap-8">
             <Tooltip content="Plan" variant="bottom">
               <span className="font-bold text-gray-900">
@@ -299,40 +354,51 @@ export default function FlashcardModal({
               <span className="font-medium text-gray-400">{planInfo.name}</span>
             </Tooltip>
           </div>
-          <div className="mt-4 pb-4 flex overflow-x-auto flex-nowrap gap-4 px-4 sm:flex-wrap sm:justify-center sm:gap-4">
-            {statusOptions.map((status) => (
-              <Button
-                variant="badge_primary"
-                key={status}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Clicked status:', status);
-                  setSelectedStatus(status);
-                }}
-                className={cn(
-                  'inline-flex items-center gap-2 px-2 py-1 rounded-full text-base sm:text-sm font-medium bg-gray-50 text-gray-900 shadow-sm whitespace-nowrap',
-                  selectedStatus === status ? 'bg-sky-100 text-sky-800' : 'hover:bg-sky-50'
-                )}
-                aria-label={`Filter by ${getStatusLabel(status)}`}
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                {getStatusLabel(status)}
-                <span
-                  className={cn(
-                    'flex items-center justify-center h-5 w-5 rounded-full text-xs font-semibold',
-                    selectedStatus === status ? 'bg-sky-200 text-sky-900' : 'bg-gray-200 text-gray-800'
-                  )}
-                >
-                  {statusCounts[status]}
-                </span>
-              </Button>
-            ))}
+        )}
+        {!currentPlanId && (
+          <div className="mb-2 sm:mb-4 px-4 sm:px-0 flex mx-auto max-w-xl items-center justify-between sm:justify-center text-base gap-8">
+            <Tooltip content="Flashcards" variant="bottom">
+              <span className="font-bold text-gray-900">Flashcards</span>
+            </Tooltip>
+            <Tooltip content="Selected Topic" variant="bottom">
+              <span className="font-medium text-gray-400">{activeTopic || 'All Topics'}</span>
+            </Tooltip>
           </div>
+        )}
+        <div className="mt-4 pb-4 flex overflow-x-auto flex-nowrap gap-4 px-4 sm:flex-wrap sm:justify-center sm:gap-4">
+          {statusOptions.map((status) => (
+            <Button
+              variant="badge_primary"
+              key={status}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Clicked status:', status);
+                setSelectedStatus(status);
+              }}
+              className={cn(
+                'inline-flex items-center gap-2 px-2 py-1 rounded-full text-base sm:text-sm font-medium bg-gray-50 text-gray-900 shadow-sm whitespace-nowrap',
+                selectedStatus === status ? 'bg-sky-100 text-sky-800' : 'hover:bg-sky-50'
+              )}
+              aria-label={`Filter by ${getStatusLabel(status)}`}
+              disabled={statusCounts[status] === 0}
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              {getStatusLabel(status)}
+              <span
+                className={cn(
+                  'flex items-center justify-center h-5 w-5 rounded-full text-xs font-semibold',
+                  selectedStatus === status ? 'bg-sky-200 text-sky-900' : 'bg-gray-200 text-gray-800'
+                )}
+              >
+                {statusCounts[status]}
+              </span>
+            </Button>
+          ))}
         </div>
-      )}
+      </div>
       <div
         className={cn(
           'relative w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-xl max-h-[80vh] rounded-xl shadow-2xl bg-white transform transition-all duration-300 overflow-hidden',
@@ -359,7 +425,11 @@ export default function FlashcardModal({
               <ArrowPathIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
             <button
-              onClick={closeCard}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('Clicked close button, triggering closeCard');
+                closeCard();
+              }}
               className="z-10 cursor-pointer p-2 rounded-full bg-white text-sky-600 hover:bg-gray-100 transition-colors shadow-sm"
               aria-label="Close"
             >
