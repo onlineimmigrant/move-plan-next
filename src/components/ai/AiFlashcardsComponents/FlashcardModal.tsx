@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { XMarkIcon, ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../../utils/cn';
 import { Flashcard } from '../../../lib/types';
@@ -59,6 +59,10 @@ export default function FlashcardModal({
     suspended: 0,
     lapsed: 0,
   });
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const touchRef = useRef<HTMLDivElement>(null);
 
   // Status options for filtering
   const statusOptions = ['all', 'learning', 'review', 'mastered', 'suspended', 'lapsed'];
@@ -241,6 +245,39 @@ export default function FlashcardModal({
     nextCard();
   };
 
+  // Swipe navigation handlers
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (isNavigationDisabled || isFiltering) return;
+    setTouchStartX(e.touches[0].clientX);
+    setTouchEndX(null);
+    setIsSwiping(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isSwiping || touchStartX === null) return;
+    setTouchEndX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isSwiping || touchStartX === null || touchEndX === null) return;
+    const swipeDistance = touchStartX - touchEndX;
+    const minSwipeDistance = 50; // Minimum distance for a swipe to register
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        // Swipe left: go to next card
+        handleNextCard();
+      } else {
+        // Swipe right: go to previous card
+        handlePrevCard();
+      }
+    }
+
+    setTouchStartX(null);
+    setTouchEndX(null);
+    setIsSwiping(false);
+  };
+
   // Get the current flashcard based on currentFlashcardId
   const currentFlashcard = flashcards.find((f) => f.id === currentFlashcardId) || flashcard;
 
@@ -253,12 +290,12 @@ export default function FlashcardModal({
       {planInfo && (
         <div className="fixed top-4 left-0 right-0 z-60 items-center gap-2">
           <div className="mb-2 sm:mb-4 px-4 sm:px-0 flex mx-auto max-w-xl items-center justify-between sm:justify-center text-base gap-8">
-            <Tooltip content="Plan" variant='bottom'>
+            <Tooltip content="Plan" variant="bottom">
               <span className="font-bold text-gray-900">
                 {planInfo.label.length > 18 ? planInfo.label.slice(0, 18) + '...' : planInfo.label}
               </span>
             </Tooltip>
-            <Tooltip content="Dates To-Do" variant='bottom'>
+            <Tooltip content="Dates To-Do" variant="bottom">
               <span className="font-medium text-gray-400">{planInfo.name}</span>
             </Tooltip>
           </div>
@@ -298,7 +335,7 @@ export default function FlashcardModal({
       )}
       <div
         className={cn(
-          'relative w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-xl max-h-[90vh] rounded-xl shadow-2xl bg-white transform transition-all duration-300 overflow-hidden',
+          'relative w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-xl max-h-[80vh] rounded-xl shadow-2xl bg-white transform transition-all duration-300 overflow-hidden',
           getStatusBackgroundClass(currentFlashcard.status),
           getStatusBorderClass(currentFlashcard.status),
           { 'rotate-y-180': localIsFlipped }
@@ -306,7 +343,10 @@ export default function FlashcardModal({
         style={{ transformStyle: 'preserve-3d', touchAction: 'pan-y' }}
         onClick={(e) => e.stopPropagation()}
         onDoubleClick={flipCard}
-        onTouchStart={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        ref={touchRef}
       >
         <div className="relative flex flex-col h-full max-h-[80vh] touch-pan-y">
           {/* Close and Flip Buttons */}
@@ -388,9 +428,15 @@ export default function FlashcardModal({
                 className="sm:p-2 p-2 sm:px-4 px-4 text-sm sm:text-sm"
               >
                 {['suspended', 'lapsed', 'mastered'].includes(currentFlashcard.status || '') ? (
-                  <div><span className='text-sky-600'>Reverse</span><span> to Learning</span></div>
+                  <div>
+                    <span className="text-sky-600">Reverse</span>
+                    <span> to Learning</span>
+                  </div>
                 ) : (
-                  <div><span className='text-sky-600'>Update</span><span> to {getStatusLabel(getNextStatus(currentFlashcard.status))}</span></div>
+                  <div>
+                    <span className="text-sky-600">Update</span>
+                    <span> to {getStatusLabel(getNextStatus(currentFlashcard.status))}</span>
+                  </div>
                 )}
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
