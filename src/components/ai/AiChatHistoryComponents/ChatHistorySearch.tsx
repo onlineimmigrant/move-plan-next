@@ -11,6 +11,7 @@ interface ChatHistorySearchProps {
   selectedDateRange: string;
   setSelectedDateRange: (range: string) => void;
   searchRef: React.RefObject<HTMLDivElement>;
+  totalHistories: number; // Added prop
 }
 
 export default function ChatHistorySearch({
@@ -19,6 +20,7 @@ export default function ChatHistorySearch({
   selectedDateRange,
   setSelectedDateRange,
   searchRef,
+  totalHistories, // Added prop
 }: ChatHistorySearchProps) {
   const dateRanges = [
     { label: 'All Time', value: 'all' },
@@ -31,11 +33,17 @@ export default function ChatHistorySearch({
   ];
 
   return (
-    <div className="flex flex-col gap-2 mt-2 mb-2 px-0 md:flex-row md:items-center md:px-0">
+    <div className="flex flex-col gap-2 mt-2 sm:mb-4 -mb-4 px-0 md:flex-row md:items-center md:px-0">
       <div ref={searchRef} className="relative w-full">
         <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-transparent transition-all duration-200">
+          {/* Total Histories Badge */}
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+           <span className="flex items-center justify-center h-6 w-6 rounded-full bg-sky-50 text-gray-900 text-[10px] font-semibold">
+            {totalHistories}
+            </span>
+          </span>
           {/* Magnifying Glass Icon */}
-          <span className="absolute inset-y-0 left-0 flex items-center pl-9">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-10">
             <MagnifyingGlassIcon className="w-6 h-6 text-gray-400" />
           </span>
           {/* Search Input */}

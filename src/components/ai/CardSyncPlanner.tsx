@@ -516,20 +516,16 @@ export default function CardSyncPlanner({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Disclosure.Panel className="w-full sm:p-4 sm:bg-gray-50 sm:border-2 border-gray-200 rounded-xl sm:min-h-[640px] sm:max-h-[640px] overflow-y-auto pb-16">
+                <Disclosure.Panel className="w-full sm:p-4 p-2 sm:bg-gray-50 sm:border-2 border-gray-200 rounded-xl sm:min-h-[640px] sm:max-h-[640px] overflow-y-auto pb-16">
+   
+                  
                   {loading ? (
                     <div className="text-gray-700">Loading...</div>
                   ) : (
                     <>
-                            {/* "+ New Plan" Button at the Top */}
-        <div className="flex justify-center mb-4">
-          <Button onClick={handleNewPlanClick} variant="outline">
-            <PlusIcon className="mr-2 h-5 w-5" />
-            New Plan
-          </Button>
-        </div>
+
                       {isCreatingPlan && (
-                        <div className="mt-2 mb-4 p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
+                        <div className="mt-2 mb-4 p-2 sm:p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
                           {/* Combined Plan Label, Period Listbox, and Buttons */}
                           <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-transparent transition-all duration-200">
                             <input
@@ -778,14 +774,24 @@ export default function CardSyncPlanner({
                           </Disclosure>
                         ))}
                       </DragDropContext>
-     
+                                                        {/* "+ New Plan" Button at the Top */}
+        <div className="flex justify-center mb-4">
+          <Button onClick={handleNewPlanClick} variant="outline">
+            <PlusIcon className="mr-2 h-5 w-5" />
+            New Plan
+          </Button>
+        </div>
                     </>
                   )}
                 </Disclosure.Panel>
               </Transition>
+
+
             </div>
           )}
+          
         </Disclosure>
+
       </div>
       {toasts.map((toast) => (
         <Toast

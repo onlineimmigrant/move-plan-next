@@ -378,7 +378,7 @@ export default function FlashcardList({
           </ul>
         </div>
         {/* Navigation buttons positioned on the sides */}
-        <div className="absolute  bottom-0 -translate-y-1/2 sm:-left-2 left-2 right-0 sm:-right-2 flex justify-between px-0">
+        <div className="absolute  -bottom-4 -translate-y-1/2 sm:-left-2 left-2 right-0 sm:-right-2 flex justify-between px-0">
          
             <Button
             aria-label='Previous Card'

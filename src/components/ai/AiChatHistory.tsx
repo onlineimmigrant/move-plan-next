@@ -470,6 +470,7 @@ export default function AiChatHistory({ userId, onError, onFlashcardCreated, onN
                   selectedDateRange={selectedDateRange}
                   setSelectedDateRange={setSelectedDateRange}
                   searchRef={searchRef}
+                  totalHistories={totalHistories}
                 />
                 {isFixed && <div style={{ height: searchHeight ? `${searchHeight}px` : '60px' }} className="md:hidden" />}
                 {filteredHistories.length === 0 ? (

@@ -409,12 +409,12 @@ export default function MemoryHub() {
               </button>
             </Link>
           </Tooltip>
-          <Tooltip content="Memory Hub">
+         
             <h1 className="text-lg sm:text-xl font-bold text-center text-gray-800 relative">
               Memory Hub
               <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
             </h1>
-          </Tooltip>
+        
           <Tooltip content="Guide" variant="left">
             <button
               onClick={() => setIsHelpModalOpen(true)}

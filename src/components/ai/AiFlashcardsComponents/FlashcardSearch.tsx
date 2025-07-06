@@ -32,7 +32,7 @@ export default function FlashcardSearch({
   const statuses = ['status', 'learning', 'review', 'mastered', 'suspended', 'lapsed'];
 
   return (
-    <div className="flex flex-col gap-2 sm:my-2 -my-2 px-0 md:flex-row md:items-center md:px-0">
+    <div className="flex flex-col gap-2 sm:my-2 -mt-2 px-0 md:flex-row md:items-center md:px-0">
       {/* Search Input with Integrated Status Filter */}
       <div className="relative w-full">
         <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-transparent transition-all duration-200">

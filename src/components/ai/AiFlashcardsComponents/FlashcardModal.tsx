@@ -255,14 +255,14 @@ export default function FlashcardModal({
           <div className="mb-2 sm:mb-4 px-4 sm:px-0 flex mx-auto max-w-xl items-center justify-between sm:justify-center text-base gap-8">
             <Tooltip content="Plan" variant='bottom'>
               <span className="font-bold text-gray-900">
-                {planInfo.label.length > 12 ? planInfo.label.slice(0, 12) + '...' : planInfo.label}
+                {planInfo.label.length > 18 ? planInfo.label.slice(0, 18) + '...' : planInfo.label}
               </span>
             </Tooltip>
             <Tooltip content="Dates To-Do" variant='bottom'>
               <span className="font-medium text-gray-400">{planInfo.name}</span>
             </Tooltip>
           </div>
-          <div className="flex flex-wrap justify-center gap-4 px-4 ">
+          <div className="mt-4 pb-4 flex overflow-x-auto flex-nowrap gap-4 px-4 sm:flex-wrap sm:justify-center sm:gap-4">
             {statusOptions.map((status) => (
               <Button
                 variant="badge_primary"
@@ -274,7 +274,7 @@ export default function FlashcardModal({
                   setSelectedStatus(status);
                 }}
                 className={cn(
-                  'inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm font-medium bg-gray-50 text-gray-900 shadow-sm',
+                  'inline-flex items-center gap-2 px-2 py-1 rounded-full text-base sm:text-sm font-medium bg-gray-50 text-gray-900 shadow-sm whitespace-nowrap',
                   selectedStatus === status ? 'bg-sky-100 text-sky-800' : 'hover:bg-sky-50'
                 )}
                 aria-label={`Filter by ${getStatusLabel(status)}`}

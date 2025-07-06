@@ -151,7 +151,7 @@ export default function AiFlashcards({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Disclosure.Panel className=" sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl">
+              <Disclosure.Panel className="py-2 sm:p-4 sm:bg-gray-50 sm:border-2 sm:border-gray-200 rounded-xl">
                 <FlashcardSearch
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}
