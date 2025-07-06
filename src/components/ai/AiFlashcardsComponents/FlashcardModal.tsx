@@ -308,7 +308,7 @@ export default function FlashcardModal({
         onDoubleClick={flipCard}
         onTouchStart={(e) => e.stopPropagation()}
       >
-        <div className="relative flex flex-col h-full max-h-[90vh] touch-pan-y">
+        <div className="relative flex flex-col h-full max-h-[80vh] touch-pan-y">
           {/* Close and Flip Buttons */}
           <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 bg-white">
             <button
@@ -326,7 +326,7 @@ export default function FlashcardModal({
               <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto min-h-[420px] p-4 sm:p-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto min-h-[380px] max-h-[380px] p-4 sm:p-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {filterMessage ? (
               <div className="flex flex-col items-center justify-center text-center">
                 <span className="text-sm font-medium text-gray-600">{filterMessage}</span>
@@ -339,7 +339,7 @@ export default function FlashcardModal({
                   </Button>
                   <span className="text-base font-medium text-gray-600">{currentFlashcard.topic || 'No topic'}</span>
                 </div>
-                <span className="px-8 text-center mt-36 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
+                <span className="px-8 text-center mt-28 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
                   {currentFlashcard.name || 'Untitled'}
                 </span>
                 <span className="text-base font-medium text-gray-600 mt-2">{currentFlashcard.section || 'No section'}</span>

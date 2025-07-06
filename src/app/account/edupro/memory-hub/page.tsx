@@ -438,8 +438,8 @@ export default function MemoryHub() {
           )}
         </div>
         <div className="flex mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-10 mx-auto p-4 lg:px-8 rounded-lg min-h-screen gap-8 lg:gap-16">
-            <div className="order-3 sm:order-1 sm:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-7 lg:grid-cols-10 mx-auto p-4 lg:px-8 rounded-lg min-h-screen gap-8 lg:gap-16">
+            <div className="order-3 lg:order-1 col-span-1 sm:col-span-3">
               <AiChatHistory
                 userId={userId}
                 onError={handleError}
@@ -447,7 +447,7 @@ export default function MemoryHub() {
                 onNewMessages={handleNewMessages}
               />
             </div>
-            <div className="order-1 sm:order-2 sm:col-span-4">
+            <div className="order-1 lg:order-2 sm:col-span-4">
               <AiFlashcards
                 userId={userId}
                 onError={handleError}
@@ -465,7 +465,7 @@ export default function MemoryHub() {
                 handleStatusTransition={handleStatusTransition}
               />
             </div>
-            <div className="order-2 sm:order-3 sm:col-span-3">
+            <div className="order-2 lg:order-3 sm:col-span-3">
               <CardSyncPlanner
                 userId={userId}
                 onError={handleError}

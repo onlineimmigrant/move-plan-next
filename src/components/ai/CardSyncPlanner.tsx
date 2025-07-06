@@ -496,7 +496,7 @@ export default function CardSyncPlanner({
   };
 
   return (
-    <div className="relative">
+    <div className="-mt-2 relative">
       <div className="block items-center justify-between sm:py-0 ">
 
         <Disclosure defaultOpen>
@@ -631,7 +631,7 @@ export default function CardSyncPlanner({
                                 return (
                                   <div
                                     key={pf.id}
-                                    className="flex items-center justify-between gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full"
+                                    className=" flex items-center justify-between gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full"
                                   >
                                     <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${pf.id})`} variant="info-top">
                                       <a
@@ -685,7 +685,7 @@ export default function CardSyncPlanner({
                                 <DisclosureButton
                                   variant="card-sync-planner"
                                   className={cn(
-                                    'flex justify-between items-center py-1 space-x-4 w-full ',
+                                    ' flex justify-between items-center py-1 space-x-4  w-full ',
                                     getPlanStyles(plan)
                                   )}
                                   onClick={() => handleDisclosureToggle(plan.id)}
@@ -730,7 +730,7 @@ export default function CardSyncPlanner({
                                                 {(provided, snapshot) => (
                                                   <div
                                                     className={cn(
-                                                      'flex items-center justify-between gap-2 px-3 py-1.5 m-1 bg-gray-50 border border-gray-200 rounded-md text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full',
+                                                      'flex items-center justify-between gap-2 px-3 py-2 m-1 my-4  bg-gray-50 border border-gray-200 rounded-full text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full',
                                                       snapshot.isDragging && 'opacity-50'
                                                     )}
                                                     ref={provided.innerRef}
