@@ -155,8 +155,12 @@ export default function AiFlashcards({
   };
 
   const handleFlipCard = () => {
-    console.log('Flipping card, current isFlipped:', isFlipped);
-    setIsFlipped((prev) => !prev);
+    console.log('Flipping card in AiFlashcards, current isFlipped:', isFlipped);
+    setIsFlipped((prev) => {
+      const newFlipped = !prev;
+      console.log('Setting isFlipped to:', newFlipped);
+      return newFlipped;
+    });
   };
 
   return (

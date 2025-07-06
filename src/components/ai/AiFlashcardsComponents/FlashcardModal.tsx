@@ -331,9 +331,9 @@ export default function FlashcardModal({
     setLocalIsFlipped((prev) => {
       const newFlipped = !prev;
       console.log('Setting localIsFlipped to:', newFlipped);
-      flipCard();
       return newFlipped;
     });
+    flipCard();
   };
 
   // Get the current flashcard based on currentFlashcardId
