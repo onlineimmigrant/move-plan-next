@@ -154,6 +154,11 @@ export default function AiFlashcards({
     closeCard();
   };
 
+  const handleFlipCard = () => {
+    console.log('Flipping card, current isFlipped:', isFlipped);
+    setIsFlipped((prev) => !prev);
+  };
+
   return (
     <div className="-mt-2 sm:mt-0 relative">
       <Disclosure defaultOpen>
@@ -227,7 +232,7 @@ export default function AiFlashcards({
         />
       )}
 
-      {selectedFlashcardId && (
+      {selectedFlashcardId && filteredFlashcards.length > 0 && (
         <FlashcardModal
           flashcard={filteredFlashcards.find((f) => f.id === selectedFlashcardId) || filteredFlashcards[0]}
           closeCard={handleCloseCard}
@@ -239,7 +244,7 @@ export default function AiFlashcards({
           getStatusBackgroundClass={getStatusBackgroundClass}
           getStatusBorderClass={getStatusBorderClass}
           isFlipped={isFlipped}
-          flipCard={flipCard}
+          flipCard={handleFlipCard}
           flashcards={flashcards}
           currentPlanId={null}
           filteredFlashcards={filteredFlashcards}
