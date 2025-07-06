@@ -77,7 +77,7 @@ export default function ChatHistoryList({
   return (
     <div className="flex flex-col gap-4">
       <div
-        className="overflow-y-auto rounded-md bg-white ring-2 ring-gray-200 p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+        className="overflow-y-auto rounded-md  ring-gray-200 p-3 py-0 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
         style={{ height: `${containerHeight}px` }}
       >
         {loading || creatingFlashcard ? (
@@ -93,10 +93,10 @@ export default function ChatHistoryList({
               <li
                 key={history.id}
                 ref={index === 0 ? cardRef : null}
-                className="shadow-lg my-1 rounded-xl group cursor-pointer border-2 border-gray-200 transform transition-transform hover:scale-[1.02] hover:shadow-sm"
+                className="shadow my-1 rounded-xl bg-white group cursor-pointer border-2 border-gray-200 transform transition-transform hover:scale-[1.02] hover:shadow-sm"
                 onClick={() => openHistory(index)}
               >
-                <div className="flex flex-col py-2 px-2 hover:bg-sky-50 hover:text-sky-900 min-h-[80px]">
+                <div className="flex   flex-col py-2 px-2 hover:bg-sky-50 hover:text-sky-900 min-h-[80px]">
                   <div className="flex justify-between items-center gap-2 p-1">
                     <span className="text-sm font-light text-gray-600">
                       {history.updated_at
@@ -192,18 +192,11 @@ export default function ChatHistoryList({
         )}
       </div>
       <div className=" items-center gap-4">
-                <div className="text-base font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-full">
-          Showing {visibleHistories.length} of {totalHistories} chat histories
-        </div>
-        <div className="flex justify-between gap-4 my-4">
+
+        <div className="flex justify-center gap-4 my-4">
+
           <Button
-            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-            disabled={page === 1 || loading || creatingFlashcard}
-            variant='outline'
-                   >
-            Previous
-          </Button>
-          <Button
+          variant='outline'
             onClick={() => setPage((prev) => prev + 1)}
             disabled={!hasMore || loading || creatingFlashcard}
                      >
@@ -212,7 +205,9 @@ export default function ChatHistoryList({
             
           </Button>
         </div>
-
+                <div className="hidden sm:block text-center text-sm font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-full">
+          Showing {visibleHistories.length} of {totalHistories} chat histories
+        </div>
       </div>
     </div>
   );
