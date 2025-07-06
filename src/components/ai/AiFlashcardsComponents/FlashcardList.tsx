@@ -378,7 +378,7 @@ export default function FlashcardList({
           </ul>
         </div>
         {/* Navigation buttons positioned on the sides */}
-        <div className="absolute top-1/3 -translate-y-1/2 sm:-left-16 left-0 right-0 sm:-right-16 flex justify-between px-0">
+        <div className="absolute  bottom-0 -translate-y-1/2 sm:-left-2 left-2 right-0 sm:-right-2 flex justify-between px-0">
          
             <Button
             aria-label='Previous Card'
@@ -408,7 +408,7 @@ export default function FlashcardList({
             </Button>
          
         </div>
-        <div className="flex justify-center my-2 mb-4 items-center gap-2">
+        <div className="flex justify-center sm:mb-4 items-center gap-2">
           <Button
             variant="outline"
             onClick={(e) => {
