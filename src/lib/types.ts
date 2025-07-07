@@ -27,4 +27,5 @@ export interface Plan {
   flashcard_ids: number[];
   status: string;
   user_id: string;
+  is_default: boolean;
 }
