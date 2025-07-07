@@ -39,4 +39,5 @@ export interface Settings {
   seo_structured_data: any[] | null; // Use any[] for flexibility; can be typed stricter if needed
   domain: string;
  billing_panel_stripe: string;
+ google_tag: string;
 }
