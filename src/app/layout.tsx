@@ -92,7 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     seo_structured_data: [],
     domain: '',
     billing_panel_stripe: '',
-
+    google_tag: '',
   };
 
   let settings = defaultSettings;
@@ -103,6 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     if (fetchedSettings && typeof fetchedSettings === 'object') {
       settings = { ...defaultSettings, ...fetchedSettings };
     }
+    console.log('[Layout] Settings:', JSON.stringify(settings, null, 2));
     organizationId = await getOrganizationId(currentDomain);
     console.log('[Layout] Organization ID:', organizationId);
   } catch (error: any) {
@@ -161,26 +162,35 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         .order('order', { ascending: true })
         .order('order', { ascending: true, referencedTable: 'website_submenuitem' });
 
+      console.log('[Layout] Menu items query error:', error);
+      console.log('[Layout] Menu items raw data:', JSON.stringify(data, null, 2));
+
       if (!error && data) {
         menuItems = data.map((item) => {
+          console.log('[Layout] Raw website_submenuitem for item:', item.id, JSON.stringify(item.website_submenuitem, null, 2));
           let reactIcons: ReactIcon | null = null;
           if (item.react_icons && typeof item.react_icons === 'object' && !Array.isArray(item.react_icons)) {
             reactIcons = item.react_icons as ReactIcon;
           }
+          const filteredSubItems = (item.website_submenuitem || []).filter(
+            (subItem: SubMenuItem) =>
+              subItem.is_displayed !== false &&
+              (subItem.organization_id === null || subItem.organization_id === organizationId)
+          );
+          console.log('[Layout] Filtered website_submenuitem for item:', item.id, JSON.stringify(filteredSubItems, null, 2));
           return {
             ...item,
             react_icons: reactIcons,
-            website_submenuitem: (item.website_submenuitem || []).filter(
-              (subItem: SubMenuItem) =>
-                subItem.is_displayed !== false &&
-                (subItem.organization_id === null || subItem.organization_id === organizationId)
-            ),
+            website_submenuitem: filteredSubItems,
           };
         });
+        console.log('[Layout] Final menuItems:', JSON.stringify(menuItems, null, 2));
       }
     } catch (error: any) {
       console.error('[Layout] Failed to fetch menu items:', error.message);
     }
+  } else {
+    console.log('[Layout] No organizationId, skipping menu items fetch');
   }
 
   const headerData = {
@@ -226,8 +236,30 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <head>
-   
         <link rel="icon" href={faviconUrl} />
+
+        {/* Google Tag Manager Script */}
+        {settings.google_tag && (
+          <>
+            <script
+              id="google-tag-manager"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  (function(w,d,s,l,i){
+                    w[l]=w[l]||[];
+                    w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+                    var f=d.getElementsByTagName(s)[0],
+                        j=d.createElement(s),
+                        dl=l!='dataLayer'?'&l='+l:'';
+                    j.async=true;
+                    j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+                    f.parentNode.insertBefore(j,f);
+                  })(window,document,'script','dataLayer','${settings.google_tag}');
+                `,
+              }}
+            />
+          </>
+        )}
 
         {(seoData.structuredData || []).map((data, index) => (
           <script
@@ -238,6 +270,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         ))}
       </head>
       <body>
+        {/* Google Tag Manager (noscript) */}
+        {settings.google_tag && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${settings.google_tag}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            ></iframe>
+          </noscript>
+        )}
+
         <ClientProviders
           settings={settings}
           headerData={headerData}

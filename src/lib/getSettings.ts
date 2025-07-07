@@ -109,6 +109,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
     seo_structured_data: null,
     domain: '',
     billing_panel_stripe: '',
+    google_tag: '',
   };
 
   // Skip Supabase query during Vercel build
@@ -152,7 +153,8 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
         seo_twitter_card,
         seo_structured_data,
         domain,
-        billing_panel_stripe
+        billing_panel_stripe,
+        google_tag
       `)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
@@ -181,6 +183,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       seo_structured_data: data.seo_structured_data ?? null,
       domain: data.domain ?? null,
       billing_panel_stripe: data.billing_panel_stripe ?? null,
+      google_tag: data.google_tag ?? null,
     };
 
     console.log('Settings fetched successfully:', settings);
