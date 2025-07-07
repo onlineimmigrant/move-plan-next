@@ -370,7 +370,7 @@ export default function FlashcardModal({
           </div>
         )}
         {!currentPlanId && (
-          <div className="mb-2 sm:mb-4 px-4 sm:px-0 flex mx-auto max-w-xl items-center justify-between sm:justify-center text-base gap-8">
+          <div className="mb-2  sm:mb-4 px-4 sm:px-0 flex mx-auto max-w-xl items-center justify-between sm:justify-center text-base gap-8">
             <Tooltip content="Flashcards" variant="bottom">
               <span className="font-bold text-gray-900">Flashcards</span>
             </Tooltip>
@@ -466,7 +466,7 @@ export default function FlashcardModal({
                 <span className="px-8 text-center mt-28 text-xl sm:text-2xl font-semibold text-gray-900 line-clamp-2">
                   {currentFlashcard.name || 'Untitled'}
                 </span>
-                <span className="text-base font-medium text-gray-600 mt-2">{currentFlashcard.section || 'No section'}</span>
+                <span className="text-lg  font-medium text-gray-500 mt-2">{currentFlashcard.section || 'No section'}</span>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-start min-h-[400px] text-center transform rotate-y-180">
@@ -478,7 +478,7 @@ export default function FlashcardModal({
                     >
                       <span
                         className={cn(
-                          'inline-block p-3 sm:p-4 rounded-lg max-w-[85%] text-sm sm:text-base',
+                          'inline-block p-3 sm:p-4 rounded-lg max-w-[85%] text-base sm:text-lg',
                           msg.role === 'user' ? 'bg-sky-100 text-gray-800' : 'bg-gray-100 text-gray-800'
                         )}
                         dangerouslySetInnerHTML={{

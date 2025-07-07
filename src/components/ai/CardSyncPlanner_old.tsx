@@ -191,10 +191,6 @@ export default function CardSyncPlanner({
         addToast('Selected plan not found', 'error');
         return;
       }
-      if (plan.is_default) {
-        addToast('Cannot add flashcards to default plans.', 'error');
-        return;
-      }
       try {
         const updatedFlashcardIds = [
           ...plan.flashcard_ids,
@@ -388,13 +384,6 @@ export default function CardSyncPlanner({
 
       console.log('handleDragEnd:', { sourcePlanId, destPlanId, flashcardId, sourceIndex, destIndex });
 
-      // Prevent dragging to default plans
-      const destPlan = destPlanId === 'new-plan' ? null : plans.find((p) => p.id === destPlanId);
-      if (destPlan?.is_default) {
-        addToast('Cannot add flashcards to default plans.', 'error');
-        return;
-      }
-
       if (sourcePlanId === destPlanId) {
         console.log('Same plan, reordering...');
         try {
@@ -439,6 +428,7 @@ export default function CardSyncPlanner({
       }
 
       const sourcePlan = sourcePlanId === 'new-plan' ? null : plans.find((p) => p.id === sourcePlanId);
+      const destPlan = destPlanId === 'new-plan' ? null : plans.find((p) => p.id === destPlanId);
       const flashcard = flashcards.find((f) => f.id === flashcardId);
 
       if (!flashcard) {
@@ -549,7 +539,7 @@ export default function CardSyncPlanner({
     setOpenPlanId((prev) => (prev === planId ? null : planId));
   };
 
-  const handleAddFlashcardsClick = () => {
+  const handleNewPlanClick = () => {
     setOpenPlanId(null);
     setIsCreatingPlan(true);
     setSelectedPlan(null);
@@ -754,10 +744,6 @@ export default function CardSyncPlanner({
     }
   }, [flashcards, openCard, addToast, onError]);
 
-  // Split plans into default and non-default
-  const nonDefaultPlans = plans.filter((plan) => !plan.is_default);
-  const defaultPlans = plans.filter((plan) => plan.is_default);
-
   return (
     <div className="-mt-2 relative">
       <div className="block items-center justify-between sm:py-0">
@@ -778,143 +764,68 @@ export default function CardSyncPlanner({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Disclosure.Panel className="w-full sm:p-4 p-2 sm:bg-gray-50 sm:border-2 border-gray-200 rounded-xl sm:min-h-[640px] sm:max-h-[640px] flex flex-col">
+                <Disclosure.Panel className="w-full sm:p-4 p-2 sm:bg-gray-50 sm:border-2 border-gray-200 rounded-xl sm:min-h-[640px] sm:max-h-[640px] overflow-y-auto pb-16">
                   {loading ? (
                     <div className="text-gray-700">Loading...</div>
                   ) : (
                     <DragDropContext onDragEnd={handleDragEnd}>
- 
-                      <div className="flex-1 overflow-y-auto">
-                        {isCreatingPlan && (
-                          <div className="mt-2 mb-4 p-2 sm:p-4 bg-white border-2 border-gray-200 rounded-lg flex flex-col gap-4">
-                            <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-transparent transition-all duration-200">
-  
-                              <div className="flex items-center justify-end gap-2">
-                                {!selectedPlan && (
-                                  <>
-                                    <input
-                                      type="text"
-                                      value={planLabel}
-                                      onChange={(e) => setPlanLabel(e.target.value.slice(0, 20))}
-                                      placeholder="Enter plan label"
-                                      className=" py-2 pl-3 pr-3 text-base font-light bg-transparent border-none focus:outline-none"
-                                      maxLength={20}
-                                    />
-                                    <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
-                                      {({ open }) => (
-                                        <div className="relative">
-                                          <Tooltip content="Select Period">
-                                            <ListboxButton
-                                              variant="outline"
-                                              className="flex justify-center h-full py-2 sm:px-1 px-0 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none rounded-l-lg focus:outline-none hover:bg-gray-100 min-w-[70px]"
-                                            >
-                                              <span className="line-clamp-1">{selectedPeriod.label}</span>
-                                            </ListboxButton>
-                                          </Tooltip>
-                                          <Transition
-                                            show={open}
-                                            enter="transition ease-out duration-100"
-                                            enterFrom="opacity-0 scale-95"
-                                            enterTo="opacity-100 scale-100"
-                                            leave="transition ease-in duration-75"
-                                            leaveFrom="opacity-100 scale-100"
-                                            leaveTo="opacity-0 scale-95"
-                                          >
-                                            <ListboxOptions className="absolute w-48 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-20">
-                                              {periods.map((period) => (
-                                                <ListboxOption
-                                                  key={period.value}
-                                                  value={period}
-                                                  className={({ active }) =>
-                                                    cn(
-                                                      'relative cursor-pointer select-none py-3 px-4 border-gray-100',
-                                                      active ? 'bg-sky-100 text-sky-900 font-semibold' : 'text-gray-900'
-                                                    )
-                                                  }
-                                                >
-                                                  <div className="flex items-center justify-between">
-                                                    <span className="flex-grow text-sm font-medium">{period.label}</span>
-                                                    {selectedPeriod.value === period.value && (
-                                                      <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
-                                                    )}
-                                                  </div>
-                                                </ListboxOption>
-                                              ))}
-                                            </ListboxOptions>
-                                          </Transition>
-                                        </div>
-                                      )}
-                                    </Listbox>
-                                  </>
-                                )}
-                                <Button
-                                  variant="primary"
-                                  onClick={handleCreatePlan}
-                                  className="h-full py-2 px-2 sm:px-2 text-sm font-medium border-none shadow-none focus:outline-none"
-                                >
-                                  Save
-                                </Button>
-
-                              </div>
-                            </div>
-                            {!selectedPlan && selectedPeriod.value === 'custom' && (
-                              <div className="flex gap-2">
-                                <input
-                                  type="date"
-                                  value={customStartDate || ''}
-                                  onChange={(e) => setCustomStartDate(e.target.value)}
-                                  className="w-full p-2 border border-gray-200 rounded-md text-sm"
-                                />
-                                <input
-                                  type="date"
-                                  value={customEndDate || ''}
-                                  onChange={(e) => setCustomEndDate(e.target.value)}
-                                  className="w-full p-2 border border-gray-200 rounded-md text-sm"
-                                />
-                              </div>
-                            )}
-                            <div className="text-sm font-medium text-gray-800 text-center">
-                              Total: {newPlanFlashcardIds.length}
-                            </div>
-                            <div className='flex justify-between'>
+                      {isCreatingPlan && (
+                        <div className="mt-2 mb-4 p-2 sm:p-4 bg-white border-2 border-gray-200 rounded-lg sm:order-1 order-first flex flex-col gap-4">
+                          <div className="relative flex items-center bg-white border-2 border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-transparent transition-all duration-200">
                             <Listbox
-                                value={selectedPlan}
-                                onChange={(plan) => {
-                                  setSelectedPlan(plan);
-                                  if (plan) {
-                                    setPlanLabel(plan.label);
-                                    setSelectedPeriod(periods[0]);
-                                    setCustomStartDate(null);
-                                    setCustomEndDate(null);
-                                  } else {
-                                    setPlanLabel('');
-                                  }
-                                }}
-                              >
-                                {({ open }) => (
-                                  <div className="relative flex-grow">
-                                    <Tooltip content="Select Plan">
-                                      <ListboxButton
-                                        variant="outline"
-                                        className="w-full h-full py-2 sm:px-2 px-1 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none focus:outline-none hover:bg-gray-100"
-                                      >
-                                        <span className="line-clamp-1">
-                                          {selectedPlan ? selectedPlan.label : 'Create New Plan'}
-                                        </span>
-                                      </ListboxButton>
-                                    </Tooltip>
-                                    <Transition
-                                      show={open}
-                                      enter="transition ease-out duration-100"
-                                      enterFrom="opacity-0 scale-95"
-                                      enterTo="opacity-100 scale-100"
-                                      leave="transition ease-in duration-75"
-                                      leaveFrom="opacity-100 scale-100"
-                                      leaveTo="opacity-0 scale-95"
+                              value={selectedPlan}
+                              onChange={(plan) => {
+                                setSelectedPlan(plan);
+                                if (plan) {
+                                  setPlanLabel(plan.label);
+                                  setSelectedPeriod(periods[0]);
+                                  setCustomStartDate(null);
+                                  setCustomEndDate(null);
+                                } else {
+                                  setPlanLabel('');
+                                }
+                              }}
+                            >
+                              {({ open }) => (
+                                <div className="relative flex-grow">
+                                  <Tooltip content="Select Plan">
+                                    <ListboxButton
+                                      variant="outline"
+                                      className="w-full h-full py-2 pl-3 pr-3 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none focus:outline-none hover:bg-gray-100"
                                     >
-                                      <ListboxOptions className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-20">
+                                      <span className="line-clamp-1">
+                                        {selectedPlan ? selectedPlan.label : 'Create New Plan'}
+                                      </span>
+                                    </ListboxButton>
+                                  </Tooltip>
+                                  <Transition
+                                    show={open}
+                                    enter="transition ease-out duration-100"
+                                    enterFrom="opacity-0 scale-95"
+                                    enterTo="opacity-100 scale-100"
+                                    leave="transition ease-in duration-75"
+                                    leaveFrom="opacity-100 scale-100"
+                                    leaveTo="opacity-0 scale-95"
+                                  >
+                                    <ListboxOptions className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-20">
+                                      <ListboxOption
+                                        value={null}
+                                        className={({ active }) =>
+                                          cn(
+                                            'relative cursor-pointer select-none py-3 px-4 border-gray-100',
+                                            active ? 'bg-sky-100 text-sky-900 font-semibold' : 'text-gray-900'
+                                          )
+                                        }
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span className="flex-grow text-sm font-medium">Create New Plan</span>
+                                          {!selectedPlan && <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />}
+                                        </div>
+                                      </ListboxOption>
+                                      {plans.map((plan) => (
                                         <ListboxOption
-                                          value={null}
+                                          key={plan.id}
+                                          value={{ id: plan.id, label: plan.label }}
                                           className={({ active }) =>
                                             cn(
                                               'relative cursor-pointer select-none py-3 px-4 border-gray-100',
@@ -922,59 +833,128 @@ export default function CardSyncPlanner({
                                             )
                                           }
                                         >
-                                          <div className="flex items-center justify-between ">
-                                            <span className="flex-grow text-sm font-medium">Create New Plan</span>
-                                            {!selectedPlan && <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />}
+                                          <div className="flex items-center justify-between">
+                                            <span className="flex-grow text-sm font-medium">{plan.label}</span>
+                                            {selectedPlan?.id === plan.id && (
+                                              <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
+                                            )}
                                           </div>
                                         </ListboxOption>
-                                        {nonDefaultPlans.map((plan) => (
-                                          <ListboxOption
-                                            key={plan.id}
-                                            value={{ id: plan.id, label: plan.label }}
-                                            className={({ active }) =>
-                                              cn(
-                                                'relative cursor-pointer select-none py-3 px-4 border-gray-100',
-                                                active ? 'bg-sky-100 text-sky-900 font-semibold' : 'text-gray-900'
-                                              )
-                                            }
-                                          >
-                                            <div className="flex items-center justify-between">
-                                              <span className="flex-grow text-sm font-medium">{plan.label}</span>
-                                              {selectedPlan?.id === plan.id && (
-                                                <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
-                                              )}
-                                            </div>
-                                          </ListboxOption>
-                                        ))}
-                                      </ListboxOptions>
-                                    </Transition>
-                                  </div>
-                                )}
-                              </Listbox>
-                                          <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    setNewPlanFlashcardIds([]);
-                                    setIsCreatingPlan(false);
-                                    setSelectedPlan(null);
-                                    setSelectedPeriod(periods[0]);
-                                    setCustomStartDate(null);
-                                    setCustomEndDate(null);
-                                    setPlanLabel('');
-                                  }}
-                                  className="h-full py-2 px-2 sm:px-2 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none focus:outline-none hover:bg-gray-100"
-                                >
-                                  <XMarkIcon className="h-5 w-5 text-gray-600" />
-                                </Button>
+                                      ))}
+                                    </ListboxOptions>
+                                  </Transition>
                                 </div>
-                            <Droppable droppableId="new-plan">
-                              {(provided) => (
-                                <div
-                                  className="flex flex-col gap-2 max-h-[9rem] overflow-y-auto"
-                                  ref={provided.innerRef}
-                                  {...provided.droppableProps}
-                                >
-                                  {newPlanFlashcardIds.map((pf, index) => {
+                              )}
+                            </Listbox>
+                            <div className="flex items-center justify-end gap-2">
+                              {!selectedPlan && (
+                                <>
+                                  <Listbox value={selectedPeriod} onChange={setSelectedPeriod}>
+                                    {({ open }) => (
+                                      <div className="relative">
+                                        <Tooltip content="Select Period">
+                                          <ListboxButton
+                                            variant="outline"
+                                            className="flex justify-center h-full py-2 sm:px-2 px-0 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none rounded-l-lg focus:outline-none hover:bg-gray-100 min-w-[80px]"
+                                          >
+                                            <span className="line-clamp-1">{selectedPeriod.label}</span>
+                                          </ListboxButton>
+                                        </Tooltip>
+                                        <Transition
+                                          show={open}
+                                          enter="transition ease-out duration-100"
+                                          enterFrom="opacity-0 scale-95"
+                                          enterTo="opacity-100 scale-100"
+                                          leave="transition ease-in duration-75"
+                                          leaveFrom="opacity-100 scale-100"
+                                          leaveTo="opacity-0 scale-95"
+                                        >
+                                          <ListboxOptions className="absolute w-48 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto z-20">
+                                            {periods.map((period) => (
+                                              <ListboxOption
+                                                key={period.value}
+                                                value={period}
+                                                className={({ active }) =>
+                                                  cn(
+                                                    'relative cursor-pointer select-none py-3 px-4 border-gray-100',
+                                                    active ? 'bg-sky-100 text-sky-900 font-semibold' : 'text-gray-900'
+                                                  )
+                                                }
+                                              >
+                                                <div className="flex items-center justify-between">
+                                                  <span className="flex-grow text-sm font-medium">{period.label}</span>
+                                                  {selectedPeriod.value === period.value && (
+                                                    <CheckIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
+                                                  )}
+                                                </div>
+                                              </ListboxOption>
+                                            ))}
+                                          </ListboxOptions>
+                                        </Transition>
+                                      </div>
+                                    )}
+                                  </Listbox>
+                                  <input
+                                    type="text"
+                                    value={planLabel}
+                                    onChange={(e) => setPlanLabel(e.target.value.slice(0, 20))}
+                                    placeholder="Enter plan label"
+                                    className="w-1/3 py-2 pl-3 pr-3 text-base font-light bg-transparent border-none focus:outline-none"
+                                    maxLength={20}
+                                  />
+                                </>
+                              )}
+                              <Button
+                                variant="primary"
+                                onClick={handleCreatePlan}
+                                className="h-full py-2 px-2 sm:px-2 text-sm font-medium border-none shadow-none focus:outline-none"
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setNewPlanFlashcardIds([]);
+                                  setIsCreatingPlan(false);
+                                  setSelectedPlan(null);
+                                  setSelectedPeriod(periods[0]);
+                                  setCustomStartDate(null);
+                                  setCustomEndDate(null);
+                                  setPlanLabel('');
+                                }}
+                                className="h-full py-2 px-2 sm:px-2 text-sm font-medium text-gray-900 bg-gray-50 border-none shadow-none focus:outline-none hover:bg-gray-100"
+                              >
+                                <XMarkIcon className="h-5 w-5 text-gray-600" />
+                              </Button>
+                            </div>
+                          </div>
+                          {!selectedPlan && selectedPeriod.value === 'custom' && (
+                            <div className="flex gap-2">
+                              <input
+                                type="date"
+                                value={customStartDate || ''}
+                                onChange={(e) => setCustomStartDate(e.target.value)}
+                                className="w-full p-2 border border-gray-200 rounded-md text-sm"
+                              />
+                              <input
+                                type="date"
+                                value={customEndDate || ''}
+                                onChange={(e) => setCustomEndDate(e.target.value)}
+                                className="w-full p-2 border border-gray-200 rounded-md text-sm"
+                              />
+                            </div>
+                          )}
+                          <Droppable droppableId="new-plan">
+                            {(provided) => (
+                              <div
+                                className="flex flex-col gap-2 max-h-[9rem] overflow-y-auto"
+                                ref={provided.innerRef}
+                                {...provided.droppableProps}
+                              >
+                                {newPlanFlashcardIds.length === 0 ? (
+                                  <p className="text-gray-500 text-center w-full">No flashcards selected</p>
+                                ) : (
+                                  newPlanFlashcardIds.map((pf, index) => {
                                     const flashcard = flashcards.find((f) => f.id === pf.id);
                                     return (
                                       <Draggable key={`new-plan-${pf.id}`} draggableId={`new-plan-${pf.id}`} index={index}>
@@ -1013,104 +993,92 @@ export default function CardSyncPlanner({
                                         )}
                                       </Draggable>
                                     );
-                                  })}
-                                  {provided.placeholder}
-                                </div>
-                              )}
-                            </Droppable>
-                          </div>
-                        )}
-                        {!isCreatingPlan && (
-                          <div className="flex justify-center mb-4">
-                            <Button onClick={handleAddFlashcardsClick} variant="outline">
-                              <PlusIcon className="mr-2 h-5 w-5" />
-                              Flashcards
-                            </Button>
-                          </div>
-                        )}
-
-
-
-
-
-                        
-                        {nonDefaultPlans.map((plan) => (
-                          <Disclosure
-                            key={plan.id}
-                            as="div"
-                            className="mb-4 px-2"
-                            defaultOpen={openPlanId === plan.id}
-                          >
-                            {({ open }) => (
-                              <>
-                                <DisclosureButton
-                                  variant="card-sync-planner"
-                                  className={cn(
-                                    'flex justify-between items-center py-1 space-x-4 w-full',
-                                    getPlanStyles(plan)
-                                  )}
-                                  onClick={() => handleDisclosureToggle(plan.id)}
-                                >
-                                  <span className="font-bold">{truncateLabel(plan.label)}</span>
-                                  <span>{plan.name}</span>
-                                  <span>{open ? '−' : '+'}</span>
-                                </DisclosureButton>
-                                <Transition
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="opacity-0 scale-95"
-                                  enterTo="opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="opacity-100 scale-100"
-                                  leaveTo="opacity-0 scale-95"
-                                >
-                                  <Disclosure.Panel className="mt-2 p-3 bg-white border-2 border-gray-200 rounded-lg">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <span className="text-sm font-medium text-gray-800">{plan.name}</span>
-                                      <div className="flex items-center gap-4">
-                                                               <Button
-                                          variant="outline"
-                                          onClick={() => handleMarkDone(plan)}
-                                          disabled={plan.status === 'done'}
-                                        >
-                                          Mark Done
-                                        </Button>
-                                      </div>
-                                    </div>
-                                    <Droppable droppableId={plan.id}>
-                                      {(provided) => (
-                                        <div
-                                          className="mt-2 flex flex-col gap-2 max-h-[9rem] overflow-y-auto"
-                                          ref={provided.innerRef}
-                                          {...provided.droppableProps}
-                                        >
-                                          <div className="text-sm font-medium text-gray-800 text-center">
-                                            Total: {plan.flashcard_ids.length}
-                                          </div>
-                                          {plan.flashcard_ids.map((id, index) => {
-                                            const flashcard = flashcards.find((f) => f.id === id);
-                                            return (
-                                              <Draggable key={`${plan.id}-${id}`} draggableId={`${plan.id}-${id}`} index={index}>
-                                                {(provided, snapshot) => (
-                                                  <a
-                                                    href="#"
-                                                    onClick={(e) => {
-                                                      e.preventDefault();
-                                                      handleOpenCard(id, plan.id);
-                                                    }}
-                                                    className="hover:underline font-medium flex-grow"
+                                  })
+                                )}
+                                {provided.placeholder}
+                              </div>
+                            )}
+                          </Droppable>
+                        </div>
+                      )}
+                      {plans.map((plan) => (
+                        <Disclosure
+                          key={plan.id}
+                          as="div"
+                          className="mb-4"
+                          defaultOpen={openPlanId === plan.id}
+                        >
+                          {({ open }) => (
+                            <>
+                              <DisclosureButton
+                                variant="card-sync-planner"
+                                className={cn(
+                                  'flex justify-between items-center py-1 space-x-4 w-full',
+                                  getPlanStyles(plan)
+                                )}
+                                onClick={() => handleDisclosureToggle(plan.id)}
+                              >
+                                <span className="font-bold">{truncateLabel(plan.label)}</span>
+                                <span>{plan.is_default ? 'Course Flashcard' : plan.name}</span>
+                                <span>{open ? '−' : '+'}</span>
+                              </DisclosureButton>
+                              <Transition
+                                enter="transition ease-out duration-100"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="transition ease-in duration-75"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                              >
+                                <Disclosure.Panel className="mt-2 p-3 bg-white border-2 border-gray-200 rounded-lg">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm font-medium text-gray-800">{plan.is_default ? 'Course Flashcard' : plan.name}</span>
+                                    {!plan.is_default && (
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => handleMarkDone(plan)}
+                                        disabled={plan.status === 'done'}
+                                      >
+                                        Mark Done
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <Droppable droppableId={plan.id}>
+                                    {(provided) => (
+                                      <div
+                                        className="mt-2 min-h-[2.5rem]"
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                      >
+                                        {plan.flashcard_ids.length === 0 && (
+                                          <p className="text-gray-500">No flashcards in this plan</p>
+                                        )}
+                                        {plan.flashcard_ids.map((id, index) => {
+                                          const flashcard = flashcards.find((f) => f.id === id);
+                                          return (
+                                            <Draggable key={`${plan.id}-${id}`} draggableId={`${plan.id}-${id}`} index={index}>
+                                              {(provided, snapshot) => (
+                                                <a
+                                                  href="#"
+                                                  onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleOpenCard(id, plan.id);
+                                                  }}
+                                                  className="hover:underline font-medium flex-grow"
+                                                >
+                                                  <div
+                                                    className={cn(
+                                                      'flex items-center justify-between gap-2 px-3 py-2 m-1 my-4 bg-gray-50 border border-gray-200 rounded-full text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full',
+                                                      snapshot.isDragging && 'opacity-50'
+                                                    )}
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
                                                   >
-                                                    <div
-                                                      className={cn(
-                                                        'flex items-center justify-between gap-2 px-3 py-2 m-1 my-1 bg-gray-50 border border-gray-200 rounded-full text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full',
-                                                        snapshot.isDragging && 'opacity-50'
-                                                      )}
-                                                      ref={provided.innerRef}
-                                                      {...provided.draggableProps}
-                                                      {...provided.dragHandleProps}
-                                                    >
-                                                      <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${id})`} variant="info-top">
-                                                        <span className="line-clamp-1">{flashcard ? flashcard.name : `Unknown (ID: ${id})`}</span>
-                                                      </Tooltip>
+                                                    <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${id})`} variant="info-top">
+                                                      <span className="line-clamp-1">{flashcard ? flashcard.name : `Unknown (ID: ${id})`}</span>
+                                                    </Tooltip>
+                                                    {!plan.is_default && (
                                                       <button
                                                         onClick={(e) => {
                                                           e.stopPropagation();
@@ -1120,118 +1088,28 @@ export default function CardSyncPlanner({
                                                       >
                                                         <XMarkIcon className="h-4 w-4" />
                                                       </button>
-                                                    </div>
-                                                  </a>
-                                                )}
-                                              </Draggable>
-                                            );
-                                          })}
-                                          {provided.placeholder}
-                                        </div>
-                                      )}
-                                    </Droppable>
-                                  </Disclosure.Panel>
-                                </Transition>
-                              </>
-                            )}
-                          </Disclosure>
-                        ))}
-
-
-
-
-
-
-                        
-                      </div>
-                      <div className="px-2 h-1/4 overflow-y-auto border-t border-gray-200 pt-2">
-                        {defaultPlans.length > 0 && (
-                          <h3 className="text-sm font-medium text-gray-800 mb-2">Course Flashcards</h3>
-                        )}
-                        {defaultPlans.map((plan) => (
-                          <Disclosure
-                            key={plan.id}
-                            as="div"
-                            className="mb-4"
-                            defaultOpen={openPlanId === plan.id}
-                          >
-                            {({ open }) => (
-                              <>
-                                <DisclosureButton
-                                  variant="card-sync-planner"
-                                  className={cn(
-                                    'flex justify-between items-center py-1 space-x-4 w-full',
-                                    getPlanStyles(plan)
-                                  )}
-                                  onClick={() => handleDisclosureToggle(plan.id)}
-                                >
-                                  <span className="font-bold">{truncateLabel(plan.label)}</span>
-                                  <span>Topic</span>
-                                  <span>{open ? '−' : '+'}</span>
-                                </DisclosureButton>
-                                <Transition
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="opacity-0 scale-95"
-                                  enterTo="opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="opacity-100 scale-100"
-                                  leaveTo="opacity-0 scale-95"
-                                >
-                                  <Disclosure.Panel className="mt-2 p-3 bg-white border-2 border-gray-200 rounded-lg">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <span className="text-sm font-medium text-gray-800">Topic Flashcards</span>
-                                                                </div>
-                                    <Droppable droppableId={plan.id}>
-                                      {(provided) => (
-                                        <div
-                                          className="mt-2 flex flex-col gap-2 max-h-[9rem] overflow-y-auto"
-                                          ref={provided.innerRef}
-                                          {...provided.droppableProps}
-                                        >
-                                          <div className="text-sm font-medium text-gray-800 text-center">
-                                            Total: {plan.flashcard_ids.length}
-                                          </div>
-                                          {plan.flashcard_ids.map((id, index) => {
-                                            const flashcard = flashcards.find((f) => f.id === id);
-                                            return (
-                                              <Draggable key={`${plan.id}-${id}`} draggableId={`${plan.id}-${id}`} index={index}>
-                                                {(provided, snapshot) => (
-                                                  <a
-                                                    href="#"
-                                                    onClick={(e) => {
-                                                      e.preventDefault();
-                                                      handleOpenCard(id, plan.id);
-                                                    }}
-                                                    className="hover:underline font-medium flex-grow"
-                                                  >
-                                                    <div
-                                                      className={cn(
-                                                        'flex items-center justify-between gap-2 px-3 py-2 m-1 my-1 bg-gray-50 border border-gray-200 rounded-full text-gray-800 text-sm shadow-sm hover:bg-gray-100 w-full',
-                                                        snapshot.isDragging && 'opacity-50'
-                                                      )}
-                                                      ref={provided.innerRef}
-                                                      {...provided.draggableProps}
-                                                      {...provided.dragHandleProps}
-                                                    >
-                                                      <Tooltip content={flashcard ? flashcard.name : `Unknown (ID: ${id})`} variant="info-top">
-                                                        <span className="line-clamp-1">{flashcard ? flashcard.name : `Unknown (ID: ${id})`}</span>
-                                                      </Tooltip>
-                                                    </div>
-                                                  </a>
-                                                )}
-                                              </Draggable>
-                                            );
-                                          })}
-                                          {provided.placeholder}
-                                        </div>
-                                      )}
-                                    </Droppable>
-                                  </Disclosure.Panel>
-                                </Transition>
-                              </>
-                            )}
-                          </Disclosure>
-                        ))}
+                                                    )}
+                                                  </div>
+                                                </a>
+                                              )}
+                                            </Draggable>
+                                          );
+                                        })}
+                                        {provided.placeholder}
+                                      </div>
+                                    )}
+                                  </Droppable>
+                                </Disclosure.Panel>
+                              </Transition>
+                            </>
+                          )}
+                        </Disclosure>
+                      ))}
+                      <div className="flex justify-center mb-4">
+                        <Button onClick={handleNewPlanClick} variant="outline">
+                          <PlusIcon className="mr-2 h-5 w-5" />
+                          New Plan
+                        </Button>
                       </div>
                     </DragDropContext>
                   )}
