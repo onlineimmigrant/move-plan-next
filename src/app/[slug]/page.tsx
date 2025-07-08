@@ -1,4 +1,3 @@
-// src/app/posts/[slug]/page.tsx
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
@@ -10,7 +9,6 @@ import '@/components/PostPage/PostEditor.css';
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
 import Loading from '@/ui/Loading';
 
 interface TOCItem {
@@ -46,11 +44,10 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   const { slug } = React.use(params);
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false); // State for admin status
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const activeLanguages = ['en', 'es', 'fr'];
 
   // Check admin status client-side
   useEffect(() => {
@@ -174,7 +171,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   };
 
   const handleContentUpdate = async () => {
-    if (!contentRef.current || !post || !isAdmin) return; // Guard against non-admins
+    if (!contentRef.current || !post || !isAdmin) return;
 
     const updatedContent = contentRef.current.innerHTML;
 
@@ -276,13 +273,15 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                 />
               </>
             ) : (
-              <span></span>
+              <div className="text-center text-gray-500">No content available for this post.</div>
             )}
           </main>
           <aside className="lg:col-span-2"></aside>
         </div>
-      ) : (
+      ) : post.content ? (
         <LandingPostContent post={post} />
+      ) : (
+        <div className="text-center text-gray-500"></div>
       )}
     </div>
   );

@@ -58,7 +58,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
       {templateSectionHeadings.map((sectionHeading) => (
         <section
           key={sectionHeading.id}
-          className={`min-h-screen py-12 sm:py-32 mx-auto w-full bg-${sectionHeading.background_color}`}
+          className={`-mt-8 min-h-screen py-32 sm:py-32 mx-auto w-full bg-${sectionHeading.background_color}`}
         >
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center px-6">
             {/* Left Side (Text) */}
