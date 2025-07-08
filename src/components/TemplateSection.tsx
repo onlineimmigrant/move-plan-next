@@ -106,14 +106,14 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
 
             {/* Metrics Section */}
             <div
-              className={`grid grid-cols-1 sm:grid-cols-${section.grid_columns || 1} gap-x-12 gap-y-12`}
+              className={`grid grid-cols-1 lg:grid-cols-${section.grid_columns || 1} gap-x-12 gap-y-12`}
             >
               {(section.website_metric || []).map((metric) => (
                 <div
                   key={metric.id}
                   className={`space-y-4 flex flex-col mx-auto ${
                     metric.is_card_type
-                      ? `bg-${metric.background_color || 'transparent'} p-8 sm:p-16 rounded-lg text-center gap-y-8 max-w-xl`
+                      ? `bg-${metric.background_color || 'transparent'} p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl`
                       : ''
                   }`}
                 >
