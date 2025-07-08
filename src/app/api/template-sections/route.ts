@@ -57,6 +57,7 @@ export async function GET(request: Request) {
         order,
         url_page,
         organization_id,
+        is_reviews_section,
         website_templatesection_metrics!templatesection_id (
           metric_id,
           website_metric!metric_id (

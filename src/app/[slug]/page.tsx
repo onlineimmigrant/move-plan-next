@@ -10,6 +10,7 @@ import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
 import Loading from '@/ui/Loading';
+import FeedbackAccordion from '@/components/FeedbackAccordion';
 
 interface TOCItem {
   tag_name: string;
@@ -279,9 +280,14 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
           <aside className="lg:col-span-2"></aside>
         </div>
       ) : post.content ? (
+        <div>
         <LandingPostContent post={post} />
+       
+        </div>
       ) : (
-        <div className="text-center text-gray-500"></div>
+        <div className=" text-gray-500">
+        
+        </div>
       )}
     </div>
   );
