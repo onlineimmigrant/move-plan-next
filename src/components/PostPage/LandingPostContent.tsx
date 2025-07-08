@@ -12,6 +12,7 @@ import Block from '@/ui/Block';
 import ImageCarousel from '@/ui/ImageCarousel';
 import VideoCarousel from '@/ui/VideoCarousel';
 import sanitizeHtml from 'sanitize-html';
+import FeedbackAccordion from '@/components/FeedbackAccordion';
 
 interface LandingPostContentProps {
   post: {
@@ -158,12 +159,14 @@ const LandingPostContent: React.FC<LandingPostContentProps> = ({ post }) => {
   // Render with error handling
   try {
     return (
-      <div className="relative z-50 w-full min-h-screen bg-gray-50">
+      <div className="">
         {sanitizedContent ? (
           parse(sanitizedContent, options)
+          
         ) : (
           <div className="text-center text-gray-500 ">No content available.</div>
         )}
+        
       </div>
     );
   } catch (error) {

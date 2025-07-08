@@ -44,6 +44,7 @@ interface TemplateSectionData {
   metric_description_color?: string;
   website_metric: Metric[];
   organization_id: string | null; // Added
+  is_reviews_section: boolean;
 }
 
 const TemplateSections: React.FC = () => {
