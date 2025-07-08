@@ -13,7 +13,7 @@ interface Feature {
   created_at: string;
   name: string;
   feature_image?: string;
-  content: string;
+    content: string | null; // Allow null
   slug: string;
   display_content: boolean;
   display_on_product: boolean;
@@ -106,9 +106,16 @@ export default function FeaturesPage() {
                     <h2 className="text-lg line-clamp-1 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
                       {feature.name}
                     </h2>
-                    <div className="text-base text-gray-600 font-light line-clamp-2 flex-grow">
-                      {parse(feature.content.split(' ').slice(0, 12).join(' ') + (feature.content.split(' ').length > 12 ? '...' : ''))}
-                    </div>
+                  <div className="text-base text-gray-600 font-light line-clamp-2 flex-grow">
+                    {feature.content ? (
+                      parse(
+                        feature.content.split(' ').slice(0, 12).join(' ') +
+                        (feature.content.split(' ').length > 12 ? '...' : '')
+                      )
+                    ) : (
+                      'No content available'
+                    )}
+                  </div>
                   </div>
                   <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end relative">
                     {feature.type ? (

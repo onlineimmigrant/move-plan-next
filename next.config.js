@@ -17,6 +17,11 @@ const nextConfig = {
         hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'rgbmdfaoowqbgshjuwwm.storage.supabase.co',
+        pathname: '/v1/object/public/**',
+      },
     ],
   },
   webpack: (config) => {
