@@ -311,7 +311,7 @@ export default function ProductDetailPricingPlans({
                 <div>
                   {plan.is_promotion && plan.promotion_price !== undefined ? (
                     <div className="flex items-baseline justify-end space-x-1.5">
-                      <span className="text-lg md:text-xl text-gray-500 font-medium line-through">
+                      <span className="text-sm md:text-xl text-gray-500 font-medium line-through">
                         {plan.currency_symbol}
                         {(plan.price / 100).toFixed(2)}
                       </span>
@@ -323,6 +323,7 @@ export default function ProductDetailPricingPlans({
                     </div>
                   ) : (
                     <div className="flex justify-between items-baseline ">
+                      
                       <span className='text-xs font-light text-gray-500'>{plan.measure}</span>
                       <span
                         className={`text-sm md:text-xl font-bold ${
