@@ -110,7 +110,7 @@ CustomToast.displayName = 'CustomToast';
 
 // Utility function for plan card styles
 const planCardStyles = (isOutOfStock: boolean, isActive: boolean) =>
-  `p-3 md:p-4 border rounded-xl transition-all duration-200 focus:ring-4 focus:ring-sky-500 focus:ring-opacity-50 focus:bg-sky-100 outline-none
+  `p-3 md:p-4 border rounded-xl transition-all duration-200 focus:ring-4 focus:ring-sky-500 focus:ring-opacity-50 focus:bg-sky-100 outline-none relative
   ${
     isOutOfStock
       ? 'border-gray-300 bg-gray-50 cursor-not-allowed opacity-70'
@@ -245,107 +245,135 @@ export default function ProductDetailPricingPlans({
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:gap-4 px-4 sm:px-8 pb-2 md:pb-4">
-        {pricingPlans.map((plan, idx) => {
-          const isActive = plan.slug === selectedPlan?.slug;
-          const status = getStatus(plan);
-          const normalizedStatus = status.toLowerCase();
-          const isOutOfStock = normalizedStatus === 'out of stock';
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-3 sm:px-6 md:px-8 pb-4 md:pb-6">
+  {pricingPlans.map((plan, idx) => {
+    const isActive = plan.slug === selectedPlan?.slug;
+    const status = getStatus(plan);
+    const normalizedStatus = status.toLowerCase();
+    const isOutOfStock = normalizedStatus === 'out of stock';
 
-          return (
-            <div key={plan.id} className="pricing-wrapper">
-              <div
-                className={planCardStyles(isOutOfStock, isActive)}
-                role="button"
-                tabIndex={isOutOfStock ? -1 : 0}
-                onClick={() => handlePlanSelect(plan)}
-                onKeyDown={(e) => handleKeyDown(e, plan, idx)}
-                aria-label={`Select ${plan.package || 'Unknown'} plan, priced at ${
-                  plan.currency_symbol
-                }${plan.is_promotion && plan.promotion_price ? plan.promotion_price : plan.price}, ${
-                  normalizedStatus === 'in stock'
-                    ? 'in stock'
-                    : normalizedStatus === 'low stock'
-                    ? 'low stock'
-                    : 'out of stock'
-                }`}
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <h2
-                    className={`text-sm md:text-base font-semibold ${
-                      isActive ? 'text-sky-600' : 'text-gray-900'
-                    } ${isOutOfStock ? 'text-gray-500' : ''}`}
-                  >
-                    {plan.package || 'Product'}
-                  </h2>
-                  {(() => {
-                    if (normalizedStatus === 'in stock') {
-                      return (
-                        <span className="inline-block px-1.5 py-0.5 text-[8px] md:text-[10px] font-medium text-green-800 bg-green-50 rounded-full">
-                          In Stock
-                        </span>
-                      );
-                    }
-                    if (normalizedStatus === 'low stock') {
-                      return (
-                        <span className="inline-block px-1.5 py-0.5 text-[8px] md:text-[10px] font-medium text-yellow-800 bg-yellow-50 rounded-full">
-                          Low Stock
-                        </span>
-                      );
-                    }
-                    if (normalizedStatus === 'out of stock') {
-                      return (
-                        <span className="inline-block px-1.5 py-0.5 text-[8px] md:text-[10px] font-medium text-gray-600 bg-gray-100 rounded-full">
-                          Out of Stock
-                        </span>
-                      );
-                    }
-                    return (
-                      <span className="inline-block px-1.5 py-0.5 text-[8px] md:text-[10px] font-medium text-gray-600 bg-green-100 rounded-full">
-                        Unknown
-                      </span>
-                    );
-                  })()}
-                </div>
+    return (
+      <div key={plan.id} className="pricing-wrapper">
+        <div
+          className={`
+            ${planCardStyles(isOutOfStock, isActive)}
+            relative bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-5
+            transition-all duration-300 ease-in-out
+            ${isOutOfStock ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md cursor-pointer'}
+          `}
+          role="button"
+          tabIndex={isOutOfStock ? -1 : 0}
+          onClick={() => !isOutOfStock && handlePlanSelect(plan)}
+          onKeyDown={(e) => !isOutOfStock && handleKeyDown(e, plan, idx)}
+          aria-label={`Select ${plan.package || 'Unknown'} plan, priced at ${
+            plan.currency_symbol
+          }${plan.is_promotion && plan.promotion_price ? plan.promotion_price : plan.price}, ${
+            normalizedStatus === 'in stock'
+              ? 'in stock'
+              : normalizedStatus === 'low stock'
+              ? 'low stock'
+              : 'out of stock'
+          }${plan.is_promotion && plan.promotion_price !== undefined ? ', on sale' : ''}`}
+        >
+          <div className="relative pt-4 sm:pt-5 pb-5 sm:pb-6 min-h-[120px]">
+            {/* Promotion Badge (Top-Left) */}
+            {plan.is_promotion && plan.promotion_price !== undefined && (
+              <span className="absolute top-0 right-0 -translate-y-1/3  px-2.5 py-1 text-xs font-medium text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full z-10 shadow-sm">
+                {plan.promotion_percent}% Off
+              </span>
+            )}
 
-                <div>
-                  {plan.is_promotion && plan.promotion_price !== undefined ? (
-                    <div className="flex items-baseline justify-end space-x-1.5">
-                      <span className="text-sm md:text-xl text-gray-500 font-medium line-through">
-                        {plan.currency_symbol}
-                        {(plan.price / 100).toFixed(2)}
-                      </span>
-                      <span className='text-xs font-light text-gray-500'>{plan.measure}</span>
-                      <span className="text-sm md:text-xl font-bold">
-                        {plan.currency_symbol}
-                        {(plan.promotion_price / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex justify-between items-baseline ">
-                      
-                      <span className='text-xs font-light text-gray-500'>{plan.measure}</span>
-                      <span
-                        className={`text-sm md:text-xl font-bold ${
-                          isOutOfStock ? 'text-gray-500' : 'text-gray-900'
-                        }`}
-                      >
-                        {plan.currency_symbol}
-                        {(plan.price / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                </div>
+            {/* Status Badge (Bottom-Left) */}
+            <div className="absolute bottom-0 left-0 translate-y-1/3 t px-2 py-0.5 text-xs font-medium rounded-full z-10">
+              {(() => {
+                if (normalizedStatus === 'in stock') {
+                  return (
+                    <span className="inline-block px-2 py-0.5 text-xs font-medium text-green-700 bg-green-50 rounded-full shadow-sm">
+                      In Stock
+                    </span>
+                  );
+                }
+                if (normalizedStatus === 'low stock') {
+                  return (
+                    <span className="inline-block px-2 py-0.5 text-xs font-medium text-yellow-700 bg-yellow-50 rounded-full shadow-sm">
+                      Low Stock
+                    </span>
+                  );
+                }
+                if (normalizedStatus === 'out of stock') {
+                  return (
+                    <span className="inline-block px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full shadow-sm">
+                      Out of Stock
+                    </span>
+                  );
+                }
+                return (
+                  <span className="inline-block px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full shadow-sm">
+                    Unknown
+                  </span>
+                );
+              })()}
+            </div>
+
+            <div className="flex justify-between items-start mb-2 sm:mb-3">
+              <div className="flex flex-col">
+                {/* Measure (Above Package) */}
+                <span className="text-xs font-medium text-gray-500 mb-0.5">
+                  {plan.measure}
+                </span>
+                <h2
+                  className={`text-sm sm:text-base font-semibold ${
+                    isActive ? 'text-sky-600' : 'text-gray-800'
+                  } ${isOutOfStock ? 'text-gray-400' : ''}`}
+                >
+                  {plan.package || 'Product'}
+                </h2>
               </div>
             </div>
-          );
-        })}
+
+            <div className="min-h-[36px] sm:min-h-[48px] flex items-end justify-end">
+              {plan.is_promotion && plan.promotion_price !== undefined ? (
+                <div className="flex flex-col items-end space-y-0.5">
+                  <div className="flex items-baseline space-x-1.5">
+                    <span className="text-2xl sm:text-2xl font-bold text-gray-800">
+                      {plan.currency_symbol}
+                      {(plan.promotion_price / 100).toFixed(2)}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-400 font-medium line-through">
+                    {plan.currency_symbol}
+                    {(plan.price / 100).toFixed(2)}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-end space-y-0.5">
+                  <div className="flex items-baseline space-x-1.5">
+                    <span
+                      className={`text-2xl sm:text-2xl font-bold ${
+                        isOutOfStock ? 'text-gray-400' : 'text-gray-800'
+                      }`}
+                    >
+                      {plan.currency_symbol}
+                      {(plan.price / 100).toFixed(2)}
+                    </span>
+                  </div>
+                  <span className="text-sm text-transparent">
+                    {/* Placeholder for alignment */}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+    );
+  })}
+</div>
 
       <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
         {activePlanCount === 0 || (selectedPlan && (selectedPlan.price === 0 || (selectedPlan.is_promotion && selectedPlan.promotion_price === 0))) ? (
           <Link href="/register-free-trial">
-            <Button variant="start"  aria-label="Register for free trial">
+            <Button variant="start" aria-label="Register for free trial">
               Register
               <RightArrowDynamic />
             </Button>
@@ -428,8 +456,8 @@ export default function ProductDetailPricingPlans({
                   <path d="M15.93,17.09a.54.54,0,0,1-.63.06,6.55,6.55,0,0,1-1.54-1.79,5.31,5.31,0,0,1-4.42,1.95,3.8,3.8,0,0,1-4-4.17A4.55,4.55,0,0,1,8.19,8.76a18.39,18.39,0,0,1,5-.93V7.5a3.42,3.42,0,0,0-.33-2,1.79,1.79,0,0,0-1.5-.7A2,2,0,0,0,9.25,6.45a.6.6,0,0,1-.47.49l-2.6-.28a.47.47,0,0,1-.40-.56C6.38,3,9.23,2,11.78,2a6.1,6.1,0,0,1,4,1.33C17.11,4.55,17,6.18,17,8v4.17a3.6,3.6,0,0,0,1,2.48c.17.25.21.54,0,.71l-2.06,1.78h0m-2.7-6.53V10c-1.94,0-4,.39-4,2.67,0,1.16.61,1.95,1.63,1.95a2.19,2.19,0,0,0,1.86-1.22,5.32,5.32,0,0,0,.5-2.84m6.93,9A14.29,14.29,0,0,1,12.1,22a14.59,14.59,0,0,1-9.85-3.76c-.20-.18,0-.43.25-.29a19.68,19.68,0,0,0,9.83,2.61A19.69,19.69,0,0,0,19.84,19c.37-.16.66.24.32.51m.91-1c-.28-.36-1.85-.17-2.57-.08-.19,0-.22-.16,0-.30A3.92,3.92,0,0,1,22,17.79a3.86,3.86,0,0,1-1.24,3.32c-.18.16-.35.07-.26-.11C20.76,20.33,21.35,18.86,21.07,18.5Z"></path>
                 </g>
               </svg>
-             <span>Buy on Amazon</span> 
-             <RightArrowDynamic />
+              <span>Buy on Amazon</span>
+              <RightArrowDynamic />
             </Button>
           </a>
         </div>
