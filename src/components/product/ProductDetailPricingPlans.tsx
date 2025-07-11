@@ -353,7 +353,6 @@ export default function ProductDetailPricingPlans({
                         isOutOfStock ? 'text-gray-400' : 'text-gray-800'
                       }`}
                     >
-                      
                       {plan.currency_symbol}
                       {(plan.price / 100).toFixed(2)}
                     </span>
