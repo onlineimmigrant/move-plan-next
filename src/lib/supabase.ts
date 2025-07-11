@@ -191,7 +191,7 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
     const now = new Date().toISOString();
     const { data, error } = await supabase
       .from('banners')
-      .select('id, position, type, content, open_state, landing_content, page_paths, is_active, start_at, end_at, priority, target_audience, dismissal_duration, is_fixed_above_navbar')
+      .select('id, position, type, content, open_state, landing_content, page_paths, is_active, start_at, end_at, priority, target_audience, dismissal_duration, is_fixed_above_navbar, end_date_promotion, end_date_promotion_is_displayed')
       .eq('is_active', true)
       .eq('organization_id', organizationId)
       .lte('start_at', now)
@@ -247,6 +247,8 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
       isDismissed: dismissedIds.includes(banner.id),
       isFixedAboveNavbar: Boolean(banner.is_fixed_above_navbar ?? false),
       is_fixed_above_navbar: Boolean(banner.is_fixed_above_navbar ?? false),
+      end_date_promotion: banner.end_date_promotion,
+      end_date_promotion_is_displayed: Boolean(banner.end_date_promotion_is_displayed ?? false),
     }));
   } catch (err) {
     console.error('Unexpected error fetching banners:', err);

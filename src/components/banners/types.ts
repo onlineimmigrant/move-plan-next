@@ -43,6 +43,9 @@ export interface Banner {
   isDismissed: boolean;
   isFixedAboveNavbar: boolean;
   is_fixed_above_navbar?: boolean; // Match Supabase column
+  organization_id?: string;
+  end_date_promotion?: string;
+  end_date_promotion_is_displayed?: boolean;
 }
 
 // Deprecate BannerType in favor of Banner

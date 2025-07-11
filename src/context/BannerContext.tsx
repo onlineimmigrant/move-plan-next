@@ -120,6 +120,8 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
             isDismissed: dismissedBannerIds.includes(banner.id) || banner.isDismissed || false,
             isFixedAboveNavbar: isFixed,
             is_fixed_above_navbar: isFixed,
+            end_date_promotion: banner.end_date_promotion,
+            end_date_promotion_is_displayed: banner.end_date_promotion_is_displayed ?? false,
           };
           console.log(
             `Mapped banner ${banner.id}: isFixedAboveNavbar=${isFixed}, isDismissed=${mappedBanner.isDismissed}`,

@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import Button from '@/ui/Button';
 import CloseButton from '@/ui/CloseButton';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
+import { BannerTimer } from './BannerTimer';
 
 interface BannerProps {
   banner: BannerType;
@@ -14,7 +15,18 @@ interface BannerProps {
 
 export const Banner = ({ banner, index = 0 }: BannerProps) => {
   const { openBanner, closeBanner, dismissBanner } = useBanner();
-  if (banner.isDismissed) return null;
+
+  // Check if the banner is expired based on end_date_promotion
+  const isBannerExpired = () => {
+    if (!banner.end_date_promotion) return false;
+    const endDate = new Date(banner.end_date_promotion);
+    if (isNaN(endDate.getTime())) return false; // Invalid date
+    const currentDate = new Date();
+    return endDate < currentDate;
+  };
+
+  // If the banner is dismissed or expired, don't render it
+  if (banner.isDismissed || isBannerExpired()) return null;
 
   useEffect(() => {
     const el = document.getElementById(`banner-${banner.id}`);
@@ -103,9 +115,11 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
         banner.isOpen && banner.openState !== 'absent'
           ? openStateStyles[banner.openState as Exclude<BannerOpenState, 'absent'>]
           : positionStyles[banner.position]
-      } flex ${banner.position === 'left' || banner.position === 'right' ? 'flex-row sm:flex-col' : 'flex-col'} items-center justify-center p-2 min-h-[48px] ${
-        banner.content?.banner_background || 'bg-gray-50'
-      }`}
+      } flex ${
+        banner.position === 'left' || banner.position === 'right' ? 'flex-row sm:flex-col' : 'flex-col'
+      } items-center justify-center p-2 ${
+        banner.end_date_promotion_is_displayed && banner.end_date_promotion ? 'min-h-[72px] sm:min-h-[48px]' : 'min-h-[48px]'
+      } ${banner.content?.banner_background || 'bg-gray-50'}`}
       role="banner"
       aria-labelledby={`banner-${banner.id}`}
       id={`banner-${banner.id}`}
@@ -122,11 +136,13 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
 
       {!banner.isOpen && (
         <div
-          className={`flex min-w-0 ${
+          className={`flex min-w-0 w-full ${
             banner.position === 'left' || banner.position === 'right'
               ? 'flex-row sm:flex-col items-center space-x-2 sm:space-x-0 sm:space-y-2'
-              : 'flex-col items-center space-y-2'
-          }`}
+              : banner.end_date_promotion_is_displayed && banner.end_date_promotion
+              ? 'flex-col sm:flex-row sm:max-w-5xl sm:justify-between sm:items-center sm:space-x-4 sm:space-y-0'
+              : 'flex-col sm:flex-row sm:justify-center sm:items-center sm:space-x-4 sm:space-y-0'
+          }`} // Conditional justify-center or max-w-5xl justify-between for desktop
         >
           <div
             className={`flex flex-row text-xs sm:text-sm justify-left items-center space-y-0 ${
@@ -144,9 +160,11 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
               />
             )}
 
-            <p id={`banner-${banner.id}-text`} className="break-words">
-              {banner.content.text}
-            </p>
+            <div className="flex flex-col">
+              <p id={`banner-${banner.id}-text`} className="break-words">
+                {banner.content.text}
+              </p>
+            </div>
 
             {banner.content.link && (
               <Button
@@ -169,19 +187,26 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
             )}
           </div>
 
-          {shouldRenderOpenButton && banner.position === 'left' && (
-            <button
-              onClick={handleOpen}
-              className={openButtonConfig.className}
-              aria-label={openButtonConfig.ariaLabel}
-            >
-              {openButtonConfig.icon}
-            </button>
+          {/* Timer for desktop (right) and mobile (below) */}
+          {banner.end_date_promotion_is_displayed && banner.end_date_promotion && (
+            <div className="mt-2 sm:mt-0">
+              <BannerTimer endDate={banner.end_date_promotion} textColor="text-gray-500" backgroundColor="bg-transparent" />
+            </div>
           )}
         </div>
       )}
 
       {shouldRenderOpenButton && banner.position === 'top' && (
+        <button
+          onClick={handleOpen}
+          className={openButtonConfig.className}
+          aria-label={openButtonConfig.ariaLabel}
+        >
+          {openButtonConfig.icon}
+        </button>
+      )}
+
+      {shouldRenderOpenButton && banner.position === 'left' && (
         <button
           onClick={handleOpen}
           className={openButtonConfig.className}
