@@ -8,8 +8,9 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import Privacy from '@/components/Privacy';
 import Terms from '@/components/Terms';
-import { useSettings } from '@/context/SettingsContext';
 import ContactModal from '@/components/ContactModal';
+import { useSettings } from '@/context/SettingsContext';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/ui/Button';
