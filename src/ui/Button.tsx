@@ -20,12 +20,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
        badge_primary_circle: 'py-2 sm:py-2 px-2 sm:px-2 shadow hover:shadow-lg rounded-full text-[10px] sm:text-xs font-medium cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-300 flex items-center gap-1',
 
       secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
+      
       start:
         'w-full font-medium bg-sky-600 text-white font-semibold py-2 rounded-lg hover:bg-sky-700 active:bg-sky-800 focus:ring-2 focus:ring-sky-500 transition-all duration-200 shadow-md hover:shadow-lg',
       close:
         'absolute top-2 right-2 text-gray-700 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-gray-500',
       link:
-        'text-sky-600 hover:text-sky-700 focus:ring-gray-500 hover:underline focus:outline-none focus:ring-2 focus:ring-sky-500',
+        'px-0 sm:px-0 text-sky-600 hover:text-sky-700 focus:ring-gray-500 hover:underline focus:outline-none focus:ring-2 focus:ring-sky-500',
       outline:
         'shadow-sm bg-transparent border border-gray-300 text-gray-700 hover:border-sky-600 hover:text-sky-600 focus:ring-sky-500',
     };

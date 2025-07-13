@@ -1,0 +1,180 @@
+/* components/ChatWidget/ChatWidget.module.css */
+.typingDots span {
+  animation: blink 1s infinite;
+}
+
+.typingDots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingDots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+.fullscreenContainer {
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.mobileHalfContainer {
+  width: 100vw;
+  height: 50vh;
+  bottom: 0;
+  right: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.centeredMessages {
+  max-width: 80rem; /* max-w-5xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.centeredInput {
+  max-width: 48rem; /* Matches Grok/ChatGPT input width */
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.taskBadgeContainer {
+  max-height: 4rem; /* Approx. two lines of badges */
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-bottom: 0.5rem; /* mb-2 */
+  -webkit-overflow-scrolling: touch;
+}
+
+.taskBadgeContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.taskBadgeContainer::-webkit-scrollbar-track {
+  background: #f1f5f9; /* bg-gray-100 */
+  border-radius: 3px;
+}
+
+.taskBadgeContainer::-webkit-scrollbar-thumb {
+  background: #9ca3af; /* bg-gray-400 */
+  border-radius: 3px;
+}
+
+.taskBadgeContainer::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* bg-gray-500 */
+}
+
+.taskBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  margin: 0.25rem;
+  background-color: #f1f5f9; /* bg-gray-100 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  color: #4b5563; /* text-gray-600 */
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.taskBadge:hover {
+  background-color: #e5e7eb; /* bg-gray-200 */
+}
+
+.taskBadge.selected {
+  background-color: #e0f2fe; /* bg-sky-100 */
+  color: #0284c7; /* text-sky-600 */
+}
+
+.addTaskButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem;
+  margin: 0.25rem;
+  background-color: #f1f5f9; /* bg-gray-100 */
+  border-radius: 9999px; /* rounded-full */
+  color: #4b5563; /* text-gray-600 */
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.addTaskButton:hover {
+  background-color: #e5e7eb; /* bg-gray-200 */
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  max-width: 32rem; /* max-w-lg */
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modalButton {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.modalButton:disabled {
+  background-color: #e5e7eb; /* bg-gray-200 */
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .centeredMessages {
+    max-width: 100%;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .centeredInput {
+    max-width: 100%;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .taskBadgeContainer {
+    max-height: 5rem; /* Approx. two lines on mobile */
+  }
+
+  .taskBadge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem; /* text-xs */
+  }
+
+  .addTaskButton {
+    padding: 0.375rem;
+  }
+}
