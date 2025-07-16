@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import CategoriesBar from '@/components/product/CategoriesBar';
@@ -31,7 +31,7 @@ type ProductSubType = {
   [key: string]: any;
 };
 
-export default function ClientProductsPage({
+const ClientProductsPage = memo(function ClientProductsPage({
   initialProducts,
   initialSubTypes,
   initialError,
@@ -43,7 +43,6 @@ export default function ClientProductsPage({
   isAdmin?: boolean;
 }) {
   const searchParams = useSearchParams();
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubType, setActiveSubType] = useState<ProductSubType | null>(null);
   const [visibleItemsCount, setVisibleItemsCount] = useState<number>(8);
@@ -64,7 +63,8 @@ export default function ClientProductsPage({
     }
   }, [searchParams, initialSubTypes]);
 
-  useEffect(() => {
+  // Memoized filtered products calculation
+  const filteredProducts = useMemo(() => {
     let result = initialProducts;
 
     if (searchQuery) {
@@ -78,15 +78,18 @@ export default function ClientProductsPage({
     if (activeSubType) {
       result = result.filter(
         (p) =>
-          p.product_sub_type_id === activeSubType!.id ||
-          p.product_sub_type_additional_id === activeSubType!.id
+          p.product_sub_type_id === activeSubType.id ||
+          p.product_sub_type_additional_id === activeSubType.id
       );
     }
 
-    result = result.sort((a, b) => a.order - b.order);
-    setFilteredProducts(result);
-    setVisibleItemsCount(8);
+    return result.sort((a, b) => a.order - b.order);
   }, [searchQuery, activeSubType, initialProducts]);
+
+  // Update visible count when filtered products change
+  useEffect(() => {
+    setVisibleItemsCount(8);
+  }, [filteredProducts]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,20 +126,37 @@ export default function ClientProductsPage({
     }
   }, [searchQuery, isFixed, searchHeight]);
 
-  function handleCategoryChange(subType: ProductSubType | null) {
+  const handleCategoryChange = useCallback((subType: ProductSubType | null) => {
     setActiveSubType(subType);
-  }
+  }, []);
 
-  function loadMoreItems() {
+  const loadMoreItems = useCallback(() => {
     setVisibleItemsCount((prev) => prev + 8);
-  }
+  }, []);
 
-  if (error)
+  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>, imageUrl?: string) => {
+    console.error('Image failed to load:', imageUrl);
+    e.currentTarget.style.display = 'none';
+  }, []);
+
+  // Error boundary fallback
+  if (error) {
     return (
-      <div className="py-32 text-center text-red-500">
-        <div>{error}</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center">
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.96-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Products</h3>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
       </div>
     );
+  }
 
   return (
     <div className="bg-gray-50">
@@ -207,44 +227,44 @@ export default function ClientProductsPage({
         ) : (
           <div
             ref={productsRef}
-            className="sm:px-0 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 max-w-7xl mx-auto"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto"
           >
             {filteredProducts.slice(0, visibleItemsCount).map((product) => (
               <Link
                 key={product.id}
                 href={product.slug ? `/products/${product.slug}` : '#'}
-                className="group"
+                className="group w-full"
               >
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full min-h-[320px] sm:min-h-[380px]">
                   {product.links_to_image && product.links_to_image.trim() !== '' && (
-                    <div className="p-2 sm:p-0 w-1/2 h-1/2 sm:w-full sm:h-auto flex-shrink-0">
+                    <div className="w-full h-48 sm:h-52 flex-shrink-0 overflow-hidden">
                       <img
                         src={product.links_to_image}
                         alt={product.product_name ?? 'Product image'}
-                        className="w-full rounded-t-lg h-auto object-cover"
-                        onError={(e) => {
-                          console.error('Image failed to load:', product.links_to_image);
-                          e.currentTarget.style.display = 'none';
-                        }}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => handleImageError(e, product.links_to_image || undefined)}
+                        loading="lazy"
                       />
                     </div>
                   )}
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h2 className="tracking-tight text-sm sm:text-lg line-clamp-2 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
+                  <div className="p-4 sm:p-6 flex flex-col flex-grow">
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-sky-400 transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]">
                       {product.product_name ?? 'Unnamed Product'}
                     </h2>
-                  </div>
-                  <div className="px-4 py-2 flex justify-between">
-                    <span className="text-gray-500 text-sm sm:text-base">From</span>
-                    <div className="font-bold tracking-wider text-sm sm:text-base text-gray-700">
-                      <span>{product.currency_manual_symbol ?? ''}</span>
-                      <span>{product.price_manual ?? ''}</span>
+                    <div className="mt-auto">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-gray-500 text-sm sm:text-base">From</span>
+                        <div className="font-bold text-base sm:text-lg text-gray-700">
+                          <span>{product.currency_manual_symbol ?? ''}</span>
+                          <span>{product.price_manual ?? ''}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <span className="text-sky-400 transition-all duration-300 group-hover:translate-x-1">
+                          <ArrowRightIcon className="h-5 w-5" />
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end relative">
-                    <span className="text-sky-400 transition-all duration-300 group">
-                      <ArrowRightIcon className="h-5 w-5" />
-                    </span>
                   </div>
                 </div>
               </Link>
@@ -253,13 +273,13 @@ export default function ClientProductsPage({
         )}
 
         {filteredProducts.length > visibleItemsCount && (
-          <div className="flex justify-end px-4 mt-8 max-w-7xl mx-auto">
+          <div className="flex justify-center sm:justify-end px-4 mt-8 max-w-7xl mx-auto">
             <button
               type="button"
-              onClick={loadMoreItems} // Ensure this references the defined function
-              className="text-gray-500 font-medium hover:text-sky-400"
+              onClick={loadMoreItems}
+              className="px-6 py-3 text-gray-600 font-medium hover:text-sky-400 hover:bg-sky-50 rounded-lg transition-all duration-200 border border-gray-200 hover:border-sky-200"
             >
-              Load more...
+              Load more products...
             </button>
           </div>
         )}
@@ -268,4 +288,6 @@ export default function ClientProductsPage({
       </div>
     </div>
   );
-}
+});
+
+export default ClientProductsPage;

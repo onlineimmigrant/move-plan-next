@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { useBasket, BasketItem } from '../../context/BasketContext';
 import ProgressBar from '../../components/product/ProgressBar';
 import BasketItemComponent from '@/components/product/BasketItem';
-import { HiTrash } from 'react-icons/hi';
-import { useEffect, useState } from 'react';
+import { HiTrash, HiShoppingBag, HiArrowRight } from 'react-icons/hi';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import Button from '@/ui/Button';
 
@@ -28,143 +28,216 @@ export default function BasketPage() {
   const { basket, updateQuantity, removeFromBasket, clearBasket } = useBasket();
   const [isMounted, setIsMounted] = useState(false);
   const [featuresMap, setFeaturesMap] = useState<{ [key: number]: Feature[] }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const totalItems = basket.reduce((sum, item: BasketItem) => sum + item.quantity, 0);
-  const totalPrice = basket.reduce((sum, item: BasketItem) => {
-    const price =
-      item.plan.is_promotion && item.plan.promotion_price
+  // Memoized calculations for better performance
+  const { totalItems, totalPrice, currency } = useMemo(() => {
+    const items = basket.reduce((sum, item: BasketItem) => sum + item.quantity, 0);
+    const price = basket.reduce((sum, item: BasketItem) => {
+      const itemPrice = item.plan.is_promotion && item.plan.promotion_price
         ? item.plan.promotion_price
         : item.plan.price;
-    return sum + price * item.quantity / 100;
-  }, 0);
+      return sum + itemPrice * item.quantity / 100;
+    }, 0);
+    const curr = basket.length > 0 ? basket[0].plan.currency_symbol || '£' : '£';
+    
+    return { totalItems: items, totalPrice: price, currency: curr };
+  }, [basket]);
 
-  const currency = basket.length > 0 ? basket[0].plan.currency_symbol || 'GBP' : 'GBP';
+  // Optimized clear basket function
+  const handleClearBasket = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await clearBasket();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [clearBasket]);
 
   // Set isMounted to true after the component mounts on the client
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Fetch associated features for each pricing plan in the basket
-  useEffect(() => {
-    const fetchFeatures = async () => {
-      const newFeaturesMap: { [key: number]: Feature[] } = {};
-      for (const item of basket) {
-        if (!item.plan.id) {
-          console.warn('Skipping item with undefined plan ID', item);
-          continue;
-        }
-        const { data: featuresData, error: featuresError } = await supabase
-          .from('pricingplan_features')
-          .select(`
-            feature_id,
-            feature:feature_id (
-              id,
-              name,
-              feature_image,
-              content,
-              slug
-            )
-          `)
-          .eq('pricingplan_id', item.plan.id);
+  // Optimized features fetching with better error handling
+  const fetchFeatures = useCallback(async () => {
+    if (basket.length === 0) {
+      setFeaturesMap({});
+      return;
+    }
 
-        if (featuresError) {
-          console.error('Error fetching features for plan', item.plan.id, featuresError);
-          newFeaturesMap[item.plan.id] = [];
-        } else {
-          newFeaturesMap[item.plan.id] =
-            featuresData
-              ?.flatMap((data: FeatureData) => data.feature)
-              .filter((feature): feature is Feature => feature !== null && feature.id !== null) || [];
-        }
-      }
+    setIsLoading(true);
+    const newFeaturesMap: { [key: number]: Feature[] } = {};
+    
+    try {
+      // Batch fetch all features in parallel for better performance
+      const featurePromises = basket
+        .filter(item => item.plan.id)
+        .map(async (item) => {
+          const { data: featuresData, error } = await supabase
+            .from('pricingplan_features')
+            .select(`
+              feature_id,
+              feature:feature_id (
+                id,
+                name,
+                feature_image,
+                content,
+                slug
+              )
+            `)
+            .eq('pricingplan_id', item.plan.id);
+
+          if (error) {
+            console.error('Error fetching features for plan', item.plan.id, error);
+            return { planId: item.plan.id, features: [] };
+          }
+
+          const features = featuresData
+            ?.flatMap((data: FeatureData) => data.feature)
+            .filter((feature): feature is Feature => feature !== null && feature.id !== null) || [];
+
+          return { planId: item.plan.id, features };
+        });
+
+      const results = await Promise.all(featurePromises);
+      results.forEach(({ planId, features }) => {
+        newFeaturesMap[planId] = features;
+      });
+
       setFeaturesMap(newFeaturesMap);
-    };
-
-    if (basket.length > 0) {
-      fetchFeatures();
+    } catch (error) {
+      console.error('Error fetching features:', error);
+    } finally {
+      setIsLoading(false);
     }
   }, [basket]);
 
+  // Fetch associated features for each pricing plan in the basket
+  useEffect(() => {
+    fetchFeatures();
+  }, [fetchFeatures]);
+
   return (
-    <div className="max-w-2xl mx-auto p-8 min-h-screen">
-      <div className="-mx-8 mt-8 mb-2 sm:mt-10 bg-gray-50  py-4 flex items-center justify-between">
-      <h1 className="px-8 text-base md:text-xl font-semibold tracking-tight leading-tight">
-          Basket
-        </h1>
-        {isMounted && basket.length > 0 && (
-          <button
-            onClick={clearBasket}
-            className="px-8 flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium transition-colors duration-200"
-          >
-            <HiTrash className="w-5 h-5" />
-            Clear Basket
-          </button>
-        )}
-      </div>
-
-
-
-
-      <div className="flex justify-between items-center mb-8">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
-              </h2>
-              <div className="flex items-center space-x-2">
-                <span className="text-base font-semibold text-gray-900 uppercase">
-                  {currency}
-                </span>
-                <span className="text-3xl font-bold text-gray-900">
-                  {totalPrice.toFixed(2)}
-                </span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section with enhanced styling */}
+        <div className="rounded-3xl shadow-lg border border-gray-200 p-6 mb-8 backdrop-blur-sm bg-white/95">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-sky-500 to-sky-600 rounded-2xl shadow-lg">
+                <HiShoppingBag className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Shopping Basket</h1>
+                <p className="text-sm text-gray-600 mt-1">
+                  {totalItems === 0 ? 'Your basket is empty' : `${totalItems} ${totalItems === 1 ? 'item' : 'items'} in basket`}
+                </p>
               </div>
             </div>
-
-          <Link href="/products">
-            <span className="mb-4 inline-block text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors duration-200">
-              Continue Shopping
-            </span>
-        </Link>
-
-      {basket.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-base">Your basket is empty.</p>
-          <Link href="/products">
-          {/*
-            <span className="inline-block mt-4 text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors duration-200">
-              Continue Shopping
-            </span>*/}
-          </Link>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-2 mb-6">
-            {basket
-              .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
-              .map((item) => (
-                <BasketItemComponent
-                  key={item.plan.id}
-                  item={item}
-                  updateQuantity={updateQuantity}
-                  removeFromBasket={removeFromBasket}
-                  associatedFeatures={featuresMap[item.plan.id] || []}
-                />
-              ))}
+            
+            {isMounted && basket.length > 0 && (
+              <button
+                onClick={handleClearBasket}
+                disabled={isLoading}
+                className="flex items-center space-x-2 px-4 py-2.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 disabled:opacity-50 border border-red-200 hover:border-red-300"
+              >
+                <HiTrash className="w-4 h-4" />
+                <span className="text-sm font-medium">Clear All</span>
+              </button>
+            )}
           </div>
+        </div>
 
-          <div className="bg-transparent rounded-lg mb-6">
-
-            <Link href="/checkout">
-              <Button 
-              variant='start'>
-                    Proceed to Checkout
+        {basket.length === 0 ? (
+          /* Enhanced Empty State */
+          <div className="rounded-3xl shadow-lg border border-gray-200 p-12 text-center backdrop-blur-sm bg-white/95">
+            <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
+              <HiShoppingBag className="w-12 h-12 text-gray-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Your basket is empty</h3>
+            <p className="text-gray-600 mb-10 max-w-md mx-auto leading-relaxed">Discover our amazing products and add them to your basket to get started with your purchase</p>
+            <Link href="/products">
+              <Button variant="start" className="inline-flex items-center space-x-2 px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                <span>Start Shopping</span>
+                <HiArrowRight className="w-5 h-5" />
               </Button>
             </Link>
           </div>
-        </>
-      )}
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Enhanced Basket Items */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="rounded-3xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm bg-white/95">
+                <h2 className="text-lg font-bold text-gray-900 mb-6 tracking-tight">Items in your basket</h2>
+                <div className="space-y-4">
+                  {basket
+                    .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
+                    .map((item, index) => (
+                      <div key={item.plan.id} className={index > 0 ? 'border-t border-gray-200 pt-4' : ''}>
+                        <BasketItemComponent
+                          item={item}
+                          updateQuantity={updateQuantity}
+                          removeFromBasket={removeFromBasket}
+                          associatedFeatures={featuresMap[item.plan.id] || []}
+                        />
+                      </div>
+                    ))}
+                </div>
+              </div>
+              
+              {/* Enhanced Continue Shopping */}
+              <Link href="/products">
+                <div className="rounded-3xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer backdrop-blur-sm bg-white/95 hover:bg-sky-50/95 group">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sky-600 font-semibold group-hover:text-sky-700 transition-colors">Continue Shopping</span>
+                    <HiArrowRight className="w-4 h-4 text-sky-600 group-hover:text-sky-700 group-hover:translate-x-1 transition-all duration-200" />
+                  </div>
+                </div>
+              </Link>
+            </div>
 
-      <ProgressBar stage={1} />
+            {/* Enhanced Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="rounded-3xl shadow-lg border border-gray-200 p-6 sticky top-24 backdrop-blur-sm bg-white/95">
+                <h3 className="text-lg font-bold text-gray-900 mb-6 tracking-tight">Order Summary</h3>
+                
+                <div className="space-y-4 mb-8">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Items ({totalItems})</span>
+                    <span className="font-semibold text-gray-900">{currency}{totalPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Shipping</span>
+                    <span className="font-semibold text-emerald-600">Free</span>
+                  </div>
+                  <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                  <div className="flex justify-between pt-2">
+                    <span className="text-lg font-bold text-gray-900">Total</span>
+                    <span className="text-xl font-bold text-gray-900">{currency}{totalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <Link href="/checkout">
+                  <Button variant="start" className="w-full justify-center whitespace-nowrap py-4 text-base font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                    <span>Proceed to Checkout</span>
+                    <HiArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+
+                <div className="mt-6 text-center">
+                  <p className="text-xs text-gray-500 bg-gray-50 rounded-full px-3 py-2 inline-block">🔒 Secure checkout powered by Stripe</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        <div className="mt-12">
+          <ProgressBar stage={1} />
+        </div>
+      </div>
     </div>
   );
 }

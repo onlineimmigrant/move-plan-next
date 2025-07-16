@@ -1,7 +1,7 @@
 // /src/context/BasketContext.tsx
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 export interface PricingPlan {
   id: number;
@@ -33,6 +33,8 @@ interface BasketContextType {
   updateQuantity: (planId: number, quantity: number) => void;
   removeFromBasket: (planId: number) => void;
   clearBasket: () => void;
+  totalItems: number;
+  totalValue: number;
 }
 
 const BasketContext = createContext<BasketContextType | undefined>(undefined);
@@ -54,31 +56,46 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error) {
       console.error('Error parsing basket from localStorage:', error);
+      // Clear corrupted data
+      localStorage.removeItem('basket');
     }
     return [];
   });
 
+  // Memoized basket calculations for better performance
+  const basketStats = useMemo(() => {
+    const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
+    const totalValue = basket.reduce((sum, item) => {
+      const price = item.plan.is_promotion && item.plan.promotion_price
+        ? item.plan.promotion_price
+        : item.plan.price;
+      return sum + (price * item.quantity / 100);
+    }, 0);
+    
+    return { totalItems, totalValue };
+  }, [basket]);
+
+  // Debounced localStorage save for better performance
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('basket', JSON.stringify(basket));
-        console.log('Basket saved to localStorage:', basket);
-      } catch (error) {
-        console.error('Error saving basket to localStorage:', error);
+    const timeoutId = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('basket', JSON.stringify(basket));
+        } catch (error) {
+          console.error('Error saving basket to localStorage:', error);
+        }
       }
-    }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [basket]);
 
-  useEffect(() => {
-    console.log('Basket updated:', basket);
-  }, [basket]);
-
-  const addToBasket = async (plan: PricingPlan) => {
-    console.log('Adding to basket:', plan);
+  const addToBasket = useCallback(async (plan: PricingPlan) => {
     const planWithFallback: PricingPlan = {
       ...plan,
-      currency_symbol: plan.currency_symbol || 'USD',
+      currency_symbol: plan.currency_symbol || '$',
     };
+    
     setBasket((prev) => {
       const existingItem = prev.find((item) => item.plan.id === plan.id);
       if (existingItem) {
@@ -90,41 +107,42 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
       }
       return [...prev, { plan: planWithFallback, quantity: 1 }];
     });
-  };
+  }, []);
 
-  const updateQuantity = (planId: number, quantity: number) => {
-    console.log('Updating quantity for plan:', planId, 'to:', quantity);
+  const updateQuantity = useCallback((planId: number, quantity: number) => {
     setBasket((prev) => {
       if (quantity <= 0) {
         return prev.filter((item) => item.plan.id !== planId);
       }
-      const existingItem = prev.find((item) => item.plan.id === planId);
-      if (existingItem) {
-        return prev.map((item) =>
-          item.plan.id === planId ? { ...item, quantity } : item
-        );
-      }
-      return prev;
+      
+      return prev.map((item) =>
+        item.plan.id === planId ? { ...item, quantity } : item
+      );
     });
-  };
+  }, []);
 
-  const removeFromBasket = (planId: number) => {
-    console.log('Removing from basket:', planId);
+  const removeFromBasket = useCallback((planId: number) => {
     setBasket((prev) => prev.filter((item) => item.plan.id !== planId));
-  };
+  }, []);
 
-  const clearBasket = () => {
-    console.log('Clearing basket');
+  const clearBasket = useCallback(() => {
     setBasket([]);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('basket');
     }
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    basket,
+    addToBasket,
+    updateQuantity,
+    removeFromBasket,
+    clearBasket,
+    ...basketStats,
+  }), [basket, addToBasket, updateQuantity, removeFromBasket, clearBasket, basketStats]);
 
   return (
-    <BasketContext.Provider
-      value={{ basket, addToBasket, updateQuantity, removeFromBasket, clearBasket }}
-    >
+    <BasketContext.Provider value={contextValue}>
       {children}
     </BasketContext.Provider>
   );

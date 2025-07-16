@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo } from 'react';
-import { ShoppingCartIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import Link from 'next/link';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useBasket } from '../../context/BasketContext';
-import PricingPlanFeatures from './PricingPlanFeatures';
 import Button from '@/ui/Button';
+import Link from 'next/link';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
+import PricingPlanFeatures from './PricingPlanFeatures';
 
 // Define types for pricing plans and props
 interface Feature {
@@ -119,7 +119,7 @@ const planCardStyles = (isOutOfStock: boolean, isActive: boolean) =>
       : 'bg-white border-sky-200 hover:shadow-sm hover:bg-gray-50 cursor-pointer'
   }`;
 
-export default function ProductDetailPricingPlans({
+const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   pricingPlans = [],
   amazonBooksUrl,
 }: ProductDetailPricingPlansProps) {
@@ -147,18 +147,19 @@ export default function ProductDetailPricingPlans({
     console.log('Selected initial plan:', firstInStockPlan);
   }, [pricingPlans]);
 
-  const showToast = (
+  // Memoized toast management
+  const showToast = useCallback((
     message: string,
     type: 'success' | 'error' | 'warn',
     onRetry?: () => void
   ) => {
     const id = Date.now();
     setToasts((prevToasts) => [...prevToasts, { id, message, type, onRetry }]);
-  };
+  }, []);
 
-  const removeToast = (id: number) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== toast.id));
-  };
+  const removeToast = useCallback((id: number) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+  }, []);
 
   const handlePlanSelect = useCallback((plan: PricingPlan) => {
     const status = getStatus(plan).toLowerCase();
@@ -466,4 +467,6 @@ export default function ProductDetailPricingPlans({
       {selectedPlan && <PricingPlanFeatures selectedPlan={selectedPlan} />}
     </div>
   );
-}
+});
+
+export default ProductDetailPricingPlans;
