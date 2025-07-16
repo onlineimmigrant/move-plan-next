@@ -1,7 +1,7 @@
 // src/components/PostPage/TOC.tsx
 'use client';
 
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 
 
 interface TOCItem {
@@ -15,31 +15,38 @@ interface TOCProps {
     handleScrollTo: (id: string) => void;
 }
 
-const TOC: React.FC<TOCProps> = ({ toc, handleScrollTo }) => {
- //   const { settings } = useSettings();
-    
+const TOC: React.FC<TOCProps> = memo(({ toc, handleScrollTo }) => {
+    // Memoize the styling classes for different heading levels
+    const getItemClassName = useMemo(() => (tagName: string) => {
+        const baseClasses = 'hover:text-gray-400 transition-colors duration-200';
+        switch (tagName) {
+            case 'h2':
+                return `${baseClasses} mt-2`;
+            case 'h3':
+                return `${baseClasses} font-normal ml-2 mt-1`;
+            case 'h4':
+                return `${baseClasses} font-light ml-4 text-xs`;
+            default:
+                return `${baseClasses} font-light ml-6`;
+        }
+    }, []);
+
+    // Early return for empty TOC
     if (!toc || toc.length === 0) return null;
 
     return (
-        <div className="table-of-contents mr-16 ">
+        <div className="table-of-contents mr-16">
             <h2 className="mt-8 font-light text-sm text-gray-400 mb-4">On this page</h2>
             <ul className="text-sm font-normal text-gray-700">
                 {toc.map((item, index) => (
                     <li
-                        key={index}
-                        className={` ${
-                            item.tag_name === 'h2'
-                                ? 'hover:text-gray-400 mt-2'
-                                : item.tag_name === 'h3'
-                                ? 'font-normal ml-2 hover:text-gray-400 mt-1 '
-                                : item.tag_name === 'h4'
-                                ? 'font-light ml-4 hover:text-gray-400 text-xs '
-                                : 'font-light ml-6 hover:text-gray-400 '
-                        }`}
+                        key={`${item.tag_id}-${index}`}
+                        className={getItemClassName(item.tag_name)}
                     >
                         <button 
                             onClick={() => handleScrollTo(item.tag_id)}
-                            className="text-left w-full line-clamp-1"
+                            className="text-left w-full line-clamp-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded px-1 py-0.5"
+                            aria-label={`Navigate to ${item.tag_text}`}
                         >
                             {item.tag_text}
                         </button>
@@ -48,6 +55,8 @@ const TOC: React.FC<TOCProps> = ({ toc, handleScrollTo }) => {
             </ul>
         </div>
     );
-};
+});
+
+TOC.displayName = 'TOC';
 
 export default TOC;

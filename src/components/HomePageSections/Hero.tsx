@@ -1,10 +1,13 @@
 'use client'; // Ensure client-side rendering for hooks
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import parse from 'html-react-parser';
 import Link from 'next/link';
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
+import DotGrid from '@/components/AnimateElements/DotGrid';
+import LetterGlitch from '@/components/AnimateElements/LetterGlitch';
+import MagicBento from '@/components/AnimateElements/MagicBento';
 
 interface HeroProps {
   hero: {
@@ -35,36 +38,34 @@ interface HeroProps {
     p_description_weight?: string;
     image_first?: boolean;
     organization_id: string | null;
-  };
-  labelsDefault?: {
-    button_main_get_started?: { url: string; text: string };
+    button_main_get_started?: string;
     button_explore?: string;
+    animation_element?: string; // Corrected from animation0876
   };
 }
 
-const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
-  // Move hooks to top level
+const Hero: React.FC<HeroProps> = ({ hero }) => {
   const [isVisible, setIsVisible] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Early return after hooks
   if (!hero) return null;
 
-  // Debug log
-  console.log('Hero props:', { h1_title: hero.h1_title, p_description: hero.p_description, title_alighnement: hero.title_alighnement });
+  console.log('Hero props:', {
+    h1_title: hero.h1_title,
+    p_description: hero.p_description,
+    title_alighnement: hero.title_alighnement,
+    animation_element: hero.animation_element,
+  });
 
-  // Intersection Observer to detect visibility
   useEffect(() => {
-    const currentRef = heroRef.current; // Store ref value
+    const currentRef = heroRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
         const visible = entry.isIntersecting;
         setIsVisible(visible);
-        console.log('Hero visibility:', visible); // Debug log
+        console.log('Hero visibility:', visible);
       },
-      {
-        threshold: 0.1, // Trigger when 10% of the section is visible
-      }
+      { threshold: 0.1 }
     );
 
     if (currentRef) {
@@ -73,34 +74,90 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
 
     return () => {
       if (currentRef) {
-        observer.unobserve(currentRef); // Use stored ref value
+        observer.unobserve(currentRef);
       }
     };
-  }, []); // Empty dependency array since heroRef is stable
+  }, []);
 
-  // Determine text classes based on is_h1_gradient_text
-  const textColorClass = hero.is_h1_gradient_text
-    ? `bg-gradient-to-r from-${hero.h1_text_color_gradient_from || 'gray-700'} via-${hero.h1_text_color_gradient_via || 'gray-700'} to-${hero.h1_text_color_gradient_to || 'indigo-200'} bg-clip-text text-transparent`
-    : `text-${hero.h1_text_color || 'gray-700'}`;
+  const textColorClass = useMemo(() => (
+    hero.is_h1_gradient_text
+      ? `bg-gradient-to-r from-${hero.h1_text_color_gradient_from || 'gray-700'} via-${hero.h1_text_color_gradient_via || 'gray-700'} to-${hero.h1_text_color_gradient_to || 'indigo-200'} bg-clip-text text-transparent`
+      : `text-${hero.h1_text_color || 'gray-700'}`
+  ), [hero.is_h1_gradient_text, hero.h1_text_color_gradient_from, hero.h1_text_color_gradient_via, hero.h1_text_color_gradient_to, hero.h1_text_color]);
 
-  // Determine background classes based on is_bg_gradient
-  const backgroundClass = hero.is_bg_gradient
-    ? `bg-gradient-to-tr from-${hero.background_color_gradient_from || 'sky-50'} via-${hero.background_color_gradient_via || 'transparent'} to-${hero.background_color_gradient_to || ''} hover:bg-sky-50`
-    : `bg-${hero.background_color || 'transparent'} hover:bg-sky-50`;
+  const backgroundClass = useMemo(() => (
+    hero.is_bg_gradient
+      ? `bg-gradient-to-tr from-${hero.background_color_gradient_from || 'sky-50'} via-${hero.background_color_gradient_via || 'transparent'} to-${hero.background_color_gradient_to || ''} hover:bg-sky-50`
+      : `bg-${hero.background_color || 'transparent'} hover:bg-sky-50`
+  ), [hero.is_bg_gradient, hero.background_color_gradient_from, hero.background_color_gradient_via, hero.background_color_gradient_to, hero.background_color]);
 
-  // Determine Get Started button background classes
-  const GetstartedBackgroundColorClass = hero.is_h1_gradient_text
-    ? `bg-gradient-to-r from-${hero.h1_text_color_gradient_from || 'gray-700'} via-${hero.h1_text_color_gradient_via || 'gray-700'} to-${hero.h1_text_color_gradient_to || 'gray-900'}`
-    : `bg-${hero.h1_text_color || 'gray-700'}`;
+  const GetstartedBackgroundColorClass = useMemo(() => (
+    hero.is_h1_gradient_text
+      ? `bg-gradient-to-r from-${hero.h1_text_color_gradient_from || 'gray-700'} via-${hero.h1_text_color_gradient_via || 'gray-700'} to-${hero.h1_text_color_gradient_to || 'gray-900'}`
+      : `bg-${hero.h1_text_color || 'gray-700'}`
+  ), [hero.is_h1_gradient_text, hero.h1_text_color_gradient_from, hero.h1_text_color_gradient_via, hero.h1_text_color_gradient_to, hero.h1_text_color]);
 
-  // Determine h1 text size classes with multiple breakpoints
-  const h1TextSize = `sm:${hero.h1_text_size || 'text-7xl'} md:${hero.h1_text_size || 'text-7xl'} lg:${hero.h1_text_size || 'text-7xl'} ${hero.h1_text_size_mobile || 'text-5xl'}`;
+  const h1TextSize = useMemo(() => (
+    `sm:${hero.h1_text_size || 'text-7xl'} md:${hero.h1_text_size || 'text-7xl'} lg:${hero.h1_text_size || 'text-7xl'} ${hero.h1_text_size_mobile || 'text-5xl'}`
+  ), [hero.h1_text_size, hero.h1_text_size_mobile]);
 
   return (
     <div
       ref={heroRef}
       className={`pt-16 min-h-screen relative isolate px-6 lg:px-8 ${backgroundClass} flex items-center justify-center`}
     >
+      {(() => {
+        switch (hero.animation_element) {
+          case 'DotGrid':
+            return (
+              <div className="absolute inset-0 -z-20">
+                <DotGrid
+                  dotSize={40}
+                  gap={200}
+                  baseColor="#f8fafc"
+                  activeColor="#f1f5f9"
+                  proximity={120}
+                  shockRadius={250}
+                  shockStrength={5}
+                  resistance={750}
+                  returnDuration={1.5}
+                />
+              </div>
+            );
+          case 'LetterGlitch':
+            return (
+              <div className="absolute inset-0 -z-20 letter-glitch-wave">
+                <LetterGlitch
+                  glitchSpeed={50}
+                  centerVignette={true}
+                  outerVignette={false}
+                  smooth={true}
+                  glitchColors={["#0284c7", "#0d9488"]} // Only sky-600 and teal-600 for better styling
+                />
+              </div>
+            );
+          case 'MagicBento':
+            return (
+              <div className="absolute inset-0 -z-20">
+                <MagicBento
+                  textAutoHide={true}
+                  enableStars={true}
+                  enableSpotlight={true}
+                  enableBorderGlow={true}
+                  enableTilt={true}
+                  enableMagnetism={true}
+                  clickEffect={true}
+                  spotlightRadius={300}
+                  particleCount={12}
+                  glowColor="132, 0, 255"
+                />
+              </div>
+            );
+          default:
+            return null;
+        }
+      })()}
+
       {hero.is_bg_gradient && (
         <div
           className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80 text-sky-500"
@@ -117,9 +174,9 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
           src={hero.image}
           alt={`Image of ${hero.h1_title}`}
           className="absolute inset-0 -z-10 h-auto w-auto object-contain sm:h-auto sm:w-auto sm:object-contain"
-          width={1280} // Adjust based on actual image size
-          height={720} // Adjust based on actual image size
-          priority={true} // Full-page image is likely critical for LCP
+          width={1280}
+          height={720}
+          priority={true}
         />
       )}
 
@@ -138,8 +195,8 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
                   aria-label={`Explore ${hero.seo_title}`}
                   className="ml-2 flex items-center transition-all duration-300 group font-semibold text-gray-700 hover:text-gray-300"
                 >
-                  Explore 
-                   <RightArrowDynamic />
+                  {hero?.button_explore}
+                  <RightArrowDynamic />
                 </Link>
               </div>
             </div>
@@ -165,17 +222,17 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
               className={`mt-10 flex items-center justify-${hero.title_alighnement || 'center'} gap-x-6`}
             >
               <Link
-                href={labelsDefault?.button_main_get_started?.url || '#'}
+                href={hero?.button_main_get_started || '#'}
                 className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-2 px-4 text-sm font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
               >
-                {labelsDefault?.button_main_get_started?.text || 'Get Started'}
+                {hero?.button_main_get_started}
               </Link>
               <Link
                 href="/blog"
                 className={`flex items-center text-sm transition-all duration-300 group font-semibold leading-6 text-gray-900 hover:text-gray-300 animate-hero-button-explore ${isVisible ? 'animate' : ''}`}
               >
-                {labelsDefault?.button_explore || 'Explore'}
-                 <RightArrowDynamic />
+                {hero?.button_explore}
+                <RightArrowDynamic />
               </Link>
             </div>
           </div>
@@ -187,8 +244,8 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
                 src={hero.image}
                 alt={`Image of ${hero.h1_title}`}
                 className="h-full w-full object-cover sm:h-auto sm:w-full sm:max-w-[80%] sm:mx-auto sm:object-contain"
-                width={1024} // Adjust based on actual image size
-                height={576} // Adjust based on actual image size
+                width={1024}
+                height={576}
                 priority={false}
               />
             </div>
@@ -257,19 +314,34 @@ const Hero: React.FC<HeroProps> = ({ hero, labelsDefault }) => {
           animation: hero-button-explore 1.2s ease-in-out 1.0s forwards;
         }
 
-        /* Reset animations when not visible */
         .animate-hero-title,
         .animate-hero-description,
         .animate-hero-button-get-started,
         .animate-hero-button-explore {
           opacity: 0;
-          transform: translateY(20px); /* Default state for title/description */
+          transform: translateY(20px);
         }
         .animate-hero-button-get-started {
-          transform: scale(0.8); /* Default state for Get Started */
+          transform: scale(0.8);
         }
         .animate-hero-button-explore {
-          transform: translateX(-10px); /* Default state for Explore */
+          transform: translateX(-10px);
+        }
+
+        /* Wave animation for LetterGlitch */
+        @keyframes wave {
+          0% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+          100% {
+            transform: translateY(0);
+          }
+        }
+        .letter-glitch-wave {
+          animation: wave 1.5s ease-in-out infinite;
         }
       `}</style>
     </div>

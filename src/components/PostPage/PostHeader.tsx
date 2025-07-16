@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
@@ -44,17 +44,38 @@ interface PostHeaderProps {
   createHref: string;
 }
 
-const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHref, createHref }) => {
+const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showMenu, editHref, createHref }) => {
   const { settings } = useSettings();
 
-  // Use settings for text size, font weight, and colors with default values
-  const textSizeHeadings = 'text-sm';
-  const textColorHover =  'gray-400';
-  const brandName = settings?.site || '';
+  // Memoize computed values
+  const textSizeHeadings = useMemo(() => 'text-sm', []);
+  const textColorHover = useMemo(() => 'gray-400', []);
+  const brandName = useMemo(() => settings?.site || '', [settings?.site]);
 
-  // Generate subsection slug and URL
-  const subsectionSlug = generateSlug(post.subsection); // e.g., 'subsection1' → 'subsection-1'
-  const subsectionUrl = `/${subsectionSlug}/`; // Placeholder prefix; adjust if section_id available
+  // Memoize subsection slug and URL
+  const { subsectionSlug, subsectionUrl } = useMemo(() => {
+    const slug = generateSlug(post.subsection);
+    return {
+      subsectionSlug: slug,
+      subsectionUrl: `/${slug}/`
+    };
+  }, [post.subsection]);
+
+  // Memoize formatted date
+  const formattedDate = useMemo(() => {
+    return new Date(post.created_on).toISOString().split('T')[0];
+  }, [post.created_on]);
+
+  // Memoize author display
+  const authorDisplay = useMemo(() => {
+    if (post.is_with_author && post.author) {
+      return `${post.author.first_name} ${post.author.last_name || brandName}`;
+    }
+    if (post.is_company_author && brandName) {
+      return brandName;
+    }
+    return null;
+  }, [post.is_with_author, post.author, post.is_company_author, brandName]);
 
   return (
     <div className="post-header relative">
@@ -69,7 +90,6 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
           {post.subsection}
           <RightArrowDynamic />
         </span>
-
       </Link>
 
       {/* Title */}
@@ -83,36 +103,26 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
         <div className="flex items-center gap-1">
           <FiCalendar className="text-gray-400" />
           <time dateTime={post.created_on}>
-            {new Date(post.created_on).toISOString().split('T')[0]}
+            {formattedDate}
           </time>
         </div>
 
         {/* Display Author or Company Name */}
-        {post.is_with_author && post.author ? (
+        {authorDisplay && (
           <div className="flex items-center gap-1">
             <FiUser className="text-gray-400" />
-            <span>
-              {post.author.first_name} {post.author.last_name || brandName}
-            </span>
+            <span>{authorDisplay}</span>
           </div>
-        ) : (
-          post.is_company_author && brandName && (
-            <div className="flex items-center gap-1">
-              <FiUser className="text-gray-400" />
-              <span>{brandName}</span>
-            </div>
-          )
         )}
       </div>
 
       {/* Description */}
       <p className="text-xl sm:text-2xl text-gray-700 mt-6 mb-8">{post.description}</p>
 
-   
-
       {/* Optional Divider */}
       <hr className="border-gray-200 mb-8" />
-         {/* Hover Menu for Admins*/}
+      
+      {/* Hover Menu for Admins*/}
       {isAdmin && showMenu && (
         <div className="absolute top-0 right-0 flex space-x-2 z-51">
           <Link href={createHref}>
@@ -133,6 +143,8 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, isAdmin, showMenu, editHr
       )} 
     </div>
   );
-};
+});
+
+PostHeader.displayName = 'PostHeader';
 
 export default PostHeader;

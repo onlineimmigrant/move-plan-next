@@ -4,84 +4,88 @@ import { getOrganizationId, supabase } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import type { FAQ } from '@/types/faq';
 
-async function fetchFAQs(organizationId: string): Promise<FAQ[]> {
-  console.log('Fetching FAQs for organizationId:', organizationId);
-  const { data, error } = await supabase
+async function fetchFAQs(organizationId: string, limit: number = 20, offset: number = 0): Promise<{ data: FAQ[], hasMore: boolean }> {
+  const { data, error, count } = await supabase
     .from('faq')
-    .select('id, order, display_order, question, answer, section, organization_id, product_sub_type_id')
+    .select('id, order, display_order, question, answer, section, organization_id, product_sub_type_id', { count: 'exact' })
     .eq('organization_id', organizationId)
-    .order('order', { ascending: true });
+    .order('order', { ascending: true })
+    .range(offset, offset + limit - 1);
 
-  if (error || !data) {
-    console.error('Error fetching FAQs:', error?.message || 'No FAQs found', 'organizationId:', organizationId, 'data:', data);
-    throw new Error(`Failed to load FAQs: ${error?.message || 'No FAQs found'}`);
+  if (error) {
+    console.error('Error fetching FAQs:', error.message);
+    throw new Error(`Failed to load FAQs: ${error.message}`);
   }
 
-  console.log('Fetched FAQs:', data);
-  return data;
+  const totalCount = count || 0;
+  const hasMore = offset + limit < totalCount;
+
+  return { 
+    data: data || [], 
+    hasMore 
+  };
+}
+
+async function getOrgId(): Promise<string | null> {
+  const baseUrl = getBaseUrl(true);
+  
+  try {
+    const organizationId = await getOrganizationId(baseUrl);
+    if (organizationId) return organizationId;
+    
+    // Fallback to NEXT_PUBLIC_BASE_URL
+    const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    return await getOrganizationId(fallbackUrl);
+  } catch (error) {
+    console.error('Error fetching organizationId:', error);
+    return null;
+  }
 }
 
 export default async function FAQ() {
-  // Skip Supabase queries during Vercel static build
-  const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
-  if (isBuild) {
-    console.log('Skipping Supabase queries during Vercel build');
+  // Skip Supabase queries during build
+  if (process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL) {
     return (
-      <div className="mt-16">
+      <div className="mt-16 min-h-[600px]">
         <div className="mx-auto max-w-7xl mt-8">
-          <ClientFAQPage initialFAQs={[]} />
+          <ClientFAQPage initialFAQs={[]} hasMore={false} organizationId={null} />
         </div>
       </div>
     );
   }
 
   let faqs: FAQ[] = [];
+  let hasMore = false;
+  let organizationId: string | null = null;
   let error: string | null = null;
 
-  // Fetch organizationId dynamically
-  let baseUrl = getBaseUrl(true);
-  console.log('FAQPage baseUrl:', baseUrl, 'VERCEL_URL:', process.env.VERCEL_URL, 'NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
-
-  let organizationId: string | null = null;
   try {
-    organizationId = await getOrganizationId(baseUrl);
+    organizationId = await getOrgId();
+    
     if (!organizationId) {
-      throw new Error('Organization not found');
+      error = 'Organization not found. Please check the URL.';
+    } else {
+      const result = await fetchFAQs(organizationId);
+      faqs = result.data;
+      hasMore = result.hasMore;
     }
-    console.log('Fetched organizationId:', organizationId);
-  } catch (err) {
-    console.error('Error fetching organizationId with initial baseUrl:', err);
-    // Fallback to NEXT_PUBLIC_BASE_URL
-    baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    console.log('Falling back to baseUrl:', baseUrl);
-    try {
-      organizationId = await getOrganizationId(baseUrl);
-      if (!organizationId) {
-        throw new Error('Organization not found after fallback');
-      }
-      console.log('Fetched organizationId after fallback:', organizationId);
-    } catch (fallbackErr) {
-      console.error('Error fetching organizationId after fallback:', fallbackErr);
-      error = 'Failed to resolve organization. Please try again later.';
-    }
-  }
-
-  if (organizationId && !error) {
-    try {
-      faqs = await fetchFAQs(organizationId);
-    } catch (err: any) {
-      console.error('Error in fetchFAQs:', err.message);
-      error = err.message;
-    }
+  } catch (err: any) {
+    console.error('Error in FAQ page:', err.message);
+    error = 'Failed to load FAQs. Please try again later.';
   }
 
   return (
-    <div className="mt-16">
+    <div className="mt-16 min-h-[600px]">
       <div className="mx-auto max-w-7xl mt-8">
         {error ? (
-          <div className="text-center text-red-500 py-8">{error}</div>
+          <div className="text-center text-red-500 py-8 min-h-[200px] flex items-center justify-center">
+            <div>
+              <h2 className="text-xl font-semibold mb-2">Error</h2>
+              <p>{error}</p>
+            </div>
+          </div>
         ) : (
-          <ClientFAQPage initialFAQs={faqs} />
+          <ClientFAQPage initialFAQs={faqs} hasMore={hasMore} organizationId={organizationId} />
         )}
       </div>
     </div>
