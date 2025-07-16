@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import ProductDetailPricingPlans from '@/components/product/ProductDetailPricingPlans';
@@ -87,124 +88,189 @@ interface FAQ {
   [key: string]: any;
 }
 
+// Enhanced product data fetching with better error handling
 async function fetchProduct(slug: string, baseUrl: string): Promise<Product | null> {
-  const organizationId = await getOrganizationId(baseUrl);
-  if (!organizationId) {
-    console.error('Organization not found for baseUrl:', baseUrl);
-    return null;
-  }
+  try {
+    const organizationId = await getOrganizationId(baseUrl);
+    if (!organizationId) {
+      console.error('Organization not found for baseUrl:', baseUrl);
+      throw new Error('Organization not found');
+    }
 
-  interface ProductData {
-    id: number;
-    slug: string;
-    organization_id: string;
-    product_name: string;
-    links_to_image?: string;
-    product_description?: string;
-    price_manual?: number;
-    currency_manual?: string;
-    product_sub_type_id: number;
-    product_sub_type: ProductSubType | null;
-  }
+    interface ProductData {
+      id: number;
+      slug: string;
+      organization_id: string;
+      product_name: string;
+      links_to_image?: string;
+      product_description?: string;
+      price_manual?: number;
+      currency_manual?: string;
+      product_sub_type_id: number;
+      product_sub_type: ProductSubType | null;
+    }
 
-  const { data: productData, error: productError } = await supabase
-    .from('product')
-    .select(`
-      id,
-      slug,
-      organization_id,
-      product_name,
-      links_to_image,
-      product_description,
-      price_manual,
-      currency_manual,
-      product_sub_type_id,
-      product_sub_type:product_sub_type (id, name)
-    `)
-    .eq('slug', slug)
-    .eq('organization_id', organizationId)
-    .single() as { data: ProductData | null; error: any };
-
-  if (productError || !productData) {
-    console.error('Error fetching product:', productError?.message || 'No product found');
-    return null;
-  }
-
-  const [plansResult, mediaResult] = await Promise.all([
-    supabase
-      .from('pricingplan')
+    const { data: productData, error: productError } = await supabase
+      .from('product')
       .select(`
-        *,
-        inventory!fk_pricing_plan_id(status),
-        pricingplan_features(feature:feature_id(id, name, content, slug))
+        id,
+        slug,
+        organization_id,
+        product_name,
+        links_to_image,
+        product_description,
+        price_manual,
+        currency_manual,
+        product_sub_type_id,
+        product_sub_type:product_sub_type (id, name)
       `)
-      .eq('product_id', productData.id)
-      .eq('organization_id', organizationId),
-    supabase
-      .from('product_media')
-      .select('id, product_id, order, is_video, video_url, video_player, image_url, thumbnail_url')
-      .eq('product_id', productData.id)
-      .eq('organization_id', organizationId),
-  ]);
+      .eq('slug', slug)
+      .eq('organization_id', organizationId)
+      .single() as { data: ProductData | null; error: any };
 
-  let pricingPlans: PricingPlan[] = [];
-  if (!plansResult.error && plansResult.data) {
-    pricingPlans = plansResult.data.map((plan) => ({
-      ...plan,
-      product_name: productData.product_name,
-      links_to_image: productData.links_to_image,
-      currency: plan.currency || productData.currency_manual || 'GBP',
-      currency_symbol: plan.currency_symbol || '£',
-      features: plan.pricingplan_features
-        ? plan.pricingplan_features
-          .map((pf: any) => pf.feature)
-          .filter((feature: any) => feature != null)
-        : [],
-    }));
-  } else if (plansResult.error) {
-    console.error('Error fetching pricing plans:', plansResult.error.message);
+    if (productError || !productData) {
+      console.error('Error fetching product:', productError?.message || 'No product found');
+      throw new Error('Product not found');
+    }
+
+    // Parallel data fetching for better performance
+    const [plansResult, mediaResult] = await Promise.all([
+      supabase
+        .from('pricingplan')
+        .select(`
+          *,
+          inventory!fk_pricing_plan_id(status),
+          pricingplan_features(feature:feature_id(id, name, content, slug))
+        `)
+        .eq('product_id', productData.id)
+        .eq('organization_id', organizationId),
+      supabase
+        .from('product_media')
+        .select('id, product_id, order, is_video, video_url, video_player, image_url, thumbnail_url')
+        .eq('product_id', productData.id)
+        .eq('organization_id', organizationId)
+        .order('order', { ascending: true }),
+    ]);
+
+    let pricingPlans: PricingPlan[] = [];
+    if (!plansResult.error && plansResult.data) {
+      pricingPlans = plansResult.data.map((plan) => ({
+        ...plan,
+        product_name: productData.product_name,
+        links_to_image: productData.links_to_image,
+        currency: plan.currency || productData.currency_manual || 'GBP',
+        currency_symbol: plan.currency_symbol || '£',
+        features: plan.pricingplan_features
+          ? plan.pricingplan_features
+            .map((pf: any) => pf.feature)
+            .filter((feature: any) => feature != null)
+          : [],
+      }));
+    } else if (plansResult.error) {
+      console.error('Error fetching pricing plans:', plansResult.error.message);
+    }
+
+    let productMedia: MediaItem[] = [];
+    if (!mediaResult.error && mediaResult.data) {
+      productMedia = mediaResult.data;
+    } else if (mediaResult.error) {
+      console.error('Error fetching product media:', mediaResult.error.message);
+    }
+
+    return {
+      ...productData,
+      product_sub_type: productData.product_sub_type,
+      pricing_plans: pricingPlans,
+      product_media: productMedia,
+    };
+  } catch (err) {
+    console.error('Error in fetchProduct:', err);
+    throw err;
   }
+}
 
-  let productMedia: MediaItem[] = [];
-  if (!mediaResult.error && mediaResult.data) {
-    productMedia = mediaResult.data;
-  } else if (mediaResult.error) {
-    console.error('Error fetching product media:', mediaResult.error.message);
-  }
-
-  return {
-    ...productData,
-    product_sub_type: productData.product_sub_type,
-    pricing_plans: pricingPlans,
-    product_media: productMedia,
-  };
+// Loading component for better UX
+function ProductDetailLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="px-4 mx-auto max-w-7xl py-16 md:py-10">
+        <div className="animate-pulse">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
+            {/* Product info skeleton */}
+            <div className="space-y-4">
+              <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+              </div>
+              {/* Pricing skeleton */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl p-4 space-y-3">
+                    <div className="h-5 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-10 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Image skeleton */}
+            <div className="mt-8 lg:mt-0">
+              <div className="h-96 bg-gray-200 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Skip Supabase queries during Vercel static build
   const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
   if (isBuild) {
     console.log('Skipping Supabase queries during Vercel build');
-    notFound();
+    return (
+      <Suspense fallback={<ProductDetailLoading />}>
+        <ProductDetailLoading />
+      </Suspense>
+    );
   }
 
   const { id: slug } = await params;
   let baseUrl = getBaseUrl(true);
+  
+  // Enhanced URL fallback logic
+  if (!baseUrl || baseUrl === 'http://localhost:3000') {
+    baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  }
 
   let product: Product | null = null;
 
   try {
     product = await fetchProduct(slug, baseUrl);
-    if (!product) throw new Error('Product not found');
   } catch (err: any) {
-    console.error('Error fetching data, trying fallback:', err.message);
-    baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    try {
-      product = await fetchProduct(slug, baseUrl);
-      if (!product) throw new Error('Product not found');
-    } catch (fallbackErr: any) {
-      console.error('Fallback failed:', fallbackErr.message);
+    console.error('Error fetching data with primary baseUrl:', err.message);
+    
+    // Fallback strategy with alternative base URL
+    const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    if (fallbackUrl !== baseUrl) {
+      console.log('Trying fallback baseUrl:', fallbackUrl);
+      try {
+        product = await fetchProduct(slug, fallbackUrl);
+      } catch (fallbackErr: any) {
+        console.error('Fallback fetch also failed:', fallbackErr.message);
+        notFound();
+      }
+    } else {
       notFound();
     }
+  }
+
+  if (!product) {
+    notFound();
   }
 
   const basket = await getBasket();
@@ -229,10 +295,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const path = `products/${slug}`; // For MetaTags and StructuredData
 
   return (
-    <>
+    <Suspense fallback={<ProductDetailLoading />}>
       <MetaTags path={path} />
       <StructuredData path={path} />
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gray-50">
         <div className="md:hidden">
           {totalItems > 0 && <ProgressBar stage={1} />}
         </div>
@@ -247,7 +313,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </a>
               <ProductHeader productSubType={product.product_sub_type} productName={product_name} />
               {product_description && (
-                <div className="text-gray-500 text-xs sm:border-t md:text-sm font-light px-8 border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-10">
+                <div className="text-gray-600 text-xs sm:border-t md:text-sm font-light px-8 border-gray-200 pt-2 md:pt-4 mt-2 md:mt-4 line-clamp-10">
                   {parse(product_description)}
                 </div>
               )}
@@ -256,7 +322,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                   <ProductDetailPricingPlans pricingPlans={product.pricing_plans} amazonBooksUrl={product.amazon_books_url} />
                 </div>
               ) : (
-                <div className="px-4 mt-4 text-gray-500">No pricing plans available.</div>
+                <div className="px-4 mt-4 text-gray-500 bg-gray-100 rounded-lg p-4">
+                  <p className="text-center">No pricing plans available.</p>
+                </div>
               )}
             </div>
             <div className="order-2 md:order-1 lg:col-span-1 py-4 sm:pt-6 md:pb-8 flex justify-center items-center">
@@ -265,16 +333,19 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               ) : (
                 <>
                   {links_to_image ? (
-                    <Image
-                      src={links_to_image}
-                      alt={product_name || 'Product image'}
-                      width={384}
-                      height={384}
-                      className="max-h-56 md:max-h-96 object-contain w-full"
-                    />
+                    <div className="relative rounded-lg overflow-hidden shadow-sm">
+                      <Image
+                        src={links_to_image}
+                        alt={product_name || 'Product image'}
+                        width={384}
+                        height={384}
+                        className="max-h-56 md:max-h-96 object-contain w-full"
+                        priority
+                      />
+                    </div>
                   ) : (
-                    <div className="w-full h-56 md:h-96 bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400">No image</span>
+                    <div className="w-full h-56 md:h-96 bg-gray-200 flex items-center justify-center rounded-lg">
+                      <span className="text-gray-400">No image available</span>
                     </div>
                   )}
                 </>
@@ -282,12 +353,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
           <CategoryBarProductDetailPage currentProduct={product} />
-          <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-7xl space-y-8">
             <FeedbackAccordion type="product" slug={slug} />
             <FAQSection slug={product.slug || ''} faqs={faqs} />
           </div>
         </div>
       </div>
-    </>
+    </Suspense>
   );
 }

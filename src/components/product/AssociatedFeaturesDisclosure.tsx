@@ -21,11 +21,11 @@ export default function AssociatedFeaturesDisclosure({
   associatedFeatures,
 }: AssociatedFeaturesDisclosureProps) {
   return (
-    <div className="mt-4">
+    <div className="mt-4 w-full">
       <Disclosure>
         {({ open }) => (
-          <div> {/* Replace Fragment with div */}
-            <Disclosure.Button className="flex rounded-full px-2 items-center justify-between w-full sm:w-1/2 py-2 text-xs font-normal text-sky-500 hover:text-gray-700 transition-colors duration-200">
+          <div className="w-full">
+            <Disclosure.Button className="flex rounded-full px-2 items-center justify-between w-full py-2 text-xs font-normal text-sky-500 hover:text-gray-700 transition-colors duration-200">
               <span>Included Features</span>
               <span className="ml-2">
                 {open ? (
@@ -35,16 +35,16 @@ export default function AssociatedFeaturesDisclosure({
                 )}
               </span>
             </Disclosure.Button>
-            <Disclosure.Panel className="pt-2">
-              <div className="grid grid-cols-1 gap-1">
+            <Disclosure.Panel className="pt-2 w-full">
+              <div className="grid grid-cols-1 gap-1 w-full">
                 {associatedFeatures.map((feature) => (
-                  <Link href={`/features/${feature.slug}`} key={feature.id}>
-                    <div className="flex items-center bg-gray-100 border-gray-200 rounded-lg p-1 duration-200 cursor-pointer">
-                      <div className="w-6 h-6 bg-transparent rounded flex items-center justify-center mr-3">
+                  <Link href={`/features/${feature.slug}`} key={feature.id} className="w-full">
+                    <div className="flex items-center bg-gray-100 border-gray-200 rounded-lg p-2 duration-200 cursor-pointer w-full hover:bg-gray-200">
+                      <div className="w-5 h-5 bg-transparent rounded flex items-center justify-center mr-3 flex-shrink-0">
                         <HiCheck className="w-4 h-4 text-green-500" />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-xs font-medium text-gray-700">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xs font-medium text-gray-700 truncate">
                           {feature.name}
                         </h3>
                       </div>

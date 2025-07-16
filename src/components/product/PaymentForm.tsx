@@ -112,13 +112,16 @@ export default function PaymentForm({
       }
 
       if (result.success) {
+        // Limit discount percentage to 100% maximum
+        const limitedDiscountPercent = Math.min(result.discountPercent, 100);
+        
         setPromoApplied(true);
-        setLocalDiscountPercent(result.discountPercent);
-        setPromoDiscount(result.discountPercent);
+        setLocalDiscountPercent(limitedDiscountPercent);
+        setPromoDiscount(limitedDiscountPercent);
         setPromoCodeId(result.promoCodeId);
         setPromoError(null);
         if (setDiscountedAmount) {
-          setDiscountedAmount(totalPrice * (1 - result.discountPercent / 100));
+          setDiscountedAmount(totalPrice * (1 - limitedDiscountPercent / 100));
         }
       }
     } catch (err: any) {
@@ -311,7 +314,7 @@ export default function PaymentForm({
         )}
         {promoApplied && (
           <div className="mt-1 mb-1 text-teal-500 text-sm font-medium">
-            Promo code applied! {localDiscountPercent}% off
+            Promo code applied! {localDiscountPercent.toFixed(2)}% off
           </div>
         )}
       </div>

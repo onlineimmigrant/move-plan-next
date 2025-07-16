@@ -222,7 +222,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
               className={`mt-10 flex items-center justify-${hero.title_alighnement || 'center'} gap-x-6`}
             >
               <Link
-                href={hero?.button_main_get_started || '#'}
+                href='/products'
                 className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-2 px-4 text-sm font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
               >
                 {hero?.button_main_get_started}

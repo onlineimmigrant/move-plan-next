@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { useBasket, BasketItem } from '../../context/BasketContext';
 import ProgressBar from '../../components/product/ProgressBar';
 import BasketItemComponent from '@/components/product/BasketItem';
+import { HiShoppingBag } from 'react-icons/hi';
 import Link from 'next/link';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -382,82 +383,129 @@ export default function CheckoutPage() {
 
   if (paymentSucceeded) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center min-h-screen">
-        <div className="-mx-8 mt-8 mb-2 sm:mt-10 bg-gray-50 py-4 flex items-center justify-between">
-          <h1 className="px-8 text-base md:text-xl font-semibold tracking-tight leading-tight">
-            Payment
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          {/* Header Section with enhanced styling */}
+          <div className="rounded-3xl shadow-lg border border-gray-200 p-6 mb-8 backdrop-blur-sm bg-white/95">
+            <div className="flex items-center justify-center">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg">
+                  <HiShoppingBag className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Payment Successful</h1>
+                  <p className="text-sm text-gray-600 mt-1">Your transaction has been completed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 p-8 mt-8">
+          <div className="p-6 bg-gradient-to-br from-emerald-100 to-sky-100 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
+            <span className="text-4xl">🎉</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
+            Payment Successful!
           </h1>
+          <p className="text-gray-600 text-base mb-2 leading-relaxed">
+            Thank you for your purchase. Your payment has been successfully processed.
+          </p>
+          <p className="text-gray-600 text-base mb-8 font-semibold">
+            Amount Paid: {finalCurrency} {finalAmount.toFixed(2)}
+          </p>
+          <Link href="/products">
+            <span className="text-sky-600 hover:text-sky-700 text-sm font-semibold inline-block transition-colors duration-200 bg-sky-50 hover:bg-sky-100 px-6 py-3 rounded-full border border-sky-200 hover:border-sky-300">
+              Continue Shopping →
+            </span>
+          </Link>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 my-16">
-          Payment Successful!
-        </h1>
-        <p className="text-gray-600 text-base mb-2">
-          Thank you for your purchase. Your payment has been successfully processed.
-        </p>
-        <p className="text-gray-600 text-base mb-6">
-          Amount Paid: {finalCurrency} {finalAmount.toFixed(2)}
-        </p>
-        <Link href="/products">
-          <span className="text-sky-600 hover:text-sky-700 text-sm font-medium inline-block transition-colors duration-200">
-            Continue Shopping
-          </span>
-        </Link>
-        <ProgressBar stage={3} />
+        <div className="mt-8">
+          <ProgressBar stage={3} />
+        </div>
+        </div>
       </div>
     );
   }
 
   if (!isMounted) {
     return (
-      <div className="max-w-2xl mx-auto p-8 min-h-screen">
-        <div className="-mx-8 mt-8 mb-2 sm:mt-10 bg-gray-50 py-4 flex items-center justify-between">
-          <h1 className="px-8 text-base md:text-xl font-semibold tracking-tight leading-tight">
-            Checkout
-          </h1>
-          <button
-            className="px-8 text-sky-600 hover:text-sky-700 text-sm font-medium"
-            disabled
-          >
-            Show Order Summary
-          </button>
-        </div>
-        <div className="bg-transparent rounded-lg mt-2 mb-6">
-          <div className="flex justify-between items-center mb-0">
-            <h2 className="text-sm font-semibold text-gray-900">Loading...</h2>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header Section with enhanced styling */}
+          <div className="rounded-3xl shadow-lg border border-gray-200 p-6 mb-8 backdrop-blur-sm bg-white/95">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-gradient-to-br from-sky-500 to-sky-600 rounded-2xl shadow-lg">
+                  <HiShoppingBag className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Checkout</h1>
+                  <p className="text-sm text-gray-600 mt-1">Loading your order details</p>
+                </div>
+              </div>
+              <button
+                className="flex items-center space-x-2 px-4 py-2.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-xl transition-all duration-200 border border-sky-200 hover:border-sky-300"
+                disabled
+              >
+                <span className="text-sm font-medium">Show Order Summary</span>
+              </button>
+            </div>
+          </div>
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 p-6 mt-6 max-w-2xl mx-auto">
+            <div className="flex justify-between items-center mb-0">
+              <h2 className="text-sm font-semibold text-gray-900">Loading...</h2>
+            </div>
+          </div>
+          <div className="mt-8">
+            <ProgressBar stage={2} />
           </div>
         </div>
-        <ProgressBar stage={2} />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-8 min-h-screen">
-      <div className="-mx-8 mt-8 mb-2 sm:mt-10 bg-gray-50 py-4 flex items-center justify-between">
-        <h1 className="px-8 text-base md:text-xl font-semibold tracking-tight leading-tight">
-          Checkout
-        </h1>
-        <button
-          onClick={() => setShowOrderSummary(!showOrderSummary)}
-          className="px-8 text-sky-600 hover:text-sky-700 text-sm font-medium"
-        >
-          {showOrderSummary ? 'Hide Order Summary' : 'Show Order Summary'}
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section with enhanced styling */}
+        <div className="rounded-3xl shadow-lg border border-gray-200 p-6 mb-8 backdrop-blur-sm bg-white/95">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-sky-500 to-sky-600 rounded-2xl shadow-lg">
+                <HiShoppingBag className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Checkout</h1>
+                <p className="text-sm text-gray-600 mt-1">Review and complete your order</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowOrderSummary(!showOrderSummary)}
+              className="flex items-center space-x-2 px-4 py-2.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-xl transition-all duration-200 border border-sky-200 hover:border-sky-300"
+            >
+              <span className="text-sm font-medium">
+                {showOrderSummary ? 'Hide Order Summary' : 'Show Order Summary'}
+              </span>
+            </button>
+          </div>
+        </div>
 
       {basket.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-base">Your basket is empty.</p>
+        <div className="text-center py-12 bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 mt-6 max-w-2xl mx-auto">
+          <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
+            <HiShoppingBag className="w-12 h-12 text-gray-500" />
+          </div>
+          <p className="text-gray-600 text-base mb-6">Your basket is empty.</p>
           <Link href="/products">
-            <span className="text-sky-600 hover:text-sky-700 text-sm font-medium mt-4 inline-block transition-colors duration-200">
-              Continue Shopping
+            <span className="text-sky-600 hover:text-sky-700 text-sm font-semibold mt-4 inline-block transition-colors duration-200 bg-sky-50 hover:bg-sky-100 px-6 py-3 rounded-full border border-sky-200 hover:border-sky-300">
+              Continue Shopping →
             </span>
           </Link>
         </div>
       ) : (
         <>
           {showOrderSummary && (
-            <div className="space-y-2">
+            <div className="space-y-4 mt-6 bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 p-6 max-w-2xl mx-auto">
+              <h3 className="font-bold text-gray-900 mb-4">Order Items</h3>
               {basket
                 .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
                 .map((item) => (
@@ -472,13 +520,13 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <div className="bg-transparent rounded-lg mt-2 mb-6">
-            <div className="flex justify-between items-center mb-0">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 mt-6 mb-6 p-6 max-w-2xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-bold text-gray-900">
+                Order Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
               </h2>
               <div className="flex items-center space-x-2">
-                <span className="text-base font-semibold text-gray-900 uppercase">
+                <span className="text-base font-bold text-gray-900 uppercase">
                   {currency}
                 </span>
                 <span className="text-3xl font-bold text-gray-900">
@@ -488,19 +536,24 @@ export default function CheckoutPage() {
             </div>
 
             {promoDiscount > 0 && (
-              <p className="text-right font-medium text-sky-600 text-sm mb-2">
-                Discount Applied: {promoDiscount}% off
-              </p>
+              <div className="mb-4 p-3 bg-sky-50 rounded-xl border border-sky-200">
+                <p className="text-center font-semibold text-sky-700 text-sm">
+                  🎉 Discount Applied: {promoDiscount.toFixed(2)}% off
+                </p>
+              </div>
             )}
 
             {error && (
-              <div className="mb-4 text-red-500 text-sm font-medium">
-                {error}
+              <div className="mb-4 p-3 bg-red-50 rounded-xl border border-red-200">
+                <p className="text-red-600 text-sm font-semibold text-center">{error}</p>
               </div>
             )}
             <div className="mt-4">
               {paymentIntentLoading ? (
-                <div className="text-center text-gray-600">Loading payment details...</div>
+                <div className="text-center text-gray-600 py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mb-4"></div>
+                  <p>Loading payment details...</p>
+                </div>
               ) : clientSecret ? (
                 <PaymentFormWrapper
                   clientSecret={clientSecret}
@@ -518,13 +571,18 @@ export default function CheckoutPage() {
                   updatePaymentIntentWithEmail={updatePaymentIntentWithEmailCallback}
                 />
               ) : (
-                <div className="text-center text-red-500">Failed to load payment details</div>
+                <div className="text-center text-red-500 py-8 bg-red-50 rounded-xl">
+                  <p className="font-semibold">⚠️ Failed to load payment details</p>
+                </div>
               )}
             </div>
           </div>
         </>
       )}
-      <ProgressBar stage={2} />
+        <div className="mt-8">
+          <ProgressBar stage={2} />
+        </div>
+      </div>
     </div>
   );
 }

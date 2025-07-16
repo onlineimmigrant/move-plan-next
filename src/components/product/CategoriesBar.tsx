@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { memo, useMemo } from 'react';
 
 type ProductSubType = {
   id: number;
@@ -14,38 +15,49 @@ interface CategoriesBarProps {
   activeSubTypeName: string | null;
 }
 
-export default function CategoriesBar({
+const CategoriesBar = memo(function CategoriesBar({
   productSubTypes,
   onCategoryChange,
   activeSubTypeName,
 }: CategoriesBarProps) {
-  // Filter sub-types to only show those with display_for_products === true
-  const visibleSubTypes = productSubTypes.filter((subType) => subType.display_for_products);
+  // Memoized filtered sub-types for better performance
+  const visibleSubTypes = useMemo(() => 
+    productSubTypes.filter((subType) => subType.display_for_products),
+    [productSubTypes]
+  );
 
   return (
-    <div className="flex space-x-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent py-2">
-      {/* "All" button */}
+    <div className="flex space-x-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent py-2 px-1">
+      {/* "All" button with improved styling */}
       <Link
         href="/products"
-        onClick={() => onCategoryChange(null)} // Trigger client-side callback for compatibility
-        className={`cursor-pointer px-3 py-1 text-sm font-semibold rounded transition-colors ${
-          activeSubTypeName === null ? 'bg-sky-100 text-sky-500' : 'bg-gray-50 text-gray-800'
-        } hover:bg-sky-200`}
+        onClick={() => onCategoryChange(null)}
+        className={`
+          cursor-pointer px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex-shrink-0
+          ${activeSubTypeName === null 
+            ? 'bg-sky-100 text-sky-600 ring-2 ring-sky-200' 
+            : 'bg-gray-50 text-gray-700 hover:bg-sky-50 hover:text-sky-600'
+          }
+        `}
       >
-        All
+        All Categories
       </Link>
 
-      {/* Links for each filtered sub-type */}
+      {/* Enhanced category links */}
       {visibleSubTypes.map((subType) => {
         const isActive = subType.name === activeSubTypeName;
         return (
           <Link
             key={subType.id}
             href={`/products?category=${subType.id}`}
-            onClick={() => onCategoryChange(subType)} // Trigger client-side callback
-            className={`cursor-pointer px-3 py-1 text-sm font-medium rounded transition-colors ${
-              isActive ? 'bg-sky-100 text-sky-500' : 'bg-gray-50 text-gray-800'
-            } hover:bg-sky-200`}
+            onClick={() => onCategoryChange(subType)}
+            className={`
+              cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex-shrink-0
+              ${isActive 
+                ? 'bg-sky-100 text-sky-600 ring-2 ring-sky-200' 
+                : 'bg-gray-50 text-gray-700 hover:bg-sky-50 hover:text-sky-600'
+              }
+            `}
           >
             {subType.title_english || subType.name}
           </Link>
@@ -53,4 +65,6 @@ export default function CategoriesBar({
       })}
     </div>
   );
-}
+});
+
+export default CategoriesBar;

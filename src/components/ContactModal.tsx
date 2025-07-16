@@ -41,7 +41,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="bg-white rounded-lg p-6 max-w-lg w-full h-full sm:max-h-[85vh] overflow-y-auto shadow-lg">
+              <Dialog.Panel className="bg-white rounded-lg p-6 max-w-2xl w-full h-full sm:max-h-[85vh] overflow-y-auto shadow-lg">
                 <div className="flex justify-between items-center mb-4">
                   <Dialog.Title
                     as="h2"
