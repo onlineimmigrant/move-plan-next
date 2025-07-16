@@ -26,6 +26,8 @@ export async function GET(request: Request) {
       );
     }
 
+    
+
     const heroData: HeroData = {
       ...data,
       organization_id: data.organization_id || null,

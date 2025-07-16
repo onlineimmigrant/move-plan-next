@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
+import Link from 'next/link';
 import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
@@ -10,7 +11,6 @@ import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
 import Loading from '@/ui/Loading';
-import FeedbackAccordion from '@/components/FeedbackAccordion';
 
 interface TOCItem {
   tag_name: string;
@@ -41,14 +41,19 @@ interface Post {
   organization_id?: string;
 }
 
-const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
+const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = memo(({ params }) => {
   const { slug } = React.use(params);
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  
+  // Memoize base URL
+  const baseUrl = useMemo(() => 
+    process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000', 
+    []
+  );
 
   // Check admin status client-side
   useEffect(() => {
@@ -159,7 +164,8 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     return tocItems;
   }, [post]);
 
-  const handleScrollTo = (id: string) => {
+  // Memoized scroll handler
+  const handleScrollTo = useCallback((id: string) => {
     const element = document.getElementById(id);
     if (element) {
       console.log('Scrolling to:', id);
@@ -169,9 +175,10 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     } else {
       console.error('Element not found for ID:', id);
     }
-  };
+  }, []);
 
-  const handleContentUpdate = async () => {
+  // Memoized content update handler
+  const handleContentUpdate = useCallback(async () => {
     if (!contentRef.current || !post || !isAdmin) return;
 
     const updatedContent = contentRef.current.innerHTML;
@@ -189,7 +196,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
       });
 
       if (response.ok) {
-        setPost({ ...post, content: updatedContent });
+        setPost((prev) => prev ? { ...prev, content: updatedContent } : null);
         console.log('Content updated successfully');
       } else {
         console.error('Failed to update content:', await response.json());
@@ -197,43 +204,67 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
     } catch (error) {
       console.error('Error updating content:', error);
     }
-  };
+  }, [baseUrl, slug, post, isAdmin]);
 
-  const makeEditable = (e: React.MouseEvent) => {
+  // Memoized editable handler
+  const makeEditable = useCallback((e: React.MouseEvent) => {
     if (!isAdmin) return;
     const target = e.target as HTMLElement;
     console.log('Double-clicked:', target.tagName, 'ID:', target.id);
+    
     if (['H1', 'H2', 'H3', 'H4', 'H5', 'P', 'UL', 'LI'].includes(target.tagName)) {
       target.contentEditable = 'true';
       target.focus();
-      target.addEventListener(
-        'blur',
-        () => {
-          console.log('Blur on:', target.tagName, 'ID:', target.id, 'Content:', target.innerHTML);
-          target.contentEditable = 'false';
-          handleContentUpdate();
-        },
-        { once: true }
-      );
-      target.addEventListener('keydown', (ev) => {
+      
+      const handleBlur = () => {
+        console.log('Blur on:', target.tagName, 'ID:', target.id, 'Content:', target.innerHTML);
+        target.contentEditable = 'false';
+        handleContentUpdate();
+      };
+
+      const handleKeyDown = (ev: KeyboardEvent) => {
         if (ev.key === 'Enter' && !ev.shiftKey) {
           console.log('Enter pressed on:', target.tagName, 'ID:', target.id);
           ev.preventDefault();
           target.blur();
         }
-      });
+      };
+
+      target.addEventListener('blur', handleBlur, { once: true });
+      target.addEventListener('keydown', handleKeyDown);
     }
-  };
+  }, [isAdmin, handleContentUpdate]);
 
-  if (loading) return <div className="py-32 text-center text-gray-500"><Loading /></div>;
-  if (!post || !post.display_this_post) notFound();
+  // Memoized content checks - MOVED BEFORE EARLY RETURNS
+  const shouldShowMainContent = useMemo(() => 
+    post && (!post.section || post.section !== 'Landing') && post.content?.length > 0,
+    [post]
+  );
 
-  const shouldShowMainContent = (!post.section || post.section !== 'Landing') && post.content?.length > 0;
+  const isLandingPost = useMemo(() => 
+    post?.section === 'Landing',
+    [post?.section]
+  );
+
+  // Early loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loading />
+      </div>
+    );
+  }
+
+  // Early not found check
+  if (!post || !post.display_this_post) {
+    notFound();
+  }
 
   return (
-    <div className="px-4 sm:pt-4 sm:pb-16">
-      {(!post.section || post.section !== 'Landing') ? (
+    <main className="px-4 sm:pt-4 sm:pb-16">
+      {!isLandingPost ? (
         <div className="grid lg:grid-cols-8 gap-x-4">
+          {/* TOC Sidebar */}
           <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
             {toc.length > 0 && (
               <div className="hidden sm:block mt-16 sticky top-32">
@@ -241,7 +272,9 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
               </div>
             )}
           </aside>
-          <main className="py-16 lg:col-span-4 text-base leading-7 text-gray-900">
+
+          {/* Main Content */}
+          <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900">
             {shouldShowMainContent ? (
               <>
                 <div
@@ -266,7 +299,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                     createHref="/admin/create-post"
                   />
                 </div>
-                <div
+                <article
                   ref={contentRef}
                   className="prose prose-sm sm:prose lg:prose-xl font-light text-gray-600 table-scroll-container"
                   onDoubleClick={makeEditable}
@@ -274,23 +307,32 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                 />
               </>
             ) : (
-              <div className="text-center text-gray-500">No content available for this post.</div>
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">No Content Available</h3>
+                  <p className="text-gray-500">This post doesn't have any content yet.</p>
+                </div>
+              </div>
             )}
-          </main>
+          </section>
+
+          {/* Right Sidebar */}
           <aside className="lg:col-span-2"></aside>
         </div>
       ) : post.content ? (
-        <div>
         <LandingPostContent post={post} />
-       
-        </div>
       ) : (
-        <div className=" text-gray-500">
-        
-        </div>
+<div></div>
       )}
-    </div>
+    </main>
   );
-};
+});
+
+PostPage.displayName = 'PostPage';
 
 export default PostPage;

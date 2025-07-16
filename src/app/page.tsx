@@ -1,5 +1,5 @@
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
-import HomePage from './HomePage';
+import HomePage from '../components/HomePageSections/HomePage';
 import { supabase } from '@/lib/supabase';
 import { HomePageData } from '@/types/home_page_data';
 import { MetaTags } from '@/components/MetaTags';

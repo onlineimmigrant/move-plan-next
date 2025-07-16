@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import parse, { domToReact, HTMLReactParserOptions, DOMNode, Element } from 'html-react-parser';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -12,7 +12,6 @@ import Block from '@/ui/Block';
 import ImageCarousel from '@/ui/ImageCarousel';
 import VideoCarousel from '@/ui/VideoCarousel';
 import sanitizeHtml from 'sanitize-html';
-import FeedbackAccordion from '@/components/FeedbackAccordion';
 
 interface LandingPostContentProps {
   post: {
@@ -21,9 +20,9 @@ interface LandingPostContentProps {
   };
 }
 
-const LandingPostContent: React.FC<LandingPostContentProps> = ({ post }) => {
-  // Define a mapping of custom HTML tags to React components
-  const componentMap: { [key: string]: React.ComponentType<any> } = {
+const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) => {
+  // Memoize component mapping for performance
+  const componentMap = useMemo((): { [key: string]: React.ComponentType<any> } => ({
     button: Button,
     Button: Button,
     disclosurebutton: DisclosureButton,
@@ -40,10 +39,10 @@ const LandingPostContent: React.FC<LandingPostContentProps> = ({ post }) => {
     VideoCarousel: VideoCarousel,
     img: Image,
     a: Link,
-  };
+  }), []);
 
-  // Sanitize the HTML content to prevent XSS and allow specific tags/attributes
-  const sanitizedContent = sanitizeHtml(post.content, {
+  // Memoize sanitization configuration
+  const sanitizeConfig = useMemo(() => ({
     allowedTags: [
       'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'ul', 'ol', 'li',
       'button', 'Button', 'disclosurebutton', 'DisclosureButton', 'listboxbutton', 'ListboxButton',
@@ -68,25 +67,25 @@ const LandingPostContent: React.FC<LandingPostContentProps> = ({ post }) => {
       ImageCarousel: ['images', 'class', 'className'],
       videocarousel: ['videos', 'class', 'className'],
       VideoCarousel: ['videos', 'class', 'className'],
-    },
-    transformTags: {
-      // Preserve class and map to className
-      '*': (tagName, attribs) => {
-        if (attribs.class || attribs.className) {
-          attribs.className = [attribs.class, attribs.className].filter(Boolean).join(' ').trim();
-          delete attribs.class;
-        }
-        console.log(`Sanitizing tag: ${tagName}`, attribs);
-        return { tagName, attribs };
+    },      transformTags: {
+        '*': (tagName: string, attribs: any) => {
+          if (attribs.class || attribs.className) {
+            attribs.className = [attribs.class, attribs.className].filter(Boolean).join(' ').trim();
+            delete attribs.class;
+          }
+          return { tagName, attribs };
+        },
       },
-    },
-  });
+    }), []);
 
-  // Log sanitized content for debugging
-  console.log('Sanitized content:', sanitizedContent);
+  // Memoize sanitized content
+  const sanitizedContent = useMemo(() => {
+    if (!post?.content) return '';
+    return sanitizeHtml(post.content, sanitizeConfig);
+  }, [post?.content, sanitizeConfig]);
 
-  // Parser options to replace HTML tags with React components
-  const options: HTMLReactParserOptions = {
+  // Memoize HTML parsing options for performance
+  const parseOptions = useMemo((): HTMLReactParserOptions => ({
     replace: (domNode: DOMNode) => {
       if (domNode instanceof Element && domNode.name.toLowerCase() in componentMap) {
         const Component = componentMap[domNode.name.toLowerCase()];
@@ -98,8 +97,7 @@ const LandingPostContent: React.FC<LandingPostContentProps> = ({ post }) => {
         // Map class and className to className, preserve className
         if (props.class || props.className) {
           props.className = [props.class, props.className].filter(Boolean).join(' ').trim();
-          delete props.class; // Remove class to avoid duplication
-          // Do not delete props.className to ensure it's passed to components
+          delete props.class;
         }
 
         // Handle Button, DisclosureButton, and Card component props (validate variant)
@@ -123,12 +121,6 @@ const LandingPostContent: React.FC<LandingPostContentProps> = ({ post }) => {
           if (props.height) {
             props.height = parseInt(props.height, 10) || 400;
           }
-          console.log('Image props:', props);
-        }
-
-        // Handle ImageCarousel and VideoCarousel props
-        if (['imagecarousel', 'ImageCarousel', 'videocarousel', 'VideoCarousel'].includes(domNode.name.toLowerCase())) {
-          console.log(`${domNode.name} props before rendering:`, props);
         }
 
         // Handle Link component props
@@ -137,48 +129,33 @@ const LandingPostContent: React.FC<LandingPostContentProps> = ({ post }) => {
         }
 
         // Safely handle children
-        const children = 'children' in domNode && domNode.children
-          ? domToReact(domNode.children as DOMNode[], options)
+        const children = 'children' in domNode && domNode.children && domNode.children.length > 0
+          ? domToReact(domNode.children as DOMNode[], parseOptions)
           : undefined;
 
-        console.log(`Rendering component: ${domNode.name}`, props, children);
-
         return <Component {...props}>{children}</Component>;
-      }
-
-      // Log standard HTML elements for debugging
-      if (domNode instanceof Element) {
-        console.log(`Rendering HTML element: ${domNode.name}`, domNode.attribs);
       }
 
       // Return undefined to render standard HTML natively
       return undefined;
     },
-  };
+  }), [componentMap]);
 
-  // Render with error handling
-  try {
+  if (!post?.content) {
     return (
-      <div className="">
-        {sanitizedContent ? (
-          parse(sanitizedContent, options)
-          
-        ) : (
-          <div className="text-center text-gray-500 ">No content available.</div>
-        )}
-        
-      </div>
-    );
-  } catch (error) {
-    console.error('Parsing error:', error);
-    return (
-      <div className="relative z-50 w-full min-h-screen bg-gray-50">
-        <div className="text-center text-red-500">
-          Error rendering content: {error instanceof Error ? error.message : 'Unknown error'}
-        </div>
+      <div className="w-full min-h-[200px] flex items-center justify-center text-gray-500">
+        <p>No content available</p>
       </div>
     );
   }
-};
+
+  return (
+    <div className="w-full max-w-none prose prose-lg prose-gray dark:prose-invert">
+      {parse(sanitizedContent, parseOptions)}
+    </div>
+  );
+});
+
+LandingPostContent.displayName = 'LandingPostContent';
 
 export default LandingPostContent;

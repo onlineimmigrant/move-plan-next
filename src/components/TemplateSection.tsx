@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import Image from 'next/image';
@@ -54,19 +54,18 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
     return null;
   }
 
-  // Sanitize HTML content to remove problematic characters and tags
-  const sanitizeHTML = (html: string): string => {
-    return DOMPurify.sanitize(html, {
+  // Memoized sanitize function to avoid unnecessary recalculations
+  const sanitizeHTML = useMemo(() => {
+    return (html: string): string => DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'span'],
       ALLOWED_ATTR: ['href', 'class', 'style'],
       FORBID_TAGS: ['iframe'],
     });
-  };
+  }, []);
 
-  // Conditionally render FeedbackAccordion or other content
   return (
     <section
-      className={`px-4 py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-transparent'}`}
+      className={`px-4 py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-transparent'} min-h-[600px]`}
     >
       <div
         className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto space-y-12 p-4 sm:p-8 sm:rounded-xl`}
@@ -108,53 +107,64 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
             <div
               className={`grid grid-cols-1 lg:grid-cols-${section.grid_columns || 1} gap-x-12 gap-y-12`}
             >
-              {(section.website_metric || []).map((metric) => (
-                <div
-                  key={metric.id}
-                  className={`space-y-4 flex flex-col mx-auto ${
-                    metric.is_card_type
-                      ? `bg-${metric.background_color || 'transparent'} p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl`
-                      : ''
-                  }`}
-                >
-                  {metric.image && (
-                    <div className={`${section.is_image_bottom ? 'order-3' : ''} mt-8`}>
-                      <Image
-                        src={metric.image}
-                        alt={metric.title || 'Metric image'}
-                        className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto w-auto ${
-                          section.image_metrics_height || 'h-48'
-                        } object-cover`}
-                        width={300}
-                        height={300}
-                        priority={false}
-                      />
-                    </div>
-                  )}
-
-                  {metric.is_title_displayed && (
-                    <h3
-                      className={`order-1 ${section.metric_title_size || 'text-xl'} ${
-                        section.metric_title_weight || 'font-semibold'
-                      } ${section.metric_title_color ? `text-${section.metric_title_color}` : 'text-gray-800'}`}
-                    >
-                      {parse(sanitizeHTML(metric.title))}
-                    </h3>
-                  )}
-
+              {(section.website_metric || []).map((metric) => {
+                // Keep animation and hover effect on card as before
+                return (
                   <div
-                    className={`flex-col order-2 ${section.metric_description_size || 'text-base'} ${
-                      section.metric_description_weight || 'font-normal'
-                    } ${section.metric_description_color ? `text-${section.metric_description_color}` : 'text-gray-600'} tracking-wider`}
+                    key={metric.id}
+                    className={`space-y-4 flex flex-col mx-auto min-h-[350px] ${
+                      metric.is_card_type
+                        ? `bg-${metric.background_color || 'transparent'} p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl card-hover`
+                        : ''
+                    }`}
                   >
-                    {parse(sanitizeHTML(metric.description))}
+                    {metric.image && (
+                      <div className={`${section.is_image_bottom ? 'order-3' : ''} mt-8`}>
+                        <Image
+                          src={metric.image}
+                          alt={metric.title || 'Metric image'}
+                          className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto w-auto ${
+                            section.image_metrics_height || 'h-48'
+                          } object-cover`}
+                          width={300}
+                          height={300}
+                          priority={false}
+                        />
+                      </div>
+                    )}
+                    {metric.is_title_displayed && (
+                      <h3
+                        className={`order-1 ${section.metric_title_size || 'text-xl'} ${
+                          section.metric_title_weight || 'font-semibold'
+                        } ${section.metric_title_color ? `text-${section.metric_title_color}` : 'text-gray-800'}`}
+                      >
+                        {parse(sanitizeHTML(metric.title))}
+                      </h3>
+                    )}
+                    <div
+                      className={`flex-col order-2 ${section.metric_description_size || 'text-base'} ${
+                        section.metric_description_weight || 'font-normal'
+                      } ${section.metric_description_color ? `text-${section.metric_description_color}` : 'text-gray-600'} tracking-wider`}
+                    >
+                      {parse(sanitizeHTML(metric.description))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
       </div>
+
+      {/* CSS for hover effect */}
+      <style jsx>{`
+        .card-hover {
+          transition: transform 0.3s ease-in-out;
+        }
+        .card-hover:hover {
+          transform: scale(1.03);
+        }
+      `}</style>
     </section>
   );
 };

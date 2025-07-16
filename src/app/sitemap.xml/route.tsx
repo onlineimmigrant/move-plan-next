@@ -3,295 +3,397 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOrganizationId } from '@/lib/supabase';
 import { getPostUrl } from '@/lib/postUtils';
 
-// Initialize Supabase client
+// Runtime configuration for better performance
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate every hour
+
+// Initialize Supabase client with error handling
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      persistSession: false,
+    },
+  }
 );
 
-// GET handler for the sitemap
-export async function GET(request: NextRequest) {
-  // Get the actual host and protocol from the request
+// Types for better type safety
+interface SitemapPage {
+  url: string;
+  lastmod: string;
+  priority: number;
+}
+
+interface StaticPageData {
+  url_path: string;
+  priority: number | null;
+  last_modified: string | null;
+}
+
+interface BlogPostData {
+  slug: string;
+  last_modified: string | null;
+  display_this_post: boolean;
+  section_id: string | null;
+}
+
+interface FeatureData {
+  slug: string;
+  created_at: string | null;
+}
+
+interface ProductData {
+  slug: string;
+  updated_at: string | null;
+}
+
+// Cache for organization data to reduce database calls
+const orgCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const getCachedOrganizationData = async (orgId: string): Promise<any> => {
+  const cacheKey = `org-${orgId}`;
+  const cached = orgCache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
+    return cached.data;
+  }
+
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('base_url')
+    .eq('id', orgId)
+    .single();
+
+  if (!error && data) {
+    orgCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+      ttl: CACHE_TTL
+    });
+  }
+
+  return { data, error };
+};
+
+// Utility functions for better organization
+const getRequestContext = (request: NextRequest) => {
   const host = request.headers.get('host') || 'localhost:3000';
   const protocol = request.headers.get('x-forwarded-proto') || 'http';
   const actualBaseUrl = `${protocol}://${host}`;
+  
+  return { host, protocol, actualBaseUrl };
+};
 
-  // Log request context for debugging
-  console.log('Sitemap - Request context:', {
-    host,
-    protocol,
-    actualBaseUrl,
-    env: {
-      NODE_ENV: process.env.NODE_ENV,
-      NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
-      NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
-      NEXT_PUBLIC_TENANT_ID: process.env.NEXT_PUBLIC_TENANT_ID,
-    },
-  });
+const validateAndNormalizeUrl = (url: string): string => {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.toString();
+  } catch {
+    return url; // Return original if invalid
+  }
+};
 
-  // Get the organization ID, passing the host string directly
-  const organizationId = await getOrganizationId(actualBaseUrl);
-  let baseUrl = actualBaseUrl;
+const getCurrentISOString = (): string => new Date().toISOString();
 
-  if (organizationId) {
-    // Fetch organization's base_url from Supabase
-    const { data: orgData, error: orgError } = await supabase
-      .from('organizations')
-      .select('base_url')
-      .eq('id', organizationId)
-      .single();
+// GET handler for the sitemap
+export async function GET(request: NextRequest): Promise<Response> {
+  try {
+    const { host, protocol, actualBaseUrl } = getRequestContext(request);
 
-    // Log organization data
-    console.log('Sitemap - Organization data:', {
-      organizationId,
-      baseUrl: orgData?.base_url || null,
-      actualBaseUrl,
-      orgError: orgError?.message || null,
-      orgErrorCode: orgError?.code || null,
-      orgErrorDetails: orgError?.details || null,
-    });
-
-    if (!orgError && orgData?.base_url) {
-      try {
-        const url = new URL(orgData.base_url);
-        baseUrl = orgData.base_url;
-      } catch (e) {
-        console.warn('Sitemap - Invalid base_url in Supabase, using actualBaseUrl:', {
-          baseUrl: orgData.base_url,
-          error: e instanceof Error ? e.message : 'Unknown error',
-        });
-      }
-    } else if (orgError) {
-      console.error('Sitemap - Error fetching organization base_url:', {
-        message: orgError?.message || 'No error message',
-        code: orgError?.code || 'No code',
-        details: orgError?.details || 'No details',
+    // Log request context for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Sitemap - Request context:', {
+        host,
+        protocol,
+        actualBaseUrl,
+        env: {
+          NODE_ENV: process.env.NODE_ENV,
+          NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+          NEXT_PUBLIC_TENANT_ID: process.env.NEXT_PUBLIC_TENANT_ID,
+        },
       });
     }
-  } else {
-    console.error('Sitemap - No organization found, falling back to default tenant ID:', {
-      tenantId: process.env.NEXT_PUBLIC_TENANT_ID || 'none',
-      host,
-    });
-  }
 
-  // Define common static pages with priority 1.0 (always included)
-  const commonStaticPages = [
-    { url: `${baseUrl}/`, lastmod: new Date().toISOString(), priority: 1.0 },
-    { url: `${baseUrl}/about-us`, lastmod: new Date().toISOString(), priority: 1.0 },
-    { url: `${baseUrl}/products`, lastmod: new Date().toISOString(), priority: 1.0 },
-    { url: `${baseUrl}/blog`, lastmod: new Date().toISOString(), priority: 1.0 },
-    { url: `${baseUrl}/faq`, lastmod: new Date().toISOString(), priority: 1.0 },
-    { url: `${baseUrl}/features`, lastmod: new Date().toISOString(), priority: 1.0 },
-    { url: `${baseUrl}/support`, lastmod: new Date().toISOString(), priority: 1.0 },
-    { url: `${baseUrl}/terms`, lastmod: new Date().toISOString(), priority: 1.0 },
-  ];
+    // Get the organization ID
+    const organizationId = await getOrganizationId(actualBaseUrl);
+    let baseUrl = actualBaseUrl;
 
-  // Initialize arrays for dynamic pages
-  let additionalStaticPages: { url: string; lastmod: string; priority: number }[] = [];
-  let dynamicPages: { url: string; lastmod: string; priority: number }[] = [];
-  let dynamicFeaturePages: { url: string; lastmod: string; priority: number }[] = [];
-  let dynamicProductsPages: { url: string; lastmod: string; priority: number }[] = [];
+    if (organizationId) {
+      // Fetch organization's base_url from Supabase with caching
+      const { data: orgData, error: orgError } = await getCachedOrganizationData(organizationId);
 
-  // Use fallback tenant ID if organizationId is not found
-  const effectiveOrgId = organizationId || process.env.NEXT_PUBLIC_TENANT_ID;
+      // Log organization data (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Sitemap - Organization data:', {
+          organizationId,
+          baseUrl: orgData?.base_url || null,
+          actualBaseUrl,
+          orgError: orgError?.message || null,
+        });
+      }
 
-  if (effectiveOrgId) {
-    // Fetch additional static pages from sitemap_static_pages
-    const { data: staticPagesData, error: staticPagesError } = await supabase
-      .from('sitemap_static_pages')
-      .select('url_path, priority, last_modified')
-      .eq('organization_id', effectiveOrgId);
+      if (!orgError && orgData?.base_url) {
+        const validatedUrl = validateAndNormalizeUrl(orgData.base_url);
+        if (validatedUrl !== orgData.base_url) {
+          console.warn('Sitemap - Invalid base_url in Supabase, using actualBaseUrl');
+        } else {
+          baseUrl = orgData.base_url;
+        }
+      }
+    }
 
-    console.log('Sitemap - Static pages query:', {
-      staticPagesCount: staticPagesData?.length || 0,
-      staticPages: staticPagesData || [],
-      staticPagesError: staticPagesError?.message || null,
-      staticPagesErrorCode: staticPagesError?.code || null,
-      staticPagesErrorDetails: staticPagesError?.details || null,
-      organizationId: effectiveOrgId,
-    });
+    // Generate common static pages
+    const currentTime = getCurrentISOString();
+    const commonStaticPages: SitemapPage[] = [
+      { url: `${baseUrl}/`, lastmod: currentTime, priority: 1.0 },
+      { url: `${baseUrl}/about-us`, lastmod: currentTime, priority: 1.0 },
+      { url: `${baseUrl}/products`, lastmod: currentTime, priority: 1.0 },
+      { url: `${baseUrl}/blog`, lastmod: currentTime, priority: 1.0 },
+      { url: `${baseUrl}/faq`, lastmod: currentTime, priority: 1.0 },
+      { url: `${baseUrl}/features`, lastmod: currentTime, priority: 1.0 },
+      { url: `${baseUrl}/support`, lastmod: currentTime, priority: 1.0 },
+      { url: `${baseUrl}/terms`, lastmod: currentTime, priority: 1.0 },
+    ];
 
-    additionalStaticPages = (staticPagesData || []).map((page) => ({
-      url: `${actualBaseUrl}${page.url_path}`,
-      lastmod: page.last_modified ? new Date(page.last_modified).toISOString() : new Date().toISOString(),
-      priority: page.priority || 1.0,
-    }));
+    // Use fallback tenant ID if organizationId is not found
+    const effectiveOrgId = organizationId || process.env.NEXT_PUBLIC_TENANT_ID;
 
-    // Fetch blog posts
-    const { data: posts, error: postError } = await supabase
-      .from('blog_post')
-      .select('slug, last_modified, display_this_post, section_id')
-      .eq('organization_id', effectiveOrgId)
-      .eq('display_this_post', true);
+    if (!effectiveOrgId) {
+      console.warn('Sitemap - No organization ID available, returning only static pages');
+      return new Response(generateSitemap(commonStaticPages), {
+        status: 200,
+        headers: { 'Content-Type': 'text/xml' },
+      });
+    }
 
-    console.log('Sitemap - Blog posts query:', {
-      postsCount: posts?.length || 0,
-      posts: posts || [],
-      postError: postError?.message || null,
-      postErrorCode: postError?.code || null,
-      postErrorDetails: postError?.details || null,
-      organizationId: effectiveOrgId,
-    });
-
-    dynamicPages = (posts || []).map((post) => ({
-      url: `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
-      lastmod: post.last_modified || new Date().toISOString(),
-      priority: 0.8,
-    }));
-
-    // Fetch features
-    const { data: features, error: featureError } = await supabase
-      .from('feature')
-      .select('slug, created_at')
-      .eq('organization_id', effectiveOrgId);
-
-    console.log('Sitemap - Features query:', {
-      featuresCount: features?.length || 0,
-      features: features || [],
-      featureError: featureError?.message || null,
-      featureErrorCode: featureError?.code || null,
-      featureErrorDetails: featureError?.details || null,
-      organizationId: effectiveOrgId,
-    });
-
-    dynamicFeaturePages = (features || []).map((feature) => ({
-      url: `${baseUrl}/features/${feature.slug}`,
-      lastmod: feature.created_at || new Date().toISOString(),
-      priority: 0.8,
-    }));
-
-    // Fetch products
-    const { data: products, error: productError } = await supabase
-      .from('product')
-      .select('slug, updated_at')
-      .eq('organization_id', effectiveOrgId);
-
-    console.log('Sitemap - Products query:', {
-      productsCount: products?.length || 0,
-      products: products || [],
-      productError: productError?.message || null,
-      productErrorCode: productError?.code || null,
-      productErrorDetails: productError?.details || null,
-      organizationId: effectiveOrgId,
-    });
-
-    dynamicProductsPages = (products || []).map((product) => ({
-      url: `${baseUrl}/products/${product.slug}`,
-      lastmod: product.updated_at || new Date().toISOString(),
-      priority: 0.8,
-    }));
-  } else {
-    console.error('Sitemap - Skipping dynamic pages: No organizationId or NEXT_PUBLIC_TENANT_ID available', {
-      host,
-      tenantId: process.env.NEXT_PUBLIC_TENANT_ID || 'none',
-    });
-  }
-
-  // Combine all pages
-  const pages = [
-    ...commonStaticPages,
-    ...additionalStaticPages,
-    ...dynamicPages,
-    ...dynamicFeaturePages,
-    ...dynamicProductsPages,
-  ];
-
-  // Log final pages
-  console.log('Sitemap - Final pages:', {
-    totalPages: pages.length,
-    commonStaticPages: commonStaticPages.length,
-    additionalStaticPages: additionalStaticPages.length,
-    dynamicPages: dynamicPages.length,
-    dynamicFeaturePages: dynamicFeaturePages.length,
-
-    host,
-    baseUrl,
-    pageUrls: pages.map((p) => p.url),
-  });
-
-  // Generate and return the sitemap
-  return new Response(generateSitemap(pages), {
-    status: 200,
-    headers: { 'Content-Type': 'text/xml' },
-  });
-}
-
-// Debug endpoint to test Supabase queries
-export async function POST(request: NextRequest) {
-  if (request.nextUrl.pathname.includes('debug')) {
-    const host = request.headers.get('host') || 'localhost:3000';
-    const organizationId = await getOrganizationId(`https://${host}`);
-    const debugData: any = { organizationId, host };
-
-    if (organizationId || process.env.NEXT_PUBLIC_TENANT_ID) {
-      const effectiveOrgId = organizationId || process.env.NEXT_PUBLIC_TENANT_ID;
-      // Test organizations query
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('base_url')
-        .eq('id', effectiveOrgId)
-        .single();
-      debugData.organizations = { data: orgData, error: orgError?.message };
-
-      // Test static pages
-      const { data: staticPagesData, error: staticPagesError } = await supabase
+    // Fetch all dynamic content in parallel for better performance
+    const [
+      { data: staticPagesData, error: staticPagesError },
+      { data: posts, error: postError },
+      { data: features, error: featureError },
+      { data: products, error: productError }
+    ] = await Promise.all([
+      supabase
         .from('sitemap_static_pages')
         .select('url_path, priority, last_modified')
-        .eq('organization_id', effectiveOrgId);
-      debugData.staticPages = { count: staticPagesData?.length || 0, data: staticPagesData, error: staticPagesError?.message };
-
-      // Test blog posts
-      const { data: posts, error: postError } = await supabase
+        .eq('organization_id', effectiveOrgId),
+      supabase
         .from('blog_post')
         .select('slug, last_modified, display_this_post, section_id')
         .eq('organization_id', effectiveOrgId)
-        .eq('display_this_post', true);
-      debugData.blogPosts = { count: posts?.length || 0, data: posts, error: postError?.message };
-
-      // Test features
-      const { data: features, error: featureError } = await supabase
+        .eq('display_this_post', true),
+      supabase
         .from('feature')
         .select('slug, created_at')
-        .eq('organization_id', effectiveOrgId);
-      debugData.features = { count: features?.length || 0, data: features, error: featureError?.message };
-
-      // Test products
-      const { data: products, error: productError } = await supabase
+        .eq('organization_id', effectiveOrgId),
+      supabase
         .from('product')
         .select('slug, updated_at')
-        .eq('organization_id', effectiveOrgId);
-      debugData.products = { count: products?.length || 0, data: products, error: productError?.message };
+        .eq('organization_id', effectiveOrgId)
+    ]);
+
+    // Log errors if any (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      if (staticPagesError) console.warn('Sitemap - Static pages error:', staticPagesError.message);
+      if (postError) console.warn('Sitemap - Blog posts error:', postError.message);
+      if (featureError) console.warn('Sitemap - Features error:', featureError.message);
+      if (productError) console.warn('Sitemap - Products error:', productError.message);
     }
 
-    console.log('Sitemap - Debug endpoint:', debugData);
-    return NextResponse.json(debugData);
+    // Process additional static pages
+    const additionalStaticPages: SitemapPage[] = (staticPagesData || []).map((page: StaticPageData) => ({
+      url: `${actualBaseUrl}${page.url_path}`,
+      lastmod: page.last_modified ? new Date(page.last_modified).toISOString() : currentTime,
+      priority: page.priority || 1.0,
+    }));
+
+    // Process blog posts
+    const dynamicPages: SitemapPage[] = (posts || []).map((post: BlogPostData) => ({
+      url: `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
+      lastmod: post.last_modified || currentTime,
+      priority: 0.8,
+    }));
+
+    // Process features
+    const dynamicFeaturePages: SitemapPage[] = (features || []).map((feature: FeatureData) => ({
+      url: `${baseUrl}/features/${feature.slug}`,
+      lastmod: feature.created_at || currentTime,
+      priority: 0.8,
+    }));
+
+    // Process products
+    const dynamicProductsPages: SitemapPage[] = (products || []).map((product: ProductData) => ({
+      url: `${baseUrl}/products/${product.slug}`,
+      lastmod: product.updated_at || currentTime,
+      priority: 0.8,
+    }));
+
+    // Combine all pages and remove duplicates
+    const allPages = [
+      ...commonStaticPages,
+      ...additionalStaticPages,
+      ...dynamicPages,
+      ...dynamicFeaturePages,
+      ...dynamicProductsPages,
+    ];
+
+    // Remove duplicate URLs (keeping the first occurrence)
+    const uniquePages = allPages.filter((page, index, arr) => 
+      arr.findIndex(p => p.url === page.url) === index
+    );
+
+    // Log final pages count (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Sitemap - Generated pages:', {
+        totalPages: uniquePages.length,
+        commonStatic: commonStaticPages.length,
+        additionalStatic: additionalStaticPages.length,
+        blogPosts: dynamicPages.length,
+        features: dynamicFeaturePages.length,
+        products: dynamicProductsPages.length,
+      });
+    }
+
+    // Generate and return the sitemap
+    return new Response(generateSitemap(uniquePages), {
+      status: 200,
+      headers: { 
+        'Content-Type': 'text/xml',
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600', // Cache for 1 hour
+      },
+    });
+
+  } catch (error) {
+    console.error('Sitemap - Generation error:', error);
+    
+    // Return a minimal sitemap with just the homepage on error
+    const fallbackBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const fallbackPages: SitemapPage[] = [{
+      url: `${fallbackBaseUrl}/`,
+      lastmod: getCurrentISOString(),
+      priority: 1.0,
+    }];
+
+    return new Response(generateSitemap(fallbackPages), {
+      status: 200,
+      headers: { 'Content-Type': 'text/xml' },
+    });
   }
-  return NextResponse.json({ error: 'Invalid debug request' }, { status: 400 });
 }
 
-// Helper function to generate XML sitemap
-function generateSitemap(pages: { url: string; lastmod: string; priority: number }[]) {
+// Debug endpoint to test Supabase queries (only available in development)
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Only allow debug endpoint in development
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Debug endpoint not available in production' }, { status: 403 });
+  }
+
+  try {
+    const { host } = getRequestContext(request);
+    const organizationId = await getOrganizationId(`https://${host}`);
+    
+    const debugData: Record<string, any> = { 
+      organizationId, 
+      host,
+      timestamp: getCurrentISOString(),
+    };
+
+    const effectiveOrgId = organizationId || process.env.NEXT_PUBLIC_TENANT_ID;
+    
+    if (!effectiveOrgId) {
+      debugData.error = 'No organization ID or tenant ID available';
+      return NextResponse.json(debugData);
+    }
+
+    // Test all queries in parallel
+    const [
+      orgResult,
+      staticPagesResult,
+      postsResult,
+      featuresResult,
+      productsResult
+    ] = await Promise.allSettled([
+      supabase.from('organizations').select('base_url').eq('id', effectiveOrgId).single(),
+      supabase.from('sitemap_static_pages').select('url_path, priority, last_modified').eq('organization_id', effectiveOrgId),
+      supabase.from('blog_post').select('slug, last_modified, display_this_post, section_id').eq('organization_id', effectiveOrgId).eq('display_this_post', true),
+      supabase.from('feature').select('slug, created_at').eq('organization_id', effectiveOrgId),
+      supabase.from('product').select('slug, updated_at').eq('organization_id', effectiveOrgId)
+    ]);
+
+    // Process results
+    debugData.organizations = orgResult.status === 'fulfilled' 
+      ? { data: orgResult.value.data, error: orgResult.value.error?.message }
+      : { error: orgResult.reason };
+
+    debugData.staticPages = staticPagesResult.status === 'fulfilled'
+      ? { count: staticPagesResult.value.data?.length || 0, data: staticPagesResult.value.data, error: staticPagesResult.value.error?.message }
+      : { error: staticPagesResult.reason };
+
+    debugData.blogPosts = postsResult.status === 'fulfilled'
+      ? { count: postsResult.value.data?.length || 0, data: postsResult.value.data, error: postsResult.value.error?.message }
+      : { error: postsResult.reason };
+
+    debugData.features = featuresResult.status === 'fulfilled'
+      ? { count: featuresResult.value.data?.length || 0, data: featuresResult.value.data, error: featuresResult.value.error?.message }
+      : { error: featuresResult.reason };
+
+    debugData.products = productsResult.status === 'fulfilled'
+      ? { count: productsResult.value.data?.length || 0, data: productsResult.value.data, error: productsResult.value.error?.message }
+      : { error: productsResult.reason };
+
+    return NextResponse.json(debugData);
+    
+  } catch (error) {
+    console.error('Sitemap debug error:', error);
+    return NextResponse.json({ 
+      error: 'Debug endpoint error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
+}
+
+// Helper function to generate XML sitemap with better formatting and validation
+function generateSitemap(pages: SitemapPage[]): string {
   // Ensure at least the homepage is included
   const finalPages = pages.length > 0 ? pages : [{
-    url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/`,
-    lastmod: new Date().toISOString(),
+    url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+    lastmod: getCurrentISOString(),
     priority: 1.0,
   }];
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      ${finalPages
-        .map(
-          (page) => `
-            <url>
-              <loc>${page.url}</loc>
-              <lastmod>${page.lastmod}</lastmod>
-              <changefreq>weekly</changefreq>
-              <priority>${page.priority}</priority>
-            </url>
-          `
-        )
-        .join('')}
-    </urlset>`;
+  // Validate and sanitize URLs
+  const validPages = finalPages
+    .filter(page => page.url && page.url.trim().length > 0)
+    .map(page => ({
+      ...page,
+      url: page.url.trim(),
+      priority: Math.min(Math.max(page.priority || 0.5, 0.0), 1.0), // Clamp between 0.0 and 1.0
+    }));
+
+  const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${validPages
+  .map(page => `  <url>
+    <loc>${escapeXml(page.url)}</loc>
+    <lastmod>${page.lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${page.priority.toFixed(1)}</priority>
+  </url>`)
+  .join('\n')}
+</urlset>`;
+
+  return xmlContent;
+}
+
+// Helper function to escape XML special characters
+function escapeXml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
