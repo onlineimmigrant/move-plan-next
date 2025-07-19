@@ -12,6 +12,7 @@ import LoginModal from './LoginModal';
 import ContactModal from './ContactModal';
 import ModernLanguageSwitcher from './ModernLanguageSwitcher';
 import LocalizedLink from './LocalizedLink';
+import { useHeaderTranslations } from './header/useHeaderTranslations';
 import {
   PlusIcon,
   MinusIcon,
@@ -46,6 +47,7 @@ const Header: React.FC<HeaderProps> = ({
   const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
   const isLoggedIn = !!session;
   const { settings } = useSettings();
+  const t = useHeaderTranslations();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -89,7 +91,7 @@ const Header: React.FC<HeaderProps> = ({
   const renderMenuItems = () => (
     <>
       {menuItems.length === 0 ? (
-        <span className="text-gray-500">No menu items available</span>
+        <span className="text-gray-500">{t.noMenuItems}</span>
       ) : (
         menuItems
           .filter((item) => item.is_displayed && item.display_name !== 'Profile')
@@ -110,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({
                       type="button"
                       className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                       title={item.display_name}
-                      aria-label={`Open ${item.display_name} menu`}
+                      aria-label={t.openMenuFor(item.display_name)}
                     >
                       {settings?.menu_items_are_text ? (
                         <span className="text-base font-medium text-gray-700">{item.display_name}</span>
@@ -148,7 +150,7 @@ const Header: React.FC<HeaderProps> = ({
                     href={item.url_name}
                     className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                     title={item.display_name}
-                    aria-label={`Go to ${item.display_name}`}
+                    aria-label={t.goTo(item.display_name)}
                   >
                     {settings?.menu_items_are_text ? (
                       <span className="text-base font-medium text-gray-700">{item.display_name}</span>
@@ -180,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({
   const renderMobileMenuItems = () => (
     <>
       {menuItems.length === 0 ? (
-        <span className="block px-6 py-6 text-gray-500">No menu items available</span>
+        <span className="block px-6 py-6 text-gray-500">{t.noMenuItems}</span>
       ) : (
         menuItems
           .filter((item) => item.is_displayed && item.display_name !== 'Profile')
@@ -201,7 +203,7 @@ const Header: React.FC<HeaderProps> = ({
                       <>
                         <Disclosure.Button
                           className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                          aria-label={`Toggle ${item.display_name} menu`}
+                          aria-label={t.toggleMenu(item.display_name)}
                         >
                           <span className="text-base font-medium text-gray-700">{item.display_name}</span>
                           {open ? (
@@ -228,7 +230,7 @@ const Header: React.FC<HeaderProps> = ({
                         href={item.url_name}
                         onClick={() => setIsOpen(false)}
                         className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                        aria-label={`Go to ${item.display_name}`}
+                        aria-label={t.goTo(item.display_name)}
                       >
                         <span className="text-base font-medium text-gray-700">{item.display_name}</span>
                       </LocalizedLink>
@@ -264,7 +266,7 @@ const Header: React.FC<HeaderProps> = ({
             router.push('/');
           }}
           className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200"
-          aria-label="Go to homepage"
+          aria-label={t.goToHomepage}
           disabled={!router}
         >
           {settings?.image ? (
@@ -280,7 +282,7 @@ const Header: React.FC<HeaderProps> = ({
               }}
             />
           ) : (
-            <span className="text-gray-500">No logo available</span>
+            <span className="text-gray-500">{t.noLogoAvailable}</span>
           )}
           <span className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
             {settings?.site || 'Default Site Name'}
@@ -307,7 +309,7 @@ const Header: React.FC<HeaderProps> = ({
               <LocalizedLink
                 href="/basket"
                 className="cursor-pointer relative"
-                aria-label={`View basket with ${totalItems} items`}
+                aria-label={t.viewBasket(totalItems)}
               >
                 <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
@@ -320,8 +322,8 @@ const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                title="Profile"
-                aria-label="Open profile menu"
+                title={t.profile}
+                aria-label={t.openProfileMenu}
               >
                 <UserIcon className="h-6 w-6 text-gray-600" />
               </button>
@@ -330,7 +332,7 @@ const Header: React.FC<HeaderProps> = ({
                   href="/account"
                   className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                 >
-                  Account
+                  {t.account}
                 </LocalizedLink>
                 <button
                   type="button"
@@ -341,7 +343,7 @@ const Header: React.FC<HeaderProps> = ({
                   }}
                   className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                 >
-                  Contact
+                  {t.contact}
                 </button>
                 <button
                   type="button"
@@ -353,7 +355,7 @@ const Header: React.FC<HeaderProps> = ({
                   }}
                   className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
                 >
-                  Logout
+                  {t.logout}
                 </button>
               </div>
             </div>
@@ -366,8 +368,8 @@ const Header: React.FC<HeaderProps> = ({
                 setIsLoginOpen(true);
               }}
               className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-              title="Login"
-              aria-label="Open login modal"
+              title={t.login}
+              aria-label={t.openLoginModal}
             >
               <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600" />
             </button>
@@ -380,7 +382,7 @@ const Header: React.FC<HeaderProps> = ({
             <LocalizedLink
               href="/basket"
               className="cursor-pointer relative mr-4"
-              aria-label={`View basket with ${totalItems} items`}
+              aria-label={t.viewBasket(totalItems)}
             >
               <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
@@ -395,7 +397,7 @@ const Header: React.FC<HeaderProps> = ({
               setIsOpen(!isOpen);
             }}
             className="cursor-pointer text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-md p-1 transition-all duration-200"
-            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+            aria-label={isOpen ? t.closeMenu : t.openMenu}
           >
             {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
@@ -426,7 +428,7 @@ const Header: React.FC<HeaderProps> = ({
                       onClick={() => setIsOpen(false)}
                       className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                     >
-                      Account
+                      {t.account}
                     </LocalizedLink>
                     <button
                       type="button"
@@ -436,7 +438,7 @@ const Header: React.FC<HeaderProps> = ({
                       }}
                       className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                     >
-                      Contact
+                      {t.contact}
                     </button>
                     <button
                       type="button"
@@ -447,7 +449,7 @@ const Header: React.FC<HeaderProps> = ({
                       }}
                       className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-sky-50 rounded-md font-medium transition-colors duration-200"
                     >
-                      Logout
+                      {t.logout}
                     </button>
                   </Disclosure.Panel>
                 </div>
@@ -461,9 +463,9 @@ const Header: React.FC<HeaderProps> = ({
                 setIsLoginOpen(true);
               }}
               className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-              aria-label="Open login modal"
+              aria-label={t.openLoginModal}
             >
-              <span className="text-base font-medium text-gray-700">Login</span>
+              <span className="text-base font-medium text-gray-700">{t.login}</span>
               <ArrowLeftOnRectangleIcon className="h-5 w-5 text-gray-600" />
             </button>
           )}
