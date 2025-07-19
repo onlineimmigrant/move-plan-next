@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useBasket } from '@/context/BasketContext';
@@ -11,6 +10,8 @@ import * as HeroIcons from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import LoginModal from './LoginModal';
 import ContactModal from './ContactModal';
+import ModernLanguageSwitcher from './ModernLanguageSwitcher';
+import LocalizedLink from './LocalizedLink';
 import {
   PlusIcon,
   MinusIcon,
@@ -132,18 +133,18 @@ const Header: React.FC<HeaderProps> = ({
                     </button>
                     <div className="absolute right-0 w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
                       {displayedSubItems.map((subItem) => (
-                        <Link
+                        <LocalizedLink
                           key={subItem.id}
                           href={subItem.url_name}
                           className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                         >
                           {subItem.name}
-                        </Link>
+                        </LocalizedLink>
                       ))}
                     </div>
                   </>
                 ) : (
-                  <Link
+                  <LocalizedLink
                     href={item.url_name}
                     className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                     title={item.display_name}
@@ -167,7 +168,7 @@ const Header: React.FC<HeaderProps> = ({
                     ) : (
                       renderIcon(getIconName(item.react_icons))
                     )}
-                  </Link>
+                  </LocalizedLink>
                 )}
               </div>
             );
@@ -211,26 +212,26 @@ const Header: React.FC<HeaderProps> = ({
                         </Disclosure.Button>
                         <Disclosure.Panel className="pl-8">
                           {displayedSubItems.map((subItem) => (
-                            <Link
+                            <LocalizedLink
                               key={subItem.id}
                               href={subItem.url_name}
                               onClick={() => setIsOpen(false)}
                               className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                             >
                               {subItem.name}
-                            </Link>
+                            </LocalizedLink>
                           ))}
                         </Disclosure.Panel>
                       </>
                     ) : (
-                      <Link
+                      <LocalizedLink
                         href={item.url_name}
                         onClick={() => setIsOpen(false)}
                         className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
                         aria-label={`Go to ${item.display_name}`}
                       >
                         <span className="text-base font-medium text-gray-700">{item.display_name}</span>
-                      </Link>
+                      </LocalizedLink>
                     )}
                   </div>
                 )}
@@ -286,21 +287,35 @@ const Header: React.FC<HeaderProps> = ({
           </span>
         </button>
 
-        <div className="hidden md:flex items-center space-x-6 text-sm">
-          {renderMenuItems()}
-          {isMounted && totalItems > 0 && (
-            <Link
-              href="/basket"
-              className="cursor-pointer relative"
-              aria-label={`View basket with ${totalItems} items`}
-            >
-              <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
-                {totalItems}
-              </span>
-            </Link>
+        <div className="hidden md:flex items-center justify-end w-full ml-8 relative">
+          {/* Language Switcher - Absolute Right (Desktop Only) */}
+          {settings?.with_language_switch && (
+            <div className="absolute right-0 mr-4 hidden lg:block">
+              <ModernLanguageSwitcher />
+            </div>
           )}
-          {isLoggedIn ? (
+          
+          {/* All Items - Right Side (grouped) */}
+          <div className={`flex items-center space-x-4 ${settings?.with_language_switch ? 'lg:mr-[120px]' : ''}`}>
+            {/* Menu Items */}
+            <div className="flex items-center space-x-6 text-sm">
+              {renderMenuItems()}
+            </div>
+            
+            {/* Action Items */}
+            {isMounted && totalItems > 0 && (
+              <LocalizedLink
+                href="/basket"
+                className="cursor-pointer relative"
+                aria-label={`View basket with ${totalItems} items`}
+              >
+                <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
+                  {totalItems}
+                </span>
+              </LocalizedLink>
+            )}
+            {isLoggedIn ? (
             <div className="relative group">
               <button
                 type="button"
@@ -311,12 +326,12 @@ const Header: React.FC<HeaderProps> = ({
                 <UserIcon className="h-6 w-6 text-gray-600" />
               </button>
               <div className="absolute right-0 w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
-                <Link
+                <LocalizedLink
                   href="/account"
                   className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
                 >
                   Account
-                </Link>
+                </LocalizedLink>
                 <button
                   type="button"
                   onClick={() => {
@@ -357,11 +372,12 @@ const Header: React.FC<HeaderProps> = ({
               <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600" />
             </button>
           )}
+          </div>
         </div>
 
         <div className="flex items-center md:hidden">
           {isMounted && totalItems > 0 && (
-            <Link
+            <LocalizedLink
               href="/basket"
               className="cursor-pointer relative mr-4"
               aria-label={`View basket with ${totalItems} items`}
@@ -370,7 +386,7 @@ const Header: React.FC<HeaderProps> = ({
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
               </span>
-            </Link>
+            </LocalizedLink>
           )}
           <button
             type="button"
@@ -405,13 +421,13 @@ const Header: React.FC<HeaderProps> = ({
                     )}
                   </Disclosure.Button>
                   <Disclosure.Panel className="pl-8">
-                    <Link
+                    <LocalizedLink
                       href="/account"
                       onClick={() => setIsOpen(false)}
                       className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
                     >
                       Account
-                    </Link>
+                    </LocalizedLink>
                     <button
                       type="button"
                       onClick={() => {

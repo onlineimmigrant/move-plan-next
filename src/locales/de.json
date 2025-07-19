@@ -155,5 +155,21 @@
         "ukrainian": "Українська"
     },
     "subscription": "abonnement",
-    "welcomeMessage": "Welcome to our site!"
+    "welcomeMessage": "Willkommen auf unserer Seite!",
+    "hero": {
+        "welcome": "Willkommen auf unserer Plattform",
+        "description": "Entdecken Sie unsere Produkte und Dienstleistungen",
+        "extendedDescription": "Entdecken Sie unsere Produkte und Dienstleistungen, die Ihnen bei der Transformation Ihres Unternehmens helfen",
+        "getStarted": "Loslegen",
+        "learnMore": "Mehr erfahren",
+        "explore": "Entdecken"
+    },
+    "homepage": {
+        "welcomeToOurPlatform": "Willkommen auf unserer Plattform",
+        "discoverOurServices": "Entdecken Sie unsere Dienstleistungen.",
+        "getStarted": "Loslegen",
+        "explore": "Entdecken",
+        "errorLoadingData": "Fehler beim Laden der Seitendaten. Bitte aktualisieren Sie die Seite.",
+        "loading": "Lädt..."
+    }
 }

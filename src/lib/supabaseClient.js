@@ -46,6 +46,8 @@ supabase.auth.onAuthStateChange((event, session) => {
     access_token: session.access_token?.substring(0, 10) + '...',
     user_id: session.user?.id,
   } : null);
-  console.log('Cookies after auth change:', document.cookie);
-  console.log('LocalStorage:', localStorage.getItem(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`));
+  if (typeof window !== 'undefined') {
+    console.log('Cookies after auth change:', document.cookie);
+    console.log('LocalStorage:', localStorage.getItem(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`));
+  }
 });
