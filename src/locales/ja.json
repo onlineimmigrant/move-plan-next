@@ -182,5 +182,14 @@
     "explore": "探索",
     "errorLoadingData": "ページデータの読み込みエラー。ページを更新してください。",
     "loading": "読み込み中..."
+  },
+  "footer": {
+    "allRightsReserved": "全著作権所有",
+    "language": "言語：",
+    "privacySettings": "プライバシー設定",
+    "profile": "プロフィール",
+    "logout": "ログアウト",
+    "login": "ログイン",
+    "register": "登録"
   }
 }

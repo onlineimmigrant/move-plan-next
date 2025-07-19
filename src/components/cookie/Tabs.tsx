@@ -4,6 +4,7 @@ import React from 'react';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import Category from './Category';
 import Service from './Service';
+import { useCookieTranslations } from './useCookieTranslations';
 
 interface TabsProps {
   categories: {
@@ -17,6 +18,7 @@ interface TabsProps {
 }
 
 const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
+  const t = useCookieTranslations();
   const isEssentialCategory = (name: string) => {
     return name.toLowerCase() === 'essential';
   };
@@ -33,7 +35,7 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
             }`
           }
         >
-          Categories
+          {t.categories}
         </Tab>
         <Tab
           className={({ selected }) =>
@@ -44,7 +46,7 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
             }`
           }
         >
-          Services
+          {t.services}
         </Tab>
       </TabList>
 

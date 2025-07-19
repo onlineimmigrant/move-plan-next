@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import parse from 'html-react-parser';
 import { ArrowRightIcon, BeakerIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
-import FeatureHeader from '../../../components/FeatureHeader';
+import FeatureHeader from '../../../../../components/FeatureHeader';
 import { getOrganizationId } from '@/lib/supabase';
 import { Suspense } from 'react';
 

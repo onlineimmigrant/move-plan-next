@@ -182,5 +182,14 @@
     "explore": "探索",
     "errorLoadingData": "加载页面数据时出错。请刷新页面。",
     "loading": "加载中..."
+  },
+  "footer": {
+    "allRightsReserved": "版权所有",
+    "language": "语言：",
+    "privacySettings": "隐私设置",
+    "profile": "个人资料",
+    "logout": "登出",
+    "login": "登录",
+    "register": "注册"
   }
 }

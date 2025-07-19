@@ -168,5 +168,14 @@
     "explore": "Esplora",
     "errorLoadingData": "Errore nel caricamento dei dati della pagina. Ricarica la pagina.",
     "loading": "Caricamento..."
+  },
+  "footer": {
+    "allRightsReserved": "Tutti i diritti riservati",
+    "language": "Lingua:",
+    "privacySettings": "Impostazioni privacy",
+    "profile": "Profilo",
+    "logout": "Esci",
+    "login": "Accedi",
+    "register": "Registrati"
   }
 }

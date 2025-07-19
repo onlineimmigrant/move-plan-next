@@ -171,5 +171,14 @@
         "explore": "Entdecken",
         "errorLoadingData": "Fehler beim Laden der Seitendaten. Bitte aktualisieren Sie die Seite.",
         "loading": "Lädt..."
+    },
+    "footer": {
+        "allRightsReserved": "Alle Rechte vorbehalten",
+        "language": "Sprache:",
+        "privacySettings": "Datenschutz-Einstellungen",
+        "profile": "Profil",
+        "logout": "Abmelden",
+        "login": "Anmelden",
+        "register": "Registrieren"
     }
 }

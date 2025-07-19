@@ -2,8 +2,8 @@ import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import HomePage from '../../components/HomePageSections/HomePage';
 import { supabase } from '@/lib/supabase';
 import { HomePageData } from '@/types/home_page_data';
-import { MetaTags } from './../components/MetaTags';
-import { StructuredData } from './../components/StructuredData';
+//import { MetaTags } from '../../components/MetaTags';
+//import { StructuredData } from '../../components/StructuredData';
 
 async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   const defaultData: HomePageData = {

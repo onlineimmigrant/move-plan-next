@@ -168,5 +168,14 @@
     "explore": "Eksploruj",
     "errorLoadingData": "Błąd ładowania danych strony. Odśwież stronę.",
     "loading": "Ładowanie..."
+  },
+  "footer": {
+    "allRightsReserved": "Wszelkie prawa zastrzeżone",
+    "language": "Język:",
+    "privacySettings": "Ustawienia prywatności",
+    "profile": "Profil",
+    "logout": "Wyloguj",
+    "login": "Zaloguj",
+    "register": "Zarejestruj"
   }
 }
