@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Switch } from '@headlessui/react';
+import { useCookieTranslations } from './useCookieTranslations';
 
 interface CategoryProps {
   category: {
@@ -22,6 +23,7 @@ const Category: React.FC<CategoryProps> = ({
   isEssentialCategory,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const t = useCookieTranslations();
   const isEssential = isEssentialCategory(category.name);
   const isChecked = category.cookie_service.every((service) => consent.services.includes(service.id));
 
@@ -84,12 +86,12 @@ const Category: React.FC<CategoryProps> = ({
       {isOpen && (
         <div className="mt-3 px-6 py-2 text-xs font-light tracking-wide text-gray-500">
           <p>
-            <span className="font-medium text-gray-700">Description:</span>{' '}
-            {category.description || 'No description available.'}
+            <span className="font-medium text-gray-700">{t.description}</span>{' '}
+            {category.description || t.noDescription}
           </p>
           <p className="mt-2">
-            <span className="font-medium text-gray-700">Services:</span>{' '}
-            {category.cookie_service.map((service) => service.name).join(', ') || 'None'}
+            <span className="font-medium text-gray-700">{t.services}</span>{' '}
+            {category.cookie_service.map((service) => service.name).join(', ') || t.none}
           </p>
         </div>
       )}

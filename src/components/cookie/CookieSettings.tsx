@@ -6,6 +6,7 @@ import Tabs from './Tabs';
 import FooterButtons from './FooterButtons';
 import { setCookie, sendConsentToBackend } from '@/utils/cookieUtils';
 import { useAuth } from '../../context/AuthContext';
+import { useCookieTranslations } from './useCookieTranslations';
 import Link from 'next/link';
 import Button from '@/ui/Button';
 import CloseButton from '@/ui/CloseButton';
@@ -35,6 +36,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
   closeSettings,
 }) => {
   const { session } = useAuth();
+  const translations = useCookieTranslations();
   const [categories, setCategories] = useState<Category[]>([]);
   const [consent, setConsent] = useState<Consent>({ services: [] });
   const [loading, setLoading] = useState(true);
@@ -308,8 +310,8 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
             <div className="animate-spin rounded-full h-12 w-12 border-3 border-sky-200"></div>
             <div className="animate-spin rounded-full h-12 w-12 border-3 border-t-sky-500 absolute inset-0"></div>
           </div>
-          <p className="mt-6 text-gray-700 font-medium">Loading privacy settings...</p>
-          <p className="mt-2 text-sm text-gray-500">Preparing your preferences</p>
+          <p className="mt-6 text-gray-700 font-medium">{translations.loading}</p>
+          <p className="mt-2 text-sm text-gray-500">{translations.managePreferences}</p>
         </div>
       </div>
     );
@@ -325,14 +327,14 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Unable to Load Settings</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">{translations.errorLoading}</h3>
             <p className="text-red-600 mb-6 text-sm leading-relaxed">{error}</p>
             <div className="flex gap-3 justify-center">
               <Button onClick={closeSettings} variant="close" className="px-6 py-2.5 text-sm font-medium rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors duration-200">
-                Close
+                {translations.close}
               </Button>
               <Button onClick={() => window.location.reload()} variant="start" className="px-6 py-2.5 text-sm font-medium rounded-lg bg-sky-500 hover:bg-sky-600 text-white transition-colors duration-200">
-                Try Again
+                {translations.rejectAll}
               </Button>
             </div>
           </div>
@@ -389,23 +391,23 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
         </div>
 
         <div className="text-center px-6 py-6 bg-gradient-to-b from-white/60 to-transparent">
-          <h2 className="text-3xl font-bold text-gray-800 tracking-tight mb-4">Privacy Settings</h2>
+          <h2 className="text-3xl font-bold text-gray-800 tracking-tight mb-4">{translations.privacySettings}</h2>
           <div className="flex justify-center space-x-6 mb-4">
             <Link
               href="/privacy-policy"
               className="relative font-medium text-sky-600 hover:text-sky-700 text-sm tracking-wide transition-all duration-300 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:outline-none after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-sky-600 after:transition-all after:duration-300 hover:after:w-full"
             >
-              Privacy Policy
+              {translations.privacyPolicy}
             </Link>
-            <a
+            <Link
               href="/cookie-policy"
               className="relative font-medium text-sky-600 hover:text-sky-700 text-sm tracking-wide transition-all duration-300 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:outline-none after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-sky-600 after:transition-all after:duration-300 hover:after:w-full"
             >
-              Cookie Policy
-            </a>
+              {translations.cookiePolicy}
+            </Link>
           </div>
           <p className="text-gray-600 text-sm leading-relaxed max-w-lg mx-auto">
-            Manage your consent preferences for third-party technologies that collect and process personal data on our website.
+            {translations.managePreferences}
           </p>
         </div>
 
@@ -427,7 +429,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
         <div className="flex justify-center px-6 py-3 bg-gray-50/50">
           <div className="flex items-center space-x-2 text-gray-400">
             <TfiWorld className="h-4 w-4" />
-            <span className="text-xs font-medium tracking-wider">SECURE PRIVACY MANAGEMENT</span>
+            <span className="text-xs font-medium tracking-wider">{translations.privacySettings}</span>
           </div>
         </div>
       </div>

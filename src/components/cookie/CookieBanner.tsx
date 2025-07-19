@@ -5,6 +5,7 @@ import CookieSettings from './CookieSettings';
 import { setCookie, getCookie, sendConsentToBackend } from '@/utils/cookieUtils';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { useAuth } from '@/context/AuthContext'; 
+import { useCookieTranslations } from './useCookieTranslations';
 import Link from 'next/link';
 import Button from '@/ui/Button';
 
@@ -27,6 +28,7 @@ interface Category {
 
 const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages }) => {
   const { session } = useAuth(); // Get session
+  const translations = useCookieTranslations();
   const [isVisible, setIsVisible] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const { showSettings, setShowSettings } = useCookieSettings();
@@ -96,17 +98,17 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
         <div className="fixed bottom-0 left-0 right-0 p-4 px-8 sm:px-16 z-200 flex justify-between items-center bg-white text-gray-800 opacity-90">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:flex-grow mr-5 text-center md:text-left">
-              For your best experience, we use Cookies. See{' '}
+              {translations.cookieNotice}
               
-              <Link href="/terms" className="text-gray-800 hover:text-gray-500">
-                <strong>Terms and Policies</strong>
+              <Link href="/terms" className="text-gray-800 hover:text-gray-500 ml-1">
+                <strong>{translations.privacyPolicy}</strong>
               </Link>{' '}
               and{' '}
               <button
                 onClick={() => setShowSettings(true)}
                 className="cursor-pointer text-gray-800 hover:text-gray-500"
               >
-                <strong>Privacy Settings</strong>
+                <strong>{translations.settings}</strong>
               </button>
             </div>
             <div className="cursor-pointer flex justify-center sm:justify-end items-center w-full space-x-16 sm:space-x-4">
@@ -115,14 +117,14 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
                 onClick={handleRejectAll}
                 className="py-1 sm:py-1 bg-sky-400"
               >
-                Reject All
+                {translations.rejectAll}
               </Button>
               <Button
               variant="primary"
                 onClick={handleAcceptAll}
                 className="py-1 sm:py-1"
               >
-                Accept All
+                {translations.acceptAll}
               </Button>
             </div>
           </div>

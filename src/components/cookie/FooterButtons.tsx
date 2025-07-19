@@ -2,41 +2,41 @@
 
 import React from 'react';
 import Button from '@/ui/Button';
+import { useCookieTranslations } from './useCookieTranslations';
 
 interface FooterButtonsProps {
   saveConsentSettings: () => void;
   handleConsent: (consentGiven: boolean) => void;
-  t?: (key: string) => string;
 }
 
 const FooterButtons: React.FC<FooterButtonsProps> = ({
   saveConsentSettings,
   handleConsent,
-  t = (key: string) => key,
 }) => {
+  const t = useCookieTranslations();
   return (
     <div className="my-2">
       <div className="flex flex-wrap justify-center items-center gap-4  sm:space-y-0 font-medium">
         <Button
         variant='start'
           onClick={saveConsentSettings}
-                  aria-label={t('Save Settings')}
+                  aria-label={t.saveSettings}
         >
-          {t('Save Settings')}
+          {t.saveSettings}
         </Button>
         <Button
         variant='start'
           onClick={() => handleConsent(false)}
-                  aria-label={t('Reject All')}
+                  aria-label={t.rejectAll}
         >
-          {t('Reject All')}
+          {t.rejectAll}
         </Button>
         <Button
         variant='start'
           onClick={() => handleConsent(true)}
-                   aria-label={t('Accept All')}
+                   aria-label={t.acceptAll}
         >
-          {t('Accept All')}
+          {t.acceptAll}
         </Button>
       </div>
     </div>

@@ -168,5 +168,14 @@
     "explore": "Explore",
     "errorLoadingData": "Error loading page data. Please refresh the page.",
     "loading": "Loading..."
+  },
+  "footer": {
+    "allRightsReserved": "Allll rights reserved",
+    "language": "Language:",
+    "privacySettings": "Privacy Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
   }
 }

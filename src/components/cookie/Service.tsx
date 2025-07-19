@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Switch } from '@headlessui/react';
+import { useCookieTranslations } from './useCookieTranslations';
 
 interface ServiceProps {
   service: {
@@ -23,6 +24,7 @@ const Service: React.FC<ServiceProps> = ({
   isEssentialCategory,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const t = useCookieTranslations();
   const isEssential = isEssentialCategory(service.categoryName);
   const isChecked = consent.services.includes(service.id);
 
@@ -84,11 +86,11 @@ const Service: React.FC<ServiceProps> = ({
       {isOpen && (
         <div className="mt-3 px-6 py-2 text-xs font-light tracking-wide text-gray-500">
           <p>
-            <span className="font-medium text-gray-700">Category:</span> {service.categoryName}
+            <span className="font-medium text-gray-700">{t.category}</span> {service.categoryName}
           </p>
           <p className="mt-2">
-            <span className="font-medium text-gray-700">Description:</span>{' '}
-            {service.description || 'No description available.'}
+            <span className="font-medium text-gray-700">{t.description}</span>{' '}
+            {service.description || t.noDescription}
           </p>
         </div>
       )}

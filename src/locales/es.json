@@ -208,5 +208,14 @@
     "explore": "Explorar",
     "errorLoadingData": "Error al cargar los datos de la página. Por favor, actualiza la página.",
     "loading": "Cargando..."
+  },
+  "footer": {
+    "allRightsReserved": "Todos los derechos reservados",
+    "language": "Idioma:",
+    "privacySettings": "Configuración de privacidad",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
   }
 }
