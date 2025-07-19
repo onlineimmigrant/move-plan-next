@@ -38,6 +38,9 @@ export interface Settings {
   seo_twitter_card: string | null;
   seo_structured_data: any[] | null; // Use any[] for flexibility; can be typed stricter if needed
   domain: string;
- billing_panel_stripe: string;
- google_tag: string;
+  billing_panel_stripe: string;
+  google_tag: string;
+  language: string; // New language field
+  with_language_switch: boolean; // Field for conditional language switcher display
+  supported_locales?: string[] | null; // Dynamic supported locales from database
 }

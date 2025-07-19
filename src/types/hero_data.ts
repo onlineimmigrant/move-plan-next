@@ -8,11 +8,16 @@ export interface HeroData {
   h1_text_color_gradient_to: string;
   p_description: string;
   p_description_color: string;
+  background_color?: string;
   background_color_home_page?: string;
+  background_color_gradient_from?: string;
+  background_color_gradient_to?: string;
+  background_color_gradient_via?: string;
   is_bg_gradient?: boolean;
   h1_title_color_id?: string;
   h1_via_gradient_color_id?: string;
   h1_to_gradient_color_id?: string;
+  image?: string;
   image_url?: string;
   is_image_full_page?: boolean;
   is_seo_title?: boolean;
@@ -26,5 +31,9 @@ export interface HeroData {
   p_description_size_mobile?: string;
   p_description_weight?: string;
   image_first?: boolean;
+  button_main_get_started?: string;
+  button_explore?: string;
+  animation_element?: string;
+  font_family?: string;
   organization_id: string | null;
 }

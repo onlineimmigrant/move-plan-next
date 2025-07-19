@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadata Demonstration - Human Readable Format</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .metadata-section { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .metadata-item { margin: 10px 0; }
+        .label { font-weight: bold; color: #2563eb; }
+        .value { color: #1f2937; }
+        .comment-block { background: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+        pre { background: #1f2937; color: #f9fafb; padding: 15px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🌐 MontChain Systems - Metadata in Human Readable Format</h1>
+    
+    <div class="comment-block">
+        <h2>📝 What you're looking at</h2>
+        <p>This page demonstrates the <strong>human-readable format</strong> of metadata that your Next.js application generates. When someone views the "Page Source" of your website, they can see the metadata tags in a clean, organized format.</p>
+    </div>
+
+    <div class="metadata-section">
+        <h2>🏠 Home Page (/) Metadata</h2>
+        <div class="metadata-item">
+            <span class="label">Title:</span> 
+            <span class="value">MontChain Systems</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">Description:</span> 
+            <span class="value">Welcome to our platform. Discover our products and services.</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">Keywords:</span> 
+            <span class="value">home, products, services</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">Robots:</span> 
+            <span class="value">index, follow</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">Canonical URL:</span> 
+            <span class="value">http://localhost:3002/</span>
+        </div>
+    </div>
+
+    <div class="metadata-section">
+        <h2>📱 Social Media Metadata (OpenGraph)</h2>
+        <div class="metadata-item">
+            <span class="label">OG Title:</span> 
+            <span class="value">MontChain Systems</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">OG Description:</span> 
+            <span class="value">Welcome to our platform. Discover our products and services.</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">OG URL:</span> 
+            <span class="value">http://localhost:3002/</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">OG Type:</span> 
+            <span class="value">website</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">OG Image:</span> 
+            <span class="value">http://localhost:3002/default-og-image.jpg</span>
+        </div>
+    </div>
+
+    <div class="metadata-section">
+        <h2>🐦 Twitter Card Metadata</h2>
+        <div class="metadata-item">
+            <span class="label">Twitter Card:</span> 
+            <span class="value">summary_large_image</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">Twitter Title:</span> 
+            <span class="value">MontChain Systems</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">Twitter Description:</span> 
+            <span class="value">Welcome to our platform. Discover our products and services.</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">Twitter Image:</span> 
+            <span class="value">http://localhost:3002/default-og-image.jpg</span>
+        </div>
+    </div>
+
+    <div class="metadata-section">
+        <h2>📄 Contact Page (/contact) Metadata</h2>
+        <div class="metadata-item">
+            <span class="label">Title:</span> 
+            <span class="value">Contact Us | MontChain Systems</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">Description:</span> 
+            <span class="value">Get in touch with us for any questions, support, or business inquiries.</span>
+        </div>
+        <div class="metadata-item">
+            <span class="label">OG Title:</span> 
+            <span class="value">Contact Us | MontChain Systems</span>
+        </div>
+    </div>
+
+    <div class="comment-block">
+        <h2>🔍 How to View Page Source</h2>
+        <p>To see the actual metadata in your browser:</p>
+        <ol>
+            <li>Go to <a href="http://localhost:3002" target="_blank">http://localhost:3002</a></li>
+            <li>Right-click anywhere on the page</li>
+            <li>Select "View Page Source" (or press Ctrl+U / Cmd+U)</li>
+            <li>Look for the <code>&lt;head&gt;</code> section</li>
+            <li>You'll see all the <code>&lt;meta&gt;</code> and <code>&lt;title&gt;</code> tags</li>
+        </ol>
+    </div>
+
+    <div class="metadata-section">
+        <h2>🛠️ What the Raw HTML Looks Like</h2>
+        <p>In the page source, you'll see something like this:</p>
+        <pre>&lt;title&gt;MontChain Systems&lt;/title&gt;
+&lt;meta name="description" content="Welcome to our platform. Discover our products and services."/&gt;
+&lt;meta name="keywords" content="home, products, services"/&gt;
+&lt;meta name="robots" content="index, follow"/&gt;
+&lt;meta property="og:title" content="MontChain Systems"/&gt;
+&lt;meta property="og:description" content="Welcome to our platform. Discover our products and services."/&gt;
+&lt;meta property="og:url" content="http://localhost:3002/"/&gt;
+&lt;meta property="og:type" content="website"/&gt;
+&lt;meta name="twitter:card" content="summary_large_image"/&gt;
+&lt;meta name="twitter:title" content="MontChain Systems"/&gt;</pre>
+    </div>
+
+    <div class="comment-block">
+        <h2>✅ Summary</h2>
+        <p><strong>Your metadata system is working perfectly!</strong> Each page generates its own appropriate metadata based on the page content, and it's all visible in the browser's "View Page Source" feature in a clean, human-readable format.</p>
+        
+        <p><strong>Key Features Implemented:</strong></p>
+        <ul>
+            <li>✅ Dynamic metadata generation per page</li>
+            <li>✅ SEO-optimized titles and descriptions</li>
+            <li>✅ OpenGraph tags for social media sharing</li>
+            <li>✅ Twitter Card optimization</li>
+            <li>✅ Search engine directives (robots)</li>
+            <li>✅ Canonical URLs</li>
+            <li>✅ Mobile-responsive viewport settings</li>
+            <li>✅ Human-readable format in page source</li>
+        </ul>
+    </div>
+</body>
+</html>

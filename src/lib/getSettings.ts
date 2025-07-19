@@ -91,26 +91,46 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
   return data.id as UUID;
 }
 
-export async function getSettings(baseUrl?: string): Promise<Settings> {
-  const defaultSettings: Settings = {
+/**
+ * Get default settings object
+ * @returns Default Settings object with sensible defaults
+ */
+export function getDefaultSettings(): Settings {
+  return {
     id: 0,
-    site: '',
-    image: '',
+    site: 'App', // Always provide a valid string
+    image: '/images/logo.svg',
     organization_id: '',
-    menu_width: '',
-    menu_items_are_text: false,
-    footer_color: '',
-    favicon: null,
+    menu_width: '7xl',
+    menu_items_are_text: true,
+    footer_color: 'gray-800',
+    favicon: '/images/favicon.ico',
     seo_title: null,
     seo_description: null,
     seo_keywords: null,
     seo_og_image: null,
     seo_twitter_card: null,
-    seo_structured_data: null,
+    seo_structured_data: [],
     domain: '',
     billing_panel_stripe: '',
     google_tag: '',
+    language: 'en', // Default language fallback
+    with_language_switch: false, // Default to false
+    supported_locales: null, // Will fall back to DEFAULT_SUPPORTED_LOCALES
   };
+}
+
+/**
+ * Get a guaranteed site name string
+ * @param settings Settings object (may contain null/undefined site)
+ * @returns A valid site name string
+ */
+export function getSiteName(settings?: Settings): string {
+  return settings?.site || 'App';
+}
+
+export async function getSettings(baseUrl?: string): Promise<Settings> {
+  const defaultSettings = getDefaultSettings();
 
   // Skip Supabase query during Vercel build
   const isBuild = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' && process.env.NEXT_PUBLIC_VERCEL_URL === undefined;
@@ -154,7 +174,10 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
         seo_structured_data,
         domain,
         billing_panel_stripe,
-        google_tag
+        google_tag,
+        language,
+        with_language_switch,
+        supported_locales
       `)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
@@ -184,6 +207,9 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       domain: data.domain ?? null,
       billing_panel_stripe: data.billing_panel_stripe ?? null,
       google_tag: data.google_tag ?? null,
+      language: data.language ?? 'en',
+      with_language_switch: (data as any).with_language_switch ?? false,
+      supported_locales: data.supported_locales || null,
     };
 
     console.log('Settings fetched successfully:', settings);

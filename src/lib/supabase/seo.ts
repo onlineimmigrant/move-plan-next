@@ -171,16 +171,17 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
       }
     }
 
+    // If no page found in database, create dynamic page metadata
     if (!page) {
-      console.log('[fetchPageSEOData] No page found for any paths:', queryPaths);
-      return fetchDefaultSEOData(baseUrl, pathname);
+      console.log('[fetchPageSEOData] No page found, generating dynamic metadata for:', normalizedPath);
+      return generateDynamicPageSEO(normalizedPath, baseUrl, organizationId);
     }
 
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
     const seoData: SEOData = {
-      title: page.title || 'Default Page Title',
-      description: page.description || 'Default Page Description',
-      keywords: page.keywords ? (Array.isArray(page.keywords) ? page.keywords : page.keywords.split(',').map(k => k.trim())) : [],
+      title: page.title || generatePageTitle(normalizedPath),
+      description: page.description || generatePageDescription(normalizedPath),
+      keywords: page.keywords ? (Array.isArray(page.keywords) ? page.keywords : page.keywords.split(',').map(k => k.trim())) : generatePageKeywords(normalizedPath),
       canonicalUrl,
       seo_og_image: page.og_image ?? undefined,
       seo_og_url: page.og_url || canonicalUrl,
@@ -219,22 +220,25 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
     }
 
     // Add WebPage and BreadcrumbList structured data
-    seoData.structuredData.push({
-      '@context': 'https://schema.org',
-      '@type': 'WebPage',
-      name: page.title || 'Default Page Title',
-      description: page.description || 'Default Page Description',
-      url: canonicalUrl,
-    }, {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: getBreadcrumbStructuredData({
-        pathname: page.path,
-        domain: baseUrl,
-        overrides: page.title ? [{ segment: page.path, label: page.title }] : [],
-        extraCrumbs: [],
-      }),
-    });
+    seoData.structuredData.push(
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: seoData.title,
+        description: seoData.description,
+        url: canonicalUrl,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: getBreadcrumbStructuredData({
+          pathname: page.path,
+          domain: baseUrl,
+          overrides: page.title ? [{ segment: page.path, label: page.title }] : [],
+          extraCrumbs: [],
+        }),
+      }
+    );
 
     console.log('[fetchPageSEOData] Page SEO data fetched:', seoData.title);
     return seoData;
@@ -242,6 +246,110 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
     console.error('[fetchPageSEOData] Error:', error.message);
     return fetchDefaultSEOData(baseUrl, pathname);
   }
+}
+
+// Generate dynamic page metadata for pages not in database
+async function generateDynamicPageSEO(pathname: string, baseUrl: string, organizationId: string): Promise<SEOData> {
+  const settings = await getSettings(baseUrl);
+  const siteName = settings?.site || 'App';
+  
+  const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
+  const pageTitle = generatePageTitle(pathname);
+  const pageDescription = generatePageDescription(pathname);
+  
+  const seoData: SEOData = {
+    title: `${pageTitle} | ${siteName}`,
+    description: pageDescription,
+    keywords: generatePageKeywords(pathname),
+    canonicalUrl,
+    seo_og_image: settings?.seo_og_image ?? undefined,
+    seo_og_url: canonicalUrl,
+    structuredData: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: pageTitle,
+        description: pageDescription,
+        url: canonicalUrl,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: getBreadcrumbStructuredData({
+          pathname,
+          domain: baseUrl,
+          overrides: [{ segment: pathname, label: pageTitle }],
+          extraCrumbs: [],
+        }),
+      }
+    ],
+    faqs: [],
+  };
+
+  console.log('[generateDynamicPageSEO] Generated dynamic SEO for:', pathname, 'title:', pageTitle);
+  return seoData;
+}
+
+// Helper functions for dynamic page content
+function generatePageTitle(pathname: string): string {
+  const pathMap: Record<string, string> = {
+    '/investors': 'Investors',
+    '/about': 'About Us',
+    '/contact': 'Contact Us',
+    '/services': 'Our Services',
+    '/products': 'Products',
+    '/blog': 'Blog',
+    '/privacy-policy': 'Privacy Policy',
+    '/terms-of-service': 'Terms of Service',
+    '/cookie-policy': 'Cookie Policy',
+  };
+
+  if (pathMap[pathname]) {
+    return pathMap[pathname];
+  }
+
+  // Generate title from path segments
+  return pathname
+    .split('/')
+    .filter(Boolean)
+    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '))
+    .join(' - ') || 'Home';
+}
+
+function generatePageDescription(pathname: string): string {
+  const descriptionMap: Record<string, string> = {
+    '/investors': 'Discover investment opportunities and learn about our company\'s growth potential.',
+    '/about': 'Learn more about our company, mission, and team.',
+    '/contact': 'Get in touch with us for any questions or inquiries.',
+    '/services': 'Explore our comprehensive range of professional services.',
+    '/products': 'Browse our complete product catalog and offerings.',
+    '/blog': 'Read our latest insights, news, and industry updates.',
+    '/privacy-policy': 'Read our privacy policy to understand how we protect your data.',
+    '/terms-of-service': 'Review our terms of service and user agreement.',
+    '/cookie-policy': 'Learn about our cookie usage and privacy practices.',
+  };
+
+  if (descriptionMap[pathname]) {
+    return descriptionMap[pathname];
+  }
+
+  return `Learn more about ${generatePageTitle(pathname).toLowerCase()} and discover what we offer.`;
+}
+
+function generatePageKeywords(pathname: string): string[] {
+  const keywordMap: Record<string, string[]> = {
+    '/investors': ['investors', 'investment', 'funding', 'growth', 'financial'],
+    '/about': ['about', 'company', 'team', 'mission', 'values'],
+    '/contact': ['contact', 'support', 'help', 'inquiries', 'get in touch'],
+    '/services': ['services', 'professional', 'solutions', 'consulting'],
+    '/products': ['products', 'catalog', 'offerings', 'solutions'],
+    '/blog': ['blog', 'news', 'insights', 'articles', 'updates'],
+    '/privacy-policy': ['privacy', 'policy', 'data protection', 'GDPR'],
+    '/terms-of-service': ['terms', 'service', 'agreement', 'legal'],
+    '/cookie-policy': ['cookies', 'policy', 'privacy', 'tracking'],
+  };
+
+  return keywordMap[pathname] || ['page', 'information', 'company'];
 }
 
 export async function fetchProductSEOData(id: string, baseUrl: string): Promise<SEOData> {
@@ -343,54 +451,57 @@ export async function fetchProductSEOData(id: string, baseUrl: string): Promise<
       console.error('[fetchProductSEOData] Error fetching FAQs:', faqsResult.error.message);
     }
 
-    // Process structured data
-    seoData.structuredData.push({
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: getBreadcrumbStructuredData({
-        pathname: `/products/${product.id}`,
-        domain: baseUrl,
-        overrides: [{ segment: product.id.toString(), label: product.product_name }],
-        extraCrumbs: [],
-      }),
-    }, {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: product.product_name,
-      description: description,
-      image: product.links_to_image || undefined,
-      sku: product.id.toString(),
-      offers: product.price_manual && product.currency_manual
-        ? {
-            '@type': 'Offer',
-            price: product.price_manual,
-            priceCurrency: product.currency_manual,
-            availability: 'https://schema.org/InStock',
-          }
-        : undefined,
-      aggregateRating: isReviewArray(reviewsResult.data) && reviewsResult.data.length > 0
-        ? {
-            '@type': 'AggregateRating',
-            ratingValue: parseFloat(
-              (
-                reviewsResult.data.reduce((sum: number, r: Review) => sum + (r.rating ?? 0), 0) / reviewsResult.data.length
-              ).toFixed(1)
-            ),
-            reviewCount: reviewsResult.data.length,
-          }
-        : undefined,
-      review: isReviewArray(reviewsResult.data) && reviewsResult.data.length > 0
-        ? reviewsResult.data.map((review: Review) => ({
-            '@type': 'Review',
-            reviewRating: {
-              '@type': 'Rating',
-              ratingValue: review.rating ?? 0,
-            },
-            author: { '@type': 'Person', name: review.user_name ?? 'Anonymous' },
-            reviewBody: review.comment ?? '',
-          }))
-        : undefined,
-    });
+    // Process structured data - add BreadcrumbList first
+    seoData.structuredData.push(
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: getBreadcrumbStructuredData({
+          pathname: `/products/${product.id}`,
+          domain: baseUrl,
+          overrides: [{ segment: product.id.toString(), label: product.product_name }],
+          extraCrumbs: [],
+        }),
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.product_name,
+        description: description,
+        image: product.links_to_image || undefined,
+        sku: product.id.toString(),
+        offers: product.price_manual && product.currency_manual
+          ? {
+              '@type': 'Offer',
+              price: product.price_manual,
+              priceCurrency: product.currency_manual,
+              availability: 'https://schema.org/InStock',
+            }
+          : undefined,
+        aggregateRating: isReviewArray(reviewsResult.data) && reviewsResult.data.length > 0
+          ? {
+              '@type': 'AggregateRating',
+              ratingValue: parseFloat(
+                (
+                  reviewsResult.data.reduce((sum: number, r: Review) => sum + (r.rating ?? 0), 0) / reviewsResult.data.length
+                ).toFixed(1)
+              ),
+              reviewCount: reviewsResult.data.length,
+            }
+          : undefined,
+        review: isReviewArray(reviewsResult.data) && reviewsResult.data.length > 0
+          ? reviewsResult.data.map((review: Review) => ({
+              '@type': 'Review',
+              reviewRating: {
+                '@type': 'Rating',
+                ratingValue: review.rating ?? 0,
+              },
+              author: { '@type': 'Person', name: review.user_name ?? 'Anonymous' },
+              reviewBody: review.comment ?? '',
+            }))
+          : undefined,
+      }
+    );
 
     if (isFAQArray(faqsResult.data) && faqsResult.data.length > 0) {
       seoData.structuredData.push({
@@ -410,17 +521,19 @@ export async function fetchProductSEOData(id: string, baseUrl: string): Promise<
     }
 
     if (isVideoArray(videosResult.data) && videosResult.data.length > 0) {
-      seoData.structuredData.push(...videosResult.data
+      videosResult.data
         .filter(isValidVideo)
-        .map((video) => ({
-          '@context': 'https://schema.org',
-          '@type': 'VideoObject',
-          name: video.title,
-          description: video.description,
-          thumbnailUrl: video.thumbnail_url || undefined,
-          contentUrl: video.video_url,
-          uploadDate: new Date().toISOString(),
-        })));
+        .forEach((video) => {
+          seoData.structuredData.push({
+            '@context': 'https://schema.org',
+            '@type': 'VideoObject',
+            name: video.title,
+            description: video.description,
+            thumbnailUrl: video.thumbnail_url || undefined,
+            contentUrl: video.video_url,
+            uploadDate: new Date().toISOString(),
+          });
+        });
     }
 
     if (isValidCourse(courseResult.data)) {
@@ -437,21 +550,24 @@ export async function fetchProductSEOData(id: string, baseUrl: string): Promise<
     }
 
     if (isArticleArray(articlesResult.data) && articlesResult.data.length > 0) {
-      seoData.structuredData.push(...articlesResult.data
+      articlesResult.data
         .filter(isValidArticle)
-        .map((article) => ({
-          '@context': 'https://schema.org',
-          '@type': 'Article',
-          headline: article.title,
-          articleBody: article.content.replace(/<[^>]+>/g, '').slice(0, 200),
-          datePublished: article.created_on,
-          author: {
-            '@type': 'Person',
-            name: article.author_name,
-          },
-        })));
+        .forEach((article) => {
+          seoData.structuredData.push({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: article.title,
+            articleBody: article.content.replace(/<[^>]+>/g, '').slice(0, 200),
+            datePublished: article.created_on,
+            author: {
+              '@type': 'Person',
+              name: article.author_name,
+            },
+          });
+        });
     }
 
+    // Add final WebPage structured data
     seoData.structuredData.push({
       '@context': 'https://schema.org',
       '@type': 'WebPage',
@@ -497,22 +613,25 @@ export async function fetchDefaultSEOData(baseUrl: string, pathname: string): Pr
     }
 
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
-    const structuredData: Array<Record<string, any>> = [{
-      '@context': 'https://schema.org',
-      '@type': 'WebPage',
-      name: settings?.site || 'App',
-      description: settings?.seo_description || 'Discover our products and services.',
-      url: canonicalUrl,
-    }, {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: getBreadcrumbStructuredData({
-        pathname,
-        domain: baseUrl,
-        overrides: [],
-        extraCrumbs: [],
-      }),
-    }];
+    const structuredData: Array<Record<string, any>> = [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: settings?.site || 'App',
+        description: settings?.seo_description || 'Discover our products and services.',
+        url: canonicalUrl,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: getBreadcrumbStructuredData({
+          pathname,
+          domain: baseUrl,
+          overrides: [],
+          extraCrumbs: [],
+        }),
+      }
+    ];
 
     if (siteFaqs.length > 0) {
       structuredData.push({

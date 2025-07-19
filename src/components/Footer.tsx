@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { MenuItem, SubMenuItem } from '@/types/menu';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface FooterProps {
   menuItems?: MenuItem[];
@@ -170,10 +171,18 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           )}
         </nav>
 
-        <div className="mt-12 border-t border-neutral-500 pt-6 text-center">
-          <small className="text-xs text-neutral-500">
-            © {new Date().getFullYear()} {settings?.site || 'Company'}. All rights reserved.
-          </small>
+        <div className="mt-12 border-t border-neutral-500 pt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <small className="text-xs text-neutral-500">
+              © {new Date().getFullYear()} {settings?.site || 'Company'}. All rights reserved.
+            </small>
+            {settings?.with_language_switch && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-neutral-500">Language:</span>
+                <LanguageSwitcher />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </footer>

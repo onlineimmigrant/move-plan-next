@@ -1,0 +1,37 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    optimizeCss: false,
+  },
+  images: {
+    remotePatterns: [
+
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'rgbmdfaoowqbgshjuwwm.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'rgbmdfaoowqbgshjuwwm.storage.supabase.co',
+        pathname: '/v1/object/public/**',
+      },
+    ],
+  },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.mjs$/,
+      include: /node_modules/,
+      type: 'javascript/auto',
+    });
+    return config;
+  },
+};
+
+module.exports = nextConfig;

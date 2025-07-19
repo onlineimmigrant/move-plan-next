@@ -13,7 +13,9 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
+import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -27,12 +29,12 @@ interface ClientProvidersProps {
   settings: any;
   headerData: any;
   activeLanguages: string[];
-  heroData: {
+  heroData?: {
     h1_text_color: string;
     p_description_color: string;
   };
   baseUrl: string;
-  menuItems: MenuItem[] | undefined;
+  menuItems?: MenuItem[];
 }
 
 export default function ClientProviders({
@@ -40,9 +42,12 @@ export default function ClientProviders({
   settings,
   headerData,
   activeLanguages,
-  heroData,
+  heroData = {
+    h1_text_color: 'gray-900',
+    p_description_color: '#000000',
+  },
   baseUrl,
-  menuItems,
+  menuItems = [],
 }: ClientProvidersProps) {
   const pathname = usePathname() || '/'; // Fallback to '/' if usePathname returns null
   const [sections, setSections] = useState<TemplateSection[]>([]);
@@ -142,6 +147,8 @@ export default function ClientProviders({
       <BannerProvider>
         <BasketProvider>
           <SettingsProvider initialSettings={settings}>
+            <DynamicLanguageUpdater />
+            <DefaultLocaleCookieManager />
             <CookieSettingsProvider>
               <BannerAwareContent
                 children={children}
