@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStudentStatus } from '@/lib/StudentContext';
 import Loading from '@/ui/Loading';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
+import { useRef, useEffect, useState } from 'react';
 
 interface Tab {
   label: string;
@@ -18,38 +20,42 @@ interface AccountTabProps {
 export default function AccountTab({ className = '' }: AccountTabProps) {
   const pathname = usePathname();
   const { isStudent, isLoading } = useStudentStatus();
+  const { t } = useAccountTranslations();
+  const [sliderStyle, setSliderStyle] = useState({ width: 0, transform: 'translateX(0px)' });
+  const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   const tabs: Tab[] = [
-    ...(isStudent ? [{ label: 'Student', href: '/account/edupro' }] : []),
-    { label: 'Purchases', href: '/account/purchases' },
-    { label: 'Payments', href: '/account/payments' },
+    ...(isStudent ? [{ label: t.student, href: '/account/edupro' }] : []),
+    { label: t.purchases, href: '/account/purchases' },
+    { label: t.payments, href: '/account/payments' },
   ];
 
-  // Determine the translate-x for the sliding background based on the number of tabs
-  const getSliderPosition = () => {
-    const activeIndex = tabs.findIndex((tab) => pathname === tab.href);
-    console.log('Active Tab Index:', activeIndex, 'Pathname:', pathname, 'Number of Tabs:', tabs.length); // Debug log
+  // Calculate slider position and width based on actual tab dimensions
+  useEffect(() => {
+    // Small delay to ensure DOM is rendered
+    const timer = setTimeout(() => {
+      const activeIndex = tabs.findIndex((tab) => pathname === tab.href);
+      if (activeIndex !== -1 && tabRefs.current[activeIndex]) {
+        const activeTab = tabRefs.current[activeIndex];
+        if (activeTab) {
+          const { offsetLeft, offsetWidth } = activeTab;
+          setSliderStyle({
+            width: offsetWidth - 4, // Account for padding
+            transform: `translateX(${offsetLeft + 2}px)` // Account for padding
+          });
+        }
+      }
+    }, 10);
 
-    if (tabs.length === 2) {
-      if (activeIndex === 0) return 'translate-x-0';
-      if (activeIndex === 1) return 'translate-x-[100%]';
-    } else if (tabs.length === 3) {
-      if (activeIndex === 0) return 'translate-x-0';
-      if (activeIndex === 1) return 'translate-x-[100%]';
-      if (activeIndex === 2) return 'translate-x-[200%]';
-    }
-    return 'translate-x-0'; // Default to first tab
-  };
-
-  // Determine the sliding background width based on the number of tabs
-  const getSliderWidth = () => {
-    return tabs.length === 2 ? 'w-[calc(50%-2px)]' : 'w-[calc(33.33%-2px)]';
-  };
+    return () => clearTimeout(timer);
+  }, [pathname, tabs.length, isStudent]); // Fixed: Added dependency array
 
   if (isLoading) {
+    return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <Loading />
       </div>
+    );
   }
 
 
@@ -57,7 +63,7 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
     <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
       <Link href="/account">
         <h1 className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
-          Account
+          {t.account}
           <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
         </h1>
       </Link>
@@ -65,13 +71,15 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
         <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-sky-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
           {/* Sliding Background */}
           <div
-            className={`absolute top-0.5 bottom-0.5 left-0.5 ${getSliderWidth()} bg-sky-600 rounded-md transition-transform duration-200 ease-in-out transform ${getSliderPosition()}`}
+            className="absolute top-0.5 bottom-0.5 bg-sky-600 rounded-md transition-all duration-200 ease-in-out"
+            style={sliderStyle}
           ></div>
           {/* Tab Labels */}
           <div className="relative flex h-full" role="tablist" aria-label="Account Tabs">
             {tabs.map((tab, index) => (
               <Link
                 key={tab.href}
+                ref={(el) => { tabRefs.current[index] = el; }}
                 href={tab.href}
                 className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-sm font-medium mona-sans px-0.5 ${
                   pathname === tab.href ? 'font-semibold text-white z-10' : ''

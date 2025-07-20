@@ -223,17 +223,11 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
             >
               <Link
                 href='/products'
-                className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-2 px-4 text-sm font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
+                className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
               >
                 {hero?.button_main_get_started}
               </Link>
-              <Link
-                href="/blog"
-                className={`flex items-center text-sm transition-all duration-300 group font-semibold leading-6 text-gray-900 hover:text-gray-300 animate-hero-button-explore ${isVisible ? 'animate' : ''}`}
-              >
-                {hero?.button_explore}
-                <RightArrowDynamic />
-              </Link>
+    
             </div>
           </div>
         </div>
