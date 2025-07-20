@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import Loading from '@/ui/Loading';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 
 export interface Settings {
@@ -78,6 +79,7 @@ export default function BillingPage() {
   const {  isLoading: authLoading } = useAuth();
    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const isLoading = authLoading;
+  const { t } = useAccountTranslations();
  
   const settings = useSettings();
 

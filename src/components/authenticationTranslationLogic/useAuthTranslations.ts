@@ -1,16 +1,22 @@
 import { usePathname } from 'next/navigation';
+import { useSettings } from '@/context/SettingsContext';
 import { AUTH_TRANSLATIONS } from './translations';
 
 type Locale = 'en' | 'es' | 'fr' | 'de' | 'ru' | 'it' | 'pt' | 'pl' | 'zh' | 'ja';
 
 export const useAuthTranslations = () => {
   const pathname = usePathname();
+  const { settings } = useSettings();
   
   // Extract locale from pathname (e.g., /es/login -> es)
-  const locale = pathname.split('/')[1] as Locale;
+  const pathLocale = pathname.split('/')[1];
   
-  // Default to English if locale is not supported
-  const currentLocale = AUTH_TRANSLATIONS[locale] ? locale : 'en';
+  // Use path locale if valid, otherwise fall back to application's default language, then English
+  const defaultLanguage = settings?.language || 'en';
+  const currentLocale = (pathLocale && AUTH_TRANSLATIONS[pathLocale as Locale]) 
+    ? pathLocale as Locale
+    : (AUTH_TRANSLATIONS[defaultLanguage as Locale] ? defaultLanguage as Locale : 'en');
+    
   const translations = AUTH_TRANSLATIONS[currentLocale];
   
   return {
@@ -94,5 +100,8 @@ export const useAuthTranslations = () => {
     registerWith: (siteName: string) => translations.registerWith(siteName),
     welcomeTo: (siteName: string) => translations.welcomeTo(siteName),
     loginTo: (siteName: string) => translations.loginTo(siteName),
+    
+    // Current locale
+    locale: currentLocale,
   };
 };

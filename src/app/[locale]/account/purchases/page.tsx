@@ -12,6 +12,7 @@ import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import Tooltip from '@/components/Tooltip';
 import Loading from '@/ui/Loading';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 // Define the Transaction interface (needed for syncAndFetchPurchases)
 interface Transaction {
@@ -277,6 +278,7 @@ const usePurchases = (accessToken: string | null, userId: string | null, itemsPe
 
 export default function PurchasesPage() {
   const { accessToken, userId, isLoading: authLoading, error: authError } = useAuth();
+  const { t } = useAccountTranslations();
   const [currentPage, setCurrentPage] = useState(1);
   const [showAllPurchases, setShowAllPurchases] = useState(false); // State for toggling active/all purchases
   const itemsPerPage = 5;

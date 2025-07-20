@@ -11,6 +11,7 @@ import Button from '@/ui/Button';
 import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Loading from '@/ui/Loading';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 // Define the Transaction interface based on the Supabase transactions table
 interface Transaction {
@@ -186,6 +187,7 @@ export default function PaymentsPage() {
   const { transactions, totalCount, isLoading: transactionsLoading, error: transactionsError, hasNonSucceeded, syncAndFetchTransactions } = useTransactions(accessToken, userId, itemsPerPage, currentPage, showAllPayments);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const router = useRouter();
+  const { t } = useAccountTranslations();
 
   const isLoading = authLoading || transactionsLoading;
   const error = authError || transactionsError;

@@ -11,6 +11,7 @@ import DialogModals from '@/components/ai/DialogModals';
 import ChatWidget from '@/components/ChatWidget';
 import Image from 'next/image';
 import DisclosureButton from '@/ui/DisclosureButton';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -71,6 +72,7 @@ interface SelectedModel {
 }
 
 export default function AISettings() {
+  const { t } = useAccountTranslations();
   const [defaultModels, setDefaultModels] = useState<Model[]>([]);
   const [userModels, setUserModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(null);

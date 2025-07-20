@@ -11,6 +11,7 @@ import { FiRefreshCw } from 'react-icons/fi';
 import { useStudentStatus } from '@/lib/StudentContext';
 import Button from '@/ui/Button';
 import Loading from '@/ui/Loading';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 // Constants
 import { FIELD_LABELS, EDITABLE_FIELDS } from '@/components/constants/profile';
@@ -150,10 +151,10 @@ const useModal = () => {
 };
 
 // Validation Function
-const validateField = (field: string, value: string): string | null => {
-  if (!value.trim()) return `${FIELD_LABELS[field] || field} cannot be empty.`;
+const validateField = (field: string, value: string, t: any): string | null => {
+  if (!value.trim()) return `${FIELD_LABELS[field] || field} ${t.requiredField.toLowerCase()}`;
   if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-    return 'Please enter a valid email address.';
+    return t.invalidEmail;
   }
   return null;
 };
@@ -162,6 +163,7 @@ export default function ProfilePage() {
   const { isStudent, organizationId} = useStudentStatus();
   const { accessToken, isLoading: authLoading, error: authError } = useAuth();
   const { profile, setProfile, fetchProfile, isLoading: profileLoading, error: profileError } = useProfile(accessToken);
+  const { t } = useAccountTranslations();
   const {
     isModalOpen,
     editingField,
@@ -226,7 +228,7 @@ export default function ProfilePage() {
 
     // Validate input
     if (editingField) {
-      const validationError = validateField(editingField, fieldValue);
+      const validationError = validateField(editingField, fieldValue, t);
       if (validationError) {
         setFormError(validationError);
         return;
@@ -253,11 +255,11 @@ export default function ProfilePage() {
 
       const updatedProfile: Profile = await response.json();
       setProfile(updatedProfile);
-      setToast({ message: 'Profile updated successfully', type: 'success' });
+      setToast({ message: t.profileUpdated, type: 'success' });
       closeModal();
     } catch (error) {
       setFormError((error as Error).message);
-      setToast({ message: `Error: ${(error as Error).message}`, type: 'error' });
+      setToast({ message: `${t.error}: ${(error as Error).message}`, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -306,7 +308,7 @@ export default function ProfilePage() {
                 className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-sky-600"
                 aria-label="Retry fetching profile"
               >
-                Retry
+                {t.loading}
               </Button>
             )}
           </div>
@@ -351,7 +353,7 @@ export default function ProfilePage() {
                           className="bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400"
                           aria-label={`Edit ${FIELD_LABELS[key] ?? key}`}
                         >
-                          Edit
+                          {t.edit}
                         </Button>
                       ) : (
                         '-'
@@ -415,7 +417,7 @@ export default function ProfilePage() {
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 id="modal-title" className="text-lg font-semibold text-gray-900">
-                      Edit {FIELD_LABELS[editingField] || editingField}
+                      {t.edit} {FIELD_LABELS[editingField] || editingField}
                     </h2>
                     <button
                       onClick={closeModal}
@@ -454,7 +456,7 @@ export default function ProfilePage() {
                                   disabled={isSubmitting}
                         aria-label="Save changes"
                       >
-                        {isSubmitting ? 'Saving...' : 'Save'}
+                        {isSubmitting ? `${t.loading}` : t.save}
                       </Button>
                       <Button
                         type="button"
@@ -463,7 +465,7 @@ export default function ProfilePage() {
                         disabled={isSubmitting}
                         aria-label="Cancel"
                       >
-                        Cancel
+                        {t.cancel}
                       </Button>
                     </div>
                   </form>
