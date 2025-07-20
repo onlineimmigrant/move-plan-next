@@ -7,6 +7,7 @@ import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon } from '@hero
 import CategoriesBar from '@/components/product/CategoriesBar';
 import IconButton from '@/ui/IconButton';
 import FeedbackAccordion from '@/components/FeedbackAccordion';
+import { useProductTranslations } from '@/components/product/useProductTranslations';
 
 type Product = {
   id: number;
@@ -42,6 +43,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
   initialError: string | null;
   isAdmin?: boolean;
 }) {
+  const { t } = useProductTranslations();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubType, setActiveSubType] = useState<ProductSubType | null>(null);
@@ -150,7 +152,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.96-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Products</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t.errorLoadingProducts}</h3>
             <p className="text-gray-600">{error}</p>
           </div>
         </div>
@@ -165,7 +167,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-12 relative">
             <div className="relative group">
               <h1 className="text-center text-xl font-bold text-gray-900 tracking-wide mb-6 sm:mb-0">
-                Products
+                {t.products}
                 <span className="absolute bottom-4 sm:-bottom-2 left-1/2 sm:left-1/3 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
               {isAdmin && (
@@ -174,14 +176,14 @@ const ClientProductsPage = memo(function ClientProductsPage({
                     <IconButton
                       onClick={() => undefined}
                       icon={PlusIcon}
-                      tooltip="Create New Product"
+                      tooltip={t.createNewProduct}
                     />
                   </Link>
                   <Link href="/admin/products/">
                     <IconButton
                       onClick={() => undefined}
                       icon={PencilIcon}
-                      tooltip="Edit Products"
+                      tooltip={t.editProducts}
                     />
                   </Link>
                 </div>
@@ -200,7 +202,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
               </span>
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-3 py-2 text-base font-light border bg-white border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
@@ -222,7 +224,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
             ref={productsRef}
             className="text-center py-16 text-gray-500 max-w-7xl mx-auto"
           >
-            {searchQuery ? `No products found matching "${searchQuery}"` : 'No products available'}
+            {searchQuery ? `${t.noProductsFound} "${searchQuery}"` : t.noProductsAvailable}
           </div>
         ) : (
           <div
@@ -240,7 +242,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
                     <div className="w-full h-48 sm:h-52 flex-shrink-0 overflow-hidden">
                       <img
                         src={product.links_to_image}
-                        alt={product.product_name ?? 'Product image'}
+                        alt={product.product_name ?? t.productImage}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => handleImageError(e, product.links_to_image || undefined)}
                         loading="lazy"
@@ -249,11 +251,11 @@ const ClientProductsPage = memo(function ClientProductsPage({
                   )}
                   <div className="p-4 sm:p-6 flex flex-col flex-grow">
                     <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-sky-400 transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]">
-                      {product.product_name ?? 'Unnamed Product'}
+                      {product.product_name ?? t.unnamedProduct}
                     </h2>
                     <div className="mt-auto">
                       <div className="flex justify-between items-center mb-3">
-                        <span className="text-gray-500 text-sm sm:text-base">From</span>
+                        <span className="text-gray-500 text-sm sm:text-base">{t.from}</span>
                         <div className="font-bold text-base sm:text-lg text-gray-700">
                           <span>{product.currency_manual_symbol ?? ''}</span>
                           <span>{product.price_manual ?? ''}</span>
@@ -279,7 +281,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
               onClick={loadMoreItems}
               className="px-6 py-3 text-gray-600 font-medium hover:text-sky-400 hover:bg-sky-50 rounded-lg transition-all duration-200 border border-gray-200 hover:border-sky-200"
             >
-              Load more products...
+              {t.loadMoreProducts}
             </button>
           </div>
         )}

@@ -1,16 +1,19 @@
 'use client';
 
 import { memo } from 'react';
+import { useProductTranslations } from './useProductTranslations';
 
 interface ProgressBarProps {
   stage: number; // Current stage (1, 2, or 3)
 }
 
 const ProgressBar = memo(function ProgressBar({ stage }: ProgressBarProps) {
+  const { t } = useProductTranslations();
+  
   const stages = [
-    { id: 1, label: 'Basket' },
-    { id: 2, label: 'Checkout' },
-    { id: 3, label: 'Payment' },
+    { id: 1, label: t.basket },
+    { id: 2, label: t.checkout },
+    { id: 3, label: t.payment },
   ];
 
   return (

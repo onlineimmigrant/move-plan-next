@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Stripe, StripeElements } from '@stripe/stripe-js';
 import Button from '@/ui/Button';
+import { useProductTranslations } from './useProductTranslations';
 
 interface PaymentFormProps {
   onSuccess: (email?: string) => void; // Update to accept email parameter
@@ -36,6 +37,7 @@ export default function PaymentForm({
 }: PaymentFormProps) {
   const stripe = useStripe() as Stripe | null;
   const elements = useElements() as StripeElements | null;
+  const { t } = useProductTranslations();
   const [message, setMessage] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
@@ -76,7 +78,7 @@ export default function PaymentForm({
     setEmail(newEmail);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (newEmail && !emailRegex.test(newEmail)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError(t.pleaseEnterValidEmail);
     } else {
       setEmailError(null);
     }
@@ -84,7 +86,7 @@ export default function PaymentForm({
 
   const handlePromoCodeApply = async () => {
     if (!promoCode) {
-      setPromoError('Please enter a promo code');
+      setPromoError(t.pleaseEnterPromoCode);
       return;
     }
 
@@ -108,7 +110,7 @@ export default function PaymentForm({
       console.log('Promo code validation result:', result);
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to validate promo code');
+        throw new Error(result.error || t.failedToValidatePromo);
       }
 
       if (result.success) {
@@ -130,7 +132,7 @@ export default function PaymentForm({
       setLocalDiscountPercent(0);
       setPromoDiscount(0);
       setPromoCodeId(null);
-      setPromoError(err.message || 'Failed to apply promo code');
+      setPromoError(err.message || t.failedToApplyPromo);
       if (setDiscountedAmount) setDiscountedAmount(totalPrice);
       resetPaymentIntent();
     } finally {
@@ -142,7 +144,7 @@ export default function PaymentForm({
     event.preventDefault();
 
     if (!stripe || !elements) {
-      const errorMsg = 'Stripe has not been initialized';
+      const errorMsg = t.stripeNotInitialized;
       console.error(errorMsg);
       setMessage(errorMsg);
       onError(errorMsg);
@@ -150,7 +152,7 @@ export default function PaymentForm({
     }
 
     if (!isMountedRef.current) {
-      const errorMsg = 'Component is unmounted. Please try again.';
+      const errorMsg = t.componentUnmounted;
       console.error(errorMsg);
       setMessage(errorMsg);
       onError(errorMsg);
@@ -232,8 +234,8 @@ export default function PaymentForm({
           setMessage(errorMsg);
           onError(errorMsg);
         } else {
-          setMessage('An unexpected error occurred during payment.');
-          onError('An unexpected error occurred during payment.');
+          setMessage(t.unexpectedPaymentError);
+          onError(t.unexpectedPaymentError);
         }
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('Payment succeeded inline:', paymentIntent);
@@ -241,12 +243,12 @@ export default function PaymentForm({
         onSuccess(email);
       } else {
         console.log('Payment intent status:', paymentIntent?.status);
-        const errorMsg = 'Payment did not succeed. Status: ' + paymentIntent?.status;
+        const errorMsg = `${t.paymentDidNotSucceed} ${paymentIntent?.status}`;
         setMessage(errorMsg);
         onError(errorMsg);
       }
     } catch (err: any) {
-      const errorMsg = err.message || 'Payment failed unexpectedly';
+      const errorMsg = err.message || t.paymentFailedUnexpectedly;
       console.error('Payment error:', err);
       setMessage(errorMsg);
       onError(errorMsg);
@@ -295,7 +297,7 @@ export default function PaymentForm({
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
             className="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
-            placeholder="Enter promo code (e.g., WELCOME20)"
+            placeholder={t.enterPromoCode}
             disabled={promoLoading}
           />
           <button
@@ -306,7 +308,7 @@ export default function PaymentForm({
               promoLoading ? 'opacity-70 cursor-not-allowed' : ''
             }`}
           >
-            {promoLoading ? 'Applying...' : 'Apply'}
+            {promoLoading ? t.applying : t.apply}
           </button>
         </div>
         {promoError && (
@@ -335,7 +337,7 @@ export default function PaymentForm({
           ${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}
         `}
       >
-        {isLoading ? 'Processing...' : isApplyingPromo ? 'Applying Discount...' : 'Pay Now'}
+        {isLoading ? t.processing : isApplyingPromo ? t.applyingDiscount : t.payNow}
       </Button>
     </form>
   );

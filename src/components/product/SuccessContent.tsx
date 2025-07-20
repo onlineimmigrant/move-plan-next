@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ProgressBar from './ProgressBar';
+import { useProductTranslations } from './useProductTranslations';
 
 // Define type for PaymentIntent
 interface PaymentIntent {
@@ -29,9 +30,10 @@ interface StatusContent {
   icon: React.ReactElement;
 }
 
-const STATUS_CONTENT_MAP: Record<string, StatusContent> = {
+// Function to get status content map with translations
+const getStatusContentMap = (t: any): Record<string, StatusContent> => ({
   succeeded: {
-    text: 'Payment succeeded',
+    text: t.paymentSucceeded,
     iconColor: '#30B130',
     icon: (
       <svg width="16" height="14" viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -45,7 +47,7 @@ const STATUS_CONTENT_MAP: Record<string, StatusContent> = {
     ),
   },
   processing: {
-    text: 'Your payment is processing.',
+    text: t.paymentProcessing,
     iconColor: '#6D6E78',
     icon: (
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -69,7 +71,7 @@ const STATUS_CONTENT_MAP: Record<string, StatusContent> = {
     ),
   },
   requires_payment_method: {
-    text: 'Your payment was not successful, please try again.',
+    text: t.paymentRequiresAction,
     iconColor: '#DF1B41',
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -83,7 +85,7 @@ const STATUS_CONTENT_MAP: Record<string, StatusContent> = {
     ),
   },
   default: {
-    text: 'Something went wrong, please try again.',
+    text: t.paymentRequiresAction,
     iconColor: '#DF1B41',
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -96,9 +98,10 @@ const STATUS_CONTENT_MAP: Record<string, StatusContent> = {
       </svg>
     ),
   },
-};
+});
 
 export default function SuccessContent() {
+  const { t } = useProductTranslations();
   const searchParams = useSearchParams();
   const paymentIntentId = searchParams.get('payment_intent');
   const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null);
@@ -167,15 +170,16 @@ export default function SuccessContent() {
   }, [paymentIntentId]);
 
   const status = paymentIntent?.status || 'default';
+  const statusContentMap = getStatusContentMap(t);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center">
       <ProgressBar stage={3} />
       <div id="payment-status">
-        <div id="status-icon" style={{ backgroundColor: STATUS_CONTENT_MAP[status].iconColor }}>
-          {STATUS_CONTENT_MAP[status].icon}
+        <div id="status-icon" style={{ backgroundColor: statusContentMap[status].iconColor }}>
+          {statusContentMap[status].icon}
         </div>
-        <h2 id="status-text">{STATUS_CONTENT_MAP[status].text}</h2>
+        <h2 id="status-text">{statusContentMap[status].text}</h2>
         {error && <div className="mb-6 text-red-500 text-sm font-medium">{error}</div>}
         {userCreated && (
           <p className="text-teal-500 text-sm mb-6">A new user account has been created for you!</p>

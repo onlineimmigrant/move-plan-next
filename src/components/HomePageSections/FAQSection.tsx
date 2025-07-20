@@ -5,6 +5,7 @@ import parse from 'html-react-parser';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { FAQ } from '@/types/faq';
+import { useProductTranslations } from '../product/useProductTranslations';
 
 interface FAQSectionProps {
   slug?: string;
@@ -13,6 +14,8 @@ interface FAQSectionProps {
 }
 
 const FAQSection = ({ faqs, showTitle = true }: FAQSectionProps) => {
+  const { t } = useProductTranslations();
+  
   // Move useMemo to top level
   const groupedFaqs = useMemo(() => {
     if (!faqs || faqs.length === 0) {
@@ -47,10 +50,10 @@ const FAQSection = ({ faqs, showTitle = true }: FAQSectionProps) => {
         {showTitle && (
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent mb-4 tracking-tight">
-              Frequently Asked Questions
+              {t.frequentlyAskedQuestions}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Find answers to common questions about our services
+              {t.findAnswersToCommonQuestions}
             </p>
           </div>
         )}
@@ -60,7 +63,7 @@ const FAQSection = ({ faqs, showTitle = true }: FAQSectionProps) => {
               <h3 className="text-center text-lg font-bold text-gray-700">{section}</h3>
               <div className="divide-y divide-gray-100">
                 {groupedFaqs[section].map((item) => (
-                  <FAQItem key={item.id} item={item} />
+                  <FAQItem key={item.id} item={item} t={t} />
                 ))}
               </div>
             </div>
@@ -71,7 +74,7 @@ const FAQSection = ({ faqs, showTitle = true }: FAQSectionProps) => {
   );
 };
 
-const FAQItem = ({ item }: { item: FAQ }) => {
+const FAQItem = ({ item, t }: { item: FAQ; t: any }) => {
   const [parsedAnswer, setParsedAnswer] = useState<React.ReactNode | null>(null);
 
   useEffect(() => {
@@ -120,7 +123,7 @@ const FAQItem = ({ item }: { item: FAQ }) => {
             {open && (parsedAnswer || (
               <div className="flex items-center space-x-2 text-gray-500">
                 <div className="animate-spin w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full"></div>
-                <span>Loading...</span>
+                <span>{t.loadingEllipsis}</span>
               </div>
             ))}
           </DisclosurePanel>

@@ -7,6 +7,7 @@ import Button from '@/ui/Button';
 import Link from 'next/link';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import PricingPlanFeatures from './PricingPlanFeatures';
+import { useProductTranslations } from './useProductTranslations';
 
 // Define types for pricing plans and props
 interface Feature {
@@ -66,6 +67,8 @@ const CustomToast = memo(
     duration?: number;
     position?: string;
   }) => {
+    const { t } = useProductTranslations();
+    
     useEffect(() => {
       const timer = setTimeout(() => {
         onClose();
@@ -88,15 +91,15 @@ const CustomToast = memo(
             <button
               onClick={onRetry}
               className="text-sm underline hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-300"
-              aria-label="Retry adding to cart"
+              aria-label={t.retryAddingToCart}
             >
-              Retry
+              {t.retry}
             </button>
           )}
           <button
             onClick={onClose}
             className="text-teal-600 hover:text-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-300"
-            aria-label="Close notification"
+            aria-label={t.closeNotification}
           >
             <XMarkIcon className="ml-4 w-3 h-3" />
           </button>
@@ -123,6 +126,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   pricingPlans = [],
   amazonBooksUrl,
 }: ProductDetailPricingPlansProps) {
+  const { t } = useProductTranslations();
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
@@ -196,21 +200,21 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
     try {
       await addToBasket(selectedPlan);
       setIsAdded(true);
-      showToast('Added to cart!', 'success');
+      showToast(t.addedToCart, 'success');
       setTimeout(() => setIsAdded(false), 2000);
     } catch (error) {
       console.error('Error adding to basket:', error);
-      showToast('Failed to add to cart', 'error', () => handleAddToBasket());
+      showToast(t.failedToLoad, 'error', () => handleAddToBasket());
     } finally {
       setIsLoading(false);
     }
-  }, [selectedPlan, addToBasket]);
+  }, [selectedPlan, addToBasket, t]);
 
   const getStatus = useCallback((plan: PricingPlan | null) => {
-    if (!plan) return 'Out of Stock';
+    if (!plan) return t.outOfStock;
     const inv = Array.isArray(plan.inventory) ? plan.inventory[0] : plan.inventory;
-    return inv?.status || 'Out of Stock';
-  }, []);
+    return inv?.status || t.outOfStock;
+  }, [t]);
 
   const selectedPlanStatus = getStatus(selectedPlan).toLowerCase();
   const totalItems = isMounted
@@ -227,7 +231,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   );
 
   if (!pricingPlans || pricingPlans.length === 0) {
-    return <div className="text-gray-500 px-4 sm:px-8">No pricing plans available.</div>;
+    return <div className="text-gray-500 px-4 sm:px-8">{t.noPricingPlans}</div>;
   }
 
   return (
@@ -396,17 +400,17 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                     : 'bg-gray-200 text-gray-700 cursor-not-allowed'
                 }`}
               aria-disabled={selectedPlanStatus === 'out of stock' || isLoading}
-              aria-label={isLoading ? 'Adding to cart' : isAdded ? 'Added to cart' : 'Add to cart'}
+              aria-label={isLoading ? t.addingToCart : isAdded ? t.addedToCart : t.addToCart}
             >
               {isLoading ? (
-                <span>Loading...</span>
+                <span>{t.loading}</span>
               ) : (
                 <>
                   <ShoppingCartIcon
                     className="w-4 md:w-5 h-4 md:h-5 mr-1.5 md:mr-2 transition-transform duration-300 group-hover:scale-110"
                     aria-hidden="true"
                   />
-                  <span>{isAdded ? 'Added' : 'Add to Cart'}</span>
+                  <span>{isAdded ? t.added : t.addToCart}</span>
                 </>
               )}
             </Button>
@@ -418,9 +422,9 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                   <Button
                     variant="start"
                     className="bg-sky-700"
-                    aria-label="Proceed to checkout"
+                    aria-label={t.proceedToCheckout}
                   >
-                    <span>Proceed to Checkout</span>
+                    <span>{t.proceedToCheckout}</span>
                     <RightArrowDynamic />
                   </Button>
                 </Link>
@@ -436,10 +440,10 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
         <div className="mt-3 md:mt-4 px-4 sm:px-8">
           <a
             href={amazonBooksUrl}
-            title="Get it on Amazon Kindle"
+            title={t.getItOnAmazonKindle}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Buy on Amazon"
+            aria-label={t.buyOnAmazonAriaLabel}
           >
             <Button variant="start" className="flex items-center bg-[#FF9900] text-gray-900 hover:text-white">
               <svg
@@ -457,7 +461,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                   <path d="M15.93,17.09a.54.54,0,0,1-.63.06,6.55,6.55,0,0,1-1.54-1.79,5.31,5.31,0,0,1-4.42,1.95,3.8,3.8,0,0,1-4-4.17A4.55,4.55,0,0,1,8.19,8.76a18.39,18.39,0,0,1,5-.93V7.5a3.42,3.42,0,0,0-.33-2,1.79,1.79,0,0,0-1.5-.7A2,2,0,0,0,9.25,6.45a.6.6,0,0,1-.47.49l-2.6-.28a.47.47,0,0,1-.40-.56C6.38,3,9.23,2,11.78,2a6.1,6.1,0,0,1,4,1.33C17.11,4.55,17,6.18,17,8v4.17a3.6,3.6,0,0,0,1,2.48c.17.25.21.54,0,.71l-2.06,1.78h0m-2.7-6.53V10c-1.94,0-4,.39-4,2.67,0,1.16.61,1.95,1.63,1.95a2.19,2.19,0,0,0,1.86-1.22,5.32,5.32,0,0,0,.5-2.84m6.93,9A14.29,14.29,0,0,1,12.1,22a14.59,14.59,0,0,1-9.85-3.76c-.20-.18,0-.43.25-.29a19.68,19.68,0,0,0,9.83,2.61A19.69,19.69,0,0,0,19.84,19c.37-.16.66.24.32.51m.91-1c-.28-.36-1.85-.17-2.57-.08-.19,0-.22-.16,0-.30A3.92,3.92,0,0,1,22,17.79a3.86,3.86,0,0,1-1.24,3.32c-.18.16-.35.07-.26-.11C20.76,20.33,21.35,18.86,21.07,18.5Z"></path>
                 </g>
               </svg>
-              <span>Buy on Amazon</span>
+              <span>{t.buyOnAmazon}</span>
               <RightArrowDynamic />
             </Button>
           </a>

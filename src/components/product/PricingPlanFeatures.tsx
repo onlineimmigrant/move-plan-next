@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChevronDownIcon, ChevronDoubleUpIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect, useRef } from 'react';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
+import { useProductTranslations } from './useProductTranslations';
 
 interface Feature {
   id: string;
@@ -34,6 +35,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
   const [canBeScrollable, setCanBeScrollable] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { t } = useProductTranslations();
 
   // Check if the content is scrollable or can be scrollable when collapsed
   useEffect(() => {
@@ -86,15 +88,15 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
   if (!selectedPlan.features || selectedPlan.features.length === 0) {
     return (
       <div className="mt-6 px-4 sm:px-8">
-        <h2 className="text-base font-semibold text-gray-700 mb-4">Features Included</h2>
-        <p className="text-sm text-gray-600">No features listed for this plan.</p>
+        <h2 className="text-base font-semibold text-gray-700 mb-4">{t.featuresIncluded}</h2>
+        <p className="text-sm text-gray-600">{t.noFeaturesListed}</p>
       </div>
     );
   }
 
   return (
     <div className="mt-6 px-4 sm:px-8">
-      <h2 className="text-base font-semibold text-gray-700 mb-4">Features Included</h2>
+      <h2 className="text-base font-semibold text-gray-700 mb-4">{t.featuresIncluded}</h2>
       <div className="relative">
         <div
           ref={scrollContainerRef}
@@ -134,7 +136,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
               <button
                 onClick={collapseFeatures}
                 className="cursor-pointer p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
-                aria-label="Collapse features list"
+                aria-label={t.collapseFeaturesAriaLabel}
               >
                 <ChevronDoubleUpIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
               </button>
@@ -142,7 +144,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
               <button
                 onClick={toggleExpand}
                 className="cursor-pointer  group p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
-                aria-label="Expand features list"
+                aria-label={t.expandFeaturesAriaLabel}
               >
                 <ChevronDownIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
               </button>

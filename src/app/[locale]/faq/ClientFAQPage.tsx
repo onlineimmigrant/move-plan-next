@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import FAQSection from '../../../components/HomePageSections/FAQSection';
 import { FAQ } from '@/types/faq';
-import { useTranslations } from 'next-intl';
+import { useProductTranslations } from '../../../components/product/useProductTranslations';
 
 interface ClientFAQPageProps {
   initialFAQs: FAQ[];
@@ -14,7 +14,7 @@ interface ClientFAQPageProps {
 }
 
 export default function ClientFAQPage({ initialFAQs, hasMore, organizationId }: ClientFAQPageProps) {
-  const t = useTranslations();
+  const { t } = useProductTranslations();
   // Memoize normalizedFAQs
   const normalizedFAQs = useMemo(
     () =>
@@ -81,10 +81,10 @@ export default function ClientFAQPage({ initialFAQs, hasMore, organizationId }: 
             </svg>
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent mb-4">
-            {t('faq.title')}
+            Frequently Asked Questions
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            {t('faq.subtitle')}
+            Find answers to common questions about our services
           </p>
         </div>
 
@@ -96,7 +96,7 @@ export default function ClientFAQPage({ initialFAQs, hasMore, organizationId }: 
             </div>
             <input
               type="text"
-              placeholder={t('faq.searchPlaceholder')}
+              placeholder="Search frequently asked questions..."
               value={searchQuery}
               onChange={handleSearchChange}
               className="w-full pl-12 pr-4 py-4 text-base bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-300 placeholder:text-gray-400"
@@ -131,11 +131,11 @@ export default function ClientFAQPage({ initialFAQs, hasMore, organizationId }: 
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span className="relative">{t('faq.loadingMoreQuestions')}</span>
+                        <span className="relative">Loading more questions...</span>
                       </>
                     ) : (
                       <>
-                        <span className="relative">{t('faq.loadMoreQuestions')}</span>
+                        <span className="relative">Load More Questions</span>
                         <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                         </svg>
@@ -153,12 +153,12 @@ export default function ClientFAQPage({ initialFAQs, hasMore, organizationId }: 
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                {searchQuery ? t('faq.noQuestionsFound') : t('faq.noQuestionsAvailable')}
+                {searchQuery ? 'No Questions Found' : 'No Questions Available'}
               </h3>
               <p className="text-gray-600 max-w-md mx-auto">
                 {searchQuery 
-                  ? t('faq.tryAdjustingSearch')
-                  : t('faq.checkBackLater')
+                  ? 'Try adjusting your search terms or browse all questions.'
+                  : 'Please check back later for frequently asked questions.'
                 }
               </p>
               {searchQuery && (
@@ -166,7 +166,7 @@ export default function ClientFAQPage({ initialFAQs, hasMore, organizationId }: 
                   onClick={() => setSearchQuery('')}
                   className="mt-4 text-blue-600 hover:text-blue-700 font-medium transition-colors"
                 >
-                  {t('faq.clearSearchAndViewAll')}
+                  Clear search and view all questions
                 </button>
               )}
             </div>

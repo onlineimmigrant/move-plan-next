@@ -3,6 +3,7 @@
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, memo } from 'react';
+import { useProductTranslations } from './useProductTranslations';
 
 interface ProductHeaderProps {
   productSubType: { id: number; name: string } | null; // Updated to include id
@@ -10,6 +11,7 @@ interface ProductHeaderProps {
 }
 
 const ProductHeader = memo(function ProductHeader({ productSubType, productName }: ProductHeaderProps) {
+  const { t } = useProductTranslations();
   const [isFixed, setIsFixed] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -55,7 +57,7 @@ const ProductHeader = memo(function ProductHeader({ productSubType, productName 
           className="flex items-center transition-all duration-200 group font-medium text-xs text-sky-600 tracking-widest hover:text-sky-700 hover:underline mb-1"
         >
           <span className="transition-transform duration-200 group-hover:-translate-x-1">
-            {productSubType?.name || 'All Products'}
+            {productSubType?.name || t.allProducts}
           </span>
           <RightArrowDynamic />
         </Link>

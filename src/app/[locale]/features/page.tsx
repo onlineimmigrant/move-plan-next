@@ -7,6 +7,7 @@ import * as Icons from '@heroicons/react/24/outline';
 import { MagnifyingGlassIcon, ArrowRightIcon, BeakerIcon } from '@heroicons/react/24/outline';
 import { getOrganizationId } from '@/lib/supabase';
 import parse from 'html-react-parser';
+import { useProductTranslations } from '@/components/product/useProductTranslations';
 
 interface Feature {
   id: string;
@@ -25,18 +26,18 @@ interface Feature {
 }
 
 // Memoized Feature Card Component for better performance
-const FeatureCard = memo(({ feature }: { feature: Feature }) => {
+const FeatureCard = memo(({ feature, t }: { feature: Feature; t: any }) => {
   const IconComponent = useMemo(() => {
     return Icons[feature.feature_image as keyof typeof Icons] || BeakerIcon;
   }, [feature.feature_image]);
 
   const truncatedContent = useMemo(() => {
-    if (!feature.content) return 'No content available';
+    if (!feature.content) return t.t.noContentAvailable;
     
     const words = feature.content.split(' ');
     const truncated = words.slice(0, 12).join(' ') + (words.length > 12 ? '...' : '');
     return parse(truncated);
-  }, [feature.content]);
+  }, [feature.content, t.t.noContentAvailable]);
 
   return (
     <Link href={`/features/${feature.slug}`} className="group h-full">
@@ -102,6 +103,9 @@ export default function FeaturesPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [displayedCount, setDisplayedCount] = useState(20); // Limit to 20 initially
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Get translations
+  const t = useProductTranslations();
 
   // Constants for pagination
   const ITEMS_PER_PAGE = 20;
@@ -251,13 +255,13 @@ export default function FeaturesPage() {
             <div className="p-6 bg-gradient-to-br from-red-100 to-red-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center">
               <BeakerIcon className="w-12 h-12 text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Unable to Load Features</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">{t.t.unableToLoadFeatures}</h2>
             <p className="text-gray-600 mb-8">{error}</p>
             <button
               onClick={fetchFeatures}
               className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors duration-200"
             >
-              Try Again
+              {t.t.tryAgain}
             </button>
           </div>
         </div>
@@ -276,11 +280,11 @@ export default function FeaturesPage() {
                 <BeakerIcon className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Features</h1>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t.t.featuresHeading}</h1>
                 <p className="text-sm text-gray-600 mt-1">
                   {filteredFeatures.length === 0 
-                    ? 'No features available' 
-                    : `Showing ${displayedFeatures.length} of ${filteredFeatures.length} ${filteredFeatures.length === 1 ? 'feature' : 'features'}`
+                    ? t.t.noFeaturesAvailable
+                    : `${t.t.showingFeatures} ${displayedFeatures.length} ${t.t.of} ${filteredFeatures.length} ${t.t.features.toLowerCase()}`
                   }
                 </p>
               </div>
@@ -293,11 +297,11 @@ export default function FeaturesPage() {
               </div>
               <input
                 type="text"
-                placeholder="Search features..."
+                placeholder={t.t.searchFeatures}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="w-full pl-12 pr-4 py-3 text-sm bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 transition-all duration-300 placeholder:text-gray-400"
-                aria-label="Search features"
+                aria-label={t.t.searchFeatures}
               />
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-sky-500/5 to-cyan-500/5 pointer-events-none" />
             </div>
@@ -312,12 +316,12 @@ export default function FeaturesPage() {
               <BeakerIcon className="w-12 h-12 text-gray-500" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">
-              {searchQuery ? `No features found matching "${searchQuery}"` : 'No features available'}
+              {searchQuery ? `${t.t.noFeaturesFound} "${searchQuery}"` : t.t.noFeaturesAvailable}
             </h3>
             <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
               {searchQuery 
-                ? 'Try adjusting your search terms or browse all available features.'
-                : 'Features will appear here when they become available.'
+                ? t.t.tryAdjustingSearchFeatures
+                : t.t.featuresWillAppear
               }
             </p>
             {searchQuery && (
@@ -325,7 +329,7 @@ export default function FeaturesPage() {
                 onClick={() => setSearchQuery('')}
                 className="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors duration-200"
               >
-                Clear Search
+                {t.t.clearSearch}
               </button>
             )}
           </div>
@@ -334,7 +338,7 @@ export default function FeaturesPage() {
           <div className="space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {displayedFeatures.map((feature) => (
-                <FeatureCard key={feature.id} feature={feature} />
+                <FeatureCard key={feature.id} feature={feature} t={t} />
               ))}
             </div>
 
@@ -344,7 +348,7 @@ export default function FeaturesPage() {
                 <div className="rounded-2xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm bg-white/95">
                   <div className="flex flex-col items-center space-y-4">
                     <p className="text-sm text-gray-600">
-                      Showing {displayedFeatures.length} of {filteredFeatures.length} features
+                      {t.t.showingFeatures} {displayedFeatures.length} {t.t.of} {filteredFeatures.length} {t.t.features.toLowerCase()}
                     </p>
                     <button
                       onClick={handleLoadMore}
@@ -354,11 +358,11 @@ export default function FeaturesPage() {
                       {isLoadingMore ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Loading...
+                          {t.t.loading}
                         </>
                       ) : (
                         <>
-                          Load More Features
+                          {t.t.loadMoreFeatures}
                           <ArrowRightIcon className="ml-2 h-4 w-4" />
                         </>
                       )}
@@ -374,7 +378,7 @@ export default function FeaturesPage() {
                 <div className="rounded-2xl shadow-lg border border-gray-200 p-4 backdrop-blur-sm bg-white/95">
                   <p className="text-sm text-gray-600 flex items-center justify-center">
                     <BeakerIcon className="w-4 h-4 mr-2 text-sky-500" />
-                    All {filteredFeatures.length} features loaded
+                    {t.t.allFeaturesLoaded} ({filteredFeatures.length})
                   </p>
                 </div>
               </div>
