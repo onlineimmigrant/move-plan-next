@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { memo, useMemo } from 'react';
+import { useProductTranslations } from './useProductTranslations';
 
 type ProductSubType = {
   id: number;
@@ -20,6 +21,8 @@ const CategoriesBar = memo(function CategoriesBar({
   onCategoryChange,
   activeSubTypeName,
 }: CategoriesBarProps) {
+  const { t } = useProductTranslations();
+  
   // Memoized filtered sub-types for better performance
   const visibleSubTypes = useMemo(() => 
     productSubTypes.filter((subType) => subType.display_for_products),
@@ -40,7 +43,7 @@ const CategoriesBar = memo(function CategoriesBar({
           }
         `}
       >
-        All Categories
+        {t.allCategories}
       </Link>
 
       {/* Enhanced category links */}

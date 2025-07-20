@@ -8,8 +8,9 @@ import {
   Elements
 } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
+import { useProductTranslations } from './useProductTranslations';
 
-// Make sure to call loadStripe outside of a component’s render to avoid
+// Make sure to call loadStripe outside of a component's render to avoid
 // recreating the Stripe object on every render.
 // This is your test publishable API key.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -17,7 +18,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 function PaymentForm() {
   const stripe = useStripe();
   const elements = useElements();
-
+  const { t } = useProductTranslations();
 
   const [message, setMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +50,7 @@ function PaymentForm() {
     if (error.type === "card_error" || error.type === "validation_error") {
       setMessage(error.message);
     } else {
-      setMessage("An unexpected error occurred.");
+      setMessage(t.unexpectedError);
     }
 
     setIsLoading(false);
@@ -64,7 +65,7 @@ function PaymentForm() {
       <PaymentElement id="payment-element" options={paymentElementOptions} />
       <button disabled={isLoading || !stripe || !elements} id="submit">
         <span id="button-text">
-          {isLoading ? <div className="spinner" id="spinner"></div> : "Pay now"}
+          {isLoading ? <div className="spinner" id="spinner"></div> : t.payNow}
         </span>
       </button>
       {/* Show any error or success messages */}

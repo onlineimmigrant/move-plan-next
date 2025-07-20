@@ -12,6 +12,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import PaymentForm from '../../../components/product/PaymentForm';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
+import { useProductTranslations } from '../../../components/product/useProductTranslations';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const supabase = createClient(
@@ -99,6 +100,7 @@ PaymentFormWrapper.displayName = 'PaymentFormWrapper';
 export default function CheckoutPage() {
   const { basket, updateQuantity, removeFromBasket, clearBasket } = useBasket();
   const { session } = useAuth();
+  const { t } = useProductTranslations();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -393,8 +395,8 @@ export default function CheckoutPage() {
                   <HiShoppingBag className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Payment Successful</h1>
-                  <p className="text-sm text-gray-600 mt-1">Your transaction has been completed</p>
+                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t.paymentSuccessful}</h1>
+                  <p className="text-sm text-gray-600 mt-1">{t.transactionCompleted}</p>
                 </div>
               </div>
             </div>
@@ -404,17 +406,17 @@ export default function CheckoutPage() {
             <span className="text-4xl">🎉</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
-            Payment Successful!
+            {t.paymentSuccessful}
           </h1>
           <p className="text-gray-600 text-base mb-2 leading-relaxed">
-            Thank you for your purchase. Your payment has been successfully processed.
+            {t.thankYouForPurchase}
           </p>
           <p className="text-gray-600 text-base mb-8 font-semibold">
-            Amount Paid: {finalCurrency} {finalAmount.toFixed(2)}
+            {t.amountPaid} {finalCurrency} {finalAmount.toFixed(2)}
           </p>
           <Link href="/products">
             <span className="text-sky-600 hover:text-sky-700 text-sm font-semibold inline-block transition-colors duration-200 bg-sky-50 hover:bg-sky-100 px-6 py-3 rounded-full border border-sky-200 hover:border-sky-300">
-              Continue Shopping →
+              {t.continueShopping} →
             </span>
           </Link>
         </div>
@@ -438,21 +440,21 @@ export default function CheckoutPage() {
                   <HiShoppingBag className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Checkout</h1>
-                  <p className="text-sm text-gray-600 mt-1">Loading your order details</p>
+                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t.checkout}</h1>
+                  <p className="text-sm text-gray-600 mt-1">{t.loadingOrderDetails}</p>
                 </div>
               </div>
               <button
                 className="flex items-center space-x-2 px-4 py-2.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-xl transition-all duration-200 border border-sky-200 hover:border-sky-300"
                 disabled
               >
-                <span className="text-sm font-medium">Show Order Summary</span>
+                <span className="text-sm font-medium">{t.showOrderSummary}</span>
               </button>
             </div>
           </div>
           <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 p-6 mt-6 max-w-2xl mx-auto">
             <div className="flex justify-between items-center mb-0">
-              <h2 className="text-sm font-semibold text-gray-900">Loading...</h2>
+              <h2 className="text-sm font-semibold text-gray-900">{t.loadingEllipsis}</h2>
             </div>
           </div>
           <div className="mt-8">
@@ -474,8 +476,8 @@ export default function CheckoutPage() {
                 <HiShoppingBag className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Checkout</h1>
-                <p className="text-sm text-gray-600 mt-1">Review and complete your order</p>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t.checkout}</h1>
+                <p className="text-sm text-gray-600 mt-1">{t.reviewAndCompleteOrder}</p>
               </div>
             </div>
             <button
@@ -483,7 +485,7 @@ export default function CheckoutPage() {
               className="flex items-center space-x-2 px-4 py-2.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-xl transition-all duration-200 border border-sky-200 hover:border-sky-300"
             >
               <span className="text-sm font-medium">
-                {showOrderSummary ? 'Hide Order Summary' : 'Show Order Summary'}
+                {showOrderSummary ? t.hideOrderSummary : t.showOrderSummary}
               </span>
             </button>
           </div>
@@ -494,10 +496,10 @@ export default function CheckoutPage() {
           <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
             <HiShoppingBag className="w-12 h-12 text-gray-500" />
           </div>
-          <p className="text-gray-600 text-base mb-6">Your basket is empty.</p>
+          <p className="text-gray-600 text-base mb-6">{t.cartEmpty}</p>
           <Link href="/products">
             <span className="text-sky-600 hover:text-sky-700 text-sm font-semibold mt-4 inline-block transition-colors duration-200 bg-sky-50 hover:bg-sky-100 px-6 py-3 rounded-full border border-sky-200 hover:border-sky-300">
-              Continue Shopping →
+              {t.startShopping} →
             </span>
           </Link>
         </div>
@@ -505,7 +507,7 @@ export default function CheckoutPage() {
         <>
           {showOrderSummary && (
             <div className="space-y-4 mt-6 bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 p-6 max-w-2xl mx-auto">
-              <h3 className="font-bold text-gray-900 mb-4">Order Items</h3>
+              <h3 className="font-bold text-gray-900 mb-4">{t.orderItems}</h3>
               {basket
                 .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
                 .map((item) => (
@@ -523,7 +525,7 @@ export default function CheckoutPage() {
           <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 mt-6 mb-6 p-6 max-w-2xl mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-bold text-gray-900">
-                Order Total ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+                {t.orderTotal} ({totalItems} {totalItems === 1 ? t.item : t.items})
               </h2>
               <div className="flex items-center space-x-2">
                 <span className="text-base font-bold text-gray-900 uppercase">
@@ -538,7 +540,7 @@ export default function CheckoutPage() {
             {promoDiscount > 0 && (
               <div className="mb-4 p-3 bg-sky-50 rounded-xl border border-sky-200">
                 <p className="text-center font-semibold text-sky-700 text-sm">
-                  🎉 Discount Applied: {promoDiscount.toFixed(2)}% off
+                  🎉 {t.discountApplied}: {promoDiscount.toFixed(2)}% {t.off}
                 </p>
               </div>
             )}
@@ -552,7 +554,7 @@ export default function CheckoutPage() {
               {paymentIntentLoading ? (
                 <div className="text-center text-gray-600 py-8">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mb-4"></div>
-                  <p>Loading payment details...</p>
+                  <p>{t.loadingPaymentDetails}</p>
                 </div>
               ) : clientSecret ? (
                 <PaymentFormWrapper
@@ -572,7 +574,7 @@ export default function CheckoutPage() {
                 />
               ) : (
                 <div className="text-center text-red-500 py-8 bg-red-50 rounded-xl">
-                  <p className="font-semibold">⚠️ Failed to load payment details</p>
+                  <p className="font-semibold">⚠️ {t.failedToLoadPaymentDetails}</p>
                 </div>
               )}
             </div>

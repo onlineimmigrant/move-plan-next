@@ -8,6 +8,7 @@ import { HiTrash, HiShoppingBag, HiArrowRight } from 'react-icons/hi';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import Button from '@/ui/Button';
+import { useProductTranslations } from '../../../components/product/useProductTranslations';
 
 // Interface for a feature (aligned with BasketItemComponent)
 interface Feature {
@@ -26,6 +27,7 @@ interface FeatureData {
 
 export default function BasketPage() {
   const { basket, updateQuantity, removeFromBasket, clearBasket } = useBasket();
+  const { t } = useProductTranslations();
   const [isMounted, setIsMounted] = useState(false);
   const [featuresMap, setFeaturesMap] = useState<{ [key: number]: Feature[] }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -129,9 +131,9 @@ export default function BasketPage() {
                 <HiShoppingBag className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Shopping Basket</h1>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t.shoppingBasket}</h1>
                 <p className="text-sm text-gray-600 mt-1">
-                  {totalItems === 0 ? 'Your basket is empty' : `${totalItems} ${totalItems === 1 ? 'item' : 'items'} in basket`}
+                  {totalItems === 0 ? t.yourBasketIsEmpty : `${totalItems} ${t.itemsInBasket}`}
                 </p>
               </div>
             </div>
@@ -155,11 +157,11 @@ export default function BasketPage() {
             <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
               <HiShoppingBag className="w-12 h-12 text-gray-500" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Your basket is empty</h3>
-            <p className="text-gray-600 mb-10 max-w-md mx-auto leading-relaxed">Discover our amazing products and add them to your basket to get started with your purchase</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">{t.yourBasketIsEmpty}</h3>
+            <p className="text-gray-600 mb-10 max-w-md mx-auto leading-relaxed">{t.discoverAmazingProducts}</p>
             <Link href="/products">
               <Button variant="start" className="inline-flex items-center space-x-2 px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                <span>Start Shopping</span>
+                <span>{t.startShopping}</span>
                 <HiArrowRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -169,7 +171,7 @@ export default function BasketPage() {
             {/* Enhanced Basket Items */}
             <div className="lg:col-span-2 space-y-6">
               <div className="rounded-3xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm bg-white/95">
-                <h2 className="text-lg font-bold text-gray-900 mb-6 tracking-tight">Items in your basket</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-6 tracking-tight">{t.itemsInYourBasket}</h2>
                 <div className="space-y-4">
                   {basket
                     .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
@@ -190,7 +192,7 @@ export default function BasketPage() {
               <Link href="/products">
                 <div className="rounded-3xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer backdrop-blur-sm bg-white/95 hover:bg-sky-50/95 group">
                   <div className="flex items-center justify-between">
-                    <span className="text-sky-600 font-semibold group-hover:text-sky-700 transition-colors">Continue Shopping</span>
+                    <span className="text-sky-600 font-semibold group-hover:text-sky-700 transition-colors">{t.continueShopping}</span>
                     <HiArrowRight className="w-4 h-4 text-sky-600 group-hover:text-sky-700 group-hover:translate-x-1 transition-all duration-200" />
                   </div>
                 </div>
@@ -200,7 +202,7 @@ export default function BasketPage() {
             {/* Enhanced Order Summary */}
             <div className="lg:col-span-1">
               <div className="rounded-3xl shadow-lg border border-gray-200 p-6 sticky top-24 backdrop-blur-sm bg-white/95">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 tracking-tight">Order Summary</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-6 tracking-tight">{t.cartTotal}</h3>
                 
                 <div className="space-y-4 mb-8">
                   <div className="flex justify-between text-sm">
@@ -220,7 +222,7 @@ export default function BasketPage() {
 
                 <Link href="/checkout">
                   <Button variant="start" className="w-full justify-center whitespace-nowrap py-4 text-base font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                    <span>Proceed to Checkout</span>
+                    <span>{t.proceedToCheckout}</span>
                     <HiArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>

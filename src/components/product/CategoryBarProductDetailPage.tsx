@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
+import { useProductTranslations } from './useProductTranslations';
 
 // Define types for the product
 type Product = {
@@ -21,6 +22,7 @@ interface CategoryBarProductDetailPageProps {
 export default function CategoryBarProductDetailPage({
   currentProduct,
 }: CategoryBarProductDetailPageProps) {
+  const { t } = useProductTranslations();
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -88,7 +90,7 @@ export default function CategoryBarProductDetailPage({
             role="tooltip"
             className="absolute z-10 hidden group-hover:block group-focus-within:block top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-sm whitespace-nowrap transition-opacity duration-300 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
           >
-            View a similar product
+            {t.viewSimilarProduct}
             {/* Tooltip Arrow */}
             <span className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900" />
           </span>
