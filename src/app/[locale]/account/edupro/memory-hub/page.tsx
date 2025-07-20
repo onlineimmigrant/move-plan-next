@@ -12,6 +12,7 @@ import HelpModal from '@/components/ai/HelpModal';
 import { Flashcard, PlanFlashcard } from '@/lib/types';
 import { PlannerContext } from '@/lib/context';
 import ChatWidget from '@/components/ChatWidget';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +20,7 @@ const supabase = createClient(
 );
 
 export default function MemoryHub() {
+  const { t } = useAccountTranslations();
   const [userId, setUserId] = useState<string | null>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

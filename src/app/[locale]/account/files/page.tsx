@@ -8,6 +8,7 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } fro
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import Button from '@/ui/Button';
 import Link from 'next/link';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,6 +26,7 @@ type SortKey = 'filename' | 'format' | 'created_at';
 type SortOrder = 'asc' | 'desc';
 
 export default function FilesPage() {
+  const { t } = useAccountTranslations();
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);

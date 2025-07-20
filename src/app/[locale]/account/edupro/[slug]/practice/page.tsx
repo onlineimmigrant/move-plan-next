@@ -12,6 +12,7 @@ import Toast from '@/components/Toast';
 import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import { useCourseAndTopics } from '@/lib/hooks/useCourseAndTopics';
 import { useAuth } from '@/context/AuthContext';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 // Initialize Supabase client
 const supabase = createClient(

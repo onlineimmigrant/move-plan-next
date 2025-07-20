@@ -516,7 +516,7 @@ export default function AISettings() {
   return (
     <div className="grid sm:grid-cols-5 mx-auto p-4 rounded-lg min-h-screen gap-4">
       <div className="flex justify-center sm:justify-start">
-        <Tooltip content="Account">
+        <Tooltip content={t.account}>
           <Link href="/account">
             <button className="cursor-pointer  text-sky-600 p-2 rounded-full hover:bg-gray-100 transition-colors mt-16">
               <ArrowLeftIcon className="h-5 w-5" />
@@ -527,9 +527,9 @@ export default function AISettings() {
       </div>
       <div className="sm:col-span-3">
         <div className="mt-8 flex flex-col items-center">
-          <Tooltip content="Settings" variant='bottom'>
+          <Tooltip content={t.aiTitle} variant='bottom'>
             <h1 className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
-              AI
+              {t.ai}
               <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
             </h1>
           </Tooltip>
@@ -541,7 +541,7 @@ export default function AISettings() {
           {({ open }: { open: boolean }) => (
             <div>
               <DisclosureButton>
-                            <span>Add Custom AI Model</span>
+                            <span>{t.addCustomModel}</span>
                 <span className="ml-2 text-sky-300 font-bold">{open ? '−' : '+'}</span>
               </DisclosureButton>
               <Transition
@@ -567,7 +567,7 @@ export default function AISettings() {
                           setModelQuery(e.target.value);
                           setNewModel({ ...newModel, name: e.target.value });
                         }}
-                        placeholder="Model Name (e.g., grok-3)"
+                        placeholder={t.modelName + " (e.g., grok-3)"}
                         displayValue={(value: string) => value}
                       />
                       <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
@@ -597,7 +597,7 @@ export default function AISettings() {
                     type="password"
                     value={newModel.api_key}
                     onChange={(e) => setNewModel({ ...newModel, api_key: e.target.value })}
-                    placeholder="API Key"
+                    placeholder={t.apiKey}
                     className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 mb-2"
                     autoComplete="new-password"
                   />
@@ -615,7 +615,7 @@ export default function AISettings() {
                           setEndpointQuery(e.target.value);
                           setNewModel({ ...newModel, endpoint: e.target.value });
                         }}
-                        placeholder="API Endpoint (e.g., https://api.x.ai/v1/chat/completions)"
+                        placeholder={t.apiEndpoint + " (e.g., https://api.x.ai/v1/chat/completions)"}
                         displayValue={(value: string) => value}
                       />
                       <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
@@ -645,11 +645,11 @@ export default function AISettings() {
                     type="number"
                     value={newModel.max_tokens}
                     onChange={(e) => setNewModel({ ...newModel, max_tokens: parseInt(e.target.value) || 200 })}
-                    placeholder="Max Tokens (default: 200)"
+                    placeholder={t.maxTokens + " (default: 200)"}
                     className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 mb-2"
                     autoComplete="off"
                   />
-                  <Tooltip content="Add Model">
+                  <Tooltip content={t.addModel}>
                     <button
                       onClick={addUserModel}
                       disabled={loading || !newModel.name || !newModel.api_key || !newModel.endpoint}
@@ -676,7 +676,7 @@ export default function AISettings() {
           <Disclosure defaultOpen>
             {({ open }: { open: boolean }) => (
               <div>
-                <DisclosureButton>     <span>Available Models</span>
+                <DisclosureButton>     <span>{t.availableModels}</span>
                   <span className="ml-2 text-sky-300 font-bold">{open ? '−' : '+'}</span>
                 </DisclosureButton>
                 <Transition
@@ -690,10 +690,10 @@ export default function AISettings() {
                   <Disclosure.Panel className="mt-2 border border-gray-200 rounded-xl py-4 px-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <h3 className="text-sm font-medium text-gray-800 mb-1">Default</h3>
+                        <h3 className="text-sm font-medium text-gray-800 mb-1">{t.defaultModels}</h3>
                         <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
                           {defaultModels.length === 0 ? (
-                            <li className="py-2 px-4 text-gray-700">No default models available.</li>
+                            <li className="py-2 px-4 text-gray-700">{t.noDefaultModels}</li>
                           ) : (
                             defaultModels.map((model) => (
                               <li
@@ -713,7 +713,7 @@ export default function AISettings() {
                                   {model.name} <span className='sm:ml-4 text-xs font-thin'>{model.user_role_to_access === "admin" ? 'admin' : ''}</span>
                                 </span>
                                 <Tooltip
-                                  content={selectedModel?.id === model.id && selectedModel.type === 'default' ? 'Selected' : 'Select'}
+                                  content={selectedModel?.id === model.id && selectedModel.type === 'default' ? t.selectedModel : t.selectThisModel}
                                 >
                                   <button
                                     className={`p-2 rounded-full ${
@@ -752,10 +752,10 @@ export default function AISettings() {
                         </ul>
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-800 mb-1">Custom</h3>
+                        <h3 className="text-sm font-medium text-gray-800 mb-1">{t.customModels}</h3>
                         <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
                           {userModels.length === 0 ? (
-                            <li className="py-2 px-4 text-gray-700">No user models available.</li>
+                            <li className="py-2 px-4 text-gray-700">{t.noUserModels}</li>
                           ) : (
                             userModels.map((model) => (
                               <li
@@ -764,7 +764,7 @@ export default function AISettings() {
                               >
                                 <span className="flex-grow text-xs sm:text-sm">{model.name}</span>
                                 <div className="flex items-center space-x-2">
-                                  <Tooltip content="Remove Model">
+                                  <Tooltip content={t.removeModel}>
                                     <button
                                       onClick={() => deleteUserModel(model.id)}
                                       className="p-2 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
@@ -774,7 +774,7 @@ export default function AISettings() {
                                     </button>
                                   </Tooltip>
                                   <Tooltip
-                                    content={selectedModel?.id === model.id && selectedModel.type === 'user' ? 'Selected' : 'Select'}
+                                    content={selectedModel?.id === model.id && selectedModel.type === 'user' ? t.selectedModel : t.selectThisModel}
                                   >
                                     <button
                                       onClick={() => selectModel(model.id, 'user')}

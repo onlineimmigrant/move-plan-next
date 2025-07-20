@@ -270,10 +270,10 @@ export default function PaymentsPage() {
   const handleSync = async () => {
     try {
       await syncAndFetchTransactions();
-      setToast({ message: 'Transactions synced successfully', type: 'success' });
+      setToast({ message: t.transactionsSyncedSuccessfully, type: 'success' });
       setCurrentPage(1); // Reset to first page after sync
     } catch (error) {
-      setToast({ message: (error as Error).message || 'Failed to sync transactions', type: 'error' });
+      setToast({ message: (error as Error).message || t.failedToSyncTransactions, type: 'error' });
     }
   };
 
@@ -358,7 +358,7 @@ export default function PaymentsPage() {
                 className="mt-4 bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 rounded-md px-4"
                 aria-label="Retry syncing transactions"
               >
-                Retry
+                {t.retry}
               </Button>
             )}
           </div>
@@ -372,37 +372,37 @@ export default function PaymentsPage() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 z-20 bg-gray-50"
                     >
-                      Transaction Date
+                      {t.transactionDate}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Amount
+                      {t.amount}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Method
+                      {t.method}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Status
+                      {t.status}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Refunded Date
+                      {t.refundedDate}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Purchased Items
+                      {t.purchasedItems}
                     </th>
                   </tr>
                 </thead>
@@ -458,7 +458,7 @@ export default function PaymentsPage() {
             {/* Pagination Controls */}
             <div className="mt-6 flex justify-between items-center">
               <span className="text-sm text-gray-600">
-                {totalCount} {totalCount === 1 ? 'transaction' : 'transactions'}
+                {totalCount} {totalCount === 1 ? t.transaction : t.transactionPlural}
               </span>
               <div className="flex items-center space-x-2">
                 <Button
@@ -471,10 +471,10 @@ export default function PaymentsPage() {
                   } focus:ring-sky-500 rounded-md px-4`}
                   aria-label="Previous page"
                 >
-                  Previous
+                  {t.previous}
                 </Button>
                 <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
+                  {t.pageOf.replace('{current}', currentPage.toString()).replace('{total}', totalPages.toString())}
                 </span>
                 <Button
                   onClick={() => handlePageChange(currentPage + 1)}
@@ -486,7 +486,7 @@ export default function PaymentsPage() {
                   } focus:ring-sky-500 rounded-md px-4`}
                   aria-label="Next page"
                 >
-                  Next
+                  {t.next}
                 </Button>
               </div>
             </div>
@@ -522,7 +522,7 @@ export default function PaymentsPage() {
                 className="bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500 rounded-md px-4"
                 aria-label="Sync transactions"
               >
-                Sync Transactions
+                {t.syncTransactions}
               </Button>
             </div>
           </div>

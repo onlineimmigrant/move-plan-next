@@ -186,7 +186,7 @@ export default function ReceiptsPage() {
       );
     } catch (error) {
       console.error('Error parsing items from metadata:', error);
-      return 'No items found';
+      return t.noItemsFound;
     }
   };
 
@@ -206,10 +206,10 @@ export default function ReceiptsPage() {
   const handleRefresh = async () => {
     try {
       await fetchTransactions();
-      setToast({ message: 'Receipts refreshed successfully', type: 'success' });
+      setToast({ message: t.receiptsRefreshedSuccessfully, type: 'success' });
       setCurrentPage(1);
     } catch (error) {
-      setToast({ message: (error as Error).message || 'Failed to refresh receipts', type: 'error' });
+      setToast({ message: (error as Error).message || t.failedToRefreshReceipts, type: 'error' });
     }
   };
 
@@ -240,7 +240,7 @@ export default function ReceiptsPage() {
         </div>
 
         <div className="mt-6 flex justify-between items-center">
-          <h2 className="text-lg font-medium text-gray-900">Receipts</h2>
+          <h2 className="text-lg font-medium text-gray-900">{t.receiptsTitle}</h2>
         </div>
 
         {/* Receipts Table */}
@@ -254,7 +254,7 @@ export default function ReceiptsPage() {
                 className="mt-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-md px-4"
                 aria-label="Retry fetching receipts"
               >
-                Retry
+                {t.retry}
               </Button>
             )}
           </div>
@@ -268,31 +268,31 @@ export default function ReceiptsPage() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 z-20 bg-gray-50"
                     >
-                      Transaction Date
+                      {t.transactionDate}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Amount
+                      {t.amount}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Method
+                      {t.method}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Purchased Items
+                      {t.purchasedItems}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Action
+                      {t.action}
                     </th>
                   </tr>
                 </thead>
@@ -321,7 +321,7 @@ export default function ReceiptsPage() {
                           className="text-sky-600 hover:text-sky-800 underline"
                           aria-label={`View receipt for transaction ${transaction.stripe_transaction_id}`}
                         >
-                          View Receipt
+                          {t.viewReceipt}
                         </button>
                       </td>
                     </tr>
@@ -333,7 +333,7 @@ export default function ReceiptsPage() {
             {/* Pagination Controls */}
             <div className="mt-6 flex justify-between items-center">
               <span className="text-sm text-gray-600">
-                {totalCount} {totalCount === 1 ? 'receipt' : 'receipts'}
+                {totalCount} {totalCount === 1 ? t.receipt : t.receiptPlural}
               </span>
               <div className="flex items-center space-x-2">
                 <Button
@@ -346,10 +346,10 @@ export default function ReceiptsPage() {
                   } focus:ring-blue-500 rounded-md px-4`}
                   aria-label="Previous page"
                 >
-                  Previous
+                  {t.previous}
                 </Button>
                 <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
+                  {t.pageOf.replace('{current}', currentPage.toString()).replace('{total}', totalPages.toString())}
                 </span>
                 <Button
                   onClick={() => handlePageChange(currentPage + 1)}
@@ -361,7 +361,7 @@ export default function ReceiptsPage() {
                   } focus:ring-blue-500 rounded-md px-4`}
                   aria-label="Next page"
                 >
-                  Next
+                  {t.next}
                 </Button>
               </div>
             </div>
@@ -391,7 +391,7 @@ export default function ReceiptsPage() {
                 className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 rounded-md px-4"
                 aria-label="Refresh receipts"
               >
-                Refresh Receipts
+                {t.refreshReceipts}
               </Button>
             </div>
           </div>

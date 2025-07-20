@@ -7,6 +7,7 @@ import Button from '@/ui/Button';
 import Toast from '@/components/Toast';
 import { Menu, X, User, Users } from 'lucide-react';
 import AccountTab from '@/components/AccountTab';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 interface TicketResponse {
   id: string;
@@ -39,6 +40,7 @@ interface Avatar {
 const statuses = ['in progress', 'open', 'closed'];
 
 export default function CustomerTicketsPage() {
+  const { t } = useAccountTranslations();
   const { settings } = useSettings();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
