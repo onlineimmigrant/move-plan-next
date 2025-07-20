@@ -55,7 +55,7 @@ export default function LanguageSwitcher() {
       <select 
         value={currentLocale}
         onChange={(e) => handleLanguageChange(e.target.value as Locale)}
-        className="bg-neutral-800 border border-neutral-600 rounded-md px-3 py-1 text-xs text-neutral-300 hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400 focus:ring-offset-neutral-900"
+        className="bg-gray-700 border border-neutral-600 rounded-md px-3 py-1 text-xs text-neutral-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400 focus:ring-offset-neutral-900"
         aria-label="Select language"
       >
         {supportedLocales.map((locale: string) => (
