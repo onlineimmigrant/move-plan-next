@@ -9,6 +9,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -19,6 +20,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { settings } = useSettings();
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+
+  const t = useAuthTranslations();
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -53,9 +56,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <div className="flex justify-end items-center mb-4">
                   <Dialog.Title
                     as="h2"
-                    className="sr-only text-2xl font-extrabold text-gray-800 bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
+                    className="sr-only text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
                   >
-                    {settings?.site || 'Login'}
+                    {settings?.site || t.loginButton}
                   </Dialog.Title>
                   <button
                     onClick={onClose}
@@ -83,7 +86,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                      {settings.image? (
                        <Image
                          src={settings.image}
-                         alt="Logo"
+                         alt={t.logo}
                          width={40}
                          height={40}
                          className="h-8 w-auto"

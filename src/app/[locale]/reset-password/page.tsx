@@ -8,6 +8,7 @@ import { useSettings } from '@/context/SettingsContext';
 import Button from '@/ui/Button';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState<string>('');
@@ -19,6 +20,8 @@ export default function ResetPasswordPage() {
   const { setSession } = useAuth();
   const { settings } = useSettings();
   const router = useRouter();
+
+  const t = useAuthTranslations();
 
   // Extract token from URL query parameters
   useEffect(() => {
@@ -63,19 +66,19 @@ export default function ResetPasswordPage() {
 
     // Validate inputs
     if (!newPassword || !confirmPassword) {
-      setError('Please enter and confirm your new password.');
+      setError(t.fillAllFields);
       setIsLoading(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t.passwordsDoNotMatch);
       setIsLoading(false);
       return;
     }
 
     if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError(t.passwordTooShort);
       setIsLoading(false);
       return;
     }
@@ -101,11 +104,11 @@ export default function ResetPasswordPage() {
         throw new Error(result.error || 'Failed to reset password.');
       }
 
-      setSuccess('Password reset successfully. Redirecting to login...');
+      setSuccess(`${t.registrationSuccessful} ${t.redirectingToLogin}`);
       setTimeout(() => router.push('/login'), 2000);
     } catch (err: any) {
       console.error('Password reset failed:', err);
-      setError(err.message || 'Failed to reset password. Please request a new link.');
+      setError(err.message || t.serverError);
     } finally {
       setIsLoading(false);
     }
@@ -117,10 +120,10 @@ export default function ResetPasswordPage() {
       <div className="hidden md:flex w-1/2 bg-gradient-to-b from-sky-400 to-sky-700 items-center justify-center">
         <div className="text-white text-center">
           <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
-            Welcome <br />to {settings?.site || ''}
+            {t.welcomeTo(settings?.site || '')}
           </h1>
           <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
-            Secure your account with a new password.
+            {t.resetPasswordSubtitle}
           </p>
         </div>
       </div>
@@ -132,7 +135,7 @@ export default function ResetPasswordPage() {
             {settings.image ? (
               <Image
                 src={settings.image}
-                alt="Logo"
+                alt={t.logo}
                 width={60}
                 height={60}
                 className="h-8 w-auto"
@@ -145,7 +148,7 @@ export default function ResetPasswordPage() {
         </Link>
         <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
           <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold">
-            Reset Password
+            {t.resetPasswordTitle}
           </h1>
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -155,7 +158,7 @@ export default function ResetPasswordPage() {
             <div className="space-y-4">
               <div className="relative">
                 <label htmlFor="new-password" className="block text-sm font-medium text-gray-700">
-                  New Password
+                  {t.password}
                 </label>
                 <input
                   id="new-password"
@@ -169,14 +172,14 @@ export default function ResetPasswordPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-8 text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? t.hidePassword : t.showPassword}
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? t.hide : t.show}
                 </button>
               </div>
               <div>
                 <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
-                  Confirm Password
+                  {t.confirmPassword}
                 </label>
                 <input
                   id="confirm-password"
@@ -191,7 +194,7 @@ export default function ResetPasswordPage() {
 
             <div className="mt-16 space-y-4">
               <Button variant="start" type="submit" disabled={isLoading}>
-                {isLoading ? 'Resetting...' : 'Reset Password'}
+                {isLoading ? t.resetPasswordLoading : t.resetPasswordButton}
               </Button>
               <Button
                 variant="start"
@@ -199,7 +202,7 @@ export default function ResetPasswordPage() {
                 onClick={() => router.push('/login')}
                 className="bg-yellow-200 text-gray-400"
               >
-                Back to Login
+                {t.backToLogin}
               </Button>
             </div>
           </form>
