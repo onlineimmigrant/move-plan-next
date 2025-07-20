@@ -21,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import ChatWidget from '@/components/ChatWidget';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 export default function AccountPage() {
   const { session, isAdmin, fullName, isLoading, error } = useAuth();
@@ -28,6 +29,7 @@ export default function AccountPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
   const pathname = usePathname();
+  const { t } = useAccountTranslations();
 
   const combinedLoading = isLoading || studentLoading;
 
@@ -54,7 +56,7 @@ export default function AccountPage() {
   if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-600 font-medium">Please log in to access your account.</p>
+        <p className="text-red-600 font-medium">{t.pleaseLogin}</p>
       </div>
     );
   }
@@ -64,56 +66,56 @@ export default function AccountPage() {
     ...(isStudent
       ? [
           {
-            label: 'Student',
+            label: t.student,
             icon: <AcademicCapIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
             href: '/account/edupro',
-            tooltip: 'Learning Platform',
+            tooltip: t.learningPlatform,
           },
         ]
       : []),
     {
-      label: 'Profile',
+      label: t.profile,
       icon: <UserIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/profile',
-      tooltip: 'Personal Info',
+      tooltip: t.personalInfo,
     },
         {
-      label: 'AI',
+      label: t.ai,
       icon: <RocketLaunchIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/ai',
-      tooltip: 'Define your AI Model',
+      tooltip: t.defineAiModel,
     },
     {
-      label: 'Purchases',
+      label: t.purchases,
       icon: <ShoppingBagIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/purchases',
-      tooltip: 'List',
+      tooltip: t.list,
     },
     {
-      label: 'Payments',
+      label: t.payments,
       icon: <CreditCardIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/payments',
-      tooltip: 'List',
+      tooltip: t.list,
     },
     {
-      label: 'Billing',
+      label: t.billing,
       icon: <DocumentTextIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/payments/billing',
-      tooltip: 'Billing Account Management',
+      tooltip: t.billingAccountManagement,
     },
     {
-      label: 'Receipts',
+      label: t.receipts,
       icon: <ReceiptPercentIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
       href: '/account/payments/receipts',
-      tooltip: 'List',
+      tooltip: t.list,
     },
         ...(isAdmin
       ? [
           {
-            label: 'Admin',
+            label: t.admin,
             icon: <ArrowsRightLeftIcon className="h-10 w-10 text-sky-600 group-hover:text-sky-600 transition-colors" />,
             href: '/admin',
-            tooltip: 'Dashboard',
+            tooltip: t.dashboard,
           },
         ]
       : []),
@@ -132,7 +134,7 @@ export default function AccountPage() {
         )}
         <Link href="/account">
           <h1 className="mt-16 sm:mt-18 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
-            Account
+            {t.account}
             <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
           </h1>
         </Link>
@@ -165,8 +167,8 @@ export default function AccountPage() {
        {session && <ChatWidget />}
         {pathname === '/account' && (
           <div className="mt-24 sm:mt-32 text-gray-600 text-sm text-center">
-            <h2 className="font-semibold text-gray-800">Hello, {fullName || 'User'}!</h2>
-            Select a card to view your account details.
+            <h2 className="font-semibold text-gray-800">{t.welcomeUser(fullName || t.user)}</h2>
+            {t.selectCard}
           </div>
         )}
       </div>

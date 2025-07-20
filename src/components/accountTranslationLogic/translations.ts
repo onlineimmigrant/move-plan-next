@@ -1,0 +1,1282 @@
+export const ACCOUNT_TRANSLATIONS = {
+  en: {
+    // Main Account Page
+    account: 'Account',
+    hello: 'Hello',
+    user: 'User',
+    selectCard: 'Select a card to view your account details.',
+    pleaseLogin: 'Please log in to access your account.',
+    
+    // Navigation Items
+    profile: 'Profile',
+    student: 'Student',
+    ai: 'AI',
+    purchases: 'Purchases',
+    payments: 'Payments',
+    billing: 'Billing',
+    receipts: 'Receipts',
+    admin: 'Admin',
+    
+    // Tooltips
+    personalInfo: 'Personal Info',
+    learningPlatform: 'Learning Platform',
+    defineAiModel: 'Define your AI Model',
+    list: 'List',
+    billingAccountManagement: 'Billing Account Management',
+    dashboard: 'Dashboard',
+    
+    // Profile Page
+    profileTitle: 'Profile Information',
+    editProfile: 'Edit Profile',
+    saveChanges: 'Save Changes',
+    cancel: 'Cancel',
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    email: 'Email',
+    username: 'Username',
+    fullName: 'Full Name',
+    phoneNumber: 'Phone Number',
+    dateOfBirth: 'Date of Birth',
+    address: 'Address',
+    city: 'City',
+    country: 'Country',
+    postalCode: 'Postal Code',
+    biography: 'Biography',
+    website: 'Website',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'AI Configuration',
+    aiModel: 'AI Model',
+    selectModel: 'Select your preferred AI model',
+    temperature: 'Temperature',
+    maxTokens: 'Max Tokens',
+    systemPrompt: 'System Prompt',
+    customizeAi: 'Customize your AI assistant',
+    
+    // Purchases Page
+    purchasesTitle: 'Purchase History',
+    orderNumber: 'Order #',
+    date: 'Date',
+    items: 'Items',
+    total: 'Total',
+    status: 'Status',
+    noPurchases: 'No purchases found',
+    viewDetails: 'View Details',
+    downloadReceipt: 'Download Receipt',
+    
+    // Payments Page
+    paymentsTitle: 'Payment Methods',
+    addPaymentMethod: 'Add Payment Method',
+    creditCard: 'Credit Card',
+    paypal: 'PayPal',
+    bankTransfer: 'Bank Transfer',
+    cardNumber: 'Card Number',
+    expiryDate: 'Expiry Date',
+    cvv: 'CVV',
+    cardholderName: 'Cardholder Name',
+    setAsDefault: 'Set as default',
+    removeCard: 'Remove Card',
+    
+    // Billing Page
+    billingTitle: 'Billing Information',
+    billingAddress: 'Billing Address',
+    invoices: 'Invoices',
+    nextBilling: 'Next Billing Date',
+    subscription: 'Subscription',
+    plan: 'Plan',
+    renewalDate: 'Renewal Date',
+    changeplan: 'Change Plan',
+    cancelSubscription: 'Cancel Subscription',
+    
+    // Receipts Page
+    receiptsTitle: 'Receipts & Invoices',
+    downloadAll: 'Download All',
+    filterByDate: 'Filter by Date',
+    receiptNumber: 'Receipt #',
+    amount: 'Amount',
+    download: 'Download',
+    
+    // Common Actions
+    edit: 'Edit',
+    save: 'Save',
+    delete: 'Delete',
+    update: 'Update',
+    confirm: 'Confirm',
+    loading: 'Loading...',
+    success: 'Success',
+    error: 'Error',
+    
+    // Status Messages
+    profileUpdated: 'Profile updated successfully',
+    paymentAdded: 'Payment method added successfully',
+    paymentRemoved: 'Payment method removed successfully',
+    subscriptionCancelled: 'Subscription cancelled successfully',
+    settingsSaved: 'Settings saved successfully',
+    
+    // Error Messages
+    requiredField: 'This field is required',
+    invalidEmail: 'Please enter a valid email address',
+    invalidPhone: 'Please enter a valid phone number',
+    updateFailed: 'Update failed. Please try again.',
+    deleteFailed: 'Delete failed. Please try again.',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `Hello, ${name}!`,
+    receiptFor: (orderNumber: string) => `Receipt for Order ${orderNumber}`,
+    totalAmount: (amount: string) => `Total: ${amount}`,
+  },
+  es: {
+    // Main Account Page
+    account: 'Cuenta',
+    hello: 'Hola',
+    user: 'Usuario',
+    selectCard: 'Selecciona una tarjeta para ver los detalles de tu cuenta.',
+    pleaseLogin: 'Por favor, inicia sesión para acceder a tu cuenta.',
+    
+    // Navigation Items
+    profile: 'Perfil',
+    student: 'Estudiante',
+    ai: 'IA',
+    purchases: 'Compras',
+    payments: 'Pagos',
+    billing: 'Facturación',
+    receipts: 'Recibos',
+    admin: 'Admin',
+    
+    // Tooltips
+    personalInfo: 'Información Personal',
+    learningPlatform: 'Plataforma de Aprendizaje',
+    defineAiModel: 'Define tu Modelo de IA',
+    list: 'Lista',
+    billingAccountManagement: 'Gestión de Cuenta de Facturación',
+    dashboard: 'Panel de Control',
+    
+    // Profile Page
+    profileTitle: 'Información del Perfil',
+    editProfile: 'Editar Perfil',
+    saveChanges: 'Guardar Cambios',
+    cancel: 'Cancelar',
+    firstName: 'Nombre',
+    lastName: 'Apellido',
+    email: 'Correo Electrónico',
+    username: 'Nombre de Usuario',
+    fullName: 'Nombre Completo',
+    phoneNumber: 'Número de Teléfono',
+    dateOfBirth: 'Fecha de Nacimiento',
+    address: 'Dirección',
+    city: 'Ciudad',
+    country: 'País',
+    postalCode: 'Código Postal',
+    biography: 'Biografía',
+    website: 'Sitio Web',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'Configuración de IA',
+    aiModel: 'Modelo de IA',
+    selectModel: 'Selecciona tu modelo de IA preferido',
+    temperature: 'Temperatura',
+    maxTokens: 'Tokens Máximos',
+    systemPrompt: 'Prompt del Sistema',
+    customizeAi: 'Personaliza tu asistente de IA',
+    
+    // Purchases Page
+    purchasesTitle: 'Historial de Compras',
+    orderNumber: 'Pedido #',
+    date: 'Fecha',
+    items: 'Artículos',
+    total: 'Total',
+    status: 'Estado',
+    noPurchases: 'No se encontraron compras',
+    viewDetails: 'Ver Detalles',
+    downloadReceipt: 'Descargar Recibo',
+    
+    // Payments Page
+    paymentsTitle: 'Métodos de Pago',
+    addPaymentMethod: 'Agregar Método de Pago',
+    creditCard: 'Tarjeta de Crédito',
+    paypal: 'PayPal',
+    bankTransfer: 'Transferencia Bancaria',
+    cardNumber: 'Número de Tarjeta',
+    expiryDate: 'Fecha de Vencimiento',
+    cvv: 'CVV',
+    cardholderName: 'Nombre del Titular',
+    setAsDefault: 'Establecer como predeterminado',
+    removeCard: 'Eliminar Tarjeta',
+    
+    // Billing Page
+    billingTitle: 'Información de Facturación',
+    billingAddress: 'Dirección de Facturación',
+    invoices: 'Facturas',
+    nextBilling: 'Próxima Fecha de Facturación',
+    subscription: 'Suscripción',
+    plan: 'Plan',
+    renewalDate: 'Fecha de Renovación',
+    changeplan: 'Cambiar Plan',
+    cancelSubscription: 'Cancelar Suscripción',
+    
+    // Receipts Page
+    receiptsTitle: 'Recibos y Facturas',
+    downloadAll: 'Descargar Todo',
+    filterByDate: 'Filtrar por Fecha',
+    receiptNumber: 'Recibo #',
+    amount: 'Cantidad',
+    download: 'Descargar',
+    
+    // Common Actions
+    edit: 'Editar',
+    save: 'Guardar',
+    delete: 'Eliminar',
+    update: 'Actualizar',
+    confirm: 'Confirmar',
+    loading: 'Cargando...',
+    success: 'Éxito',
+    error: 'Error',
+    
+    // Status Messages
+    profileUpdated: 'Perfil actualizado exitosamente',
+    paymentAdded: 'Método de pago agregado exitosamente',
+    paymentRemoved: 'Método de pago eliminado exitosamente',
+    subscriptionCancelled: 'Suscripción cancelada exitosamente',
+    settingsSaved: 'Configuraciones guardadas exitosamente',
+    
+    // Error Messages
+    requiredField: 'Este campo es obligatorio',
+    invalidEmail: 'Por favor, ingresa un correo electrónico válido',
+    invalidPhone: 'Por favor, ingresa un número de teléfono válido',
+    updateFailed: 'Actualización falló. Por favor, inténtalo de nuevo.',
+    deleteFailed: 'Eliminación falló. Por favor, inténtalo de nuevo.',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `¡Hola, ${name}!`,
+    receiptFor: (orderNumber: string) => `Recibo para Pedido ${orderNumber}`,
+    totalAmount: (amount: string) => `Total: ${amount}`,
+  },
+  fr: {
+    // Main Account Page
+    account: 'Compte',
+    hello: 'Bonjour',
+    user: 'Utilisateur',
+    selectCard: 'Sélectionnez une carte pour voir les détails de votre compte.',
+    pleaseLogin: 'Veuillez vous connecter pour accéder à votre compte.',
+    
+    // Navigation Items
+    profile: 'Profil',
+    student: 'Étudiant',
+    ai: 'IA',
+    purchases: 'Achats',
+    payments: 'Paiements',
+    billing: 'Facturation',
+    receipts: 'Reçus',
+    admin: 'Admin',
+    
+    // Tooltips
+    personalInfo: 'Informations Personnelles',
+    learningPlatform: 'Plateforme d\'Apprentissage',
+    defineAiModel: 'Définir votre Modèle IA',
+    list: 'Liste',
+    billingAccountManagement: 'Gestion du Compte de Facturation',
+    dashboard: 'Tableau de Bord',
+    
+    // Profile Page
+    profileTitle: 'Informations du Profil',
+    editProfile: 'Modifier le Profil',
+    saveChanges: 'Enregistrer les Modifications',
+    cancel: 'Annuler',
+    firstName: 'Prénom',
+    lastName: 'Nom de Famille',
+    email: 'E-mail',
+    username: 'Nom d\'Utilisateur',
+    fullName: 'Nom Complet',
+    phoneNumber: 'Numéro de Téléphone',
+    dateOfBirth: 'Date de Naissance',
+    address: 'Adresse',
+    city: 'Ville',
+    country: 'Pays',
+    postalCode: 'Code Postal',
+    biography: 'Biographie',
+    website: 'Site Web',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'Configuration IA',
+    aiModel: 'Modèle IA',
+    selectModel: 'Sélectionnez votre modèle IA préféré',
+    temperature: 'Température',
+    maxTokens: 'Tokens Maximum',
+    systemPrompt: 'Prompt Système',
+    customizeAi: 'Personnalisez votre assistant IA',
+    
+    // Purchases Page
+    purchasesTitle: 'Historique des Achats',
+    orderNumber: 'Commande #',
+    date: 'Date',
+    items: 'Articles',
+    total: 'Total',
+    status: 'Statut',
+    noPurchases: 'Aucun achat trouvé',
+    viewDetails: 'Voir les Détails',
+    downloadReceipt: 'Télécharger le Reçu',
+    
+    // Payments Page
+    paymentsTitle: 'Méthodes de Paiement',
+    addPaymentMethod: 'Ajouter une Méthode de Paiement',
+    creditCard: 'Carte de Crédit',
+    paypal: 'PayPal',
+    bankTransfer: 'Virement Bancaire',
+    cardNumber: 'Numéro de Carte',
+    expiryDate: 'Date d\'Expiration',
+    cvv: 'CVV',
+    cardholderName: 'Nom du Titulaire',
+    setAsDefault: 'Définir par défaut',
+    removeCard: 'Supprimer la Carte',
+    
+    // Billing Page
+    billingTitle: 'Informations de Facturation',
+    billingAddress: 'Adresse de Facturation',
+    invoices: 'Factures',
+    nextBilling: 'Prochaine Date de Facturation',
+    subscription: 'Abonnement',
+    plan: 'Plan',
+    renewalDate: 'Date de Renouvellement',
+    changeplan: 'Changer de Plan',
+    cancelSubscription: 'Annuler l\'Abonnement',
+    
+    // Receipts Page
+    receiptsTitle: 'Reçus et Factures',
+    downloadAll: 'Tout Télécharger',
+    filterByDate: 'Filtrer par Date',
+    receiptNumber: 'Reçu #',
+    amount: 'Montant',
+    download: 'Télécharger',
+    
+    // Common Actions
+    edit: 'Modifier',
+    save: 'Enregistrer',
+    delete: 'Supprimer',
+    update: 'Mettre à jour',
+    confirm: 'Confirmer',
+    loading: 'Chargement...',
+    success: 'Succès',
+    error: 'Erreur',
+    
+    // Status Messages
+    profileUpdated: 'Profil mis à jour avec succès',
+    paymentAdded: 'Méthode de paiement ajoutée avec succès',
+    paymentRemoved: 'Méthode de paiement supprimée avec succès',
+    subscriptionCancelled: 'Abonnement annulé avec succès',
+    settingsSaved: 'Paramètres enregistrés avec succès',
+    
+    // Error Messages
+    requiredField: 'Ce champ est obligatoire',
+    invalidEmail: 'Veuillez entrer une adresse e-mail valide',
+    invalidPhone: 'Veuillez entrer un numéro de téléphone valide',
+    updateFailed: 'Mise à jour échouée. Veuillez réessayer.',
+    deleteFailed: 'Suppression échouée. Veuillez réessayer.',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `Bonjour, ${name} !`,
+    receiptFor: (orderNumber: string) => `Reçu pour la Commande ${orderNumber}`,
+    totalAmount: (amount: string) => `Total : ${amount}`,
+  },
+  de: {
+    // Main Account Page
+    account: 'Konto',
+    hello: 'Hallo',
+    user: 'Benutzer',
+    selectCard: 'Wählen Sie eine Karte aus, um Ihre Kontodetails anzuzeigen.',
+    pleaseLogin: 'Bitte melden Sie sich an, um auf Ihr Konto zuzugreifen.',
+    
+    // Navigation Items
+    profile: 'Profil',
+    student: 'Student',
+    ai: 'KI',
+    purchases: 'Käufe',
+    payments: 'Zahlungen',
+    billing: 'Abrechnung',
+    receipts: 'Belege',
+    admin: 'Admin',
+    
+    // Tooltips
+    personalInfo: 'Persönliche Informationen',
+    learningPlatform: 'Lernplattform',
+    defineAiModel: 'Definieren Sie Ihr KI-Modell',
+    list: 'Liste',
+    billingAccountManagement: 'Abrechnungskontoverwaltung',
+    dashboard: 'Dashboard',
+    
+    // Profile Page
+    profileTitle: 'Profilinformationen',
+    editProfile: 'Profil Bearbeiten',
+    saveChanges: 'Änderungen Speichern',
+    cancel: 'Abbrechen',
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    email: 'E-Mail',
+    username: 'Benutzername',
+    fullName: 'Vollständiger Name',
+    phoneNumber: 'Telefonnummer',
+    dateOfBirth: 'Geburtsdatum',
+    address: 'Adresse',
+    city: 'Stadt',
+    country: 'Land',
+    postalCode: 'Postleitzahl',
+    biography: 'Biografie',
+    website: 'Website',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'KI-Konfiguration',
+    aiModel: 'KI-Modell',
+    selectModel: 'Wählen Sie Ihr bevorzugtes KI-Modell',
+    temperature: 'Temperatur',
+    maxTokens: 'Max Tokens',
+    systemPrompt: 'System-Prompt',
+    customizeAi: 'Passen Sie Ihren KI-Assistenten an',
+    
+    // Purchases Page
+    purchasesTitle: 'Kaufhistorie',
+    orderNumber: 'Bestellung #',
+    date: 'Datum',
+    items: 'Artikel',
+    total: 'Gesamt',
+    status: 'Status',
+    noPurchases: 'Keine Käufe gefunden',
+    viewDetails: 'Details Anzeigen',
+    downloadReceipt: 'Beleg Herunterladen',
+    
+    // Payments Page
+    paymentsTitle: 'Zahlungsmethoden',
+    addPaymentMethod: 'Zahlungsmethode Hinzufügen',
+    creditCard: 'Kreditkarte',
+    paypal: 'PayPal',
+    bankTransfer: 'Banküberweisung',
+    cardNumber: 'Kartennummer',
+    expiryDate: 'Ablaufdatum',
+    cvv: 'CVV',
+    cardholderName: 'Name des Karteninhabers',
+    setAsDefault: 'Als Standard festlegen',
+    removeCard: 'Karte Entfernen',
+    
+    // Billing Page
+    billingTitle: 'Abrechnungsinformationen',
+    billingAddress: 'Rechnungsadresse',
+    invoices: 'Rechnungen',
+    nextBilling: 'Nächstes Abrechnungsdatum',
+    subscription: 'Abonnement',
+    plan: 'Plan',
+    renewalDate: 'Verlängerungsdatum',
+    changeplan: 'Plan Ändern',
+    cancelSubscription: 'Abonnement Kündigen',
+    
+    // Receipts Page
+    receiptsTitle: 'Belege und Rechnungen',
+    downloadAll: 'Alle Herunterladen',
+    filterByDate: 'Nach Datum Filtern',
+    receiptNumber: 'Beleg #',
+    amount: 'Betrag',
+    download: 'Herunterladen',
+    
+    // Common Actions
+    edit: 'Bearbeiten',
+    save: 'Speichern',
+    delete: 'Löschen',
+    update: 'Aktualisieren',
+    confirm: 'Bestätigen',
+    loading: 'Laden...',
+    success: 'Erfolg',
+    error: 'Fehler',
+    
+    // Status Messages
+    profileUpdated: 'Profil erfolgreich aktualisiert',
+    paymentAdded: 'Zahlungsmethode erfolgreich hinzugefügt',
+    paymentRemoved: 'Zahlungsmethode erfolgreich entfernt',
+    subscriptionCancelled: 'Abonnement erfolgreich gekündigt',
+    settingsSaved: 'Einstellungen erfolgreich gespeichert',
+    
+    // Error Messages
+    requiredField: 'Dieses Feld ist erforderlich',
+    invalidEmail: 'Bitte geben Sie eine gültige E-Mail-Adresse ein',
+    invalidPhone: 'Bitte geben Sie eine gültige Telefonnummer ein',
+    updateFailed: 'Aktualisierung fehlgeschlagen. Bitte versuchen Sie es erneut.',
+    deleteFailed: 'Löschen fehlgeschlagen. Bitte versuchen Sie es erneut.',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `Hallo, ${name}!`,
+    receiptFor: (orderNumber: string) => `Beleg für Bestellung ${orderNumber}`,
+    totalAmount: (amount: string) => `Gesamt: ${amount}`,
+  },
+  ru: {
+    // Main Account Page
+    account: 'Аккаунт',
+    hello: 'Привет',
+    user: 'Пользователь',
+    selectCard: 'Выберите карту для просмотра деталей вашего аккаунта.',
+    pleaseLogin: 'Пожалуйста, войдите в систему для доступа к вашему аккаунту.',
+    
+    // Navigation Items
+    profile: 'Профиль',
+    student: 'Студент',
+    ai: 'ИИ',
+    purchases: 'Покупки',
+    payments: 'Платежи',
+    billing: 'Биллинг',
+    receipts: 'Чеки',
+    admin: 'Админ',
+    
+    // Tooltips
+    personalInfo: 'Личная Информация',
+    learningPlatform: 'Платформа Обучения',
+    defineAiModel: 'Определите вашу ИИ модель',
+    list: 'Список',
+    billingAccountManagement: 'Управление Биллинговым Аккаунтом',
+    dashboard: 'Панель управления',
+    
+    // Profile Page
+    profileTitle: 'Информация Профиля',
+    editProfile: 'Редактировать Профиль',
+    saveChanges: 'Сохранить Изменения',
+    cancel: 'Отмена',
+    firstName: 'Имя',
+    lastName: 'Фамилия',
+    email: 'Электронная почта',
+    username: 'Имя пользователя',
+    fullName: 'Полное имя',
+    phoneNumber: 'Номер телефона',
+    dateOfBirth: 'Дата рождения',
+    address: 'Адрес',
+    city: 'Город',
+    country: 'Страна',
+    postalCode: 'Почтовый индекс',
+    biography: 'Биография',
+    website: 'Веб-сайт',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'Конфигурация ИИ',
+    aiModel: 'Модель ИИ',
+    selectModel: 'Выберите предпочитаемую модель ИИ',
+    temperature: 'Температура',
+    maxTokens: 'Макс Токенов',
+    systemPrompt: 'Системный Промпт',
+    customizeAi: 'Настройте вашего ИИ-ассистента',
+    
+    // Purchases Page
+    purchasesTitle: 'История Покупок',
+    orderNumber: 'Заказ #',
+    date: 'Дата',
+    items: 'Товары',
+    total: 'Итого',
+    status: 'Статус',
+    noPurchases: 'Покупки не найдены',
+    viewDetails: 'Просмотр Деталей',
+    downloadReceipt: 'Скачать Чек',
+    
+    // Payments Page
+    paymentsTitle: 'Способы Оплаты',
+    addPaymentMethod: 'Добавить Способ Оплаты',
+    creditCard: 'Кредитная Карта',
+    paypal: 'PayPal',
+    bankTransfer: 'Банковский Перевод',
+    cardNumber: 'Номер Карты',
+    expiryDate: 'Срок Действия',
+    cvv: 'CVV',
+    cardholderName: 'Имя Держателя Карты',
+    setAsDefault: 'Установить по умолчанию',
+    removeCard: 'Удалить Карту',
+    
+    // Billing Page
+    billingTitle: 'Информация о Выставлении Счетов',
+    billingAddress: 'Адрес для Выставления Счетов',
+    invoices: 'Счета',
+    nextBilling: 'Следующая Дата Выставления Счета',
+    subscription: 'Подписка',
+    plan: 'План',
+    renewalDate: 'Дата Продления',
+    changeplan: 'Изменить План',
+    cancelSubscription: 'Отменить Подписку',
+    
+    // Receipts Page
+    receiptsTitle: 'Чеки и Счета',
+    downloadAll: 'Скачать Все',
+    filterByDate: 'Фильтр по Дате',
+    receiptNumber: 'Чек #',
+    amount: 'Сумма',
+    download: 'Скачать',
+    
+    // Common Actions
+    edit: 'Редактировать',
+    save: 'Сохранить',
+    delete: 'Удалить',
+    update: 'Обновить',
+    confirm: 'Подтвердить',
+    loading: 'Загрузка...',
+    success: 'Успех',
+    error: 'Ошибка',
+    
+    // Status Messages
+    profileUpdated: 'Профиль успешно обновлен',
+    paymentAdded: 'Способ оплаты успешно добавлен',
+    paymentRemoved: 'Способ оплаты успешно удален',
+    subscriptionCancelled: 'Подписка успешно отменена',
+    settingsSaved: 'Настройки успешно сохранены',
+    
+    // Error Messages
+    requiredField: 'Это поле обязательно',
+    invalidEmail: 'Пожалуйста, введите действительный адрес электронной почты',
+    invalidPhone: 'Пожалуйста, введите действительный номер телефона',
+    updateFailed: 'Обновление не удалось. Пожалуйста, попробуйте еще раз.',
+    deleteFailed: 'Удаление не удалось. Пожалуйста, попробуйте еще раз.',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `Привет, ${name}!`,
+    receiptFor: (orderNumber: string) => `Чек для Заказа ${orderNumber}`,
+    totalAmount: (amount: string) => `Итого: ${amount}`,
+  },
+  it: {
+    // Main Account Page
+    account: 'Account',
+    hello: 'Ciao',
+    user: 'Utente',
+    selectCard: 'Seleziona una carta per visualizzare i dettagli del tuo account.',
+    pleaseLogin: 'Per favore accedi per accedere al tuo account.',
+    
+    // Navigation Items
+    profile: 'Profilo',
+    student: 'Studente',
+    ai: 'IA',
+    purchases: 'Acquisti',
+    payments: 'Pagamenti',
+    billing: 'Fatturazione',
+    receipts: 'Ricevute',
+    admin: 'Admin',
+    
+    // Tooltips
+    personalInfo: 'Informazioni Personali',
+    learningPlatform: 'Piattaforma di Apprendimento',
+    defineAiModel: 'Definisci il tuo Modello IA',
+    list: 'Lista',
+    billingAccountManagement: 'Gestione Account di Fatturazione',
+    dashboard: 'Dashboard',
+    
+    // Profile Page
+    profileTitle: 'Informazioni del Profilo',
+    editProfile: 'Modifica Profilo',
+    saveChanges: 'Salva Modifiche',
+    cancel: 'Annulla',
+    firstName: 'Nome',
+    lastName: 'Cognome',
+    email: 'Email',
+    username: 'Nome Utente',
+    fullName: 'Nome Completo',
+    phoneNumber: 'Numero di Telefono',
+    dateOfBirth: 'Data di Nascita',
+    address: 'Indirizzo',
+    city: 'Città',
+    country: 'Paese',
+    postalCode: 'Codice Postale',
+    biography: 'Biografia',
+    website: 'Sito Web',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'Configurazione IA',
+    aiModel: 'Modello IA',
+    selectModel: 'Seleziona il tuo modello IA preferito',
+    temperature: 'Temperatura',
+    maxTokens: 'Token Massimi',
+    systemPrompt: 'Prompt di Sistema',
+    customizeAi: 'Personalizza il tuo assistente IA',
+    
+    // Purchases Page
+    purchasesTitle: 'Cronologia Acquisti',
+    orderNumber: 'Ordine #',
+    date: 'Data',
+    items: 'Articoli',
+    total: 'Totale',
+    status: 'Stato',
+    noPurchases: 'Nessun acquisto trovato',
+    viewDetails: 'Visualizza Dettagli',
+    downloadReceipt: 'Scarica Ricevuta',
+    
+    // Payments Page
+    paymentsTitle: 'Metodi di Pagamento',
+    addPaymentMethod: 'Aggiungi Metodo di Pagamento',
+    creditCard: 'Carta di Credito',
+    paypal: 'PayPal',
+    bankTransfer: 'Bonifico Bancario',
+    cardNumber: 'Numero Carta',
+    expiryDate: 'Data di Scadenza',
+    cvv: 'CVV',
+    cardholderName: 'Nome del Titolare',
+    setAsDefault: 'Imposta come predefinito',
+    removeCard: 'Rimuovi Carta',
+    
+    // Billing Page
+    billingTitle: 'Informazioni di Fatturazione',
+    billingAddress: 'Indirizzo di Fatturazione',
+    invoices: 'Fatture',
+    nextBilling: 'Prossima Data di Fatturazione',
+    subscription: 'Abbonamento',
+    plan: 'Piano',
+    renewalDate: 'Data di Rinnovo',
+    changeplan: 'Cambia Piano',
+    cancelSubscription: 'Cancella Abbonamento',
+    
+    // Receipts Page
+    receiptsTitle: 'Ricevute e Fatture',
+    downloadAll: 'Scarica Tutto',
+    filterByDate: 'Filtra per Data',
+    receiptNumber: 'Ricevuta #',
+    amount: 'Importo',
+    download: 'Scarica',
+    
+    // Common Actions
+    edit: 'Modifica',
+    save: 'Salva',
+    delete: 'Elimina',
+    update: 'Aggiorna',
+    confirm: 'Conferma',
+    loading: 'Caricamento...',
+    success: 'Successo',
+    error: 'Errore',
+    
+    // Status Messages
+    profileUpdated: 'Profilo aggiornato con successo',
+    paymentAdded: 'Metodo di pagamento aggiunto con successo',
+    paymentRemoved: 'Metodo di pagamento rimosso con successo',
+    subscriptionCancelled: 'Abbonamento cancellato con successo',
+    settingsSaved: 'Impostazioni salvate con successo',
+    
+    // Error Messages
+    requiredField: 'Questo campo è obbligatorio',
+    invalidEmail: 'Per favore inserisci un indirizzo email valido',
+    invalidPhone: 'Per favore inserisci un numero di telefono valido',
+    updateFailed: 'Aggiornamento fallito. Per favore riprova.',
+    deleteFailed: 'Eliminazione fallita. Per favore riprova.',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `Ciao, ${name}!`,
+    receiptFor: (orderNumber: string) => `Ricevuta per l'Ordine ${orderNumber}`,
+    totalAmount: (amount: string) => `Totale: ${amount}`,
+  },
+  pt: {
+    // Main Account Page
+    account: 'Conta',
+    hello: 'Olá',
+    user: 'Usuário',
+    selectCard: 'Selecione um cartão para ver os detalhes da sua conta.',
+    pleaseLogin: 'Por favor, faça login para acessar sua conta.',
+    
+    // Navigation Items
+    profile: 'Perfil',
+    student: 'Estudante',
+    ai: 'IA',
+    purchases: 'Compras',
+    payments: 'Pagamentos',
+    billing: 'Faturamento',
+    receipts: 'Recibos',
+    admin: 'Admin',
+    
+    // Tooltips
+    personalInfo: 'Informações Pessoais',
+    learningPlatform: 'Plataforma de Aprendizagem',
+    defineAiModel: 'Defina seu Modelo de IA',
+    list: 'Lista',
+    billingAccountManagement: 'Gerenciamento de Conta de Faturamento',
+    dashboard: 'Painel',
+    
+    // Profile Page
+    profileTitle: 'Informações do Perfil',
+    editProfile: 'Editar Perfil',
+    saveChanges: 'Salvar Alterações',
+    cancel: 'Cancelar',
+    firstName: 'Nome',
+    lastName: 'Sobrenome',
+    email: 'E-mail',
+    username: 'Nome de Usuário',
+    fullName: 'Nome Completo',
+    phoneNumber: 'Número de Telefone',
+    dateOfBirth: 'Data de Nascimento',
+    address: 'Endereço',
+    city: 'Cidade',
+    country: 'País',
+    postalCode: 'Código Postal',
+    biography: 'Biografia',
+    website: 'Site',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'Configuração de IA',
+    aiModel: 'Modelo de IA',
+    selectModel: 'Selecione seu modelo de IA preferido',
+    temperature: 'Temperatura',
+    maxTokens: 'Tokens Máximos',
+    systemPrompt: 'Prompt do Sistema',
+    customizeAi: 'Personalize seu assistente de IA',
+    
+    // Purchases Page
+    purchasesTitle: 'Histórico de Compras',
+    orderNumber: 'Pedido #',
+    date: 'Data',
+    items: 'Itens',
+    total: 'Total',
+    status: 'Status',
+    noPurchases: 'Nenhuma compra encontrada',
+    viewDetails: 'Ver Detalhes',
+    downloadReceipt: 'Baixar Recibo',
+    
+    // Payments Page
+    paymentsTitle: 'Métodos de Pagamento',
+    addPaymentMethod: 'Adicionar Método de Pagamento',
+    creditCard: 'Cartão de Crédito',
+    paypal: 'PayPal',
+    bankTransfer: 'Transferência Bancária',
+    cardNumber: 'Número do Cartão',
+    expiryDate: 'Data de Expiração',
+    cvv: 'CVV',
+    cardholderName: 'Nome do Portador',
+    setAsDefault: 'Definir como padrão',
+    removeCard: 'Remover Cartão',
+    
+    // Billing Page
+    billingTitle: 'Informações de Faturamento',
+    billingAddress: 'Endereço de Faturamento',
+    invoices: 'Faturas',
+    nextBilling: 'Próxima Data de Faturamento',
+    subscription: 'Assinatura',
+    plan: 'Plano',
+    renewalDate: 'Data de Renovação',
+    changeplan: 'Alterar Plano',
+    cancelSubscription: 'Cancelar Assinatura',
+    
+    // Receipts Page
+    receiptsTitle: 'Recibos e Faturas',
+    downloadAll: 'Baixar Todos',
+    filterByDate: 'Filtrar por Data',
+    receiptNumber: 'Recibo #',
+    amount: 'Valor',
+    download: 'Baixar',
+    
+    // Common Actions
+    edit: 'Editar',
+    save: 'Salvar',
+    delete: 'Excluir',
+    update: 'Atualizar',
+    confirm: 'Confirmar',
+    loading: 'Carregando...',
+    success: 'Sucesso',
+    error: 'Erro',
+    
+    // Status Messages
+    profileUpdated: 'Perfil atualizado com sucesso',
+    paymentAdded: 'Método de pagamento adicionado com sucesso',
+    paymentRemoved: 'Método de pagamento removido com sucesso',
+    subscriptionCancelled: 'Assinatura cancelada com sucesso',
+    settingsSaved: 'Configurações salvas com sucesso',
+    
+    // Error Messages
+    requiredField: 'Este campo é obrigatório',
+    invalidEmail: 'Por favor, insira um endereço de e-mail válido',
+    invalidPhone: 'Por favor, insira um número de telefone válido',
+    updateFailed: 'Atualização falhou. Por favor, tente novamente.',
+    deleteFailed: 'Exclusão falhou. Por favor, tente novamente.',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `Olá, ${name}!`,
+    receiptFor: (orderNumber: string) => `Recibo para Pedido ${orderNumber}`,
+    totalAmount: (amount: string) => `Total: ${amount}`,
+  },
+  pl: {
+    // Main Account Page
+    account: 'Konto',
+    hello: 'Cześć',
+    user: 'Użytkownik',
+    selectCard: 'Wybierz kartę, aby zobaczyć szczegóły swojego konta.',
+    pleaseLogin: 'Zaloguj się, aby uzyskać dostęp do swojego konta.',
+    
+    // Navigation Items
+    profile: 'Profil',
+    student: 'Student',
+    ai: 'AI',
+    purchases: 'Zakupy',
+    payments: 'Płatności',
+    billing: 'Rozliczenia',
+    receipts: 'Paragony',
+    admin: 'Admin',
+    
+    // Tooltips
+    personalInfo: 'Informacje Osobiste',
+    learningPlatform: 'Platforma Edukacyjna',
+    defineAiModel: 'Zdefiniuj swój Model AI',
+    list: 'Lista',
+    billingAccountManagement: 'Zarządzanie Kontem Rozliczeniowym',
+    dashboard: 'Panel kontrolny',
+    
+    // Profile Page
+    profileTitle: 'Informacje Profilu',
+    editProfile: 'Edytuj Profil',
+    saveChanges: 'Zapisz Zmiany',
+    cancel: 'Anuluj',
+    firstName: 'Imię',
+    lastName: 'Nazwisko',
+    email: 'E-mail',
+    username: 'Nazwa Użytkownika',
+    fullName: 'Pełne Imię',
+    phoneNumber: 'Numer Telefonu',
+    dateOfBirth: 'Data Urodzenia',
+    address: 'Adres',
+    city: 'Miasto',
+    country: 'Kraj',
+    postalCode: 'Kod Pocztowy',
+    biography: 'Biografia',
+    website: 'Strona Internetowa',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'Konfiguracja AI',
+    aiModel: 'Model AI',
+    selectModel: 'Wybierz preferowany model AI',
+    temperature: 'Temperatura',
+    maxTokens: 'Maksymalne Tokeny',
+    systemPrompt: 'Prompt Systemowy',
+    customizeAi: 'Dostosuj swojego asystenta AI',
+    
+    // Purchases Page
+    purchasesTitle: 'Historia Zakupów',
+    orderNumber: 'Zamówienie #',
+    date: 'Data',
+    items: 'Pozycje',
+    total: 'Razem',
+    status: 'Status',
+    noPurchases: 'Nie znaleziono zakupów',
+    viewDetails: 'Zobacz Szczegóły',
+    downloadReceipt: 'Pobierz Paragon',
+    
+    // Payments Page
+    paymentsTitle: 'Metody Płatności',
+    addPaymentMethod: 'Dodaj Metodę Płatności',
+    creditCard: 'Karta Kredytowa',
+    paypal: 'PayPal',
+    bankTransfer: 'Przelew Bankowy',
+    cardNumber: 'Numer Karty',
+    expiryDate: 'Data Ważności',
+    cvv: 'CVV',
+    cardholderName: 'Imię Posiadacza Karty',
+    setAsDefault: 'Ustaw jako domyślne',
+    removeCard: 'Usuń Kartę',
+    
+    // Billing Page
+    billingTitle: 'Informacje Rozliczeniowe',
+    billingAddress: 'Adres Rozliczeniowy',
+    invoices: 'Faktury',
+    nextBilling: 'Następna Data Rozliczenia',
+    subscription: 'Subskrypcja',
+    plan: 'Plan',
+    renewalDate: 'Data Odnowienia',
+    changeplan: 'Zmień Plan',
+    cancelSubscription: 'Anuluj Subskrypcję',
+    
+    // Receipts Page
+    receiptsTitle: 'Paragony i Faktury',
+    downloadAll: 'Pobierz Wszystko',
+    filterByDate: 'Filtruj według Daty',
+    receiptNumber: 'Paragon #',
+    amount: 'Kwota',
+    download: 'Pobierz',
+    
+    // Common Actions
+    edit: 'Edytuj',
+    save: 'Zapisz',
+    delete: 'Usuń',
+    update: 'Aktualizuj',
+    confirm: 'Potwierdź',
+    loading: 'Ładowanie...',
+    success: 'Sukces',
+    error: 'Błąd',
+    
+    // Status Messages
+    profileUpdated: 'Profil zaktualizowany pomyślnie',
+    paymentAdded: 'Metoda płatności dodana pomyślnie',
+    paymentRemoved: 'Metoda płatności usunięta pomyślnie',
+    subscriptionCancelled: 'Subskrypcja anulowana pomyślnie',
+    settingsSaved: 'Ustawienia zapisane pomyślnie',
+    
+    // Error Messages
+    requiredField: 'To pole jest wymagane',
+    invalidEmail: 'Proszę podać prawidłowy adres e-mail',
+    invalidPhone: 'Proszę podać prawidłowy numer telefonu',
+    updateFailed: 'Aktualizacja nie powiodła się. Spróbuj ponownie.',
+    deleteFailed: 'Usuwanie nie powiodło się. Spróbuj ponownie.',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `Cześć, ${name}!`,
+    receiptFor: (orderNumber: string) => `Paragon dla Zamówienia ${orderNumber}`,
+    totalAmount: (amount: string) => `Razem: ${amount}`,
+  },
+  zh: {
+    // Main Account Page
+    account: '账户',
+    hello: '你好',
+    user: '用户',
+    selectCard: '选择卡片查看您的账户详情。',
+    pleaseLogin: '请登录以访问您的账户。',
+    
+    // Navigation Items
+    profile: '个人资料',
+    student: '学生',
+    ai: 'AI',
+    purchases: '购买',
+    payments: '支付',
+    billing: '计费',
+    receipts: '收据',
+    admin: '管理员',
+    
+    // Tooltips
+    personalInfo: '个人信息',
+    learningPlatform: '学习平台',
+    defineAiModel: '定义您的AI模型',
+    list: '列表',
+    billingAccountManagement: '计费账户管理',
+    dashboard: '仪表板',
+    
+    // Profile Page
+    profileTitle: '个人资料信息',
+    editProfile: '编辑个人资料',
+    saveChanges: '保存更改',
+    cancel: '取消',
+    firstName: '名字',
+    lastName: '姓氏',
+    email: '电子邮件',
+    username: '用户名',
+    fullName: '全名',
+    phoneNumber: '电话号码',
+    dateOfBirth: '出生日期',
+    address: '地址',
+    city: '城市',
+    country: '国家',
+    postalCode: '邮政编码',
+    biography: '个人简介',
+    website: '网站',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'AI配置',
+    aiModel: 'AI模型',
+    selectModel: '选择您首选的AI模型',
+    temperature: '温度',
+    maxTokens: '最大令牌数',
+    systemPrompt: '系统提示',
+    customizeAi: '自定义您的AI助手',
+    
+    // Purchases Page
+    purchasesTitle: '购买历史',
+    orderNumber: '订单 #',
+    date: '日期',
+    items: '项目',
+    total: '总计',
+    status: '状态',
+    noPurchases: '未找到购买记录',
+    viewDetails: '查看详情',
+    downloadReceipt: '下载收据',
+    
+    // Payments Page
+    paymentsTitle: '支付方式',
+    addPaymentMethod: '添加支付方式',
+    creditCard: '信用卡',
+    paypal: 'PayPal',
+    bankTransfer: '银行转账',
+    cardNumber: '卡号',
+    expiryDate: '到期日期',
+    cvv: 'CVV',
+    cardholderName: '持卡人姓名',
+    setAsDefault: '设为默认',
+    removeCard: '删除卡片',
+    
+    // Billing Page
+    billingTitle: '计费信息',
+    billingAddress: '计费地址',
+    invoices: '发票',
+    nextBilling: '下次计费日期',
+    subscription: '订阅',
+    plan: '计划',
+    renewalDate: '续费日期',
+    changeplan: '更改计划',
+    cancelSubscription: '取消订阅',
+    
+    // Receipts Page
+    receiptsTitle: '收据和发票',
+    downloadAll: '下载全部',
+    filterByDate: '按日期筛选',
+    receiptNumber: '收据 #',
+    amount: '金额',
+    download: '下载',
+    
+    // Common Actions
+    edit: '编辑',
+    save: '保存',
+    delete: '删除',
+    update: '更新',
+    confirm: '确认',
+    loading: '加载中...',
+    success: '成功',
+    error: '错误',
+    
+    // Status Messages
+    profileUpdated: '个人资料更新成功',
+    paymentAdded: '支付方式添加成功',
+    paymentRemoved: '支付方式删除成功',
+    subscriptionCancelled: '订阅取消成功',
+    settingsSaved: '设置保存成功',
+    
+    // Error Messages
+    requiredField: '此字段为必填项',
+    invalidEmail: '请输入有效的电子邮件地址',
+    invalidPhone: '请输入有效的电话号码',
+    updateFailed: '更新失败。请重试。',
+    deleteFailed: '删除失败。请重试。',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `你好，${name}！`,
+    receiptFor: (orderNumber: string) => `订单 ${orderNumber} 的收据`,
+    totalAmount: (amount: string) => `总计：${amount}`,
+  },
+  ja: {
+    // Main Account Page
+    account: 'アカウント',
+    hello: 'こんにちは',
+    user: 'ユーザー',
+    selectCard: 'カードを選択してアカウントの詳細を表示してください。',
+    pleaseLogin: 'アカウントにアクセスするにはログインしてください。',
+    
+    // Navigation Items
+    profile: 'プロフィール',
+    student: '学生',
+    ai: 'AI',
+    purchases: '購入履歴',
+    payments: '支払い',
+    billing: '請求',
+    receipts: 'レシート',
+    admin: '管理者',
+    
+    // Tooltips
+    personalInfo: '個人情報',
+    learningPlatform: '学習プラットフォーム',
+    defineAiModel: 'AIモデルを定義',
+    list: 'リスト',
+    billingAccountManagement: '請求アカウント管理',
+    dashboard: 'ダッシュボード',
+    
+    // Profile Page
+    profileTitle: 'プロフィール情報',
+    editProfile: 'プロフィール編集',
+    saveChanges: '変更を保存',
+    cancel: 'キャンセル',
+    firstName: '名',
+    lastName: '姓',
+    email: 'メールアドレス',
+    username: 'ユーザー名',
+    fullName: 'フルネーム',
+    phoneNumber: '電話番号',
+    dateOfBirth: '生年月日',
+    address: '住所',
+    city: '市区町村',
+    country: '国',
+    postalCode: '郵便番号',
+    biography: '略歴',
+    website: 'ウェブサイト',
+    linkedin: 'LinkedIn',
+    twitter: 'Twitter',
+    
+    // AI Page
+    aiTitle: 'AI設定',
+    aiModel: 'AIモデル',
+    selectModel: '好みのAIモデルを選択',
+    temperature: '温度',
+    maxTokens: '最大トークン数',
+    systemPrompt: 'システムプロンプト',
+    customizeAi: 'AIアシスタントをカスタマイズ',
+    
+    // Purchases Page
+    purchasesTitle: '購入履歴',
+    orderNumber: '注文 #',
+    date: '日付',
+    items: 'アイテム',
+    total: '合計',
+    status: 'ステータス',
+    noPurchases: '購入履歴が見つかりません',
+    viewDetails: '詳細を見る',
+    downloadReceipt: 'レシートをダウンロード',
+    
+    // Payments Page
+    paymentsTitle: '支払い方法',
+    addPaymentMethod: '支払い方法を追加',
+    creditCard: 'クレジットカード',
+    paypal: 'PayPal',
+    bankTransfer: '銀行振込',
+    cardNumber: 'カード番号',
+    expiryDate: '有効期限',
+    cvv: 'CVV',
+    cardholderName: 'カード名義人',
+    setAsDefault: 'デフォルトに設定',
+    removeCard: 'カードを削除',
+    
+    // Billing Page
+    billingTitle: '請求情報',
+    billingAddress: '請求先住所',
+    invoices: '請求書',
+    nextBilling: '次回請求日',
+    subscription: 'サブスクリプション',
+    plan: 'プラン',
+    renewalDate: '更新日',
+    changeplan: 'プラン変更',
+    cancelSubscription: 'サブスクリプション解約',
+    
+    // Receipts Page
+    receiptsTitle: 'レシートと請求書',
+    downloadAll: 'すべてダウンロード',
+    filterByDate: '日付でフィルター',
+    receiptNumber: 'レシート #',
+    amount: '金額',
+    download: 'ダウンロード',
+    
+    // Common Actions
+    edit: '編集',
+    save: '保存',
+    delete: '削除',
+    update: '更新',
+    confirm: '確認',
+    loading: '読み込み中...',
+    success: '成功',
+    error: 'エラー',
+    
+    // Status Messages
+    profileUpdated: 'プロフィールが正常に更新されました',
+    paymentAdded: '支払い方法が正常に追加されました',
+    paymentRemoved: '支払い方法が正常に削除されました',
+    subscriptionCancelled: 'サブスクリプションが正常に解約されました',
+    settingsSaved: '設定が正常に保存されました',
+    
+    // Error Messages
+    requiredField: 'この項目は必須です',
+    invalidEmail: '有効なメールアドレスを入力してください',
+    invalidPhone: '有効な電話番号を入力してください',
+    updateFailed: '更新に失敗しました。もう一度お試しください。',
+    deleteFailed: '削除に失敗しました。もう一度お試しください。',
+    
+    // Dynamic strings
+    welcomeUser: (name: string) => `こんにちは、${name}さん！`,
+    receiptFor: (orderNumber: string) => `注文 ${orderNumber} のレシート`,
+    totalAmount: (amount: string) => `合計：${amount}`,
+  },
+};

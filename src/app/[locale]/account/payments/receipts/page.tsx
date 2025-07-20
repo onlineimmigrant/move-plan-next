@@ -7,6 +7,7 @@ import Button from '@/ui/Button';
 import AccountPaymentsReceiptTab from '@/components/AccountPaymentsReceiptTab';
 import Toast from '@/components/Toast';
 import Loading from '@/ui/Loading';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 // Transaction interface (same as PaymentsPage)
 interface Transaction {
@@ -136,6 +137,7 @@ export default function ReceiptsPage() {
   const { transactions, totalCount, isLoading: transactionsLoading, error: transactionsError, fetchTransactions } = useTransactions(accessToken, userId, itemsPerPage, currentPage);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const router = useRouter();
+  const { t } = useAccountTranslations();
 
   const isLoading = authLoading || transactionsLoading;
   const error = authError || transactionsError;
