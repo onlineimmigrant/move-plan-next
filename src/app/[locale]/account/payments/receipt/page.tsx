@@ -8,6 +8,7 @@ import AccountPaymentsReceiptTab from '@/components/AccountPaymentsReceiptTab';
 import Loading from '@/ui/Loading';
 import { useSettings } from '@/context/SettingsContext';
 import { Settings } from '@/types/settings';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 // Define the context type
 interface SettingsContextType {
@@ -46,6 +47,7 @@ interface Item {
 
 // Child component containing the main logic
 function ReceiptContent() {
+  const { t } = useAccountTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [transaction, setTransaction] = useState<Transaction | null>(null);

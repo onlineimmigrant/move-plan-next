@@ -11,6 +11,7 @@ import { useStudentStatus } from '@/lib/StudentContext';
 import Loading from '@/ui/Loading';
 import Tooltip from '@/components/Tooltip';
 import { FiRefreshCw } from 'react-icons/fi';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -70,6 +71,7 @@ interface Course {
 }
 
 export default function EduPro() {
+  const { t } = useAccountTranslations();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

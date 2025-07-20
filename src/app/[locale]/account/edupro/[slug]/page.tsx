@@ -14,6 +14,7 @@ import { useCourseAndTopics } from '@/lib/hooks/useCourseAndTopics';
 import { useAuth } from '@/context/AuthContext';
 import { ArrowUpIcon } from '@heroicons/react/24/outline';
 import Loading from '@/ui/Loading';
+import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -106,6 +107,7 @@ const TopicHeader = ({ topics, slug, topicCompletion }: { topics: Topic[]; slug:
 );
 
 export default function EduProCourseDetail() {
+  const { t } = useAccountTranslations();
   const params = useParams();
   const slug = params?.slug as string;
   const { course, topics, isLoading, error, toast, setToast } = useCourseAndTopics(slug);
