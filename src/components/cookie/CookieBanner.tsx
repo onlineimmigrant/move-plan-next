@@ -99,30 +99,27 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:flex-grow mr-5 text-center md:text-left">
               {translations.cookieNotice}
-              
-              <Link href="/terms" className="text-gray-800 hover:text-gray-500 ml-1">
-                <strong>{translations.privacyPolicy}</strong>
-              </Link>{' '}
-              and{' '}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="cursor-pointer text-gray-800 hover:text-gray-500"
-              >
-                <strong>{translations.settings}</strong>
-              </button>
+
+  
             </div>
-            <div className="cursor-pointer flex justify-center sm:justify-end items-center w-full space-x-16 sm:space-x-4">
+            <div className="cursor-pointer flex justify-center sm:justify-end items-center w-full space-x-4">
+                         <Button
+                onClick={() => setShowSettings(true)}
+              variant="outline"      >
+                {translations.settings}
+              </Button>
+             
               <Button
               variant="primary"
                 onClick={handleRejectAll}
-                className="py-1 sm:py-1 bg-sky-400"
+                
               >
                 {translations.rejectAll}
               </Button>
               <Button
               variant="primary"
                 onClick={handleAcceptAll}
-                className="py-1 sm:py-1"
+               
               >
                 {translations.acceptAll}
               </Button>
