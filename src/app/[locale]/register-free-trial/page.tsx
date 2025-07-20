@@ -15,6 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/ui/Button';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
+import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 
 // Define constants using Next.js environment variables
 const DOMAIN_CUSTOM = process.env.NEXT_PUBLIC_DOMAIN_CUSTOM || 'http://localhost:3000';
@@ -35,6 +36,8 @@ export default function RegisterPage() {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
   const [isTermsOpen, setIsTermsOpen] = useState<boolean>(false);
 
+  const t = useAuthTranslations();
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -43,19 +46,19 @@ export default function RegisterPage() {
 
     // Validate inputs
     if (!username || !email || !password) {
-      setError('Please fill in all fields.');
+      setError(t.fillAllFields);
       setIsLoading(false);
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError(t.passwordTooShort);
       setIsLoading(false);
       return;
     }
 
     if (username.length < 3) {
-      setError('Username must be at least 3 characters long.');
+      setError(t.usernameTooShort);
       setIsLoading(false);
       return;
     }
@@ -88,9 +91,9 @@ export default function RegisterPage() {
       if (authError) {
         console.error('Auth error:', authError.message, authError);
         if (authError.message.includes('already registered')) {
-          setError('This email is already in use. Please try a different email.');
+          setError(t.emailAlreadyExists);
         } else if (authError.message.includes('Database error saving new user')) {
-          setError('Unable to create account due to a server issue. Please try again later or contact support.');
+          setError(t.serverError);
         } else {
           setError(authError.message);
         }
@@ -186,20 +189,20 @@ export default function RegisterPage() {
       if (data.session) {
         console.log('Setting session and redirecting to profile');
         setSession(data.session);
-        setSuccess('Registration successful! Redirecting to profile...');
+        setSuccess(`${t.registrationSuccessful} ${t.redirectingToProfile}`);
         setTimeout(() => router.push('/account/profile'), 2000);
       } else if (EMAIL_CONFIRM_REQUIRED) {
         console.log('Email confirmation required, redirecting to login');
-        setSuccess('Please check your email to confirm your account.');
+        setSuccess(t.checkEmail);
         setTimeout(() => router.push('/login'), 2000);
       } else {
         console.log('No session, redirecting to login');
-        setSuccess('Registration successful! Redirecting to login...');
+        setSuccess(`${t.registrationSuccessful} ${t.redirectingToLogin}`);
         setTimeout(() => router.push('/login'), 2000);
       }
     } catch (err: any) {
       console.error('Registration failed:', err.message, err.stack);
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.message || t.registrationFailed);
       setIsLoading(false);
     }
   };
@@ -216,11 +219,11 @@ export default function RegisterPage() {
         <div className="text-white text-center">
           <Link href="/">
             <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
-              Welcome
+              {t.welcomeTitle}
             </h1>
           </Link>
           <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
-            Start your learning journey with ease.
+            {t.registerFreeTrialSubtitle}
           </p>
         </div>
       </div>
@@ -233,7 +236,7 @@ export default function RegisterPage() {
               {settings.image ? (
                 <Image
                   src={settings.image}
-                  alt="Logo"
+                  alt={t.logo}
                   width={60}
                   height={60}
                   className="h-8 w-auto"
@@ -245,7 +248,7 @@ export default function RegisterPage() {
             </span>
           </Link>
           <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
-            Register and Start Free 7-day Trial with {settings?.site || ''}
+            {t.registerFreeTrialTitle}
           </h1>
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -255,7 +258,7 @@ export default function RegisterPage() {
             <div className="space-y-4">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                  Username
+                  {t.username}
                 </label>
                 <input
                   id="username"
@@ -268,7 +271,7 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
+                  {t.email}
                 </label>
                 <input
                   id="email"
@@ -281,7 +284,7 @@ export default function RegisterPage() {
               </div>
               <div className="relative">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
+                  {t.password}
                 </label>
                 <input
                   id="password"
@@ -295,9 +298,9 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-8 text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? t.hidePassword : t.showPassword}
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? t.hide : t.show}
                 </button>
               </div>
             </div>
@@ -308,7 +311,7 @@ export default function RegisterPage() {
                 type="submit"
                 disabled={isLoading}
               >
-                {isLoading ? 'Registering...' : 'Register'}
+                {isLoading ? t.freeTrialLoading : t.registerButton}
                 <RightArrowDynamic />
               </Button>
               <Button
@@ -317,7 +320,7 @@ export default function RegisterPage() {
                 onClick={handleLogin}
                 className="bg-yellow-200 text-gray-400"
               >
-                Back to Login
+                {t.backToLogin}
                 <RightArrowDynamic />
               </Button>
             </div>
@@ -328,21 +331,21 @@ export default function RegisterPage() {
                 onClick={() => setIsPrivacyOpen(true)}
                 className="text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
               >
-                Privacy
+                {t.privacy}
               </button>
               <button
                 type="button"
                 onClick={() => setIsTermsOpen(true)}
                 className="text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
               >
-                Terms
+                {t.terms}
               </button>
               <button
                 type="button"
                 onClick={() => setIsContactOpen(true)}
                 className="text-sm text-gray-600 hover:text-sky-600 cursor-pointer"
               >
-                Contact
+                {t.contact}
               </button>
             </div>
           </form>

@@ -8,6 +8,7 @@ import { useSettings } from '@/context/SettingsContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import Tooltip from '@/components/Tooltip';
+import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 
 
 export default function LoginPage() {
@@ -17,6 +18,8 @@ export default function LoginPage() {
   const logoCompany = settings.image;
   const backgroundColor = settings.footer_color;
 
+  const t = useAuthTranslations();
+
   return (
     <div className="min-h-screen flex">
       {/* Left side: Gradient background */}
@@ -24,11 +27,11 @@ export default function LoginPage() {
         <div className="text-white text-center">
           <Link href='/'>
           <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
-            Welcome 
+            {t.welcomeTitle} 
           </h1>
           </Link>
           <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
-            Start your learning journey with ease.
+            {t.loginSubtitle}
           </p>
         </div>
       </div>
@@ -39,7 +42,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
 
           <h1 className={`my-8 text-center tracking-wide text-xl sm:text-2xl font-extrabold text-${backgroundColor}`}>
-            Sign In
+            {t.loginButton}
           </h1>
 
           <LoginForm
@@ -56,7 +59,7 @@ export default function LoginPage() {
                  <Tooltip content="Home" >
                 <Image
                   src={settings.image}
-                  alt="Logo"
+                  alt={t.logo}
                   width={60}
                   height={60}
                   className="h-8 w-auto"

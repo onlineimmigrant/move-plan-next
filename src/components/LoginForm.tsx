@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import Button from '@/ui/Button';
 import { v4 as uuidv4 } from 'uuid';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
+import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 
 interface LoginFormProps {
   onShowPrivacy?: () => void;
@@ -28,6 +29,8 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const t = useAuthTranslations();
 
   useEffect(() => {
     console.log('searchParams:', searchParams.toString());
@@ -55,7 +58,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
     setIsLoading(true);
 
     if (!email || !password) {
-      setError('Please enter both email and password.');
+      setError(t.fillAllFields);
       setIsLoading(false);
       return;
     }
@@ -86,7 +89,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
       console.error('Login failed:', (err as Error).message);
-      setError('Invalid email or password. Please try again.');
+      setError(t.invalidCredentials);
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +113,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
     setIsLoading(true);
 
     if (!resetEmail) {
-      setError('Please enter your email to reset your password.');
+      setError(t.fillAllFields);
       setIsLoading(false);
       return;
     }
@@ -173,7 +176,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
         throw new Error('Failed to send reset email.');
       }
 
-      setResetSuccess('Password reset email sent. Check your inbox.');
+      setResetSuccess(t.resetPasswordSuccess);
       setTimeout(() => {
         setShowForgotPassword(false);
         setResetEmail('');
@@ -182,7 +185,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
       }, 2000);
     } catch (err: unknown) {
       console.error('Password reset failed:', (err as Error).message);
-      setError('Failed to send password reset email. Try again or contact support.');
+      setError(t.serverError);
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +201,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
           <div className="space-y-4">
             <div>
               <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700">
-                Email
+                {t.email}
               </label>
               <input
                 id="reset-email"
@@ -212,7 +215,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
           </div>
           <div className="mt-16 space-y-4">
             <Button variant="start" type="submit" disabled={isLoading}>
-              {isLoading ? 'Sending...' : 'Send Reset Email'}
+              {isLoading ? t.resetPasswordLoading : t.resetPasswordButton}
             </Button>
             <Button
               type="button"
@@ -220,7 +223,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
               onClick={() => setShowForgotPassword(false)}
               className="bg-yellow-200 text-gray-400"
             >
-              Back to Login
+              {t.backToLogin}
             </Button>
           </div>
         </form>
@@ -229,7 +232,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+                {t.email}
               </label>
               <input
                 id="email"
@@ -242,7 +245,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
             </div>
             <div className="relative">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                {t.password}
               </label>
               <input
                 id="password"
@@ -256,15 +259,15 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-8 text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t.hidePassword : t.showPassword}
               >
-                {showPassword ? 'Hide' : 'Show'}
+                {showPassword ? t.hide : t.show}
               </button>
             </div>
           </div>
           <div className="mt-16 space-y-4 text-base">
             <Button variant="start" type="submit" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? t.loginLoading : t.loginButton}
               <RightArrowDynamic />
             </Button>
             <Button
@@ -273,7 +276,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
               onClick={handleRegister}
               className="bg-yellow-200 text-gray-400"
             >
-              Register
+              {t.registerButton}
               <RightArrowDynamic />
             </Button>
           </div>
@@ -283,21 +286,21 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
               onClick={onShowPrivacy}
               className="text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
             >
-              Privacy
+              {t.privacy}
             </button>
             <button
               type="button"
               onClick={onShowTerms}
               className="text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
             >
-              Terms
+              {t.terms}
             </button>
             <button
               type="button"
               onClick={() => setShowForgotPassword(true)}
               className="text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
             >
-              Forgot Password?
+              {t.forgotPassword}
             </button>
           </div>
         </form>

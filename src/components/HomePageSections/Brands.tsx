@@ -39,12 +39,13 @@ const Brands: React.FC<BrandsProps> = memo(({ brands, textContent }) => {
   return (
     <section className="py-16 bg-gray-50/50" aria-labelledby="brands-heading">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+       {/*
         <h2 
           id="brands-heading"
           className="text-center text-sm font-semibold leading-8 text-gray-500 tracking-wider uppercase mb-8"
         >
           {textContent.brands_heading || 'Our Trusted Partners'}
-        </h2>
+        </h2>*/}
         
         <div className="relative overflow-hidden" role="img" aria-label="Partner company logos">
           {/* Gradient overlays for smooth fade effect */}
