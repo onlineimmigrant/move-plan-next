@@ -71,6 +71,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     '/admin/products/management',
     '/admin/pricingplans/management',
     '/admin/ai/management',
+    '/admin/miners/management',
   ];
 
   const shouldShowTablesChildMenu =

@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Settings } from '@/types/settings';
+import { Organization } from './types';
 
 type UUID = string;
 
@@ -55,7 +56,7 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
   console.log('Querying organization for URL:', currentUrl);
   const { data, error } = await supabase
     .from('organizations')
-    .select('id')
+    .select('id, type')
     .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
     .maybeSingle();
 
@@ -89,6 +90,106 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
   console.log('Organization found for URL:', currentUrl, 'ID:', data.id);
   organizationIdCache.set(currentUrl, data.id);
   return data.id as UUID;
+}
+
+export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string } } | string): Promise<Organization | null> {
+  let currentUrl: string | undefined;
+
+  if (typeof reqOrBaseUrl === 'string') {
+    currentUrl = reqOrBaseUrl;
+  } else if (reqOrBaseUrl && 'headers' in reqOrBaseUrl && reqOrBaseUrl.headers.host) {
+    currentUrl = `https://${reqOrBaseUrl.headers.host}`;
+  } else {
+    currentUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  }
+
+  const isLocal = process.env.NODE_ENV === 'development';
+  console.log('Fetching organization for URL:', currentUrl, 'isLocal:', isLocal);
+
+  // Normalize URL: remove trailing slashes and convert to lowercase
+  if (currentUrl) {
+    currentUrl = currentUrl.replace(/\/+$/, '').toLowerCase();
+    // Normalize https:// to http:// for localhost:3000 in development
+    if (isLocal && currentUrl === 'https://localhost:3000') {
+      currentUrl = 'http://localhost:3000';
+      console.log('Normalized URL to:', currentUrl);
+    }
+  }
+
+  if (!currentUrl) {
+    const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
+    if (tenantId && isValidUUID(tenantId)) {
+      console.log('No URL provided, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, tenant_id, base_url, base_url_local, type, created_at, updated_at')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      
+      if (error || !data) {
+        console.error('Error fetching organization by tenantId:', error?.message);
+        return null;
+      }
+      return data as Organization;
+    }
+    console.error('No URL or NEXT_PUBLIC_TENANT_ID provided');
+    return null;
+  }
+
+  console.log('Querying organization for URL:', currentUrl);
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('id, tenant_id, base_url, base_url_local, type, created_at, updated_at')
+    .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching organization for URL:', currentUrl, 'Error:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
+    const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
+    if (tenantId && isValidUUID(tenantId)) {
+      console.log('Query failed, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('organizations')
+        .select('id, tenant_id, base_url, base_url_local, type, created_at, updated_at')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      
+      if (fallbackError || !fallbackData) {
+        console.error('Error fetching organization by tenantId:', fallbackError?.message);
+        return null;
+      }
+      return fallbackData as Organization;
+    }
+    return null;
+  }
+
+  if (!data) {
+    console.error('No organization found for URL:', currentUrl);
+    const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
+    if (tenantId && isValidUUID(tenantId)) {
+      console.log('No organization found, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('organizations')
+        .select('id, tenant_id, base_url, base_url_local, type, created_at, updated_at')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      
+      if (fallbackError || !fallbackData) {
+        console.error('Error fetching organization by tenantId:', fallbackError?.message);
+        return null;
+      }
+      return fallbackData as Organization;
+    }
+    return null;
+  }
+
+  console.log('Organization found for URL:', currentUrl, 'ID:', data.id, 'Type:', data.type);
+  return data as Organization;
 }
 
 /**
