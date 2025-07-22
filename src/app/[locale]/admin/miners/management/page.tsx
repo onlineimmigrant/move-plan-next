@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Button from '@/ui/Button';
-import { MinersDashboard, useMinersManagement } from '@/components/MinersComponent';
+import { MinersDashboard, useMinersManagement, CurrencyProvider } from '@/components/MinersComponent';
 
 export default function AdminMinersPage({ params }: { params: { locale: string } }) {
   const {
@@ -105,30 +105,32 @@ export default function AdminMinersPage({ params }: { params: { locale: string }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
-      {/* Revolutionary Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 via-purple-400/5 to-indigo-400/10"></div>
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400/20 to-indigo-500/20 rounded-full blur-3xl"></div>
-      
-      <MinersDashboard 
-        isAuthorized={isAuthorized}
-        miners={miners}
-        isCreatingSample={isCreatingSample}
-        sampleMessage={sampleMessage}
-        debugInfo={debugInfo}
-        filters={filters}
-        onFiltersChange={setFilters}
-        groupBy={groupBy}
-        onGroupByChange={setGroupBy}
-        sort={sort}
-        onSortChange={setSort}
-        showFilters={showFilters}
-        onToggleFilters={toggleFilters}
-        copiedId={copiedId}
-        onCopyToClipboard={copyToClipboard}
-        onCreateSample={handleCreateSample}
-      />
-    </div>
+    <CurrencyProvider>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+        {/* Revolutionary Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 via-purple-400/5 to-indigo-400/10"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400/20 to-indigo-500/20 rounded-full blur-3xl"></div>
+        
+        <MinersDashboard 
+          isAuthorized={isAuthorized}
+          miners={miners}
+          isCreatingSample={isCreatingSample}
+          sampleMessage={sampleMessage}
+          debugInfo={debugInfo}
+          filters={filters}
+          onFiltersChange={setFilters}
+          groupBy={groupBy}
+          onGroupByChange={setGroupBy}
+          sort={sort}
+          onSortChange={setSort}
+          showFilters={showFilters}
+          onToggleFilters={toggleFilters}
+          copiedId={copiedId}
+          onCopyToClipboard={copyToClipboard}
+          onCreateSample={handleCreateSample}
+        />
+      </div>
+    </CurrencyProvider>
   );
 }

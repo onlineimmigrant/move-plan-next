@@ -8,6 +8,11 @@ export { default as MinersList } from './MinersList';
 export { default as MinerCard } from './MinerCard';
 export { default as EmptyState } from './EmptyState';
 
+// Currency Components
+export { default as CurrencySwitcher } from './CurrencySwitcher';
+export { default as CurrencyInfo } from './CurrencyInfo';
+export { CurrencyProvider, useCurrency } from './CurrencyContext';
+
 // Sub Components
 export { default as SearchComponent } from './SearchComponent';
 export { default as GroupByDropdown } from './GroupByDropdown';

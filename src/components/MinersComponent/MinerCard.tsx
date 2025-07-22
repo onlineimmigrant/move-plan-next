@@ -6,6 +6,7 @@ import Tooltip from '@/components/Tooltip';
 import Button from '@/ui/Button';
 import { MinerData } from './types';
 import { getModelFromSerial, getMinerStatus } from './utils';
+import { useCurrency } from './CurrencyContext';
 
 interface MinerCardProps {
   miner: MinerData;
@@ -16,6 +17,7 @@ interface MinerCardProps {
 export default function MinerCard({ miner, copiedId, onCopyToClipboard }: MinerCardProps) {
   // Use centralized status determination
   const status = getMinerStatus(miner);
+  const { formatAmount } = useCurrency();
   return (
     <div className="group relative p-4 sm:p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 hover:shadow-xl hover:border-blue-300/60 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
       {/* Background Gradient Overlay */}
@@ -92,7 +94,7 @@ export default function MinerCard({ miner, copiedId, onCopyToClipboard }: MinerC
                 <div className="text-xs text-emerald-600 uppercase tracking-wide font-semibold">Daily Profit</div>
               </div>
               <div className="font-bold text-emerald-900 text-sm sm:text-base truncate">
-                {miner.profit ? `$${miner.profit.toFixed(2)}` : 'N/A'}
+                {miner.profit ? formatAmount(miner.profit) : 'N/A'}
               </div>
             </div>
           </div>
