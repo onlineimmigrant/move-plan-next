@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/AuthContext'; // Verify this export exists
 import { BasketProvider } from '@/context/BasketContext'; // Verify this export exists
 import { SettingsProvider } from '@/context/SettingsContext'; // Verify this export exists
@@ -54,6 +55,16 @@ export default function ClientProviders({
   const [headings, setHeadings] = useState<TemplateHeadingSection[]>([]);
   const [loading, setLoading] = useState(true);
   const cache = useMemo(() => new Map<string, { sections: TemplateSection[]; headings: TemplateHeadingSection[] }>(), []);
+
+  // Create QueryClient instance
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchOnWindowFocus: false,
+      },
+    },
+  }));
 
   useEffect(() => {
     const fetchTemplateData = async () => {
@@ -143,27 +154,29 @@ export default function ClientProviders({
   );
 
   return (
-    <AuthProvider>
-      <BannerProvider>
-        <BasketProvider>
-          <SettingsProvider initialSettings={settings}>
-            <DynamicLanguageUpdater />
-            <DefaultLocaleCookieManager />
-            <CookieSettingsProvider>
-              <BannerAwareContent
-                children={children}
-                showNavbarFooter={showNavbarFooter}
-                menuItems={menuItems}
-                loading={loading}
-                headerData={headerData}
-                activeLanguages={activeLanguages}
-              />
-              <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
-            </CookieSettingsProvider>
-          </SettingsProvider>
-        </BasketProvider>
-      </BannerProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BannerProvider>
+          <BasketProvider>
+            <SettingsProvider initialSettings={settings}>
+              <DynamicLanguageUpdater />
+              <DefaultLocaleCookieManager />
+              <CookieSettingsProvider>
+                <BannerAwareContent
+                  children={children}
+                  showNavbarFooter={showNavbarFooter}
+                  menuItems={menuItems}
+                  loading={loading}
+                  headerData={headerData}
+                  activeLanguages={activeLanguages}
+                />
+                <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+              </CookieSettingsProvider>
+            </SettingsProvider>
+          </BasketProvider>
+        </BannerProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

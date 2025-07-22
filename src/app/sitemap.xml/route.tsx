@@ -63,7 +63,7 @@ const getCachedOrganizationData = async (orgId: string): Promise<any> => {
 
   const { data, error } = await supabase
     .from('organizations')
-    .select('base_url')
+    .select('base_url, type')
     .eq('id', orgId)
     .single();
 
@@ -316,7 +316,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       featuresResult,
       productsResult
     ] = await Promise.allSettled([
-      supabase.from('organizations').select('base_url').eq('id', effectiveOrgId).single(),
+      supabase.from('organizations').select('base_url, type').eq('id', effectiveOrgId).single(),
       supabase.from('sitemap_static_pages').select('url_path, priority, last_modified').eq('organization_id', effectiveOrgId),
       supabase.from('blog_post').select('slug, last_modified, display_this_post, section_id').eq('organization_id', effectiveOrgId).eq('display_this_post', true),
       supabase.from('feature').select('slug, created_at').eq('organization_id', effectiveOrgId),

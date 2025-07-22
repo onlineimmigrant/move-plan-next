@@ -1,3 +1,13 @@
+export interface Organization {
+  id: string;
+  tenant_id?: string | null;
+  base_url?: string | null;
+  base_url_local?: string | null;
+  type: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Flashcard {
   id: number;
   name: string;

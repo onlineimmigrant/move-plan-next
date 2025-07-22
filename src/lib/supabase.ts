@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { getBaseUrl } from './utils';
 import { Banner, BannerOpenState, BannerPosition, BannerType } from '../components/banners/types';
+import { Organization } from './types';
 
 // Validate environment variables
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -24,7 +25,7 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
   // Try fetching by base_url or base_url_local
   const query = supabase
     .from('organizations')
-    .select('id')
+    .select('id, type')
     .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl);
 
   const { data, error } = await query.single();
@@ -43,7 +44,7 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
       console.log('Attempting fallback with tenantId:', tenantId);
       const { data: tenantData, error: tenantError } = await supabase
         .from('organizations')
-        .select('id')
+        .select('id, type')
         .eq('tenant_id', tenantId)
         .single();
 
@@ -67,6 +68,61 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
 
   console.log('Fetched organization ID by baseUrl:', data.id);
   return data.id;
+}
+
+export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: string; type: string } | null> {
+  const isLocal = process.env.NODE_ENV === 'development';
+  const currentUrl = baseUrl || getBaseUrl(true); // Use getBaseUrl for Vercel compatibility
+  const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
+
+  console.log('Fetching organization with type for URL:', currentUrl, 'isLocal:', isLocal, 'tenantId:', tenantId);
+
+  // Try fetching by base_url or base_url_local
+  const query = supabase
+    .from('organizations')
+    .select('id, type')
+    .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl);
+
+  const { data, error } = await query.single();
+
+  if (error || !data) {
+    console.error('Error fetching organization by baseUrl:', {
+      message: error?.message || 'No error message',
+      code: error?.code || 'No code',
+      details: error?.details || 'No details',
+      hint: error?.hint || 'No hint',
+      baseUrl: currentUrl,
+    });
+
+    // Fallback to tenantId if provided
+    if (tenantId) {
+      console.log('Attempting fallback with tenantId:', tenantId);
+      const { data: tenantData, error: tenantError } = await supabase
+        .from('organizations')
+        .select('id, type')
+        .eq('tenant_id', tenantId)
+        .single();
+
+      if (tenantError || !tenantData) {
+        console.error('Error fetching organization by tenantId:', {
+          message: tenantError?.message || 'No error message',
+          code: tenantError?.code || 'No code',
+          details: tenantError?.details || 'No details',
+          hint: tenantError?.hint || 'No hint',
+          tenantId,
+        });
+        return null;
+      }
+
+      console.log('Fetched organization with type by tenantId:', tenantData.id, tenantData.type);
+      return { id: tenantData.id, type: tenantData.type };
+    }
+
+    return null;
+  }
+
+  console.log('Fetched organization with type by baseUrl:', data.id, data.type);
+  return { id: data.id, type: data.type };
 }
 
 // Parse interval string to milliseconds
