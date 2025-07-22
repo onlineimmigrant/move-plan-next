@@ -2,8 +2,6 @@
 
 import React from 'react';
 import SearchComponent from './SearchComponent';
-import GroupByDropdown from './GroupByDropdown';
-import SortDropdown from './SortDropdown';
 import FiltersToggle from './FiltersToggle';
 import AdvancedFilters from './AdvancedFilters';
 import { FilterState, SortState, GroupByKey } from './types';
@@ -11,10 +9,6 @@ import { FilterState, SortState, GroupByKey } from './types';
 interface ControlsPanelProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
-  groupBy: GroupByKey;
-  onGroupByChange: (groupBy: GroupByKey) => void;
-  sort: SortState;
-  onSortChange: (sort: SortState) => void;
   showFilters: boolean;
   onToggleFilters: () => void;
   uniqueStatuses: string[];
@@ -25,10 +19,6 @@ interface ControlsPanelProps {
 export default function ControlsPanel({
   filters,
   onFiltersChange,
-  groupBy,
-  onGroupByChange,
-  sort,
-  onSortChange,
   showFilters,
   onToggleFilters,
   uniqueStatuses,
@@ -47,18 +37,6 @@ export default function ControlsPanel({
             <SearchComponent 
               filters={filters}
               onFiltersChange={onFiltersChange}
-            />
-
-            {/* Group By Dropdown */}
-            <GroupByDropdown 
-              groupBy={groupBy}
-              onGroupByChange={onGroupByChange}
-            />
-
-            {/* Sort Dropdown */}
-            <SortDropdown 
-              sort={sort}
-              onSortChange={onSortChange}
             />
 
             {/* Filters Toggle */}
