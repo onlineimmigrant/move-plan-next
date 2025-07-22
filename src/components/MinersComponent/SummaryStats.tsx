@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { MinerData } from './types';
 import { getMinerStatus } from './utils';
+import { useCurrency } from './CurrencyContext';
 
 interface SummaryStatsProps {
   sortedMiners: MinerData[];
@@ -50,6 +51,8 @@ function useAnimatedCounter(endValue: number, duration: number = 1000, decimals:
 }
 
 export default function SummaryStats({ sortedMiners }: SummaryStatsProps) {
+  const { formatAmount } = useCurrency();
+  
   // Calculate status counts using consistent logic
   const onlineMiners = sortedMiners.filter(m => getMinerStatus(m) === 'online').length;
   const offlineMiners = sortedMiners.filter(m => getMinerStatus(m) === 'offline').length;
@@ -62,7 +65,7 @@ export default function SummaryStats({ sortedMiners }: SummaryStatsProps) {
   const animatedTotal = useAnimatedCounter(sortedMiners.length, 800);
   const animatedOnline = useAnimatedCounter(onlineMiners, 900);
   const animatedHashrate = useAnimatedCounter(totalHashrate, 1200, 1);
-  const animatedProfit = useAnimatedCounter(totalProfit, 1000, 2);
+  const animatedProfitValue = useAnimatedCounter(totalProfit, 1000, 2);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -118,7 +121,7 @@ export default function SummaryStats({ sortedMiners }: SummaryStatsProps) {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-medium text-orange-600 uppercase tracking-wide">Total Profit</h3>
-            <p className="text-3xl font-bold text-orange-900 mt-1 tabular-nums">${animatedProfit}</p>
+            <p className="text-3xl font-bold text-orange-900 mt-1 tabular-nums">{formatAmount(parseFloat(animatedProfitValue))}</p>
             <p className="text-orange-700 text-sm mt-1">per day</p>
           </div>
           <div className="bg-orange-200 p-3 rounded-xl">
