@@ -43,7 +43,7 @@ interface CurrencyProviderProps {
 }
 
 export function CurrencyProvider({ children }: CurrencyProviderProps) {
-  const [currentCurrency, setCurrentCurrency] = useState<CurrencyCode>('USD');
+  const [currentCurrency, setCurrentCurrency] = useState<CurrencyCode>('EUR');
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,9 +55,9 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
       setIsLoading(true);
       setError(null);
 
-      // CoinGecko API endpoints
-      const fiatRatesUrl = 'https://api.coingecko.com/api/v3/exchange_rates';
-      const cryptoRatesUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether,usd-coin,dai&vs_currencies=usd,eur,gbp,jpy,cad,aud,chf,cny';
+      // CoinGecko API endpoints from environment variables
+      const fiatRatesUrl = process.env.NEXT_PUBLIC_COINGECKO_RATES_URL || 'https://api.coingecko.com/api/v3/exchange_rates';
+      const cryptoRatesUrl = process.env.NEXT_PUBLIC_COINGECKO_CRYPTO_URL || 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether,usd-coin,dai&vs_currencies=usd,eur,gbp,jpy,cad,aud,chf,cny';
 
       const [fiatResponse, cryptoResponse] = await Promise.all([
         fetch(fiatRatesUrl),

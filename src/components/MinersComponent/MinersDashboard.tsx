@@ -75,16 +75,17 @@ export default function MinersDashboard({
       <div className="relative z-10 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Ultra-Modern Header with Glass Morphism */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="w-full mb-6">
             <MinersHeader 
               isAuthorized={isAuthorized}
               sortedMinersLength={sortedMiners.length}
               isCreatingSample={isCreatingSample}
               onCreateSample={onCreateSample}
+              groupBy={groupBy}
+              onGroupByChange={onGroupByChange}
+              sort={sort}
+              onSortChange={onSortChange}
             />
-            
-            {/* Currency Switcher */}
-            <CurrencySwitcher className="sm:ml-auto" />
           </div>
 
           {/* Status Messages */}
@@ -100,10 +101,6 @@ export default function MinersDashboard({
           <ControlsPanel 
             filters={filters}
             onFiltersChange={onFiltersChange}
-            groupBy={groupBy}
-            onGroupByChange={onGroupByChange}
-            sort={sort}
-            onSortChange={onSortChange}
             showFilters={showFilters}
             onToggleFilters={onToggleFilters}
             uniqueStatuses={uniqueStatuses}
