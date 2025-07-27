@@ -1,7 +1,7 @@
 // components/ChatHelpWidget/ConversationTab.tsx
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { PaperAirplaneIcon, UserIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { PaperAirplaneIcon, UserIcon, UserCircleIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import { WidgetSize } from '../ChatWidget/types';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
 
@@ -107,13 +107,6 @@ export default function ConversationTab({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
   const getMessageIcon = (sender: string) => {
     if (sender === 'user') {
       return <UserIcon className="h-5 w-5" />;
@@ -123,31 +116,9 @@ export default function ConversationTab({
   };
 
   return (
-    <div className={`h-full flex flex-col ${size === 'fullscreen' ? 'max-w-4xl mx-auto' : ''}`}>
-      {/* Conversation Header */}
-      <div className="px-4 py-3 bg-sky-50 border-b border-sky-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-sky-800">{t.liveSupport}</h3>
-            <p className="text-xs text-sky-600">
-              {isAuthenticated ? t.chatSupportTeam : t.chatSupportTeam}
-            </p>
-          </div>
-          <div className={`w-3 h-3 rounded-full ${
-            connectionStatus === 'connected' ? 'bg-green-500' :
-            connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'
-          }`} />
-        </div>
-        <div className="mt-1">
-          <span className="text-sm text-gray-600">
-            {connectionStatus === 'connected' ? t.online :
-             connectionStatus === 'connecting' ? t.connecting : t.offline}
-          </span>
-        </div>
-      </div>
-
+    <div className={`h-full flex flex-col relative ${size === 'fullscreen' ? 'max-w-4xl mx-auto' : ''}`}>
       {/* Messages Container */}
-      <div className="flex-1 p-4 space-y-4">
+      <div className="flex-1 p-4 space-y-4 overflow-y-auto pb-36">
         {messages.map((message) => (
           <div key={message.id} className="flex items-start space-x-2">
             <div className={`p-2 rounded-full ${
@@ -199,27 +170,27 @@ export default function ConversationTab({
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-end space-x-2">
-          <div className="flex-1 relative">
+      <div className="absolute bottom-0 left-0 right-0 p-4  border-gray-200 bg-white">
+        <div className="border border-gray-200 rounded-xl bg-gray-50 p-2">
+          <div className="flex items-end">
             <textarea
               ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyPress}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
               placeholder={t.typeMessage}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none"
+              className="rounded p-2 flex-grow resize-none focus:outline-none bg-gray-50"
               rows={1}
               disabled={isTyping}
             />
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isTyping}
+              className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full ml-2 disabled:bg-gray-200 hover:bg-gray-200 transition-colors"
+            >
+              <ArrowUpIcon className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isTyping}
-            className="p-3 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex-shrink-0"
-          >
-            <PaperAirplaneIcon className="h-5 w-5" />
-          </button>
         </div>
         
         <div className="mt-2 text-xs text-gray-500 text-center">

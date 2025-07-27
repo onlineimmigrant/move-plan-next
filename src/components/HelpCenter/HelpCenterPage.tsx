@@ -31,6 +31,23 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/favicons/${favicon}`;
   };
 
+  const getHeaderTitle = () => {
+    switch (activeTab) {
+      case 'welcome':
+        return t.helpCenter;
+      case 'articles':
+        return t.knowledgeBase;
+      case 'faq':
+        return t.faqs;
+      case 'conversation':
+        return t.liveSupport;
+      case 'ai':
+        return t.aiAssistant;
+      default:
+        return t.helpCenter;
+    }
+  };
+
   const tabs = [
     {
       id: 'welcome' as const,
@@ -110,7 +127,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
             userId={null}
             accessToken={null}
             goToLogin={() => {}}
-            goToSignup={() => {}}
+            goToRegister={() => {}}
           />
         );
       default:
@@ -121,7 +138,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="px-4 sm:px-8 flex justify-between items-center bg-white border-b border-gray-200 sticky top-0 z-10 h-16">
+      <header className="z-11 px-4 sm:px-8 flex justify-between items-center bg-white border-b border-gray-200 sticky top-0  h-16">
        
         
            
@@ -168,7 +185,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
               </button>
               
               <div className='flex items-center space-x-3'>
-              <h1 className="text-base sm:text-2xl font-bold text-gray-900">{t.helpCenter}</h1>
+              <h1 className="text-base sm:text-2xl font-bold text-gray-900">{getHeaderTitle()}</h1>
               <span className="hidden sm:flex ml-3 px-2 py-1 text-xs bg-sky-100 text-sky-700 rounded-full">
                 {t.supportKnowledgeBase}
               </span>
@@ -188,8 +205,8 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
       </header>
 
       {/* Mobile Navigation */}
-      <div className=" bg-white border-b border-gray-200">
-        <div className=" px-4 sm:px-6">
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
+        <div className="px-4 sm:px-6">
           <div className="flex items-center justify-between py-3">
             <div className="flex space-x-1 overflow-x-auto flex-1">
               {tabs.map((tab) => {
@@ -216,7 +233,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
       </div>
 
       {/* Main Content */}
-      <main className="  px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-8">
         {/* Breadcrumb */}
         <div className="mb-6">
           <nav className="flex items-center space-x-2 text-sm text-gray-500">
@@ -232,7 +249,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
           </nav>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[700px] overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[700px] flex flex-col relative">
           {renderActiveTab()}
         </div>
       </main>

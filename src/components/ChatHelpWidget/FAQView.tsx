@@ -38,7 +38,7 @@ export default function FAQView({ size, onBack }: FAQViewProps) {
         <p className="text-gray-600 text-sm mt-1 mb-4">{t.findAnswersCommon}</p>
         
         {/* Search Bar */}
-        <div className="relative z-10">
+        <div className="relative z-1">
           <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"

@@ -116,7 +116,7 @@ export default function ArticlesTab({ size, showBackButton, onBack }: ArticlesTa
         </h2>
         
         {/* Search Bar */}
-        <div className="relative mb-4 z-10">
+        <div className="relative mb-4 z-1">
           <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"

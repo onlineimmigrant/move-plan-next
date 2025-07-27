@@ -15,8 +15,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Frequently asked questions',
     liveSupport: 'Live Support',
     liveSupportDescription: 'Chat with our support team',
-    aiAssistant: 'AI Assistant',
-    aiAssistantDescription: 'Get help from our AI assistant',
+    aiAssistant: 'AI Agent',
+    aiAssistantDescription: 'Get help from our AI agent',
     
     // Search and actions
     searchForHelp: 'Search for help...',
@@ -30,7 +30,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Find answers to common questions',
     browseArticlesGuides: 'Browse articles and guides',
     chatSupportTeam: 'Chat with our support team',
-    getHelpAI: 'Get help from our AI assistant',
+    getHelpAI: 'Get help from our AI agent',
     
     // Articles and content
     popularArticles: 'Popular Articles',
@@ -69,7 +69,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Ask me anything...',
     thinking: 'Thinking...',
     loginRequired: 'Login Required',
-    pleaseLogin: 'Please log in to use the AI assistant',
+    pleaseLogin: 'Please log in to use the AI agent',
     login: 'Login',
     signup: 'Sign Up',
     
@@ -119,8 +119,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Preguntas frecuentes',
     liveSupport: 'Soporte en Vivo',
     liveSupportDescription: 'Chatea con nuestro equipo de soporte',
-    aiAssistant: 'Asistente IA',
-    aiAssistantDescription: 'Obtén ayuda de nuestro asistente IA',
+    aiAssistant: 'Agente IA',
+    aiAssistantDescription: 'Obtén ayuda de nuestro agente IA',
     
     // Search and actions
     searchForHelp: 'Buscar ayuda...',
@@ -134,7 +134,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Encuentra respuestas a preguntas comunes',
     browseArticlesGuides: 'Navega artículos y guías',
     chatSupportTeam: 'Chatea con nuestro equipo de soporte',
-    getHelpAI: 'Obtén ayuda de nuestro asistente IA',
+    getHelpAI: 'Obtén ayuda de nuestro agente IA',
     
     // Articles and content
     popularArticles: 'Artículos Populares',
@@ -173,7 +173,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Pregúntame cualquier cosa...',
     thinking: 'Pensando...',
     loginRequired: 'Inicio de Sesión Requerido',
-    pleaseLogin: 'Por favor, inicia sesión para usar el asistente IA',
+    pleaseLogin: 'Por favor, inicia sesión para usar el agente IA',
     login: 'Iniciar Sesión',
     signup: 'Registrarse',
     
@@ -223,8 +223,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Questions fréquemment posées',
     liveSupport: 'Support en Direct',
     liveSupportDescription: 'Chattez avec notre équipe de support',
-    aiAssistant: 'Assistant IA',
-    aiAssistantDescription: 'Obtenez de l\'aide de notre assistant IA',
+    aiAssistant: 'Agent IA',
+    aiAssistantDescription: 'Obtenez de l\'aide de notre agent IA',
     
     // Search and actions
     searchForHelp: 'Rechercher de l\'aide...',
@@ -238,7 +238,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Trouvez des réponses aux questions courantes',
     browseArticlesGuides: 'Parcourez les articles et guides',
     chatSupportTeam: 'Chattez avec notre équipe de support',
-    getHelpAI: 'Obtenez de l\'aide de notre assistant IA',
+    getHelpAI: 'Obtenez de l\'aide de notre agent IA',
     
     // Articles and content
     popularArticles: 'Articles Populaires',
@@ -277,7 +277,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Demandez-moi n\'importe quoi...',
     thinking: 'Réflexion...',
     loginRequired: 'Connexion Requise',
-    pleaseLogin: 'Veuillez vous connecter pour utiliser l\'assistant IA',
+    pleaseLogin: 'Veuillez vous connecter pour utiliser l\'agent IA',
     login: 'Se Connecter',
     signup: 'S\'Inscrire',
     
@@ -327,8 +327,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Häufig gestellte Fragen',
     liveSupport: 'Live-Support',
     liveSupportDescription: 'Mit unserem Support-Team chatten',
-    aiAssistant: 'KI-Assistent',
-    aiAssistantDescription: 'Hilfe von unserem KI-Assistenten erhalten',
+    aiAssistant: 'KI-Agent',
+    aiAssistantDescription: 'Hilfe von unserem KI-Agenten erhalten',
     
     // Search and actions
     searchForHelp: 'Nach Hilfe suchen...',
@@ -342,7 +342,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Antworten auf häufige Fragen finden',
     browseArticlesGuides: 'Artikel und Anleitungen durchsuchen',
     chatSupportTeam: 'Mit unserem Support-Team chatten',
-    getHelpAI: 'Hilfe von unserem KI-Assistenten erhalten',
+    getHelpAI: 'Hilfe von unserem KI-Agenten erhalten',
     
     // Articles and content
     popularArticles: 'Beliebte Artikel',
@@ -381,7 +381,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Fragen Sie mich alles...',
     thinking: 'Denke nach...',
     loginRequired: 'Anmeldung Erforderlich',
-    pleaseLogin: 'Bitte melden Sie sich an, um den KI-Assistenten zu verwenden',
+    pleaseLogin: 'Bitte melden Sie sich an, um den KI-Agenten zu verwenden',
     login: 'Anmelden',
     signup: 'Registrieren',
     
@@ -431,8 +431,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Часто задаваемые вопросы',
     liveSupport: 'Онлайн Поддержка',
     liveSupportDescription: 'Чат с нашей командой поддержки',
-    aiAssistant: 'ИИ Ассистент',
-    aiAssistantDescription: 'Получите помощь от нашего ИИ ассистента',
+    aiAssistant: 'ИИ Агент',
+    aiAssistantDescription: 'Получите помощь от нашего ИИ агента',
     
     // Search and actions
     searchForHelp: 'Поиск помощи...',
@@ -446,7 +446,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Найдите ответы на распространенные вопросы',
     browseArticlesGuides: 'Просмотр статей и руководств',
     chatSupportTeam: 'Чат с нашей командой поддержки',
-    getHelpAI: 'Получите помощь от нашего ИИ ассистента',
+    getHelpAI: 'Получите помощь от нашего ИИ агента',
     
     // Articles and content
     popularArticles: 'Популярные Статьи',
@@ -485,7 +485,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Спросите меня о чем угодно...',
     thinking: 'Думаю...',
     loginRequired: 'Требуется Вход',
-    pleaseLogin: 'Пожалуйста, войдите в систему, чтобы использовать ИИ ассистента',
+    pleaseLogin: 'Пожалуйста, войдите в систему, чтобы использовать ИИ агента',
     login: 'Войти',
     signup: 'Регистрация',
     
@@ -535,8 +535,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Perguntas frequentes',
     liveSupport: 'Suporte ao Vivo',
     liveSupportDescription: 'Converse com nossa equipe de suporte',
-    aiAssistant: 'Assistente IA',
-    aiAssistantDescription: 'Obtenha ajuda de nosso assistente IA',
+    aiAssistant: 'Agente IA',
+    aiAssistantDescription: 'Obtenha ajuda de nosso agente IA',
     
     // Search and actions
     searchForHelp: 'Procurar ajuda...',
@@ -550,7 +550,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Encontre respostas para perguntas comuns',
     browseArticlesGuides: 'Navegue por artigos e guias',
     chatSupportTeam: 'Converse com nossa equipe de suporte',
-    getHelpAI: 'Obtenha ajuda de nosso assistente IA',
+    getHelpAI: 'Obtenha ajuda de nosso agente IA',
     
     // Articles and content
     popularArticles: 'Artigos Populares',
@@ -589,7 +589,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Pergunte-me qualquer coisa...',
     thinking: 'Pensando...',
     loginRequired: 'Login Necessário',
-    pleaseLogin: 'Por favor, faça login para usar o assistente IA',
+    pleaseLogin: 'Por favor, faça login para usar o agente IA',
     login: 'Entrar',
     signup: 'Cadastrar-se',
     
@@ -639,8 +639,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Domande frequenti',
     liveSupport: 'Supporto Live',
     liveSupportDescription: 'Chatta con il nostro team di supporto',
-    aiAssistant: 'Assistente IA',
-    aiAssistantDescription: 'Ottieni aiuto dal nostro assistente IA',
+    aiAssistant: 'Agente IA',
+    aiAssistantDescription: 'Ottieni aiuto dal nostro agente IA',
     
     // Search and actions
     searchForHelp: 'Cerca aiuto...',
@@ -654,7 +654,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Trova risposte alle domande comuni',
     browseArticlesGuides: 'Sfoglia articoli e guide',
     chatSupportTeam: 'Chatta con il nostro team di supporto',
-    getHelpAI: 'Ottieni aiuto dal nostro assistente IA',
+    getHelpAI: 'Ottieni aiuto dal nostro agente IA',
     
     // Articles and content
     popularArticles: 'Articoli Popolari',
@@ -693,7 +693,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Chiedimi qualsiasi cosa...',
     thinking: 'Pensando...',
     loginRequired: 'Login Richiesto',
-    pleaseLogin: 'Effettua il login per usare l\'assistente IA',
+    pleaseLogin: 'Effettua il login per usare l\'agente IA',
     login: 'Accedi',
     signup: 'Registrati',
     
@@ -743,8 +743,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Veelgestelde vragen',
     liveSupport: 'Live Ondersteuning',
     liveSupportDescription: 'Chat met ons ondersteuningsteam',
-    aiAssistant: 'AI Assistent',
-    aiAssistantDescription: 'Krijg hulp van onze AI assistent',
+    aiAssistant: 'AI Agent',
+    aiAssistantDescription: 'Krijg hulp van onze AI agent',
     
     // Search and actions
     searchForHelp: 'Zoek naar hulp...',
@@ -758,7 +758,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Vind antwoorden op veelgestelde vragen',
     browseArticlesGuides: 'Blader door artikelen en gidsen',
     chatSupportTeam: 'Chat met ons ondersteuningsteam',
-    getHelpAI: 'Krijg hulp van onze AI assistent',
+    getHelpAI: 'Krijg hulp van onze AI agent',
     
     // Articles and content
     popularArticles: 'Populaire Artikelen',
@@ -797,7 +797,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Vraag me alles...',
     thinking: 'Denken...',
     loginRequired: 'Inloggen Vereist',
-    pleaseLogin: 'Log in om de AI assistent te gebruiken',
+    pleaseLogin: 'Log in om de AI agent te gebruiken',
     login: 'Inloggen',
     signup: 'Registreren',
     
@@ -847,8 +847,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'Często zadawane pytania',
     liveSupport: 'Wsparcie na Żywo',
     liveSupportDescription: 'Porozmawiaj z naszym zespołem wsparcia',
-    aiAssistant: 'Asystent AI',
-    aiAssistantDescription: 'Uzyskaj pomoc od naszego asystenta AI',
+    aiAssistant: 'Agent AI',
+    aiAssistantDescription: 'Uzyskaj pomoc od naszego agenta AI',
     
     // Search and actions
     searchForHelp: 'Szukaj pomocy...',
@@ -862,7 +862,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'Znajdź odpowiedzi na często zadawane pytania',
     browseArticlesGuides: 'Przeglądaj artykuły i przewodniki',
     chatSupportTeam: 'Porozmawiaj z naszym zespołem wsparcia',
-    getHelpAI: 'Uzyskaj pomoc od naszego asystenta AI',
+    getHelpAI: 'Uzyskaj pomoc od naszego agenta AI',
     
     // Articles and content
     popularArticles: 'Popularne Artykuły',
@@ -901,7 +901,7 @@ export const helpCenterTranslations = {
     askQuestion: 'Zapytaj mnie o cokolwiek...',
     thinking: 'Myślę...',
     loginRequired: 'Wymagane Logowanie',
-    pleaseLogin: 'Zaloguj się, aby korzystać z asystenta AI',
+    pleaseLogin: 'Zaloguj się, aby korzystać z agenta AI',
     login: 'Zaloguj się',
     signup: 'Zarejestruj się',
     
@@ -951,8 +951,8 @@ export const helpCenterTranslations = {
     faqsDescription: 'よくある質問',
     liveSupport: 'ライブサポート',
     liveSupportDescription: 'サポートチームとチャット',
-    aiAssistant: 'AIアシスタント',
-    aiAssistantDescription: 'AIアシスタントからヘルプを取得',
+    aiAssistant: 'AIエージェント',
+    aiAssistantDescription: 'AIエージェントからヘルプを取得',
     
     // Search and actions
     searchForHelp: 'ヘルプを検索...',
@@ -966,7 +966,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: 'よくある質問の回答を見つける',
     browseArticlesGuides: '記事とガイドを閲覧',
     chatSupportTeam: 'サポートチームとチャット',
-    getHelpAI: 'AIアシスタントからヘルプを取得',
+    getHelpAI: 'AIエージェントからヘルプを取得',
     
     // Articles and content
     popularArticles: '人気記事',
@@ -1005,7 +1005,7 @@ export const helpCenterTranslations = {
     askQuestion: '何でもお聞きください...',
     thinking: '考え中...',
     loginRequired: 'ログインが必要',
-    pleaseLogin: 'AIアシスタントを使用するにはログインしてください',
+    pleaseLogin: 'AIエージェントを使用するにはログインしてください',
     login: 'ログイン',
     signup: 'サインアップ',
     
@@ -1055,8 +1055,8 @@ export const helpCenterTranslations = {
     faqsDescription: '常见问题',
     liveSupport: '在线支持',
     liveSupportDescription: '与我们的支持团队聊天',
-    aiAssistant: 'AI助手',
-    aiAssistantDescription: '从我们的AI助手获得帮助',
+    aiAssistant: 'AI代理',
+    aiAssistantDescription: '从我们的AI代理获得帮助',
     
     // Search and actions
     searchForHelp: '搜索帮助...',
@@ -1070,7 +1070,7 @@ export const helpCenterTranslations = {
     findAnswersCommon: '查找常见问题的答案',
     browseArticlesGuides: '浏览文章和指南',
     chatSupportTeam: '与我们的支持团队聊天',
-    getHelpAI: '从我们的AI助手获得帮助',
+    getHelpAI: '从我们的AI代理获得帮助',
     
     // Articles and content
     popularArticles: '热门文章',
@@ -1109,7 +1109,7 @@ export const helpCenterTranslations = {
     askQuestion: '问我任何问题...',
     thinking: '思考中...',
     loginRequired: '需要登录',
-    pleaseLogin: '请登录以使用AI助手',
+    pleaseLogin: '请登录以使用AI代理',
     login: '登录',
     signup: '注册',
     

@@ -18,6 +18,8 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+const WIDGET_STATE_KEY = 'chatHelpWidget_state';
+
 export default function ChatHelpWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'welcome' | 'conversation' | 'ai'>('welcome');
@@ -86,11 +88,7 @@ export default function ChatHelpWidget() {
   };
 
   const handleTabChange = (tab: 'welcome' | 'conversation' | 'ai') => {
-    // Check if user is authenticated for AI Agent tab
-    if (tab === 'ai' && !isAuthenticated) {
-      setError('Please log in to access AI Agent features.');
-      return;
-    }
+    // Allow navigation to all tabs - authentication check handled within each tab component
     setActiveTab(tab);
     setCurrentView(tab);
     setError(null);
@@ -105,7 +103,59 @@ export default function ChatHelpWidget() {
   };
 
   const goToSignup = () => {
-    router.push('/signup');
+    router.push('/register');
+  };
+
+  // Save widget state before language changes
+  const saveWidgetState = () => {
+    if (typeof window !== 'undefined') {
+      const state = {
+        isOpen,
+        size,
+        activeTab,
+        currentView,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem(WIDGET_STATE_KEY, JSON.stringify(state));
+    }
+  };
+
+  // Restore widget state after language changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = sessionStorage.getItem(WIDGET_STATE_KEY);
+      if (savedState) {
+        try {
+          const state = JSON.parse(savedState);
+          // Only restore if state is recent (within 5 seconds)
+          if (Date.now() - state.timestamp < 5000) {
+            setIsOpen(state.isOpen);
+            setSize(state.size);
+            setActiveTab(state.activeTab);
+            setCurrentView(state.currentView);
+          }
+          // Clear the state after restoring
+          sessionStorage.removeItem(WIDGET_STATE_KEY);
+        } catch (error) {
+          console.error('Error restoring widget state:', error);
+        }
+      }
+    }
+  }, []);
+
+  const handleLanguageChange = (newLocale: string) => {
+    // Save current widget state
+    saveWidgetState();
+    
+    // Navigate to new locale
+    const currentPath = window.location.pathname;
+    const segments = currentPath.split('/');
+    const pathWithoutLocale = segments.length > 2 && segments[1].length === 2 
+      ? segments.slice(2).join('/') 
+      : segments.slice(1).join('/');
+    
+    const newPath = pathWithoutLocale ? `/${newLocale}/${pathWithoutLocale}` : `/${newLocale}`;
+    router.push(newPath);
   };
 
   const renderActiveTab = () => {
@@ -153,7 +203,7 @@ export default function ChatHelpWidget() {
             accessToken={accessToken}
             size={size}
             goToLogin={goToLogin}
-            goToSignup={goToSignup}
+            goToRegister={goToSignup}
           />
         );
       default:
@@ -173,6 +223,8 @@ export default function ChatHelpWidget() {
             toggleSize={toggleSize}
             closeWidget={() => setIsOpen(false)}
             isMobile={isMobile}
+            currentView={currentView}
+            onLanguageChange={handleLanguageChange}
           />
           {error && (
             <div className="text-red-500 mb-2 px-4 py-2 bg-red-50 border-b border-red-200">

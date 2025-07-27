@@ -99,7 +99,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
             userId={null}
             accessToken={null}
             goToLogin={() => {}}
-            goToSignup={() => {}}
+            goToRegister={() => {}}
           />
         );
       default:

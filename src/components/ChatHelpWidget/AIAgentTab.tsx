@@ -11,7 +11,7 @@ interface AIAgentTabProps {
   accessToken: string | null;
   size: WidgetSize;
   goToLogin: () => void;
-  goToSignup: () => void;
+  goToRegister: () => void;
 }
 
 interface AIMessage {
@@ -27,7 +27,7 @@ export default function AIAgentTab({
   accessToken,
   size,
   goToLogin,
-  goToSignup,
+  goToRegister,
 }: AIAgentTabProps) {
   const { t } = useHelpCenterTranslations();
   const [messages, setMessages] = useState<AIMessage[]>([
@@ -143,7 +143,7 @@ export default function AIAgentTab({
               {t.login}
             </button>
             <button
-              onClick={goToSignup}
+              onClick={goToRegister}
               className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors font-medium"
             >
               {t.signup}

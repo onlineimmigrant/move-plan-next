@@ -12,12 +12,14 @@ interface ChatHelpTabsProps {
   activeTab: 'welcome' | 'conversation' | 'ai';
   onTabChange: (tab: 'welcome' | 'conversation' | 'ai') => void;
   isAuthenticated: boolean;
+  isFullPage?: boolean;
 }
 
 export default function ChatHelpTabs({
   activeTab,
   onTabChange,
   isAuthenticated,
+  isFullPage = false,
 }: ChatHelpTabsProps) {
   const { t } = useHelpCenterTranslations();
   
@@ -50,7 +52,7 @@ export default function ChatHelpTabs({
   ];
 
   return (
-    <div className="flex border-t border-gray-200 bg-white rounded-b-lg overflow-hidden">
+    <div className={`flex border-t border-gray-200 bg-white rounded-b-lg overflow-hidden ${isFullPage ? 'mb-8' : ''}`}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
