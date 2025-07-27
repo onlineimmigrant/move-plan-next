@@ -9,9 +9,15 @@ import { useSettings } from '@/context/SettingsContext';
 
 interface ModernLanguageSwitcherProps {
   zIndex?: number;
+  onLanguageChange?: (locale: Locale) => void;
+  preventNavigation?: boolean;
 }
 
-export default function ModernLanguageSwitcher({ zIndex = 20 }: ModernLanguageSwitcherProps) {
+export default function ModernLanguageSwitcher({ 
+  zIndex = 20, 
+  onLanguageChange,
+  preventNavigation = false 
+}: ModernLanguageSwitcherProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { settings } = useSettings();
@@ -32,6 +38,12 @@ export default function ModernLanguageSwitcher({ zIndex = 20 }: ModernLanguageSw
   const currentLocale = urlLocale || defaultLanguage;
 
   const handleLanguageChange = (newLocale: Locale) => {
+    if (preventNavigation && onLanguageChange) {
+      // Use callback instead of navigation when in widget context
+      onLanguageChange(newLocale);
+      return;
+    }
+    
     // Calculate the path without locale
     const segments = pathname.split('/');
     const pathWithoutLocale = urlLocale ? segments.slice(2).join('/') : segments.slice(1).join('/');
@@ -58,7 +70,7 @@ export default function ModernLanguageSwitcher({ zIndex = 20 }: ModernLanguageSw
   };
 
   return (
-    <Menu as="div" className="relative inline-block text-left">
+    <Menu as="div" className=" relative inline-block text-left">
       <div>
         <Menu.Button className="inline-flex w-full justify-center items-center gap-x-2 rounded-lg bg-transparent hover:bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-md hover:shadow-lg  focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-white transition-all duration-300 ease-in-out group">
           <span className="text-sm font-bold tracking-wide">{currentLocale.toUpperCase()}</span>

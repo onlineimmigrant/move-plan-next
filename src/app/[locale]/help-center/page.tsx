@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import HelpCenterPage from '@/components/HelpCenter/HelpCenterPage';
 import { getSupportedLocales, DEFAULT_SUPPORTED_LOCALES } from '@/lib/language-utils';
+import HelpCenterContainer from '@/components/HelpCenter/HelpCenterContainer';
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -33,5 +33,5 @@ export default async function HelpCenter({ params }: Props) {
     notFound();
   }
 
-  return <HelpCenterPage locale={locale} />;
+  return <HelpCenterContainer />;
 }

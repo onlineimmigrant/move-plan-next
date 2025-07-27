@@ -11,6 +11,8 @@ interface ChatHelpHeaderProps {
   toggleSize: () => void;
   closeWidget: () => void;
   isMobile: boolean;
+  currentView?: 'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support';
+  onLanguageChange?: (locale: string) => void;
 }
 
 export default function ChatHelpHeader({
@@ -18,8 +20,29 @@ export default function ChatHelpHeader({
   toggleSize,
   closeWidget,
   isMobile,
+  currentView,
+  onLanguageChange,
 }: ChatHelpHeaderProps) {
   const { t } = useHelpCenterTranslations();
+  
+  const getHeaderTitle = () => {
+    switch (currentView) {
+      case 'welcome':
+        return t.helpCenter;
+      case 'articles':
+      case 'knowledge-base':
+        return t.knowledgeBase;
+      case 'faq':
+        return t.faqs;
+      case 'conversation':
+      case 'live-support':
+        return t.liveSupport;
+      case 'ai':
+        return t.aiAssistant;
+      default:
+        return t.helpCenter;
+    }
+  };
   const getTooltipContent = () => {
     if (isMobile) {
       return size === 'half' ? t.fullScreen : t.shrink;
@@ -52,11 +75,15 @@ export default function ChatHelpHeader({
       </Tooltip>
       
       <div className="flex items-center space-x-3">
-        <h3 className="text-lg font-semibold text-sky-800">{t.helpCenter}</h3>
+        <h3 className="text-lg font-semibold text-sky-800">{getHeaderTitle()}</h3>
         {/* Only show language switcher when not in initial window mode */}
         {size !== 'initial' && (
           <div className="scale-90 relative z-[200]">
-            <ModernLanguageSwitcher zIndex={9999} />
+            <ModernLanguageSwitcher 
+              zIndex={9999} 
+              onLanguageChange={onLanguageChange}
+              preventNavigation={!!onLanguageChange}
+            />
           </div>
         )}
       </div>
