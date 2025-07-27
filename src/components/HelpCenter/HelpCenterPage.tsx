@@ -101,6 +101,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
         return (
           <ArticlesTab
             size="fullscreen"
+            onBackToHelpCenter={() => setActiveTab('welcome')}
           />
         );
       case 'faq':
@@ -136,9 +137,9 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50/30">
       {/* Header */}
-      <header className="z-11 px-4 sm:px-8 flex justify-between items-center bg-white border-b border-gray-200 sticky top-0  h-16">
+      <header className="z-11 px-6 sm:px-10 flex justify-between items-center bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 h-20 shadow-sm">
        
         
            
@@ -146,16 +147,16 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
               <button
                 type="button"
                 onClick={() => router.push('/')}
-                className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200 mr-6"
+                className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-300 ease-out mr-8 hover:scale-105"
                 aria-label="Go to homepage"
               >
                 {/* Mobile - Use favicon with proper URL logic */}
                 <img
                   src={getFaviconUrl(settings?.favicon || undefined)}
                   alt="Logo"
-                  width={24}
-                  height={24}
-                  className="h-6 w-6 sm:hidden"
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 sm:hidden rounded-lg"
                   onError={(e) => {
                     console.error('Failed to load favicon:', settings?.favicon);
                     e.currentTarget.style.display = 'none';
@@ -167,16 +168,16 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
                   <img
                     src={settings.image}
                     alt="Logo"
-                    width={30}
-                    height={30}
-                    className="hidden sm:block h-8 w-auto"
+                    width={36}
+                    height={36}
+                    className="hidden sm:block h-9 w-auto rounded-lg"
                     onError={(e) => {
                       console.error('Failed to load logo:', settings.image);
                       e.currentTarget.style.display = 'none';
                     }}
                   />
                 ) : (
-                  <span className="text-gray-500 hidden sm:block">Logo</span>
+                  <span className="text-gray-500 hidden sm:block font-light text-lg">Logo</span>
                 )}
                 
                 <span className="sr-only tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
@@ -184,9 +185,9 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
                 </span>
               </button>
               
-              <div className='flex items-center space-x-3'>
-              <h1 className="text-base sm:text-2xl font-bold text-gray-900">{getHeaderTitle()}</h1>
-              <span className="hidden sm:flex ml-3 px-2 py-1 text-xs bg-sky-100 text-sky-700 rounded-full">
+              <div className='flex items-center space-x-4'>
+              <h1 className="text-lg sm:text-3xl font-light text-gray-900 tracking-tight">{getHeaderTitle()}</h1>
+              <span className="hidden sm:flex ml-4 px-4 py-2 text-xs font-medium bg-sky-50 text-sky-600 rounded-full border border-sky-100">
                 {t.supportKnowledgeBase}
               </span>
               </div>
@@ -196,7 +197,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
 
               
               {/* Language Switcher - Absolute Right */}
-              <div className="  relative z-50">
+              <div className="relative z-50">
                 <ModernLanguageSwitcher zIndex={9999} />
               </div>
             

@@ -144,6 +144,7 @@ export default function HelpCenterContainer() {
         return (
           <ArticlesTab
             size="fullscreen"
+            onBackToHelpCenter={() => setCurrentView('welcome')}
           />
         );
       case 'ai':

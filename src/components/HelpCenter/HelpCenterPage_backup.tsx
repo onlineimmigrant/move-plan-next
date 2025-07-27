@@ -73,6 +73,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
         return (
           <ArticlesTab
             size="fullscreen"
+            onBackToHelpCenter={() => setActiveTab('welcome')}
           />
         );
       case 'faq':
