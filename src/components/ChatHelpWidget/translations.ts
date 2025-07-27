@@ -34,6 +34,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Popular Articles',
+    popularArticlesDescription: 'Discover our most helpful resources',
     articles: 'Articles',
     minRead: 'min read',
     by: 'By',
@@ -53,6 +54,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Frequently Asked Questions',
+    faqDescription: 'Get quick answers to common questions',
     searchFAQs: 'Search FAQs...',
     noFAQsFound: 'No FAQs found matching your search.',
     
@@ -98,6 +100,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Support Center',
     contactSupport: 'Contact Support',
     
+    // Chat quick replies
+    howToRegister: 'How to register?',
+    contactForm: 'Contact Form',
+    pricing: 'Pricing',
+    accountSettings: 'Account Settings',
+    technicalSupport: 'Technical Support',
+    
+    // Chat responses
+    liveAgentUnavailable: 'I understand you\'d like to speak with a live agent. Unfortunately, live agents are not available at the moment. Please contact us via our contact form for personalized assistance, and our support team will get back to you as soon as possible.',
+    chatBotGreeting: 'Hi! I\'m your ChatBot assistant. I\'m here to help you with any questions or issues you might have. How can I assist you today?',
+    
     // Accessibility
     toggleMenu: 'Toggle menu',
     openInNewTab: 'Open in new tab',
@@ -139,6 +152,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Artículos Populares',
+    popularArticlesDescription: 'Descubre nuestros recursos más útiles',
     articles: 'Artículos',
     minRead: 'min de lectura',
     by: 'Por',
@@ -158,6 +172,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Preguntas Frecuentes',
+    faqDescription: 'Obtén respuestas rápidas a preguntas comunes',
     searchFAQs: 'Buscar en preguntas frecuentes...',
     noFAQsFound: 'No se encontraron preguntas frecuentes que coincidan con tu búsqueda.',
     
@@ -203,6 +218,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Centro de Soporte',
     contactSupport: 'Contactar Soporte',
     
+    // Chat quick replies
+    howToRegister: '¿Cómo registrarse?',
+    contactForm: 'Formulario de Contacto',
+    pricing: 'Precios',
+    accountSettings: 'Configuración de Cuenta',
+    technicalSupport: 'Soporte Técnico',
+    
+    // Chat responses
+    liveAgentUnavailable: 'Entiendo que te gustaría hablar con un agente en vivo. Desafortunadamente, los agentes en vivo no están disponibles en este momento. Por favor, contáctanos a través de nuestro formulario de contacto para asistencia personalizada, y nuestro equipo de soporte se pondrá en contacto contigo lo antes posible.',
+    chatBotGreeting: '¡Hola! Soy tu asistente ChatBot. Estoy aquí para ayudarte con cualquier pregunta o problema que puedas tener. ¿Cómo puedo asistirte hoy?',
+    
     // Accessibility
     toggleMenu: 'Alternar menú',
     openInNewTab: 'Abrir en nueva pestaña',
@@ -244,6 +270,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Articles Populaires',
+    popularArticlesDescription: 'Découvrez nos ressources les plus utiles',
     articles: 'Articles',
     minRead: 'min de lecture',
     by: 'Par',
@@ -263,6 +290,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Questions Fréquemment Posées',
+    faqDescription: 'Obtenez des réponses rapides aux questions courantes',
     searchFAQs: 'Rechercher dans les FAQ...',
     noFAQsFound: 'Aucune FAQ trouvée correspondant à votre recherche.',
     
@@ -308,6 +336,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Centre de Support',
     contactSupport: 'Contacter le Support',
     
+    // Chat quick replies
+    howToRegister: 'Comment s\'inscrire ?',
+    contactForm: 'Formulaire de Contact',
+    pricing: 'Tarification',
+    accountSettings: 'Paramètres du Compte',
+    technicalSupport: 'Support Technique',
+    
+    // Chat responses
+    liveAgentUnavailable: 'Je comprends que vous souhaiteriez parler à un agent en direct. Malheureusement, les agents en direct ne sont pas disponibles pour le moment. Veuillez nous contacter via notre formulaire de contact pour une assistance personnalisée, et notre équipe de support vous recontactera dès que possible.',
+    chatBotGreeting: 'Salut ! Je suis votre assistant ChatBot. Je suis là pour vous aider avec toutes vos questions ou problèmes. Comment puis-je vous aider aujourd\'hui ?',
+    
     // Accessibility
     toggleMenu: 'Basculer le menu',
     openInNewTab: 'Ouvrir dans un nouvel onglet',
@@ -349,6 +388,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Beliebte Artikel',
+    popularArticlesDescription: 'Entdecken Sie unsere hilfreichen Ressourcen',
     articles: 'Artikel',
     minRead: 'Min. Lesezeit',
     by: 'Von',
@@ -368,6 +408,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Häufig Gestellte Fragen',
+    faqDescription: 'Schnelle Antworten auf häufige Fragen erhalten',
     searchFAQs: 'In FAQ suchen...',
     noFAQsFound: 'Keine FAQ gefunden, die Ihrer Suche entsprechen.',
     
@@ -413,6 +454,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Support-Center',
     contactSupport: 'Support Kontaktieren',
     
+    // Chat quick replies
+    howToRegister: 'Wie registriert man sich?',
+    contactForm: 'Kontaktformular',
+    pricing: 'Preise',
+    accountSettings: 'Konto-Einstellungen',
+    technicalSupport: 'Technischer Support',
+    
+    // Chat responses
+    liveAgentUnavailable: 'Ich verstehe, dass Sie gerne mit einem Live-Agent sprechen möchten. Leider sind Live-Agents derzeit nicht verfügbar. Bitte kontaktieren Sie uns über unser Kontaktformular für persönliche Unterstützung, und unser Support-Team wird sich so schnell wie möglich bei Ihnen melden.',
+    chatBotGreeting: 'Hallo! Ich bin Ihr ChatBot-Assistent. Ich bin hier, um Ihnen bei allen Fragen oder Problemen zu helfen. Wie kann ich Ihnen heute helfen?',
+    
     // Accessibility
     toggleMenu: 'Menü umschalten',
     openInNewTab: 'In neuem Tab öffnen',
@@ -454,6 +506,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Популярные Статьи',
+    popularArticlesDescription: 'Откройте для себя наши самые полезные ресурсы',
     articles: 'Статьи',
     minRead: 'мин чтения',
     by: 'От',
@@ -473,6 +526,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Часто Задаваемые Вопросы',
+    faqDescription: 'Получите быстрые ответы на часто задаваемые вопросы',
     searchFAQs: 'Поиск в FAQ...',
     noFAQsFound: 'FAQ, соответствующие вашему поиску, не найдены.',
     
@@ -518,6 +572,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Центр Поддержки',
     contactSupport: 'Связаться с Поддержкой',
     
+    // Chat quick replies
+    howToRegister: 'Как зарегистрироваться?',
+    contactForm: 'Форма Обратной Связи',
+    pricing: 'Цены',
+    accountSettings: 'Настройки Аккаунта',
+    technicalSupport: 'Техническая Поддержка',
+    
+    // Chat responses
+    liveAgentUnavailable: 'Я понимаю, что вы хотели бы поговорить с живым агентом. К сожалению, живые агенты в данный момент недоступны. Пожалуйста, свяжитесь с нами через нашу форму обратной связи для персонализированной помощи, и наша команда поддержки свяжется с вами как можно скорее.',
+    chatBotGreeting: 'Привет! Я ваш помощник ChatBot. Я здесь, чтобы помочь вам с любыми вопросами или проблемами. Как я могу помочь вам сегодня?',
+    
     // Accessibility
     toggleMenu: 'Переключить меню',
     openInNewTab: 'Открыть в новой вкладке',
@@ -559,6 +624,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Artigos Populares',
+    popularArticlesDescription: 'Descubra nossos recursos mais úteis',
     articles: 'Artigos',
     minRead: 'min de leitura',
     by: 'Por',
@@ -578,6 +644,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Perguntas Frequentes',
+    faqDescription: 'Obtenha respostas rápidas para perguntas comuns',
     searchFAQs: 'Pesquisar FAQ...',
     noFAQsFound: 'Nenhuma FAQ encontrada que corresponda à sua pesquisa.',
     
@@ -623,6 +690,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Centro de Suporte',
     contactSupport: 'Contatar Suporte',
     
+    // Chat quick replies
+    howToRegister: 'Como se registrar?',
+    contactForm: 'Formulário de Contato',
+    pricing: 'Preços',
+    accountSettings: 'Configurações da Conta',
+    technicalSupport: 'Suporte Técnico',
+    
+    // Chat responses
+    liveAgentUnavailable: 'Entendo que você gostaria de falar com um agente ao vivo. Infelizmente, os agentes ao vivo não estão disponíveis no momento. Por favor, entre em contato conosco através do nosso formulário de contato para assistência personalizada, e nossa equipe de suporte entrará em contato com você o mais breve possível.',
+    chatBotGreeting: 'Olá! Eu sou seu assistente ChatBot. Estou aqui para ajudá-lo com qualquer dúvida ou problema que você possa ter. Como posso ajudá-lo hoje?',
+    
     // Accessibility
     toggleMenu: 'Alternar menu',
     openInNewTab: 'Abrir em nova aba',
@@ -664,6 +742,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Articoli Popolari',
+    popularArticlesDescription: 'Scopri le nostre risorse più utili',
     articles: 'Articoli',
     minRead: 'min di lettura',
     by: 'Di',
@@ -683,6 +762,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Domande Frequenti',
+    faqDescription: 'Ottieni risposte rapide alle domande comuni',
     searchFAQs: 'Cerca nelle FAQ...',
     noFAQsFound: 'Nessuna FAQ trovata che corrisponda alla tua ricerca.',
     
@@ -728,6 +808,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Centro Supporto',
     contactSupport: 'Contatta il Supporto',
     
+    // Chat quick replies
+    howToRegister: 'Come registrarsi?',
+    contactForm: 'Modulo di Contatto',
+    pricing: 'Prezzi',
+    accountSettings: 'Impostazioni Account',
+    technicalSupport: 'Supporto Tecnico',
+    
+    // Chat responses
+    liveAgentUnavailable: 'Capisco che vorresti parlare con un agente dal vivo. Sfortunatamente, gli agenti dal vivo non sono al momento disponibili. Ti preghiamo di contattarci tramite il nostro modulo di contatto per assistenza personalizzata, e il nostro team di supporto ti ricontatterà il prima possibile.',
+    chatBotGreeting: 'Ciao! Sono il tuo assistente ChatBot. Sono qui per aiutarti con qualsiasi domanda o problema tu possa avere. Come posso aiutarti oggi?',
+    
     // Accessibility
     toggleMenu: 'Attiva/disattiva menu',
     openInNewTab: 'Apri in nuova scheda',
@@ -769,6 +860,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Populaire Artikelen',
+    popularArticlesDescription: 'Ontdek onze meest nuttige bronnen',
     articles: 'Artikelen',
     minRead: 'min lezen',
     by: 'Door',
@@ -788,6 +880,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Veelgestelde Vragen',
+    faqDescription: 'Krijg snelle antwoorden op veelgestelde vragen',
     searchFAQs: 'Zoek in FAQ...',
     noFAQsFound: 'Geen FAQ\'s gevonden die overeenkomen met uw zoekopdracht.',
     
@@ -833,6 +926,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Ondersteuningscentrum',
     contactSupport: 'Contact Ondersteuning',
     
+    // Chat quick replies
+    howToRegister: 'Hoe registreren?',
+    contactForm: 'Contactformulier',
+    pricing: 'Prijzen',
+    accountSettings: 'Account Instellingen',
+    technicalSupport: 'Technische Ondersteuning',
+    
+    // Chat responses
+    liveAgentUnavailable: 'Ik begrijp dat je graag met een live agent zou willen spreken. Helaas zijn live agents momenteel niet beschikbaar. Neem alsjeblieft contact met ons op via ons contactformulier voor persoonlijke hulp, en ons supportteam zal zo snel mogelijk contact met je opnemen.',
+    chatBotGreeting: 'Hallo! Ik ben je ChatBot-assistent. Ik ben hier om je te helpen met alle vragen of problemen die je mogelijk hebt. Hoe kan ik je vandaag helpen?',
+    
     // Accessibility
     toggleMenu: 'Menu omschakelen',
     openInNewTab: 'Openen in nieuw tabblad',
@@ -874,6 +978,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: 'Popularne Artykuły',
+    popularArticlesDescription: 'Odkryj nasze najbardziej pomocne zasoby',
     articles: 'Artykuły',
     minRead: 'min czytania',
     by: 'Przez',
@@ -893,6 +998,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'Często Zadawane Pytania',
+    faqDescription: 'Uzyskaj szybkie odpowiedzi na często zadawane pytania',
     searchFAQs: 'Szukaj w FAQ...',
     noFAQsFound: 'Nie znaleziono FAQ pasujących do wyszukiwania.',
     
@@ -938,6 +1044,17 @@ export const helpCenterTranslations = {
     supportCenter: 'Centrum Wsparcia',
     contactSupport: 'Skontaktuj się ze Wsparciem',
     
+    // Chat quick replies
+    howToRegister: 'Jak się zarejestrować?',
+    contactForm: 'Formularz Kontaktowy',
+    pricing: 'Cennik',
+    accountSettings: 'Ustawienia Konta',
+    technicalSupport: 'Wsparcie Techniczne',
+    
+    // Chat responses
+    liveAgentUnavailable: 'Rozumiem, że chciałbyś porozmawiać z agentem na żywo. Niestety, agenci na żywo nie są obecnie dostępni. Skontaktuj się z nami za pomocą naszego formularza kontaktowego, aby uzyskać spersonalizowaną pomoc, a nasz zespół wsparcia skontaktuje się z Tobą tak szybko, jak to możliwe.',
+    chatBotGreeting: 'Cześć! Jestem Twoim asystentem ChatBot. Jestem tutaj, aby pomóc Ci z wszelkimi pytaniami lub problemami, które możesz mieć. Jak mogę Ci pomóc dzisiaj?',
+    
     // Accessibility
     toggleMenu: 'Przełącz menu',
     openInNewTab: 'Otwórz w nowej karcie',
@@ -979,6 +1096,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: '人気記事',
+    popularArticlesDescription: '最も役立つリソースを見つけてください',
     articles: '記事',
     minRead: '分で読める',
     by: '作成者',
@@ -998,6 +1116,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: 'よくある質問',
+    faqDescription: 'よくある質問への迅速な回答を取得',
     searchFAQs: 'FAQを検索...',
     noFAQsFound: '検索に一致するFAQが見つかりませんでした。',
     
@@ -1043,6 +1162,17 @@ export const helpCenterTranslations = {
     supportCenter: 'サポートセンター',
     contactSupport: 'サポートに連絡',
     
+    // Chat quick replies
+    howToRegister: '登録方法は？',
+    contactForm: 'お問い合わせフォーム',
+    pricing: '料金',
+    accountSettings: 'アカウント設定',
+    technicalSupport: 'テクニカルサポート',
+    
+    // Chat responses
+    liveAgentUnavailable: 'ライブエージェントとお話しされたいお気持ちは分かります。申し訳ございませんが、現在ライブエージェントはご利用いただけません。個別のサポートについては、お問い合わせフォームからご連絡ください。サポートチームができるだけ早くご連絡いたします。',
+    chatBotGreeting: 'こんにちは！私はあなたのChatBotアシスタントです。ご質問や問題がございましたら、お手伝いいたします。今日はどのようにお手伝いできますか？',
+    
     // Accessibility
     toggleMenu: 'メニューを切り替え',
     openInNewTab: '新しいタブで開く',
@@ -1084,6 +1214,7 @@ export const helpCenterTranslations = {
     
     // Articles and content
     popularArticles: '热门文章',
+    popularArticlesDescription: '发现我们最有用的资源',
     articles: '文章',
     minRead: '分钟阅读',
     by: '作者',
@@ -1103,6 +1234,7 @@ export const helpCenterTranslations = {
     
     // FAQ section
     frequentlyAskedQuestionsLong: '常见问题',
+    faqDescription: '快速获得常见问题的答案',
     searchFAQs: '搜索常见问题...',
     noFAQsFound: '没有找到符合您搜索的常见问题。',
     
@@ -1147,6 +1279,17 @@ export const helpCenterTranslations = {
     needMoreHelp: '需要更多帮助？联系我们的支持团队获得个性化协助。',
     supportCenter: '支持中心',
     contactSupport: '联系支持',
+    
+    // Chat quick replies
+    howToRegister: '如何注册？',
+    contactForm: '联系表单',
+    pricing: '价格',
+    accountSettings: '账户设置',
+    technicalSupport: '技术支持',
+    
+    // Chat responses
+    liveAgentUnavailable: '我理解您想与在线客服交谈。不幸的是，在线客服目前不可用。请通过我们的联系表单联系我们以获得个性化帮助，我们的支持团队将尽快与您联系。',
+    chatBotGreeting: '您好！我是您的ChatBot助手。我在这里帮助您解决任何问题。今天我可以为您做些什么？',
     
     // Accessibility
     toggleMenu: '切换菜单',

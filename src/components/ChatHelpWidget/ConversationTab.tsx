@@ -1,7 +1,7 @@
 // components/ChatHelpWidget/ConversationTab.tsx
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { PaperAirplaneIcon, UserIcon, UserCircleIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
+import { PaperAirplaneIcon, UserIcon, UserCircleIcon, ArrowUpIcon, ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/outline';
 import { WidgetSize } from '../ChatWidget/types';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
 
@@ -32,10 +32,10 @@ export default function ConversationTab({
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      content: t.chatSupportTeam,
+      content: t.chatBotGreeting,
       sender: 'agent',
       timestamp: new Date(),
-      agentName: 'Sarah',
+      agentName: 'ChatBot',
     },
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -43,6 +43,14 @@ export default function ConversationTab({
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const quickReplies = [
+    t.howToRegister,
+    t.contactForm, 
+    t.pricing,
+    t.accountSettings,
+    t.technicalSupport
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,12 +69,13 @@ export default function ConversationTab({
     }
   }, [inputValue]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+  const handleSendMessage = async (messageText?: string) => {
+    const textToSend = messageText || inputValue;
+    if (!textToSend.trim()) return;
 
     const userMessage: Message = {
       id: Date.now(),
-      content: inputValue,
+      content: textToSend,
       sender: 'user',
       timestamp: new Date(),
     };
@@ -79,46 +88,90 @@ export default function ConversationTab({
     setTimeout(() => {
       const agentResponse: Message = {
         id: Date.now() + 1,
-        content: getAgentResponse(inputValue),
+        content: getAgentResponse(textToSend),
         sender: 'agent',
         timestamp: new Date(),
-        agentName: 'Sarah',
+        agentName: 'ChatBot',
       };
       setMessages(prev => [...prev, agentResponse]);
       setIsTyping(false);
     }, 1000 + Math.random() * 2000);
   };
 
+  const handleQuickReply = (reply: string) => {
+    handleSendMessage(reply);
+  };
+
   const getAgentResponse = (userInput: string): string => {
     const input = userInput.toLowerCase();
     
-    if (input.includes('help') || input.includes('support')) {
-      return 'I\'d be happy to help you! Can you please provide more details about what specific issue or question you have? This will help me assist you better.';
-    } else if (input.includes('account') || input.includes('login')) {
-      return 'I can help you with account-related issues. Are you having trouble logging in, or do you need help with account settings? Let me know the specific problem you\'re experiencing.';
-    } else if (input.includes('password') || input.includes('reset')) {
-      return 'For password issues, I can guide you through the reset process. Would you like me to send a password reset link to your registered email address?';
-    } else if (input.includes('billing') || input.includes('payment')) {
-      return 'For billing and payment inquiries, I can help you check your current plan, update payment methods, or address billing issues. What specifically would you like to know about your billing?';
-    } else if (input.includes('bug') || input.includes('error')) {
-      return 'I\'m sorry to hear you\'re experiencing an issue. Can you please describe the error you\'re seeing in detail? Include any error messages and the steps you took before the issue occurred.';
-    } else {
-      return 'Thank you for your message. I understand you\'re asking about "' + userInput + '". Let me help you with that. Could you provide a bit more context so I can give you the most accurate assistance?';
+    // Live agent requests
+    if (input.includes('live agent') || input.includes('human') || input.includes('real person') || input.includes('speak to someone') || input.includes('talk to agent') || input.includes('human agent') || input.includes('live support') || input.includes('live chat')) {
+      return t.liveAgentUnavailable;
     }
+    
+    // Registration related
+    if (input.includes('register') || input.includes('sign up') || input.includes('create account')) {
+      return 'To create your account:\n\n1. Visit our registration page: [Sign Up](/register)\n2. Fill out your email, password, and basic information\n3. Verify your email address\n4. Complete your profile setup\n\nThe registration process typically takes less than 2 minutes. Need help with any specific step?';
+    }
+    
+    
+    // Contact form related
+    if (input.includes('contact') || input.includes('contact form') || input.includes('get in touch')) {
+      return 'You can reach our team through several channels:\n\n📧 Contact form: [Contact Us](/contact)\n💬 Live chat: Right here in this widget\n📞 Phone support: Available during business hours\n📱 Email support: Available through our contact page\n\nFor urgent issues, I recommend using this chat or our contact form for fastest response. What type of inquiry do you have?';
+    }
+    
+    // Pricing related
+    if (input.includes('pricing') || input.includes('price') || input.includes('cost') || input.includes('plan')) {
+      return 'Our pricing plans are designed to fit different needs:\n\n� Starter Plan: For individuals getting started\n🚀 Professional Plan: Perfect for growing teams\n🏢 Enterprise Plan: Custom solutions for organizations\n\nAll plans include trial options. Visit our pricing page or contact us for detailed information and custom quotes.';
+    }
+    
+    // Account settings
+    if (input.includes('account') || input.includes('settings') || input.includes('profile')) {
+      return 'I can help you with account management:\n\n⚙️ Profile settings and preferences\n🔐 Security and password settings\n💳 Billing and subscription management\n📧 Notification preferences\n🔄 Data management options\n\nWhat specific account setting would you like help with?';
+    }
+    
+    // Technical support
+    if (input.includes('technical') || input.includes('bug') || input.includes('error') || input.includes('not working')) {
+      return 'I\'m here to help with technical issues. To better assist you:\n\n🔍 Describe the specific issue you\'re experiencing\n💻 Let me know your browser and device type\n📱 Tell me what you were trying to do\n📸 Share any error messages if available\n\nThe more details you provide, the faster we can resolve the issue!';
+    }
+    
+    // Password/login issues
+    if (input.includes('password') || input.includes('login') || input.includes('forgot') || input.includes('reset')) {
+      return 'For login and password issues:\n\n🔐 **Password Reset:**\n1. Go to the login page\n2. Click "Forgot Password?"\n3. Enter your email address\n4. Check your email for reset instructions\n\n🔑 **Login Problems:**\n• Verify you\'re using the correct email\n• Check if Caps Lock is enabled\n• Try clearing your browser cache\n\nNeed additional help? [Contact our support team](/contact)';
+    }
+    
+    // Billing related
+    if (input.includes('billing') || input.includes('payment') || input.includes('invoice') || input.includes('subscription')) {
+      return 'I can assist with billing inquiries:\n\n💳 **Payment Methods:** Manage payment options\n🧾 **Invoices:** Access billing history\n🔄 **Subscriptions:** Upgrade, modify, or cancel\n💰 **Billing Questions:** Charges and refunds\n📅 **Billing Cycles:** Payment scheduling\n\nFor detailed billing assistance, please [contact our support team](/contact).';
+    }
+    
+    // General help
+    if (input.includes('help') || input.includes('support') || input.includes('assistance')) {
+      return 'I\'m here to help! I can assist you with:\n\n🆕 Getting started and account setup\n💰 Pricing and billing questions\n⚙️ Account settings and management\n🛠️ Technical support and troubleshooting\n📞 Connecting you with our support team\n\nWhat would you like help with today? Feel free to ask me anything!';
+    }
+    
+    // Greeting responses
+    if (input.includes('hello') || input.includes('hi') || input.includes('hey') || input.includes('good morning') || input.includes('good afternoon')) {
+      return 'Hello! 👋 Welcome! I\'m your ChatBot assistant and I\'m here to help you with any questions or concerns you might have.\n\nI can help you with account setup, pricing information, technical support, and much more. What can I assist you with today?';
+    }
+    
+    // Default response with context
+    return `Thank you for your question about "${userInput}". I want to make sure I give you the most helpful response possible.\n\nCould you provide a bit more detail about what you\'re looking for? For example:\n• Account setup or registration help\n• Technical questions or troubleshooting\n• Pricing and billing information\n• General support assistance\n\nI\'m here to help with whatever you need! For additional support, you can also [contact our team](/contact). 😊`;
   };
 
   const getMessageIcon = (sender: string) => {
     if (sender === 'user') {
       return <UserIcon className="h-5 w-5" />;
     } else {
-      return <UserCircleIcon className="h-5 w-5" />;
+      return <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5" />;
     }
   };
 
   return (
     <div className={`h-full flex flex-col relative ${size === 'fullscreen' ? 'max-w-4xl mx-auto' : ''}`}>
       {/* Messages Container */}
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto pb-36">
+      <div className="flex-1 p-4 space-y-4 overflow-y-auto pb-64">
         {messages.map((message) => (
           <div key={message.id} className="flex items-start space-x-2">
             <div className={`p-2 rounded-full ${
@@ -129,7 +182,7 @@ export default function ConversationTab({
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-1">
                 <span className="text-sm font-medium text-gray-800">
-                  {message.sender === 'user' ? 'You' : message.agentName || 'Support'}
+                  {message.sender === 'user' ? 'You' : message.agentName || 'ChatBot'}
                 </span>
                 <span className="text-xs text-gray-500">
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -149,11 +202,11 @@ export default function ConversationTab({
         {isTyping && (
           <div className="flex items-start space-x-2">
             <div className="p-2 rounded-full bg-sky-500 text-white">
-              <UserCircleIcon className="h-5 w-5" />
+              <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5" />
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-1">
-                <span className="text-sm font-medium text-gray-800">Support</span>
+                <span className="text-sm font-medium text-gray-800">ChatBot</span>
                 <span className="text-xs text-gray-500">typing...</span>
               </div>
               <div className="bg-gray-100 text-gray-800 p-3 rounded-lg">
@@ -170,7 +223,22 @@ export default function ConversationTab({
       </div>
 
       {/* Input Area */}
-      <div className="absolute bottom-0 left-0 right-0 p-4  border-gray-200 bg-white">
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-gray-200 bg-white">
+        {/* Quick Action Badges */}
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {quickReplies.map((reply, index) => (
+              <button
+                key={index}
+                onClick={() => handleQuickReply(reply)}
+                className="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200 font-medium"
+              >
+                {reply}
+              </button>
+            ))}
+          </div>
+        </div>
+        
         <div className="border border-gray-200 rounded-xl bg-gray-50 p-2">
           <div className="flex items-end">
             <textarea
@@ -184,7 +252,7 @@ export default function ConversationTab({
               disabled={isTyping}
             />
             <button
-              onClick={handleSendMessage}
+              onClick={() => handleSendMessage()}
               disabled={!inputValue.trim() || isTyping}
               className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full ml-2 disabled:bg-gray-200 hover:bg-gray-200 transition-colors"
             >
@@ -194,10 +262,14 @@ export default function ConversationTab({
         </div>
         
         <div className="mt-2 text-xs text-gray-500 text-center">
-          {isAuthenticated 
-            ? t.needMoreHelp
-            : t.needMoreHelp
-          }
+          <a 
+            href="/contact" 
+            className="text-sky-600 hover:text-sky-700 underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t.needMoreHelp}
+          </a>
         </div>
       </div>
     </div>
