@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { MagnifyingGlassIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, RocketLaunchIcon, QuestionMarkCircleIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, RocketLaunchIcon, QuestionMarkCircleIcon, UserGroupIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { WidgetSize } from '../ChatWidget/types';
 import { useFAQs } from './hooks/useFAQs';
 import { useArticles } from './hooks/useArticles';
@@ -74,12 +74,31 @@ export default function WelcomeTab({
 
   if (loading) {
     return (
-      <div className="p-6 space-y-4">
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded-lg mb-4"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="p-8 space-y-8">
+        <div className="animate-pulse space-y-8">
+          {/* Header skeleton */}
+          <div className="text-center space-y-4">
+            <div className="h-12 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-3xl mx-auto w-3/4"></div>
+            <div className="h-6 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-2xl mx-auto w-1/2"></div>
+          </div>
+          
+          {/* Search bar skeleton */}
+          <div className="h-16 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-3xl max-w-2xl mx-auto"></div>
+          
+          {/* Quick actions skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100">
+                <div className="flex items-start space-x-5">
+                  <div className="w-14 h-14 bg-gradient-to-br from-gray-200 to-gray-100 rounded-3xl"></div>
+                  <div className="flex-1 space-y-3">
+                    <div className="h-6 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-xl w-3/4"></div>
+                    <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-lg w-full"></div>
+                    <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-lg w-2/3"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -88,9 +107,13 @@ export default function WelcomeTab({
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="text-center text-red-600">
-          <p>{t.errorLoadingContent}</p>
+      <div className="p-8">
+        <div className="text-center py-16">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-100">
+            <span className="text-red-500 text-3xl font-thin">!</span>
+          </div>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">Something went wrong</h3>
+          <p className="text-red-600 font-light">{t.errorLoadingContent}</p>
         </div>
       </div>
     );
@@ -100,27 +123,30 @@ export default function WelcomeTab({
     <div className="h-full overflow-y-auto">
       <div className="p-8 space-y-10 mx-auto max-w-4xl">
         {/* Welcome Header - Enhanced Apple Style */}
-        <div className="text-center space-y-6">
-          <h1 className="text-4xl font-thin text-gray-900 tracking-tight leading-tight">
+        <div className="text-center space-y-8">
+          <h1 className="text-5xl sm:text-6xl font-thin text-gray-900 tracking-tight leading-none">
             {t.howCanWeHelp}
           </h1>
-          <p className="text-xl text-gray-500 font-light max-w-lg mx-auto leading-relaxed">
+          <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto leading-relaxed">
             {t.searchKnowledgeBase}
           </p>
         </div>
 
         {/* Search Bar - Enhanced Apple Style */}
-        <div className="relative max-w-2xl mx-auto">
-          <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+        <div className="relative max-w-2xl mx-auto group">
+          <div className="absolute inset-0 bg-gradient-to-r from-sky-100 via-white to-sky-100 rounded-3xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 blur-xl"></div>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none z-10">
+              <MagnifyingGlassIcon className="h-6 w-6 text-gray-400 group-focus-within:text-sky-500 transition-colors duration-300" />
+            </div>
+            <input
+              type="text"
+              placeholder={t.searchForHelp}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="relative block w-full pl-16 pr-8 py-6 bg-gray-50/80 backdrop-blur-sm border-0 rounded-3xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:bg-white focus:shadow-xl transition-all duration-500 text-lg font-normal shadow-sm hover:bg-gray-100/80 hover:shadow-md group-hover:shadow-lg"
+            />
           </div>
-          <input
-            type="text"
-            placeholder={t.searchForHelp}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-14 pr-6 py-5 bg-gray-50 border-0 rounded-3xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all duration-300 text-lg font-normal shadow-sm hover:bg-gray-100"
-          />
         </div>
 
         {/* Search Results */}
@@ -134,20 +160,24 @@ export default function WelcomeTab({
                   {filteredFAQs.slice(0, 3).map((faq: FAQ) => (
                     <div
                       key={faq.id}
-                      className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-400"
+                      className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:border-gray-200 hover:scale-[1.005] transition-all duration-500 ease-out"
                     >
                       <button
                         onClick={() => setExpandedFAQ(expandedFAQ === faq.id ? null : faq.id)}
-                        className="w-full text-left flex items-center justify-between"
+                        className="w-full text-left flex items-center justify-between group"
                       >
-                        <span className="text-gray-900 font-medium text-lg leading-relaxed pr-6">{faq.question}</span>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-400 ${expandedFAQ === faq.id ? 'bg-sky-500 rotate-45 shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                          <span className={`text-xl font-thin ${expandedFAQ === faq.id ? 'text-white' : 'text-gray-600'}`}>+</span>
+                        <span className="text-gray-900 font-semibold text-xl leading-relaxed pr-6 group-hover:text-sky-600 transition-colors duration-300">{faq.question}</span>
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-sky-100 group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                          <ChevronDownIcon 
+                            className={`h-6 w-6 text-gray-500 group-hover:text-sky-600 transition-all duration-500 ${
+                              expandedFAQ === faq.id ? 'rotate-180 text-sky-600' : ''
+                            }`}
+                          />
                         </div>
                       </button>
                       {expandedFAQ === faq.id && (
-                        <div className="mt-6 pt-6 border-t border-gray-100">
-                          <p className="text-gray-600 font-normal leading-relaxed text-base">{faq.answer}</p>
+                        <div className="mt-8 pt-6 border-t border-gray-100 animate-in slide-in-from-top-2 duration-500">
+                          <p className="text-gray-700 font-normal leading-relaxed text-lg">{faq.answer}</p>
                         </div>
                       )}
                     </div>
@@ -165,19 +195,22 @@ export default function WelcomeTab({
                     <button
                       key={article.id}
                       onClick={() => onShowKnowledgeBase?.()}
-                      className="w-full p-6 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-400 text-left group"
+                      className="w-full p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-gray-200 hover:scale-[1.005] transition-all duration-500 ease-out text-left group relative overflow-hidden"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 text-xs text-gray-500 mb-3">
-                            <span className="bg-gray-100 px-2 py-1 rounded-full font-medium text-xs">{article.subsection}</span>
-                            <span className="font-medium text-xs">{article.readTime} {t.minRead}</span>
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-sky-50/50 to-transparent rounded-full -mr-10 -mt-10 group-hover:opacity-80 transition-opacity duration-500"></div>
+                      <div className="relative">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 text-xs text-gray-500 mb-4">
+                              <span className="bg-gray-100 px-2 py-1 rounded-full font-medium text-xs">{article.subsection}</span>
+                              <span className="font-medium text-xs">{article.readTime} {t.minRead}</span>
+                            </div>
+                            <h3 className="text-gray-900 font-semibold text-xl mb-4 group-hover:text-sky-600 transition-colors duration-500 leading-tight">{article.title}</h3>
+                            <p className="text-gray-600 line-clamp-2 leading-relaxed text-base">{article.description}</p>
                           </div>
-                          <h3 className="text-gray-900 font-semibold text-xl mb-3 group-hover:text-sky-600 transition-colors leading-tight">{article.title}</h3>
-                          <p className="text-gray-600 line-clamp-2 leading-relaxed text-base">{article.description}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center ml-6 flex-shrink-0 group-hover:bg-sky-50 transition-colors">
-                          <DocumentTextIcon className="h-6 w-6 text-gray-400 group-hover:text-sky-500 transition-colors" />
+                          <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center ml-8 flex-shrink-0 group-hover:bg-sky-50 group-hover:scale-110 transition-all duration-500">
+                            <DocumentTextIcon className="h-7 w-7 text-gray-400 group-hover:text-sky-500 transition-colors duration-500" />
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -213,19 +246,20 @@ export default function WelcomeTab({
               <button
                 key={index}
                 onClick={action.action}
-                className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:scale-[1.03] hover:border-gray-200 transition-all duration-400 text-left group relative overflow-hidden"
+                className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] hover:border-gray-200 transition-all duration-500 ease-out text-left group relative overflow-hidden min-h-[180px]"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sky-50 to-cyan-50 rounded-full opacity-40 -mr-12 -mt-12 group-hover:opacity-60 transition-opacity duration-400"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-50 via-sky-25 to-cyan-50 rounded-full opacity-30 -mr-16 -mt-16 group-hover:opacity-50 group-hover:scale-110 transition-all duration-500"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-gray-50 to-transparent rounded-full opacity-40 -ml-12 -mb-12 group-hover:opacity-60 transition-all duration-500"></div>
                 <div className="relative">
                   <div className="flex items-start space-x-5">
-                    <div className="w-14 h-14 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl flex items-center justify-center flex-shrink-0 group-hover:from-sky-50 group-hover:to-sky-100 transition-all duration-400 shadow-sm">
-                      <action.icon className="h-7 w-7 text-gray-600 group-hover:text-sky-500 transition-colors duration-400" />
+                    <div className="w-14 h-14 bg-gradient-to-br from-gray-50 via-gray-25 to-gray-100 rounded-3xl flex items-center justify-center flex-shrink-0 group-hover:from-sky-50 group-hover:via-sky-25 group-hover:to-sky-100 transition-all duration-500 shadow-sm group-hover:shadow-md group-hover:scale-105">
+                      <action.icon className="h-7 w-7 text-gray-600 group-hover:text-sky-500 transition-colors duration-500" />
                     </div>
                     <div className="flex-1 pt-1">
-                      <h3 className="text-gray-900 font-semibold text-xl mb-3 group-hover:text-sky-600 transition-colors duration-400 leading-tight">
+                      <h3 className="text-gray-900 font-semibold text-lg mb-3 group-hover:text-sky-600 transition-colors duration-500 leading-tight">
                         {action.title}
                       </h3>
-                      <p className="text-gray-600 font-normal leading-relaxed text-base">
+                      <p className="text-gray-600 font-normal leading-relaxed text-sm">
                         {action.description}
                       </p>
                     </div>
@@ -236,10 +270,56 @@ export default function WelcomeTab({
           </div>
         )}
 
+        {/* Popular FAQs - New Section */}
+        {!searchQuery.trim() && faqs.length > 0 && (
+          <div className="pt-12 border-t border-gray-100 max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-light text-gray-900 mb-4 tracking-tight">{t.frequentlyAskedQuestions}</h2>
+              <p className="text-lg text-gray-500 font-light">{t.faqDescription}</p>
+            </div>
+            <div className="space-y-6">
+              {faqs.slice(0, 5).map((faq: FAQ, index) => (
+                <div
+                  key={faq.id}
+                  className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:scale-[1.005] transition-all duration-500 ease-out overflow-hidden"
+                >
+                  <button
+                    onClick={() => setExpandedFAQ(expandedFAQ === faq.id ? null : faq.id)}
+                    className="w-full px-10 py-8 flex items-center justify-between text-left hover:bg-gray-50/50 transition-all duration-300 group"
+                  >
+                    <span className="text-xl font-semibold text-gray-900 group-hover:text-sky-600 transition-colors duration-300 pr-8 leading-tight">
+                      {faq.question}
+                    </span>
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-sky-100 group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                      <ChevronDownIcon 
+                        className={`h-6 w-6 text-gray-500 group-hover:text-sky-600 transition-all duration-500 ${
+                          expandedFAQ === faq.id ? 'rotate-180 text-sky-600' : ''
+                        }`}
+                      />
+                    </div>
+                  </button>
+                  
+                  {expandedFAQ === faq.id && (
+                    <div className="px-10 pb-8 animate-in slide-in-from-top-2 duration-500 ease-out">
+                      <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-8"></div>
+                      <p className="text-gray-700 leading-relaxed text-lg">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Popular Articles - Enhanced Apple Style */}
         {!searchQuery.trim() && articles.length > 0 && (
-          <div className="pt-10 border-t border-gray-100 max-w-4xl mx-auto">
-            <h2 className="text-3xl font-semibold text-gray-900 mb-8 tracking-tight">{t.popularArticles}</h2>
+          <div className="pt-12 border-t border-gray-100 max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-light text-gray-900 mb-4 tracking-tight">{t.popularArticles}</h2>
+              <p className="text-lg text-gray-500 font-light">{t.popularArticlesDescription}</p>
+            </div>
             <div className={`gap-6 ${
               size === 'initial' 
                 ? 'space-y-6' 
@@ -251,21 +331,24 @@ export default function WelcomeTab({
                 <button
                   key={article.id}
                   onClick={() => onShowKnowledgeBase?.()}
-                  className="w-full p-6 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.02] hover:border-gray-200 transition-all duration-400 text-left group"
+                  className="w-full p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:scale-[1.01] hover:border-gray-200 transition-all duration-500 ease-out text-left group relative overflow-hidden"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 text-xs text-gray-500 mb-3">
-                        <span className="bg-gray-100 px-2 py-1 rounded-full font-medium text-xs">{article.subsection}</span>
-                        <span className="font-medium text-xs">{article.readTime} {t.minRead}</span>
-                        <span>•</span>
-                        <span className="font-medium text-xs">{t.by} {article.author_name}</span>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-sky-50/50 to-transparent rounded-full -mr-10 -mt-10 group-hover:opacity-80 transition-opacity duration-500"></div>
+                  <div className="relative">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 text-xs text-gray-500 mb-4">
+                          <span className="bg-gray-100 px-2 py-1 rounded-full font-medium text-xs">{article.subsection}</span>
+                          <span className="font-medium text-xs">{article.readTime} {t.minRead}</span>
+                          <span>•</span>
+                          <span className="font-medium text-xs">{t.by} {article.author_name}</span>
+                        </div>
+                        <h4 className="text-gray-900 font-semibold text-xl mb-4 group-hover:text-sky-600 transition-colors duration-500 leading-tight">{article.title}</h4>
+                        <p className="text-gray-600 line-clamp-2 leading-relaxed text-base">{article.description}</p>
                       </div>
-                      <h4 className="text-gray-900 font-semibold text-lg mb-3 group-hover:text-sky-600 transition-colors leading-tight">{article.title}</h4>
-                      <p className="text-gray-600 line-clamp-2 leading-relaxed text-base">{article.description}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center ml-6 flex-shrink-0 group-hover:bg-sky-50 transition-colors">
-                      <DocumentTextIcon className="h-6 w-6 text-gray-400 group-hover:text-sky-500 transition-colors" />
+                      <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center ml-8 flex-shrink-0 group-hover:bg-sky-50 group-hover:scale-110 transition-all duration-500">
+                        <DocumentTextIcon className="h-7 w-7 text-gray-400 group-hover:text-sky-500 transition-colors duration-500" />
+                      </div>
                     </div>
                   </div>
                 </button>
