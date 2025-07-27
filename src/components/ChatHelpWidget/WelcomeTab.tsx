@@ -97,169 +97,186 @@ export default function WelcomeTab({
   }
 
   return (
-    <div className="p-6 space-y-6 mx-auto max-w-2xl">
-      {/* Welcome Header */}
-      <div className="text-center">
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">
-          {t.howCanWeHelp}
-        </h2>
-        <p className="text-gray-600 text-sm">
-          {t.searchKnowledgeBase}
-        </p>
-      </div>
-
-      {/* Search Bar */}
-      <div className="relative z-1">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+    <div className="h-full overflow-y-auto">
+      <div className="p-8 space-y-10 mx-auto max-w-4xl">
+        {/* Welcome Header - Enhanced Apple Style */}
+        <div className="text-center space-y-6">
+          <h1 className="text-4xl font-thin text-gray-900 tracking-tight leading-tight">
+            {t.howCanWeHelp}
+          </h1>
+          <p className="text-xl text-gray-500 font-light max-w-lg mx-auto leading-relaxed">
+            {t.searchKnowledgeBase}
+          </p>
         </div>
-        <input
-          type="text"
-          placeholder={t.searchForHelp}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm"
-        />
-      </div>
 
-      {/* Search Results */}
-      {hasSearchResults && (
-        <div className="space-y-4">
-          {/* FAQs Results */}
-          {filteredFAQs.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-md font-medium text-gray-700 mb-2">{t.frequentlyAskedQuestions}</h4>
-              <div className="space-y-2">
-                {filteredFAQs.slice(0, 3).map((faq: FAQ) => (
-                  <div
-                    key={faq.id}
-                    className="bg-white border border-gray-200 rounded-lg p-3"
-                  >
-                    <button
-                      onClick={() => setExpandedFAQ(expandedFAQ === faq.id ? null : faq.id)}
-                      className="w-full text-left flex items-center justify-between"
+        {/* Search Bar - Enhanced Apple Style */}
+        <div className="relative max-w-2xl mx-auto">
+          <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder={t.searchForHelp}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full pl-14 pr-6 py-5 bg-gray-50 border-0 rounded-3xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all duration-300 text-lg font-normal shadow-sm hover:bg-gray-100"
+          />
+        </div>
+
+        {/* Search Results */}
+        {hasSearchResults && (
+          <div className="space-y-8 max-w-3xl mx-auto">
+            {/* FAQs Results */}
+            {filteredFAQs.length > 0 && (
+              <div className="space-y-5">
+                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">{t.frequentlyAskedQuestions}</h2>
+                <div className="space-y-4">
+                  {filteredFAQs.slice(0, 3).map((faq: FAQ) => (
+                    <div
+                      key={faq.id}
+                      className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-400"
                     >
-                      <span className="font-medium text-gray-800 text-sm">{faq.question}</span>
-                      <span className="text-gray-400 text-lg">
-                        {expandedFAQ === faq.id ? '−' : '+'}
-                      </span>
-                    </button>
-                    {expandedFAQ === faq.id && (
-                      <div className="mt-2 pt-2 border-t border-gray-100">
-                        <p className="text-sm text-gray-600">{faq.answer}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Articles Results */}
-          {filteredArticles.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-md font-medium text-gray-700 mb-2">{t.articles}</h4>
-              <div className="space-y-2">
-                {filteredArticles.slice(0, 3).map((article: Article) => (
-                  <button
-                    key={article.id}
-                    onClick={() => onShowKnowledgeBase?.()}
-                    className="w-full p-3 bg-white border border-gray-200 rounded-lg hover:border-sky-300 hover:shadow-sm transition-all duration-200 text-left"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 text-xs text-gray-500 mb-1">
-                          <span>{article.subsection}</span>
-                          <span>•</span>
-                          <span>{article.readTime} {t.minRead}</span>
+                      <button
+                        onClick={() => setExpandedFAQ(expandedFAQ === faq.id ? null : faq.id)}
+                        className="w-full text-left flex items-center justify-between"
+                      >
+                        <span className="text-gray-900 font-medium text-lg leading-relaxed pr-6">{faq.question}</span>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-400 ${expandedFAQ === faq.id ? 'bg-sky-500 rotate-45 shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                          <span className={`text-xl font-thin ${expandedFAQ === faq.id ? 'text-white' : 'text-gray-600'}`}>+</span>
                         </div>
-                        <h5 className="font-semibold text-gray-800 mb-1">{article.title}</h5>
-                        <p className="text-sm text-gray-600 line-clamp-2">{article.description}</p>
-                      </div>
-                      <DocumentTextIcon className="h-4 w-4 text-gray-400 ml-2 flex-shrink-0" />
+                      </button>
+                      {expandedFAQ === faq.id && (
+                        <div className="mt-6 pt-6 border-t border-gray-100">
+                          <p className="text-gray-600 font-normal leading-relaxed text-base">{faq.answer}</p>
+                        </div>
+                      )}
                     </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* No Results */}
-          {filteredFAQs.length === 0 && filteredArticles.length === 0 && (
-            <div className="text-center py-4 text-gray-500">
-              {t.noResultsFound} "{searchQuery}"
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Quick Actions - Only show when not searching or no results */}
-      {!hasSearchResults && (
-        <div className={`gap-3 ${
-          size === 'initial' 
-            ? 'grid grid-cols-1' 
-            : size === 'half' 
-              ? 'grid sm:grid-cols-2' 
-              : 'grid sm:grid-cols-2'
-        }`}>
-          {quickActions.map((action, index) => (
-            <button
-              key={index}
-              onClick={action.action}
-              className="p-4 bg-white border border-gray-200 rounded-lg hover:border-sky-300 hover:shadow-sm transition-all duration-200 text-left group"
-            >
-              <div className="flex items-start space-x-3">
-                <action.icon className="h-6 w-6 text-sky-600 group-hover:text-sky-700 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-800 group-hover:text-gray-900">
-                    {action.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {action.description}
-                  </p>
+                  ))}
                 </div>
               </div>
-            </button>
-          ))}
-        </div>
-      )}
+            )}
 
-      {/* Popular Articles - Only show when not searching */}
-      {!searchQuery.trim() && articles.length > 0 && (
-        <div className="border-t border-gray-100 pt-6">
-          <h3 className="text-lg font-medium text-gray-800 mb-4">{t.popularArticles}</h3>
-          <div className={`gap-3 ${
+            {/* Articles Results */}
+            {filteredArticles.length > 0 && (
+              <div className="space-y-5">
+                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">{t.articles}</h2>
+                <div className="space-y-4">
+                  {filteredArticles.slice(0, 3).map((article: Article) => (
+                    <button
+                      key={article.id}
+                      onClick={() => onShowKnowledgeBase?.()}
+                      className="w-full p-6 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-400 text-left group"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 text-xs text-gray-500 mb-3">
+                            <span className="bg-gray-100 px-2 py-1 rounded-full font-medium text-xs">{article.subsection}</span>
+                            <span className="font-medium text-xs">{article.readTime} {t.minRead}</span>
+                          </div>
+                          <h3 className="text-gray-900 font-semibold text-xl mb-3 group-hover:text-sky-600 transition-colors leading-tight">{article.title}</h3>
+                          <p className="text-gray-600 line-clamp-2 leading-relaxed text-base">{article.description}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center ml-6 flex-shrink-0 group-hover:bg-sky-50 transition-colors">
+                          <DocumentTextIcon className="h-6 w-6 text-gray-400 group-hover:text-sky-500 transition-colors" />
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Results */}
+            {filteredFAQs.length === 0 && filteredArticles.length === 0 && (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <MagnifyingGlassIcon className="h-10 w-10 text-gray-400" />
+                </div>
+                <p className="text-gray-500 text-xl font-light">
+                  {t.noResultsFound} "{searchQuery}"
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Actions - Enhanced Apple Style Cards */}
+        {!hasSearchResults && (
+          <div className={`gap-6 max-w-4xl mx-auto ${
             size === 'initial' 
-              ? 'space-y-3' 
+              ? 'grid grid-cols-1' 
               : size === 'half' 
-                ? 'grid sm:grid-cols-2' 
-                : 'grid sm:grid-cols-2'
+                ? 'grid grid-cols-1 sm:grid-cols-2' 
+                : 'grid grid-cols-1 sm:grid-cols-2'
           }`}>
-            {articles.slice(0, size === 'initial' ? 3 : size === 'half' ? 4 : 8).map((article: Article) => (
+            {quickActions.map((action, index) => (
               <button
-                key={article.id}
-                onClick={() => onShowKnowledgeBase?.()}
-                className="w-full p-3 bg-white border border-gray-200 rounded-lg hover:border-sky-300 hover:shadow-sm transition-all duration-200 text-left"
+                key={index}
+                onClick={action.action}
+                className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:scale-[1.03] hover:border-gray-200 transition-all duration-400 text-left group relative overflow-hidden"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 text-xs text-gray-500 mb-1">
-                      <span>{article.subsection}</span>
-                      <span>•</span>
-                      <span>{article.readTime} {t.minRead}</span>
-                      <span>•</span>
-                      <span>{t.by} {article.author_name}</span>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sky-50 to-cyan-50 rounded-full opacity-40 -mr-12 -mt-12 group-hover:opacity-60 transition-opacity duration-400"></div>
+                <div className="relative">
+                  <div className="flex items-start space-x-5">
+                    <div className="w-14 h-14 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl flex items-center justify-center flex-shrink-0 group-hover:from-sky-50 group-hover:to-sky-100 transition-all duration-400 shadow-sm">
+                      <action.icon className="h-7 w-7 text-gray-600 group-hover:text-sky-500 transition-colors duration-400" />
                     </div>
-                    <h4 className="font-semibold text-gray-800 mb-1">{article.title}</h4>
-                    <p className="text-sm text-gray-600 line-clamp-2">{article.description}</p>
+                    <div className="flex-1 pt-1">
+                      <h3 className="text-gray-900 font-semibold text-xl mb-3 group-hover:text-sky-600 transition-colors duration-400 leading-tight">
+                        {action.title}
+                      </h3>
+                      <p className="text-gray-600 font-normal leading-relaxed text-base">
+                        {action.description}
+                      </p>
+                    </div>
                   </div>
-                  <DocumentTextIcon className="h-4 w-4 text-gray-400 ml-2 flex-shrink-0" />
                 </div>
               </button>
             ))}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Popular Articles - Enhanced Apple Style */}
+        {!searchQuery.trim() && articles.length > 0 && (
+          <div className="pt-10 border-t border-gray-100 max-w-4xl mx-auto">
+            <h2 className="text-3xl font-semibold text-gray-900 mb-8 tracking-tight">{t.popularArticles}</h2>
+            <div className={`gap-6 ${
+              size === 'initial' 
+                ? 'space-y-6' 
+                : size === 'half' 
+                  ? 'grid grid-cols-1 sm:grid-cols-2' 
+                  : 'grid grid-cols-1 sm:grid-cols-2'
+            }`}>
+              {articles.slice(0, size === 'initial' ? 3 : size === 'half' ? 4 : 8).map((article: Article) => (
+                <button
+                  key={article.id}
+                  onClick={() => onShowKnowledgeBase?.()}
+                  className="w-full p-6 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.02] hover:border-gray-200 transition-all duration-400 text-left group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 text-xs text-gray-500 mb-3">
+                        <span className="bg-gray-100 px-2 py-1 rounded-full font-medium text-xs">{article.subsection}</span>
+                        <span className="font-medium text-xs">{article.readTime} {t.minRead}</span>
+                        <span>•</span>
+                        <span className="font-medium text-xs">{t.by} {article.author_name}</span>
+                      </div>
+                      <h4 className="text-gray-900 font-semibold text-lg mb-3 group-hover:text-sky-600 transition-colors leading-tight">{article.title}</h4>
+                      <p className="text-gray-600 line-clamp-2 leading-relaxed text-base">{article.description}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center ml-6 flex-shrink-0 group-hover:bg-sky-50 transition-colors">
+                      <DocumentTextIcon className="h-6 w-6 text-gray-400 group-hover:text-sky-500 transition-colors" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bottom padding for scrolling */}
+        <div className="h-8"></div>
+      </div>
     </div>
   );
 }

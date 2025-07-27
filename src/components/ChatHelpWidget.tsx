@@ -193,6 +193,7 @@ export default function ChatHelpWidget() {
             size={size}
             showBackButton={true}
             onBack={() => setCurrentView('welcome')}
+            onBackToHelpCenter={() => setCurrentView('welcome')}
           />
         );
       case 'ai':

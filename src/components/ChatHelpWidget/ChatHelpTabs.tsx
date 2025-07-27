@@ -52,7 +52,7 @@ export default function ChatHelpTabs({
   ];
 
   return (
-    <div className={`flex border-t border-gray-200 bg-white rounded-b-lg overflow-hidden ${isFullPage ? 'mb-8' : ''}`}>
+    <div className={`flex border-t border-gray-100 bg-gray-50/50 backdrop-blur-sm rounded-b-2xl overflow-hidden ${isFullPage ? 'mb-8' : ''}`}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -61,14 +61,14 @@ export default function ChatHelpTabs({
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium transition-all duration-200 ${
+            className={`flex-1 flex flex-col items-center py-4 px-3 text-sm font-light transition-all duration-300 ease-out transform ${
               isActive
-                ? `${tab.color} ${tab.bgColor} border-t-2 ${tab.borderColor}`
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                ? `${tab.color} ${tab.bgColor} border-t-2 ${tab.borderColor} shadow-sm scale-105`
+                : 'text-gray-500 hover:text-sky-600 hover:bg-white/80 hover:shadow-sm hover:scale-102'
             }`}
           >
-            <Icon className="h-5 w-5 mb-1" />
-            {tab.name}
+            <Icon className={`${isActive ? 'h-6 w-6' : 'h-5 w-5'} mb-1.5 transition-all duration-300`} />
+            <span className="font-thin tracking-wide">{tab.name}</span>
           </button>
         );
       })}
