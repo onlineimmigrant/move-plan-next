@@ -32,7 +32,7 @@
 .mobileHalfContainer {
   width: 100vw;
   height: 50vh;
-  bottom: 0;
+  bottom: 2rem;
   right: 0;
   border: none;
   border-radius: 0;

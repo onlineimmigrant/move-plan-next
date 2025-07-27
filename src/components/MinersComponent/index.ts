@@ -8,6 +8,11 @@ export { default as MinersList } from './MinersList';
 export { default as MinerCard } from './MinerCard';
 export { default as EmptyState } from './EmptyState';
 
+// Cost Management Components
+export { default as MiningCostManager } from './MiningCostManager';
+export { default as CostSummaryCard } from './CostSummaryCard';
+export { default as CostAnalyticsDashboard } from './CostAnalyticsDashboard';
+
 // Currency Components
 export { default as CurrencySwitcher } from './CurrencySwitcher';
 export { default as CurrencyInfo } from './CurrencyInfo';

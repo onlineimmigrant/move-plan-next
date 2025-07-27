@@ -9,6 +9,9 @@ import MinersList from './MinersList';
 import EmptyState from './EmptyState';
 import CurrencySwitcher from './CurrencySwitcher';
 import CurrencyInfo from './CurrencyInfo';
+import MiningCostManager from './MiningCostManager';
+import CostAnalyticsDashboard from './CostAnalyticsDashboard';
+import { useMiningCosts } from '../../hooks/useMiningCosts';
 import { 
   MinerData, 
   FilterState, 
@@ -60,6 +63,9 @@ export default function MinersDashboard({
   onCopyToClipboard,
   onCreateSample
 }: MinersDashboardProps) {
+  // Get mining cost data
+  const { miningCost } = useMiningCosts();
+
   // Process data with filtering, grouping, and sorting
   const filteredMiners = filterMiners(miners, filters);
   const sortedMiners = sortMiners(filteredMiners, sort);
@@ -97,6 +103,11 @@ export default function MinersDashboard({
           {/* Currency Information */}
           <CurrencyInfo className="mb-4" />
 
+          {/* Mining Cost Management */}
+          <div className="mb-6">
+            <MiningCostManager />
+          </div>
+
           {/* Revolutionary Controls Panel with Glass Morphism */}
           <ControlsPanel 
             filters={filters}
@@ -120,12 +131,20 @@ export default function MinersDashboard({
               {/* Summary Stats */}
               <SummaryStats sortedMiners={sortedMiners} />
 
+              {/* Cost Analytics Dashboard */}
+              <CostAnalyticsDashboard 
+                miners={sortedMiners}
+                miningCost={miningCost}
+                className="mb-6"
+              />
+
               {/* Miners List */}
               <MinersList 
                 groupedMiners={groupedMiners}
                 groupBy={groupBy}
                 copiedId={copiedId}
                 onCopyToClipboard={onCopyToClipboard}
+                miningCost={miningCost}
               />
             </>
           )}
