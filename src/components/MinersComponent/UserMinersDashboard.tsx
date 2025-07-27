@@ -8,7 +8,10 @@ import SummaryStats from './SummaryStats';
 import MinersList from './MinersList';
 import EmptyState from './EmptyState';
 import CurrencyInfo from './CurrencyInfo';
+import MiningCostManager from './MiningCostManager';
+import CostAnalyticsDashboard from './CostAnalyticsDashboard';
 import { useUserMinersDashboard } from '../../hooks/useUserMinersDashboard';
+import { useMiningCosts } from '../../hooks/useMiningCosts';
 import { filterMiners, groupMiners, sortMiners, getModelFromSerial, getMinerStatus } from './utils';
 
 export default function UserMinersDashboard() {
@@ -35,6 +38,9 @@ export default function UserMinersDashboard() {
     uniqueUsers,
     uniqueModels,
   } = useUserMinersDashboard();
+
+  // Get mining cost data
+  const { miningCost } = useMiningCosts();
 
   // Apply filtering, grouping, and sorting using the same logic as admin
   const filteredMiners = filterMiners(rawMiners, filters);
@@ -81,6 +87,11 @@ export default function UserMinersDashboard() {
           {/* Currency Information */}
           <CurrencyInfo className="mb-4" />
 
+          {/* Mining Cost Management */}
+          <div className="mb-6">
+            <MiningCostManager />
+          </div>
+
           {/* Revolutionary Controls Panel with Glass Morphism */}
           <ControlsPanel 
             filters={filters}
@@ -105,6 +116,13 @@ export default function UserMinersDashboard() {
               <SummaryStats 
                 sortedMiners={sortedMiners}
               />
+
+              {/* Cost Analytics Dashboard */}
+              <CostAnalyticsDashboard 
+                miners={sortedMiners}
+                miningCost={miningCost}
+                className="mb-6"
+              />
               
               {/* Miners Grid/List Display */}
               <MinersList 
@@ -112,6 +130,7 @@ export default function UserMinersDashboard() {
                 groupBy={groupBy}
                 copiedId={copiedId}
                 onCopyToClipboard={handleCopyToClipboard}
+                miningCost={miningCost}
               />
             </>
           )}

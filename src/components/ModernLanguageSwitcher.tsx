@@ -7,7 +7,11 @@ import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { LANGUAGE_LOCALE_MAP, getSupportedLocales, type Locale } from '@/lib/language-utils';
 import { useSettings } from '@/context/SettingsContext';
 
-export default function ModernLanguageSwitcher() {
+interface ModernLanguageSwitcherProps {
+  zIndex?: number;
+}
+
+export default function ModernLanguageSwitcher({ zIndex = 20 }: ModernLanguageSwitcherProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { settings } = useSettings();
@@ -71,7 +75,10 @@ export default function ModernLanguageSwitcher() {
         leaveFrom="transform opacity-100 scale-100 translate-y-0"
         leaveTo="transform opacity-0 scale-95 translate-y-1"
       >
-        <Menu.Items className="absolute right-0 z-20 mt-3 w-52 origin-top-right rounded-xl bg-gray-50 shadow-2xl ring-2 ring-sky-300 ring-opacity-10 focus:outline-none backdrop-blur-sm">
+        <Menu.Items 
+          className="absolute right-0 mt-3 w-52 origin-top-right rounded-xl bg-gray-50 shadow-2xl ring-2 ring-sky-300 ring-opacity-10 focus:outline-none backdrop-blur-sm"
+          style={{ zIndex }}
+        >
           <div className="py-2">
             {supportedLocales.map((locale: string) => (
               <Menu.Item key={locale}>

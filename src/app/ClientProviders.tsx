@@ -17,6 +17,7 @@ import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
+import ChatHelpWidget from '@/components/ChatHelpWidget';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -148,10 +149,19 @@ export default function ClientProviders({
     fetchTemplateData();
   }, [pathname, cache]);
 
-  const showNavbarFooter = useMemo(
-    () => !hideNavbarFooterPrefixes.some((prefix) => pathname.startsWith(prefix)),
-    [pathname]
-  );
+  const showNavbarFooter = useMemo(() => {
+    // Extract the path without locale prefix for hidden route checking
+    // Pathname format: /[locale]/path or /path
+    const pathSegments = pathname.split('/').filter(Boolean);
+    const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/; // Matches 'en', 'es', 'en-US', etc.
+    
+    // If first segment looks like a locale, remove it to get the actual route
+    const routePath = pathSegments.length > 0 && localePattern.test(pathSegments[0])
+      ? '/' + pathSegments.slice(1).join('/')
+      : pathname;
+    
+    return !hideNavbarFooterPrefixes.some((prefix) => routePath.startsWith(prefix));
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -233,6 +243,7 @@ function BannerAwareContent({
             <BannerContainer banners={nonFixedBanners} />
           </main>
         )}
+        <ChatHelpWidget />
       </div>
     </>
   );

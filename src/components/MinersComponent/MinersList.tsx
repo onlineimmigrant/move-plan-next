@@ -2,20 +2,22 @@
 
 import React from 'react';
 import MinerCard from './MinerCard';
-import { MinerData, GroupByKey } from './types';
+import { MinerData, GroupByKey, MiningCostData } from './types';
 
 interface MinersListProps {
   groupedMiners: Record<string, MinerData[]>;
   groupBy: GroupByKey;
   copiedId: string | null;
   onCopyToClipboard: (text: string, id: string) => void;
+  miningCost?: MiningCostData | null;
 }
 
 export default function MinersList({ 
   groupedMiners, 
   groupBy, 
   copiedId, 
-  onCopyToClipboard 
+  onCopyToClipboard,
+  miningCost = null
 }: MinersListProps) {
   return (
     <div className="space-y-6">
@@ -48,6 +50,7 @@ export default function MinersList({
                   miner={miner}
                   copiedId={copiedId}
                   onCopyToClipboard={onCopyToClipboard}
+                  miningCost={miningCost}
                 />
               ))}
             </div>

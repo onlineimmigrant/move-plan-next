@@ -4,17 +4,24 @@ import React from 'react';
 import { LineChart, Line, Tooltip as RechartsTooltip } from 'recharts';
 import Tooltip from '@/components/Tooltip';
 import Button from '@/ui/Button';
-import { MinerData } from './types';
+import { MinerData, MiningCostData } from './types';
 import { getModelFromSerial, getMinerStatus } from './utils';
 import { useCurrency } from './CurrencyContext';
+import CostSummaryCard from './CostSummaryCard';
 
 interface MinerCardProps {
   miner: MinerData;
   copiedId: string | null;
   onCopyToClipboard: (text: string, id: string) => void;
+  miningCost?: MiningCostData | null;
 }
 
-export default function MinerCard({ miner, copiedId, onCopyToClipboard }: MinerCardProps) {
+export default function MinerCard({ 
+  miner, 
+  copiedId, 
+  onCopyToClipboard, 
+  miningCost = null
+}: MinerCardProps) {
   // Use centralized status determination
   const status = getMinerStatus(miner);
   const { formatAmount } = useCurrency();
@@ -270,6 +277,14 @@ export default function MinerCard({ miner, copiedId, onCopyToClipboard }: MinerC
           </div>
         </div>
       )}
+
+      {/* Cost Analysis */}
+      <div className="mt-6 pt-6 border-t border-gray-200/60">
+        <CostSummaryCard
+          miner={miner}
+          miningCost={miningCost}
+        />
+      </div>
     </div>
   );
 }
