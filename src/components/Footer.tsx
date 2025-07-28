@@ -18,7 +18,8 @@ const FOOTER_TRANSLATIONS = {
     profile: 'Profile',
     logout: 'Logout',
     login: 'Login',
-    register: 'Register'
+    register: 'Register',
+    links: 'Links'
   },
   es: { 
     allRightsReserved: 'Todos los derechos reservados', 
@@ -27,7 +28,8 @@ const FOOTER_TRANSLATIONS = {
     profile: 'Perfil',
     logout: 'Cerrar sesión',
     login: 'Iniciar sesión',
-    register: 'Registrarse'
+    register: 'Registrarse',
+    links: 'Enlaces'
   },
   fr: { 
     allRightsReserved: 'Tous droits réservés', 
@@ -36,7 +38,8 @@ const FOOTER_TRANSLATIONS = {
     profile: 'Profil',
     logout: 'Se déconnecter',
     login: 'Se connecter',
-    register: 'S\'inscrire'
+    register: 'S\'inscrire',
+    links: 'Liens'
   },
   de: { 
     allRightsReserved: 'Alle Rechte vorbehalten', 
@@ -45,7 +48,8 @@ const FOOTER_TRANSLATIONS = {
     profile: 'Profil',
     logout: 'Abmelden',
     login: 'Anmelden',
-    register: 'Registrieren'
+    register: 'Registrieren',
+    links: 'Links'
   },
   ru: { 
     allRightsReserved: 'Все права защищены', 
@@ -54,7 +58,8 @@ const FOOTER_TRANSLATIONS = {
     profile: 'Профиль',
     logout: 'Выйти',
     login: 'Войти',
-    register: 'Зарегистрироваться'
+    register: 'Зарегистрироваться',
+    links: 'Ссылки'
   },
   it: { 
     allRightsReserved: 'Tutti i diritti riservati', 
@@ -63,7 +68,8 @@ const FOOTER_TRANSLATIONS = {
     profile: 'Profilo',
     logout: 'Esci',
     login: 'Accedi',
-    register: 'Registrati'
+    register: 'Registrati',
+    links: 'Collegamenti'
   },
   pt: { 
     allRightsReserved: 'Todos os direitos reservados', 
@@ -72,7 +78,8 @@ const FOOTER_TRANSLATIONS = {
     profile: 'Perfil',
     logout: 'Sair',
     login: 'Entrar',
-    register: 'Registrar'
+    register: 'Registrar',
+    links: 'Links'
   },
   pl: { 
     allRightsReserved: 'Wszelkie prawa zastrzeżone', 
@@ -81,7 +88,8 @@ const FOOTER_TRANSLATIONS = {
     profile: 'Profil',
     logout: 'Wyloguj',
     login: 'Zaloguj',
-    register: 'Zarejestruj'
+    register: 'Zarejestruj',
+    links: 'Linki'
   },
   zh: { 
     allRightsReserved: '版权所有', 
@@ -90,16 +98,18 @@ const FOOTER_TRANSLATIONS = {
     profile: '个人资料',
     logout: '登出',
     login: '登录',
-    register: '注册'
+    register: '注册',
+    links: '链接'
   },
   ja: { 
     allRightsReserved: '全著作権所有', 
-    language: '言語：', 
+    language: '言语：', 
     privacySettings: 'プライバシー設定',
     profile: 'プロフィール',
     logout: 'ログアウト',
     login: 'ログイン',
-    register: '登録'
+    register: '登録',
+    links: 'リンク'
   }
 };
 
@@ -128,6 +138,7 @@ function useFooterTranslations() {
     logout: translations.logout,
     login: translations.login,
     register: translations.register,
+    links: translations.links,
     hasTranslations: true
   };
 }
@@ -236,7 +247,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                       href={group[0]?.url_name || '#'}
                       className="hover:text-neutral-300 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                     >
-                      {itemsWithSubitems.length ? '' : 'Links'}
+                      {itemsWithSubitems.length ? '' : translations.links}
                     </Link>
                   </h3>
                   <ul className="space-y-2">
