@@ -40,21 +40,11 @@ export async function GET(request: Request) {
         url,
         url_page,
         image,
-        background_color,
-        font_family,
-        text_color,
-        button_color,
-        button_text_color,
-        text_size_h1,
-        text_size_h1_mobile,
-        text_size,
-        font_weight_1,
-        font_weight,
-        h1_text_color,
-        is_text_link,
         image_first,
         is_included_template_sections_active,
-        organization_id
+        organization_id,
+        style_variant,
+        text_style_variant
       `)
       .eq('url_page', decodedUrlPage)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)

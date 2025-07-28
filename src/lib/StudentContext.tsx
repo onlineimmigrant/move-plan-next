@@ -49,23 +49,38 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
 
         const userId = session.user.id;
         console.log('StudentProvider: Fetching profile for user:', userId, 'currentOrgId:', currentOrgId);
+        
+        // Use select() without .single() to handle multiple or no rows gracefully
         const { data, error } = await supabase
           .from('profiles')
           .select('is_student, organization_id')
           .eq('id', userId)
-          .eq('organization_id', currentOrgId)
-          .single();
+          .eq('organization_id', currentOrgId);
 
-        if (error || !data) {
-          console.error('StudentProvider: Profile error:', error?.message || 'Profile not found');
+        if (error) {
+          console.error('StudentProvider: Database error:', error.message);
           setIsStudent(false);
           setOrganizationId(null);
           return;
         }
 
-        console.log('StudentProvider: Profile fetched, is_student:', data.is_student, 'organization_id:', data.organization_id);
-        setIsStudent(data.is_student || false);
-        setOrganizationId(data.organization_id || null);
+        // Handle no rows found
+        if (!data || data.length === 0) {
+          console.warn('StudentProvider: No profile found for user in current organization');
+          setIsStudent(false);
+          setOrganizationId(null);
+          return;
+        }
+
+        // Handle multiple rows (shouldn't happen, but take the first one)
+        if (data.length > 1) {
+          console.warn(`StudentProvider: Multiple profiles found (${data.length}), using the first one`);
+        }
+
+        const profile = data[0];
+        console.log('StudentProvider: Profile fetched, is_student:', profile.is_student, 'organization_id:', profile.organization_id);
+        setIsStudent(profile.is_student || false);
+        setOrganizationId(profile.organization_id || null);
       } catch (err) {
         console.error('StudentProvider: Unexpected error:', err);
         setIsStudent(false);
