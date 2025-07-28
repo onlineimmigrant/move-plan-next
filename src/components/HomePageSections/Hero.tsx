@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import parse from 'html-react-parser';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import DotGrid from '@/components/AnimateElements/DotGrid';
 import LetterGlitch from '@/components/AnimateElements/LetterGlitch';
@@ -12,6 +13,7 @@ import MagicBento from '@/components/AnimateElements/MagicBento';
 interface HeroProps {
   hero: {
     h1_title: string;
+    h1_title_translation?: Record<string, string>; // JSONB field for translations
     h1_text_color: string;
     is_h1_gradient_text?: boolean;
     h1_text_color_gradient_from: string;
@@ -23,6 +25,7 @@ interface HeroProps {
     background_color_gradient_via?: string;
     background_color_gradient_to?: string;
     p_description: string;
+    p_description_translation?: Record<string, string>; // JSONB field for translations
     p_description_color: string;
     image?: string;
     is_image_full_page?: boolean;
@@ -44,15 +47,61 @@ interface HeroProps {
   };
 }
 
+/**
+ * Utility function to get translated content
+ * @param defaultContent - The default content (fallback)
+ * @param translations - JSONB object with translations
+ * @param locale - Current locale
+ * @returns Translated content or default content
+ */
+const getTranslatedContent = (
+  defaultContent: string,
+  translations?: Record<string, string>,
+  locale?: string
+): string => {
+  // If no translations or no locale, return default content
+  if (!translations || !locale) {
+    return defaultContent;
+  }
+
+  // Try to get translation for the current locale
+  const translatedContent = translations[locale];
+  
+  // Return translated content if available, otherwise return default
+  return translatedContent && translatedContent.trim() !== '' ? translatedContent : defaultContent;
+};
+
 const Hero: React.FC<HeroProps> = ({ hero }) => {
   const [isVisible, setIsVisible] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   if (!hero) return null;
 
+  // Extract locale from pathname (e.g., /en/page -> en)
+  const currentLocale = pathname.split('/')[1] || 'en';
+
+  // Get translated content using the utility function
+  const translatedH1Title = getTranslatedContent(
+    hero.h1_title,
+    hero.h1_title_translation,
+    currentLocale
+  );
+
+  const translatedPDescription = getTranslatedContent(
+    hero.p_description,
+    hero.p_description_translation,
+    currentLocale
+  );
+
   console.log('Hero props:', {
     h1_title: hero.h1_title,
+    h1_title_translation: hero.h1_title_translation,
+    translatedH1Title,
     p_description: hero.p_description,
+    p_description_translation: hero.p_description_translation,
+    translatedPDescription,
+    currentLocale,
     title_alighnement: hero.title_alighnement,
     animation_element: hero.animation_element,
   });
@@ -172,7 +221,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
       {hero.image && hero.is_image_full_page && (
         <Image
           src={hero.image}
-          alt={`Image of ${hero.h1_title}`}
+          alt={`Image of ${translatedH1Title}`}
           className="absolute inset-0 -z-10 h-auto w-auto object-contain sm:h-auto sm:w-auto sm:object-contain"
           width={1280}
           height={720}
@@ -206,7 +255,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
             <h1
               className={`${h1TextSize} font-bold tracking-tight inline hover:text-gray-700 ${textColorClass} animate-hero-title ${isVisible ? 'animate' : ''}`}
             >
-              {parse(hero.h1_title)}
+              {parse(translatedH1Title)}
             </h1>
 
             <p
@@ -215,7 +264,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
               } hover:text-gray-900 animate-hero-description ${isVisible ? 'animate' : ''}`}
               style={{ fontWeight: hero.p_description_weight || 'normal' }}
             >
-              {parse(hero.p_description)}
+              {parse(translatedPDescription)}
             </p>
 
             <div
@@ -236,7 +285,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
             <div className={`text-${hero.title_alighnement || 'center'}`}>
               <Image
                 src={hero.image}
-                alt={`Image of ${hero.h1_title}`}
+                alt={`Image of ${translatedH1Title}`}
                 className="h-full w-full object-cover sm:h-auto sm:w-full sm:max-w-[80%] sm:mx-auto sm:object-contain"
                 width={1024}
                 height={576}
