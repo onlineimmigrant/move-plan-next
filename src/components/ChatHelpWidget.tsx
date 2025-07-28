@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { useHelpCenterTranslations } from './ChatHelpWidget/useHelpCenterTranslations';
 import ChatHelpToggleButton from './ChatHelpWidget/ChatHelpToggleButton';
 import ChatHelpHeader from './ChatHelpWidget/ChatHelpHeader';
 import ChatHelpTabs from './ChatHelpWidget/ChatHelpTabs';
@@ -10,6 +12,7 @@ import ConversationTab from './ChatHelpWidget/ConversationTab';
 import ArticlesTab from './ChatHelpWidget/ArticlesTab';
 import AIAgentTab from './ChatHelpWidget/AIAgentTab';
 import FAQView from './ChatHelpWidget/FAQView';
+import ChatWidget from './ChatWidget';
 import { WidgetSize } from './ChatWidget/types';
 import styles from './ChatWidget/ChatWidget.module.css';
 
@@ -19,8 +22,10 @@ const supabase = createClient(
 );
 
 const WIDGET_STATE_KEY = 'chatHelpWidget_state';
+const WIDGET_MODE_KEY = 'chatWidget_mode'; // 'help' or 'chat'
 
 export default function ChatHelpWidget() {
+  const { t, getSafeTranslation } = useHelpCenterTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'welcome' | 'conversation' | 'ai'>('welcome');
   const [currentView, setCurrentView] = useState<'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support'>('welcome');
@@ -30,7 +35,51 @@ export default function ChatHelpWidget() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showChatWidget, setShowChatWidget] = useState(false);
+  const [sizeBeforeChatSwitch, setSizeBeforeChatSwitch] = useState<WidgetSize>('initial');
+  const [chatWidgetSize, setChatWidgetSize] = useState<WidgetSize>('initial');
   const router = useRouter();
+
+  // Check stored widget mode on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedMode = localStorage.getItem(WIDGET_MODE_KEY);
+      if (storedMode === 'chat') {
+        setShowChatWidget(true);
+      }
+    }
+  }, []);
+
+  // Listen for localStorage changes to react to external switches
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === WIDGET_MODE_KEY || e.key === 'chatWidget_isOpen') {
+        if (e.key === WIDGET_MODE_KEY && e.newValue === 'chat') {
+          setShowChatWidget(true);
+          setIsOpen(true);
+        }
+        if (e.key === 'chatWidget_isOpen' && e.newValue === 'true') {
+          setIsOpen(true);
+        }
+      }
+    };
+
+    // Also listen for custom storage events (for same-window changes)
+    const handleCustomStorageChange = (e: CustomEvent) => {
+      if (e.detail.key === WIDGET_MODE_KEY && e.detail.newValue === 'chat') {
+        setShowChatWidget(true);
+        setIsOpen(true);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('customStorageChange', handleCustomStorageChange as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('customStorageChange', handleCustomStorageChange as EventListener);
+    };
+  }, []);
 
   // Detect mobile device
   useEffect(() => {
@@ -104,6 +153,47 @@ export default function ChatHelpWidget() {
 
   const goToSignup = () => {
     router.push('/register');
+  };
+
+  const handleSwitchToChatWidget = (forceFullscreen = false) => {
+    // Store current size before switching to chat widget
+    setSizeBeforeChatSwitch(size);
+    
+    // Calculate the target size for ChatWidget
+    const targetChatWidgetSize = forceFullscreen ? 'fullscreen' : size;
+    
+    // Set the ChatWidget size (separate from help center size)
+    setChatWidgetSize(targetChatWidgetSize);
+    
+    // Ensure the widget is opened when switching to ChatWidget
+    setIsOpen(true);
+    setShowChatWidget(true);
+    
+    // Keep the help center size unchanged for when we return
+    // (Don't change the 'size' state here)
+    
+    // Clear any stored ChatWidget closed state after setting the states
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('chatWidget_isOpen'); // Remove old state
+        localStorage.setItem('chatWidget_isOpen', 'true'); // Force open
+      }
+    }, 0);
+    
+    // Save the chat mode preference
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(WIDGET_MODE_KEY, 'chat');
+    }
+  };
+
+  const handleReturnToHelpCenter = () => {
+    setShowChatWidget(false);
+    // Restore the size that was used before switching to chat widget
+    setSize(sizeBeforeChatSwitch);
+    // Save the help mode preference
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(WIDGET_MODE_KEY, 'help');
+    }
   };
 
   // Save widget state before language changes
@@ -205,6 +295,7 @@ export default function ChatHelpWidget() {
             size={size}
             goToLogin={goToLogin}
             goToRegister={goToSignup}
+            onSwitchToChatWidget={handleSwitchToChatWidget}
           />
         );
       default:
@@ -214,33 +305,47 @@ export default function ChatHelpWidget() {
 
   return (
     <div className="z-62">
-      <ChatHelpToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} />
-      {isOpen && (
-        <div
-          className={`z-63 fixed min-h-[480px] bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
-        >
-          <ChatHelpHeader
-            size={size}
-            toggleSize={toggleSize}
-            closeWidget={() => setIsOpen(false)}
-            isMobile={isMobile}
-            currentView={currentView}
-            onLanguageChange={handleLanguageChange}
-          />
-          {error && (
-            <div className="text-red-500 mb-2 px-4 py-2 bg-red-50 border-b border-red-200">
-              {error}
+      {showChatWidget ? (
+        // Show ChatWidget when in AI Agent mode - it manages its own state
+        // Use key to force re-initialization when switching
+        <ChatWidget 
+          key="chat-widget-open"
+          onReturnToHelpCenter={handleReturnToHelpCenter} 
+          initialSize={chatWidgetSize}
+          initialOpen={true}
+        />
+      ) : (
+        // Show ChatHelpWidget normally
+        <>
+          <ChatHelpToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} />
+          {isOpen && (
+            <div
+              className={`z-63 fixed min-h-[480px] bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
+            >
+              <ChatHelpHeader
+                size={size}
+                toggleSize={toggleSize}
+                closeWidget={() => setIsOpen(false)}
+                isMobile={isMobile}
+                currentView={currentView}
+                onLanguageChange={handleLanguageChange}
+              />
+              {error && (
+                <div className="text-red-500 mb-2 px-4 py-2 bg-red-50 border-b border-red-200">
+                  {error}
+                </div>
+              )}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                {renderActiveTab()}
+              </div>
+              <ChatHelpTabs
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                isAuthenticated={isAuthenticated}
+              />
             </div>
           )}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            {renderActiveTab()}
-          </div>
-          <ChatHelpTabs
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            isAuthenticated={isAuthenticated}
-          />
-        </div>
+        </>
       )}
     </div>
   );

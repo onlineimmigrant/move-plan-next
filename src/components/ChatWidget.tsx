@@ -15,8 +15,27 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+const CHAT_WIDGET_OPEN_KEY = 'chatWidget_isOpen'; // Store open/closed state
+
+interface ChatWidgetProps {
+  onReturnToHelpCenter?: () => void;
+  initialSize?: WidgetSize;
+  initialOpen?: boolean;
+}
+
+export default function ChatWidget({ 
+  onReturnToHelpCenter, 
+  initialSize = 'initial', 
+  initialOpen = false 
+}: ChatWidgetProps = {}) {
+  // Check localStorage for saved open state, fallback to initialOpen
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem(CHAT_WIDGET_OPEN_KEY);
+      return savedState !== null ? JSON.parse(savedState) : initialOpen;
+    }
+    return initialOpen;
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +43,7 @@ export default function ChatWidget() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null); // Add userId state
   const [isTyping, setIsTyping] = useState(false);
-  const [size, setSize] = useState<WidgetSize>('initial');
+  const [size, setSize] = useState<WidgetSize>(initialSize);
   const [historyName, setHistoryName] = useState('');
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,6 +74,11 @@ export default function ChatWidget() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Save open state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(CHAT_WIDGET_OPEN_KEY, JSON.stringify(isOpen));
+  }, [isOpen]);
 
   // Listen for addToChat event
   useEffect(() => {
@@ -526,8 +550,8 @@ const sendMessage = async () => {
   };
 
   const sizeClasses = {
-    initial: 'w-[400px] max-h-[70vh] bottom-0 right-4',
-    half: isMobile ? styles.mobileHalfContainer : 'w-1/2 max-h-[80vh] bottom-0 right-4',
+    initial: 'w-[400px] h-[750px] bottom-8 right-4',
+    half: isMobile ? styles.mobileHalfContainer : 'w-1/2 h-[750px] bottom-8 right-4',
     fullscreen: styles.fullscreenContainer,
   };
 
@@ -556,7 +580,7 @@ const sendMessage = async () => {
       <ChatToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} />
       {isOpen && (
         <div
-          className={`z-63 fixed min-h-[480px] bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
+          className={`z-63 fixed bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
         >
           <ChatHeader
             size={size}
@@ -567,6 +591,7 @@ const sendMessage = async () => {
             selectModel={selectModel}
             goToSettings={goToSettings}
             isMobile={isMobile}
+            onReturnToHelpCenter={onReturnToHelpCenter}
           />
           {error && (
             <div className="text-red-500 mb-2 px-4">

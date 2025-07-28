@@ -54,6 +54,22 @@ export default function HelpCenterContainer() {
     }
   };
 
+  const handleSwitchToChatWidget = () => {
+    // Switch the existing ChatHelpWidget to chat mode using localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chatWidget_mode', 'chat'); // Set mode to chat
+      localStorage.setItem('chatWidget_isOpen', 'true'); // Force open
+      
+      // Dispatch a custom event to notify the ChatHelpWidget (storage events don't fire in same window)
+      window.dispatchEvent(new CustomEvent('customStorageChange', {
+        detail: {
+          key: 'chatWidget_mode',
+          newValue: 'chat'
+        }
+      }));
+    }
+  };
+
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
@@ -156,6 +172,7 @@ export default function HelpCenterContainer() {
             accessToken={accessToken}
             goToLogin={goToLogin}
             goToRegister={goToSignup}
+            onSwitchToChatWidget={handleSwitchToChatWidget}
           />
         );
       case 'faq':

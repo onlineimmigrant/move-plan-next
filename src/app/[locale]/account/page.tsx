@@ -164,7 +164,7 @@ export default function AccountPage() {
         <div className="my-16 sm:my-32 flex justify-center">
           <UserCircleIcon className="h-16 w-16 text-sky-600" />
         </div>
-       {session && <ChatWidget />}
+      {session && <ChatWidget />}
         {pathname === '/account' && (
           <div className="mt-24 sm:mt-32 text-gray-600 text-sm text-center">
             <h2 className="font-semibold text-gray-800">{t.welcomeUser(fullName || t.user)}</h2>
