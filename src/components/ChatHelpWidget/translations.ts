@@ -76,6 +76,17 @@ export const helpCenterTranslations = {
     login: 'Login',
     signup: 'Sign Up',
     
+    // AI Agent Tab
+    switchToAIAgentMode: 'Switch to AI Agent Mode',
+    aiAgentBenefits: 'Our system allows you to add your own AI agent and utilize the full functionality of the site even for free or with minimal costs.',
+    aiAgentsCanHelp: 'AI agents can help you with:',
+    executeMainTasks: 'Execute main tasks',
+    executeMainTasksDesc: 'Automate complex workflows and processes',
+    fillContent: 'Fill content',
+    fillContentDesc: 'Generate and populate content automatically',
+    manageAccount: 'Manage account',
+    manageAccountDesc: 'Handle account settings and preferences',
+    
     // Common actions
     back: 'Back',
     close: 'Close',
@@ -193,6 +204,17 @@ export const helpCenterTranslations = {
     pleaseLogin: 'Por favor, inicia sesión para usar el agente IA',
     login: 'Iniciar Sesión',
     signup: 'Registrarse',
+    
+    // AI Agent Tab
+    switchToAIAgentMode: 'Cambiar a Modo Agente IA',
+    aiAgentBenefits: 'Nuestro sistema te permite agregar tu propio agente IA y utilizar toda la funcionalidad del sitio incluso gratis o con costos mínimos.',
+    aiAgentsCanHelp: 'Los agentes IA pueden ayudarte con:',
+    executeMainTasks: 'Ejecutar tareas principales',
+    executeMainTasksDesc: 'Automatizar flujos de trabajo complejos y procesos',
+    fillContent: 'Llenar contenido',
+    fillContentDesc: 'Generar y llenar contenido automáticamente',
+    manageAccount: 'Gestionar cuenta',
+    manageAccountDesc: 'Manejar configuración y preferencias de cuenta',
     
     // Common actions
     back: 'Atrás',
@@ -347,6 +369,17 @@ export const helpCenterTranslations = {
     liveAgentUnavailable: 'Je comprends que vous souhaiteriez parler à un agent en direct. Malheureusement, les agents en direct ne sont pas disponibles pour le moment. Veuillez nous contacter via notre formulaire de contact pour une assistance personnalisée, et notre équipe de support vous recontactera dès que possible.',
     chatBotGreeting: 'Salut ! Je suis votre assistant ChatBot. Je suis là pour vous aider avec toutes vos questions ou problèmes. Comment puis-je vous aider aujourd\'hui ?',
     
+    // AI Agent Mode
+    switchToAIAgentMode: 'Passer au Mode Agent IA',
+    aiAgentBenefits: 'Notre système vous permet d\'ajouter votre propre agent IA et d\'utiliser toutes les fonctionnalités du site même gratuitement ou avec des coûts minimes.',
+    aiAgentsCanHelp: 'Les agents IA peuvent vous aider avec:',
+    executeMainTasks: 'Exécuter les tâches principales',
+    executeMainTasksDesc: 'Automatiser les flux de travail et processus complexes',
+    fillContent: 'Remplir le contenu',
+    fillContentDesc: 'Générer et remplir le contenu automatiquement',
+    manageAccount: 'Gérer le compte',
+    manageAccountDesc: 'Gérer les paramètres et préférences du compte',
+    
     // Accessibility
     toggleMenu: 'Basculer le menu',
     openInNewTab: 'Ouvrir dans un nouvel onglet',
@@ -464,6 +497,17 @@ export const helpCenterTranslations = {
     // Chat responses
     liveAgentUnavailable: 'Ich verstehe, dass Sie gerne mit einem Live-Agent sprechen möchten. Leider sind Live-Agents derzeit nicht verfügbar. Bitte kontaktieren Sie uns über unser Kontaktformular für persönliche Unterstützung, und unser Support-Team wird sich so schnell wie möglich bei Ihnen melden.',
     chatBotGreeting: 'Hallo! Ich bin Ihr ChatBot-Assistent. Ich bin hier, um Ihnen bei allen Fragen oder Problemen zu helfen. Wie kann ich Ihnen heute helfen?',
+    
+    // AI Agent Mode
+    switchToAIAgentMode: 'Zu KI-Agent-Modus wechseln',
+    aiAgentBenefits: 'Unser System ermöglicht es Ihnen, Ihren eigenen KI-Agenten hinzuzufügen und die volle Funktionalität der Website sogar kostenlos oder mit minimalen Kosten zu nutzen.',
+    aiAgentsCanHelp: 'KI-Agenten können Ihnen helfen mit:',
+    executeMainTasks: 'Hauptaufgaben ausführen',
+    executeMainTasksDesc: 'Komplexe Arbeitsabläufe und Prozesse automatisieren',
+    fillContent: 'Inhalte ausfüllen',
+    fillContentDesc: 'Inhalte automatisch generieren und füllen',
+    manageAccount: 'Konto verwalten',
+    manageAccountDesc: 'Kontoeinstellungen und -präferenzen verwalten',
     
     // Accessibility
     toggleMenu: 'Menü umschalten',
@@ -583,6 +627,17 @@ export const helpCenterTranslations = {
     liveAgentUnavailable: 'Я понимаю, что вы хотели бы поговорить с живым агентом. К сожалению, живые агенты в данный момент недоступны. Пожалуйста, свяжитесь с нами через нашу форму обратной связи для персонализированной помощи, и наша команда поддержки свяжется с вами как можно скорее.',
     chatBotGreeting: 'Привет! Я ваш помощник ChatBot. Я здесь, чтобы помочь вам с любыми вопросами или проблемами. Как я могу помочь вам сегодня?',
     
+    // AI Agent Mode
+    switchToAIAgentMode: 'Переключиться в режим ИИ-агента',
+    aiAgentBenefits: 'Наша система позволяет добавить собственного ИИ-агента и использовать всю функциональность сайта даже бесплатно или с минимальными затратами.',
+    aiAgentsCanHelp: 'ИИ-агенты могут помочь вам с:',
+    executeMainTasks: 'Выполнять основные задачи',
+    executeMainTasksDesc: 'Автоматизировать сложные рабочие процессы',
+    fillContent: 'Заполнять контент',
+    fillContentDesc: 'Генерировать и заполнять контент автоматически',
+    manageAccount: 'Управлять аккаунтом',
+    manageAccountDesc: 'Управлять настройками и предпочтениями аккаунта',
+    
     // Accessibility
     toggleMenu: 'Переключить меню',
     openInNewTab: 'Открыть в новой вкладке',
@@ -700,6 +755,17 @@ export const helpCenterTranslations = {
     // Chat responses
     liveAgentUnavailable: 'Entendo que você gostaria de falar com um agente ao vivo. Infelizmente, os agentes ao vivo não estão disponíveis no momento. Por favor, entre em contato conosco através do nosso formulário de contato para assistência personalizada, e nossa equipe de suporte entrará em contato com você o mais breve possível.',
     chatBotGreeting: 'Olá! Eu sou seu assistente ChatBot. Estou aqui para ajudá-lo com qualquer dúvida ou problema que você possa ter. Como posso ajudá-lo hoje?',
+    
+    // AI Agent Mode  
+    switchToAIAgentMode: 'Mudar para Modo Agente IA',
+    aiAgentBenefits: 'Nosso sistema permite adicionar seu próprio agente IA e utilizar toda a funcionalidade do site até mesmo gratuitamente ou com custos mínimos.',
+    aiAgentsCanHelp: 'Agentes IA podem ajudá-lo com:',
+    executeMainTasks: 'Executar tarefas principais',
+    executeMainTasksDesc: 'Automatizar fluxos de trabalho e processos complexos',
+    fillContent: 'Preencher conteúdo',
+    fillContentDesc: 'Gerar e preencher conteúdo automaticamente',
+    manageAccount: 'Gerenciar conta',
+    manageAccountDesc: 'Gerenciar configurações e preferências da conta',
     
     // Accessibility
     toggleMenu: 'Alternar menu',
@@ -819,6 +885,17 @@ export const helpCenterTranslations = {
     liveAgentUnavailable: 'Capisco che vorresti parlare con un agente dal vivo. Sfortunatamente, gli agenti dal vivo non sono al momento disponibili. Ti preghiamo di contattarci tramite il nostro modulo di contatto per assistenza personalizzata, e il nostro team di supporto ti ricontatterà il prima possibile.',
     chatBotGreeting: 'Ciao! Sono il tuo assistente ChatBot. Sono qui per aiutarti con qualsiasi domanda o problema tu possa avere. Come posso aiutarti oggi?',
     
+    // AI Agent Mode
+    switchToAIAgentMode: 'Passa alla Modalità Agente IA',
+    aiAgentBenefits: 'Il nostro sistema ti permette di aggiungere il tuo agente IA e utilizzare tutte le funzionalità del sito anche gratuitamente o con costi minimi.',
+    aiAgentsCanHelp: 'Gli agenti IA possono aiutarti con:',
+    executeMainTasks: 'Eseguire compiti principali',
+    executeMainTasksDesc: 'Automatizzare flussi di lavoro e processi complessi',
+    fillContent: 'Riempire contenuti',
+    fillContentDesc: 'Generare e compilare contenuti automaticamente',
+    manageAccount: 'Gestire account',
+    manageAccountDesc: 'Gestire impostazioni e preferenze dell\'account',
+    
     // Accessibility
     toggleMenu: 'Attiva/disattiva menu',
     openInNewTab: 'Apri in nuova scheda',
@@ -936,6 +1013,17 @@ export const helpCenterTranslations = {
     // Chat responses
     liveAgentUnavailable: 'Ik begrijp dat je graag met een live agent zou willen spreken. Helaas zijn live agents momenteel niet beschikbaar. Neem alsjeblieft contact met ons op via ons contactformulier voor persoonlijke hulp, en ons supportteam zal zo snel mogelijk contact met je opnemen.',
     chatBotGreeting: 'Hallo! Ik ben je ChatBot-assistent. Ik ben hier om je te helpen met alle vragen of problemen die je mogelijk hebt. Hoe kan ik je vandaag helpen?',
+    
+    // AI Agent Mode
+    switchToAIAgentMode: 'Overschakelen naar AI Agent Modus',
+    aiAgentBenefits: 'Ons systeem stelt je in staat om je eigen AI-agent toe te voegen en de volledige functionaliteit van de site te gebruiken, zelfs gratis of met minimale kosten.',
+    aiAgentsCanHelp: 'AI-agenten kunnen je helpen met:',
+    executeMainTasks: 'Hoofdtaken uitvoeren',
+    executeMainTasksDesc: 'Complexe workflows en processen automatiseren',
+    fillContent: 'Inhoud invullen',
+    fillContentDesc: 'Automatisch inhoud genereren en invullen',
+    manageAccount: 'Account beheren',
+    manageAccountDesc: 'Account instellingen en voorkeuren beheren',
     
     // Accessibility
     toggleMenu: 'Menu omschakelen',
@@ -1055,6 +1143,17 @@ export const helpCenterTranslations = {
     liveAgentUnavailable: 'Rozumiem, że chciałbyś porozmawiać z agentem na żywo. Niestety, agenci na żywo nie są obecnie dostępni. Skontaktuj się z nami za pomocą naszego formularza kontaktowego, aby uzyskać spersonalizowaną pomoc, a nasz zespół wsparcia skontaktuje się z Tobą tak szybko, jak to możliwe.',
     chatBotGreeting: 'Cześć! Jestem Twoim asystentem ChatBot. Jestem tutaj, aby pomóc Ci z wszelkimi pytaniami lub problemami, które możesz mieć. Jak mogę Ci pomóc dzisiaj?',
     
+    // AI Agent Mode
+    switchToAIAgentMode: 'Przełącz na Tryb Agenta AI',
+    aiAgentBenefits: 'Nasz system pozwala dodać własnego agenta AI i korzystać z pełnej funkcjonalności strony nawet za darmo lub przy minimalnych kosztach.',
+    aiAgentsCanHelp: 'Agenci AI mogą pomóc Ci w:',
+    executeMainTasks: 'Wykonywanie głównych zadań',
+    executeMainTasksDesc: 'Automatyzacja złożonych przepływów pracy i procesów',
+    fillContent: 'Wypełnianie treści',
+    fillContentDesc: 'Automatyczne generowanie i wypełnianie treści',
+    manageAccount: 'Zarządzanie kontem',
+    manageAccountDesc: 'Zarządzanie ustawieniami i preferencjami konta',
+    
     // Accessibility
     toggleMenu: 'Przełącz menu',
     openInNewTab: 'Otwórz w nowej karcie',
@@ -1173,6 +1272,17 @@ export const helpCenterTranslations = {
     liveAgentUnavailable: 'ライブエージェントとお話しされたいお気持ちは分かります。申し訳ございませんが、現在ライブエージェントはご利用いただけません。個別のサポートについては、お問い合わせフォームからご連絡ください。サポートチームができるだけ早くご連絡いたします。',
     chatBotGreeting: 'こんにちは！私はあなたのChatBotアシスタントです。ご質問や問題がございましたら、お手伝いいたします。今日はどのようにお手伝いできますか？',
     
+    // AI Agent Mode
+    switchToAIAgentMode: 'AIエージェントモードに切り替え',
+    aiAgentBenefits: '当システムでは、独自のAIエージェントを追加して、無料または最小限のコストでサイトの全機能をご利用いただけます。',
+    aiAgentsCanHelp: 'AIエージェントがお手伝いできること：',
+    executeMainTasks: '主要タスクの実行',
+    executeMainTasksDesc: '複雑なワークフローとプロセスの自動化',
+    fillContent: 'コンテンツの入力',
+    fillContentDesc: 'コンテンツの自動生成と入力',
+    manageAccount: 'アカウント管理',
+    manageAccountDesc: 'アカウント設定と設定の管理',
+    
     // Accessibility
     toggleMenu: 'メニューを切り替え',
     openInNewTab: '新しいタブで開く',
@@ -1290,6 +1400,17 @@ export const helpCenterTranslations = {
     // Chat responses
     liveAgentUnavailable: '我理解您想与在线客服交谈。不幸的是，在线客服目前不可用。请通过我们的联系表单联系我们以获得个性化帮助，我们的支持团队将尽快与您联系。',
     chatBotGreeting: '您好！我是您的ChatBot助手。我在这里帮助您解决任何问题。今天我可以为您做些什么？',
+    
+    // AI Agent Mode
+    switchToAIAgentMode: '切换到AI代理模式',
+    aiAgentBenefits: '我们的系统允许您添加自己的AI代理，甚至免费或以最低成本使用网站的全部功能。',
+    aiAgentsCanHelp: 'AI代理可以帮助您：',
+    executeMainTasks: '执行主要任务',
+    executeMainTasksDesc: '自动化复杂的工作流程和流程',
+    fillContent: '填充内容',
+    fillContentDesc: '自动生成和填充内容',
+    manageAccount: '管理账户',
+    manageAccountDesc: '管理账户设置和偏好',
     
     // Accessibility
     toggleMenu: '切换菜单',
