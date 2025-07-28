@@ -101,7 +101,10 @@ export default function ChatHelpWidget() {
         setIsAuthenticated(false);
         setAccessToken(null);
         setUserId(null);
-        console.error('Client auth error:', error?.message || 'No session found');
+        // Only log actual errors, not missing sessions (which is normal for unauthenticated users)
+        if (error) {
+          console.error('Client auth error:', error.message);
+        }
       } else {
         setIsAuthenticated(true);
         setAccessToken(session.access_token);
