@@ -49,7 +49,7 @@ const FAQSection = ({ faqs, showTitle = true }: FAQSectionProps) => {
       <div className="mx-auto w-full max-w-none">
         {showTitle && (
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent mb-4 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-900 to-gray-900 bg-clip-text text-transparent mb-4 tracking-tight">
               {t.frequentlyAskedQuestions}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
