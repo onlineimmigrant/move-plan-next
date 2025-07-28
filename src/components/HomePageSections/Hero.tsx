@@ -51,24 +51,39 @@ interface HeroProps {
  * Utility function to get translated content
  * @param defaultContent - The default content (fallback)
  * @param translations - JSONB object with translations
- * @param locale - Current locale
+ * @param locale - Current locale (null means use default content)
  * @returns Translated content or default content
  */
 const getTranslatedContent = (
   defaultContent: string,
   translations?: Record<string, string>,
-  locale?: string
+  locale?: string | null
 ): string => {
-  // If no translations or no locale, return default content
-  if (!translations || !locale) {
+  // If no locale, return default content
+  if (!locale) {
+    console.log('Translation: No locale provided, using default content');
+    return defaultContent;
+  }
+
+  // If no translations object exists, return default content
+  if (!translations) {
+    console.log('Translation: No translations available, using default content');
     return defaultContent;
   }
 
   // Try to get translation for the current locale
   const translatedContent = translations[locale];
   
-  // Return translated content if available, otherwise return default
-  return translatedContent && translatedContent.trim() !== '' ? translatedContent : defaultContent;
+  // If translation exists and is not empty, use it
+  if (translatedContent && translatedContent.trim() !== '') {
+    console.log(`Translation: Found translation for locale '${locale}', using translated content`);
+    return translatedContent;
+  }
+
+  // If no translation for current locale, return the original default content
+  // (NOT English translation, but the actual default field value)
+  console.log(`Translation: No translation found for locale '${locale}', using default content`);
+  return defaultContent;
 };
 
 const Hero: React.FC<HeroProps> = ({ hero }) => {
@@ -79,32 +94,46 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
   if (!hero) return null;
 
   // Extract locale from pathname (e.g., /en/page -> en)
-  const currentLocale = pathname.split('/')[1] || 'en';
+  const pathSegments = pathname.split('/').filter(segment => segment !== '');
+  const pathLocale = pathSegments[0];
+  
+  // List of supported locales
+  const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
+  
+  // Determine the current locale
+  // Only consider it a locale if it's exactly 2 characters AND in our supported list
+  const currentLocale = (pathLocale && pathLocale.length === 2 && supportedLocales.includes(pathLocale)) 
+    ? pathLocale 
+    : null;
 
-  // Get translated content using the utility function
-  const translatedH1Title = getTranslatedContent(
-    hero.h1_title,
-    hero.h1_title_translation,
-    currentLocale
-  );
+  // Get content - if no locale, use default fields directly
+  const translatedH1Title = currentLocale 
+    ? getTranslatedContent(hero.h1_title, hero.h1_title_translation, currentLocale)
+    : hero.h1_title; // Direct default field
 
-  const translatedPDescription = getTranslatedContent(
-    hero.p_description,
-    hero.p_description_translation,
-    currentLocale
-  );
+  const translatedPDescription = currentLocale
+    ? getTranslatedContent(hero.p_description, hero.p_description_translation, currentLocale)
+    : hero.p_description; // Direct default field
 
-  console.log('Hero props:', {
-    h1_title: hero.h1_title,
-    h1_title_translation: hero.h1_title_translation,
-    translatedH1Title,
-    p_description: hero.p_description,
-    p_description_translation: hero.p_description_translation,
-    translatedPDescription,
-    currentLocale,
-    title_alighnement: hero.title_alighnement,
-    animation_element: hero.animation_element,
-  });
+  console.log('=== HERO TRANSLATION DETAILED DEBUG ===');
+  console.log('Raw pathname:', pathname);
+  console.log('Path segments:', pathSegments);
+  console.log('First segment (potential locale):', pathLocale);
+  console.log('Supported locales:', ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh']);
+  console.log('Is valid locale?', pathLocale && pathLocale.length === 2 && ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'].includes(pathLocale));
+  console.log('Final currentLocale:', currentLocale);
+  console.log('Using translation system:', !!currentLocale);
+  console.log('---');
+  console.log('H1 Title - Default field:', hero.h1_title);
+  console.log('H1 Title - Translation object:', hero.h1_title_translation);
+  console.log('H1 Title - Final result:', translatedH1Title);
+  console.log('H1 Title - Are they equal?', hero.h1_title === translatedH1Title);
+  console.log('---');
+  console.log('P Description - Default field:', hero.p_description);
+  console.log('P Description - Translation object:', hero.p_description_translation);
+  console.log('P Description - Final result:', translatedPDescription);
+  console.log('P Description - Are they equal?', hero.p_description === translatedPDescription);
+  console.log('=== END DEBUG ===');
 
   useEffect(() => {
     const currentRef = heroRef.current;
