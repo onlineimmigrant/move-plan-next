@@ -6,6 +6,22 @@ import DOMPurify from 'dompurify';
 import Image from 'next/image';
 import FeedbackAccordion from './FeedbackAccordion';
 
+// Text style variants - similar to TemplateHeadingSection
+const TEXT_VARIANTS = {
+  default: {
+    sectionTitle: 'text-3xl sm:text-4xl lg:text-5xl font-normal text-gray-800',
+    sectionDescription: 'text-lg font-light text-gray-700',
+    metricTitle: 'text-xl sm:text-2xl font-normal text-gray-800',
+    metricDescription: 'text-base font-light text-gray-700'
+  },
+  apple: {
+    sectionTitle: 'text-4xl font-light text-gray-900',
+    sectionDescription: 'text-lg font-light text-gray-600',
+    metricTitle: 'text-xl font-medium text-gray-900',
+    metricDescription: 'text-base font-light text-gray-600'
+  }
+};
+
 // Types
 interface Metric {
   id: number;
@@ -27,22 +43,11 @@ interface TemplateSectionData {
   is_section_title_aligned_center: boolean;
   is_section_title_aligned_right: boolean;
   section_title: string;
-  section_title_size?: string;
-  section_title_weight?: string;
-  section_title_color?: string;
   section_description?: string;
-  section_description_size?: string;
-  section_description_weight?: string;
-  section_description_color?: string;
+  text_style_variant?: 'default' | 'apple';
   grid_columns: number;
   image_metrics_height?: string;
   is_image_bottom: boolean;
-  metric_title_size?: string;
-  metric_title_weight?: string;
-  metric_title_color?: string;
-  metric_description_size?: string;
-  metric_description_weight?: string;
-  metric_description_color?: string;
   website_metric: Metric[];
   organization_id: string | null;
   is_reviews_section: boolean;
@@ -53,6 +58,9 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
   if (!section) {
     return null;
   }
+
+  // Get text variant styles
+  const textVar = TEXT_VARIANTS[section.text_style_variant || 'default'];
 
   // Memoized sanitize function to avoid unnecessary recalculations
   const sanitizeHTML = useMemo(() => {
@@ -85,18 +93,14 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
               }`}
             >
               <h2
-                className={`${section.section_title_size || 'text-3xl'} ${
-                  section.section_title_weight || 'font-bold'
-                } ${section.section_title_color ? `text-${section.section_title_color}` : 'text-gray-900'}`}
+                className={textVar.sectionTitle}
               >
                 {parse(sanitizeHTML(section.section_title))}
               </h2>
 
               {section.section_description && (
                 <p
-                  className={`pt-4 ${section.section_description_size || 'text-lg'} ${
-                    section.section_description_weight || 'font-normal'
-                  } ${section.section_description_color ? `text-${section.section_description_color}` : 'text-gray-600'}`}
+                  className={`pt-4 ${textVar.sectionDescription}`}
                 >
                   {parse(sanitizeHTML(section.section_description))}
                 </p>
@@ -134,17 +138,13 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                     )}
                     {metric.is_title_displayed && (
                       <h3
-                        className={`order-1 ${section.metric_title_size || 'text-xl'} ${
-                          section.metric_title_weight || 'font-semibold'
-                        } ${section.metric_title_color ? `text-${section.metric_title_color}` : 'text-gray-800'}`}
+                        className={`order-1 ${textVar.metricTitle}`}
                       >
                         {parse(sanitizeHTML(metric.title))}
                       </h3>
                     )}
                     <div
-                      className={`flex-col order-2 ${section.metric_description_size || 'text-base'} ${
-                        section.metric_description_weight || 'font-normal'
-                      } ${section.metric_description_color ? `text-${section.metric_description_color}` : 'text-gray-600'} tracking-wider`}
+                      className={`flex-col order-2 ${textVar.metricDescription} tracking-wider`}
                     >
                       {parse(sanitizeHTML(metric.description))}
                     </div>
