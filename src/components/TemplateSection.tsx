@@ -37,7 +37,6 @@ interface Metric {
 
 interface TemplateSectionData {
   id: number;
-  font_family?: string;
   background_color?: string;
   is_full_width: boolean;
   is_section_title_aligned_center: boolean;
@@ -73,7 +72,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
 
   return (
     <section
-      className={`px-4 py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-transparent'} min-h-[600px]`}
+      className={`px-4 py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-white'} min-h-[600px]`}
     >
       <div
         className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto space-y-12 p-4 sm:p-8 sm:rounded-xl`}
@@ -118,7 +117,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                     key={metric.id}
                     className={`space-y-4 flex flex-col mx-auto min-h-[350px] ${
                       metric.is_card_type
-                        ? `bg-${metric.background_color || 'transparent'} p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl card-hover`
+                        ? `bg-${metric.background_color || 'white'} p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl card-hover`
                         : ''
                     }`}
                   >

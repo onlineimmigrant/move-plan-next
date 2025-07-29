@@ -36,7 +36,6 @@ export async function GET(request: Request) {
         section_description,
         text_style_variant,
         background_color,
-        font_family,
         grid_columns,
         is_full_width,
         is_section_title_aligned_center,

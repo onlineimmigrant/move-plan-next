@@ -20,7 +20,6 @@ interface Metric {
 
 interface TemplateSectionData {
   id: number;
-  font_family?: string;
   background_color?: string;
   is_full_width: boolean;
   is_section_title_aligned_center: boolean;
