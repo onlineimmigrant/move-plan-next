@@ -2,10 +2,13 @@
 export interface TemplateHeadingSection {
   id: string;
   name: string;
+  name_translation?: Record<string, string>;
   name_part_2?: string;
   name_part_3?: string;
   description_text: string;
+  description_text_translation?: Record<string, string>;
   button_text?: string;
+  button_text_translation?: Record<string, string>;
   url?: string;
   url_page: string;
   image?: string;

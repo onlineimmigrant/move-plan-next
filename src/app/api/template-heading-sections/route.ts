@@ -33,10 +33,13 @@ export async function GET(request: Request) {
       .select(`
         id,
         name,
+        name_translation,
         name_part_2,
         name_part_3,
         description_text,
+        description_text_translation,
         button_text,
+        button_text_translation,
         url,
         url_page,
         image,
