@@ -3,15 +3,19 @@
 import React from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
+import { usePathname } from 'next/navigation';
 import  Button from '@/ui/Button';
 
 interface TemplateHeadingSectionData {
   id: number;
   name: string;
+  name_translation?: Record<string, string>;
   name_part_2?: string;
   name_part_3?: string;
   description_text?: string;
+  description_text_translation?: Record<string, string>;
   button_text?: string;
+  button_text_translation?: Record<string, string>;
   url_page?: string;
   url?: string;
   image?: string;
@@ -44,9 +48,54 @@ const TEXT_VARIANTS = {
   }
 };
 
+/**
+ * Utility function to get translated content
+ * @param defaultContent - The default content (fallback)
+ * @param translations - JSONB object with translations
+ * @param locale - Current locale (null means use default content)
+ * @returns Translated content or default content
+ */
+const getTranslatedContent = (
+  defaultContent: string,
+  translations?: Record<string, string>,
+  locale?: string | null
+): string => {
+  // Ensure defaultContent is a string
+  const safeDefaultContent = defaultContent || '';
+  
+  // If no locale, return default content
+  if (!locale) {
+    return safeDefaultContent;
+  }
+
+  // If no translations object exists, return default content
+  if (!translations || typeof translations !== 'object') {
+    return safeDefaultContent;
+  }
+
+  // Try to get translation for the current locale
+  const translatedContent = translations[locale];
+  
+  // If translation exists and is not empty, use it
+  if (translatedContent && typeof translatedContent === 'string' && translatedContent.trim() !== '') {
+    return translatedContent;
+  }
+
+  // If no translation for current locale, return the original default content
+  return safeDefaultContent;
+};
+
 
 const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templateSectionHeadings }) => {
   if (!templateSectionHeadings?.length) return null;
+
+  const pathname = usePathname();
+  
+  // Extract locale from pathname (similar to Hero component logic)
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const pathLocale = pathSegments[0];
+  const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
+  const currentLocale = pathLocale && pathLocale.length === 2 && supportedLocales.includes(pathLocale) ? pathLocale : null;
 
   const sanitizeHTML = (html: string) => DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'span'],
@@ -56,13 +105,33 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
   return (
     <>
       {templateSectionHeadings.map((section) => {
-        const isClean = section.style_variant === 'clean';
-        const styleVar = STYLE_VARIANTS[section.style_variant || 'default'];
-        const textVar = TEXT_VARIANTS[section.text_style_variant || 'default'];
-        const hasImage = !!section.image;
-        const isApple = section.text_style_variant === 'apple';
-        
-        return (
+        try {
+          const isClean = section.style_variant === 'clean';
+          const styleVar = STYLE_VARIANTS[section.style_variant || 'default'];
+          const textVar = TEXT_VARIANTS[section.text_style_variant || 'default'];
+          const hasImage = !!section.image;
+          const isApple = section.text_style_variant === 'apple';
+          
+          // Get translated content
+          const translatedName = currentLocale 
+            ? getTranslatedContent(section.name || '', section.name_translation, currentLocale)
+            : section.name || '';
+          
+          const translatedDescription = section.description_text
+            ? (currentLocale 
+                ? getTranslatedContent(section.description_text, section.description_text_translation, currentLocale)
+                : section.description_text
+              )
+            : '';
+
+          const translatedButtonText = section.button_text
+            ? (currentLocale 
+                ? getTranslatedContent(section.button_text, section.button_text_translation, currentLocale)
+                : section.button_text
+              )
+            : '';
+          
+          return (
           <section
             key={section.id}
             className={`relative isolate ${!isClean ? 'px-6 lg:px-8' : ''} ${styleVar.section} font-sans ${
@@ -91,7 +160,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                     !hasImage ? 'text-center max-w-4xl mx-auto' : 'w-full'
                   }`}>
                     <h1 className={`${textVar.h1} tracking-tight text-${textVar.color} leading-tight`}>
-                      {parse(sanitizeHTML(section.name || ''))}{' '}
+                      {parse(sanitizeHTML(translatedName))}{' '}
                       {section.name_part_2 && (
                         <span className="relative inline-block">
                           <span className="relative z-10 bg-clip-text text-transparent" style={{
@@ -108,13 +177,13 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                       {section.name_part_3 && parse(sanitizeHTML(section.name_part_3))}
                     </h1>
 
-                    {section.description_text && (
+                    {translatedDescription && (
                       <p className={`mt-8 text-lg font-light text-${textVar.text} leading-8 max-w-2xl ${!hasImage ? 'mx-auto' : ''}`}>
-                        {parse(sanitizeHTML(section.description_text))}
+                        {parse(sanitizeHTML(translatedDescription))}
                       </p>
                     )}
 
-                    {section.button_text && section.url && (
+                    {translatedButtonText && section.url && (
                       <div className="mt-10">
                         {/* Use text link when is_text_link is explicitly true, or when it's undefined (fallback) */}
                         {(section.is_text_link === true || section.is_text_link === undefined) ? (
@@ -122,7 +191,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                             href={section.url}
                             className="inline-flex items-center gap-x-2 text-sky-600 hover:text-sky-500 text-lg font-light transition-colors duration-200 group"
                           >
-                            {parse(sanitizeHTML(section.button_text))}
+                            {parse(sanitizeHTML(translatedButtonText))}
                             <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
@@ -133,7 +202,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
 
                             onClick={() => window.location.href = section.url || ''}
                           >
-                            {parse(sanitizeHTML(section.button_text))}
+                            {parse(sanitizeHTML(translatedButtonText))}
                           </Button>
                         )}
                       </div>
@@ -161,6 +230,14 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
             </div>
           </section>
         );
+        } catch (error) {
+          console.error('Error rendering TemplateHeadingSection:', error, section);
+          return (
+            <div key={section.id} className="p-4 bg-red-100 border border-red-400 text-red-700">
+              Error rendering section: {section.name || 'Unknown'}
+            </div>
+          );
+        }
       })}
     </>
   );

@@ -48,7 +48,25 @@ const TemplateHeadingSections: React.FC = () => {
         return;
       }
 
-      const encodedPathname = encodeURIComponent(pathname);
+      // Strip locale from pathname for API call
+      const pathSegments = pathname.split('/').filter(Boolean);
+      const firstSegment = pathSegments[0];
+      const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
+      
+      // If first segment is a locale, remove it to get the base path
+      const basePath = firstSegment && firstSegment.length === 2 && supportedLocales.includes(firstSegment)
+        ? '/' + pathSegments.slice(1).join('/')
+        : pathname;
+      
+      console.log('Pathname processing:', {
+        originalPathname: pathname,
+        pathSegments,
+        firstSegment,
+        isLocale: supportedLocales.includes(firstSegment),
+        basePath
+      });
+
+      const encodedPathname = encodeURIComponent(basePath);
       const url = `/api/template-heading-sections?url_page=${encodedPathname}`;
       console.log('Fetching template heading sections from URL:', url);
 
