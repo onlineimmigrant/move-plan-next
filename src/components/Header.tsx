@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useBasket } from '@/context/BasketContext';
 import { useAuth } from '@/context/AuthContext';
 import { Disclosure } from '@headlessui/react';
 import * as HeroIcons from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
+import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import LoginModal from './LoginModal';
 import ContactModal from './ContactModal';
 import ModernLanguageSwitcher from './ModernLanguageSwitcher';
@@ -44,10 +45,14 @@ const Header: React.FC<HeaderProps> = ({
   const { basket } = useBasket();
   const { session, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
   const isLoggedIn = !!session;
   const { settings } = useSettings();
   const t = useHeaderTranslations();
+
+  // Get current locale for translations
+  const currentLocale = getLocaleFromPathname(pathname);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,6 +109,11 @@ const Header: React.FC<HeaderProps> = ({
               JSON.stringify(displayedSubItems, null, 2)
             );
 
+            // Get translated content for menu item
+            const translatedDisplayName = currentLocale 
+              ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+              : item.display_name;
+
             return (
               <div key={item.id} className="relative group">
                 {displayedSubItems.length > 0 ? (
@@ -111,21 +121,21 @@ const Header: React.FC<HeaderProps> = ({
                     <button
                       type="button"
                       className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                      title={item.display_name}
-                      aria-label={t.openMenuFor(item.display_name)}
+                      title={translatedDisplayName}
+                      aria-label={t.openMenuFor(translatedDisplayName)}
                     >
                       {settings?.menu_items_are_text ? (
-                        <span className="text-base font-medium text-gray-700">{item.display_name}</span>
+                        <span className="text-base font-medium text-gray-700">{translatedDisplayName}</span>
                       ) : item.image ? (
                         <Image
                           src={item.image}
-                          alt={item.display_name}
+                          alt={translatedDisplayName}
                           width={24}
                           height={24}
                           className="h-6 w-6 text-gray-600"
                           onError={() =>
                             console.error(
-                              `Failed to load image for menu item ${item.display_name}: ${item.image}`
+                              `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
                             )
                           }
                         />
@@ -134,36 +144,43 @@ const Header: React.FC<HeaderProps> = ({
                       )}
                     </button>
                     <div className="absolute right-0 w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
-                      {displayedSubItems.map((subItem) => (
-                        <LocalizedLink
-                          key={subItem.id}
-                          href={subItem.url_name}
-                          className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
-                        >
-                          {subItem.name}
-                        </LocalizedLink>
-                      ))}
+                      {displayedSubItems.map((subItem) => {
+                        // Get translated content for submenu item
+                        const translatedSubItemName = currentLocale 
+                          ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
+                          : subItem.name;
+
+                        return (
+                          <LocalizedLink
+                            key={subItem.id}
+                            href={subItem.url_name}
+                            className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
+                          >
+                            {translatedSubItemName}
+                          </LocalizedLink>
+                        );
+                      })}
                     </div>
                   </>
                 ) : (
                   <LocalizedLink
                     href={item.url_name}
                     className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    title={item.display_name}
-                    aria-label={t.goTo(item.display_name)}
+                    title={translatedDisplayName}
+                    aria-label={t.goTo(translatedDisplayName)}
                   >
                     {settings?.menu_items_are_text ? (
-                      <span className="text-base font-medium text-gray-700">{item.display_name}</span>
+                      <span className="text-base font-medium text-gray-700">{translatedDisplayName}</span>
                     ) : item.image ? (
                       <Image
                         src={item.image}
-                        alt={item.display_name}
+                        alt={translatedDisplayName}
                         width={24}
                         height={24}
                         className="h-4 w-6 text-gray-600"
                         onError={() =>
                           console.error(
-                            `Failed to load image for menu item ${item.display_name}: ${item.image}`
+                            `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
                           )
                         }
                       />
@@ -195,6 +212,11 @@ const Header: React.FC<HeaderProps> = ({
               JSON.stringify(displayedSubItems, null, 2)
             );
 
+            // Get translated content for menu item
+            const translatedDisplayName = currentLocale 
+              ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+              : item.display_name;
+
             return (
               <Disclosure key={item.id}>
                 {({ open }) => (
@@ -203,9 +225,9 @@ const Header: React.FC<HeaderProps> = ({
                       <>
                         <Disclosure.Button
                           className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                          aria-label={t.toggleMenu(item.display_name)}
+                          aria-label={t.toggleMenu(translatedDisplayName)}
                         >
-                          <span className="text-base font-medium text-gray-700">{item.display_name}</span>
+                          <span className="text-base font-medium text-gray-700">{translatedDisplayName}</span>
                           {open ? (
                             <MinusIcon className="h-5 w-5" aria-hidden="true" />
                           ) : (
@@ -213,16 +235,23 @@ const Header: React.FC<HeaderProps> = ({
                           )}
                         </Disclosure.Button>
                         <Disclosure.Panel className="pl-8">
-                          {displayedSubItems.map((subItem) => (
-                            <LocalizedLink
-                              key={subItem.id}
-                              href={subItem.url_name}
-                              onClick={() => setIsOpen(false)}
-                              className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
-                            >
-                              {subItem.name}
-                            </LocalizedLink>
-                          ))}
+                          {displayedSubItems.map((subItem) => {
+                            // Get translated content for submenu item
+                            const translatedSubItemName = currentLocale 
+                              ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
+                              : subItem.name;
+
+                            return (
+                              <LocalizedLink
+                                key={subItem.id}
+                                href={subItem.url_name}
+                                onClick={() => setIsOpen(false)}
+                                className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                              >
+                                {translatedSubItemName}
+                              </LocalizedLink>
+                            );
+                          })}
                         </Disclosure.Panel>
                       </>
                     ) : (
@@ -230,9 +259,9 @@ const Header: React.FC<HeaderProps> = ({
                         href={item.url_name}
                         onClick={() => setIsOpen(false)}
                         className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                        aria-label={t.goTo(item.display_name)}
+                        aria-label={t.goTo(translatedDisplayName)}
                       >
-                        <span className="text-base font-medium text-gray-700">{item.display_name}</span>
+                        <span className="text-base font-medium text-gray-700">{translatedDisplayName}</span>
                       </LocalizedLink>
                     )}
                   </div>

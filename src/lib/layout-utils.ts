@@ -16,20 +16,25 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
       .select(`
         id,
         display_name,
+        display_name_translation,
         url_name,
         is_displayed,
         is_displayed_on_footer,
         order,
         image,
+        description,
+        description_translation,
         react_icon_id,
         organization_id,
         react_icons (icon_name),
         website_submenuitem (
           id,
           name,
+          name_translation,
           url_name,
           order,
           description,
+          description_translation,
           is_displayed,
           organization_id
         )

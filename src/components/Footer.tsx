@@ -8,6 +8,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { MenuItem, SubMenuItem } from '@/types/menu';
 import LanguageSwitcher from './LanguageSwitcher';
+import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 
 // Static translations for footer
 const FOOTER_TRANSLATIONS = {
@@ -149,12 +150,16 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { session, logout } = useAuth();
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
 
   // Use translations with fallback
   const translations = useFooterTranslations();
+  
+  // Get current locale for menu translations
+  const currentLocale = getLocaleFromPathname(pathname);
   
   const isAuthenticated = !!session;
   const maxItemsPerColumn = 8;
@@ -213,32 +218,46 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             <span className="text-neutral-500 text-sm">No menu items available</span>
           ) : (
             <>
-              {itemsWithSubitems.map((item) => (
-                <div key={item.id} className="col-span-1 min-h-[200px]">
-                  <h3 className="text-base font-semibold mb-4">
-                    <Link
-                      href={item.url_name || '#'}
-                      className="hover:text-neutral-300 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                    >
-                      {item.display_name}
-                    </Link>
-                  </h3>
-                  <ul className="space-y-2">
-                    {item.website_submenuitem
-                      ?.filter((subItem) => subItem.is_displayed !== false)
-                      .map((subItem) => (
-                        <li key={subItem.id}>
-                          <Link
-                            href={subItem.url_name || '#'}
-                            className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                          >
-                            {subItem.name}
-                          </Link>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ))}
+              {itemsWithSubitems.map((item) => {
+                // Get translated content for menu item
+                const translatedDisplayName = currentLocale 
+                  ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+                  : item.display_name;
+
+                return (
+                  <div key={item.id} className="col-span-1 min-h-[200px]">
+                    <h3 className="text-base font-semibold mb-4">
+                      <Link
+                        href={item.url_name || '#'}
+                        className="hover:text-neutral-300 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                      >
+                        {translatedDisplayName}
+                      </Link>
+                    </h3>
+                    <ul className="space-y-2">
+                      {item.website_submenuitem
+                        ?.filter((subItem) => subItem.is_displayed !== false)
+                        .map((subItem) => {
+                          // Get translated content for submenu item
+                          const translatedSubItemName = currentLocale 
+                            ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
+                            : subItem.name;
+
+                          return (
+                            <li key={subItem.id}>
+                              <Link
+                                href={subItem.url_name || '#'}
+                                className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                              >
+                                {translatedSubItemName}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                    </ul>
+                  </div>
+                );
+              })}
 
               {groupedItemsWithoutSubitems.map((group, index) => (
                 <div key={`group-${index}`} className="col-span-1 min-h-[200px]">
@@ -251,16 +270,23 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     </Link>
                   </h3>
                   <ul className="space-y-2">
-                    {group.map((item) => (
-                      <li key={item.id}>
-                        <Link
-                          href={item.url_name || '#'}
-                          className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                        >
-                          {item.display_name}
-                        </Link>
-                      </li>
-                    ))}
+                    {group.map((item) => {
+                      // Get translated content for menu item
+                      const translatedDisplayName = currentLocale 
+                        ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+                        : item.display_name;
+
+                      return (
+                        <li key={item.id}>
+                          <Link
+                            href={item.url_name || '#'}
+                            className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                          >
+                            {translatedDisplayName}
+                          </Link>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ))}
