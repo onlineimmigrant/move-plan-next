@@ -12,6 +12,6 @@ export interface TemplateHeadingSection {
   image_first?: boolean;
   is_included_template_sections_active?: boolean;
   organization_id: string | null;
-  style_variant?: 'default' | 'minimal' | 'bold' | 'creative' | 'professional' | 'modern' | 'clean';
-  text_style_variant?: 'default' | 'minimal' | 'bold' | 'creative' | 'professional' | 'modern' | 'elegant' | 'compact' | 'apple';
+  style_variant?: 'default' | 'clean';
+  text_style_variant?: 'default' | 'apple';
 }

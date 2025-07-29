@@ -44,7 +44,8 @@ export async function GET(request: Request) {
         is_included_template_sections_active,
         organization_id,
         style_variant,
-        text_style_variant
+        text_style_variant,
+        is_text_link
       `)
       .eq('url_page', decodedUrlPage)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)
