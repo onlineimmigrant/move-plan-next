@@ -5,7 +5,6 @@ export interface TemplateSection {
   section_description?: string;
   text_style_variant?: 'default' | 'apple';
   background_color?: string;
-  font_family?: string;
   grid_columns?: number;
   is_full_width?: boolean;
   is_section_title_aligned_center?: boolean;
