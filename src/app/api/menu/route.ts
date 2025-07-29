@@ -5,9 +5,11 @@ import { supabase, getOrganizationId } from '@/lib/supabase';
 interface SubMenuItem {
   id: number;
   name: string;
+  name_translation?: Record<string, any>;
   url_name: string;
   order: number;
   description?: string;
+  description_translation?: Record<string, any>;
   is_displayed?: boolean;
   organization_id: string | null;
 }
@@ -19,6 +21,7 @@ interface ReactIcon {
 interface MenuItem {
   id: number;
   display_name: string;
+  display_name_translation?: Record<string, any>;
   url_name: string;
   is_displayed: boolean;
   is_displayed_on_footer: boolean;
@@ -28,6 +31,7 @@ interface MenuItem {
   react_icons?: ReactIcon | ReactIcon[];
   website_submenuitem?: SubMenuItem[];
   organization_id: string | null;
+  description_translation?: Record<string, any>;
 }
 
 export async function GET(request: Request) {
@@ -56,6 +60,8 @@ export async function GET(request: Request) {
       .select(`
         id,
         display_name,
+        display_name_translation,
+        description_translation,
         url_name,
         is_displayed,
         is_displayed_on_footer,
@@ -67,9 +73,11 @@ export async function GET(request: Request) {
         website_submenuitem (
           id,
           name,
+          name_translation,
           order,
           url_name,
           description,
+          description_translation,
           is_displayed,
           organization_id
         )
