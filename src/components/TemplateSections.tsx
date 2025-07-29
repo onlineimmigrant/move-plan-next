@@ -9,13 +9,15 @@ import TemplateSection from './TemplateSection';
 interface Metric {
   id: number;
   title: string;
-  is_title_displayed: boolean;
+  title_translation?: Record<string, string>;
   description: string;
+  description_translation?: Record<string, string>;
   image?: string;
   is_image_rounded_full: boolean;
-  is_card_type: boolean;
+  is_title_displayed: boolean;
   background_color?: string;
-  organization_id: string | null; // Added
+  is_card_type: boolean;
+  organization_id: string | null;
 }
 
 interface TemplateSectionData {
@@ -25,7 +27,9 @@ interface TemplateSectionData {
   is_section_title_aligned_center: boolean;
   is_section_title_aligned_right: boolean;
   section_title: string;
+  section_title_translation?: Record<string, string>;
   section_description?: string;
+  section_description_translation?: Record<string, string>;
   text_style_variant?: 'default' | 'apple';
   grid_columns: number;
   image_metrics_height?: string;
