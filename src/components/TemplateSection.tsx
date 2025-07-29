@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import FeedbackAccordion from './FeedbackAccordion';
 
 // Text style variants - similar to TemplateHeadingSection
@@ -22,12 +23,51 @@ const TEXT_VARIANTS = {
   }
 };
 
+/**
+ * Utility function to get translated content
+ * @param defaultContent - The default content (fallback)
+ * @param translations - JSONB object with translations
+ * @param locale - Current locale (null means use default content)
+ * @returns Translated content or default content
+ */
+const getTranslatedContent = (
+  defaultContent: string,
+  translations?: Record<string, string>,
+  locale?: string | null
+): string => {
+  // Ensure defaultContent is a string
+  const safeDefaultContent = defaultContent || '';
+  
+  // If no locale, return default content
+  if (!locale) {
+    return safeDefaultContent;
+  }
+
+  // If no translations object exists, return default content
+  if (!translations || typeof translations !== 'object') {
+    return safeDefaultContent;
+  }
+
+  // Try to get translation for the current locale
+  const translatedContent = translations[locale];
+  
+  // If translation exists and is not empty, use it
+  if (translatedContent && typeof translatedContent === 'string' && translatedContent.trim() !== '') {
+    return translatedContent;
+  }
+
+  // If no translation for current locale, return the original default content
+  return safeDefaultContent;
+};
+
 // Types
 interface Metric {
   id: number;
   title: string;
+  title_translation?: Record<string, string>;
   is_title_displayed: boolean;
   description: string;
+  description_translation?: Record<string, string>;
   image?: string;
   is_image_rounded_full: boolean;
   is_card_type: boolean;
@@ -42,7 +82,9 @@ interface TemplateSectionData {
   is_section_title_aligned_center: boolean;
   is_section_title_aligned_right: boolean;
   section_title: string;
+  section_title_translation?: Record<string, string>;
   section_description?: string;
+  section_description_translation?: Record<string, string>;
   text_style_variant?: 'default' | 'apple';
   grid_columns: number;
   image_metrics_height?: string;
@@ -58,8 +100,28 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
     return null;
   }
 
+  const pathname = usePathname();
+  
+  // Extract locale from pathname (similar to TemplateHeadingSection logic)
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const pathLocale = pathSegments[0];
+  const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
+  const currentLocale = pathLocale && pathLocale.length === 2 && supportedLocales.includes(pathLocale) ? pathLocale : null;
+
   // Get text variant styles
   const textVar = TEXT_VARIANTS[section.text_style_variant || 'default'];
+
+  // Get translated content
+  const translatedSectionTitle = currentLocale 
+    ? getTranslatedContent(section.section_title || '', section.section_title_translation, currentLocale)
+    : section.section_title || '';
+  
+  const translatedSectionDescription = section.section_description
+    ? (currentLocale 
+        ? getTranslatedContent(section.section_description, section.section_description_translation, currentLocale)
+        : section.section_description
+      )
+    : '';
 
   // Memoized sanitize function to avoid unnecessary recalculations
   const sanitizeHTML = useMemo(() => {
@@ -94,14 +156,14 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
               <h2
                 className={textVar.sectionTitle}
               >
-                {parse(sanitizeHTML(section.section_title))}
+                {parse(sanitizeHTML(translatedSectionTitle))}
               </h2>
 
-              {section.section_description && (
+              {translatedSectionDescription && (
                 <p
                   className={`pt-4 ${textVar.sectionDescription}`}
                 >
-                  {parse(sanitizeHTML(section.section_description))}
+                  {parse(sanitizeHTML(translatedSectionDescription))}
                 </p>
               )}
             </div>
@@ -111,6 +173,21 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
               className={`grid grid-cols-1 lg:grid-cols-${section.grid_columns || 1} gap-x-12 gap-y-12`}
             >
               {(section.website_metric || []).map((metric) => {
+                // Get translated content for each metric
+                const translatedMetricTitle = metric.title
+                  ? (currentLocale 
+                      ? getTranslatedContent(metric.title, metric.title_translation, currentLocale)
+                      : metric.title
+                    )
+                  : '';
+
+                const translatedMetricDescription = metric.description
+                  ? (currentLocale 
+                      ? getTranslatedContent(metric.description, metric.description_translation, currentLocale)
+                      : metric.description
+                    )
+                  : '';
+
                 // Keep animation and hover effect on card as before
                 return (
                   <div
@@ -139,13 +216,13 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                       <h3
                         className={`order-1 ${textVar.metricTitle}`}
                       >
-                        {parse(sanitizeHTML(metric.title))}
+                        {parse(sanitizeHTML(translatedMetricTitle))}
                       </h3>
                     )}
                     <div
                       className={`flex-col order-2 ${textVar.metricDescription} tracking-wider`}
                     >
-                      {parse(sanitizeHTML(metric.description))}
+                      {parse(sanitizeHTML(translatedMetricDescription))}
                     </div>
                   </div>
                 );

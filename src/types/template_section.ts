@@ -2,7 +2,9 @@
 export interface TemplateSection {
   id: string;
   section_title: string;
+  section_title_translation?: Record<string, string>;
   section_description?: string;
+  section_description_translation?: Record<string, string>;
   text_style_variant?: 'default' | 'apple';
   background_color?: string;
   grid_columns?: number;

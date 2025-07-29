@@ -33,7 +33,9 @@ export async function GET(request: Request) {
       .select(`
         id,
         section_title,
+        section_title_translation,
         section_description,
+        section_description_translation,
         text_style_variant,
         background_color,
         grid_columns,
@@ -51,7 +53,9 @@ export async function GET(request: Request) {
           website_metric!metric_id (
             id,
             title,
+            title_translation,
             description,
+            description_translation,
             image,
             is_image_rounded_full,
             is_title_displayed,
