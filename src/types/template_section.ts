@@ -2,19 +2,8 @@
 export interface TemplateSection {
   id: string;
   section_title: string;
-  section_title_color?: string;
-  section_title_size?: string;
-  section_title_weight?: string;
   section_description?: string;
-  section_description_color?: string;
-  section_description_size?: string;
-  section_description_weight?: string;
-  metric_title_color?: string;
-  metric_title_size?: string;
-  metric_title_weight?: string;
-  metric_description_color?: string;
-  metric_description_size?: string;
-  metric_description_weight?: string;
+  text_style_variant?: 'default' | 'apple';
   background_color?: string;
   font_family?: string;
   grid_columns?: number;

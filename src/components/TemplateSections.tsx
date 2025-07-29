@@ -26,24 +26,13 @@ interface TemplateSectionData {
   is_section_title_aligned_center: boolean;
   is_section_title_aligned_right: boolean;
   section_title: string;
-  section_title_size?: string;
-  section_title_weight?: string;
-  section_title_color?: string;
   section_description?: string;
-  section_description_size?: string;
-  section_description_weight?: string;
-  section_description_color?: string;
+  text_style_variant?: 'default' | 'apple';
   grid_columns: number;
   image_metrics_height?: string;
   is_image_bottom: boolean;
-  metric_title_size?: string;
-  metric_title_weight?: string;
-  metric_title_color?: string;
-  metric_description_size?: string;
-  metric_description_weight?: string;
-  metric_description_color?: string;
   website_metric: Metric[];
-  organization_id: string | null; // Added
+  organization_id: string | null;
   is_reviews_section: boolean;
 }
 
