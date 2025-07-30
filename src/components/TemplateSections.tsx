@@ -37,6 +37,7 @@ interface TemplateSectionData {
   website_metric: Metric[];
   organization_id: string | null;
   is_reviews_section: boolean;
+  is_help_center_section?: boolean;
 }
 
 const TemplateSections: React.FC = () => {

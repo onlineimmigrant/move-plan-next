@@ -71,7 +71,7 @@ export default function AIAgentTab({
   return (
     <div className={`h-full flex flex-col ${size === 'fullscreen' ? 'max-w-4xl mx-auto' : ''}`}>
       {!isAuthenticated ? (
-        <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+        <div className="h-full flex flex-col items-center justify-center p-4 sm:p-6 text-center">
           <div className="p-4 bg-sky-100 rounded-full mb-4">
             <SparklesIcon className="h-8 w-8 text-sky-500" />
           </div>
@@ -95,7 +95,7 @@ export default function AIAgentTab({
           </div>
         </div>
       ) : (
-        <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <div className="h-full flex flex-col items-center justify-center p-4 sm:p-6 text-center space-y-6">
           {/* AI Agent Header */}
           <div className="text-center space-y-4">
 

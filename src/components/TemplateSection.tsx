@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import FeedbackAccordion from './FeedbackAccordion';
+import HelpCenterSection from './HelpCenterSection';
 
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
@@ -92,6 +93,8 @@ interface TemplateSectionData {
   website_metric: Metric[];
   organization_id: string | null;
   is_reviews_section: boolean;
+  is_help_center_section?: boolean;
+  max_faqs_display?: number;
 }
 
 const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }) => {
@@ -134,13 +137,15 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
 
   return (
     <section
-      className={`px-4 py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-white'} min-h-[600px]`}
+      className={`py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-white'} min-h-[600px]`}
     >
       <div
-        className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto space-y-12 p-4 sm:p-8 sm:rounded-xl`}
+        className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto space-y-12 py-4 sm:p-8 sm:rounded-xl`}
       >
         {section.is_reviews_section ? (
           <FeedbackAccordion type="all_products" />
+        ) : section.is_help_center_section ? (
+          <HelpCenterSection section={section} />
         ) : (
           <>
             {/* Section Title and Description */}

@@ -287,17 +287,17 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
   return (
     <section className="py-8 bg-transparent">
       <div className="max-w-7xl mx-auto px-4 sm:px-0">
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className="bg-white rounded-lg shadow-md border-2 border-teal-600">
           <button
             onClick={toggleAccordion}
-            className="w-full text-left py-4 px-4 sm:px-6 flex justify-between items-center text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 border-2 border-teal-600 focus:ring-teal-600 transition-colors duration-300 ease-in-out"
+            className="w-full text-left py-6 px-4 sm:px-6 flex justify-between items-center text-gray-900 hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 rounded-t-lg transition-all duration-300 ease-in-out"
             aria-expanded={isOpen}
             aria-controls="feedback-content"
           >
             <div className="flex items-center space-x-1 sm:space-x-4">
               {overallAvgRating ? (
                 <div className="flex items-center space-x-1 sm:space-x-4">
-                  <span className="text-xl sm:text-3xl font-bold">{overallAvgRating.toFixed(1)}</span>
+                  <span className="text-xl sm:text-3xl font-bold text-gray-900">{overallAvgRating.toFixed(1)}</span>
                   <div className="flex items-center">
                     <div className="ml-2 block sm:hidden">
                       <Star filled={true} size="5" />
@@ -327,7 +327,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
           <div
             ref={contentRef}
             id="feedback-content"
-            className={`px-4 sm:px-6 py-6 sm:py-8 transition-all duration-300 ease-in-out ${
+            className={`px-4 sm:px-6 py-6 sm:py-8 bg-gray-50 border-t border-gray-200 transition-all duration-300 ease-in-out ${
               isOpen ? 'block' : 'hidden max-h-0 overflow-hidden'
             }`}
             style={{
@@ -339,7 +339,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
               <div className="mb-6 text-center">
                 <button
                   onClick={toggleForm}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:ring-2 focus:ring-teal-600 transition-colors duration-200"
+                  className="px-6 py-3 bg-teal-600 text-white rounded-lg shadow-sm hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-all duration-200"
                   aria-label="Open review form modal"
                 >
                   Write Review
@@ -356,15 +356,18 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
             />
 
             {feedbacks.length === 0 ? (
-              <p className="text-center text-gray-500 py-6">No reviews available.</p>
+              <div className="text-center py-12 bg-white rounded-lg">
+                <p className="text-gray-500 text-lg mb-2">No reviews yet</p>
+                <p className="text-gray-400 text-sm">Be the first to share your experience!</p>
+              </div>
             ) : (
               <>
                 <div className="space-y-6 sm:space-y-8">
                   {feedbacks.map(comment => (
-                    <div key={comment.id} className="border-b border-gray-200 pb-6 sm:pb-8">
+                    <div key={comment.id} className="border-b border-gray-200 pb-6 sm:pb-8 last:border-b-0">
                       {comment.product && (
-                        <p className="text-sm text-teal-500 underline mb-3">
-                          <Link href={`/products/${comment.product.slug}`} className="hover:text-teal-700">
+                        <p className="text-sm text-teal-600 underline mb-3">
+                          <Link href={`/products/${comment.product.slug}`} className="hover:text-teal-800 transition-colors duration-200">
                             {comment.product.name}
                           </Link>
                         </p>
@@ -379,8 +382,8 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
                           })}
                         </div>
                       </div>
-                      <p className="mt-3 text-base sm:text-lg text-gray-900 leading-relaxed">{comment.comment}</p>
-                      <div className="mt-2 text-sm font-semibold text-gray-600">
+                      <p className="mt-4 text-base sm:text-lg text-gray-800 leading-relaxed">{comment.comment}</p>
+                      <div className="mt-3 text-sm font-medium text-gray-700">
                         {comment.user.first_name} {comment.user.last_name}
                       </div>
                     </div>
@@ -392,14 +395,14 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
                     <button
                       onClick={loadMoreFeedbacks}
                       disabled={isLoadingMore}
-                      className={`text-teal-500 hover:text-teal-700 focus:ring-2 focus:ring-teal-600 text-sm font-medium flex items-center justify-center mx-auto ${
+                      className={`text-teal-600 hover:text-teal-800 focus:ring-2 focus:ring-teal-500 text-sm font-medium flex items-center justify-center mx-auto transition-colors duration-200 ${
                         isLoadingMore ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
                       {isLoadingMore ? (
                         <span className="flex items-center">
                           <svg
-                            className="animate-spin h-5 w-5 mr-2 text-teal-500"
+                            className="animate-spin h-5 w-5 mr-2 text-teal-600"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
