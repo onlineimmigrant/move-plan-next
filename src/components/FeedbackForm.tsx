@@ -36,8 +36,8 @@ const Star: React.FC<{
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
-    className={`w-${size} h-${size} ${filled ? "text-teal-600" : "text-gray-300"} transition-transform duration-200 ${
-      clickable ? 'cursor-pointer hover:scale-110' : 'hover:scale-110'
+    className={`w-${size} h-${size} ${filled ? "text-amber-500" : "text-gray-300"} transition-transform duration-200 ${
+      clickable ? 'cursor-pointer hover:scale-110 hover:text-amber-600' : 'hover:scale-110'
     }`}
     fill={filled ? "currentColor" : "none"}
     stroke="currentColor"
@@ -415,7 +415,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
   if (!isAuthenticated) {
     return (
       <p className="text-center text-gray-600 py-6 text-base">
-        Please <Link href="/login" className="text-teal-600 font-medium hover:text-teal-800 transition-colors duration-200">log in</Link> to submit a review.
+        Please <Link href="/login" className="text-sky-600 font-medium hover:text-sky-800 transition-colors duration-200">log in</Link> to submit a review.
       </p>
     );
   }
@@ -440,7 +440,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-transparent">
       <div
         ref={modalRef}
-        className="absolute bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="absolute bg-white rounded-lg shadow-2xl border border-gray-200 w-full max-w-lg max-h-[90vh] overflow-y-auto"
         style={{ top: `${position.y}px`, left: `${position.x}px` }}
         role="dialog"
         aria-labelledby="modal-title"
@@ -448,7 +448,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
       >
         {/* Modal Header (draggable) */}
         <div
-          className="flex items-center justify-between p-6 border-b border-gray-200 cursor-move"
+          className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50 rounded-t-lg cursor-move"
           onMouseDown={handleDragStart}
         >
           <h3 id="modal-title" className="text-xl font-bold text-gray-900">
@@ -459,7 +459,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
               e.stopPropagation();
               onClose();
             }}
-            className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 rounded-full p-1"
+            className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-full p-1 transition-colors duration-200"
             aria-label="Close modal"
           >
             <XMarkIcon className="h-6 w-6" />
@@ -474,7 +474,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
             </p>
           )}
           {success && (
-            <p className="text-sm text-teal-700 bg-teal-50 border border-teal-200 rounded-md p-3 mb-6" role="status">
+            <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md p-3 mb-6" role="status">
               {success}
             </p>
           )}
@@ -482,10 +482,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Rating Selector */}
             <div>
-              <label htmlFor="rating" className="block text-sm font-semibold text-gray-800 mb-2">
+              <label htmlFor="rating" className="block text-sm font-semibold text-gray-900 mb-3">
                 Rating
               </label>
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 mb-2">
                 {Array.from({ length: 5 }, (_, index) => {
                   const starValue = index + 1;
                   const uniqueId = uuidv4();
@@ -503,6 +503,11 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                   );
                 })}
               </div>
+              {rating > 0 && (
+                <p className="text-sm text-gray-600 mt-1">
+                  You rated: {rating} star{rating !== 1 ? 's' : ''}
+                </p>
+              )}
             </div>
 
             {/* Admin Fields (Submit as User and Submission Date) */}
@@ -519,7 +524,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                       setSelectedUserId(e.target.value || null);
                       console.log('Selected user ID:', e.target.value);
                     }}
-                    className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors duration-200"
+                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors duration-200"
                     aria-label="Select user to submit review on behalf of"
                   >
                     <option value="" disabled>
@@ -542,7 +547,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                     type="datetime-local"
                     value={submittedAt}
                     onChange={(e) => setSubmittedAt(e.target.value)}
-                    className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors duration-200"
+                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors duration-200"
                     aria-required="true"
                   />
                 </div>
@@ -552,7 +557,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
             {/* User Name and Surname Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="user-name" className="block text-sm font-semibold text-gray-800 mb-2">
+                <label htmlFor="user-name" className="block text-sm font-semibold text-gray-900 mb-2">
                   First Name
                 </label>
                 <input
@@ -560,13 +565,13 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                   type="text"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors duration-200"
+                  className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors duration-200"
                   placeholder="Enter first name"
                   aria-required="true"
                 />
               </div>
               <div>
-                <label htmlFor="user-surname" className="block text-sm font-semibold text-gray-800 mb-2">
+                <label htmlFor="user-surname" className="block text-sm font-semibold text-gray-900 mb-2">
                   Last Name
                 </label>
                 <input
@@ -574,7 +579,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                   type="text"
                   value={userSurname}
                   onChange={(e) => setUserSurname(e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors duration-200"
+                  className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors duration-200"
                   placeholder="Enter last name"
                 />
               </div>
@@ -582,14 +587,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
 
             {/* Comment Field */}
             <div>
-              <label htmlFor="comment" className="block text-sm font-semibold text-gray-800 mb-2">
+              <label htmlFor="comment" className="block text-sm font-semibold text-gray-900 mb-2">
                 Comment
               </label>
               <textarea
                 id="comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-y transition-colors duration-200"
+                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y transition-colors duration-200"
                 rows={5}
                 maxLength={500}
                 placeholder="Write your review here..."
@@ -605,7 +610,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200"
                 aria-label="Cancel and close modal"
               >
                 Cancel
@@ -613,7 +618,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`px-6 py-2 bg-teal-600 text-white rounded-lg shadow-md hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-all duration-200 ${
+                className={`px-6 py-2 bg-sky-600 text-white rounded-lg shadow-md hover:bg-sky-700 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 ${
                   isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
                 aria-label="Submit review"

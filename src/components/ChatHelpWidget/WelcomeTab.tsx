@@ -121,7 +121,7 @@ export default function WelcomeTab({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-8 space-y-10 mx-auto max-w-4xl">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8 sm:space-y-10 mx-auto max-w-4xl">
         {/* Welcome Header - Enhanced Apple Style */}
         <div className="text-center space-y-8">
           <h1 className="text-5xl sm:text-6xl font-thin text-gray-900 tracking-tight leading-none">
@@ -160,7 +160,7 @@ export default function WelcomeTab({
                   {filteredFAQs.slice(0, 3).map((faq: FAQ) => (
                     <div
                       key={faq.id}
-                      className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:border-gray-200 hover:scale-[1.005] transition-all duration-500 ease-out"
+                      className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:border-gray-200 hover:scale-[1.005] transition-all duration-500 ease-out"
                     >
                       <button
                         onClick={() => setExpandedFAQ(expandedFAQ === faq.id ? null : faq.id)}
@@ -195,7 +195,7 @@ export default function WelcomeTab({
                     <button
                       key={article.id}
                       onClick={() => onShowKnowledgeBase?.()}
-                      className="w-full p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-gray-200 hover:scale-[1.005] transition-all duration-500 ease-out text-left group relative overflow-hidden"
+                      className="w-full p-4 sm:p-6 lg:p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-gray-200 hover:scale-[1.005] transition-all duration-500 ease-out text-left group relative overflow-hidden"
                     >
                       <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-sky-50/50 to-transparent rounded-full -mr-10 -mt-10 group-hover:opacity-80 transition-opacity duration-500"></div>
                       <div className="relative">
@@ -246,7 +246,7 @@ export default function WelcomeTab({
               <button
                 key={index}
                 onClick={action.action}
-                className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] hover:border-gray-200 transition-all duration-500 ease-out text-left group relative overflow-hidden min-h-[180px]"
+                className="p-4 sm:p-6 lg:p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] hover:border-gray-200 transition-all duration-500 ease-out text-left group relative overflow-hidden min-h-[160px] sm:min-h-[180px]"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-50 via-sky-25 to-cyan-50 rounded-full opacity-30 -mr-16 -mt-16 group-hover:opacity-50 group-hover:scale-110 transition-all duration-500"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-gray-50 to-transparent rounded-full opacity-40 -ml-12 -mb-12 group-hover:opacity-60 transition-all duration-500"></div>

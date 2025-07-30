@@ -48,6 +48,7 @@ export async function GET(request: Request) {
         url_page,
         organization_id,
         is_reviews_section,
+        is_help_center_section,
         website_templatesection_metrics!templatesection_id (
           metric_id,
           website_metric!metric_id (
