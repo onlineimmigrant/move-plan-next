@@ -17,6 +17,7 @@ export { TextField, TextAreaField, SelectField, CheckboxField } from './FormFiel
 export { ColorSelect } from './ColorSelect';
 export { ImageUploadField } from './ImageUploadField';
 export { MultiLanguageSelect, SingleLanguageSelect } from './LanguageSelect';
+export { OrganizationTypeSelect } from './OrganizationTypeSelect';
 export { DisclosureSection } from './DisclosureSection';
 
 // Configuration and utilities

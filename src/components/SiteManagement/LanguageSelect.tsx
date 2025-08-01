@@ -115,7 +115,7 @@ export const MultiLanguageSelect: React.FC<MultiLanguageSelectProps> = ({
               leaveTo="opacity-0"
               afterLeave={() => setIsOpen(false)}
             >
-              <Listbox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-sm shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-100">
+              <Listbox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-sm shadow-xl ring-1 ring-gray-200ring-opacity-5 focus:outline-none border border-gray-200">
                 {availableLanguages.map((language) => {
                   const isSelected = value.includes(language.code);
                   return (
@@ -207,7 +207,7 @@ export const SingleLanguageSelect: React.FC<SingleLanguageSelectProps> = ({
               leaveFrom="opacity-100"
               leaveTo="opacity-0"
             >
-              <Listbox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-sm shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-100">
+              <Listbox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-sm shadow-xl ring-1 ring-gray-200 ring-opacity-5 focus:outline-none border border-gray-200">
                 {availableOptions.map((language) => (
                   <Listbox.Option
                     key={language.code}
