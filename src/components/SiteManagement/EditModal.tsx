@@ -29,6 +29,8 @@ export default function EditModal({
   const [isMobile, setIsMobile] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop'); // New state for preview mode
+  const [hoveredImage, setHoveredImage] = useState<string | null>(null); // New state for image hover
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 }); // Mouse position for tooltip
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef<number>(0);
   const dragStartWidth = useRef<number>(0);
@@ -58,8 +60,19 @@ export default function EditModal({
   useEffect(() => {
     if (organization?.settings) {
       console.log('Loading organization settings:', organization.settings); // Debug log
-      setSettings(organization.settings);
-      setOriginalSettings(organization.settings);
+      const loadedSettings = {
+        ...organization.settings,
+        // Ensure supported_locales is always an array
+        supported_locales: Array.isArray(organization.settings.supported_locales) 
+          ? organization.settings.supported_locales 
+          : organization.settings.supported_locales 
+            ? [organization.settings.supported_locales] 
+            : ['en'],
+        // Ensure language has a default
+        language: organization.settings.language || 'en'
+      };
+      setSettings(loadedSettings);
+      setOriginalSettings(loadedSettings);
     } else {
       console.log('No settings found, using defaults'); // Debug log
       // Initialize with default values if no settings exist
@@ -80,7 +93,7 @@ export default function EditModal({
         seo_title: '',
         seo_description: '',
         language: 'en',
-        supported_locales: [],
+        supported_locales: ['en'], // Default to English array
         with_language_switch: false,
         contact_email: '',
         contact_phone: ''
@@ -295,59 +308,112 @@ export default function EditModal({
   if (!isOpen || !organization) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white w-full h-full flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+      onClick={(e) => {
+        // Only close modal if clicking the backdrop itself, not any child elements
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      {/* Image Hover Modal */}
+      {hoveredImage && (
+        <div 
+          className="fixed z-[60] pointer-events-none"
+          style={{
+            left: `${mousePosition.x + 10}px`,
+            top: `${mousePosition.y + 10}px`,
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-2">
+            <img 
+              src={hoveredImage} 
+              alt="Organization Logo Preview"
+              className="rounded-md"
+              style={{ width: '120px', height: '120px', objectFit: 'contain' }}
+            />
+          </div>
+        </div>
+      )}
+      
+      <div className="bg-white w-full h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
+        <header className="bg-gray-100  border-b border-gray-200 px-3 sm:px-4 py-2.5">
           <div className="flex items-center justify-between">
             {/* Left Side - Title and Description */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-3">
-                {/* Organization Icon/Avatar */}
-                <div className="hidden sm:flex w-10 h-10 bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl items-center justify-center text-white font-bold text-lg shadow-sm">
-                  {organization.name.charAt(0).toUpperCase()}
+              <div className="flex items-center space-x-2">
+                {/* Organization Icon/Avatar or Logo */}
+                <div className="flex w-8 h-8 rounded-lg items-center justify-center shadow-sm overflow-hidden">
+                  {settings.image ? (
+                    <img 
+                      src={settings.image} 
+                      alt={organization.name}
+                      className="w-full h-full object-cover rounded-lg cursor-pointer transition-transform duration-200 hover:scale-105"
+                      onMouseEnter={(e) => {
+                        if (settings.image) {
+                          setHoveredImage(settings.image);
+                          setMousePosition({ x: e.clientX, y: e.clientY });
+                        }
+                      }}
+                      onMouseMove={(e) => {
+                        setMousePosition({ x: e.clientX, y: e.clientY });
+                      }}
+                      onMouseLeave={() => setHoveredImage(null)}
+                      onError={(e) => {
+                        // Fallback to avatar if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-full h-full bg-gradient-to-br from-sky-500 to-sky-600 rounded-lg flex items-center justify-center text-white font-bold text-sm ${settings.image ? 'hidden' : ''}`}>
+                    {organization.name.charAt(0).toUpperCase()}
+                  </div>
                 </div>
                 
                 {/* Title Section */}
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
-                    {isMobile ? 'Settings' : `Edit Settings - ${organization.name}`}
+                <div className="px-4  min-w-0 flex-1">
+                  <h1 className="text-base sm:text-base font-semibold text-gray-900 truncate">
+                    {isMobile ? 'Settings' : `${organization.name.toUpperCase()}`}
                   </h1>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5 truncate">
-                    {isMobile ? organization.name : 'Configure your site settings and see changes in real-time'}
+                  <p className="text-xs text-gray-600 mt-0 truncate">
+                    {isMobile ? organization.name.toUpperCase() : 'Configure your site settings and see changes in real-time'}
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Right Side - Actions */}
-            <div className="flex items-center space-x-2 sm:space-x-3 ml-4">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 ml-3">
               {/* Save Button */}
               <Button
                 onClick={handleSave}
                 disabled={isLoading || !hasUnsavedChanges}
-                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-sm sm:text-base font-medium transition-all duration-300 shadow-sm hover:shadow-md transform ${
+                className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md transform ${
                   hasUnsavedChanges && !isLoading
                     ? 'bg-sky-500 hover:bg-sky-600 text-white hover:scale-105'
                     : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 } disabled:opacity-75 disabled:cursor-not-allowed disabled:hover:scale-100`}
               >
                 {isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="flex items-center space-x-1.5">
+                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     <span className="hidden sm:inline">Saving...</span>
                   </div>
                 ) : hasUnsavedChanges ? (
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center space-x-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="hidden sm:inline">Save Changes</span>
                     <span className="sm:hidden">Save</span>
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center space-x-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="hidden sm:inline">No Changes</span>
@@ -360,71 +426,85 @@ export default function EditModal({
               <button
                 onClick={onClose}
                 disabled={isLoading}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Close"
               >
-                <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
 
-          {/* Mobile Status Bar */}
-          {isMobile && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center space-x-4">
-                  <span className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span>Live Preview</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <div className={`w-2 h-2 rounded-full ${
-                      isLoading ? 'bg-amber-400' : 
-                      hasUnsavedChanges ? 'bg-orange-400' : 'bg-green-400'
-                    }`}></div>
-                    <span>
-                      {isLoading ? 'Saving' : 
-                       hasUnsavedChanges ? 'Changes' : 'Saved'}
-                    </span>
-                  </span>
-                </div>
-                <div className="text-gray-400">
-                  {organization.base_url || 'Preview Mode'}
-                </div>
-              </div>
-            </div>
-          )}
+  
         </header>
 
         {/* Content */}
         <div className={`flex-1 flex overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`} ref={containerRef}>
           {/* Collapsed Settings Button (Desktop) */}
           {isCollapsed && !isMobile && (
-            <div className="w-16 bg-gray-50 border-r border-gray-200 flex flex-col items-center justify-start pt-6">
+            <div className="w-12 bg-gray-50 border-r border-gray-200 flex flex-col items-center justify-start pt-4">
               <button
                 onClick={toggleCollapse}
-                className="w-12 h-12 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl shadow-lg transition-all duration-300 hover:scale-105 flex items-center justify-center group"
+                className="w-8 h-8 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-md transition-all duration-300 hover:scale-105 flex items-center justify-center group"
                 title="Open Settings"
               >
-                <Cog6ToothIcon className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+                <Cog6ToothIcon className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
               </button>
             </div>
           )}
 
           {/* Mobile Settings Overlay */}
           {isMobile && isCollapsed && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-              <div className="bg-white w-full h-full flex flex-col">
-                <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Settings</h3>
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+              onClick={(e) => {
+                // Only close overlay if clicking the backdrop itself
+                if (e.target === e.currentTarget) {
+                  toggleCollapse();
+                }
+              }}
+            >
+              <div className="bg-white w-full h-full flex flex-col" onMouseDown={(e) => e.stopPropagation()}>
+                <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    {/* Organization Icon/Avatar or Logo */}
+                    <div className="flex w-6 h-6 rounded-md items-center justify-center shadow-sm overflow-hidden">
+                      {settings.image ? (
+                        <img 
+                          src={settings.image} 
+                          alt={organization.name}
+                          className="w-full h-full object-cover rounded-md cursor-pointer transition-transform duration-200 hover:scale-105"
+                          onMouseEnter={(e) => {
+                            if (settings.image) {
+                              setHoveredImage(settings.image);
+                              setMousePosition({ x: e.clientX, y: e.clientY });
+                            }
+                          }}
+                          onMouseMove={(e) => {
+                            setMousePosition({ x: e.clientX, y: e.clientY });
+                          }}
+                          onMouseLeave={() => setHoveredImage(null)}
+                          onError={(e) => {
+                            // Fallback to avatar if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-full h-full bg-gradient-to-br from-sky-500 to-sky-600 rounded-md flex items-center justify-center text-white font-bold text-xs ${settings.image ? 'hidden' : ''}`}>
+                        {organization.name.charAt(0).toUpperCase()}
+                      </div>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900">Settings</h3>
+                  </div>
                   <button
                     onClick={toggleCollapse}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
                   >
-                    <XMarkIcon className="w-6 h-6" />
+                    <XMarkIcon className="w-5 h-5" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-4 pb-12" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
                   <SettingsFormFields
                     settings={settings}
                     onChange={handleSettingChange}
@@ -448,25 +528,29 @@ export default function EditModal({
                 willChange: isDragging ? 'width' : 'auto',
                 contain: isDragging ? 'layout style' : 'none'
               }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Settings</h3>
+              <div className="pb-12 p-4" onMouseDown={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-900">Settings</h3>
                   <button
                     onClick={toggleCollapse}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
                     title="Minimize to icon"
                   >
-                    <ChevronLeftIcon className="w-5 h-5" />
+                    <ChevronLeftIcon className="w-4 h-4" />
                   </button>
                 </div>
-                <SettingsFormFields
-                  settings={settings}
-                  onChange={handleSettingChange}
-                  onImageUpload={handleImageUpload}
-                  uploadingImages={uploadingImages}
-                  isNarrow={leftPanelWidth < 40}
-                />
+                <div onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                  <SettingsFormFields
+                    settings={settings}
+                    onChange={handleSettingChange}
+                    onImageUpload={handleImageUpload}
+                    uploadingImages={uploadingImages}
+                    isNarrow={leftPanelWidth < 40}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -511,13 +595,13 @@ export default function EditModal({
           >
             {/* Mobile Settings Toggle Button */}
             {isMobile && !isCollapsed && (
-              <div className="absolute top-4 left-4 z-10">
+              <div className="absolute top-1.5 right-3 z-10">
                 <button
                   onClick={toggleCollapse}
-                  className="w-12 h-12 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl shadow-lg transition-all duration-300 hover:scale-105 flex items-center justify-center"
+                  className="w-9 h-9 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-md transition-all duration-300 hover:scale-105 flex items-center justify-center"
                   title="Open Settings"
                 >
-                  <Cog6ToothIcon className="w-6 h-6" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                 </button>
               </div>
             )}
