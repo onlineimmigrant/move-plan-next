@@ -8,13 +8,13 @@ import { ModalProvider } from '@/context/ModalContext';
 import ParentMenu from './components/ParentMenu';
 import TablesChildMenu from './components/TablesChildMenu';
 import ReportsChildMenu from './components/ReportsChildMenu';
-import { sidebarLinks, DisclosureKey as TablesDisclosureKey } from '@/lib/sidebarLinks';
+import { sidebarLinks, getFilteredSidebarLinks, DisclosureKey as TablesDisclosureKey } from '@/lib/sidebarLinks';
 import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib/reportSidebarLinks';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { isAdmin } = useAuth();
-  console.log('[AdminLayout] Rendering for path:', pathname, 'isAdmin:', isAdmin);
+  const { isAdmin, isInGeneralOrganization } = useAuth();
+  console.log('[AdminLayout] Rendering for path:', pathname, 'isAdmin:', isAdmin, 'isInGeneralOrganization:', isInGeneralOrganization);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isParentMenuCollapsed, setIsParentMenuCollapsed] = useState(true);
@@ -41,6 +41,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     custom: false,
   });
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Get filtered sidebar links based on user permissions
+  const filteredSidebarLinks = getFilteredSidebarLinks(sidebarLinks, isInGeneralOrganization);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 768px)');
@@ -98,7 +101,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <TablesChildMenu
                 isSidebarOpen={isSidebarOpen}
                 setIsSidebarOpen={setIsSidebarOpen}
-                sidebarLinks={sidebarLinks}
+                sidebarLinks={filteredSidebarLinks}
                 openSections={openTablesSections}
                 setOpenSections={setOpenTablesSections}
                 searchQuery={searchQuery}

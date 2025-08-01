@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
     { href: '/admin/cookie_category', label: 'Cookies', icon: ShieldCheckIcon, tooltip: 'Consent Management' },
     //{ href: '/admin/reports/custom', label: 'Reports', icon: ChartBarIcon, tooltip: 'Standard and Custom' },
     { href: '/admin/ai/management', label: 'AI', icon: RocketLaunchIcon, tooltip: 'AI Models' },
-    { href: '/admin/settings', label: 'Settings', icon: Cog6ToothIcon, tooltip:'Website Management' },
+    { href: '/admin/site-management', label: 'Settings', icon: Cog6ToothIcon, tooltip:'Website Management' },
     { href: '/admin/tickets/management', label: 'Tickets', icon: ChatBubbleLeftIcon, tooltip: 'Contact Management' },
     { href: '/account', label: 'Account', icon: ArrowsRightLeftIcon, tooltip: 'Personal' },
   ];
