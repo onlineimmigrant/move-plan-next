@@ -3,7 +3,8 @@ import { TextField, TextAreaField, SelectField, CheckboxField } from './FormFiel
 import { ColorSelect } from './ColorSelect';
 import { ImageUploadField } from './ImageUploadField';
 import { MultiLanguageSelect, SingleLanguageSelect } from './LanguageSelect';
-import { Settings } from './types';
+import { OrganizationTypeSelect } from './OrganizationTypeSelect';
+import { Settings, organizationTypes } from './types';
 
 interface SectionConfig {
   title: string;
@@ -14,7 +15,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'image' | 'multi-language' | 'single-language';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'image' | 'multi-language' | 'single-language' | 'organization-type';
   placeholder?: string;
   span?: 'full' | 'half';
 }
@@ -55,7 +56,11 @@ interface SingleLanguageFieldConfig extends BaseFieldConfig {
   supportedLanguagesField: keyof Settings; // Field name that contains supported languages
 }
 
-type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig;
+interface OrganizationTypeFieldConfig extends BaseFieldConfig {
+  type: 'organization-type';
+}
+
+type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small (240px)', value: '240px' },
@@ -76,8 +81,11 @@ export const sectionsConfig: SectionConfig[] = [
     title: 'Basic Information',
     key: 'basic',
     fields: [
-      { name: 'site', label: 'Site Title', type: 'text', placeholder: 'Enter your site title', span: 'full' }
-
+      { name: 'name', label: 'Organization Name', type: 'text', placeholder: 'Enter organization name' },
+      { name: 'site', label: 'Site Title', type: 'text', placeholder: 'Enter your site title' },
+      { name: 'base_url', label: 'Base URL (Vercel Address)', type: 'url', placeholder: 'https://your-site.vercel.app'},
+      { name: 'base_url_local', label: 'Local URL', type: 'url', placeholder: 'http://localhost:3100'},
+      { name: 'type', label: 'Organization Type', type: 'organization-type' },
     ]
   },
   {
@@ -250,6 +258,16 @@ export const renderField = ({
           name={field.name}
           value={value || 'en'}
           supportedLanguages={Array.isArray(supportedLanguages) ? supportedLanguages : ['en']}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'organization-type':
+      return (
+        <OrganizationTypeSelect
+          label={field.label}
+          name={field.name}
+          value={value || 'services'}
           onChange={handleChange}
         />
       );

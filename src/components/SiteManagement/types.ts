@@ -13,6 +13,12 @@ export interface Organization {
 }
 
 export interface Settings {
+  // Organization Information
+  name?: string;
+  base_url?: string;
+  base_url_local?: string;
+  type?: string;
+  
   // Basic Information
   primary_color?: string;
   secondary_color?: string;
