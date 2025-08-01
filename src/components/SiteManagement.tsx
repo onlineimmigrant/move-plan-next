@@ -322,9 +322,9 @@ export default function SiteManagement() {
 
       console.log('Settings saved successfully:', data); // Debug log
 
-      // Close modal and refresh
-      setIsEditModalOpen(false);
-      setSelectedOrganization(null);
+      // Don't close modal anymore - let user continue editing
+      // setIsEditModalOpen(false);
+      // setSelectedOrganization(null);
       await fetchOrganizations();
 
     } catch (err: any) {

@@ -101,50 +101,40 @@ export default function SettingsFormFields({
   };
 
   const renderSectionFields = (fields: any[], sectionKey: string) => {
-    const fullSpanFields = fields.filter((field: any) => field.span === 'full');
-    const regularFields = fields.filter((field: any) => field.span !== 'full');
+    const fullSpanFields = fields.filter(field => field.span === 'full');
+    const regularFields = fields.filter(field => field.span !== 'full');
     
     return (
       <>
         {/* Regular grid fields */}
         {regularFields.length > 0 && (
           <div className={getGridClasses(sectionKey === 'images' ? 3 : 2)}>
-            {regularFields.map((field: any) => {
-              const fieldComponent = renderField({
-                field,
-                value: (settings as any)[field.name],
-                onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
-                onImageUpload,
-                uploadingImages,
-                allSettings: settings
-              } as any);
-              
-              return fieldComponent ? (
-                <div key={field.name}>
-                  {fieldComponent as unknown as React.ReactElement}
-                </div>
-              ) : null;
-            })}
+            {regularFields.map(field => (
+              <div key={field.name}>
+                {renderField({
+                  field,
+                  value: settings[field.name as keyof Settings],
+                  onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
+                  onImageUpload,
+                  uploadingImages
+                }) as React.ReactNode}
+              </div>
+            ))}
           </div>
         )}
         
         {/* Full span fields */}
-        {fullSpanFields.map((field: any) => {
-          const fieldComponent = renderField({
-            field,
-            value: (settings as any)[field.name],
-            onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
-            onImageUpload,
-            uploadingImages,
-            allSettings: settings
-          } as any);
-          
-          return fieldComponent ? (
-            <div key={field.name}>
-              {fieldComponent as unknown as React.ReactElement}
-            </div>
-          ) : null;
-        })}
+        {fullSpanFields.map(field => (
+          <div key={field.name}>
+            {renderField({
+              field,
+              value: settings[field.name as keyof Settings],
+              onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
+              onImageUpload,
+              uploadingImages
+            }) as React.ReactNode}
+          </div>
+        ))}
       </>
     );
   };

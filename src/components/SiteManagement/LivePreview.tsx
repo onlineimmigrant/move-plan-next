@@ -82,7 +82,7 @@ export default function LivePreview({
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-100">
+    <div className="h-full flex flex-col bg-gray-100 pb-8 ">
       {/* Preview Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
         {/* Wide Layout - Single Row */}
@@ -162,7 +162,7 @@ export default function LivePreview({
           </div>
           
           {/* Second Row - Preview Mode Toggle and Status */}
-          <div className="flex items-center justify-between">
+          <div className="hidden items-center justify-between">
             {/* Preview Mode Toggle */}
             {onPreviewModeChange ? (
               <div className="flex items-center bg-gray-100 rounded-lg p-1">
