@@ -9,6 +9,7 @@ interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
   organizationId: string | null;
+  organizationType: string | null;
   fullName: string | null;
   isLoading: boolean;
   error: string | null;
@@ -16,6 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
   supabase: SupabaseClient;
+  isInGeneralOrganization: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [organizationType, setOrganizationType] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,25 +37,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, organization_id, full_name')
+        .select(`
+          role, 
+          organization_id, 
+          full_name, 
+          is_site_creator,
+          organizations (
+            type
+          )
+        `)
         .eq('id', userId)
         .single();
       if (error || !data) {
         console.error('Profile fetch error:', error?.message || 'No profile found');
         setIsAdmin(false);
         setOrganizationId(null);
+        setOrganizationType(null);
         setFullName(null);
         return false;
       }
-      console.log('Profile fetched:', { role: data.role, organization_id: data.organization_id, full_name: data.full_name });
+      console.log('Profile fetched:', { role: data.role, organization_id: data.organization_id, full_name: data.full_name, is_site_creator: data.is_site_creator, organization_type: (data.organizations as any)?.type });
       setIsAdmin(data.role === 'admin');
       setOrganizationId(data.organization_id || null);
+      setOrganizationType((data.organizations as any)?.type || null);
       setFullName(data.full_name || null);
       return data.role === 'admin';
     } catch (err: unknown) {
       console.error('Profile fetch failed:', (err as Error).message);
       setIsAdmin(false);
       setOrganizationId(null);
+      setOrganizationType(null);
       setFullName(null);
       return false;
     }
@@ -104,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setIsAdmin(false);
         setOrganizationId(null);
+        setOrganizationType(null);
         setFullName(null);
         setError('No session found');
         if (window.location.pathname.startsWith('/admin')) {
@@ -151,6 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(null);
       setIsAdmin(false);
       setOrganizationId(null);
+      setOrganizationType(null);
       setFullName(null);
       console.log('Cookies after logout:', document.cookie);
       router.push('/login');
@@ -159,9 +175,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const isInGeneralOrganization = useMemo(() => organizationType === 'general', [organizationType]);
+
   const contextValue = useMemo(
-    () => ({ session, isAdmin, organizationId, fullName, isLoading, error, setSession, login, logout, supabase }),
-    [session, isAdmin, organizationId, fullName, isLoading, error]
+    () => ({ session, isAdmin, organizationId, organizationType, fullName, isLoading, error, setSession, login, logout, supabase, isInGeneralOrganization }),
+    [session, isAdmin, organizationId, organizationType, fullName, isLoading, error, isInGeneralOrganization]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

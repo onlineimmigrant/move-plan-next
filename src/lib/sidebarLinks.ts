@@ -316,6 +316,12 @@ email: [
           { href: "/admin/size", label: "Sizes" },
         ],
       },
+      {
+        label: "Site Management",
+        children: [
+          { href: "/admin/site-management/management", label: "Site Management" },
+        ],
+      },
     ],
   };
   
@@ -340,3 +346,23 @@ email: [
     });
     return mapping;
   };
+
+// Function to filter sidebar links based on user permissions
+export const getFilteredSidebarLinks = (
+  sidebarLinks: Record<DisclosureKey, LinkItem[]>, 
+  isInGeneralOrganization: boolean
+): Record<DisclosureKey, LinkItem[]> => {
+  if (isInGeneralOrganization) {
+    return sidebarLinks; // Show all links including site management
+  }
+  
+  // Filter out site management for non-general organization users
+  const filteredLinks = { ...sidebarLinks };
+  if (filteredLinks.settings) {
+    filteredLinks.settings = sidebarLinks.settings.filter(section => 
+      section.label !== 'Site Management'
+    );
+  }
+  
+  return filteredLinks;
+};
