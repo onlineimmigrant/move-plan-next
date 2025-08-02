@@ -9,9 +9,12 @@ const supabase = createClient(
 // GET - Fetch organization details with settings
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params before accessing properties
+    const { id } = await params;
+    
     // Get the authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -27,7 +30,7 @@ export async function GET(
     }
 
     const userId = user.user.id;
-    const orgId = params.id;
+    const orgId = id;
 
     console.log('Fetching organization details for:', orgId, 'by user:', userId);
 
@@ -53,16 +56,13 @@ export async function GET(
       .eq('id', profile.organization_id)
       .single();
 
-    if (currentOrgError || !currentOrg || currentOrg.type !== 'general') {
-      return NextResponse.json({ error: 'Access denied. Only general organization members can access site management.' }, { status: 403 });
+    if (currentOrgError || !currentOrg) {
+      return NextResponse.json({ error: 'Could not verify organization' }, { status: 500 });
     }
 
-    // Only admins can edit organizations
-    if (profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
-    }
+    console.log('User organization type:', currentOrg.type, 'Requested org ID:', orgId, 'User org ID:', profile.organization_id);
 
-    // Fetch the organization
+    // Fetch the target organization first
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('*')
@@ -74,20 +74,39 @@ export async function GET(
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    // Check if this organization was created by someone from the current general organization
-    const { data: generalOrgUsers, error: usersError } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('organization_id', profile.organization_id)
-      .or('role.eq.admin,is_site_creator.eq.true');
+    if (currentOrg.type === 'general') {
+      // GENERAL ORGANIZATION LOGIC (existing logic)
+      // Only admins can edit organizations
+      if (profile.role !== 'admin') {
+        return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
+      }
 
-    if (usersError) {
-      return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
-    }
+      // Check if this organization was created by someone from the current general organization
+      const { data: generalOrgUsers, error: usersError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('organization_id', profile.organization_id)
+        .or('role.eq.admin,is_site_creator.eq.true');
 
-    const creatorEmails = generalOrgUsers?.map(user => user.email) || [];
-    if (!creatorEmails.includes(organization.created_by_email)) {
-      return NextResponse.json({ error: 'Access denied. You can only edit organizations created by your team.' }, { status: 403 });
+      if (usersError) {
+        return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
+      }
+
+      const creatorEmails = generalOrgUsers?.map((user: any) => user.email) || [];
+      if (!creatorEmails.includes(organization.created_by_email)) {
+        return NextResponse.json({ error: 'Access denied. You can only edit organizations created by your team.' }, { status: 403 });
+      }
+    } else {
+      // NON-GENERAL ORGANIZATION LOGIC (new)
+      // Users can only access their own organization
+      if (orgId !== profile.organization_id) {
+        return NextResponse.json({ error: 'Access denied. You can only access your own organization.' }, { status: 403 });
+      }
+
+      // Check if user has appropriate role (admin or member with edit permissions)
+      if (profile.role !== 'admin' && profile.role !== 'member') {
+        return NextResponse.json({ error: 'Access denied. Insufficient permissions.' }, { status: 403 });
+      }
     }
 
     // Fetch the organization's settings
@@ -116,9 +135,12 @@ export async function GET(
 // PUT - Update organization and settings
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params before accessing properties
+    const { id } = await params;
+    
     // Get the authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -134,7 +156,7 @@ export async function PUT(
     }
 
     const userId = user.user.id;
-    const orgId = params.id;
+    const orgId = id;
     const body = await request.json();
 
     console.log('Updating organization:', orgId, 'with data:', body);
@@ -163,12 +185,22 @@ export async function PUT(
       .eq('id', profile.organization_id)
       .single();
 
-    if (currentOrgError || !currentOrg || currentOrg.type !== 'general') {
-      return NextResponse.json({ error: 'Access denied. Only general organization members can access site management.' }, { status: 403 });
+    if (currentOrgError || !currentOrg) {
+      return NextResponse.json({ error: 'Current organization not found' }, { status: 404 });
     }
 
-    if (profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
+    // Access control based on organization type
+    if (currentOrg.type === 'general') {
+      // General organizations: check admin role
+      if (profile.role !== 'admin') {
+        return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
+      }
+    } else {
+      // Non-general organizations: check if editing their own organization
+      if (profile.organization_id !== orgId) {
+        return NextResponse.json({ error: 'Access denied. You can only edit your own organization.' }, { status: 403 });
+      }
+      // For non-general orgs, any member can edit their own org
     }
 
     // Verify user can edit this organization
@@ -182,20 +214,24 @@ export async function PUT(
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    const { data: generalOrgUsers, error: usersError } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('organization_id', profile.organization_id)
-      .or('role.eq.admin,is_site_creator.eq.true');
+    // Additional permission check only for general organizations
+    if (currentOrg.type === 'general') {
+      const { data: generalOrgUsers, error: usersError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('organization_id', profile.organization_id)
+        .or('role.eq.admin,is_site_creator.eq.true');
 
-    if (usersError) {
-      return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
-    }
+      if (usersError) {
+        return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
+      }
 
-    const creatorEmails = generalOrgUsers?.map(user => user.email) || [];
-    if (!creatorEmails.includes(targetOrg.created_by_email)) {
-      return NextResponse.json({ error: 'Access denied. You can only edit organizations created by your team.' }, { status: 403 });
+      const creatorEmails = generalOrgUsers?.map(user => user.email) || [];
+      if (!creatorEmails.includes(targetOrg.created_by_email)) {
+        return NextResponse.json({ error: 'Access denied. You can only edit organizations created by your team.' }, { status: 403 });
+      }
     }
+    // For non-general organizations, no additional check needed since they can only edit their own org
 
     let updatedOrg = null;
     let updatedSettings = null;

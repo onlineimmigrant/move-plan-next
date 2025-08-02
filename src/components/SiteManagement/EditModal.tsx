@@ -346,20 +346,20 @@ export default function EditModal({
         </div>
       )}
       
-      <div className="bg-white w-full h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white/95 backdrop-blur-sm w-full h-full flex flex-col font-light" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <header className="bg-gray-100  border-b border-gray-200 px-3 sm:px-4 py-2.5">
+        <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 px-3 sm:px-4 py-2.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             {/* Left Side - Title and Description */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 {/* Organization Icon/Avatar or Logo */}
-                <div className="flex w-8 h-8 rounded-lg items-center justify-center shadow-sm overflow-hidden">
+                <div className="flex w-10 h-10 rounded-xl items-center justify-center shadow-sm overflow-hidden">
                   {settings.image ? (
                     <img 
                       src={settings.image} 
                       alt={organization.name}
-                      className="w-full h-full object-cover rounded-lg cursor-pointer transition-transform duration-200 hover:scale-105"
+                      className="w-full h-full object-cover rounded-xl cursor-pointer transition-transform duration-200 hover:scale-105"
                       onMouseEnter={(e) => {
                         if (settings.image) {
                           setHoveredImage(settings.image);
@@ -378,55 +378,55 @@ export default function EditModal({
                       }}
                     />
                   ) : null}
-                  <div className={`w-full h-full bg-gradient-to-br from-sky-500 to-sky-600 rounded-lg flex items-center justify-center text-white font-bold text-sm ${settings.image ? 'hidden' : ''}`}>
+                  <div className={`w-full h-full bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center text-white font-light text-lg ${settings.image ? 'hidden' : ''}`}>
                     {organization.name.charAt(0).toUpperCase()}
                   </div>
                 </div>
                 
                 {/* Title Section */}
-                <div className="px-4  min-w-0 flex-1">
-                  <h1 className="text-base sm:text-base font-semibold text-gray-900 truncate">
-                    {isMobile ? 'Settings' : `${organization.name.toUpperCase()}`}
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg font-light tracking-tight text-gray-900 truncate">
+                    {isMobile ? 'Settings' : `${organization.name}`}
                   </h1>
-                  <p className="text-xs text-gray-600 mt-0 truncate">
-                    {isMobile ? organization.name.toUpperCase() : 'Configure your site settings and see changes in real-time'}
+                  <p className="text-sm font-light text-gray-600/80 mt-0.5 truncate">
+                    {isMobile ? organization.name : 'Configure your site settings and see changes in real-time'}
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Right Side - Actions */}
-            <div className="flex items-center space-x-1.5 sm:space-x-2 ml-3">
+            <div className="flex items-center space-x-2 ml-4">
               {/* Save Button */}
               <Button
                 onClick={handleSave}
                 disabled={isLoading || !hasUnsavedChanges}
-                className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md transform ${
+                className={`px-4 py-2 rounded-xl text-sm font-light tracking-wide transition-all duration-300 shadow-sm hover:shadow-md transform ${
                   hasUnsavedChanges && !isLoading
                     ? 'bg-sky-500 hover:bg-sky-600 text-white hover:scale-105'
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-200/60 text-gray-500 cursor-not-allowed'
                 } disabled:opacity-75 disabled:cursor-not-allowed disabled:hover:scale-100`}
               >
                 {isLoading ? (
-                  <div className="flex items-center space-x-1.5">
-                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="hidden sm:inline">Saving...</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span className="hidden sm:inline font-light">Saving...</span>
                   </div>
                 ) : hasUnsavedChanges ? (
-                  <div className="flex items-center space-x-1.5">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="hidden sm:inline">Save Changes</span>
-                    <span className="sm:hidden">Save</span>
+                    <span className="hidden sm:inline font-light">Save Changes</span>
+                    <span className="sm:hidden font-light">Save</span>
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-1.5">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="hidden sm:inline">No Changes</span>
-                    <span className="sm:hidden">Saved</span>
+                    <span className="hidden sm:inline font-light">No Changes</span>
+                    <span className="sm:hidden font-light">Saved</span>
                   </div>
                 )}
               </Button>
@@ -435,10 +435,10 @@ export default function EditModal({
               <button
                 onClick={onClose}
                 disabled={isLoading}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white/60 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
                 title="Close"
               >
-                <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -450,13 +450,13 @@ export default function EditModal({
         <div className={`flex-1 flex overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`} ref={containerRef}>
           {/* Collapsed Settings Button (Desktop) */}
           {isCollapsed && !isMobile && (
-            <div className="w-12 bg-gray-50 border-r border-gray-200 flex flex-col items-center justify-start pt-4">
+            <div className="w-16 bg-white/60 backdrop-blur-sm border-r border-gray-200/60 flex flex-col items-center justify-start pt-6">
               <button
                 onClick={toggleCollapse}
-                className="w-8 h-8 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-md transition-all duration-300 hover:scale-105 flex items-center justify-center group"
+                className="w-10 h-10 bg-sky-500 hover:bg-sky-600 text-white rounded-xl shadow-sm transition-all duration-300 hover:scale-105 flex items-center justify-center group"
                 title="Open Settings"
               >
-                <Cog6ToothIcon className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                <Cog6ToothIcon className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
               </button>
             </div>
           )}
@@ -472,16 +472,16 @@ export default function EditModal({
                 }
               }}
             >
-              <div className="bg-white w-full h-full flex flex-col" onMouseDown={(e) => e.stopPropagation()}>
-                <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
+              <div className="bg-white/95 backdrop-blur-sm w-full h-full flex flex-col font-light" onMouseDown={(e) => e.stopPropagation()}>
+                <div className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
                     {/* Organization Icon/Avatar or Logo */}
-                    <div className="flex w-6 h-6 rounded-md items-center justify-center shadow-sm overflow-hidden">
+                    <div className="flex w-8 h-8 rounded-xl items-center justify-center shadow-sm overflow-hidden">
                       {settings.image ? (
                         <img 
                           src={settings.image} 
                           alt={organization.name}
-                          className="w-full h-full object-cover rounded-md cursor-pointer transition-transform duration-200 hover:scale-105"
+                          className="w-full h-full object-cover rounded-xl cursor-pointer transition-transform duration-200 hover:scale-105"
                           onMouseEnter={(e) => {
                             if (settings.image) {
                               setHoveredImage(settings.image);
@@ -500,20 +500,20 @@ export default function EditModal({
                           }}
                         />
                       ) : null}
-                      <div className={`w-full h-full bg-gradient-to-br from-sky-500 to-sky-600 rounded-md flex items-center justify-center text-white font-bold text-xs ${settings.image ? 'hidden' : ''}`}>
+                      <div className={`w-full h-full bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center text-white font-light text-sm ${settings.image ? 'hidden' : ''}`}>
                         {organization.name.charAt(0).toUpperCase()}
                       </div>
                     </div>
-                    <h3 className="text-base font-semibold text-gray-900">Settings</h3>
+                    <h3 className="text-lg font-light tracking-tight text-gray-900">Settings</h3>
                   </div>
                   <button
                     onClick={toggleCollapse}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-xl hover:bg-white/60 backdrop-blur-sm"
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 pb-12" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                <div className="flex-1 overflow-y-auto p-6 pb-12 space-y-1" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
                   <SettingsFormFields
                     settings={settings}
                     onChange={handleSettingChange}
@@ -529,7 +529,7 @@ export default function EditModal({
           {/* Left Panel - Form (Desktop) */}
           {!isCollapsed && !isMobile && (
             <div 
-              className={`overflow-y-auto border-r border-gray-200 ${
+              className={`overflow-y-auto border-r border-gray-200/60 bg-white/50 backdrop-blur-sm ${
                 isDragging ? 'transition-none' : 'transition-all duration-150 ease-out'
               }`}
               style={{ 
@@ -540,15 +540,15 @@ export default function EditModal({
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="pb-12 p-4" onMouseDown={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-gray-900">Settings</h3>
+              <div className="pb-12 p-6 font-light" onMouseDown={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-light tracking-tight text-gray-900">Settings</h3>
                   <button
                     onClick={toggleCollapse}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-xl hover:bg-white/60 backdrop-blur-sm"
                     title="Minimize to icon"
                   >
-                    <ChevronLeftIcon className="w-4 h-4" />
+                    <ChevronLeftIcon className="w-5 h-5" />
                   </button>
                 </div>
                 <div onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
@@ -567,8 +567,8 @@ export default function EditModal({
           {/* Resize Handle (Desktop only, when not collapsed) */}
           {!isCollapsed && !isMobile && (
             <div
-              className={`w-2 bg-gray-200 hover:bg-sky-400 cursor-col-resize transition-all duration-150 relative group ${
-                isDragging ? 'bg-sky-500 w-3' : ''
+              className={`w-2 bg-gray-200/60 hover:bg-sky-400/60 cursor-col-resize transition-all duration-150 relative group ${
+                isDragging ? 'bg-sky-500/60 w-3' : ''
               }`}
               onMouseDown={handleMouseDown}
               onDoubleClick={handleDoubleClick}
@@ -576,13 +576,13 @@ export default function EditModal({
             >
               {/* Visual indicator with improved styling */}
               <div className={`absolute inset-y-0 left-1/2 transform -translate-x-1/2 transition-all duration-150 ${
-                isDragging ? 'w-2 bg-sky-600' : 'w-1 bg-gray-400 group-hover:bg-sky-500'
+                isDragging ? 'w-2 bg-sky-600/60' : 'w-1 bg-gray-400/60 group-hover:bg-sky-500/60'
               }`}>
                 <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-150 ${
-                  isDragging ? 'w-4 h-8 bg-sky-600' : 'w-3 h-6 bg-gray-400 group-hover:bg-sky-500'
-                } rounded-full flex items-center justify-center`}>
+                  isDragging ? 'w-4 h-8 bg-sky-600/80' : 'w-3 h-6 bg-gray-400/60 group-hover:bg-sky-500/60'
+                } rounded-full flex items-center justify-center backdrop-blur-sm`}>
                   <div className={`rounded-full transition-all duration-150 ${
-                    isDragging ? 'w-1 h-4 bg-white' : 'w-0.5 h-3 bg-white'
+                    isDragging ? 'w-1 h-4 bg-white/80' : 'w-0.5 h-3 bg-white/80'
                   }`}></div>
                 </div>
               </div>
@@ -604,13 +604,13 @@ export default function EditModal({
           >
             {/* Mobile Settings Toggle Button */}
             {isMobile && !isCollapsed && (
-              <div className="absolute top-1.5 right-3 z-10">
+              <div className="absolute top-3 right-4 z-10">
                 <button
                   onClick={toggleCollapse}
-                  className="w-9 h-9 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-md transition-all duration-300 hover:scale-105 flex items-center justify-center"
+                  className="w-11 h-11 bg-sky-500 hover:bg-sky-600 text-white rounded-xl shadow-sm transition-all duration-300 hover:scale-105 flex items-center justify-center backdrop-blur-sm"
                   title="Open Settings"
                 >
-                  <Cog6ToothIcon className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-5 h-5" />
                 </button>
               </div>
             )}

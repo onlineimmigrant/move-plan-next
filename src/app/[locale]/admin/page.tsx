@@ -60,7 +60,7 @@ export default function AdminDashboardPage() {
   }
 
   const dashboardLinks = [
-    { href: '/admin/relocation_plans', label: 'App', icon: DevicePhoneMobileIcon, tooltip: 'Customers App' },
+    { href: '/admin/site/management', label: 'Site', icon: DevicePhoneMobileIcon, tooltip: 'Site Management' },
     { href: '/admin/products/management', label: 'Products', icon: ArchiveBoxIcon, tooltip: 'Product Management' },
     { href: '/admin/pricingplans/management', label: 'Pricing Plans', icon: CurrencyDollarIcon, tooltip: 'Price Management' },
     { href: '/admin/cookie_category', label: 'Cookies', icon: ShieldCheckIcon, tooltip: 'Consent Management' },
