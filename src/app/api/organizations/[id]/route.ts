@@ -137,13 +137,17 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log('PUT /api/organizations/[id] - Starting request');
+  
   try {
     // Await params before accessing properties
     const { id } = await params;
+    console.log('PUT - Organization ID:', id);
     
     // Get the authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('PUT - No authorization header');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -152,6 +156,7 @@ export async function PUT(
     // Verify the user's session
     const { data: user, error: userError } = await supabase.auth.getUser(token);
     if (userError || !user.user) {
+      console.log('PUT - Invalid token:', userError);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
@@ -159,7 +164,8 @@ export async function PUT(
     const orgId = id;
     const body = await request.json();
 
-    console.log('Updating organization:', orgId, 'with data:', body);
+    console.log('PUT - Updating organization:', orgId, 'with data:', body);
+    console.log('PUT - User ID:', userId);
 
     const { organization: orgData, settings: settingsData } = body;
 
@@ -170,12 +176,16 @@ export async function PUT(
       .eq('id', userId)
       .single();
 
+    console.log('PUT - Profile fetch result:', { profile, profileError });
+
     if (profileError || !profile) {
+      console.log('PUT - Profile not found:', profileError);
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
     // Check permissions (same as GET)
     if (!profile.organization_id) {
+      console.log('PUT - User has no organization_id');
       return NextResponse.json({ error: 'User must belong to an organization' }, { status: 403 });
     }
 
@@ -185,19 +195,33 @@ export async function PUT(
       .eq('id', profile.organization_id)
       .single();
 
+    console.log('PUT - Current org fetch result:', { currentOrg, currentOrgError });
+
     if (currentOrgError || !currentOrg) {
+      console.log('PUT - Current organization not found:', currentOrgError);
       return NextResponse.json({ error: 'Current organization not found' }, { status: 404 });
     }
+
+    console.log('PUT - Access control check:', {
+      currentOrgType: currentOrg.type,
+      userRole: profile.role,
+      userOrgId: profile.organization_id,
+      targetOrgId: orgId
+    });
 
     // Access control based on organization type
     if (currentOrg.type === 'general') {
       // General organizations: check admin role
+      console.log('PUT - General org access control');
       if (profile.role !== 'admin') {
+        console.log('PUT - Access denied: not admin');
         return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
       }
     } else {
       // Non-general organizations: check if editing their own organization
+      console.log('PUT - Non-general org access control');
       if (profile.organization_id !== orgId) {
+        console.log('PUT - Access denied: not own organization');
         return NextResponse.json({ error: 'Access denied. You can only edit your own organization.' }, { status: 403 });
       }
       // For non-general orgs, any member can edit their own org

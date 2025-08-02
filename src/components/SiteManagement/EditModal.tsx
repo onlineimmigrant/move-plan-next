@@ -62,11 +62,11 @@ export default function EditModal({
       console.log('Loading organization settings:', organization.settings); // Debug log
       const loadedSettings = {
         ...organization.settings,
-        // Include organization-level fields in settings
-        name: organization.settings.name || organization.name,
-        base_url: organization.settings.base_url || organization.base_url || '',
-        base_url_local: organization.settings.base_url_local || organization.base_url_local,
-        type: organization.settings.type || organization.type,
+        // Include organization-level fields in settings (use organization values, not settings)
+        name: organization.name,
+        base_url: organization.base_url || '',
+        base_url_local: organization.base_url_local || '',
+        type: organization.type,
         // Ensure supported_locales is always an array
         supported_locales: Array.isArray(organization.settings.supported_locales) 
           ? organization.settings.supported_locales 
