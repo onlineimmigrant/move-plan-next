@@ -326,18 +326,25 @@ export default function SiteManagement() {
       console.log('Saving settings:', settings); // Debug log
       console.log('Selected organization:', selectedOrganization); // Debug log
 
-      // Separate hero_image from settings since it belongs to website_hero table
-      const { hero_image, ...settingsWithoutHeroImage } = settings;
+      // Separate organization fields and hero_image from settings
+      const { 
+        hero_image, 
+        name, 
+        base_url, 
+        base_url_local, 
+        type,
+        ...pureSettings 
+      } = settings;
 
       // Use the correct API structure that expects organization and settings
       const requestBody = {
         organization: {
-          name: selectedOrganization.name,
-          type: selectedOrganization.type,
-          base_url: selectedOrganization.base_url,
-          base_url_local: selectedOrganization.base_url_local
+          name: name || selectedOrganization.name,
+          type: type || selectedOrganization.type,
+          base_url: base_url || selectedOrganization.base_url,
+          base_url_local: base_url_local || selectedOrganization.base_url_local
         },
-        settings: settingsWithoutHeroImage,
+        settings: pureSettings,
         // Send hero_image separately so the API can handle it for website_hero table
         website_hero: hero_image ? { image: hero_image } : null
       };
@@ -368,15 +375,41 @@ export default function SiteManagement() {
 
       if (!response.ok) {
         console.error('API Error Response:', data);
+        console.error('Response status:', response.status);
+        console.error('Response status text:', response.statusText);
+        console.error('Full error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          data,
+          url: response.url,
+          organizationId: selectedOrganization.id
+        });
         throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       console.log('Settings saved successfully:', data); // Debug log
 
+      // Refresh the organizations list
+      await fetchOrganizations();
+      
+      // Also refresh the currently selected organization with updated data
+      if (data.organization || data.settings) {
+        const updatedOrgData = {
+          ...selectedOrganization,
+          // Update organization fields if they were returned
+          ...(data.organization && data.organization),
+          settings: {
+            ...selectedOrganization.settings,
+            // Update settings if they were returned
+            ...(data.settings && data.settings)
+          }
+        };
+        setSelectedOrganization(updatedOrgData);
+      }
+
       // Don't close modal anymore - let user continue editing
       // setIsEditModalOpen(false);
       // setSelectedOrganization(null);
-      await fetchOrganizations();
 
     } catch (err: any) {
       console.error('Save settings error:', err); // Debug log
