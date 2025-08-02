@@ -24,12 +24,12 @@ export default function SettingsFormFields({
   // Helper function to get grid classes based on narrow state
   const getGridClasses = (columns: number = 2) => {
     if (isNarrow) {
-      return 'grid grid-cols-1 gap-3';
+      return 'grid grid-cols-1 gap-4';
     }
     if (columns === 3) {
-      return 'grid grid-cols-1 md:grid-cols-3 gap-3';
+      return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
     }
-    return 'grid grid-cols-1 md:grid-cols-2 gap-3';
+    return 'grid grid-cols-1 md:grid-cols-2 gap-4';
   };
 
   const handleSectionChange = (sectionKey: string, field: keyof Settings, value: any) => {
@@ -150,7 +150,7 @@ export default function SettingsFormFields({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {sectionsConfig.map(section => (
         <DisclosureSection 
           key={section.key}

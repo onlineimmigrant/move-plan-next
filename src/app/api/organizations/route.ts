@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const { data: currentOrg, error: currentOrgError } = await supabase
       .from('organizations')
-      .select('type')
+      .select('id, name, type, base_url, base_url_local, created_at, created_by_email')
       .eq('id', profile.organization_id)
       .single();
 
@@ -57,61 +57,86 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Could not verify organization' }, { status: 500 });
     }
 
-    // Only users in 'general' organizations can access site management
-    if (currentOrg.type !== 'general') {
-      return NextResponse.json({ error: 'Access denied. Only general organization members can access site management.' }, { status: 403 });
+    console.log('User organization type:', currentOrg.type, 'User role:', profile.role);
+
+    let organizations: any[] = [];
+    let canCreateMore = false;
+
+    if (currentOrg.type === 'general') {
+      // GENERAL ORGANIZATION LOGIC (unchanged)
+      // Only admins in general organizations can view all organizations they manage
+      if (profile.role !== 'admin') {
+        return NextResponse.json({ error: 'Access denied. Admin role required for general organization access.' }, { status: 403 });
+      }
+
+      // Get organizations created by users from this specific general organization
+      const { data: generalOrgUsers, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('organization_id', profile.organization_id)
+        .or('role.eq.admin,is_site_creator.eq.true');
+
+      console.log('General org users with creation rights:', { generalOrgUsers, usersError });
+
+      if (usersError) {
+        console.error('Error fetching general org users:', usersError);
+        return NextResponse.json({ error: 'Error fetching organization users' }, { status: 500 });
+      }
+
+      const creatorEmails = generalOrgUsers?.map(user => user.email) || [];
+      console.log('Creator emails to filter by:', creatorEmails);
+
+      // Get organizations created by these users
+      const { data: managedOrganizations, error: organizationsError } = await supabase
+        .from('organizations')
+        .select('id, name, type, base_url, base_url_local, created_at, created_by_email')
+        .neq('type', 'general') // Exclude general organizations from the list
+        .in('created_by_email', creatorEmails); // Only show organizations created by users from this general org
+
+      console.log('Managed organizations query result:', { managedOrganizations, organizationsError });
+
+      if (organizationsError) {
+        console.error('Error fetching managed organizations:', organizationsError);
+        return NextResponse.json({ error: 'Error fetching organizations' }, { status: 500 });
+      }
+
+      // Transform the data - all organizations shown will have admin access for general org admins
+      organizations = managedOrganizations?.map(org => ({
+        ...org,
+        user_role: 'admin', // General org admins have admin access to all managed organizations
+        user_status: 'active'
+      })) || [];
+
+      // Check if user can create more organizations
+      canCreateMore = profile.is_site_creator === true;
+
+    } else {
+      // NON-GENERAL ORGANIZATION LOGIC (new)
+      // Users in non-general organizations can access their own organization
+      // and any sites created by their organization's creator email
+      console.log('Processing non-general organization access');
+
+      // Get the current user's organization (their own site)
+      const currentOrgData = {
+        id: currentOrg.id,
+        name: currentOrg.name,
+        type: currentOrg.type,
+        base_url: currentOrg.base_url,
+        base_url_local: currentOrg.base_url_local,
+        created_at: currentOrg.created_at,
+        created_by_email: currentOrg.created_by_email || '',
+        user_role: profile.role || 'member', // Use their actual role in this organization
+        user_status: 'active'
+      };
+
+      organizations = [currentOrgData];
+
+      // Check if they can create more (only if they have site creation permissions and are in their original org)
+      canCreateMore = false; // Non-general org users typically cannot create more organizations
     }
-
-    // Only admins in general organizations can view all organizations
-    if (profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
-    }
-
-    // Get organizations created by users from this specific general organization
-    // First, get all users from this general organization who have created organizations
-    const { data: generalOrgUsers, error: usersError } = await supabase
-      .from('profiles')
-      .select('id, email')
-      .eq('organization_id', profile.organization_id)
-      .or('role.eq.admin,is_site_creator.eq.true');
-
-    console.log('General org users with creation rights:', { generalOrgUsers, usersError });
-
-    if (usersError) {
-      console.error('Error fetching general org users:', usersError);
-      return NextResponse.json({ error: 'Error fetching organization users' }, { status: 500 });
-    }
-
-    const creatorEmails = generalOrgUsers?.map(user => user.email) || [];
-    console.log('Creator emails to filter by:', creatorEmails);
-
-    // Get organizations created by these users
-    const { data: organizations, error: organizationsError } = await supabase
-      .from('organizations')
-      .select('id, name, type, base_url, base_url_local, created_at, created_by_email')
-      .neq('type', 'general') // Exclude general organizations from the list
-      .in('created_by_email', creatorEmails); // Only show organizations created by users from this general org
-
-    console.log('Organizations query result:', { organizations, organizationsError });
-
-    if (organizationsError) {
-      console.error('Error fetching organizations:', organizationsError);
-      return NextResponse.json({ error: 'Error fetching organizations' }, { status: 500 });
-    }
-
-    // Transform the data - all organizations shown will have admin access for general org admins
-    const transformedOrganizations = organizations?.map(org => ({
-      ...org,
-      user_role: 'admin', // General org admins have admin access to all created organizations
-      user_status: 'active'
-    })) || [];
-
-    // Check if user can create more organizations
-    // Only users with is_site_creator = true in general organizations can create organizations
-    const canCreateMore = profile.is_site_creator === true;
 
     return NextResponse.json({
-      organizations: transformedOrganizations,
+      organizations: organizations,
       canCreateMore,
       profile: {
         role: profile.role,

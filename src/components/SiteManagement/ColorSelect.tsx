@@ -1,6 +1,6 @@
-import React from 'react';
-import { Listbox, Transition } from '@headlessui/react';
+import React, { useRef, useEffect, useState } from 'react';
 import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { createPortal } from 'react-dom';
 import { colorOptions } from './colorOptions';
 
 interface ColorSelectProps {
@@ -16,72 +16,100 @@ export const ColorSelect: React.FC<ColorSelectProps> = ({
   value, 
   onChange 
 }) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
+
   const selectedColor = colorOptions.find(c => c.value === value) || colorOptions[0];
   
-  const handleSelectionChange = (newValue: string) => {
-    onChange(name, newValue);
+  const updateButtonRect = () => {
+    if (buttonRef.current) {
+      setButtonRect(buttonRef.current.getBoundingClientRect());
+    }
   };
 
-  return (
-    <div className="space-y-2">
-      <label className="block text-xs font-semibold text-gray-700 mb-2">{label}</label>
-      <div className="relative">
-        <Listbox value={value} onChange={handleSelectionChange}>
-          <div className="relative">
-            <Listbox.Button 
-              className="relative w-full cursor-pointer rounded-xl bg-white  border-gray-200 py-2.5 pl-3 pr-8 text-left shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300"
-            >
-              <div className="flex items-center space-x-2">
-                <div className={`w-4 h-4 rounded-full border border-white shadow-sm ${selectedColor.color}`}></div>
-                <span className="block truncate text-sm font-medium text-gray-900">{selectedColor.name}</span>
-              </div>
-              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <ChevronUpDownIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
-              </span>
-            </Listbox.Button>
-            
-            <Transition
-              as={React.Fragment}
-              leave="transition ease-in duration-200"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0"
-            >
-              <Listbox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-sm shadow-xl ring-1 ring-gray-200 ring-opacity-5 focus:outline-none  border-gray-200">
-                {colorOptions.map((color) => (
-                  <Listbox.Option
-                    key={color.value}
-                    className={({ active, selected }) =>
-                      `relative cursor-pointer select-none py-2 pl-3 pr-8 transition-colors duration-200 ${
-                        active ? 'bg-sky-50 text-sky-900' : 'text-gray-900'
-                      } ${selected ? 'bg-sky-100/60' : ''}`
-                    }
-                    value={color.value}
-                  >
-                    {({ selected, active }) => (
-                      <>
-                        <div className="flex items-center space-x-2">
-                          <div className={`w-4 h-4 rounded-full border border-white shadow-sm ${color.color} ${
-                            selected ? 'ring-2 ring-sky-400 ring-offset-1' : ''
-                          }`}></div>
-                          <span className={`block truncate text-sm ${
-                            selected ? 'font-semibold text-sky-900' : 'font-medium text-gray-900'
-                          }`}>
-                            {color.name}
-                          </span>
-                        </div>
-                        {selected && (
-                          <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-sky-600">
-                            <CheckIcon className="h-4 w-4" aria-hidden="true" />
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </Listbox.Option>
-                ))}
-              </Listbox.Options>
-            </Transition>
+  useEffect(() => {
+    if (isOpen) {
+      updateButtonRect();
+      const handleScroll = () => updateButtonRect();
+      const handleResize = () => updateButtonRect();
+      
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [isOpen]);
+
+  const handleChange = (newValue: string) => {
+    onChange(name, newValue);
+    setIsOpen(false);
+  };
+
+  const dropdownContent = isOpen && buttonRect && createPortal(
+    <div
+      className="fixed z-[99999] mt-2 max-h-60 overflow-auto rounded-xl bg-white/95 backdrop-blur-sm shadow-2xl py-2 text-sm focus:outline-none border border-gray-200/60"
+      style={{
+        top: buttonRect.bottom + window.scrollY + 8,
+        left: buttonRect.left + window.scrollX,
+        width: buttonRect.width,
+      }}
+    >
+      {colorOptions.map((color) => (
+        <button
+          key={color.value}
+          onClick={() => handleChange(color.value)}
+          className={`relative cursor-pointer select-none py-3 pl-4 pr-10 w-full text-left transition-colors duration-200 hover:bg-sky-50/80 hover:text-sky-900 ${
+            color.value === value ? 'bg-sky-100/60 text-sky-900' : 'text-gray-900'
+          }`}
+        >
+          <div className="flex items-center space-x-3">
+            <div className={`w-5 h-5 rounded-full border border-white/60 shadow-sm ${color.color} ${
+              color.value === value ? 'ring-2 ring-sky-400 ring-offset-1' : ''
+            }`}></div>
+            <span className="block truncate text-sm font-light">{color.name}</span>
           </div>
-        </Listbox>
+          {color.value === value && (
+            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-sky-600">
+              <CheckIcon className="h-5 w-5" aria-hidden="true" />
+            </span>
+          )}
+        </button>
+      ))}
+    </div>,
+    document.body
+  );
+
+  return (
+    <div className="space-y-3">
+      <label className="block text-sm font-light text-gray-700 mb-2">{label}</label>
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="relative w-full cursor-pointer rounded-xl bg-white/50 backdrop-blur-sm border border-gray-200/60 py-3 pl-4 pr-10 text-left shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-md hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300"
+        >
+          <div className="flex items-center space-x-3">
+            <div className={`w-5 h-5 rounded-full border border-white/60 shadow-sm ${selectedColor.color}`}></div>
+            <span className="block truncate text-sm font-light text-gray-900">{selectedColor.name}</span>
+          </div>
+          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+          </span>
+        </button>
+        
+        {dropdownContent}
+        
+        {/* Click outside handler */}
+        {isOpen && (
+          <div
+            className="fixed inset-0 z-[99998]"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

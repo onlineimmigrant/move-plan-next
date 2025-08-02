@@ -13,11 +13,12 @@ import {
   Organization,
   Settings,
   UserProfile
-} from './SiteManagement/';
+} from '.';
 
 export default function SiteManagement() {
   const { session, isLoading } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [filteredOrganizations, setFilteredOrganizations] = useState<Organization[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [canCreateMore, setCanCreateMore] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -27,6 +28,9 @@ export default function SiteManagement() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [displayLimit, setDisplayLimit] = useState(6);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     console.log('Session state:', session);
@@ -34,6 +38,46 @@ export default function SiteManagement() {
       fetchOrganizations();
     }
   }, [session]);
+
+  // Update filtered organizations when organizations change or search is empty
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredOrganizations(organizations.slice(0, displayLimit));
+    }
+  }, [organizations, searchQuery, displayLimit]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    
+    if (!query.trim()) {
+      // If no search query, show limited organizations
+      setFilteredOrganizations(organizations.slice(0, displayLimit));
+    } else {
+      // Filter organizations based on search query (show all matching results)
+      const filtered = organizations.filter((org: Organization) =>
+        org.name.toLowerCase().includes(query.toLowerCase()) ||
+        org.type.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredOrganizations(filtered);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    setIsLoadingMore(true);
+    // Simulate loading delay for UX
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const newLimit = displayLimit + 6;
+    setDisplayLimit(newLimit);
+    
+    if (!searchQuery.trim()) {
+      setFilteredOrganizations(organizations.slice(0, newLimit));
+    }
+    
+    setIsLoadingMore(false);
+  };
+
+  const hasMoreOrganizations = !searchQuery.trim() && organizations.length > displayLimit;
 
   const testAuth = async () => {
     try {
@@ -88,7 +132,11 @@ export default function SiteManagement() {
       console.log('User profile:', data.profile); // Debug log
       console.log('Organizations count:', data.organizations?.length); // Debug log
       
-      setOrganizations(data.organizations);
+      // Limit to first 6 organizations for initial display
+      const limitedOrganizations = data.organizations?.slice(0, 6) || [];
+      
+      setOrganizations(data.organizations || []);
+      setFilteredOrganizations(limitedOrganizations);
       setProfile(data.profile);
       setCanCreateMore(data.canCreateMore);
       
@@ -168,6 +216,9 @@ export default function SiteManagement() {
       // Close modal and refresh
       setIsCreateModalOpen(false);
       await fetchOrganizations();
+      // Reset search and display limit to show the new organization
+      setDisplayLimit(6);
+      handleSearch('');
 
     } catch (err: any) {
       setError(err.message || 'Failed to create organization');
@@ -368,46 +419,58 @@ export default function SiteManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Debug Panel - Remove in production */}
-        {process.env.NODE_ENV === 'development' && profile && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm">
-            <strong>Debug Info:</strong> Email: {profile.email} | Role: {profile.role} | 
-            Organization ID: {profile.organization_id || profile.current_organization_id || 'None'} | 
-            Is Site Creator: {profile.is_site_creator ? 'Yes' : 'No'} | 
-            Organizations Count: {organizations.length}
-            {(() => {
-              const orgId = profile.organization_id || profile.current_organization_id;
-              const userOrg = orgId ? organizations.find(org => org.id === orgId) : null;
-              return userOrg ? (
-                <span className={profile.role === 'admin' && userOrg.type === 'general' ? 'font-bold text-green-600' : ''}>
-                  {' '}| Org Type: {userOrg.type} | Admin of General Org: {profile.role === 'admin' && userOrg.type === 'general' ? 'YES' : 'No'}
-                </span>
-              ) : (
-                <span className="text-red-600"> | No Organization Found</span>
-              );
-            })()}
-          </div>
-        )}
+    <div className="min-h-screen bg-white font-light">
+      <div className="max-w-7xl mx-auto">
+
 
         {/* Header */}
         <Header 
           canCreateMore={canCreateMore}
           onCreateNew={handleCreateNew}
           onTestAuth={testAuth}
+          onSearch={handleSearch}
         />
 
         {/* Error Display */}
         <ErrorDisplay error={error} />
 
-        {/* Organizations Grid */}
-        <OrganizationsGrid
-          organizations={organizations}
-          canCreateMore={canCreateMore}
-          onCreateNew={handleCreateNew}
-          onEditOrganization={handleEditOrganization}
-        />
+        {/* Main Content Area */}
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
+          {/* Organizations Grid */}
+          <OrganizationsGrid
+            organizations={filteredOrganizations}
+            canCreateMore={canCreateMore}
+            onCreateNew={handleCreateNew}
+            onEditOrganization={handleEditOrganization}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMoreOrganizations}
+            isLoadingMore={isLoadingMore}
+          />
+        </div>
+
+                {/* Debug Panel - Remove in production */}
+        {process.env.NODE_ENV === 'development' && profile && (
+          <div className="mx-4 sm:mx-6 lg:mx-8 my-6 p-4 bg-sky-50/50 border border-sky-200/60 rounded-xl text-sm font-light backdrop-blur-sm">
+            <strong className="font-medium text-sky-800">Debug Info:</strong> 
+            <span className="text-sky-700">
+              Email: {profile.email} | Role: {profile.role} | 
+              Organization ID: {profile.organization_id || profile.current_organization_id || 'None'} | 
+              Is Site Creator: {profile.is_site_creator ? 'Yes' : 'No'} | 
+              Organizations Count: {organizations.length}
+            </span>
+            {(() => {
+              const orgId = profile.organization_id || profile.current_organization_id;
+              const userOrg = orgId ? organizations.find(org => org.id === orgId) : null;
+              return userOrg ? (
+                <span className={profile.role === 'admin' && userOrg.type === 'general' ? 'font-medium text-emerald-600' : 'text-sky-700'}>
+                  {' '}| Org Type: {userOrg.type} | Admin of General Org: {profile.role === 'admin' && userOrg.type === 'general' ? 'YES' : 'No'}
+                </span>
+              ) : (
+                <span className="text-red-500"> | No Organization Found</span>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Create Modal */}
         <CreateModal
@@ -416,6 +479,7 @@ export default function SiteManagement() {
           onSubmit={handleCreateOrganization}
           isLoading={isCreating}
         />
+
 
         {/* Edit Modal */}
         <EditModal

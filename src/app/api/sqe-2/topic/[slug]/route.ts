@@ -50,10 +50,10 @@ const VALID_SECTION_IDS = [
   'Dispute Resolution',
 ];
 
-export async function GET(request: NextRequest, context: { params: { slug: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const { slug } = context.params;
+  const { slug } = await context.params;
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organization_id');
   console.log('Received GET request for /api/sqe-2/topic/[slug]:', slug, 'organization_id:', organizationId);
