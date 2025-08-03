@@ -3,6 +3,7 @@ import { XMarkIcon, Cog6ToothIcon, ChevronLeftIcon, ChevronRightIcon } from '@he
 import { Organization, Settings } from './types';
 import SettingsFormFields from './SettingsFormFields';
 import LivePreview from './LivePreview';
+import SiteDeployment from './SiteDeployment';
 import Button from '@/ui/Button';
 
 interface EditModalProps {
@@ -11,6 +12,7 @@ interface EditModalProps {
   onClose: () => void;
   onSave: (settings: Settings) => void;
   isLoading: boolean;
+  session: any; // Add session prop
 }
 
 export default function EditModal({ 
@@ -18,7 +20,8 @@ export default function EditModal({
   organization, 
   onClose, 
   onSave, 
-  isLoading 
+  isLoading,
+  session 
 }: EditModalProps) {
   const [settings, setSettings] = useState<Settings>({} as Settings);
   const [originalSettings, setOriginalSettings] = useState<Settings>({} as Settings);
@@ -31,6 +34,7 @@ export default function EditModal({
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop'); // New state for preview mode
   const [hoveredImage, setHoveredImage] = useState<string | null>(null); // New state for image hover
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 }); // Mouse position for tooltip
+  const [activeTab, setActiveTab] = useState<'settings' | 'deployment'>('settings'); // New tab state
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef<number>(0);
   const dragStartWidth = useRef<number>(0);
@@ -514,13 +518,49 @@ export default function EditModal({
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 pb-12 space-y-1" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                  <SettingsFormFields
-                    settings={settings}
-                    onChange={handleSettingChange}
-                    onImageUpload={handleImageUpload}
-                    uploadingImages={uploadingImages}
-                    isNarrow={false}
-                  />
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-xl">
+                    <button
+                      onClick={() => setActiveTab('settings')}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        activeTab === 'settings'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Settings
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('deployment')}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        activeTab === 'deployment'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Deployment
+                    </button>
+                  </div>
+
+                  {/* Tab Content */}
+                  {activeTab === 'settings' ? (
+                    <SettingsFormFields
+                      settings={settings}
+                      onChange={handleSettingChange}
+                      onImageUpload={handleImageUpload}
+                      uploadingImages={uploadingImages}
+                      isNarrow={false}
+                    />
+                  ) : (
+                    <SiteDeployment
+                      organization={organization}
+                      session={session}
+                      onDeploymentComplete={(baseUrl) => {
+                        // Update the organization's base_url when deployment completes
+                        setSettings(prev => ({ ...prev, base_url: baseUrl }));
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -542,7 +582,9 @@ export default function EditModal({
             >
               <div className="pb-12 p-6 font-light" onMouseDown={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-light tracking-tight text-gray-900">Settings</h3>
+                  <h3 className="text-lg font-light tracking-tight text-gray-900">
+                    {activeTab === 'settings' ? 'Settings' : 'Deployment'}
+                  </h3>
                   <button
                     onClick={toggleCollapse}
                     className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-xl hover:bg-white/60 backdrop-blur-sm"
@@ -551,14 +593,51 @@ export default function EditModal({
                     <ChevronLeftIcon className="w-5 h-5" />
                   </button>
                 </div>
+
+                {/* Tab Navigation */}
+                <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-xl">
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      activeTab === 'settings'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('deployment')}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      activeTab === 'deployment'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Deployment
+                  </button>
+                </div>
+
                 <div onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                  <SettingsFormFields
-                    settings={settings}
-                    onChange={handleSettingChange}
-                    onImageUpload={handleImageUpload}
-                    uploadingImages={uploadingImages}
-                    isNarrow={leftPanelWidth < 40}
-                  />
+                  {/* Tab Content */}
+                  {activeTab === 'settings' ? (
+                    <SettingsFormFields
+                      settings={settings}
+                      onChange={handleSettingChange}
+                      onImageUpload={handleImageUpload}
+                      uploadingImages={uploadingImages}
+                      isNarrow={leftPanelWidth < 40}
+                    />
+                  ) : (
+                    <SiteDeployment
+                      organization={organization}
+                      session={session}
+                      onDeploymentComplete={(baseUrl) => {
+                        // Update the organization's base_url when deployment completes
+                        setSettings(prev => ({ ...prev, base_url: baseUrl }));
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             </div>

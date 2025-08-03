@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowTopRightOnSquareIcon, PencilIcon, GlobeAltIcon, AcademicCapIcon, BuildingOfficeIcon, UserGroupIcon, CogIcon, HeartIcon, HomeIcon, BanknotesIcon, ShieldCheckIcon, BeakerIcon, ChartBarIcon, ScaleIcon, CurrencyDollarIcon, BriefcaseIcon, SparklesIcon, UserIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
+import { ArrowTopRightOnSquareIcon, PencilIcon, GlobeAltIcon, AcademicCapIcon, BuildingOfficeIcon, UserGroupIcon, CogIcon, HeartIcon, HomeIcon, BanknotesIcon, ShieldCheckIcon, BeakerIcon, ChartBarIcon, ScaleIcon, CurrencyDollarIcon, BriefcaseIcon, SparklesIcon, UserIcon, WrenchScrewdriverIcon, CheckCircleIcon, ClockIcon, ExclamationTriangleIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import { Organization, organizationTypes } from './types';
 import Button from '@/ui/Button';
 
@@ -46,6 +46,45 @@ export default function OrganizationCard({ organization, onEdit }: OrganizationC
   const primaryUrl = organization.base_url || organization.base_url_local;
   const domain = primaryUrl ? getDomainFromUrl(primaryUrl) : null;
 
+  // Get deployment status info
+  const getDeploymentStatusInfo = () => {
+    const status = organization.deployment_status || 'not_deployed';
+    switch (status) {
+      case 'ready':
+        return {
+          icon: CheckCircleIcon,
+          text: 'Deployed',
+          className: 'text-green-600 bg-green-50 border-green-200'
+        };
+      case 'building':
+        return {
+          icon: ClockIcon,
+          text: 'Building',
+          className: 'text-yellow-600 bg-yellow-50 border-yellow-200'
+        };
+      case 'created':
+        return {
+          icon: ClockIcon,
+          text: 'Queued',
+          className: 'text-blue-600 bg-blue-50 border-blue-200'
+        };
+      case 'error':
+        return {
+          icon: ExclamationTriangleIcon,
+          text: 'Failed',
+          className: 'text-red-600 bg-red-50 border-red-200'
+        };
+      default:
+        return {
+          icon: CloudArrowUpIcon,
+          text: 'Not Deployed',
+          className: 'text-gray-600 bg-gray-50 border-gray-200'
+        };
+    }
+  };
+
+  const deploymentStatus = getDeploymentStatusInfo();
+
   // Determine which icon to show based on availability and load states
   const renderIcon = () => {
     // Priority 1: Custom settings image (if available and not failed)
@@ -89,7 +128,14 @@ export default function OrganizationCard({ organization, onEdit }: OrganizationC
           {/* Name and Type */}
           <div className="flex-1">
             <h3 className="text-lg font-light text-gray-900 tracking-tight">{organization.name}</h3>
-            <p className="text-sm text-gray-500 font-light capitalize mt-1">{typeInfo.label}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-sm text-gray-500 font-light capitalize">{typeInfo.label}</p>
+              {/* Deployment Status Badge */}
+              <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${deploymentStatus.className}`}>
+                <deploymentStatus.icon className="h-3 w-3" />
+                {deploymentStatus.text}
+              </div>
+            </div>
           </div>
           
           {/* Edit Button */}

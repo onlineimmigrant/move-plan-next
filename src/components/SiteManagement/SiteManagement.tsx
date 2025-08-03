@@ -521,6 +521,7 @@ export default function SiteManagement() {
           onClose={closeEditModal}
           onSave={handleSaveSettings}
           isLoading={isEditing}
+          session={session}
         />
       </div>
     </div>
