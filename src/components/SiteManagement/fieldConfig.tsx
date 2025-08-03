@@ -63,10 +63,15 @@ interface OrganizationTypeFieldConfig extends BaseFieldConfig {
 type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig;
 
 export const menuWidthOptions = [
-  { name: 'Small (240px)', value: '240px' },
-  { name: 'Medium (280px)', value: '280px' },
-  { name: 'Large (320px)', value: '320px' },
-  { name: 'Extra Large (360px)', value: '360px' }
+  { name: 'Small', value: 'sm' },
+  { name: 'Large', value: 'lg' },
+  { name: 'Extra Large', value: 'xl' },
+  { name: '2X Large', value: '2xl' },
+  { name: '3X Large', value: '3xl' },
+  { name: '4X Large', value: '4xl' },
+  { name: '5X Large', value: '5xl' },
+  { name: '7X Large', value: '7xl' },
+  { name: 'Full Width', value: 'full' }
 ];
 
 export const headerStyleOptions = [

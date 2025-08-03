@@ -5,6 +5,10 @@ export interface Organization {
   base_url_local: string;
   type: string;
   created_by_email: string;
+  // Vercel deployment fields
+  vercel_project_id?: string | null;
+  vercel_deployment_id?: string | null;
+  deployment_status?: 'not_deployed' | 'created' | 'building' | 'ready' | 'error' | 'canceled';
   // Additional fields that might be joined or computed
   created_at?: string;
   user_role?: string;

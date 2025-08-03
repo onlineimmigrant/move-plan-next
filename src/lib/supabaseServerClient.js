@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-console.log('supabaseServerClient - SUPABASE_URL:', supabaseUrl);
+console.log('supabaseServerClient - NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
 console.log('supabaseServerClient - SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceRoleKey ? 'Set' : 'Missing');
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
   console.error('Missing Supabase environment variables:', { supabaseUrl, supabaseServiceRoleKey });
-  throw new Error('Missing Supabase environment variables. Ensure SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY are set.');
+  throw new Error('Missing Supabase environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.');
 }
 
 export const supabaseServer = createClient(supabaseUrl, supabaseServiceRoleKey, {
