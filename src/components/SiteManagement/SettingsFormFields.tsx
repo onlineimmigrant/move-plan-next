@@ -22,22 +22,70 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   const [sectionChanges, setSectionChanges] = useState<Record<string, Partial<Settings>>>({});
   const [originalSectionValues, setOriginalSectionValues] = useState<Record<string, Partial<Settings>>>({});
   const [sectionStates, setSectionStates] = useState<Record<string, boolean>>({});
+  const [lastActiveSections, setLastActiveSections] = useState<Set<string>>(new Set());
 
-  // Initialize section states
+  // Initialize section states only once
   useEffect(() => {
+    const storedStates = sessionStorage.getItem('siteManagement_sectionStates');
+    if (storedStates) {
+      try {
+        const parsed = JSON.parse(storedStates);
+        // Validate that stored states match current sections
+        const validatedStates: Record<string, boolean> = {};
+        sectionsConfig.forEach(section => {
+          validatedStates[section.key] = parsed[section.key] || false;
+        });
+        // If no sections are open, default to hero section
+        const hasOpenSection = Object.values(validatedStates).some(isOpen => isOpen);
+        if (!hasOpenSection) {
+          validatedStates.hero = true;
+        }
+        setSectionStates(validatedStates);
+      } catch {
+        // Fallback to default if parsing fails
+        const initialStates: Record<string, boolean> = {};
+        sectionsConfig.forEach(section => {
+          initialStates[section.key] = section.key === 'hero';
+        });
+        setSectionStates(initialStates);
+      }
+    } else {
+      const initialStates: Record<string, boolean> = {};
+      sectionsConfig.forEach(section => {
+        // Default hero section to be open, others closed
+        initialStates[section.key] = section.key === 'hero';
+      });
+      setSectionStates(initialStates);
+    }
+  }, []);
+
+  // Save section states to sessionStorage whenever they change
+  useEffect(() => {
+    if (Object.keys(sectionStates).length > 0) {
+      sessionStorage.setItem('siteManagement_sectionStates', JSON.stringify(sectionStates));
+    }
+  }, [sectionStates]);
+
+  // Clean up function to reset states if needed (can be called externally)
+  const resetSectionStates = () => {
+    sessionStorage.removeItem('siteManagement_sectionStates');
     const initialStates: Record<string, boolean> = {};
     sectionsConfig.forEach(section => {
-      // Default hero section to be open, others closed
       initialStates[section.key] = section.key === 'hero';
     });
     setSectionStates(initialStates);
-  }, []);
+  };
 
   const handleSectionToggle = (sectionKey: string, isOpen: boolean) => {
     setSectionStates(prev => ({
       ...prev,
       [sectionKey]: isOpen
     }));
+
+    // Track which sections are being actively used
+    if (isOpen) {
+      setLastActiveSections(prev => new Set([...prev, sectionKey]));
+    }
   };
 
   // Helper function to get grid classes based on narrow state
@@ -56,6 +104,15 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
 
   const handleSectionChange = (sectionKey: string, field: keyof Settings, value: any) => {
     onChange(field as keyof Settings, value);
+    
+    // Ensure the section being edited is open
+    setSectionStates(prev => ({
+      ...prev,
+      [sectionKey]: true
+    }));
+
+    // Track this as an active section
+    setLastActiveSections(prev => new Set([...prev, sectionKey]));
     
     setSectionChanges(prev => ({
       ...prev,
@@ -84,6 +141,15 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   };
 
   const handleSectionSave = (sectionKey: string) => {
+    // Keep the section that was saved open
+    setSectionStates(prev => ({
+      ...prev,
+      [sectionKey]: true
+    }));
+
+    // Track this as the last active section
+    setLastActiveSections(prev => new Set([...prev, sectionKey]));
+    
     setSectionChanges(prev => {
       const newChanges = { ...prev };
       delete newChanges[sectionKey];
@@ -95,6 +161,18 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
       delete newOriginals[sectionKey];
       return newOriginals;
     });
+
+    // Scroll to the saved section after a brief delay to ensure DOM is updated
+    setTimeout(() => {
+      const sectionElement = document.querySelector(`[data-section-key="${sectionKey}"]`);
+      if (sectionElement) {
+        sectionElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest' 
+        });
+      }
+    }, 100);
   };
 
   const handleSectionCancel = (sectionKey: string) => {
@@ -203,32 +281,33 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-64">
       {sectionsConfig.map(section => (
-        <DisclosureSection 
-          key={section.key}
-          title={section.title} 
-          defaultOpen={false}
-          sectionKey={section.key}
-          hasChanges={hasSectionChanges(section.key)}
-          onSave={() => handleSectionSave(section.key)}
-          onCancel={() => handleSectionCancel(section.key)}
-          isOpen={sectionStates[section.key] || false}
-          onToggle={handleSectionToggle}
-        >
-          {section.subsections ? (
-            <div className="space-y-10">
-              {section.subsections.map(subsection => (
-                <div key={subsection.key} className="border-l-2 border-gray-200 pl-4">
-                  <h4 className="text-xs font-medium text-gray-700 mb-4">{subsection.title}</h4>
-                  {renderSectionFields(subsection.fields, section.key, subsection.columns)}
-                </div>
-              ))}
-            </div>
-          ) : section.fields ? (
-            renderSectionFields(section.fields, section.key, section.columns)
-          ) : null}
-        </DisclosureSection>
+        <div key={section.key} data-section-key={section.key}>
+          <DisclosureSection 
+            title={section.title} 
+            defaultOpen={false}
+            sectionKey={section.key}
+            hasChanges={hasSectionChanges(section.key)}
+            onSave={() => handleSectionSave(section.key)}
+            onCancel={() => handleSectionCancel(section.key)}
+            isOpen={sectionStates[section.key] || false}
+            onToggle={handleSectionToggle}
+          >
+            {section.subsections ? (
+              <div className="space-y-10">
+                {section.subsections.map(subsection => (
+                  <div key={subsection.key} className="border-l-2 border-gray-200 pl-4">
+                    <h4 className="text-xs font-medium text-gray-700 mb-4">{subsection.title}</h4>
+                    {renderSectionFields(subsection.fields, section.key, subsection.columns)}
+                  </div>
+                ))}
+              </div>
+            ) : section.fields ? (
+              renderSectionFields(section.fields, section.key, section.columns)
+            ) : null}
+          </DisclosureSection>
+        </div>
       ))}
     </div>
   );

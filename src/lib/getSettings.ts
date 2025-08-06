@@ -122,8 +122,8 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
       console.log('No URL provided, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, tenant_id, base_url, base_url_local, type, created_at, updated_at')
-        .eq('tenant_id', tenantId)
+        .select('id, base_url, base_url_local, type, created_at, updated_at')
+        .eq('id', tenantId)
         .maybeSingle();
       
       if (error || !data) {
@@ -139,7 +139,7 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
   console.log('Querying organization for URL:', currentUrl);
   const { data, error } = await supabase
     .from('organizations')
-    .select('id, tenant_id, base_url, base_url_local, type, created_at, updated_at')
+    .select('id, base_url, base_url_local, type, created_at, updated_at')
     .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
     .maybeSingle();
 
@@ -155,12 +155,12 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
       console.log('Query failed, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('organizations')
-        .select('id, tenant_id, base_url, base_url_local, type, created_at, updated_at')
-        .eq('tenant_id', tenantId)
+        .select('id, base_url, base_url_local, type, created_at, updated_at')
+        .eq('id', tenantId)
         .maybeSingle();
       
       if (fallbackError || !fallbackData) {
-        console.error('Error fetching organization by tenantId:', fallbackError?.message);
+        console.error('Error fetching organization by ID:', fallbackError?.message);
         return null;
       }
       return fallbackData as Organization;
@@ -175,12 +175,12 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
       console.log('No organization found, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('organizations')
-        .select('id, tenant_id, base_url, base_url_local, type, created_at, updated_at')
-        .eq('tenant_id', tenantId)
+        .select('id, base_url, base_url_local, type, created_at, updated_at')
+        .eq('id', tenantId)
         .maybeSingle();
       
       if (fallbackError || !fallbackData) {
-        console.error('Error fetching organization by tenantId:', fallbackError?.message);
+        console.error('Error fetching organization by ID:', fallbackError?.message);
         return null;
       }
       return fallbackData as Organization;

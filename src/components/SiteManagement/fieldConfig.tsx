@@ -11,6 +11,7 @@ import { TextSizeSelect } from './TextSizeSelect';
 import { TextWeightSelect } from './TextWeightSelect';
 import { BlockWidthSelect } from './BlockWidthSelect';
 import { ColumnsSelect } from './ColumnsSelect';
+import { MenuItemsSelect } from './MenuItemsSelect';
 import { Settings, organizationTypes } from './types';
 
 interface SubSectionConfig {
@@ -31,7 +32,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items';
   placeholder?: string;
   span?: 'full' | 'half';
 }
@@ -105,7 +106,11 @@ interface ColumnsFieldConfig extends BaseFieldConfig {
   type: 'columns';
 }
 
-export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig;
+interface MenuItemsFieldConfig extends BaseFieldConfig {
+  type: 'menu-items';
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -175,32 +180,102 @@ export const sectionsConfig: SectionConfig[] = [
   {
     title: 'Basic Information',
     key: 'basic',
-    fields: [
-      { name: 'name', label: 'Organization Name', type: 'text', placeholder: 'Enter organization name' },
-      { name: 'site', label: 'Site Title', type: 'text', placeholder: 'Enter your site title' },
-      { name: 'base_url', label: 'Base URL (Vercel Address)', type: 'url', placeholder: 'https://your-site.vercel.app'},
-      { name: 'base_url_local', label: 'Local URL', type: 'url', placeholder: 'http://localhost:3100'},
-      { name: 'type', label: 'Organization Type', type: 'organization-type' },
+    subsections: [
+      {
+        title: 'Organization Details',
+        key: 'organization',
+        columns: 2,
+        fields: [
+          { name: 'name', label: 'Organization Name', type: 'text', placeholder: 'Enter organization name' },
+          { name: 'site', label: 'Site Title', type: 'text', placeholder: 'Enter your site title' },
+          { name: 'type', label: 'Organization Type', type: 'organization-type' }
+        ]
+      },
+      {
+        title: 'URLs',
+        key: 'urls',
+        columns: 2,
+        fields: [
+          { name: 'base_url', label: 'Base URL (Vercel Address)', type: 'url', placeholder: 'https://your-site.vercel.app'},
+          { name: 'base_url_local', label: 'Local URL', type: 'url', placeholder: 'http://localhost:3100'}
+        ]
+      },
+      {
+        title: 'Contact Information',
+        key: 'contact',
+        columns: 2,
+        fields: [
+          { name: 'contact_email', label: 'Contact Email', type: 'email', placeholder: 'contact@yoursite.com' },
+          { name: 'contact_phone', label: 'Contact Phone', type: 'tel', placeholder: '+1 (555) 123-4567' }
+        ]
+      }
     ]
   },
   {
     title: 'Layout & Design',
     key: 'layout',
-    fields: [
-      { name: 'font_family', label: 'Font', type: 'text', placeholder: 'e.g., SF Pro Display, Inter, Arial' },
-      { name: 'header_style', label: 'Header Style', type: 'select', options: headerStyleOptions },
-      { name: 'menu_width', label: 'Menu Width', type: 'select', options: menuWidthOptions },
-      { name: 'primary_color', label: 'Primary Color', type: 'color' },
-      { name: 'secondary_color', label: 'Secondary Color', type: 'color' },
-      { name: 'footer_color', label: 'Footer Color', type: 'color' }
+    subsections: [
+      {
+        title: 'Typography',
+        key: 'typography',
+        columns: 1,
+        fields: [
+          { name: 'font_family', label: 'Font', type: 'text', placeholder: 'e.g., SF Pro Display, Inter, Arial' }
+        ]
+      },
+      {
+        title: 'Colors',
+        key: 'colors',
+        columns: 2,
+        fields: [
+          { name: 'primary_color', label: 'Primary Color', type: 'color' },
+          { name: 'secondary_color', label: 'Secondary Color', type: 'color' }
+        ]
+      },
+      {
+        title: 'Images',
+        key: 'images',
+        columns: 2,
+        fields: [
+          { name: 'image', label: 'Logo', type: 'image', field: 'image' },
+          { name: 'favicon', label: 'Favicon', type: 'image', field: 'favicon' }
+        ]
+      }
     ]
   },
   {
-    title: 'Images',
-    key: 'images',
-    fields: [
-      { name: 'image', label: 'Logo', type: 'image', field: 'image' },
-      { name: 'favicon', label: 'Favicon', type: 'image', field: 'favicon' }
+    title: 'SEO & Languages',
+    key: 'seo',
+    subsections: [
+      {
+        title: 'SEO Settings',
+        key: 'seo',
+        columns: 2,
+        fields: [
+          { name: 'seo_title', label: 'SEO Title', type: 'text', placeholder: 'Page title for search engines' },
+          { name: 'seo_description', label: 'SEO Description', type: 'textarea', rows: 2, placeholder: 'Meta description for search engines' },
+          { name: 'seo_keywords', label: 'SEO Keywords', type: 'textarea', rows: 1, placeholder: 'keyword1, keyword2, keyword3' }
+        ]
+      },
+      {
+        title: 'Analytics',
+        key: 'analytics',
+        columns: 2,
+        fields: [
+          { name: 'google_tag', label: 'Google Tag Manager ID', type: 'text', placeholder: 'GTM-XXXXXXX' },
+          { name: 'google_analytics_id', label: 'Google Analytics ID', type: 'text', placeholder: 'GA-XXXXXXXXX-X' }
+        ]
+      },
+      {
+        title: 'Language & Localization',
+        key: 'language',
+        columns: 2,
+        fields: [
+          { name: 'supported_locales', label: 'Supported Languages', type: 'multi-language' },
+          { name: 'language', label: 'Default Language', type: 'single-language', supportedLanguagesField: 'supported_locales' },
+          { name: 'with_language_switch', label: 'Enable Language Switcher', type: 'checkbox' }
+        ]
+      }
     ]
   },
   {
@@ -260,7 +335,7 @@ export const sectionsConfig: SectionConfig[] = [
         title: 'Image',
         key: 'image',
         fields: [
-          { name: 'hero_image', label: 'Hero Image', type: 'image', field: 'hero_image', span: 'full' },
+          { name: 'hero_image', label: 'Hero Image', type: 'image', field: 'hero_image' },
           { name: 'is_image_full_page', label: 'Full Page Background Image', type: 'checkbox' },
           { name: 'image_first', label: 'Show Image First (on mobile)', type: 'checkbox' }
         ]
@@ -278,38 +353,42 @@ export const sectionsConfig: SectionConfig[] = [
           { 
             name: 'animation_element', 
             label: 'Animation', 
-            type: 'animation'
+            type: 'animation', span: 'full'
           }
         ]
       }
     ]
   },
   {
-    title: 'SEO & Analytics',
-    key: 'seo',
-    fields: [
-      { name: 'seo_title', label: 'SEO Title', type: 'text', placeholder: 'Page title for search engines' },
-      { name: 'seo_description', label: 'SEO Description', type: 'textarea', rows: 2, placeholder: 'Meta description for search engines' },
-      { name: 'seo_keywords', label: 'SEO Keywords', type: 'textarea', rows: 1, placeholder: 'keyword1, keyword2, keyword3' },
-      { name: 'google_tag', label: 'Google Tag Manager ID', type: 'text', placeholder: 'GTM-XXXXXXX' },
-                  { name: 'google_analytics_id', label: 'Google Analytics ID', type: 'text', placeholder: 'GA-XXXXXXXXX-X' },
-    ]
-  },
-  {
-    title: 'Language & Localization',
-    key: 'language',
-    fields: [
-      { name: 'supported_locales', label: 'Supported Languages', type: 'multi-language' },
-      { name: 'language', label: 'Default Language', type: 'single-language', supportedLanguagesField: 'supported_locales' },
-      { name: 'with_language_switch', label: 'Enable Language Switcher', type: 'checkbox' },
-    ]
-  },
-  {
-    title: 'Contact Information',
-    key: 'contact',
-    fields: [
-      { name: 'contact_email', label: 'Contact Email', type: 'email', placeholder: 'contact@yoursite.com' },
-      { name: 'contact_phone', label: 'Contact Phone', type: 'tel', placeholder: '+1 (555) 123-4567' }
+    title: 'Header & Footer',
+    key: 'menu',
+    subsections: [
+      {
+        title: 'Header Settings',
+        key: 'header-settings',
+        columns: 2,
+        fields: [
+          { name: 'header_style', label: 'Header Style', type: 'select', options: headerStyleOptions },
+          { name: 'menu_width', label: 'Menu Width', type: 'select', options: menuWidthOptions },
+          { name: 'menu_items_are_text', label: 'Text-only Menu Items', type: 'checkbox' }
+        ]
+      },
+      {
+        title: 'Menu Items',
+        key: 'menu-items',
+        columns: 1,
+        fields: [
+          { name: 'menu_items', label: 'Navigation Menu Items', type: 'menu-items', span: 'full' }
+        ]
+      },
+      {
+        title: 'Footer Settings',
+        key: 'footer-settings',
+        columns: 1,
+        fields: [
+          { name: 'footer_color', label: 'Footer Color', type: 'color' }
+        ]
+      }
     ]
   }
 ];
@@ -514,6 +593,16 @@ export const renderField = ({
           label={field.label}
           name={field.name}
           value={value || '1'}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'menu-items':
+      return (
+        <MenuItemsSelect
+          label={field.label}
+          name={field.name}
+          value={Array.isArray(value) ? value : []}
           onChange={handleChange}
         />
       );

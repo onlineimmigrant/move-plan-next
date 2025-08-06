@@ -21,7 +21,6 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         is_displayed,
         is_displayed_on_footer,
         order,
-        image,
         description,
         description_translation,
         react_icon_id,
@@ -43,12 +42,16 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
       .order('order', { ascending: true })
       .order('order', { ascending: true, referencedTable: 'website_submenuitem' });
 
-    if (error || !data) {
-      console.error('Error fetching menu items:', error);
+    if (error) {
+      console.error('Failed to fetch menu items:', error);
+      return [];
+    }
+    
+    if (!data) {
       return [];
     }
 
-    return data.map((item) => {
+    const processedItems = data.map((item) => {
       let reactIcons: ReactIcon | null = null;
       if (item.react_icons && typeof item.react_icons === 'object' && !Array.isArray(item.react_icons)) {
         reactIcons = item.react_icons as ReactIcon;
@@ -66,6 +69,8 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         website_submenuitem: filteredSubItems,
       };
     });
+    
+    return processedItems;
   } catch (error) {
     console.error('Failed to fetch menu items:', error);
     return [];
