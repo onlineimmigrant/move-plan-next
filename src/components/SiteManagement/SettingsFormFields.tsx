@@ -43,12 +43,15 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   // Helper function to get grid classes based on narrow state
   const getGridClasses = (columns: number = 2) => {
     if (isNarrow) {
-      return 'grid grid-cols-1 gap-4';
+      return 'grid grid-cols-1 gap-6';
+    }
+    if (columns === 4) {
+      return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
     }
     if (columns === 3) {
-      return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+      return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
     }
-    return 'grid grid-cols-1 md:grid-cols-2 gap-4';
+    return 'grid grid-cols-1 md:grid-cols-2 gap-6';
   };
 
   const handleSectionChange = (sectionKey: string, field: keyof Settings, value: any) => {
@@ -119,16 +122,45 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
     return sectionChanges[sectionKey] && Object.keys(sectionChanges[sectionKey]).length > 0;
   };
 
-  const renderSectionFields = (fields: any[], sectionKey: string) => {
+  const renderSectionFields = (fields: any[], sectionKey: string, columns?: number) => {
     const fullSpanFields = fields.filter((field: any) => field.span === 'full');
     const regularFields = fields.filter((field: any) => field.span !== 'full');
     
+    // Group fields by type for better layout
+    const colorFields = regularFields.filter((field: any) => field.type === 'color');
+    const nonColorFields = regularFields.filter((field: any) => field.type !== 'color');
+    
+    // Determine grid columns: use passed columns, fallback to section-specific logic, default to 2
+    const gridColumns = columns || (sectionKey === 'images' ? 3 : 2);
+    
     return (
-      <>
-        {/* Regular grid fields */}
-        {regularFields.length > 0 && (
-          <div className={getGridClasses(sectionKey === 'images' ? 3 : 2)}>
-            {regularFields.map((field: any) => {
+      <div className="space-y-8">
+        {/* Non-color regular fields */}
+        {nonColorFields.length > 0 && (
+          <div className={getGridClasses(gridColumns)}>
+            {nonColorFields.map((field: any) => {
+              const fieldComponent = renderField({
+                field,
+                value: (settings as any)[field.name],
+                onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
+                onImageUpload,
+                uploadingImages,
+                allSettings: settings
+              } as any);
+              
+              return fieldComponent ? (
+                <div key={field.name}>
+                  {fieldComponent as unknown as React.ReactElement}
+                </div>
+              ) : null;
+            })}
+          </div>
+        )}
+
+        {/* Color fields in 4-column layout */}
+        {colorFields.length > 0 && (
+          <div className={getGridClasses(4)}>
+            {colorFields.map((field: any) => {
               const fieldComponent = renderField({
                 field,
                 value: (settings as any)[field.name],
@@ -148,9 +180,10 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
         )}
         
         {/* Full span fields */}
-        {fullSpanFields.map((field: any) => {
-          const fieldComponent = renderField({
-            field,
+        <div className="space-y-6">
+          {fullSpanFields.map((field: any) => {
+            const fieldComponent = renderField({
+              field,
             value: (settings as any)[field.name],
             onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
             onImageUpload,
@@ -164,7 +197,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             </div>
           ) : null;
         })}
-      </>
+        </div>
+      </div>
     );
   };
 
@@ -182,7 +216,18 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
           isOpen={sectionStates[section.key] || false}
           onToggle={handleSectionToggle}
         >
-          {renderSectionFields(section.fields, section.key)}
+          {section.subsections ? (
+            <div className="space-y-10">
+              {section.subsections.map(subsection => (
+                <div key={subsection.key} className="border-l-2 border-gray-200 pl-4">
+                  <h4 className="text-xs font-medium text-gray-700 mb-4">{subsection.title}</h4>
+                  {renderSectionFields(subsection.fields, section.key, subsection.columns)}
+                </div>
+              ))}
+            </div>
+          ) : section.fields ? (
+            renderSectionFields(section.fields, section.key, section.columns)
+          ) : null}
         </DisclosureSection>
       ))}
     </div>

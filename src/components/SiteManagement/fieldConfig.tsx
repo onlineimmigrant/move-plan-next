@@ -1,22 +1,37 @@
 import React from 'react';
 import { TextField, TextAreaField, SelectField, CheckboxField } from './FormField';
 import { ColorSelect } from './ColorSelect';
+import { AnimationSelect } from './AnimationSelect';
 import { ImageUploadField } from './ImageUploadField';
 import { MultiLanguageSelect, SingleLanguageSelect } from './LanguageSelect';
 import { OrganizationTypeSelect } from './OrganizationTypeSelect';
 import { TranslationsField } from './TranslationsField';
+import { AlignmentSelect } from './AlignmentSelect';
+import { TextSizeSelect } from './TextSizeSelect';
+import { TextWeightSelect } from './TextWeightSelect';
+import { BlockWidthSelect } from './BlockWidthSelect';
+import { ColumnsSelect } from './ColumnsSelect';
 import { Settings, organizationTypes } from './types';
+
+interface SubSectionConfig {
+  title: string;
+  key: string;
+  fields: FieldConfig[];
+  columns?: number; // Number of columns for grid layout
+}
 
 interface SectionConfig {
   title: string;
   key: string;
-  fields: FieldConfig[];
+  fields?: FieldConfig[];
+  subsections?: SubSectionConfig[];
+  columns?: number; // Number of columns for grid layout
 }
 
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns';
   placeholder?: string;
   span?: 'full' | 'half';
 }
@@ -43,6 +58,10 @@ interface ColorFieldConfig extends BaseFieldConfig {
   type: 'color';
 }
 
+interface AnimationFieldConfig extends BaseFieldConfig {
+  type: 'animation';
+}
+
 interface ImageFieldConfig extends BaseFieldConfig {
   type: 'image';
   field: 'image' | 'favicon' | 'hero_image';
@@ -63,9 +82,30 @@ interface OrganizationTypeFieldConfig extends BaseFieldConfig {
 
 interface TranslationsFieldConfig extends BaseFieldConfig {
   type: 'translations';
+  supportedLanguagesField?: keyof Settings; // Field name that contains supported languages
 }
 
-export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig;
+interface AlignmentFieldConfig extends BaseFieldConfig {
+  type: 'alignment';
+}
+
+interface TextSizeFieldConfig extends BaseFieldConfig {
+  type: 'text-size';
+}
+
+interface TextWeightFieldConfig extends BaseFieldConfig {
+  type: 'text-weight';
+}
+
+interface BlockWidthFieldConfig extends BaseFieldConfig {
+  type: 'block-width';
+}
+
+interface ColumnsFieldConfig extends BaseFieldConfig {
+  type: 'columns';
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -147,14 +187,12 @@ export const sectionsConfig: SectionConfig[] = [
     title: 'Layout & Design',
     key: 'layout',
     fields: [
-      { name: 'font_family', label: 'Font Family', type: 'text', placeholder: 'e.g., SF Pro Display, Inter, Arial' },
+      { name: 'font_family', label: 'Font', type: 'text', placeholder: 'e.g., SF Pro Display, Inter, Arial' },
       { name: 'header_style', label: 'Header Style', type: 'select', options: headerStyleOptions },
-            { name: 'menu_width', label: 'Menu Width', type: 'select', options: menuWidthOptions },
+      { name: 'menu_width', label: 'Menu Width', type: 'select', options: menuWidthOptions },
       { name: 'primary_color', label: 'Primary Color', type: 'color' },
       { name: 'secondary_color', label: 'Secondary Color', type: 'color' },
-      { name: 'footer_color', label: 'Footer Color', type: 'color' },
-
-
+      { name: 'footer_color', label: 'Footer Color', type: 'color' }
     ]
   },
   {
@@ -168,65 +206,82 @@ export const sectionsConfig: SectionConfig[] = [
   {
     title: 'Hero Section',
     key: 'hero',
-    fields: [
-      // Basic Information & Image
-      { name: 'hero_image', label: 'Hero Image', type: 'image', field: 'hero_image', span: 'full'  },
-      { name: 'is_image_full_page', label: 'Full Page Image', type: 'checkbox' },
-      { name: 'image_first', label: 'Image First (on mobile)', type: 'checkbox' },
-      
-      // Content - Title
-      { name: 'h1_title', label: 'Hero Title', type: 'text', placeholder: 'Enter your main headline', span: 'full' },
-      { name: 'h1_title_translation', label: 'Hero Title Translations', type: 'translations', span: 'full' },
-      { name: 'is_seo_title', label: 'Use as SEO Title', type: 'checkbox' },
-      
-      // Content - Description  
-      { name: 'p_description', label: 'Hero Description', type: 'textarea', rows: 3, placeholder: 'Enter hero description', span: 'full' },
-      { name: 'p_description_translation', label: 'Hero Description Translations', type: 'translations', span: 'full' },
-      
-      // Typography & Font
-      { name: 'hero_font_family', label: 'Font Family', type: 'text', placeholder: 'Custom font family' },
-      { name: 'title_alighnement', label: 'Title Alignment', type: 'select', options: alignmentOptions },
-      
-      // Typography - Title Sizing
-      { name: 'h1_text_size', label: 'Title Size (Desktop)', type: 'select', options: textSizeOptions },
-      { name: 'h1_text_size_mobile', label: 'Title Size (Mobile)', type: 'select', options: textSizeOptions },
-      
-      // Typography - Description Sizing
-      { name: 'p_description_size', label: 'Description Size (Desktop)', type: 'select', options: textSizeOptions },
-      { name: 'p_description_size_mobile', label: 'Description Size (Mobile)', type: 'select', options: textSizeOptions },
-      { name: 'p_description_weight', label: 'Description Weight', type: 'select', options: textWeightOptions },
-      
-      // Colors - Title
-      { name: 'h1_text_color', label: 'Title Color', type: 'color' },
-      { name: 'is_h1_gradient_text', label: 'Use Gradient Text', type: 'checkbox' },
-      { name: 'h1_text_color_gradient_from', label: 'Title Gradient From', type: 'color' },
-      { name: 'h1_text_color_gradient_to', label: 'Title Gradient To', type: 'color' },
-      { name: 'h1_text_color_gradient_via', label: 'Title Gradient Via', type: 'color' },
-      
-      // Colors - Description
-      { name: 'p_description_color', label: 'Description Color', type: 'color' },
-      
-      // Layout & Structure
-      { name: 'title_block_width', label: 'Content Width', type: 'select', options: blockWidthOptions },
-      { name: 'title_block_columns', label: 'Content Columns', type: 'select', options: [
-        { name: '1 Column', value: '1' },
-        { name: '2 Columns', value: '2' },
-        { name: '3 Columns', value: '3' }
-      ]},
-      
-      // Background
-      { name: 'background_color', label: 'Background Color', type: 'color' },
-      { name: 'is_bg_gradient', label: 'Use Background Gradient', type: 'checkbox' },
-      { name: 'background_color_gradient_from', label: 'Background Gradient From', type: 'color' },
-      { name: 'background_color_gradient_to', label: 'Background Gradient To', type: 'color' },
-      { name: 'background_color_gradient_via', label: 'Background Gradient Via', type: 'color' },
-      
-      // Interactive Elements - Buttons
-      { name: 'button_main_get_started', label: 'Main Button Text', type: 'text', placeholder: 'Get Started' },
-      { name: 'button_explore', label: 'Secondary Button Text', type: 'text', placeholder: 'Explore' },
-      
-      // Advanced Options
-      { name: 'animation_element', label: 'Animation Element', type: 'text', placeholder: 'CSS animation class or element' }
+    columns: 4, // Increase to 4 columns for better organization
+    subsections: [
+      {
+        title: 'General',
+        key: 'general',
+        columns: 3, // Change to 3 columns for alignment, width, and columns
+        fields: [
+          { name: 'title_alighnement', label: 'Alignment', type: 'alignment' },
+          { name: 'title_block_width', label: 'Width', type: 'block-width' },
+          { name: 'title_block_columns', label: 'Columns', type: 'columns' },
+          { name: 'is_seo_title', label: 'Use Title as SEO Title', type: 'checkbox' }
+        ]
+      },
+      {
+        title: 'Title',
+        key: 'title',
+        columns: 2, // Keep 2 columns for most fields, color fields will use 4 via special handling
+        fields: [
+          { name: 'h1_title', label: 'Hero Title', type: 'text', placeholder: 'Enter your main headline', span: 'full' },
+          { name: 'h1_title_translation', label: 'Title Translations', type: 'translations', span: 'full', supportedLanguagesField: 'supported_locales' },
+          { name: 'h1_text_size', label: 'Size (Desktop)', type: 'text-size' },
+          { name: 'h1_text_size_mobile', label: 'Size (Mobile)', type: 'text-size' },
+          { name: 'h1_text_color', label: 'Color', type: 'color' },
+          { name: 'is_h1_gradient_text', label: 'Use Gradient', type: 'checkbox' },
+          { name: 'h1_text_color_gradient_from', label: 'From', type: 'color' },
+          { name: 'h1_text_color_gradient_to', label: 'To', type: 'color' },
+          { name: 'h1_text_color_gradient_via', label: 'Via', type: 'color' }
+        ]
+      },
+      {
+        title: 'Description',
+        key: 'description',
+        columns: 2,
+        fields: [
+          { name: 'p_description', label: 'Description Text', type: 'textarea', rows: 3, placeholder: 'Enter hero description', span: 'full' },
+          { name: 'p_description_translation', label: 'Description Translations', type: 'translations', span: 'full', supportedLanguagesField: 'supported_locales' },
+          { name: 'p_description_size', label: 'Size (Desktop)', type: 'text-size' },
+          { name: 'p_description_size_mobile', label: 'Size (Mobile)', type: 'text-size' },
+          { name: 'p_description_weight', label: 'Weight', type: 'text-weight' },
+          { name: 'p_description_color', label: 'Color', type: 'color' }
+        ]
+      },
+      {
+        title: 'Buttons',
+        key: 'buttons',
+        fields: [
+          { name: 'button_main_get_started', label: 'Main Button Text', type: 'text', placeholder: 'Get Started' },
+          { name: 'button_explore', label: 'Secondary Button Text', type: 'text', placeholder: 'Explore' }
+        ]
+      },
+      {
+        title: 'Image',
+        key: 'image',
+        fields: [
+          { name: 'hero_image', label: 'Hero Image', type: 'image', field: 'hero_image', span: 'full' },
+          { name: 'is_image_full_page', label: 'Full Page Background Image', type: 'checkbox' },
+          { name: 'image_first', label: 'Show Image First (on mobile)', type: 'checkbox' }
+        ]
+      },
+      {
+        title: 'Background & Animation',
+        key: 'background',
+        columns: 2,
+        fields: [
+          { name: 'background_color', label: 'Background Color', type: 'color' },
+          { name: 'is_bg_gradient', label: 'Use Gradient', type: 'checkbox' },
+          { name: 'background_color_gradient_from', label: 'From', type: 'color' },
+          { name: 'background_color_gradient_to', label: 'To', type: 'color' },
+          { name: 'background_color_gradient_via', label: 'Via', type: 'color' },
+          { 
+            name: 'animation_element', 
+            label: 'Animation', 
+            type: 'animation'
+          }
+        ]
+      }
     ]
   },
   {
@@ -343,6 +398,16 @@ export const renderField = ({
           onChange={handleChange}
         />
       );
+      
+    case 'animation':
+      return (
+        <AnimationSelect
+          label={field.label}
+          name={field.name}
+          value={value || ''}
+          onChange={handleChange}
+        />
+      );
     
     case 'image':
       if (!onImageUpload || !uploadingImages) return null;
@@ -391,10 +456,64 @@ export const renderField = ({
       );
     
     case 'translations':
+      const translationsSupportedLanguagesField = (field as TranslationsFieldConfig).supportedLanguagesField || 'supported_locales';
+      const translationsSupportedLanguages = allSettings?.[translationsSupportedLanguagesField] || ['en'];
+      
       return (
         <TranslationsField
           field={field}
           value={value || {}}
+          onChange={handleChange}
+          supportedLanguages={Array.isArray(translationsSupportedLanguages) ? translationsSupportedLanguages : ['en']}
+        />
+      );
+    
+    case 'alignment':
+      return (
+        <AlignmentSelect
+          label={field.label}
+          name={field.name}
+          value={value || 'left'}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'text-size':
+      return (
+        <TextSizeSelect
+          label={field.label}
+          name={field.name}
+          value={value || 'text-base'}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'text-weight':
+      return (
+        <TextWeightSelect
+          label={field.label}
+          name={field.name}
+          value={value || 'normal'}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'block-width':
+      return (
+        <BlockWidthSelect
+          label={field.label}
+          name={field.name}
+          value={value || 'full'}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'columns':
+      return (
+        <ColumnsSelect
+          label={field.label}
+          name={field.name}
+          value={value || '1'}
           onChange={handleChange}
         />
       );
