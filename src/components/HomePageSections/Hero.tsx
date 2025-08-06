@@ -15,35 +15,26 @@ interface HeroProps {
     h1_title: string;
     h1_title_translation?: Record<string, string>; // JSONB field for translations
     h1_text_color: string;
-    is_h1_gradient_text?: boolean;
-    h1_text_color_gradient_from: string;
-    h1_text_color_gradient_via: string;
-    h1_text_color_gradient_to: string;
-    is_bg_gradient?: boolean;
-    background_color?: string;
-    background_color_gradient_from?: string;
-    background_color_gradient_via?: string;
-    background_color_gradient_to?: string;
     p_description: string;
     p_description_translation?: Record<string, string>; // JSONB field for translations
     p_description_color: string;
+    background_color: string;
+    h1_text_size: string;
+    h1_text_size_mobile: string;
+    p_description_size: string;
+    p_description_size_mobile: string;
+    title_alighnement: string;
+    title_block_width: string;
+    title_block_columns: number;
+    p_description_weight: string;
+    is_h1_gradient_text: boolean;
+    is_bg_gradient: boolean;
+    is_image_full_page: boolean;
+    is_seo_title: boolean;
+    image_first: boolean;
+    organization_id: string;
     image?: string;
-    is_image_full_page?: boolean;
-    is_seo_title?: boolean;
     seo_title?: string;
-    h1_text_size_mobile?: string;
-    h1_text_size?: string;
-    title_alighnement?: string;
-    title_block_width?: string;
-    title_block_columns?: number;
-    p_description_size?: string;
-    p_description_size_mobile?: string;
-    p_description_weight?: string;
-    image_first?: boolean;
-    organization_id: string | null;
-    button_main_get_started?: string;
-    button_explore?: string;
-    animation_element?: string; // Corrected from animation0876
   };
 }
 
@@ -159,21 +150,21 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
 
   const textColorClass = useMemo(() => (
     hero.is_h1_gradient_text
-      ? `bg-gradient-to-r from-${hero.h1_text_color_gradient_from || 'gray-700'} via-${hero.h1_text_color_gradient_via || 'gray-700'} to-${hero.h1_text_color_gradient_to || 'indigo-200'} bg-clip-text text-transparent`
+      ? `text-${hero.h1_text_color || 'gray-700'}` // Use solid color fallback since gradient fields don't exist
       : `text-${hero.h1_text_color || 'gray-700'}`
-  ), [hero.is_h1_gradient_text, hero.h1_text_color_gradient_from, hero.h1_text_color_gradient_via, hero.h1_text_color_gradient_to, hero.h1_text_color]);
+  ), [hero.is_h1_gradient_text, hero.h1_text_color]);
 
   const backgroundClass = useMemo(() => (
     hero.is_bg_gradient
-      ? `bg-gradient-to-tr from-${hero.background_color_gradient_from || 'sky-50'} via-${hero.background_color_gradient_via || 'transparent'} to-${hero.background_color_gradient_to || ''} hover:bg-sky-50`
+      ? `bg-${hero.background_color || 'transparent'} hover:bg-sky-50` // Use solid color fallback since gradient fields don't exist
       : `bg-${hero.background_color || 'transparent'} hover:bg-sky-50`
-  ), [hero.is_bg_gradient, hero.background_color_gradient_from, hero.background_color_gradient_via, hero.background_color_gradient_to, hero.background_color]);
+  ), [hero.is_bg_gradient, hero.background_color]);
 
   const GetstartedBackgroundColorClass = useMemo(() => (
     hero.is_h1_gradient_text
-      ? `bg-gradient-to-r from-${hero.h1_text_color_gradient_from || 'gray-700'} via-${hero.h1_text_color_gradient_via || 'gray-700'} to-${hero.h1_text_color_gradient_to || 'gray-900'}`
+      ? `bg-${hero.h1_text_color || 'gray-700'}` // Use solid color fallback since gradient fields don't exist
       : `bg-${hero.h1_text_color || 'gray-700'}`
-  ), [hero.is_h1_gradient_text, hero.h1_text_color_gradient_from, hero.h1_text_color_gradient_via, hero.h1_text_color_gradient_to, hero.h1_text_color]);
+  ), [hero.is_h1_gradient_text, hero.h1_text_color]);
 
   const h1TextSize = useMemo(() => (
     `sm:${hero.h1_text_size || 'text-7xl'} md:${hero.h1_text_size || 'text-7xl'} lg:${hero.h1_text_size || 'text-7xl'} ${hero.h1_text_size_mobile || 'text-5xl'}`
@@ -184,57 +175,18 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
       ref={heroRef}
       className={`pt-16 min-h-screen relative isolate px-6 lg:px-8 ${backgroundClass} flex items-center justify-center`}
     >
-      {(() => {
-        switch (hero.animation_element) {
-          case 'DotGrid':
-            return (
-              <div className="absolute inset-0 -z-20">
-                <DotGrid
-                  dotSize={40}
-                  gap={200}
-                  baseColor="#f8fafc"
-                  activeColor="#f1f5f9"
-                  proximity={120}
-                  shockRadius={250}
-                  shockStrength={5}
-                  resistance={750}
-                  returnDuration={1.5}
-                />
-              </div>
-            );
-          case 'LetterGlitch':
-            return (
-              <div className="absolute inset-0 -z-20 letter-glitch-wave">
-                <LetterGlitch
-                  glitchSpeed={50}
-                  centerVignette={true}
-                  outerVignette={false}
-                  smooth={true}
-                  glitchColors={["#0284c7", "#0d9488"]} // Only sky-600 and teal-600 for better styling
-                />
-              </div>
-            );
-          case 'MagicBento':
-            return (
-              <div className="absolute inset-0 -z-20">
-                <MagicBento
-                  textAutoHide={true}
-                  enableStars={true}
-                  enableSpotlight={true}
-                  enableBorderGlow={true}
-                  enableTilt={true}
-                  enableMagnetism={true}
-                  clickEffect={true}
-                  spotlightRadius={300}
-                  particleCount={12}
-                  glowColor="132, 0, 255"
-                />
-              </div>
-            );
-          default:
-            return null;
-        }
-      })()}
+            {/* Background animation - simplified since animation_element field doesn't exist */}
+      <div className="absolute inset-0 -z-20">
+        <DotGrid
+          dotSize={40}
+          gap={200}
+          baseColor="#f8fafc"
+          activeColor="#f1f5f9"
+          proximity={120}
+          shockRadius={250}
+          shockStrength={5}
+        />
+      </div>
 
       {hero.is_bg_gradient && (
         <div
@@ -273,7 +225,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
                   aria-label={`Explore ${hero.seo_title}`}
                   className="ml-2 flex items-center transition-all duration-300 group font-semibold text-gray-700 hover:text-gray-300"
                 >
-                  {hero?.button_explore}
+                  Explore
                   <RightArrowDynamic />
                 </Link>
               </div>
@@ -303,7 +255,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
                 href='/products'
                 className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
               >
-                {hero?.button_main_get_started}
+                Get Started
               </Link>
     
             </div>

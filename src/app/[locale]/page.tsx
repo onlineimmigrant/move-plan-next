@@ -10,14 +10,23 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
     hero: {
       h1_title: 'Welcome to Our Platform',
       h1_text_color: 'gray-900',
-      is_h1_gradient_text: false,
-      h1_text_color_gradient_from: 'gray-900',
-      h1_text_color_gradient_via: 'gray-700',
-      h1_text_color_gradient_to: 'gray-500',
       p_description: 'Discover our services.',
       p_description_color: '#000000',
-      h1_title_color_id: '',
-      organization_id: null,
+      background_color: '#ffffff',
+      h1_text_size: 'text-xl',
+      h1_text_size_mobile: 'text-lg',
+      p_description_size: 'text-base',
+      p_description_size_mobile: 'text-sm',
+      title_alighnement: 'center',
+      title_block_width: 'full',
+      title_block_columns: 1,
+      p_description_weight: 'normal',
+      is_h1_gradient_text: false,
+      is_bg_gradient: false,
+      is_image_full_page: false,
+      is_seo_title: false,
+      image_first: false,
+      organization_id: '',
     },
     brands: [],
     faqs: [],
@@ -137,4 +146,4 @@ export default async function Page() {
   );
 }
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 0; // Disable ISR caching completely for instant hero updates

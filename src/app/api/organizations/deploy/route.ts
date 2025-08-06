@@ -120,9 +120,9 @@ export async function POST(request: NextRequest) {
         console.log('GitHub repository connected successfully');
       } catch (error: any) {
         console.error('Error connecting GitHub repository:', error);
-        return NextResponse.json({ 
-          error: `Failed to connect GitHub repository: ${error.message}` 
-        }, { status: 500 });
+        console.warn('GitHub connection failed - this is expected if you have reached the 10 project limit per repository');
+        console.log('Project will be created without automatic Git integration');
+        // Don't fail the entire deployment - continue without Git connection
       }
     }
 
@@ -145,34 +145,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Trigger deployment for the linked project
-    let deployment;
+    let deployment: any = null;
     if (gitRepository) {
-      console.log('Triggering deployment for project:', vercelProject.id);
+      console.log('Attempting automatic deployment for project:', vercelProject.id);
+      
+      // Wait longer for GitHub connection to be fully established
+      console.log('Waiting for GitHub connection to stabilize...');
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Increased to 5 seconds
+      
       try {
         deployment = await vercelClient.deployProject(vercelProject.id, projectName);
-        console.log('Deployment created:', deployment.uid);
+        console.log('Automatic deployment created successfully:', deployment.uid);
       } catch (error: any) {
-        console.error('Error creating deployment:', error);
-        // If simple deployment fails, try the GitHub approach as fallback
-        console.log('Fallback: Attempting GitHub deployment');
-        try {
-          deployment = await vercelClient.deployFromGitHub(
-            projectName, 
-            gitRepository, 
-            branch, 
-            envVars
-          );
-          console.log('Fallback deployment created:', deployment.uid);
-        } catch (fallbackError: any) {
-          console.error('Fallback deployment also failed:', fallbackError);
-          return NextResponse.json({ 
-            error: `Failed to create deployment: ${fallbackError.message}` 
-          }, { status: 500 });
+        console.error('Automatic deployment failed:', error);
+        console.log('Deployment error details:', error.message);
+        
+        // Check if it's a timing/access issue that might resolve with manual deployment
+        if (error.message.includes('repository does not contain') || 
+            error.message.includes('branch or commit reference') ||
+            error.message.includes('repository can\'t be found')) {
+          console.log('Git access issue detected - this is common for newly connected repositories');
+          console.log('Manual deployment should work once Vercel fully processes the Git connection');
         }
+        
+        // Don't fail the entire process, but log the error
+        console.warn('Continuing without automatic deployment - user can deploy manually from Vercel dashboard');
+        deployment = null;
       }
     }
 
-    // Update organization with Vercel project info
+    // Update organization with Vercel project info (even if deployment failed)
     const { error: updateError } = await supabase
       .from('organizations')
       .update({
@@ -213,7 +215,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Site deployment initiated successfully',
+      message: deployment ? 
+        'Site deployment initiated successfully - your site is being built and will be live shortly!' : 
+        'Vercel project created successfully. Manual deployment required.',
       data: {
         organizationId,
         projectName,
@@ -221,7 +225,21 @@ export async function POST(request: NextRequest) {
         vercelProjectId: vercelProject.id,
         vercelDeploymentId: deployment?.uid || null,
         deploymentStatus: deployment ? 'building' : 'created',
-        estimatedReadyTime: deployment ? new Date(Date.now() + 5 * 60 * 1000).toISOString() : null // ~5 minutes
+        estimatedReadyTime: deployment ? new Date(Date.now() + 5 * 60 * 1000).toISOString() : null, // ~5 minutes
+        dashboardUrl: `https://vercel.com/dashboard/projects/${vercelProject.id}`,
+        settingsUrl: `https://vercel.com/dashboard/projects/${vercelProject.id}/settings/git`,
+        deploymentUrl: deployment ? `https://vercel.com/dashboard/deployments/${deployment.uid}` : null,
+        manualDeploymentNote: deployment ? null : 
+          'Automatic deployment failed. Please visit the Vercel dashboard to deploy manually.',
+        instructions: deployment ? [
+          'Your site is being built automatically',
+          'Check the deployment status in your Vercel dashboard',
+          'Your site will be live at the base URL once deployment completes'
+        ] : [
+          '1. Visit the Vercel dashboard using the link above',
+          '2. Go to Project Settings > Git (if not already connected)',  
+          '3. Deploy your project manually'
+        ]
       }
     });
 

@@ -7,6 +7,7 @@ interface LivePreviewProps {
   organizationUrl?: string;
   previewMode?: 'desktop' | 'mobile';
   onPreviewModeChange?: (mode: 'desktop' | 'mobile') => void;
+  refreshKey?: string | number; // Add refresh key to force reload
 }
 
 // Helper function to validate if a string is a valid URL
@@ -25,11 +26,19 @@ export default function LivePreview({
   settings, 
   organizationUrl, 
   previewMode = 'desktop', 
-  onPreviewModeChange 
+  onPreviewModeChange,
+  refreshKey 
 }: LivePreviewProps) {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [debouncedOrganizationUrl, setDebouncedOrganizationUrl] = useState<string>(organizationUrl || '');
+
+  // Force reload when refreshKey changes
+  useEffect(() => {
+    if (refreshKey !== undefined) {
+      setIsLoading(true);
+    }
+  }, [refreshKey]);
 
   // Debounce the organization URL to avoid constant re-renders while typing
   useEffect(() => {
@@ -265,6 +274,7 @@ export default function LivePreview({
         {previewUrl && (
           <div className={`w-full h-full flex ${previewMode === 'mobile' ? 'justify-center items-start' : ''}`}>
             <iframe
+              key={refreshKey} // Add key to force reload when refreshKey changes
               src={previewUrl}
               className={`border-0 transition-all duration-300 ${
                 previewMode === 'mobile' 

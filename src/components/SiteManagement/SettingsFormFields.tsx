@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings } from './types';
 import { DisclosureSection } from './DisclosureSection';
 import { sectionsConfig, renderField } from './fieldConfig';
+import { TranslationsField } from './TranslationsField';
 
 interface SettingsFormFieldsProps {
   settings: Settings;
@@ -11,15 +12,33 @@ interface SettingsFormFieldsProps {
   isNarrow?: boolean;
 }
 
-export default function SettingsFormFields({ 
+const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({ 
   settings, 
   onChange, 
   onImageUpload, 
   uploadingImages,
   isNarrow = false
-}: SettingsFormFieldsProps) {
+}) => {
   const [sectionChanges, setSectionChanges] = useState<Record<string, Partial<Settings>>>({});
   const [originalSectionValues, setOriginalSectionValues] = useState<Record<string, Partial<Settings>>>({});
+  const [sectionStates, setSectionStates] = useState<Record<string, boolean>>({});
+
+  // Initialize section states
+  useEffect(() => {
+    const initialStates: Record<string, boolean> = {};
+    sectionsConfig.forEach(section => {
+      // Default hero section to be open, others closed
+      initialStates[section.key] = section.key === 'hero';
+    });
+    setSectionStates(initialStates);
+  }, []);
+
+  const handleSectionToggle = (sectionKey: string, isOpen: boolean) => {
+    setSectionStates(prev => ({
+      ...prev,
+      [sectionKey]: isOpen
+    }));
+  };
 
   // Helper function to get grid classes based on narrow state
   const getGridClasses = (columns: number = 2) => {
@@ -160,10 +179,14 @@ export default function SettingsFormFields({
           hasChanges={hasSectionChanges(section.key)}
           onSave={() => handleSectionSave(section.key)}
           onCancel={() => handleSectionCancel(section.key)}
+          isOpen={sectionStates[section.key] || false}
+          onToggle={handleSectionToggle}
         >
           {renderSectionFields(section.fields, section.key)}
         </DisclosureSection>
       ))}
     </div>
   );
-}
+};
+
+export default SettingsFormFields;
