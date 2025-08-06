@@ -122,6 +122,9 @@ export interface Settings {
   language?: string;
   with_language_switch?: boolean;
   
+  // Menu & Navigation
+  menu_items?: any[]; // MenuItem[] - keeping as any[] to avoid circular imports
+  
   // Contact Information
   contact_email?: string;
   contact_phone?: string;

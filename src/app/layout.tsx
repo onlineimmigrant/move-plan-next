@@ -1,4 +1,4 @@
-import { getSettings, getOrganizationId, getDefaultSettings, getSiteName } from '@/lib/getSettings';
+import { getSettings, getOrganizationId, getDefaultSettings, getSiteName, getOrganization } from '@/lib/getSettings';
 import { headers } from 'next/headers';
 import './globals.css';
 import ClientProviders from './ClientProviders';
@@ -56,9 +56,19 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const currentDomain = await getDomain();
-  const settings = await getSettingsWithFallback(currentDomain);
-  const organizationId = await getOrganizationId(currentDomain).catch(() => null);
-  const menuItems = await fetchMenuItems(organizationId);
+  console.log('RootLayout - currentDomain:', currentDomain);
+  
+  const organization = await getOrganization(currentDomain);
+  const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
+  
+  console.log('RootLayout - settings loaded:', !!settings);
+
+  const organizationId = organization?.id || null;
+  console.log('RootLayout - organizationId:', organizationId);
+
+  const menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
+  console.log('RootLayout - menuItems:', menuItems.length, 'items fetched');
+  
   const language = getLanguageFromSettings(settings);
 
   const headerData = {
