@@ -1,4 +1,8 @@
 export const colorOptions = [
+  // Basic colors
+  { name: 'White', value: 'white', color: 'bg-white' },
+  { name: 'Black', value: 'black', color: 'bg-black' },
+  
   // Red colors
   { name: 'Red 50', value: 'red-50', color: 'bg-red-50' },
   { name: 'Red 100', value: 'red-100', color: 'bg-red-100' },

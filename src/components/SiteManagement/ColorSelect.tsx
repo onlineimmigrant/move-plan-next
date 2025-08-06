@@ -20,7 +20,8 @@ export const ColorSelect: React.FC<ColorSelectProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
 
-  const selectedColor = colorOptions.find(c => c.value === value) || colorOptions[0];
+  // Find the selected color option based on Tailwind color value
+  const selectedColor = colorOptions.find(c => c.value === value) || colorOptions.find(c => c.value === 'gray-500') || colorOptions[0];
   
   const updateButtonRect = () => {
     if (buttonRef.current) {
@@ -45,6 +46,7 @@ export const ColorSelect: React.FC<ColorSelectProps> = ({
   }, [isOpen]);
 
   const handleChange = (newValue: string) => {
+    // Store Tailwind color format directly in database
     onChange(name, newValue);
     setIsOpen(false);
   };

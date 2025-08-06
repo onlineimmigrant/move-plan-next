@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         name,
         type,
         base_url_local: baseUrlLocal,
-        base_url: null, // Will be filled later when deployed
+        base_url: null, // Will be filled with Vercel project URL below
         created_by_email: user.user.email
       })
       .select()
@@ -157,12 +157,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create organization', details: createError.message }, { status: 500 });
     }
 
+    // Generate Vercel project name and base URL
+    const projectName = `${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${newOrg.id.slice(0, 8)}`;
+    const baseUrl = `https://${projectName}.vercel.app`;
+
+    console.log('Generated Vercel project details:', { projectName, baseUrl });
+
+    // Update the organization with the generated base_url
+    const { data: updatedOrg, error: updateError } = await supabase
+      .from('organizations')
+      .update({ base_url: baseUrl })
+      .eq('id', newOrg.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Failed to update organization with base_url:', updateError);
+      // Don't fail the creation, just log the error
+      console.warn('Organization created but base_url update failed');
+    }
+
+    console.log('Organization updated with base_url:', updatedOrg);
+
     // Create default settings record for the new organization
     const { data: newSettings, error: settingsError } = await supabase
       .from('settings')
       .insert({
         organization_id: newOrg.id,
         site: newOrg.name, // Default site field to organization name
+        font_family: 'Inter', // Default font family
         // Add other default fields as needed
       })
       .select()
@@ -176,6 +199,42 @@ export async function POST(request: NextRequest) {
       console.warn('Organization created but settings creation failed. Manual settings creation may be required.');
     }
 
+    // Create default website_hero record for the new organization
+    const { data: newHero, error: heroError } = await supabase
+      .from('website_hero')
+      .insert({
+        organization_id: newOrg.id,
+        name: newSettings?.site || newOrg.name, // Use site value or organization name as fallback
+        h1_title: `Welcome to ${newOrg.name}`,
+        h1_text_color: '#1f2937',
+        p_description: `Discover what ${newOrg.name} has to offer.`,
+        p_description_color: '#6b7280',
+        background_color: '#ffffff',
+        h1_text_size: 'text-xl',
+        h1_text_size_mobile: 'text-lg',
+        p_description_size: 'text-base',
+        p_description_size_mobile: 'text-sm',
+        title_alighnement: 'center',
+        title_block_width: 'full',
+        title_block_columns: 1,
+        p_description_weight: 'normal',
+        is_h1_gradient_text: false,
+        is_bg_gradient: false,
+        is_image_full_page: false,
+        is_seo_title: false,
+        image_first: false,
+        button_main_get_started: 'Get Started' // Default button text
+      })
+      .select()
+      .single();
+
+    console.log('Hero creation result:', { newHero, heroError });
+
+    if (heroError) {
+      console.error('Failed to create hero:', heroError);
+      console.warn('Organization created but hero creation failed. Manual hero creation may be required.');
+    }
+
     return NextResponse.json({
       success: true,
       organization: {
@@ -183,9 +242,10 @@ export async function POST(request: NextRequest) {
         name: newOrg.name,
         type: newOrg.type,
         base_url_local: newOrg.base_url_local,
-        base_url: newOrg.base_url
+        base_url: updatedOrg?.base_url || baseUrl // Use updated value or fallback to generated one
       },
-      settings: newSettings || null
+      settings: newSettings || null,
+      website_hero: newHero || null
     });
 
   } catch (error) {

@@ -14,29 +14,102 @@ export interface Organization {
   user_role?: string;
   user_status?: string;
   settings?: Settings;
+  website_hero?: HeroData;
+}
+
+// Separate interface for hero data (website_hero table)
+export interface HeroData {
+  id?: string;
+  organization_id?: string;
+  name?: string;
+  font_family?: string;
+  h1_title?: string;
+  h1_title_translation?: Record<string, string>;
+  is_seo_title?: boolean;
+  seo_title?: string;
+  p_description?: string;
+  p_description_translation?: Record<string, string>;
+  h1_text_color?: string;
+  h1_text_color_gradient_from?: string;
+  h1_text_color_gradient_to?: string;
+  h1_text_color_gradient_via?: string;
+  is_h1_gradient_text?: boolean;
+  h1_text_size?: string;
+  h1_text_size_mobile?: string;
+  image?: string | null; // hero_image
+  title_alighnement?: string;
+  title_block_width?: string;
+  is_bg_gradient?: boolean;
+  is_image_full_page?: boolean;
+  title_block_columns?: number;
+  image_first?: boolean;
+  background_color?: string;
+  background_color_gradient_from?: string;
+  background_color_gradient_to?: string;
+  background_color_gradient_via?: string;
+  button_main_get_started?: string;
+  button_explore?: string;
+  animation_element?: string;
+  p_description_color?: string;
+  p_description_size?: string;
+  p_description_size_mobile?: string;
+  p_description_weight?: string;
 }
 
 export interface Settings {
-  // Organization Information
+  // Organization Information (for form convenience, but separated when saving)
   name?: string;
   base_url?: string;
   base_url_local?: string;
   type?: string;
   
-  // Basic Information
+  // Basic Information (settings table)
   primary_color?: string;
   secondary_color?: string;
   
-  // Layout & Design
+  // Layout & Design (settings table)
   header_style?: string;
   footer_color?: string;
   menu_width?: string;
   font_family?: string;
   
-  // Images
+  // Images (settings table)
   image?: string | null;
   favicon?: string | null;
+  
+  // Hero fields (for form convenience - will be separated to HeroData)
   hero_image?: string | null;
+  hero_name?: string;
+  hero_font_family?: string;
+  h1_title?: string;
+  h1_title_translation?: Record<string, string>;
+  is_seo_title?: boolean;
+  p_description?: string;
+  p_description_translation?: Record<string, string>;
+  h1_text_color?: string;
+  h1_text_color_gradient_from?: string;
+  h1_text_color_gradient_to?: string;
+  h1_text_color_gradient_via?: string;
+  is_h1_gradient_text?: boolean;
+  h1_text_size?: string;
+  h1_text_size_mobile?: string;
+  title_alighnement?: string;
+  title_block_width?: string;
+  is_bg_gradient?: boolean;
+  is_image_full_page?: boolean;
+  title_block_columns?: number;
+  image_first?: boolean;
+  background_color?: string;
+  background_color_gradient_from?: string;
+  background_color_gradient_to?: string;
+  background_color_gradient_via?: string;
+  button_main_get_started?: string;
+  button_explore?: string;
+  animation_element?: string;
+  p_description_color?: string;
+  p_description_size?: string;
+  p_description_size_mobile?: string;
+  p_description_weight?: string;
   
   // SEO & Analytics
   google_analytics_id?: string;

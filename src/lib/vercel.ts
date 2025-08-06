@@ -129,28 +129,67 @@ class VercelClient {
     throw new Error('Failed to deploy with any available branch');
   }
 
-  // Trigger a deployment for a project (simpler approach)
-  async deployProject(projectId: string, projectName: string, target = 'production'): Promise<VercelDeployment> {
-    // Try the redeploy endpoint first, then fallback to manual deployment
+  // Trigger a deployment for a project - fixed approach
+  async deployProject(projectId: string, name: string): Promise<any> {
+    console.log('Attempting to deploy project:', projectId);
+    
+    // Strategy 1: Try direct deployment trigger (works for connected Git repos)
     try {
-      return await this.request<VercelDeployment>(`/v9/projects/${projectId}/redeploy`, {
-        method: 'POST',
-        body: JSON.stringify({
-          name: projectName,
-          target,
-        }),
-      });
-    } catch (error) {
-      // Fallback: Use the standard deployments endpoint with minimal parameters
-      return this.request<VercelDeployment>('/v13/deployments', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: projectName,
-          projectId: projectId,
-          target,
-          source: 'git',
-        }),
-      });
+      console.log('Trying direct deployment trigger...');
+      const response = await this.request(
+        `/v13/deployments`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            name: name,
+            project: projectId,
+            target: 'production',
+            source: 'git'
+          })
+        }
+      );
+      
+      console.log('Direct deployment trigger successful');
+      return response;
+    } catch (error: any) {
+      console.log('Direct deployment trigger failed:', error.message);
+      
+      // If it's a Git access issue, explain this is normal for new connections
+      if (error.message.includes('repository does not contain') || 
+          error.message.includes('branch or commit reference') ||
+          error.message.includes('repository can\'t be found')) {
+        console.log('Git repository access issue - this is common immediately after connecting');
+        console.log('The connection needs time to propagate through Vercel\'s systems');
+        
+        // Try waiting a bit longer and retry once
+        console.log('Waiting additional time for Git connection to propagate...');
+        await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 more seconds
+        
+        try {
+          console.log('Retrying direct deployment trigger after wait...');
+          const retryResponse = await this.request(
+            `/v13/deployments`,
+            {
+              method: 'POST',
+              body: JSON.stringify({
+                name: name,
+                project: projectId,
+                target: 'production',
+                source: 'git'
+              })
+            }
+          );
+          
+          console.log('Retry deployment trigger successful');
+          return retryResponse;
+        } catch (retryError: any) {
+          console.log('Retry also failed:', retryError.message);
+          throw new Error(`Git repository connection is still establishing. Please wait 1-2 minutes then deploy manually from Vercel dashboard. This is normal for newly connected repositories.`);
+        }
+      } else {
+        // For other errors, try fallback methods
+        throw error;
+      }
     }
   }
 
@@ -209,17 +248,51 @@ class VercelClient {
     const [, owner, repo] = repoMatch;
     const repoName = repo.replace(/\.git$/, ''); // Remove .git suffix if present
     
-    await this.request(`/v10/projects/${projectId}/link`, {
-      method: 'POST',
-      body: JSON.stringify({
-        type: 'github',
-        repo: `${owner}/${repoName}`,
-        gitSource: {
+    try {
+      // Try the newer API endpoint first
+      await this.request(`/v1/integrations/git-repositories`, {
+        method: 'POST',
+        body: JSON.stringify({
           type: 'github',
-          repo: `${owner}/${repoName}`,
-        },
-      }),
-    });
+          gitRepository: {
+            type: 'github',
+            owner,
+            name: repoName,
+          },
+          projectId: projectId,
+        }),
+      });
+    } catch (error) {
+      console.log('New API failed, trying legacy method:', error);
+      
+      // Fallback to the legacy project link method
+      try {
+        await this.request(`/v10/projects/${projectId}/link`, {
+          method: 'POST',
+          body: JSON.stringify({
+            type: 'github',
+            repo: `${owner}/${repoName}`,
+            gitSource: {
+              type: 'github',
+              repo: `${owner}/${repoName}`,
+            },
+          }),
+        });
+      } catch (legacyError) {
+        console.log('Legacy API also failed, trying project update:', legacyError);
+        
+        // Final fallback: Update project settings directly
+        await this.request(`/v10/projects/${projectId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            link: {
+              type: 'github',
+              repo: `${owner}/${repoName}`,
+            },
+          }),
+        });
+      }
+    }
   }
 
   // Get Vercel dashboard URL for a project

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { XMarkIcon, InformationCircleIcon, Cog6ToothIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
-import { Organization, organizationTypes } from './types';
+import { Organization } from './types';
 import { OrganizationTypeSelect } from './OrganizationTypeSelect';
 import LivePreview from './LivePreview';
 import Button from '@/ui/Button';
@@ -8,11 +8,13 @@ import Button from '@/ui/Button';
 interface CreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (orgData: Partial<Organization>) => void;
+  onSubmit: (orgData: Partial<Organization>) => Promise<Organization> | void;
+  onOrganizationCreated?: (organization: Organization) => void;
   isLoading: boolean;
+  session: any;
 }
 
-export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: CreateModalProps) {
+export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationCreated, isLoading, session }: CreateModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     base_url_local: 'http://localhost:3100',
@@ -20,7 +22,7 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [showTooltip, setShowTooltip] = useState(false);
-  const [leftPanelWidth, setLeftPanelWidth] = useState(40); // 40% for form, 60% for preview
+  const [leftPanelWidth, setLeftPanelWidth] = useState(40);
   const [isDragging, setIsDragging] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -62,9 +64,28 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
     }
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    console.log('CreateModal: handleSubmit called');
+    try {
+      const result = onSubmit(formData);
+      console.log('CreateModal: onSubmit result:', result);
+      
+      if (result && typeof result.then === 'function') {
+        console.log('CreateModal: Awaiting Promise result');
+        const createdOrg = await result;
+        console.log('CreateModal: Received created organization:', createdOrg);
+        if (createdOrg) {
+          if (onOrganizationCreated) {
+            console.log('CreateModal: Calling onOrganizationCreated callback');
+            onOrganizationCreated(createdOrg);
+          }
+          onClose();
+        }
+      }
+    } catch (error) {
+      console.error('CreateModal: Failed to create organization:', error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -114,19 +135,17 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
     }
   };
 
-  // Optimized mouse handlers using refs to avoid circular dependencies
+  // Mouse handlers for resize functionality
   const handleMouseMoveRef = useRef<(e: MouseEvent) => void>();
   const handleMouseUpRef = useRef<() => void>();
 
   handleMouseMoveRef.current = useCallback((e: MouseEvent) => {
     if (!isDraggingRef.current || !containerRef.current || isCollapsed || isMobile) return;
 
-    // Cancel any pending animation frame
     if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
     }
 
-    // Use requestAnimationFrame to throttle updates
     animationFrameId.current = requestAnimationFrame(() => {
       if (!containerRef.current || !isDraggingRef.current) return;
       
@@ -135,7 +154,6 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
       const deltaWidthPercent = (deltaX / containerRect.width) * 100;
       const newWidth = dragStartWidth.current + deltaWidthPercent;
       
-      // Constrain between 20% and 75% to ensure both panels have minimum usable width
       const constrainedWidth = Math.min(75, Math.max(20, newWidth));
       setLeftPanelWidth(constrainedWidth);
     });
@@ -145,12 +163,10 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
     isDraggingRef.current = false;
     setIsDragging(false);
     
-    // Cancel any pending animation frame
     if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
     }
     
-    // Clean up immediately
     if (handleMouseMoveRef.current) {
       document.removeEventListener('mousemove', handleMouseMoveRef.current);
     }
@@ -164,7 +180,6 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
     (document.body.style as any).msUserSelect = '';
   }, []);
 
-  // Create stable event handler references
   const handleMouseMove = useCallback((e: MouseEvent) => {
     handleMouseMoveRef.current?.(e);
   }, []);
@@ -173,7 +188,6 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
     handleMouseUpRef.current?.();
   }, []);
 
-  // Resize functionality - optimized
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -185,7 +199,6 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
     isDraggingRef.current = true;
     setIsDragging(true);
     
-    // Add event listeners immediately
     document.addEventListener('mousemove', handleMouseMove, { passive: false });
     document.addEventListener('mouseup', handleMouseUp, { passive: false });
     document.body.style.cursor = 'col-resize';
@@ -195,13 +208,11 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
     (document.body.style as any).msUserSelect = 'none';
   }, [isMobile, isCollapsed, leftPanelWidth, handleMouseMove, handleMouseUp]);
 
-  // Cleanup animation frame on unmount only
   useEffect(() => {
     return () => {
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
-      // Cleanup any lingering drag state
       isDraggingRef.current = false;
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -228,29 +239,24 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
         {/* Header */}
         <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 px-3 sm:px-4 py-2.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
-            {/* Left Side - Title and Description */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-3">
-                {/* Default Icon */}
                 <div className="w-10 h-10 bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center text-white font-light text-lg shadow-sm">
                   +
                 </div>
                 
-                {/* Title Section */}
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg font-light tracking-tight text-gray-900 truncate">
-                    {isMobile ? 'Create New Site' : 'Create New Site'}
+                    Create New Site
                   </h1>
                   <p className="text-sm font-light text-gray-600/80 mt-0.5 truncate">
-                    {isMobile ? 'Set up your organization' : 'Set up your organization and preview inspirational sites'}
+                    Set up your organization and preview inspirational sites
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Right Side - Actions */}
             <div className="flex items-center space-x-2 ml-4">
-              {/* Create Button */}
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading || !formData.name.trim()}
@@ -276,7 +282,6 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
                 )}
               </Button>
 
-              {/* Close Button */}
               <button
                 onClick={onClose}
                 disabled={isLoading}
@@ -320,7 +325,9 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
                     <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center text-white font-light text-sm">
                       +
                     </div>
-                    <h3 className="text-lg font-light tracking-tight text-gray-900">Create Site</h3>
+                    <h3 className="text-lg font-light tracking-tight text-gray-900">
+                      Create Site
+                    </h3>
                   </div>
                   <button
                     onClick={toggleCollapse}
@@ -330,7 +337,6 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 pb-12 space-y-1" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                  {/* Mobile Form Content */}
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Preview URL Field */}
                     <div>
@@ -431,7 +437,9 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
             >
               <div className="pb-12 p-6 font-light" onMouseDown={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-light tracking-tight text-gray-900">Site Details</h3>
+                  <h3 className="text-lg font-light tracking-tight text-gray-900">
+                    Site Details
+                  </h3>
                   <button
                     onClick={toggleCollapse}
                     className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-xl hover:bg-white/60 backdrop-blur-sm"
@@ -440,6 +448,7 @@ export default function CreateModal({ isOpen, onClose, onSubmit, isLoading }: Cr
                     <ChevronLeftIcon className="w-5 h-5" />
                   </button>
                 </div>
+
                 <div onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Preview URL Field */}

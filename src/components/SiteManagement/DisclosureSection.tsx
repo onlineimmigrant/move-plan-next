@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface DisclosureSectionProps {
@@ -9,6 +9,8 @@ interface DisclosureSectionProps {
   hasChanges: boolean;
   onSave: () => void;
   onCancel: () => void;
+  isOpen?: boolean;
+  onToggle?: (sectionKey: string, isOpen: boolean) => void;
 }
 
 export const DisclosureSection: React.FC<DisclosureSectionProps> = ({ 
@@ -18,12 +20,23 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
   sectionKey,
   hasChanges,
   onSave,
-  onCancel
+  onCancel,
+  isOpen: externalIsOpen,
+  onToggle
 }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+  
+  // Use external state if provided, otherwise use internal state
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   
   const handleToggle = () => {
-    setIsOpen(prev => !prev);
+    if (onToggle) {
+      // Use external state management
+      onToggle(sectionKey, !isOpen);
+    } else {
+      // Use internal state management
+      setInternalIsOpen(prev => !prev);
+    }
   };
 
   return (
@@ -73,11 +86,12 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
         </div>
       </button>
       {isOpen && (
-        <div className="px-4 pb-5 space-y-5">
-          <div className="h-px bg-gradient-to-r from-transparent via-sky-200/60 to-transparent opacity-60" />
-          <div>{children}</div>
+        <div className="border-t border-gray-200/60">
+          <div className="max-h-96 overflow-y-auto px-4 py-5 space-y-5">
+            <div>{children}</div>
+          </div>
           {hasChanges && (
-            <div className="flex justify-end gap-3 mt-5 pt-4 border-t border-gray-200/60">
+            <div className="flex justify-end gap-3 px-4 pb-4 border-t border-gray-200/60 bg-gray-50/30">
               <button
                 type="button"
                 onClick={onCancel}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { XMarkIcon, Cog6ToothIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Organization, Settings } from './types';
 import SettingsFormFields from './SettingsFormFields';
@@ -30,16 +30,21 @@ export default function EditModal({
   const [isDragging, setIsDragging] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop'); // New state for preview mode
   const [hoveredImage, setHoveredImage] = useState<string | null>(null); // New state for image hover
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 }); // Mouse position for tooltip
   const [activeTab, setActiveTab] = useState<'settings' | 'deployment'>('settings'); // New tab state
+  const [previewRefreshKey, setPreviewRefreshKey] = useState<number>(0); // Add refresh key for LivePreview
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef<number>(0);
   const dragStartWidth = useRef<number>(0);
   const animationFrameId = useRef<number>(0);
   const isDraggingRef = useRef<boolean>(false);
+
+  // Compute hasUnsavedChanges using useMemo to avoid re-renders on every change
+  const hasUnsavedChanges = useMemo(() => {
+    return JSON.stringify(settings) !== JSON.stringify(originalSettings);
+  }, [settings, originalSettings]);
 
   // Check for mobile on mount and resize
   useEffect(() => {
@@ -62,6 +67,7 @@ export default function EditModal({
 
   // Initialize settings when organization changes
   useEffect(() => {
+    console.log(`[EditModal] Organization changed:`, organization);
     if (organization?.settings) {
       console.log('Loading organization settings:', organization.settings); // Debug log
       const loadedSettings = {
@@ -80,6 +86,7 @@ export default function EditModal({
         // Ensure language has a default
         language: organization.settings.language || 'en'
       };
+      console.log(`[EditModal] Loaded settings:`, loadedSettings);
       setSettings(loadedSettings);
       setOriginalSettings(loadedSettings);
     } else {
@@ -114,20 +121,18 @@ export default function EditModal({
       setSettings(defaultSettings);
       setOriginalSettings(defaultSettings);
     }
-    setHasUnsavedChanges(false);
   }, [organization]);
 
-  // Check for changes whenever settings change
-  useEffect(() => {
-    const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
-    setHasUnsavedChanges(hasChanges);
-  }, [settings, originalSettings]);
-
   const handleSettingChange = (field: keyof Settings, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    console.log(`[EditModal] Setting change: ${field} = ${value}`);
+    setSettings(prev => {
+      const newSettings = {
+        ...prev,
+        [field]: value
+      };
+      console.log(`[EditModal] New settings state:`, newSettings);
+      return newSettings;
+    });
   };
 
   const handleImageUpload = async (field: 'image' | 'favicon' | 'hero_image') => {
@@ -175,13 +180,20 @@ export default function EditModal({
   const handleSave = async () => {
     if (!hasUnsavedChanges) return;
     
+    console.log(`[EditModal] Starting save process with settings:`, settings);
+    console.log(`[EditModal] Original settings:`, originalSettings);
+    
     try {
       await onSave(settings);
       // After successful save, update original settings to current settings
+      console.log(`[EditModal] Save successful, updating originalSettings`);
       setOriginalSettings({ ...settings });
-      setHasUnsavedChanges(false);
+      
+      // Refresh only the LivePreview component, not the entire modal
+      setPreviewRefreshKey(prev => prev + 1);
+      console.log('[EditModal] LivePreview refresh triggered');
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error('[EditModal] Save failed:', error);
       // Handle error if needed
     }
   };
@@ -699,6 +711,7 @@ export default function EditModal({
               organizationUrl={organization.base_url || organization.base_url_local || ''}
               previewMode={previewMode}
               onPreviewModeChange={handlePreviewModeChange}
+              refreshKey={previewRefreshKey}
             />
           </div>
         </div>

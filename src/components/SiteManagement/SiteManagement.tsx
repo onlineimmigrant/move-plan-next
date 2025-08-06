@@ -2,18 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import {
-  Header,
-  ErrorDisplay,
-  OrganizationsGrid,
-  CreateModal,
-  EditModal,
-  LoadingStates,
-  AccessRestricted,
-  Organization,
-  Settings,
-  UserProfile
-} from '.';
+import LoadingStates from './LoadingStates';
+import Header from './Header';
+import ErrorDisplay from './ErrorDisplay';
+import OrganizationsGrid from './OrganizationsGrid';
+import CreateModal from './CreateModal';
+import DeploymentModal from './DeploymentModal';
+import EditModal from './EditModal';
+import AccessRestricted from './AccessRestricted';
+import { Organization, Settings, UserProfile, HeroData } from './types';
 
 export default function SiteManagement() {
   const { session, isLoading } = useAuth();
@@ -22,12 +19,14 @@ export default function SiteManagement() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [canCreateMore, setCanCreateMore] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDeploymentModalOpen, setIsDeploymentModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
+  const [createdOrganization, setCreatedOrganization] = useState<Organization | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [displayLimit, setDisplayLimit] = useState(6);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -213,18 +212,33 @@ export default function SiteManagement() {
         throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Close modal and refresh
-      setIsCreateModalOpen(false);
-      await fetchOrganizations();
-      // Reset search and display limit to show the new organization
-      setDisplayLimit(6);
-      handleSearch('');
+      // Return the created organization data instead of closing immediately
+      return data.organization; // Return just the organization object from the response
 
     } catch (err: any) {
       setError(err.message || 'Failed to create organization');
+      throw err; // Re-throw to let the modal handle the error
     } finally {
       setIsCreating(false);
     }
+  };
+
+  // Handle successful organization creation (called from CreateModal)
+  const handleOrganizationCreated = async (organization: Organization) => {
+    console.log('SiteManagement: handleOrganizationCreated called with:', organization);
+    
+    // Store the created organization for the deployment modal
+    setCreatedOrganization(organization);
+    
+    // Open the deployment modal immediately
+    setIsDeploymentModalOpen(true);
+    
+    // Refresh the organizations list to include the new one
+    await fetchOrganizations();
+    // Reset search and display limit to show the new organization
+    setDisplayLimit(6);
+    handleSearch('');
+    console.log('SiteManagement: Finished handling organization creation');
   };
 
   const handleEditOrganization = async (organization: Organization) => {
@@ -259,24 +273,62 @@ export default function SiteManagement() {
         app_url: data.organization.base_url_local,
         // Ensure settings exist with comprehensive field mapping
         settings: {
-          // Map existing settings or provide defaults
+          // Map existing settings or provide defaults (settings table only)
           ...data.settings,
-          // Basic Information
+          // Organization info (for form convenience)
+          name: data.organization.name,
+          base_url: data.organization.base_url || '',
+          base_url_local: data.organization.base_url_local || '',
+          type: data.organization.type,
+          
+          // Basic Information (settings table)
           site: data.settings?.site || data.organization.name || '',
           primary_color: data.settings?.primary_color || 'sky',
           secondary_color: data.settings?.secondary_color || 'gray',
           
-          // Layout & Design
+          // Layout & Design (settings table)
           header_style: data.settings?.header_style || 'default',
           footer_color: data.settings?.footer_color || 'gray',
           menu_width: data.settings?.menu_width || '280px',
-          font_family: data.settings?.font_family || '',
+          font_family: data.settings?.font_family || 'Inter',
           
-          // Images - map both new and legacy field names
+          // Images (settings table)
           image: data.settings?.image || data.settings?.logo_url || null,
           favicon: data.settings?.favicon || data.settings?.favicon_url || null,
-          // Hero image from website_hero table
+          
+          // Hero Section Fields (combined for form convenience, but will be separated on save)
           hero_image: data.website_hero?.image || null,
+          hero_name: data.website_hero?.name || data.settings?.site || '',
+          hero_font_family: data.website_hero?.font_family || '',
+          h1_title: data.website_hero?.h1_title || '',
+          h1_title_translation: data.website_hero?.h1_title_translation || {},
+          is_seo_title: data.website_hero?.is_seo_title || false,
+          p_description: data.website_hero?.p_description || '',
+          p_description_translation: data.website_hero?.p_description_translation || {},
+          h1_text_color: data.website_hero?.h1_text_color || 'gray-800',
+          h1_text_color_gradient_from: data.website_hero?.h1_text_color_gradient_from || 'gray-800',
+          h1_text_color_gradient_to: data.website_hero?.h1_text_color_gradient_to || 'blue-500',
+          h1_text_color_gradient_via: data.website_hero?.h1_text_color_gradient_via || '',
+          is_h1_gradient_text: data.website_hero?.is_h1_gradient_text || false,
+          h1_text_size: data.website_hero?.h1_text_size || 'text-xl',
+          h1_text_size_mobile: data.website_hero?.h1_text_size_mobile || 'text-lg',
+          title_alighnement: data.website_hero?.title_alighnement || 'center',
+          title_block_width: data.website_hero?.title_block_width || 'full',
+          is_bg_gradient: data.website_hero?.is_bg_gradient || false,
+          is_image_full_page: data.website_hero?.is_image_full_page || false,
+          title_block_columns: data.website_hero?.title_block_columns || 1,
+          image_first: data.website_hero?.image_first || false,
+          background_color: data.website_hero?.background_color || 'white',
+          background_color_gradient_from: data.website_hero?.background_color_gradient_from || 'white',
+          background_color_gradient_to: data.website_hero?.background_color_gradient_to || 'gray-100',
+          background_color_gradient_via: data.website_hero?.background_color_gradient_via || '',
+          button_main_get_started: data.website_hero?.button_main_get_started || 'Get Started',
+          button_explore: data.website_hero?.button_explore || 'Explore',
+          animation_element: data.website_hero?.animation_element || '',
+          p_description_color: data.website_hero?.p_description_color || 'gray-500',
+          p_description_size: data.website_hero?.p_description_size || 'text-base',
+          p_description_size_mobile: data.website_hero?.p_description_size_mobile || 'text-sm',
+          p_description_weight: data.website_hero?.p_description_weight || 'normal',
           
           // SEO & Analytics
           google_analytics_id: data.settings?.google_analytics_id || '',
@@ -326,15 +378,83 @@ export default function SiteManagement() {
       console.log('Saving settings:', settings); // Debug log
       console.log('Selected organization:', selectedOrganization); // Debug log
 
-      // Separate organization fields and hero_image from settings
+      // Separate organization fields, hero fields, and other settings
       const { 
-        hero_image, 
+        hero_image,
+        hero_name,
+        hero_font_family,
+        h1_title,
+        h1_title_translation,
+        is_seo_title,
+        p_description,
+        p_description_translation,
+        h1_text_color,
+        h1_text_color_gradient_from,
+        h1_text_color_gradient_to,
+        h1_text_color_gradient_via,
+        is_h1_gradient_text,
+        h1_text_size,
+        h1_text_size_mobile,
+        title_alighnement,
+        title_block_width,
+        is_bg_gradient,
+        is_image_full_page,
+        title_block_columns,
+        image_first,
+        background_color,
+        background_color_gradient_from,
+        background_color_gradient_to,
+        background_color_gradient_via,
+        button_main_get_started,
+        button_explore,
+        animation_element,
+        p_description_color,
+        p_description_size,
+        p_description_size_mobile,
+        p_description_weight,
         name, 
         base_url, 
         base_url_local, 
         type,
+        site,
         ...pureSettings 
       } = settings;
+
+      // Prepare hero data for website_hero table
+      const heroData = {
+        image: hero_image,
+        name: hero_name || site || '', // Use site value if hero_name is empty
+        font_family: hero_font_family,
+        h1_title,
+        h1_title_translation,
+        is_seo_title,
+        p_description,
+        p_description_translation,
+        h1_text_color,
+        h1_text_color_gradient_from,
+        h1_text_color_gradient_to,
+        h1_text_color_gradient_via,
+        is_h1_gradient_text,
+        h1_text_size,
+        h1_text_size_mobile,
+        title_alighnement,
+        title_block_width,
+        is_bg_gradient,
+        is_image_full_page,
+        title_block_columns,
+        image_first,
+        background_color,
+        background_color_gradient_from,
+        background_color_gradient_to,
+        background_color_gradient_via,
+        button_main_get_started,
+        button_explore,
+        animation_element,
+        p_description_color,
+        p_description_size,
+        p_description_size_mobile,
+        p_description_weight
+      };
 
       // Use the correct API structure that expects organization and settings
       const requestBody = {
@@ -345,8 +465,8 @@ export default function SiteManagement() {
           base_url_local: base_url_local || selectedOrganization.base_url_local
         },
         settings: pureSettings,
-        // Send hero_image separately so the API can handle it for website_hero table
-        website_hero: hero_image ? { image: hero_image } : null
+        // Send hero data separately so the API can handle it for website_hero table
+        website_hero: heroData
       };
 
       console.log('Request body:', requestBody); // Debug log
@@ -389,22 +509,134 @@ export default function SiteManagement() {
 
       console.log('Settings saved successfully:', data); // Debug log
 
-      // Refresh the organizations list
-      await fetchOrganizations();
+      // After successful save, refresh the selected organization data from API to get the latest state
+      console.log('[SiteManagement] Refreshing selected organization data after save...');
       
-      // Also refresh the currently selected organization with updated data
-      if (data.organization || data.settings) {
-        const updatedOrgData = {
-          ...selectedOrganization,
-          // Update organization fields if they were returned
-          ...(data.organization && data.organization),
+      // Fetch fresh data for this specific organization
+      const refreshResponse = await fetch(`/api/organizations/${selectedOrganization.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        console.log('[SiteManagement] Fresh organization data:', refreshData);
+        
+        // Create updated organization object with fresh data
+        const updatedOrgWithSettings = {
+          ...refreshData.organization,
+          website_url: refreshData.organization.base_url,
+          app_url: refreshData.organization.base_url_local,
           settings: {
-            ...selectedOrganization.settings,
-            // Update settings if they were returned
-            ...(data.settings && data.settings)
+            ...refreshData.settings,
+            // Organization info (for form convenience)
+            name: refreshData.organization.name,
+            base_url: refreshData.organization.base_url || '',
+            base_url_local: refreshData.organization.base_url_local || '',
+            type: refreshData.organization.type,
+            
+            // Basic Information (settings table)
+            site: refreshData.settings?.site || refreshData.organization.name || '',
+            primary_color: refreshData.settings?.primary_color || 'sky',
+            secondary_color: refreshData.settings?.secondary_color || 'gray',
+            header_style: refreshData.settings?.header_style || 'default',
+            footer_color: refreshData.settings?.footer_color || 'gray',
+            menu_width: refreshData.settings?.menu_width || '280px',
+            font_family: refreshData.settings?.font_family || 'Inter',
+            image: refreshData.settings?.image || refreshData.settings?.logo_url || null,
+            favicon: refreshData.settings?.favicon || refreshData.settings?.favicon_url || null,
+            
+            // Hero Section Fields (combined for form convenience)
+            hero_image: refreshData.website_hero?.image || null,
+            hero_name: refreshData.website_hero?.name || refreshData.settings?.site || '',
+            hero_font_family: refreshData.website_hero?.font_family || '',
+            h1_title: refreshData.website_hero?.h1_title || '',
+            h1_title_translation: refreshData.website_hero?.h1_title_translation || {},
+            is_seo_title: refreshData.website_hero?.is_seo_title || false,
+            p_description: refreshData.website_hero?.p_description || '',
+            p_description_translation: refreshData.website_hero?.p_description_translation || {},
+            h1_text_color: refreshData.website_hero?.h1_text_color || 'gray-800',
+            h1_text_color_gradient_from: refreshData.website_hero?.h1_text_color_gradient_from || 'gray-800',
+            h1_text_color_gradient_to: refreshData.website_hero?.h1_text_color_gradient_to || 'blue-500',
+            h1_text_color_gradient_via: refreshData.website_hero?.h1_text_color_gradient_via || '',
+            is_h1_gradient_text: refreshData.website_hero?.is_h1_gradient_text || false,
+            h1_text_size: refreshData.website_hero?.h1_text_size || 'text-xl',
+            h1_text_size_mobile: refreshData.website_hero?.h1_text_size_mobile || 'text-lg',
+            title_alighnement: refreshData.website_hero?.title_alighnement || 'center',
+            title_block_width: refreshData.website_hero?.title_block_width || 'full',
+            is_bg_gradient: refreshData.website_hero?.is_bg_gradient || false,
+            is_image_full_page: refreshData.website_hero?.is_image_full_page || false,
+            title_block_columns: refreshData.website_hero?.title_block_columns || 1,
+            image_first: refreshData.website_hero?.image_first || false,
+            background_color: refreshData.website_hero?.background_color || 'white',
+            background_color_gradient_from: refreshData.website_hero?.background_color_gradient_from || 'white',
+            background_color_gradient_to: refreshData.website_hero?.background_color_gradient_to || 'gray-100',
+            background_color_gradient_via: refreshData.website_hero?.background_color_gradient_via || '',
+            button_main_get_started: refreshData.website_hero?.button_main_get_started || 'Get Started',
+            button_explore: refreshData.website_hero?.button_explore || 'Explore',
+            animation_element: refreshData.website_hero?.animation_element || '',
+            p_description_color: refreshData.website_hero?.p_description_color || 'gray-500',
+            p_description_size: refreshData.website_hero?.p_description_size || 'text-base',
+            p_description_size_mobile: refreshData.website_hero?.p_description_size_mobile || 'text-sm',
+            p_description_weight: refreshData.website_hero?.p_description_weight || 'normal',
+            
+            // SEO & Analytics
+            google_analytics_id: refreshData.settings?.google_analytics_id || '',
+            google_tag: refreshData.settings?.google_tag || refreshData.settings?.google_tag_manager_id || '',
+            seo_keywords: refreshData.settings?.seo_keywords || refreshData.settings?.meta_keywords || '',
+            seo_title: refreshData.settings?.seo_title || refreshData.settings?.site || '',
+            seo_description: refreshData.settings?.seo_description || refreshData.settings?.site_description || '',
+            
+            // Language & Localization
+            language: refreshData.settings?.language || 'en',
+            supported_locales: Array.isArray(refreshData.settings?.supported_locales) 
+              ? refreshData.settings.supported_locales 
+              : refreshData.settings?.supported_locales 
+                ? [refreshData.settings.supported_locales] 
+                : ['en'],
+            with_language_switch: refreshData.settings?.with_language_switch || false,
+            
+            // Contact Information
+            contact_email: refreshData.settings?.contact_email || '',
+            contact_phone: refreshData.settings?.contact_phone || ''
           }
         };
-        setSelectedOrganization(updatedOrgData);
+
+        console.log('[SiteManagement] Updated organization with fresh settings:', updatedOrgWithSettings);
+        setSelectedOrganization(updatedOrgWithSettings);
+      } else {
+        console.warn('[SiteManagement] Failed to refresh organization data, falling back to local update');
+      }
+
+      // Refresh the organizations list for the grid
+      await fetchOrganizations();
+
+      // Force cache revalidation for deployed sites
+      try {
+        console.log('[SiteManagement] Triggering cache revalidation...');
+        const revalidateResponse = await fetch('/api/revalidate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            organizationId: selectedOrganization.id,
+            paths: ['/'],
+            tags: [`hero-${selectedOrganization.id}`, `homepage-${selectedOrganization.id}`]
+          })
+        });
+
+        if (revalidateResponse.ok) {
+          const revalidateData = await revalidateResponse.json();
+          console.log('[SiteManagement] Cache revalidation successful:', revalidateData);
+        } else {
+          console.warn('[SiteManagement] Cache revalidation failed:', revalidateResponse.status);
+        }
+      } catch (revalidateError) {
+        console.warn('[SiteManagement] Cache revalidation error:', revalidateError);
+        // Don't fail the save if revalidation fails
       }
 
       // Don't close modal anymore - let user continue editing
@@ -434,6 +666,17 @@ export default function SiteManagement() {
   const closeCreateModal = () => {
     setIsCreateModalOpen(false);
     setError(null);
+  };
+
+  const closeDeploymentModal = () => {
+    setIsDeploymentModalOpen(false);
+    setCreatedOrganization(null);
+  };
+
+  // Close deployment modal after deployment complete
+  const handleDeploymentComplete = () => {
+    setIsDeploymentModalOpen(false);
+    setCreatedOrganization(null);
   };
 
   // Loading state
@@ -510,9 +753,21 @@ export default function SiteManagement() {
           isOpen={isCreateModalOpen}
           onClose={closeCreateModal}
           onSubmit={handleCreateOrganization}
+          onOrganizationCreated={handleOrganizationCreated}
           isLoading={isCreating}
+          session={session}
         />
 
+        {/* Deployment Modal */}
+        {createdOrganization && (
+          <DeploymentModal
+            isOpen={isDeploymentModalOpen}
+            onClose={closeDeploymentModal}
+            organization={createdOrganization}
+            session={session}
+            onDeploymentComplete={handleDeploymentComplete}
+          />
+        )}
 
         {/* Edit Modal */}
         <EditModal

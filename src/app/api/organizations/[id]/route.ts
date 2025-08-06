@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { revalidateTag } from 'next/cache';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -121,9 +122,22 @@ export async function GET(
       return NextResponse.json({ error: 'Error fetching settings' }, { status: 500 });
     }
 
+    // Fetch the organization's hero data
+    const { data: website_hero, error: heroError } = await supabase
+      .from('website_hero')
+      .select('*')
+      .eq('organization_id', orgId)
+      .single();
+
+    if (heroError && heroError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error('Error fetching hero data:', heroError);
+      return NextResponse.json({ error: 'Error fetching hero data' }, { status: 500 });
+    }
+
     return NextResponse.json({
       organization,
-      settings: settings || null
+      settings: settings || null,
+      website_hero: website_hero || null
     });
 
   } catch (error) {
@@ -167,7 +181,7 @@ export async function PUT(
     console.log('PUT - Updating organization:', orgId, 'with data:', body);
     console.log('PUT - User ID:', userId);
 
-    const { organization: orgData, settings: settingsData } = body;
+    const { organization: orgData, settings: settingsData, website_hero: heroData } = body;
 
     // Get user's profile to check permissions
     const { data: profile, error: profileError } = await supabase
@@ -259,6 +273,7 @@ export async function PUT(
 
     let updatedOrg = null;
     let updatedSettings = null;
+    let updatedHero = null;
 
     // Update organization if data provided
     if (orgData) {
@@ -326,10 +341,75 @@ export async function PUT(
       }
     }
 
+    // Update or create website_hero if data provided
+    if (heroData) {
+      // Check if hero record exists
+      const { data: existingHero, error: existingHeroError } = await supabase
+        .from('website_hero')
+        .select('id')
+        .eq('organization_id', orgId)
+        .single();
+
+      if (existingHeroError && existingHeroError.code !== 'PGRST116') {
+        console.error('Error checking existing hero:', existingHeroError);
+        return NextResponse.json({ error: 'Error checking hero data' }, { status: 500 });
+      }
+
+      if (existingHero) {
+        // Update existing hero
+        const { data: hero, error: heroUpdateError } = await supabase
+          .from('website_hero')
+          .update(heroData)
+          .eq('organization_id', orgId)
+          .select()
+          .single();
+
+        if (heroUpdateError) {
+          console.error('Error updating hero:', heroUpdateError);
+          return NextResponse.json({ error: 'Failed to update hero data' }, { status: 500 });
+        }
+
+        updatedHero = hero;
+      } else {
+        // Create new hero record
+        const { data: hero, error: heroCreateError } = await supabase
+          .from('website_hero')
+          .insert({
+            organization_id: orgId,
+            ...heroData
+          })
+          .select()
+          .single();
+
+        if (heroCreateError) {
+          console.error('Error creating hero:', heroCreateError);
+          return NextResponse.json({ error: 'Failed to create hero data' }, { status: 500 });
+        }
+
+        updatedHero = hero;
+      }
+    }
+
+    // Revalidate cached pages that might use this organization's data
+    try {
+      console.log('Revalidating cached data for organization:', orgId);
+      
+      // Revalidate by organization-specific tags
+      revalidateTag(`hero-${orgId}`);
+      revalidateTag(`homepage-${orgId}`);
+      revalidateTag('homepage');
+      
+      console.log(`Revalidated tags: hero-${orgId}, homepage-${orgId}, homepage`);
+    } catch (revalidateError) {
+      console.error('Error during cache revalidation:', revalidateError);
+      // Don't fail the whole request if revalidation fails
+    }
+
     return NextResponse.json({
       success: true,
       organization: updatedOrg,
-      settings: updatedSettings
+      settings: updatedSettings,
+      website_hero: updatedHero
     });
 
   } catch (error) {

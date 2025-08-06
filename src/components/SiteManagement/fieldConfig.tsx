@@ -4,6 +4,7 @@ import { ColorSelect } from './ColorSelect';
 import { ImageUploadField } from './ImageUploadField';
 import { MultiLanguageSelect, SingleLanguageSelect } from './LanguageSelect';
 import { OrganizationTypeSelect } from './OrganizationTypeSelect';
+import { TranslationsField } from './TranslationsField';
 import { Settings, organizationTypes } from './types';
 
 interface SectionConfig {
@@ -15,7 +16,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'image' | 'multi-language' | 'single-language' | 'organization-type';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations';
   placeholder?: string;
   span?: 'full' | 'half';
 }
@@ -60,7 +61,11 @@ interface OrganizationTypeFieldConfig extends BaseFieldConfig {
   type: 'organization-type';
 }
 
-type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig;
+interface TranslationsFieldConfig extends BaseFieldConfig {
+  type: 'translations';
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -79,6 +84,51 @@ export const headerStyleOptions = [
   { name: 'Minimal', value: 'minimal' },
   { name: 'Centered', value: 'centered' },
   { name: 'Sidebar', value: 'sidebar' }
+];
+
+export const textSizeOptions = [
+  { name: 'Extra Small', value: 'text-xs' },
+  { name: 'Small', value: 'text-sm' },
+  { name: 'Base', value: 'text-base' },
+  { name: 'Large', value: 'text-lg' },
+  { name: 'Extra Large', value: 'text-xl' },
+  { name: '2XL', value: 'text-2xl' },
+  { name: '3XL', value: 'text-3xl' },
+  { name: '4XL', value: 'text-4xl' },
+  { name: '5XL', value: 'text-5xl' },
+  { name: '6XL', value: 'text-6xl' }
+];
+
+export const textWeightOptions = [
+  { name: 'Light', value: 'light' },
+  { name: 'Normal', value: 'normal' },
+  { name: 'Medium', value: 'medium' },
+  { name: 'Semibold', value: 'semibold' },
+  { name: 'Bold', value: 'bold' }
+];
+
+export const alignmentOptions = [
+  { name: 'Left', value: 'left' },
+  { name: 'Center', value: 'center' },
+  { name: 'Right', value: 'right' }
+];
+
+export const blockWidthOptions = [
+  { name: 'Full Width', value: 'full' },
+  { name: '1/2 Width', value: '1/2' },
+  { name: '1/3 Width', value: '1/3' },
+  { name: '2/3 Width', value: '2/3' },
+  { name: '1/4 Width', value: '1/4' },
+  { name: '3/4 Width', value: '3/4' }
+];
+
+export const animationOptions = [
+  { name: 'None', value: 'none' },
+  { name: 'Fade In', value: 'fadeIn' },
+  { name: 'Slide Up', value: 'slideUp' },
+  { name: 'Slide Down', value: 'slideDown' },
+  { name: 'Slide Left', value: 'slideLeft' },
+  { name: 'Slide Right', value: 'slideRight' }
 ];
 
 export const sectionsConfig: SectionConfig[] = [
@@ -112,8 +162,71 @@ export const sectionsConfig: SectionConfig[] = [
     key: 'images',
     fields: [
       { name: 'image', label: 'Logo', type: 'image', field: 'image' },
-      { name: 'favicon', label: 'Favicon', type: 'image', field: 'favicon' },
-      { name: 'hero_image', label: 'Hero Image', type: 'image', field: 'hero_image' }
+      { name: 'favicon', label: 'Favicon', type: 'image', field: 'favicon' }
+    ]
+  },
+  {
+    title: 'Hero Section',
+    key: 'hero',
+    fields: [
+      // Basic Information & Image
+      { name: 'hero_image', label: 'Hero Image', type: 'image', field: 'hero_image', span: 'full'  },
+      { name: 'is_image_full_page', label: 'Full Page Image', type: 'checkbox' },
+      { name: 'image_first', label: 'Image First (on mobile)', type: 'checkbox' },
+      
+      // Content - Title
+      { name: 'h1_title', label: 'Hero Title', type: 'text', placeholder: 'Enter your main headline', span: 'full' },
+      { name: 'h1_title_translation', label: 'Hero Title Translations', type: 'translations', span: 'full' },
+      { name: 'is_seo_title', label: 'Use as SEO Title', type: 'checkbox' },
+      
+      // Content - Description  
+      { name: 'p_description', label: 'Hero Description', type: 'textarea', rows: 3, placeholder: 'Enter hero description', span: 'full' },
+      { name: 'p_description_translation', label: 'Hero Description Translations', type: 'translations', span: 'full' },
+      
+      // Typography & Font
+      { name: 'hero_font_family', label: 'Font Family', type: 'text', placeholder: 'Custom font family' },
+      { name: 'title_alighnement', label: 'Title Alignment', type: 'select', options: alignmentOptions },
+      
+      // Typography - Title Sizing
+      { name: 'h1_text_size', label: 'Title Size (Desktop)', type: 'select', options: textSizeOptions },
+      { name: 'h1_text_size_mobile', label: 'Title Size (Mobile)', type: 'select', options: textSizeOptions },
+      
+      // Typography - Description Sizing
+      { name: 'p_description_size', label: 'Description Size (Desktop)', type: 'select', options: textSizeOptions },
+      { name: 'p_description_size_mobile', label: 'Description Size (Mobile)', type: 'select', options: textSizeOptions },
+      { name: 'p_description_weight', label: 'Description Weight', type: 'select', options: textWeightOptions },
+      
+      // Colors - Title
+      { name: 'h1_text_color', label: 'Title Color', type: 'color' },
+      { name: 'is_h1_gradient_text', label: 'Use Gradient Text', type: 'checkbox' },
+      { name: 'h1_text_color_gradient_from', label: 'Title Gradient From', type: 'color' },
+      { name: 'h1_text_color_gradient_to', label: 'Title Gradient To', type: 'color' },
+      { name: 'h1_text_color_gradient_via', label: 'Title Gradient Via', type: 'color' },
+      
+      // Colors - Description
+      { name: 'p_description_color', label: 'Description Color', type: 'color' },
+      
+      // Layout & Structure
+      { name: 'title_block_width', label: 'Content Width', type: 'select', options: blockWidthOptions },
+      { name: 'title_block_columns', label: 'Content Columns', type: 'select', options: [
+        { name: '1 Column', value: '1' },
+        { name: '2 Columns', value: '2' },
+        { name: '3 Columns', value: '3' }
+      ]},
+      
+      // Background
+      { name: 'background_color', label: 'Background Color', type: 'color' },
+      { name: 'is_bg_gradient', label: 'Use Background Gradient', type: 'checkbox' },
+      { name: 'background_color_gradient_from', label: 'Background Gradient From', type: 'color' },
+      { name: 'background_color_gradient_to', label: 'Background Gradient To', type: 'color' },
+      { name: 'background_color_gradient_via', label: 'Background Gradient Via', type: 'color' },
+      
+      // Interactive Elements - Buttons
+      { name: 'button_main_get_started', label: 'Main Button Text', type: 'text', placeholder: 'Get Started' },
+      { name: 'button_explore', label: 'Secondary Button Text', type: 'text', placeholder: 'Explore' },
+      
+      // Advanced Options
+      { name: 'animation_element', label: 'Animation Element', type: 'text', placeholder: 'CSS animation class or element' }
     ]
   },
   {
@@ -226,7 +339,7 @@ export const renderField = ({
         <ColorSelect
           label={field.label}
           name={field.name}
-          value={value || 'sky-500'}
+          value={value || '#6b7280'}
           onChange={handleChange}
         />
       );
@@ -273,6 +386,15 @@ export const renderField = ({
           label={field.label}
           name={field.name}
           value={value || 'services'}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'translations':
+      return (
+        <TranslationsField
+          field={field}
+          value={value || {}}
           onChange={handleChange}
         />
       );
