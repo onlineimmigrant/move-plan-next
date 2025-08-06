@@ -48,9 +48,9 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
       <button 
         type="button"
         onClick={handleToggle}
-        className={`flex w-full items-center justify-between p-4 text-left transition-all duration-300 rounded-xl ${
+        className={`flex w-full items-center justify-between p-4 text-left transition-all duration-300 rounded-t-xl ${
           isOpen 
-            ? 'bg-gradient-to-r from-sky-50/40 to-blue-50/20' 
+            ? 'bg-gradient-to-r from-sky-200/40 to-blue-50/20' 
             : 'hover:bg-gray-50/40'
         }`}
       >
@@ -87,7 +87,7 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
       </button>
       {isOpen && (
         <div className="border-t border-gray-200/60">
-          <div className="max-h-96 overflow-y-auto px-4 py-5 space-y-5">
+          <div className="max-h-[75vh] overflow-y-auto px-4 py-5 space-y-5">
             <div>{children}</div>
           </div>
           {hasChanges && (

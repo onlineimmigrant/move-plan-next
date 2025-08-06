@@ -36,8 +36,8 @@ export const TextField: React.FC<TextFieldProps> = ({
   placeholder,
   className = ''
 }) => (
-  <div className="space-y-3">
-    <label className="block text-sm font-light text-gray-700 mb-2">{label}</label>
+  <div className="space-y-1.5">
+    <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
     <input
       type={type}
       name={name}
@@ -58,8 +58,8 @@ export const TextAreaField: React.FC<TextAreaFieldProps> = ({
   placeholder,
   className = ''
 }) => (
-  <div className="space-y-3">
-    <label className="block text-sm font-light text-gray-700 mb-2">{label}</label>
+  <div className="space-y-1.5">
+    <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
     <textarea
       name={name}
       value={value || ''}
@@ -79,8 +79,8 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   options,
   className = ''
 }) => (
-  <div className="space-y-3">
-    <label className="block text-sm font-light text-gray-700 mb-2">{label}</label>
+  <div className="space-y-1.5">
+    <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
     <select
       name={name}
       value={value || ''}
@@ -112,7 +112,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
       onChange={(e) => onChange(name, e.target.checked)}
       className="h-5 w-5 text-sky-500 focus:ring-sky-500/30 border-sky-300 rounded-md transition-all duration-300 bg-white/80 shadow-sm"
     />
-    <label htmlFor={name} className="ml-3 text-sm font-light text-sky-900/80 cursor-pointer group-hover:text-sky-800 transition-colors duration-300">
+    <label htmlFor={name} className="ml-3 text-xs font-light text-sky-900/80 cursor-pointer group-hover:text-sky-800 transition-colors duration-300">
       {label}
     </label>
   </div>

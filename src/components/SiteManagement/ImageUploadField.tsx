@@ -17,8 +17,8 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   onImageUpload,
   uploadingImages
 }) => (
-  <div className="space-y-3">
-    <label className="block text-sm font-light text-gray-700">{label}</label>
+  <div className="space-y-1.5">
+    <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
     
     {/* Upload Area */}
     <div className="relative">

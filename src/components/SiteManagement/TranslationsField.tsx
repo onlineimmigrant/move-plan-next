@@ -1,4 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+interface Language {
+  code: string;
+  name: string;
+  flag: string;
+}
+
+// Use the same language data as LanguageSelect but exclude NL as requested
+const availableLanguages: Language[] = [
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+  { code: 'fr', name: 'French', flag: '🇫🇷' },
+  { code: 'de', name: 'German', flag: '🇩🇪' },
+  { code: 'it', name: 'Italian', flag: '🇮🇹' },
+  { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
+  { code: 'ru', name: 'Russian', flag: '🇷🇺' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+  { code: 'zh', name: 'Chinese (Simplified)', flag: '🇨🇳' },
+  { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
+  { code: 'ur', name: 'Urdu', flag: '🇵🇰' },
+  { code: 'pl', name: 'Polish', flag: '🇵🇱' },
+];
 
 interface TranslationsFieldProps {
   field: {
@@ -8,16 +30,28 @@ interface TranslationsFieldProps {
   };
   value: Record<string, string>;
   onChange: (name: string, value: Record<string, string>) => void;
+  supportedLanguages?: string[]; // Array of language codes from Language & Localization
 }
-
-const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
 
 export const TranslationsField: React.FC<TranslationsFieldProps> = ({
   field,
   value = {},
-  onChange
+  onChange,
+  supportedLanguages = ['en'] // Default to English if no supported languages provided
 }) => {
-  const [activeLocale, setActiveLocale] = useState<string>('en');
+  const [activeLocale, setActiveLocale] = useState<string>(supportedLanguages[0] || 'en');
+
+  // Filter available languages to only show supported ones
+  const displayLanguages = availableLanguages.filter(lang => 
+    supportedLanguages.includes(lang.code)
+  );
+
+  // Ensure activeLocale is valid for the current supported languages
+  useEffect(() => {
+    if (!supportedLanguages.includes(activeLocale)) {
+      setActiveLocale(supportedLanguages[0] || 'en');
+    }
+  }, [supportedLanguages, activeLocale]);
 
   const handleTranslationChange = (locale: string, translation: string) => {
     const newTranslations = {
@@ -34,67 +68,60 @@ export const TranslationsField: React.FC<TranslationsFieldProps> = ({
   };
 
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-medium text-gray-700">
+    <div className="space-y-1.5">
+      <label className="block text-xs font-light text-gray-600 mb-1">
         {field.label}
       </label>
       
-      {/* Locale tabs */}
-      <div className="flex flex-wrap gap-1 mb-3">
-        {supportedLocales.map((locale) => (
+      {/* Language tabs with flags and icons */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {displayLanguages.map((language) => (
           <button
-            key={locale}
+            key={language.code}
             type="button"
-            onClick={() => setActiveLocale(locale)}
-            className={`px-3 py-1 text-xs rounded-md transition-colors ${
-              activeLocale === locale
-                ? 'bg-sky-500 text-white'
-                : value[locale]
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            onClick={() => setActiveLocale(language.code)}
+            className={`flex items-center space-x-2 px-3 py-2 text-xs rounded-lg transition-all duration-200 border ${
+              activeLocale === language.code
+                ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm'
+                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300'
             }`}
           >
-            {locale.toUpperCase()}
-            {value[locale] && <span className="ml-1">✓</span>}
+            <span className="text-base">{language.flag}</span>
+            <span className="font-medium">{language.code.toUpperCase()}</span>
+            {value[language.code] && (
+              <span className="text-green-500">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      {/* Translation input for active locale */}
+      {/* Translation input with language name indicator */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
-          Translation for {activeLocale.toUpperCase()}
-        </label>
-        {field.name.includes('description') ? (
-          <textarea
-            value={value[activeLocale] || ''}
-            onChange={(e) => handleTranslationChange(activeLocale, e.target.value)}
-            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()} in ${activeLocale.toUpperCase()}`}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none text-sm"
-          />
-        ) : (
-          <input
-            type="text"
-            value={value[activeLocale] || ''}
-            onChange={(e) => handleTranslationChange(activeLocale, e.target.value)}
-            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()} in ${activeLocale.toUpperCase()}`}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent text-sm"
-          />
-        )}
-      </div>
-
-      {/* Summary of existing translations */}
-      {Object.keys(value).length > 0 && (
-        <div className="text-xs text-gray-500">
-          <span>Translations available: </span>
-          {Object.keys(value).map(locale => (
-            <span key={locale} className="inline-block bg-gray-100 px-2 py-1 rounded mr-1">
-              {locale.toUpperCase()}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-gray-500">
+            {displayLanguages.find(lang => lang.code === activeLocale)?.name} translation
+          </span>
+          {value[activeLocale] && (
+            <span className="text-xs text-green-600 flex items-center">
+              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Translated
             </span>
-          ))}
+          )}
         </div>
-      )}
+        <textarea
+          value={value[activeLocale] || ''}
+          onChange={(e) => handleTranslationChange(activeLocale, e.target.value)}
+          placeholder={field.placeholder ? `${field.placeholder} (${displayLanguages.find(lang => lang.code === activeLocale)?.name})` : ''}
+          className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical min-h-[80px]"
+          rows={3}
+        />
+      </div>
     </div>
   );
 };

@@ -125,8 +125,8 @@ export const MultiLanguageSelect: React.FC<MultiLanguageSelectProps> = ({
   );
 
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-light text-gray-700 mb-2">{label}</label>
+    <div className="space-y-1.5">
+      <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
       <div className="relative">
         <button
           ref={buttonRef}
@@ -268,8 +268,8 @@ export const SingleLanguageSelect: React.FC<SingleLanguageSelectProps> = ({
   );
 
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-light text-gray-700 mb-2">{label}</label>
+    <div className="space-y-1.5">
+      <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
       <div className="relative">
         <button
           ref={buttonRef}

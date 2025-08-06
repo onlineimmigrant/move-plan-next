@@ -24,6 +24,8 @@ export { DisclosureSection } from './DisclosureSection';
 // Configuration and utilities
 export { sectionsConfig, renderField, menuWidthOptions, headerStyleOptions } from './fieldConfig';
 export { colorOptions } from './colorOptions';
+export { animationOptions } from './animationOptions';
+export { AnimationSelect } from './AnimationSelect';
 
 // Types
 export * from './types';
