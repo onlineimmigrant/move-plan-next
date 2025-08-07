@@ -141,7 +141,8 @@ export const textSizeOptions = [
   { name: '3XL', value: 'text-3xl' },
   { name: '4XL', value: 'text-4xl' },
   { name: '5XL', value: 'text-5xl' },
-  { name: '6XL', value: 'text-6xl' }
+  { name: '6XL', value: 'text-6xl' },
+  { name: '7XL', value: 'text-7xl' }
 ];
 
 export const textWeightOptions = [
@@ -378,7 +379,7 @@ export const sectionsConfig: SectionConfig[] = [
         key: 'menu-items',
         columns: 1,
         fields: [
-          { name: 'menu_items', label: 'Navigation Menu Items', type: 'menu-items', span: 'full' }
+          { name: 'menu_items', label: '', type: 'menu-items', span: 'full' }
         ]
       },
       {
@@ -598,12 +599,15 @@ export const renderField = ({
       );
     
     case 'menu-items':
+      const submenuItems = allSettings?.submenu_items || [];
       return (
         <MenuItemsSelect
           label={field.label}
           name={field.name}
           value={Array.isArray(value) ? value : []}
+          submenuItems={Array.isArray(submenuItems) ? submenuItems : []}
           onChange={handleChange}
+          onSubmenuChange={(submenuItems) => handleChange('submenu_items', submenuItems)}
         />
       );
     

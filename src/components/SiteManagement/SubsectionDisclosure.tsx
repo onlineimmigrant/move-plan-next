@@ -1,0 +1,98 @@
+import React, { useState, useEffect } from 'react';
+import { PlusIcon, MinusIcon } from '@heroicons/react/24/outline';
+
+interface SubsectionDisclosureProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  storageKey?: string; // Optional key for persistent state
+  action?: React.ReactNode; // Optional action button/element
+}
+
+export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({ 
+  title, 
+  children, 
+  defaultOpen = false,
+  storageKey,
+  action
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  // Load state from localStorage if storageKey is provided
+  useEffect(() => {
+    if (storageKey && typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`subsection_${storageKey}`);
+      if (saved !== null) {
+        setIsOpen(JSON.parse(saved));
+      }
+    }
+  }, [storageKey]);
+
+  const handleToggle = () => {
+    const newState = !isOpen;
+    setIsOpen(newState);
+    
+    // Save state to localStorage if storageKey is provided
+    if (storageKey && typeof window !== 'undefined') {
+      localStorage.setItem(`subsection_${storageKey}`, JSON.stringify(newState));
+    }
+  };
+
+  return (
+    <div className="">
+      <div className="">
+        <button
+          type="button"
+          onClick={handleToggle}
+          className={`flex items-center justify-between w-full text-left p-3 rounded-xl transition-all duration-300 mb-4 group focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:ring-offset-1 ${
+            isOpen 
+              ? 'bg-white/90 backdrop-blur-sm border border-sky-200/60 shadow-md shadow-sky-100/20 ring-1 ring-sky-100/30' 
+              : 'bg-white/60 backdrop-blur-sm border border-gray-200/50 hover:bg-white/80 hover:border-gray-300/60 hover:shadow-md'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full">
+            <h4 className={`text-sm font-medium transition-colors duration-300 tracking-tight ${
+              isOpen ? 'text-sky-800' : 'text-gray-700 group-hover:text-gray-900'
+            }`}>
+              {title}
+            </h4>
+            <div className="flex items-center gap-2">
+              {/* Action button if provided */}
+              {action && (
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-shrink-0"
+                >
+                  {action}
+                </div>
+              )}
+              {/* Disclosure toggle icon */}
+              <div className={`flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 ${
+                isOpen 
+                  ? 'bg-sky-100/80 text-sky-600 shadow-sm ring-1 ring-sky-200/40' 
+                  : 'bg-gray-100/70 text-gray-500 group-hover:bg-gray-200/80 group-hover:text-gray-600 group-focus:bg-sky-50'
+              }`}>
+                {isOpen ? (
+                  <MinusIcon className="h-3.5 w-3.5" />
+                ) : (
+                  <PlusIcon className="h-3.5 w-3.5" />
+                )}
+              </div>
+            </div>
+          </div>
+        </button>
+        {isOpen && (
+            <div className="p-2  rounded-lg transition-all duration-300">
+                <div className=" overflow-hidden">
+                    <div className="animate-fadeIn transition-all duration-300 ease-out transform translate-y-0">
+                    <div className="pb-4">
+                        {children}
+                    </div>
+                    </div>
+                </div>
+            </div>
+        )}
+      </div>
+    </div>
+  );
+};

@@ -20,6 +20,8 @@ export { ImageUploadField } from './ImageUploadField';
 export { MultiLanguageSelect, SingleLanguageSelect } from './LanguageSelect';
 export { OrganizationTypeSelect } from './OrganizationTypeSelect';
 export { DisclosureSection } from './DisclosureSection';
+export { SubsectionDisclosure } from './SubsectionDisclosure';
+export { SubsectionDemo } from './SubsectionDemo';
 
 // Configuration and utilities
 export { sectionsConfig, renderField, menuWidthOptions, headerStyleOptions } from './fieldConfig';

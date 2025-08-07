@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { ChevronUpDownIcon, CheckIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { createPortal } from 'react-dom';
 
 interface SizeOption {
@@ -19,7 +19,8 @@ const sizeOptions: SizeOption[] = [
   { name: '3XL', value: 'text-3xl', preview: 'Aa', fontSize: 'text-3xl' },
   { name: '4XL', value: 'text-4xl', preview: 'Aa', fontSize: 'text-4xl' },
   { name: '5XL', value: 'text-5xl', preview: 'Aa', fontSize: 'text-5xl' },
-  { name: '6XL', value: 'text-6xl', preview: 'Aa', fontSize: 'text-6xl' }
+  { name: '6XL', value: 'text-6xl', preview: 'Aa', fontSize: 'text-6xl' },
+  { name: '7XL', value: 'text-7xl', preview: 'Aa', fontSize: 'text-7xl' }
 ];
 
 interface TextSizeSelectProps {
