@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings } from './types';
 import { DisclosureSection } from './DisclosureSection';
+import { SubsectionDisclosure } from './SubsectionDisclosure';
 import { sectionsConfig, renderField } from './fieldConfig';
 import { TranslationsField } from './TranslationsField';
 
@@ -297,10 +298,41 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             {section.subsections ? (
               <div className="space-y-10">
                 {section.subsections.map(subsection => (
-                  <div key={subsection.key} className="border-l-2 border-gray-200 pl-4">
-                    <h4 className="text-xs font-medium text-gray-700 mb-4">{subsection.title}</h4>
+                  <SubsectionDisclosure 
+                    key={subsection.key} 
+                    title={subsection.title}
+                    defaultOpen={false}
+                    storageKey={`${section.key}_${subsection.key}`}
+                    action={subsection.key === 'menu-items' ? 
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Find the menu_items field and trigger add via a custom event
+                          const event = new CustomEvent('addMenuItem');
+                          window.dispatchEvent(event);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const event = new CustomEvent('addMenuItem');
+                            window.dispatchEvent(event);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50/80 backdrop-blur-sm border border-sky-200 rounded-lg hover:bg-sky-100/80 hover:border-sky-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Add Menu Item
+                      </div>
+                      : undefined
+                    }
+                  >
                     {renderSectionFields(subsection.fields, section.key, subsection.columns)}
-                  </div>
+                  </SubsectionDisclosure>
                 ))}
               </div>
             ) : section.fields ? (

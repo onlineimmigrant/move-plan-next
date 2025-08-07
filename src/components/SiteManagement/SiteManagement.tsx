@@ -351,11 +351,13 @@ export default function SiteManagement() {
           billing_panel_stripe: data.settings?.billing_panel_stripe || '',
           menu_items_are_text: data.settings?.menu_items_are_text || false,
           seo_og_image: data.settings?.seo_og_image || '',
-          seo_twitter_card: data.settings?.seo_twitter_card || 'summary'
+          seo_twitter_card: data.settings?.seo_twitter_card || 'summary',
+          
+          // Menu Items from database
+          menu_items: data.menu_items || [],
+          submenu_items: data.submenu_items || []
         }
-      };
-      
-      console.log('Processed organization with settings:', orgWithSettings); // Debug log
+      };      console.log('Processed organization with settings:', orgWithSettings); // Debug log
       setSelectedOrganization(orgWithSettings);
       setIsEditModalOpen(true);
 
@@ -378,7 +380,7 @@ export default function SiteManagement() {
       console.log('Saving settings:', settings); // Debug log
       console.log('Selected organization:', selectedOrganization); // Debug log
 
-      // Separate organization fields, hero fields, and other settings
+      // Separate organization fields, hero fields, menu items, and other settings
       const { 
         hero_image,
         hero_name,
@@ -417,6 +419,8 @@ export default function SiteManagement() {
         base_url_local, 
         type,
         site,
+        menu_items,
+        submenu_items,
         ...pureSettings 
       } = settings;
 
@@ -466,7 +470,11 @@ export default function SiteManagement() {
         },
         settings: pureSettings,
         // Send hero data separately so the API can handle it for website_hero table
-        website_hero: heroData
+        website_hero: heroData,
+        // Send menu items separately so the API can handle it for website_menuitem table
+        menu_items: menu_items || [],
+        // Send submenu items separately so the API can handle it for website_submenuitem table
+        submenu_items: submenu_items || []
       };
 
       console.log('Request body:', requestBody); // Debug log
@@ -600,7 +608,11 @@ export default function SiteManagement() {
             
             // Contact Information
             contact_email: refreshData.settings?.contact_email || '',
-            contact_phone: refreshData.settings?.contact_phone || ''
+            contact_phone: refreshData.settings?.contact_phone || '',
+            
+            // Menu Items from database
+            menu_items: refreshData.menu_items || [],
+            submenu_items: refreshData.submenu_items || []
           }
         };
 
