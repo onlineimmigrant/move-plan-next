@@ -126,6 +126,10 @@ export interface Settings {
   menu_items?: any[]; // MenuItem[] - keeping as any[] to avoid circular imports
   submenu_items?: any[]; // SubMenuItem[] - keeping as any[] to avoid circular imports
   
+  // Content Management
+  blog_posts?: any[]; // BlogPost[] - keeping as any[] to avoid circular imports
+  products?: any[]; // Product[] - keeping as any[] to avoid circular imports
+  
   // Contact Information
   contact_email?: string;
   contact_phone?: string;

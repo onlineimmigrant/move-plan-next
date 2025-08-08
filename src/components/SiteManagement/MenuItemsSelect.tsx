@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, Bars3Icon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
@@ -70,6 +70,25 @@ function SortableSubmenuItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Enhanced listeners that prevent parent menu item drag interference
+  const enhancedListeners = {
+    ...listeners,
+    onMouseDown: (e: React.MouseEvent) => {
+      // Prevent event from bubbling to parent menu item
+      e.stopPropagation();
+      if (listeners?.onMouseDown) {
+        listeners.onMouseDown(e as any);
+      }
+    },
+    onTouchStart: (e: React.TouchEvent) => {
+      // Prevent event from bubbling to parent menu item
+      e.stopPropagation();
+      if (listeners?.onTouchStart) {
+        listeners.onTouchStart(e as any);
+      }
+    },
+  };
+
   return (
     <div key={submenuIndex}>
       <div 
@@ -83,10 +102,14 @@ function SortableSubmenuItem({
           {/* Drag Handle for Submenu */}
           <button
             {...attributes}
-            {...listeners}
-            className="p-1 text-gray-300 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-all duration-200 cursor-grab active:cursor-grabbing touch-none"
+            {...enhancedListeners}
+            className="p-1 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-all duration-200 cursor-grab active:cursor-grabbing touch-none"
             aria-label="Drag to reorder submenu item"
             disabled={isDragDisabled}
+            style={{ 
+              backgroundColor: isDragging ? '#10b981' : 'transparent',
+              color: isDragging ? 'white' : undefined 
+            }}
           >
             <Bars3Icon className="h-3 w-3" />
           </button>
@@ -97,14 +120,9 @@ function SortableSubmenuItem({
                 {submenuItem.name}
               </span>
 
-              {!submenuItem.is_visible && (
+              {!submenuItem.is_displayed && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600 border border-red-200">
                   Hidden
-                </span>
-              )}
-              {submenuItem.is_new_window && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-600 border border-blue-200">
-                  New Window
                 </span>
               )}
             </div>
@@ -156,8 +174,8 @@ function SortableSubmenuItem({
               <label className="block text-xs font-medium text-gray-700 mb-1">URL *</label>
               <input
                 type="text"
-                value={submenuEditForm.url || ''}
-                onChange={(e) => setSubmenuEditForm({ ...submenuEditForm, url: e.target.value })}
+                value={submenuEditForm.url_name || ''}
+                onChange={(e) => setSubmenuEditForm({ ...submenuEditForm, url_name: e.target.value })}
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
@@ -206,6 +224,7 @@ interface SortableMenuItemProps {
   setSubmenuEditForm: (form: Partial<SubmenuItem>) => void;
   handleSaveSubmenu: () => void;
   handleCancelSubmenu: () => void;
+  submenuRenderKey: number;
   // Edit form props
   isEditing: boolean;
   editingIndex: number | null;
@@ -235,6 +254,7 @@ function SortableMenuItem({
   setSubmenuEditForm,
   handleSaveSubmenu,
   handleCancelSubmenu,
+  submenuRenderKey,
   // Edit form props
   isEditing,
   editingIndex,
@@ -262,40 +282,112 @@ function SortableMenuItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Drag and drop sensors for submenu items
+  // Drag and drop sensors for submenu items - isolated from parent menu drag
   const submenuSensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Slightly higher threshold to prevent accidental activation
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  // Handle submenu drag and drop reordering
+  // Reference to track if we've done manual DOM reordering
+  const hasManuallyReordered = useRef(false);
+
+  // Handle submenu drag and drop reordering with immediate DOM manipulation
   const handleSubmenuDragEnd = (event: DragEndEvent) => {
+    console.log('🎯 Submenu drag end event:', event);
     const { active, over } = event;
+
+    // CRITICAL: Stop event propagation to prevent parent menu item drag system interference
+    if (event.activatorEvent?.stopPropagation) {
+      event.activatorEvent.stopPropagation();
+    }
 
     if (over && active.id !== over.id && item.id) {
       const activeId = active.id.toString();
       const overId = over.id.toString();
       
-      // Extract indices from the drag IDs
-      const activeIndex = menuItemSubmenuItems.findIndex((_, idx) => 
-        `submenu-${item.id}-${idx}` === activeId
-      );
-      const overIndex = menuItemSubmenuItems.findIndex((_, idx) => 
-        `submenu-${item.id}-${idx}` === overId
-      );
-
-      if (activeIndex !== -1 && overIndex !== -1) {
-        const reorderedItems = arrayMove(menuItemSubmenuItems, activeIndex, overIndex);
+      console.log('🔄 Submenu reorder attempt:', { activeId, overId });
+      
+      // Parse the indices from the ID format: submenu-{menuItemId}-{index}
+      const activeIdParts = activeId.split('-');
+      const overIdParts = overId.split('-');
+      
+      // Validate that both IDs are submenu IDs (not menu item IDs)
+      if (activeIdParts.length === 3 && overIdParts.length === 3 && 
+          activeIdParts[0] === 'submenu' && overIdParts[0] === 'submenu') {
         
-        // Update order values to match new positions
-        const updatedItems = reorderedItems.map((submenuItem, idx) => ({
-          ...submenuItem,
-          order: idx + 1,
-        }));
+        const activeIndex = parseInt(activeIdParts[2]);
+        const overIndex = parseInt(overIdParts[2]);
+        const activeMenuItemId = parseInt(activeIdParts[1]);
+        const overMenuItemId = parseInt(overIdParts[1]);
 
-        onSubmenuReorder(item.id, updatedItems);
+        // Ensure we're reordering within the same menu item
+        if (activeMenuItemId === overMenuItemId && activeMenuItemId === item.id &&
+            !isNaN(activeIndex) && !isNaN(overIndex) && 
+            activeIndex >= 0 && overIndex >= 0 && 
+            activeIndex < menuItemSubmenuItems.length && 
+            overIndex < menuItemSubmenuItems.length) {
+          
+          console.log('✅ Valid submenu reorder:', { activeIndex, overIndex, menuItemId: item.id });
+          
+          // Set flag to prevent React from overriding our manual reordering
+          hasManuallyReordered.current = true;
+          
+          // Create a copy of the current submenu items to avoid mutation
+          const currentSubmenuItems = [...menuItemSubmenuItems];
+          const reorderedItems = arrayMove(currentSubmenuItems, activeIndex, overIndex);
+          
+          // Update order values to match new positions
+          const updatedItems = reorderedItems.map((submenuItem, idx) => ({
+            ...submenuItem,
+            order: idx + 1,
+          }));
+
+          console.log('🚀 Applying immediate DOM reorder');
+          
+          // Immediate DOM manipulation for instant visual feedback
+          const submenuContainer = document.querySelector(`[data-submenu-container="${item.id}"] .sortable-context-container`);
+          if (submenuContainer) {
+            const submenuElements = Array.from(submenuContainer.children);
+            const activeElement = submenuElements[activeIndex];
+            const overElement = submenuElements[overIndex];
+            
+            if (activeElement && overElement) {
+              // Create smooth transition
+              (activeElement as HTMLElement).style.transition = 'transform 0.2s ease-out';
+              
+              // Remove and reinsert at new position
+              activeElement.remove();
+              
+              if (activeIndex < overIndex) {
+                overElement.insertAdjacentElement('afterend', activeElement as Element);
+              } else {
+                overElement.insertAdjacentElement('beforebegin', activeElement as Element);
+              }
+              
+              // Remove transition after animation
+              setTimeout(() => {
+                (activeElement as HTMLElement).style.transition = '';
+                hasManuallyReordered.current = false;
+              }, 200);
+            }
+          }
+
+          // Update React state after DOM manipulation
+          setTimeout(() => {
+            console.log('📊 Updating React state with reordered items');
+            onSubmenuReorder(item.id!, updatedItems);
+          }, 0);
+        } else {
+          console.log('❌ Invalid submenu reorder conditions');
+        }
+      } else {
+        console.log('❌ Not a valid submenu drag operation');
       }
     }
   };
@@ -422,6 +514,32 @@ function SortableMenuItem({
                 min="1"
               />
             </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Image URL
+              </label>
+              <input
+                type="url"
+                value={editForm.image || ''}
+                onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="https://example.com/image.png"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                React Icon ID
+              </label>
+              <input
+                type="number"
+                value={editForm.react_icon_id || ''}
+                onChange={(e) => setEditForm({ ...editForm, react_icon_id: parseInt(e.target.value) || undefined })}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="Icon ID from react_icons table"
+              />
+            </div>
             
             <div className="space-y-2">
               <label className="flex items-center gap-2">
@@ -472,20 +590,27 @@ function SortableMenuItem({
           <div className="pl-8 pr-4 py-4">
 
             
-            {/* Submenu Items List */}
-            <div className="space-y-2">
+            {/* Submenu Items List - Isolated drag context */}
+            <div 
+              className="space-y-2" 
+              data-submenu-container={item.id}
+              onClick={(e) => e.stopPropagation()} // Prevent menu item click events
+              onMouseDown={(e) => e.stopPropagation()} // Prevent menu item drag activation
+            >
               <DndContext
                 sensors={submenuSensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleSubmenuDragEnd}
+                id={`submenu-context-${item.id}`} // Unique context ID
               >
                 <SortableContext
                   items={menuItemSubmenuItems.map((_, idx) => `submenu-${item.id}-${idx}`)}
                   strategy={verticalListSortingStrategy}
                 >
+                  <div className="sortable-context-container">
                   {menuItemSubmenuItems.map((submenuItem, submenuIndex) => (
                     <SortableSubmenuItem
-                      key={submenuItem.id || `submenu-${index}-${submenuIndex}`}
+                      key={`submenu-${item.id}-${submenuIndex}-${submenuItem.name}-${submenuItem.order}-${submenuRenderKey}`}
                       submenuItem={submenuItem}
                       submenuIndex={submenuIndex}
                       menuItemId={item.id!}
@@ -500,6 +625,7 @@ function SortableMenuItem({
                       onDeleteSubmenu={onDeleteSubmenu}
                     />
                   ))}
+                  </div>
                 </SortableContext>
               </DndContext>
               {/* Add Submenu Form - Positioned under submenu items */}
@@ -522,10 +648,41 @@ function SortableMenuItem({
                       <label className="block text-xs font-medium text-gray-700 mb-1">URL *</label>
                       <input
                         type="text"
-                        value={submenuEditForm.url || ''}
-                        onChange={(e) => setSubmenuEditForm({ ...submenuEditForm, url: e.target.value })}
+                        value={submenuEditForm.url_name || ''}
+                        onChange={(e) => setSubmenuEditForm({ ...submenuEditForm, url_name: e.target.value })}
                         className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={submenuEditForm.description || ''}
+                        onChange={(e) => setSubmenuEditForm({ ...submenuEditForm, description: e.target.value })}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        placeholder="Optional description"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Order</label>
+                      <input
+                        type="number"
+                        value={submenuEditForm.order || ''}
+                        onChange={(e) => setSubmenuEditForm({ ...submenuEditForm, order: parseInt(e.target.value) || 1 })}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        min="1"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={submenuEditForm.is_displayed !== false}
+                          onChange={(e) => setSubmenuEditForm({ ...submenuEditForm, is_displayed: e.target.checked })}
+                          className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                        />
+                        <span className="text-xs font-medium text-gray-700">Visible in Menu</span>
+                      </label>
                     </div>
                     <div className="md:col-span-2">
                       <div className="flex justify-end gap-2">
@@ -601,11 +758,12 @@ interface SubmenuItem {
   id?: number;
   website_menuitem_id: number;
   name: string;
-  url: string;
+  name_translation?: Record<string, any>;
+  url_name: string;
   description?: string;
+  description_translation?: Record<string, any>;
   order: number;
-  is_new_window?: boolean;
-  is_visible?: boolean;
+  is_displayed?: boolean;
   organization_id?: string | null;
 }
 
@@ -630,6 +788,18 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Partial<MenuItem>>({});
   
+  // Local state for submenu items to enable immediate updates
+  const [localSubmenuItems, setLocalSubmenuItems] = useState<SubmenuItem[]>(submenuItems);
+  
+  // Force re-render key for submenu items
+  const [submenuRenderKey, setSubmenuRenderKey] = useState(0);
+  
+  // Sync local state when props change
+  useEffect(() => {
+    setLocalSubmenuItems(submenuItems);
+    setSubmenuRenderKey(prev => prev + 1);
+  }, [submenuItems]);
+  
   // Submenu state
   const [isEditingSubmenu, setIsEditingSubmenu] = useState(false);
   const [editingSubmenuIndex, setEditingSubmenuIndex] = useState<number | null>(null);
@@ -641,7 +811,11 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
 
   // Drag and drop sensors
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 3,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -719,9 +893,16 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
     onChange(name, newValue);
   };
 
-  // Handle drag and drop reordering
+  // Handle drag and drop reordering for menu items (not submenu items)
   const handleDragEnd = (event: DragEndEvent) => {
+    console.log('🏠 Menu item drag end event:', event);
     const { active, over } = event;
+
+    // Ignore submenu drag operations - only handle menu item drags
+    if (active.id.toString().startsWith('submenu-') || over?.id.toString().startsWith('submenu-')) {
+      console.log('🚫 Ignoring submenu drag in menu item handler');
+      return;
+    }
 
     if (over && active.id !== over.id) {
       const oldIndex = value.findIndex(item => 
@@ -732,6 +913,7 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
       );
 
       if (oldIndex !== -1 && newIndex !== -1) {
+        console.log('✅ Valid menu item reorder:', { oldIndex, newIndex });
         const newValue = arrayMove(value, oldIndex, newIndex);
         
         // Update order values to match new positions
@@ -758,20 +940,23 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
     });
   };
 
-  // Submenu handlers
-  const getSubmenuItemsForMenuItem = (menuItemId: number) => {
-    return submenuItems.filter(item => item.website_menuitem_id === menuItemId);
-  };
+  // Submenu handlers - direct function that forces re-evaluation
+  const getSubmenuItemsForMenuItem = useCallback((menuItemId: number) => {
+    const items = localSubmenuItems
+      .filter(item => item.website_menuitem_id === menuItemId)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    console.log(`getSubmenuItemsForMenuItem(${menuItemId}):`, items.map(s => ({ name: s.name, order: s.order })));
+    return items;
+  }, [localSubmenuItems, submenuRenderKey]);
 
   const handleAddSubmenu = (menuItemId: number) => {
     const currentSubmenuItems = getSubmenuItemsForMenuItem(menuItemId);
     setSubmenuEditForm({
       name: '',
-      url: '',
+      url_name: '',
       description: '',
       website_menuitem_id: menuItemId,
-      is_visible: true,
-      is_new_window: false,
+      is_displayed: true,
       order: currentSubmenuItems.length + 1
     });
     setEditingSubmenuForMenuItem(menuItemId);
@@ -787,15 +972,14 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
   };
 
   const handleSaveSubmenu = () => {
-    if (!submenuEditForm.name || !submenuEditForm.url || !onSubmenuChange) return;
+    if (!submenuEditForm.name || !submenuEditForm.url_name || !onSubmenuChange) return;
 
     const newSubmenuItem: SubmenuItem = {
       ...submenuEditForm,
       name: submenuEditForm.name!,
-      url: submenuEditForm.url!,
+      url_name: submenuEditForm.url_name!,
       website_menuitem_id: submenuEditForm.website_menuitem_id!,
-      is_visible: submenuEditForm.is_visible !== false,
-      is_new_window: submenuEditForm.is_new_window || false,
+      is_displayed: submenuEditForm.is_displayed !== false,
       order: submenuEditForm.order || 1,
       description: submenuEditForm.description || ''
     };
@@ -803,8 +987,8 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
     let newSubmenuItems: SubmenuItem[];
     if (editingSubmenuIndex !== null) {
       // Editing existing submenu item
-      newSubmenuItems = [...submenuItems];
-      const actualIndex = submenuItems.findIndex((item, idx) => 
+      newSubmenuItems = [...localSubmenuItems];
+      const actualIndex = localSubmenuItems.findIndex((item, idx) => 
         item.website_menuitem_id === editingSubmenuForMenuItem && 
         getSubmenuItemsForMenuItem(editingSubmenuForMenuItem!)[editingSubmenuIndex] === item
       );
@@ -813,9 +997,14 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
       }
     } else {
       // Adding new submenu item
-      newSubmenuItems = [...submenuItems, newSubmenuItem];
+      newSubmenuItems = [...localSubmenuItems, newSubmenuItem];
     }
 
+    // Force immediate re-render
+    setSubmenuRenderKey(prev => prev + 1);
+    setLocalSubmenuItems(newSubmenuItems);
+    
+    // Update parent state
     onSubmenuChange(newSubmenuItems);
     setIsEditingSubmenu(false);
     setSubmenuEditForm({});
@@ -832,32 +1021,59 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
 
   const handleDeleteSubmenu = (submenuItem: SubmenuItem) => {
     if (!onSubmenuChange) return;
-    const newSubmenuItems = submenuItems.filter(item => 
+    const newSubmenuItems = localSubmenuItems.filter(item => 
       !(item.website_menuitem_id === submenuItem.website_menuitem_id && 
         item.name === submenuItem.name && 
-        item.url === submenuItem.url)
+        item.url_name === submenuItem.url_name)
     );
+    
+    // Force immediate re-render
+    setSubmenuRenderKey(prev => prev + 1);
+    setLocalSubmenuItems(newSubmenuItems);
+    
+    // Update parent state
     onSubmenuChange(newSubmenuItems);
   };
 
-  // Submenu reordering handler
-  const handleSubmenuReorder = (menuItemId: number, reorderedSubmenuItems: SubmenuItem[]) => {
-    // Update the submenu items with new order
-    const updatedSubmenuItems = submenuItems.map(submenuItem => {
+  // Submenu reordering handler with auto-save
+  const handleSubmenuReorder = useCallback(async (menuItemId: number, reorderedSubmenuItems: SubmenuItem[]) => {
+    console.log('handleSubmenuReorder called:', { menuItemId, reorderedSubmenuItems: reorderedSubmenuItems.map(s => ({ name: s.name, order: s.order })) });
+    
+    // Create a new array with updated submenu items using local state
+    const updatedSubmenuItems = localSubmenuItems.map(submenuItem => {
       if (submenuItem.website_menuitem_id === menuItemId) {
         const newSubmenuItem = reorderedSubmenuItems.find(reordered => 
-          reordered.id === submenuItem.id
+          reordered.id === submenuItem.id || 
+          (reordered.name === submenuItem.name && reordered.url_name === submenuItem.url_name)
         );
         return newSubmenuItem || submenuItem;
       }
       return submenuItem;
     });
     
-    // Update state with reordered items
+    console.log('Updated submenu items:', updatedSubmenuItems.map(s => ({ name: s.name, order: s.order, menuItemId: s.website_menuitem_id })));
+    
+    // Force immediate re-render by updating both state and render key
+    setSubmenuRenderKey(prev => prev + 1);
+    setLocalSubmenuItems(updatedSubmenuItems);
+    
+    // Immediately update parent state for immediate persistence
     if (onSubmenuChange) {
       onSubmenuChange(updatedSubmenuItems);
+      console.log('✅ Parent state updated immediately with reordered submenu items');
     }
-  };
+    
+    // Trigger auto-save immediately (without delay to prevent race conditions)
+    const autoSaveEvent = new CustomEvent('autoSaveMenuChanges', { 
+      detail: { 
+        type: 'submenu_reorder',
+        menuItemId,
+        updatedSubmenuItems 
+      }
+    });
+    window.dispatchEvent(autoSaveEvent);
+    console.log('🚀 Auto-save event dispatched immediately for submenu reorder');
+  }, [localSubmenuItems, onSubmenuChange]);
 
   return (
     <div className="space-y-4">
@@ -876,9 +1092,14 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
               const menuItemSubmenuItems = item.id ? getSubmenuItemsForMenuItem(item.id) : [];
               const isExpanded = item.id ? expandedMenuItems.has(item.id) : false;
               
+              // Debug: log submenu items for this menu item
+              if (item.id && menuItemSubmenuItems.length > 0) {
+                console.log(`Menu item ${item.id} submenu items:`, menuItemSubmenuItems.map(s => ({ name: s.name, order: s.order })));
+              }
+              
               return (
                 <SortableMenuItem
-                  key={item.id?.toString() || `temp-${index}`}
+                  key={`${item.id?.toString() || `temp-${index}`}-${submenuRenderKey}-${menuItemSubmenuItems.length}-${menuItemSubmenuItems.map(s => `${s.name}-${s.order}`).join('|')}`}
                   item={item}
                   index={index}
                   menuItemSubmenuItems={menuItemSubmenuItems}
@@ -897,6 +1118,7 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
                   setSubmenuEditForm={setSubmenuEditForm}
                   handleSaveSubmenu={handleSaveSubmenu}
                   handleCancelSubmenu={handleCancelSubmenu}
+                  submenuRenderKey={submenuRenderKey}
                   isEditing={isEditing}
                   editingIndex={editingIndex}
                   editForm={editForm}
@@ -969,6 +1191,32 @@ export const MenuItemsSelect: React.FC<MenuItemsSelectProps> = ({
                 onChange={(e) => setEditForm({ ...editForm, order: parseInt(e.target.value) || 1 })}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 min="1"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Image URL
+              </label>
+              <input
+                type="url"
+                value={editForm.image || ''}
+                onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="https://example.com/image.png"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                React Icon ID
+              </label>
+              <input
+                type="number"
+                value={editForm.react_icon_id || ''}
+                onChange={(e) => setEditForm({ ...editForm, react_icon_id: parseInt(e.target.value) || undefined })}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="Icon ID from react_icons table"
               />
             </div>
             

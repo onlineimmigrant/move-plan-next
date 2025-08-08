@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface TooltipProps {
-  content: string;
+  content: string | React.ReactNode;
   children: React.ReactNode;
   variant?: 'primary' | 'bottom' | 'left' | 'right' | 'info-top' | 'info-bottom' | 'info-left' | 'info-right';
 }
@@ -125,8 +126,8 @@ export default function Tooltip({ content, children, variant = 'primary' }: Tool
   // Determine tooltip styles based on variant
   const isInfoVariant = variant?.startsWith('info-');
   const tooltipClasses = isInfoVariant
-    ? 'fixed z-50 bg-white text-gray-500 text-xs font-medium rounded-md py-1 px-2 border-2 border-gray-200 max-w-xs break-words animate-fade-in overflow-y-auto max-h-60'
-    : 'fixed z-50 bg-gray-600 text-white text-sm font-light rounded-md py-1 px-2 shadow-lg max-w-xs break-words animate-fade-in';
+    ? 'fixed z-[9999] bg-white text-gray-500 text-xs font-medium rounded-md py-2 px-3 border-2 border-gray-200 max-w-xs break-words animate-fade-in overflow-y-auto max-h-60 shadow-lg'
+    : 'fixed z-[9999] bg-gray-600 text-white text-sm font-light rounded-md py-1 px-2 shadow-lg max-w-xs break-words animate-fade-in';
 
   return (
     <div className="relative inline-block">
@@ -144,7 +145,7 @@ export default function Tooltip({ content, children, variant = 'primary' }: Tool
       >
         {children}
       </div>
-      {isVisible && (
+      {isVisible && createPortal(
         <div
           ref={tooltipRef}
           id="tooltip"
@@ -167,7 +168,8 @@ export default function Tooltip({ content, children, variant = 'primary' }: Tool
               animation: fade-in 0.2s ease-out;
             }
           `}</style>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

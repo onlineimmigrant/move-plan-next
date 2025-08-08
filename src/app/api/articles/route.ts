@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error, count } = await supabase
       .from('blog_post')
-      .select('id, slug, title, description, content, subsection, author_name, created_on, display_this_post, main_photo', { count: 'exact' })
+      .select('id, slug, title, description, content, display_as_blog_post,  subsection, author_name, created_on, display_this_post, main_photo', { count: 'exact' })
       .eq('display_this_post', true)
       .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`)
       .order('created_on', { ascending: false })

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface DisclosureSectionProps {
@@ -25,26 +25,51 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
   onToggle
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+  const sectionRef = useRef<HTMLDivElement>(null);
   
   // Use external state if provided, otherwise use internal state
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   
   const handleToggle = () => {
+    const newIsOpen = !isOpen;
+    
     if (onToggle) {
       // Use external state management
-      onToggle(sectionKey, !isOpen);
+      onToggle(sectionKey, newIsOpen);
     } else {
       // Use internal state management
-      setInternalIsOpen(prev => !prev);
+      setInternalIsOpen(newIsOpen);
+    }
+
+    // Scroll to this specific DisclosureSection when opening it
+    if (newIsOpen && sectionRef.current) {
+      setTimeout(() => {
+        // Scroll to this specific section with some top margin
+        sectionRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+        
+        // Add some top margin by scrolling up a bit
+        setTimeout(() => {
+          window.scrollBy({
+            top: -16, // 16px = pt-4 (1rem)
+            behavior: 'smooth'
+          });
+        }, 150);
+      }, 100); // Small delay to allow the section to open first
     }
   };
 
   return (
-    <div className={`group bg-white/95 backdrop-blur-sm rounded-xl border transition-all duration-300 ${
-      isOpen 
-        ? 'border-sky-200/60 shadow-lg shadow-sky-100/30 ring-1 ring-sky-100/50' 
-        : 'border-gray-200/60 shadow-sm hover:shadow-md hover:border-gray-300/60'
-    }`}>
+    <div 
+      ref={sectionRef}
+      className={`group bg-white/95 backdrop-blur-sm rounded-xl border transition-all duration-300 ${
+        isOpen 
+          ? 'border-sky-200/60 shadow-lg shadow-sky-100/30 ring-1 ring-sky-100/50' 
+          : 'border-gray-200/60 shadow-sm hover:shadow-md hover:border-gray-300/60'
+      }`}
+    >
       <button 
         type="button"
         onClick={handleToggle}

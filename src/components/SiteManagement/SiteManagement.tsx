@@ -355,7 +355,13 @@ export default function SiteManagement() {
           
           // Menu Items from database
           menu_items: data.menu_items || [],
-          submenu_items: data.submenu_items || []
+          submenu_items: data.submenu_items || [],
+          
+          // Blog Posts from database
+          blog_posts: data.blog_posts || [],
+          
+          // Products from database
+          products: data.products || []
         }
       };      console.log('Processed organization with settings:', orgWithSettings); // Debug log
       setSelectedOrganization(orgWithSettings);
@@ -421,6 +427,8 @@ export default function SiteManagement() {
         site,
         menu_items,
         submenu_items,
+        blog_posts,
+        products,
         ...pureSettings 
       } = settings;
 
@@ -474,7 +482,11 @@ export default function SiteManagement() {
         // Send menu items separately so the API can handle it for website_menuitem table
         menu_items: menu_items || [],
         // Send submenu items separately so the API can handle it for website_submenuitem table
-        submenu_items: submenu_items || []
+        submenu_items: submenu_items || [],
+        // Send blog posts separately so the API can handle it for blog_post table
+        blog_posts: blog_posts || [],
+        // Send products separately so the API can handle it for product table
+        products: products || []
       };
 
       console.log('Request body:', requestBody); // Debug log
@@ -612,7 +624,13 @@ export default function SiteManagement() {
             
             // Menu Items from database
             menu_items: refreshData.menu_items || [],
-            submenu_items: refreshData.submenu_items || []
+            submenu_items: refreshData.submenu_items || [],
+            
+            // Blog Posts from database
+            blog_posts: refreshData.blog_posts || [],
+            
+            // Products from database
+            products: refreshData.products || []
           }
         };
 
@@ -668,6 +686,132 @@ export default function SiteManagement() {
       setIsEditing(false);
     }
   };
+
+  // Auto-save listener for menu changes
+  useEffect(() => {
+    let autoSaveTimeoutId: NodeJS.Timeout | null = null;
+    
+    const handleAutoSaveMenuChanges = async (event: Event) => {
+      if (!selectedOrganization || !session?.access_token) return;
+      
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Auto-save triggered for menu changes:', customEvent.detail);
+      
+      // Clear any existing timeout to debounce rapid changes
+      if (autoSaveTimeoutId) {
+        clearTimeout(autoSaveTimeoutId);
+      }
+      
+      // Set a new timeout to batch rapid operations
+      autoSaveTimeoutId = setTimeout(async () => {
+        try {
+          // Get the current settings from the modal via a global variable
+          const settingsData = (window as any).__currentEditSettings;
+          if (settingsData) {
+            console.log('💾 Auto-saving settings with updated menu data...');
+            await handleSaveSettings(settingsData);
+            console.log('✅ Auto-save completed successfully');
+          }
+        } catch (error) {
+          console.warn('⚠️ Auto-save failed, changes remain in local state:', error);
+          // Auto-save failures shouldn't interrupt the user experience
+        }
+      }, 300); // 300ms debounce to batch rapid changes
+    };
+
+    window.addEventListener('autoSaveMenuChanges', handleAutoSaveMenuChanges);
+    
+    return () => {
+      if (autoSaveTimeoutId) {
+        clearTimeout(autoSaveTimeoutId);
+      }
+      window.removeEventListener('autoSaveMenuChanges', handleAutoSaveMenuChanges);
+    };
+  }, [selectedOrganization, session, handleSaveSettings]);
+
+  // Auto-save listener for blog post changes
+  useEffect(() => {
+    let blogPostSaveTimeoutId: NodeJS.Timeout | null = null;
+    
+    const handleAutoSaveBlogPostChanges = async (event: Event) => {
+      if (!selectedOrganization || !session?.access_token) return;
+      
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Auto-save triggered for blog post changes:', customEvent.detail);
+      
+      // Clear any existing timeout to debounce rapid changes
+      if (blogPostSaveTimeoutId) {
+        clearTimeout(blogPostSaveTimeoutId);
+      }
+      
+      // Set a new timeout to batch rapid operations
+      blogPostSaveTimeoutId = setTimeout(async () => {
+        try {
+          // Get the current settings from the modal via a global variable
+          const settingsData = (window as any).__currentEditSettings;
+          if (settingsData) {
+            console.log('💾 Auto-saving settings with updated blog post data...');
+            await handleSaveSettings(settingsData);
+            console.log('✅ Blog post auto-save completed successfully');
+          }
+        } catch (error) {
+          console.warn('⚠️ Blog post auto-save failed, changes remain in local state:', error);
+          // Auto-save failures shouldn't interrupt the user experience
+        }
+      }, 300); // 300ms debounce to batch rapid changes
+    };
+
+    window.addEventListener('autoSaveBlogPostChanges', handleAutoSaveBlogPostChanges);
+    
+    return () => {
+      if (blogPostSaveTimeoutId) {
+        clearTimeout(blogPostSaveTimeoutId);
+      }
+      window.removeEventListener('autoSaveBlogPostChanges', handleAutoSaveBlogPostChanges);
+    };
+  }, [selectedOrganization, session, handleSaveSettings]);
+
+  // Auto-save listener for product changes
+  useEffect(() => {
+    let productSaveTimeoutId: NodeJS.Timeout | null = null;
+    
+    const handleAutoSaveProductChanges = async (event: Event) => {
+      if (!selectedOrganization || !session?.access_token) return;
+      
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Auto-save triggered for product changes:', customEvent.detail);
+      
+      // Clear any existing timeout to debounce rapid changes
+      if (productSaveTimeoutId) {
+        clearTimeout(productSaveTimeoutId);
+      }
+      
+      // Set a new timeout to batch rapid operations
+      productSaveTimeoutId = setTimeout(async () => {
+        try {
+          // Get the current settings from the modal via a global variable
+          const settingsData = (window as any).__currentEditSettings;
+          if (settingsData) {
+            console.log('💾 Auto-saving settings with updated product data...');
+            await handleSaveSettings(settingsData);
+            console.log('✅ Product auto-save completed successfully');
+          }
+        } catch (error) {
+          console.warn('⚠️ Product auto-save failed, changes remain in local state:', error);
+          // Auto-save failures shouldn't interrupt the user experience
+        }
+      }, 300); // 300ms debounce to batch rapid changes
+    };
+
+    window.addEventListener('autoSaveProductChanges', handleAutoSaveProductChanges);
+    
+    return () => {
+      if (productSaveTimeoutId) {
+        clearTimeout(productSaveTimeoutId);
+      }
+      window.removeEventListener('autoSaveProductChanges', handleAutoSaveProductChanges);
+    };
+  }, [selectedOrganization, session, handleSaveSettings]);
 
   const closeEditModal = () => {
     setIsEditModalOpen(false);

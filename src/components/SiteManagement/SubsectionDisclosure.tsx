@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/outline';
 
 interface SubsectionDisclosureProps {
@@ -7,6 +7,8 @@ interface SubsectionDisclosureProps {
   defaultOpen?: boolean;
   storageKey?: string; // Optional key for persistent state
   action?: React.ReactNode; // Optional action button/element
+  actionContent?: React.ReactNode; // Content to show below action button when open
+  itemCount?: number; // Optional count to display in a badge
 }
 
 export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({ 
@@ -14,9 +16,12 @@ export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({
   children, 
   defaultOpen = false,
   storageKey,
-  action
+  action,
+  actionContent,
+  itemCount
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const subsectionRef = useRef<HTMLDivElement>(null);
 
   // Load state from localStorage if storageKey is provided
   useEffect(() => {
@@ -36,10 +41,29 @@ export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({
     if (storageKey && typeof window !== 'undefined') {
       localStorage.setItem(`subsection_${storageKey}`, JSON.stringify(newState));
     }
+
+    // Scroll to this specific subsection when opening it
+    if (newState && subsectionRef.current) {
+      setTimeout(() => {
+        // Scroll to this specific subsection with some top margin
+        subsectionRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+        
+        // Add some top margin by scrolling up a bit
+        setTimeout(() => {
+          window.scrollBy({
+            top: -8, // 8px = pt-2 (0.5rem) - smaller margin for subsections
+            behavior: 'smooth'
+          });
+        }, 150);
+      }, 100); // Small delay to allow the subsection to open first
+    }
   };
 
   return (
-    <div className="">
+    <div ref={subsectionRef} className="">
       <div className="">
         <button
           type="button"
@@ -51,11 +75,23 @@ export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({
           }`}
         >
           <div className="flex items-center justify-between w-full">
-            <h4 className={`text-sm font-medium transition-colors duration-300 tracking-tight ${
-              isOpen ? 'text-sky-800' : 'text-gray-700 group-hover:text-gray-900'
-            }`}>
-              {title}
-            </h4>
+            <div className="flex items-center gap-2">
+              <h4 className={`text-sm font-medium transition-colors duration-300 tracking-tight ${
+                isOpen ? 'text-sky-800' : 'text-gray-700 group-hover:text-gray-900'
+              }`}>
+                {title}
+              </h4>
+              {/* Item count badge */}
+              {typeof itemCount === 'number' && itemCount >= 0 && (
+                <span className={`inline-flex items-center justify-center w-5 h-5 text-xs font-semibold rounded-full transition-colors duration-300 ${
+                  isOpen 
+                    ? 'bg-sky-100 text-sky-600 ring-1 ring-sky-200/40' 
+                    : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                }`}>
+                  {itemCount}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               {/* Action button if provided */}
               {action && (
@@ -82,12 +118,20 @@ export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({
           </div>
         </button>
         {isOpen && (
-            <div className="p-2  rounded-lg transition-all duration-300">
-                <div className=" overflow-hidden">
-                    <div className="animate-fadeIn transition-all duration-300 ease-out transform translate-y-0">
-                    <div className="pb-4">
-                        {children}
-                    </div>
+            <div className="transition-all duration-300">
+                {/* Action content (e.g., Add forms) */}
+                {actionContent && (
+                  <div className="mb-6">
+                    {actionContent}
+                  </div>
+                )}
+                <div className="p-2 rounded-lg">
+                    <div className="overflow-hidden">
+                        <div className="animate-fadeIn transition-all duration-300 ease-out transform translate-y-0">
+                        <div className="pb-4">
+                            {children}
+                        </div>
+                        </div>
                     </div>
                 </div>
             </div>

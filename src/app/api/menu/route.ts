@@ -11,6 +11,7 @@ interface SubMenuItem {
   description?: string;
   description_translation?: Record<string, any>;
   is_displayed?: boolean;
+  website_menuitem_id?: number;
   organization_id: string | null;
 }
 
@@ -79,6 +80,7 @@ export async function GET(request: Request) {
           description,
           description_translation,
           is_displayed,
+          website_menuitem_id,
           organization_id
         )
       `)
