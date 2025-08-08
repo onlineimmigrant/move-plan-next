@@ -123,6 +123,11 @@ export default function EditModal({
     }
   }, [organization]);
 
+  // Expose current settings globally for auto-save functionality
+  useEffect(() => {
+    (window as any).__currentEditSettings = settings;
+  }, [settings]);
+
   const handleSettingChange = (field: keyof Settings, value: any) => {
     console.log(`[EditModal] Setting change: ${field} = ${value}`);
     setSettings(prev => {

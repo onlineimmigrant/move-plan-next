@@ -12,6 +12,8 @@ import { TextWeightSelect } from './TextWeightSelect';
 import { BlockWidthSelect } from './BlockWidthSelect';
 import { ColumnsSelect } from './ColumnsSelect';
 import { MenuItemsSelect } from './MenuItemsSelect';
+import { BlogPostsSelect } from './BlogPostsSelect';
+import { ProductSelect } from './ProductSelect';
 import { Settings, organizationTypes } from './types';
 
 interface SubSectionConfig {
@@ -32,7 +34,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products';
   placeholder?: string;
   span?: 'full' | 'half';
 }
@@ -110,7 +112,15 @@ interface MenuItemsFieldConfig extends BaseFieldConfig {
   type: 'menu-items';
 }
 
-export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig;
+interface BlogPostsFieldConfig extends BaseFieldConfig {
+  type: 'blog-posts';
+}
+
+interface ProductsFieldConfig extends BaseFieldConfig {
+  type: 'products';
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -391,6 +401,28 @@ export const sectionsConfig: SectionConfig[] = [
         ]
       }
     ]
+  },
+  {
+    title: 'Content Management',
+    key: 'content',
+    subsections: [
+      {
+        title: 'Blog Posts',
+        key: 'blog-posts',
+        columns: 1,
+        fields: [
+          { name: 'blog_posts', label: 'Blog Posts', type: 'blog-posts', span: 'full' }
+        ]
+      },
+      {
+        title: 'Products',
+        key: 'products',
+        columns: 1,
+        fields: [
+          { name: 'products', label: 'Products', type: 'products', span: 'full' }
+        ]
+      }
+    ]
   }
 ];
 
@@ -608,6 +640,26 @@ export const renderField = ({
           submenuItems={Array.isArray(submenuItems) ? submenuItems : []}
           onChange={handleChange}
           onSubmenuChange={(submenuItems) => handleChange('submenu_items', submenuItems)}
+        />
+      );
+    
+    case 'blog-posts':
+      return (
+        <BlogPostsSelect
+          label={field.label}
+          name={field.name}
+          value={Array.isArray(value) ? value : []}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'products':
+      return (
+        <ProductSelect
+          label={field.label}
+          name={field.name}
+          value={Array.isArray(value) ? value : []}
+          onChange={handleChange}
         />
       );
     

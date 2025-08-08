@@ -282,7 +282,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   };
 
   return (
-    <div className="space-y-4 pb-64">
+    <div className="space-y-4 pb-64" data-settings-container>
       {sectionsConfig.map(section => (
         <div key={section.key} data-section-key={section.key}>
           <DisclosureSection 
@@ -297,43 +297,117 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
           >
             {section.subsections ? (
               <div className="space-y-10">
-                {section.subsections.map(subsection => (
-                  <SubsectionDisclosure 
-                    key={subsection.key} 
-                    title={subsection.title}
-                    defaultOpen={false}
-                    storageKey={`${section.key}_${subsection.key}`}
-                    action={subsection.key === 'menu-items' ? 
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Find the menu_items field and trigger add via a custom event
-                          const event = new CustomEvent('addMenuItem');
-                          window.dispatchEvent(event);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
+                {section.subsections.map(subsection => {
+                  // Get item counts for badges
+                  const getItemCount = (key: string) => {
+                    if (key === 'blog-posts' && settings.blog_posts) {
+                      return Array.isArray(settings.blog_posts) ? settings.blog_posts.length : 0;
+                    }
+                    if (key === 'products' && settings.products) {
+                      return Array.isArray(settings.products) ? settings.products.length : 0;
+                    }
+                    if (key === 'menu-items' && settings.menu_items) {
+                      return Array.isArray(settings.menu_items) ? settings.menu_items.length : 0;
+                    }
+                    return undefined;
+                  };
+
+                  // Get action content for specific subsections
+                  const getActionContent = () => {
+                    // For now, return null - we'll implement this differently
+                    return null;
+                  };
+
+                  return (
+                    <SubsectionDisclosure 
+                      key={subsection.key} 
+                      title={subsection.title}
+                      defaultOpen={false}
+                      storageKey={`${section.key}_${subsection.key}`}
+                      itemCount={getItemCount(subsection.key)}
+                      actionContent={getActionContent()}
+                      action={subsection.key === 'menu-items' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
                             e.stopPropagation();
+                            // Find the menu_items field and trigger add via a custom event
                             const event = new CustomEvent('addMenuItem');
                             window.dispatchEvent(event);
-                          }
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50/80 backdrop-blur-sm border border-sky-200 rounded-lg hover:bg-sky-100/80 hover:border-sky-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
-                      >
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        Add Menu Item
-                      </div>
-                      : undefined
-                    }
-                  >
-                    {renderSectionFields(subsection.fields, section.key, subsection.columns)}
-                  </SubsectionDisclosure>
-                ))}
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addMenuItem');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50/80 backdrop-blur-sm border border-sky-200 rounded-lg hover:bg-sky-100/80 hover:border-sky-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Menu Item
+                        </div>
+                        : subsection.key === 'blog-posts' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Find the blog_posts field and trigger add via a custom event
+                            const event = new CustomEvent('addBlogPost');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addBlogPost');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50/80 backdrop-blur-sm border border-purple-200 rounded-lg hover:bg-purple-100/80 hover:border-purple-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Post
+                        </div>
+                        : subsection.key === 'products' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Find the products field and trigger add via a custom event
+                            const event = new CustomEvent('addProduct');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addProduct');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50/80 backdrop-blur-sm border border-emerald-200 rounded-lg hover:bg-emerald-100/80 hover:border-emerald-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Product
+                        </div>
+                        : undefined
+                      }
+                    >
+                      {renderSectionFields(subsection.fields, section.key, subsection.columns)}
+                    </SubsectionDisclosure>
+                  );
+                })}
               </div>
             ) : section.fields ? (
               renderSectionFields(section.fields, section.key, section.columns)
