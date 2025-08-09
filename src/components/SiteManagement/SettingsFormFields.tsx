@@ -306,6 +306,12 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                     if (key === 'products' && settings.products) {
                       return Array.isArray(settings.products) ? settings.products.length : 0;
                     }
+                    if (key === 'features' && settings.features) {
+                      return Array.isArray(settings.features) ? settings.features.length : 0;
+                    }
+                    if (key === 'faqs' && settings.faqs) {
+                      return Array.isArray(settings.faqs) ? settings.faqs.length : 0;
+                    }
                     if (key === 'menu-items' && settings.menu_items) {
                       return Array.isArray(settings.menu_items) ? settings.menu_items.length : 0;
                     }
@@ -400,6 +406,56 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                           </svg>
                           Add Product
+                        </div>
+                        : subsection.key === 'features' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Find the features field and trigger add via a custom event
+                            const event = new CustomEvent('addFeature');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addFeature');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-50/80 backdrop-blur-sm border border-orange-200 rounded-lg hover:bg-orange-100/80 hover:border-orange-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Feature
+                        </div>
+                        : subsection.key === 'faqs' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Find the faqs field and trigger add via a custom event
+                            const event = new CustomEvent('addFAQ');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addFAQ');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50/80 backdrop-blur-sm border border-purple-200 rounded-lg hover:bg-purple-100/80 hover:border-purple-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add FAQ
                         </div>
                         : undefined
                       }

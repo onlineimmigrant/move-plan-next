@@ -14,6 +14,8 @@ import { ColumnsSelect } from './ColumnsSelect';
 import { MenuItemsSelect } from './MenuItemsSelect';
 import { BlogPostsSelect } from './BlogPostsSelect';
 import { ProductSelect } from './ProductSelect';
+import { FeatureSelect } from './FeatureSelect';
+import { FAQSelect } from './FAQSelect';
 import { Settings, organizationTypes } from './types';
 
 interface SubSectionConfig {
@@ -34,7 +36,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs';
   placeholder?: string;
   span?: 'full' | 'half';
 }
@@ -120,7 +122,15 @@ interface ProductsFieldConfig extends BaseFieldConfig {
   type: 'products';
 }
 
-export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig;
+interface FeaturesFieldConfig extends BaseFieldConfig {
+  type: 'features';
+}
+
+interface FAQsFieldConfig extends BaseFieldConfig {
+  type: 'faqs';
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -421,6 +431,22 @@ export const sectionsConfig: SectionConfig[] = [
         fields: [
           { name: 'products', label: 'Products', type: 'products', span: 'full' }
         ]
+      },
+      {
+        title: 'Features',
+        key: 'features',
+        columns: 1,
+        fields: [
+          { name: 'features', label: 'Features', type: 'features', span: 'full' }
+        ]
+      },
+      {
+        title: 'FAQs',
+        key: 'faqs',
+        columns: 1,
+        fields: [
+          { name: 'faqs', label: 'FAQs', type: 'faqs', span: 'full' }
+        ]
       }
     ]
   }
@@ -656,6 +682,26 @@ export const renderField = ({
     case 'products':
       return (
         <ProductSelect
+          label={field.label}
+          name={field.name}
+          value={Array.isArray(value) ? value : []}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'features':
+      return (
+        <FeatureSelect
+          label={field.label}
+          name={field.name}
+          value={Array.isArray(value) ? value : []}
+          onChange={handleChange}
+        />
+      );
+    
+    case 'faqs':
+      return (
+        <FAQSelect
           label={field.label}
           name={field.name}
           value={Array.isArray(value) ? value : []}

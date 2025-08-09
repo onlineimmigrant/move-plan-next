@@ -129,6 +129,8 @@ export interface Settings {
   // Content Management
   blog_posts?: any[]; // BlogPost[] - keeping as any[] to avoid circular imports
   products?: any[]; // Product[] - keeping as any[] to avoid circular imports
+  features?: any[]; // Feature[] - keeping as any[] to avoid circular imports
+  faqs?: any[]; // FAQ[] - keeping as any[] to avoid circular imports
   
   // Contact Information
   contact_email?: string;

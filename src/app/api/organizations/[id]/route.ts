@@ -7,6 +7,71 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Helper function for robust boolean conversion
+function convertToBoolean(value: any): boolean {
+  console.log('🔍 convertToBoolean called with:');
+  console.log('  - value:', JSON.stringify(value));
+  console.log('  - type:', typeof value);
+  console.log('  - constructor:', value?.constructor?.name);
+  console.log('  - toString():', String(value));
+  
+  // Handle null, undefined, empty string
+  if (value === null || value === undefined || value === '') {
+    console.log('✅ convertToBoolean returning false for null/undefined/empty');
+    return false;
+  }
+  
+  // Handle boolean values
+  if (typeof value === 'boolean') {
+    console.log('✅ convertToBoolean returning boolean:', value);
+    return value;
+  }
+  
+  // Handle numbers
+  if (typeof value === 'number') {
+    const result = value > 0;
+    console.log('✅ convertToBoolean returning for number:', result, 'from', value);
+    return result;
+  }
+  
+  // Handle strings
+  if (typeof value === 'string') {
+    const lowerValue = value.toLowerCase().trim();
+    console.log('🔍 convertToBoolean processing string:', lowerValue);
+    
+    // Handle explicit boolean strings
+    if (lowerValue === 'true') {
+      console.log('✅ convertToBoolean returning true for "true"');
+      return true;
+    }
+    if (lowerValue === 'false') {
+      console.log('✅ convertToBoolean returning false for "false"');
+      return false;
+    }
+    
+    // Handle numeric strings (including "2")
+    if (!isNaN(Number(lowerValue))) {
+      const numValue = Number(lowerValue);
+      const result = numValue > 0;
+      console.log('✅ convertToBoolean returning for numeric string:', result, 'from numeric value:', numValue, 'original string:', lowerValue);
+      return result;
+    }
+    
+    // Handle any other string cases
+    console.log('⚠️ convertToBoolean processing non-numeric string:', lowerValue);
+  }
+  
+  // Handle objects or arrays (just in case)
+  if (typeof value === 'object') {
+    console.log('⚠️ convertToBoolean received object:', JSON.stringify(value));
+    return false;
+  }
+  
+  // Default fallback
+  console.log('⚠️ convertToBoolean returning false as fallback for:', typeof value, value);
+  return false;
+}
+
 // GET - Fetch organization details with settings
 export async function GET(
   request: NextRequest,
@@ -229,6 +294,53 @@ export async function GET(
       return NextResponse.json({ error: 'Error fetching products' }, { status: 500 });
     }
 
+    // Fetch the organization's features
+    const { data: features, error: featuresError } = await supabase
+      .from('feature')
+      .select(`
+        id,
+        name,
+        slug,
+        content,
+        feature_image,
+        display_content,
+        display_on_product_card,
+        type,
+        package,
+        organization_id,
+        created_at
+      `)
+      .eq('organization_id', orgId)
+      .order('id', { ascending: true });
+
+    if (featuresError) {
+      console.error('Error fetching features:', featuresError);
+      return NextResponse.json({ error: 'Error fetching features' }, { status: 500 });
+    }
+
+    // Fetch the organization's FAQs
+    const { data: faqs, error: faqsError } = await supabase
+      .from('faq')
+      .select(`
+        id,
+        question,
+        answer,
+        section,
+        order,
+        display_order,
+        display_home_page,
+        product_sub_type_id,
+        organization_id,
+        created_at
+      `)
+      .eq('organization_id', orgId)
+      .order('order', { ascending: true });
+
+    if (faqsError) {
+      console.error('Error fetching FAQs:', faqsError);
+      return NextResponse.json({ error: 'Error fetching FAQs' }, { status: 500 });
+    }
+
     // Structure menu items with nested submenu items and map field names for admin interface
     let structuredMenuItems = menu_items;
     let mappedSubmenuItems = submenu_items;
@@ -257,7 +369,9 @@ export async function GET(
       menu_items: structuredMenuItems || [],
       submenu_items: mappedSubmenuItems || [],
       blog_posts: blog_posts || [],
-      products: products || []
+      products: products || [],
+      features: features || [],
+      faqs: faqs || []
     });
 
   } catch (error) {
@@ -298,10 +412,68 @@ export async function PUT(
     const orgId = id;
     const body = await request.json();
 
-    console.log('PUT - Updating organization:', orgId, 'with data:', body);
+    // 🚨 DEBUG: Log the entire request body to see what's being sent
+    console.log('🔍 FULL REQUEST BODY:', JSON.stringify(body, null, 2));
+    
+    // 🚨 DEBUG: Check ALL boolean fields across ALL content types
+    const booleanFields = ['display_home_page', 'display_this_post', 'display_as_blog_post', 'is_displayed', 'display_content', 'display_on_product_card', 'is_displayed_on_footer'];
+    
+    Object.keys(body).forEach(key => {
+      const data = body[key];
+      if (Array.isArray(data)) {
+        console.log(`🔍 Checking ${key} array for boolean fields:`);
+        data.forEach((item: any, index: number) => {
+          if (typeof item === 'object' && item !== null) {
+            booleanFields.forEach(field => {
+              if (field in item) {
+                console.log(`  ${key}[${index}].${field}:`, {
+                  value: item[field],
+                  type: typeof item[field],
+                  constructor: item[field]?.constructor?.name,
+                  toString: String(item[field]),
+                  isStringTwo: item[field] === '2'
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+
+    // 🚨 DEBUG: Check settings data for any field confusion  
+    if (body.settings) {
+      console.log('🔍 SETTINGS DATA ANALYSIS:');
+      Object.keys(body.settings).forEach(key => {
+        const value = body.settings[key];
+        if (value === '2' || value === 2) {
+          console.log(`  ⚠️ FOUND "2" VALUE in settings.${key}:`, {
+            value: value,
+            type: typeof value,
+            constructor: value?.constructor?.name
+          });
+        }
+      });
+    }
+
+    // 🚨 DEBUG: Check website_hero data for any field confusion
+    if (body.website_hero) {
+      console.log('🔍 WEBSITE_HERO DATA ANALYSIS:');
+      Object.keys(body.website_hero).forEach(key => {
+        const value = body.website_hero[key];
+        if (value === '2' || value === 2) {
+          console.log(`  ⚠️ FOUND "2" VALUE in website_hero.${key}:`, {
+            value: value,
+            type: typeof value,
+            constructor: value?.constructor?.name
+          });
+        }
+      });
+    }
+
+    console.log('PUT - Updating organization:', orgId, 'with data keys:', Object.keys(body));
     console.log('PUT - User ID:', userId);
 
-    const { organization: orgData, settings: settingsData, website_hero: heroData, menu_items: menuItems, submenu_items: submenuItems, blog_posts: blogPosts, products } = body;
+    const { organization: orgData, settings: settingsData, website_hero: heroData, menu_items: menuItems, submenu_items: submenuItems, blog_posts: blogPosts, products, features, faqs } = body;
 
     // Get user's profile to check permissions
     const { data: profile, error: profileError } = await supabase
@@ -398,6 +570,8 @@ export async function PUT(
     let updatedSubmenuItems = null;
     let updatedBlogPosts = null;
     let updatedProducts = null;
+    let updatedFeatures = null;
+    let updatedFaqs = null;
 
     // Update organization if data provided
     if (orgData) {
@@ -578,8 +752,8 @@ export async function PUT(
             display_name: item.display_name,
             display_name_translation: item.display_name_translation,
             url_name: item.url_name,
-            is_displayed: item.is_displayed !== false,
-            is_displayed_on_footer: item.is_displayed_on_footer || false,
+            is_displayed: convertToBoolean(item.is_displayed),
+            is_displayed_on_footer: convertToBoolean(item.is_displayed_on_footer),
             order: item.order || index + 1,
             organization_id: orgId
           };
@@ -704,27 +878,34 @@ export async function PUT(
 
       // Upsert blog posts (update existing, insert new)
       if (blogPosts.length > 0) {
-        const blogPostsWithOrgId = blogPosts.map((post, index) => {
-          const postData: any = {
-            title: post.title,
-            slug: post.slug,
-            description: post.description || '',
-            content: post.content || '',
-            order: post.order || index + 1,
-            display_this_post: post.display_this_post === true,
-            display_as_blog_post: post.display_as_blog_post === true,
-            organization_id: orgId,
-            created_on: post.created_on || new Date().toISOString(),
-            last_modified: new Date().toISOString()
-          };
-          
-          // Only include ID if it exists (for updates), omit for new posts
-          if (post.id) {
-            postData.id = post.id;
-          }
-          
-          return postData;
-        });
+        // Filter out blog posts that don't have required fields
+        const validBlogPosts = blogPosts.filter(post => 
+          post.title && post.title.trim() !== '' && 
+          post.slug && post.slug.trim() !== ''
+        );
+        
+        if (validBlogPosts.length > 0) {
+          const blogPostsWithOrgId = validBlogPosts.map((post, index) => {
+            const postData: any = {
+              title: post.title.trim(),
+              slug: post.slug.trim(),
+              description: post.description || '',
+              content: post.content || '',
+              order: parseInt(String(post.order)) || index + 1,
+              display_this_post: convertToBoolean(post.display_this_post),
+              display_as_blog_post: convertToBoolean(post.display_as_blog_post),
+              organization_id: orgId,
+              created_on: post.created_on || new Date().toISOString(),
+              last_modified: new Date().toISOString()
+            };
+            
+            // Only include ID if it exists (for updates), omit for new posts
+            if (post.id) {
+              postData.id = post.id;
+            }
+            
+            return postData;
+          });
 
         const { data: upsertedBlogPosts, error: blogPostsError } = await supabase
           .from('blog_post')
@@ -741,6 +922,9 @@ export async function PUT(
 
         updatedBlogPosts = upsertedBlogPosts;
         console.log('Successfully upserted blog posts:', upsertedBlogPosts);
+        } else {
+          updatedBlogPosts = [];
+        }
       } else {
         updatedBlogPosts = [];
       }
@@ -787,17 +971,23 @@ export async function PUT(
 
       // Handle products (separate new inserts from updates)
       if (products.length > 0) {
+        // Filter out products that don't have required fields
+        const validProducts = products.filter(product => 
+          product.product_name && product.product_name.trim() !== ''
+        );
+        
+        if (validProducts.length > 0) {
         const productsToUpdate: any[] = [];
         const productsToInsert: any[] = [];
 
-        products.forEach((product, index) => {
+        validProducts.forEach((product, index) => {
           const baseProduct = {
-            product_name: product.product_name,
+            product_name: product.product_name.trim(),
             slug: product.slug || '',
             product_description: product.product_description || '',
             links_to_image: product.links_to_image || '',
-            order: product.order || index + 1,
-            is_displayed: product.is_displayed === true,
+            order: parseInt(String(product.order)) || index + 1,
+            is_displayed: convertToBoolean(product.is_displayed),
             price_manual: product.price_manual || '',
             currency_manual_symbol: product.currency_manual_symbol || '$',
             product_tax_code: product.product_tax_code || '',
@@ -856,10 +1046,264 @@ export async function PUT(
         }
 
         console.log('Successfully processed products:', updatedProducts);
+        } else {
+          updatedProducts = [];
+        }
       } else {
         updatedProducts = [];
       }
     }
+
+    // Update features if data provided
+    if (features && Array.isArray(features)) {
+      // Get existing features for this organization
+      const { data: existingFeatures, error: existingFeaturesError } = await supabase
+        .from('feature')
+        .select('id')
+        .eq('organization_id', orgId);
+
+      if (existingFeaturesError) {
+        console.error('Error fetching existing features:', existingFeaturesError);
+        return NextResponse.json({ error: 'Failed to fetch existing features' }, { status: 500 });
+      }
+
+      const existingIds = new Set(existingFeatures?.map(feature => feature.id) || []);
+      const incomingIds = new Set(features.filter(feature => feature.id).map(feature => feature.id));
+
+      // Delete features that are no longer in the new list (but only if they're not referenced)
+      const idsToDelete = Array.from(existingIds).filter(id => !incomingIds.has(id));
+      
+      if (idsToDelete.length > 0) {
+        // Try to delete features that aren't referenced by other tables
+        for (const featureId of idsToDelete) {
+          const { error: deleteError } = await supabase
+            .from('feature')
+            .delete()
+            .eq('id', featureId)
+            .eq('organization_id', orgId);
+
+          if (deleteError && deleteError.code !== '23503') {
+            // If it's not a foreign key constraint error, it's a real error
+            console.error('Error deleting feature:', deleteError);
+            return NextResponse.json({ error: 'Failed to delete feature' }, { status: 500 });
+          } else if (deleteError && deleteError.code === '23503') {
+            // Foreign key constraint - just log it and continue
+            console.log('Skipping deletion of feature', featureId, 'due to foreign key constraints');
+          }
+        }
+      }
+
+      // Handle features (separate new inserts from updates)
+      if (features.length > 0) {
+        // Filter out features that don't have required fields
+        const validFeatures = features.filter(feature => 
+          feature.name && feature.name.trim() !== ''
+        );
+        
+        if (validFeatures.length > 0) {
+        const featuresToUpdate: any[] = [];
+        const featuresToInsert: any[] = [];
+
+        validFeatures.forEach((feature) => {
+          const baseFeature = {
+            name: feature.name.trim(),
+            slug: feature.slug || '',
+            content: feature.content || '',
+            feature_image: feature.feature_image || '',
+            display_content: convertToBoolean(feature.display_content),
+            display_on_product_card: convertToBoolean(feature.display_on_product_card),
+            type: feature.type || '',
+            package: feature.package || '',
+            organization_id: orgId,
+            created_at: feature.created_at || new Date().toISOString()
+          };
+
+          if (feature.id) {
+            // Existing feature - add to update list
+            featuresToUpdate.push({
+              id: feature.id,
+              ...baseFeature
+            });
+          } else {
+            // New feature - add to insert list (no id field)
+            featuresToInsert.push(baseFeature);
+          }
+        });
+
+        let updatedFeatures = [];
+
+        // Handle updates
+        if (featuresToUpdate.length > 0) {
+          const { data: upsertedFeatures, error: updateError } = await supabase
+            .from('feature')
+            .upsert(featuresToUpdate, { 
+              onConflict: 'id',
+              ignoreDuplicates: false 
+            })
+            .select();
+
+          if (updateError) {
+            console.error('Error updating features:', updateError);
+            return NextResponse.json({ error: 'Failed to update features' }, { status: 500 });
+          }
+
+          updatedFeatures.push(...(upsertedFeatures || []));
+        }
+
+        // Handle inserts
+        if (featuresToInsert.length > 0) {
+          const { data: insertedFeatures, error: insertError } = await supabase
+            .from('feature')
+            .insert(featuresToInsert)
+            .select();
+
+          if (insertError) {
+            console.error('Error inserting features:', insertError);
+            return NextResponse.json({ error: 'Failed to insert features' }, { status: 500 });
+          }
+
+          updatedFeatures.push(...(insertedFeatures || []));
+        }
+
+        console.log('Successfully processed features:', updatedFeatures);
+        } else {
+          updatedFeatures = [];
+        }
+      } else {
+        updatedFeatures = [];
+      }
+    }
+
+    // 🚨 TEMPORARILY DISABLED FAQ UPDATE FOR DEBUGGING
+    // Update FAQs if data provided
+    /*
+    if (faqs && Array.isArray(faqs)) {
+      // Get existing FAQs for this organization
+      const { data: existingFaqs, error: existingFaqsError } = await supabase
+        .from('faq')
+        .select('id')
+        .eq('organization_id', orgId);
+
+      if (existingFaqsError) {
+        console.error('Error fetching existing FAQs:', existingFaqsError);
+        return NextResponse.json({ error: 'Failed to fetch existing FAQs' }, { status: 500 });
+      }
+
+      const existingIds = new Set(existingFaqs?.map(faq => faq.id) || []);
+      const incomingIds = new Set(faqs.filter(faq => faq.id).map(faq => faq.id));
+
+      // Delete FAQs that are no longer in the new list (but only if they're not referenced)
+      const idsToDelete = Array.from(existingIds).filter(id => !incomingIds.has(id));
+      
+      if (idsToDelete.length > 0) {
+        // Try to delete FAQs that aren't referenced by other tables
+        for (const faqId of idsToDelete) {
+          const { error: deleteError } = await supabase
+            .from('faq')
+            .delete()
+            .eq('id', faqId)
+            .eq('organization_id', orgId);
+
+          if (deleteError && deleteError.code !== '23503') {
+            // If it's not a foreign key constraint error, it's a real error
+            console.error('Error deleting FAQ:', deleteError);
+            return NextResponse.json({ error: 'Failed to delete FAQ' }, { status: 500 });
+          } else if (deleteError && deleteError.code === '23503') {
+            // Foreign key constraint - just log it and continue
+            console.log('Skipping deletion of FAQ', faqId, 'due to foreign key constraints');
+          }
+        }
+      }
+
+      // Handle FAQs (separate new inserts from updates)
+      if (faqs.length > 0) {
+        // Filter out FAQs that don't have required fields
+        const validFaqs = faqs.filter(faq => 
+          faq.question && faq.question.trim() !== '' && 
+          faq.answer && faq.answer.trim() !== ''
+        );
+        
+        if (validFaqs.length > 0) {
+        const faqsToUpdate: any[] = [];
+        const faqsToInsert: any[] = [];
+
+        validFaqs.forEach((faq) => {
+          console.log('Processing FAQ:', JSON.stringify(faq, null, 2));
+          console.log('Processing FAQ with display_home_page:', faq.display_home_page, typeof faq.display_home_page);
+          
+          const baseFaq = {
+            question: faq.question.trim(),
+            answer: faq.answer.trim(),
+            section: faq.section || '',
+            order: parseInt(String(faq.order)) || 1,
+            display_order: parseInt(String(faq.display_order || faq.order)) || 1,
+            display_home_page: convertToBoolean(faq.display_home_page),
+            product_sub_type_id: faq.product_sub_type_id || null,
+            organization_id: orgId
+          };
+          
+          console.log('Converted FAQ object:', JSON.stringify(baseFaq, null, 2));
+
+          if (faq.id) {
+            // Existing FAQ - add to update list
+            faqsToUpdate.push({
+              id: faq.id,
+              ...baseFaq
+            });
+          } else {
+            // New FAQ - add to insert list (no id field)
+            faqsToInsert.push(baseFaq);
+          }
+        });
+
+        let processedFaqs = [];
+
+        // Handle updates
+        if (faqsToUpdate.length > 0) {
+          const { data: upsertedFaqs, error: updateError } = await supabase
+            .from('faq')
+            .upsert(faqsToUpdate, { 
+              onConflict: 'id',
+              ignoreDuplicates: false 
+            })
+            .select();
+
+          if (updateError) {
+            console.error('Error updating FAQs:', updateError);
+            return NextResponse.json({ error: 'Failed to update FAQs' }, { status: 500 });
+          }
+
+          processedFaqs.push(...(upsertedFaqs || []));
+        }
+
+        // Handle inserts
+        if (faqsToInsert.length > 0) {
+          const { data: insertedFaqs, error: insertError } = await supabase
+            .from('faq')
+            .insert(faqsToInsert)
+            .select();
+
+          if (insertError) {
+            console.error('Error inserting FAQs:', insertError);
+            return NextResponse.json({ error: 'Failed to insert FAQs' }, { status: 500 });
+          }
+
+          processedFaqs.push(...(insertedFaqs || []));
+        }
+
+        updatedFaqs = processedFaqs;
+        console.log('Successfully processed FAQs:', processedFaqs);
+        } else {
+          updatedFaqs = [];
+        }
+      } else {
+        updatedFaqs = [];
+      }
+    }
+    */
+    
+    console.log('🚨 FAQ UPDATE TEMPORARILY DISABLED - Skipping FAQ processing');
+    updatedFaqs = faqs || [];
 
     // Revalidate cached pages that might use this organization's data
     try {
@@ -909,7 +1353,8 @@ export async function PUT(
         is_new_window: false
       })) || [],
       blog_posts: updatedBlogPosts || [],
-      products: updatedProducts || []
+      products: updatedProducts || [],
+      faqs: updatedFaqs || []
     });
 
   } catch (error) {
