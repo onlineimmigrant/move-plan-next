@@ -361,7 +361,13 @@ export default function SiteManagement() {
           blog_posts: data.blog_posts || [],
           
           // Products from database
-          products: data.products || []
+          products: data.products || [],
+          
+          // Features from database
+          features: data.features || [],
+          
+          // FAQs from database
+          faqs: data.faqs || []
         }
       };      console.log('Processed organization with settings:', orgWithSettings); // Debug log
       setSelectedOrganization(orgWithSettings);
@@ -429,6 +435,8 @@ export default function SiteManagement() {
         submenu_items,
         blog_posts,
         products,
+        features,
+        faqs,
         ...pureSettings 
       } = settings;
 
@@ -486,7 +494,11 @@ export default function SiteManagement() {
         // Send blog posts separately so the API can handle it for blog_post table
         blog_posts: blog_posts || [],
         // Send products separately so the API can handle it for product table
-        products: products || []
+        products: products || [],
+        // Send features separately so the API can handle it for feature table
+        features: features || [],
+        // Send FAQs separately so the API can handle it for faq table
+        faqs: faqs || []
       };
 
       console.log('Request body:', requestBody); // Debug log
@@ -630,7 +642,13 @@ export default function SiteManagement() {
             blog_posts: refreshData.blog_posts || [],
             
             // Products from database
-            products: refreshData.products || []
+            products: refreshData.products || [],
+            
+            // Features from database
+            features: refreshData.features || [],
+            
+            // FAQs from database
+            faqs: refreshData.faqs || []
           }
         };
 
@@ -810,6 +828,82 @@ export default function SiteManagement() {
         clearTimeout(productSaveTimeoutId);
       }
       window.removeEventListener('autoSaveProductChanges', handleAutoSaveProductChanges);
+    };
+  }, [selectedOrganization, session, handleSaveSettings]);
+
+  // Auto-save listener for feature changes
+  useEffect(() => {
+    let featureSaveTimeoutId: NodeJS.Timeout | null = null;
+    let faqSaveTimeoutId: NodeJS.Timeout | null = null;
+    
+    const handleAutoSaveFeatureChanges = async (event: Event) => {
+      if (!selectedOrganization || !session?.access_token) return;
+      
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Auto-save triggered for feature changes:', customEvent.detail);
+      
+      // Clear any existing timeout to debounce rapid changes
+      if (featureSaveTimeoutId) {
+        clearTimeout(featureSaveTimeoutId);
+      }
+      
+      // Set a new timeout to batch rapid operations
+      featureSaveTimeoutId = setTimeout(async () => {
+        try {
+          // Get the current settings from the modal via a global variable
+          const settingsData = (window as any).__currentEditSettings;
+          if (settingsData) {
+            console.log('💾 Auto-saving settings with updated feature data...');
+            await handleSaveSettings(settingsData);
+            console.log('✅ Feature auto-save completed successfully');
+          }
+        } catch (error) {
+          console.warn('⚠️ Feature auto-save failed, changes remain in local state:', error);
+          // Auto-save failures shouldn't interrupt the user experience
+        }
+      }, 300); // 300ms debounce to batch rapid changes
+    };
+
+    const handleAutoSaveFAQChanges = async (event: Event) => {
+      if (!selectedOrganization || !session?.access_token) return;
+      
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Auto-save triggered for FAQ changes:', customEvent.detail);
+      
+      // Clear any existing timeout to debounce rapid changes
+      if (faqSaveTimeoutId) {
+        clearTimeout(faqSaveTimeoutId);
+      }
+      
+      // Set a new timeout to batch rapid operations
+      faqSaveTimeoutId = setTimeout(async () => {
+        try {
+          // Get the current settings from the modal via a global variable
+          const settingsData = (window as any).__currentEditSettings;
+          if (settingsData) {
+            console.log('💾 Auto-saving settings with updated FAQ data...');
+            await handleSaveSettings(settingsData);
+            console.log('✅ FAQ auto-save completed successfully');
+          }
+        } catch (error) {
+          console.warn('⚠️ FAQ auto-save failed, changes remain in local state:', error);
+          // Auto-save failures shouldn't interrupt the user experience
+        }
+      }, 300); // 300ms debounce to batch rapid changes
+    };
+
+    window.addEventListener('autoSaveFeatureChanges', handleAutoSaveFeatureChanges);
+    window.addEventListener('autoSaveFAQChanges', handleAutoSaveFAQChanges);
+    
+    return () => {
+      if (featureSaveTimeoutId) {
+        clearTimeout(featureSaveTimeoutId);
+      }
+      if (faqSaveTimeoutId) {
+        clearTimeout(faqSaveTimeoutId);
+      }
+      window.removeEventListener('autoSaveFeatureChanges', handleAutoSaveFeatureChanges);
+      window.removeEventListener('autoSaveFAQChanges', handleAutoSaveFAQChanges);
     };
   }, [selectedOrganization, session, handleSaveSettings]);
 
