@@ -320,6 +320,7 @@ export const FAQSelect: React.FC<FAQSelectProps> = ({
   const [displayCount, setDisplayCount] = useState(10);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [faqToDelete, setFAQToDelete] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Helper function to update edit form
   const updateEditForm = useCallback((field: keyof Partial<FAQ>, value: any) => {
@@ -503,9 +504,24 @@ export const FAQSelect: React.FC<FAQSelectProps> = ({
     console.log('🚀 Auto-save event dispatched for FAQ visibility toggle');
   };
 
+  // Filter FAQs based on search query
+  const filteredFAQs = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return value;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return value.filter(faq => {
+      const question = faq.question?.toLowerCase() || '';
+      const answer = faq.answer?.toLowerCase() || '';
+      
+      return question.includes(query) || answer.includes(query);
+    });
+  }, [value, searchQuery]);
+
   const sortedFAQs = useMemo(() => {
-    return [...value].sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [value]);
+    return [...filteredFAQs].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [filteredFAQs]);
 
   const displayedFAQs = sortedFAQs.slice(0, displayCount);
   const hasMoreFAQs = sortedFAQs.length > displayCount;
@@ -614,6 +630,47 @@ export const FAQSelect: React.FC<FAQSelectProps> = ({
         </div>
       )}
 
+      {/* Search Input - Only show when there are FAQs */}
+      {value && value.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm p-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setDisplayCount(10); // Reset display count when searching
+              }}
+              placeholder="Search FAQs by question or answer..."
+              className="w-full px-4 py-3 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white/90"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setDisplayCount(10);
+                }}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-xs text-gray-600">
+              Found {filteredFAQs.length} FAQ{filteredFAQs.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="space-y-3">
         <DndContext 
           sensors={sensors}
@@ -657,17 +714,38 @@ export const FAQSelect: React.FC<FAQSelectProps> = ({
           </div>
         )}
 
-        {value.length === 0 && (
+        {/* Empty State Handling */}
+        {displayedFAQs.length === 0 && (
           <div className="text-center py-12 text-gray-500">
-            <div className="max-w-sm mx-auto">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PlusIcon className="h-8 w-8 text-gray-400" />
+            {searchQuery ? (
+              <div>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">No FAQs found</h3>
+                <p className="text-xs text-gray-500 mb-3">
+                  No FAQs match "{searchQuery}". Try a different search term.
+                </p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-blue-600 hover:text-blue-800 underline text-sm"
+                >
+                  Clear search
+                </button>
               </div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">No FAQs yet</h3>
-              <p className="text-xs text-gray-500">
-                Use "Add FAQ" in the section header to create your first FAQ.
-              </p>
-            </div>
+            ) : value.length === 0 ? (
+              <div className="max-w-sm mx-auto">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <PlusIcon className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">No FAQs yet</h3>
+                <p className="text-xs text-gray-500">
+                  Use "Add FAQ" in the section header to create your first FAQ.
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

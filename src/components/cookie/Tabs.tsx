@@ -25,13 +25,13 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
 
   return (
     <TabGroup>
-      <TabList className="flex space-x-2 rounded-lg bg-gray-50 p-2 shadow-sm">
+      <TabList className="flex space-x-1 rounded-2xl bg-gray-100/60 backdrop-blur-sm p-1.5 shadow-sm border border-gray-200/50">
         <Tab
           className={({ selected }) =>
-            `cursor-pointer w-full py-1.5 px-6 text-sm font-medium rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
+            `cursor-pointer w-full py-3 px-6 text-[14px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 focus:ring-offset-transparent antialiased ${
               selected
-                ? 'bg-white text-sky-600 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-sky-700'
+                ? 'bg-white text-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
+                : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
             }`
           }
         >
@@ -39,10 +39,10 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
         </Tab>
         <Tab
           className={({ selected }) =>
-            `cursor-pointer w-full py-1.5 px-6 text-sm font-medium rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
+            `cursor-pointer w-full py-3 px-6 text-[14px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 focus:ring-offset-transparent antialiased ${
               selected
-                ? 'bg-white text-sky-600 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-sky-700'
+                ? 'bg-white text-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
+                : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
             }`
           }
         >
@@ -50,8 +50,8 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
         </Tab>
       </TabList>
 
-      <TabPanels className="py-4">
-        <TabPanel>
+      <TabPanels className="py-6">
+        <TabPanel className="space-y-4">
           {categories.map((category) => (
             <Category
               key={category.id}
@@ -63,7 +63,7 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
           ))}
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel className="space-y-4">
           {categories
             .flatMap((category) =>
               category.cookie_service.map((service) => ({

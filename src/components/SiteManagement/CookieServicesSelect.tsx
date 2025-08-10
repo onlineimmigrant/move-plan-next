@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, Bars3Icon, EyeIcon, EyeSlashIcon, ExclamationTriangleIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { createPortal } from 'react-dom';
 import Tooltip from '../Tooltip';
@@ -520,6 +520,7 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
   const [displayCount, setDisplayCount] = useState(10);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -751,7 +752,23 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
     setDisplayCount(prev => prev + 10);
   };
 
-  const sortedServices = value.sort((a, b) => (a.order || 0) - (b.order || 0));
+  // Filter services based on search query
+  const filteredServices = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return value;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return value.filter(service => {
+      const name = service.name?.toLowerCase() || '';
+      const description = service.description?.toLowerCase() || '';
+      const processingCompany = service.processing_company?.toLowerCase() || '';
+      
+      return name.includes(query) || description.includes(query) || processingCompany.includes(query);
+    });
+  }, [value, searchQuery]);
+
+  const sortedServices = filteredServices.sort((a, b) => (a.order || 0) - (b.order || 0));
   const displayedServices = sortedServices.slice(0, displayCount);
   const hasMoreServices = sortedServices.length > displayCount;
 
@@ -892,6 +909,47 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
         </div>
       )}
 
+      {/* Search Input - Only show when there are services */}
+      {value && value.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm p-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setDisplayCount(10); // Reset display count when searching
+              }}
+              placeholder="Search cookie services by name, description, or company..."
+              className="w-full px-4 py-3 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 bg-white/90"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setDisplayCount(10);
+                }}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-xs text-gray-600">
+              Found {filteredServices.length} service{filteredServices.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Services List */}
       <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6">
         {sortedServices && sortedServices.length > 0 ? (
@@ -928,22 +986,42 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
           </DndContext>
         ) : (
           <div className="text-center py-12">
-            <div className="max-w-sm mx-auto">
-              <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-                <PlusIcon className="h-8 w-8 text-sky-600" />
+            {searchQuery ? (
+              <div>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">No services found</h3>
+                <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                  No cookie services match "{searchQuery}". Try a different search term.
+                </p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-emerald-600 hover:text-emerald-800 underline text-sm"
+                >
+                  Clear search
+                </button>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">No Cookie Services Found</h3>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                No cookie services are configured for this organization yet.
-              </p>
-              <button
-                onClick={handleAdd}
-                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-sky-700 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200/60 rounded-lg hover:from-sky-100 hover:to-blue-100 hover:shadow-sm transition-all duration-200"
-              >
-                <PlusIcon className="h-4 w-4" />
-                Create First Service
-              </button>
-            </div>
+            ) : (
+              <div className="max-w-sm mx-auto">
+                <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                  <PlusIcon className="h-8 w-8 text-sky-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">No Cookie Services Found</h3>
+                <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                  No cookie services are configured for this organization yet.
+                </p>
+                <button
+                  onClick={handleAdd}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-sky-700 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200/60 rounded-lg hover:from-sky-100 hover:to-blue-100 hover:shadow-sm transition-all duration-200"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Create First Service
+                </button>
+              </div>
+            )}
           </div>
         )}
 

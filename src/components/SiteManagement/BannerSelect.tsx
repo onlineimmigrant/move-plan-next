@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Banner, BannerPosition, BannerContent, BannerOpenState } from '../banners/types';
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
@@ -42,6 +42,7 @@ export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], on
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [newBanner, setNewBanner] = useState<Partial<Banner>>({
     position: 'top',
     type: 'permanent',
@@ -653,6 +654,22 @@ export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], on
     </>
   );
 
+  // Filter banners based on search query
+  const filteredBanners = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return value;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return value.filter(banner => {
+      const text = banner.content?.text?.toLowerCase() || '';
+      const linkLabel = banner.content?.link?.label?.toLowerCase() || '';
+      const customContent = banner.content?.customContent?.toLowerCase() || '';
+      
+      return text.includes(query) || linkLabel.includes(query) || customContent.includes(query);
+    });
+  }, [value, searchQuery]);
+
   return (
     <div className="space-y-4">
       {/* Add Form - Only for adding new banners - Positioned at top */}
@@ -671,10 +688,45 @@ export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], on
         </div>
       )}
 
+      {/* Search Input - Only show when there are banners */}
+      {value && value.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm p-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search banners by text content or link..."
+              className="w-full px-4 py-3 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white/90"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-xs text-gray-600">
+              Found {filteredBanners.length} banner{filteredBanners.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Banners List */}
       <div className="space-y-2 max-h-[48rem] overflow-y-auto">
-        {value && value.length > 0 ? (
-          value.map((banner, index) => (
+        {filteredBanners && filteredBanners.length > 0 ? (
+          filteredBanners.map((banner, index) => (
             <div key={banner.id || index}>
               {/* Main Banner Item */}
               <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
@@ -751,24 +803,44 @@ export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], on
           ))
         ) : (
           /* Empty State */
-          !showAddForm && (
-            <div className="text-center py-8 px-4 bg-gray-50/50 rounded-lg border-2 border-dashed border-gray-300">
-            <div className="text-gray-400 mb-3">
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v1a1 1 0 01-1 1h-1v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7H3a1 1 0 01-1-1V5a1 1 0 011-1h4zM9 3v1h6V3H9zM5 7v11a1 1 0 001 1h12a1 1 0 001-1V7H5z" />
-              </svg>
-            </div>
-            <h3 className="text-sm font-medium text-gray-900 mb-1">No banners configured</h3>
-            <p className="text-xs text-gray-500 mb-4">Get started by adding your first banner</p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-cyan-600 bg-cyan-50/80 backdrop-blur-sm border border-cyan-200 rounded-lg hover:bg-cyan-100/80 hover:border-cyan-300 transition-all duration-200 shadow-sm"
-            >
-              <PlusIcon className="h-3.5 w-3.5" />
-              Add First Banner
-            </button>
+          <div className="text-center py-8 px-4 bg-gray-50/50 rounded-lg border-2 border-dashed border-gray-300">
+            {searchQuery ? (
+              <div>
+                <div className="text-gray-400 mb-3">
+                  <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-1">No banners found</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  No banners match "{searchQuery}". Try a different search term.
+                </p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-indigo-600 hover:text-indigo-800 underline text-sm"
+                >
+                  Clear search
+                </button>
+              </div>
+            ) : !showAddForm ? (
+              <div>
+                <div className="text-gray-400 mb-3">
+                  <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v1a1 1 0 01-1 1h-1v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7H3a1 1 0 01-1-1V5a1 1 0 011-1h4zM9 3v1h6V3H9zM5 7v11a1 1 0 001 1h12a1 1 0 001-1V7H5z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-1">No banners configured</h3>
+                <p className="text-xs text-gray-500 mb-4">Get started by adding your first banner</p>
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-cyan-600 bg-cyan-50/80 backdrop-blur-sm border border-cyan-200 rounded-lg hover:bg-cyan-100/80 hover:border-cyan-300 transition-all duration-200 shadow-sm"
+                >
+                  <PlusIcon className="h-3.5 w-3.5" />
+                  Add First Banner
+                </button>
+              </div>
+            ) : null}
           </div>
-          )
         )}
       </div>
     </div>
