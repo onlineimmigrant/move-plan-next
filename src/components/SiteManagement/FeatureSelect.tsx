@@ -394,6 +394,7 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
   const [displayCount, setDisplayCount] = useState(10);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [featureToDelete, setFeatureToDelete] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Helper function to truncate text
   const truncateText = (text: string, maxLength: number) => {
@@ -599,10 +600,25 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
     }
   };
 
+  // Filter features based on search query
+  const filteredFeatures = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return value;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return value.filter(feature => {
+      const name = feature.name?.toLowerCase() || '';
+      const content = feature.content?.toLowerCase() || '';
+      
+      return name.includes(query) || content.includes(query);
+    });
+  }, [value, searchQuery]);
+
   // Sort features by order
   const sortedFeatures = useMemo(() => {
-    return [...value].sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [value]);
+    return [...filteredFeatures].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [filteredFeatures]);
 
   const displayedFeatures = sortedFeatures.slice(0, displayCount);
   const hasMoreFeatures = sortedFeatures.length > displayCount;
@@ -765,6 +781,47 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
         </div>
       )}
 
+      {/* Search Input - Only show when there are features */}
+      {value && value.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm p-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setDisplayCount(10); // Reset display count when searching
+              }}
+              placeholder="Search features by name or description..."
+              className="w-full px-4 py-3 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 bg-white/90"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setDisplayCount(10);
+                }}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-xs text-gray-600">
+              Found {filteredFeatures.length} feature{filteredFeatures.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="space-y-3">
         <DndContext 
           sensors={sensors}
@@ -809,17 +866,38 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
           </div>
         )}
 
-        {value.length === 0 && (
+        {/* Empty State Handling */}
+        {displayedFeatures.length === 0 && (
           <div className="text-center py-12 text-gray-500">
-            <div className="max-w-sm mx-auto">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PlusIcon className="h-8 w-8 text-gray-400" />
+            {searchQuery ? (
+              <div>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">No features found</h3>
+                <p className="text-xs text-gray-500 mb-3">
+                  No features match "{searchQuery}". Try a different search term.
+                </p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-orange-600 hover:text-orange-800 underline text-sm"
+                >
+                  Clear search
+                </button>
               </div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">No features yet</h3>
-              <p className="text-xs text-gray-500">
-                Use "Add Feature" in the section header to create your first feature.
-              </p>
-            </div>
+            ) : value.length === 0 ? (
+              <div className="max-w-sm mx-auto">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <PlusIcon className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">No features yet</h3>
+                <p className="text-xs text-gray-500">
+                  Use "Add Feature" in the section header to create your first feature.
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

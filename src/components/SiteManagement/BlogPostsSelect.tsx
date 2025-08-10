@@ -365,6 +365,7 @@ export const BlogPostsSelect: React.FC<BlogPostsSelectProps> = ({
   const [displayCount, setDisplayCount] = useState(10);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [postToDelete, setPostToDelete] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Helper function to truncate text
   const truncateText = (text: string, maxLength: number) => {
@@ -531,7 +532,22 @@ export const BlogPostsSelect: React.FC<BlogPostsSelectProps> = ({
     setDisplayCount(prev => prev + 10);
   };
 
-  const sortedPosts = value.sort((a, b) => (a.order || 0) - (b.order || 0));
+  // Filter blog posts based on search query
+  const filteredPosts = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return value;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return value.filter(post => {
+      const title = post.title?.toLowerCase() || '';
+      const description = post.description?.toLowerCase() || '';
+      
+      return title.includes(query) || description.includes(query);
+    });
+  }, [value, searchQuery]);
+
+  const sortedPosts = filteredPosts.sort((a, b) => (a.order || 0) - (b.order || 0));
   const displayedPosts = sortedPosts.slice(0, displayCount);
   const hasMorePosts = sortedPosts.length > displayCount;
 
@@ -650,6 +666,47 @@ export const BlogPostsSelect: React.FC<BlogPostsSelectProps> = ({
         </div>
       )}
 
+      {/* Search Input - Only show when there are blog posts */}
+      {value && value.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm p-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setDisplayCount(10); // Reset display count when searching
+              }}
+              placeholder="Search blog posts by title or description..."
+              className="w-full px-4 py-3 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 bg-white/90"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setDisplayCount(10);
+                }}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-xs text-gray-600">
+              Found {filteredPosts.length} blog post{filteredPosts.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Blog Posts List */}
       <div className="space-y-2 max-h-[48rem] overflow-y-auto">
         <DndContext 
@@ -694,17 +751,38 @@ export const BlogPostsSelect: React.FC<BlogPostsSelectProps> = ({
           </div>
         )}
 
-        {value.length === 0 && (
+        {/* Empty State Handling */}
+        {displayedPosts.length === 0 && (
           <div className="text-center py-12 text-gray-500">
-            <div className="max-w-sm mx-auto">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PlusIcon className="h-8 w-8 text-gray-400" />
+            {searchQuery ? (
+              <div>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">No blog posts found</h3>
+                <p className="text-xs text-gray-500 mb-3">
+                  No blog posts match "{searchQuery}". Try a different search term.
+                </p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-purple-600 hover:text-purple-800 underline text-sm"
+                >
+                  Clear search
+                </button>
               </div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">No blog posts yet</h3>
-              <p className="text-xs text-gray-500">
-                Use "Add Post" in the section header to create your first blog post.
-              </p>
-            </div>
+            ) : value.length === 0 ? (
+              <div className="max-w-sm mx-auto">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <PlusIcon className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">No blog posts yet</h3>
+                <p className="text-xs text-gray-500">
+                  Use "Add Post" in the section header to create your first blog post.
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

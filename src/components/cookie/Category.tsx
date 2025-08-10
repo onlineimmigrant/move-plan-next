@@ -52,47 +52,55 @@ const Category: React.FC<CategoryProps> = ({
   };
 
   return (
-    <div className="border-b border-gray-100 py-4">
+    <div className="bg-white/50 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden">
       <div
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
         role="button"
         tabIndex={0}
-        className="flex items-center justify-between px-6 py-3 text-sky-600 hover:text-sky-700 hover:bg-gray-50 w-full rounded-md transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+        className="flex items-center justify-between px-6 py-4 text-gray-700 hover:text-gray-900 hover:bg-white/60 w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 focus:ring-offset-transparent group"
       >
         <div className="flex items-center space-x-4">
           <Switch
             checked={isChecked}
             onChange={handleToggle}
             disabled={isEssential}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-2 focus:ring-offset-transparent ${
               isEssential
-                ? 'bg-gray-300 cursor-not-allowed'
+                ? 'bg-gray-300/80 cursor-not-allowed'
                 : isChecked
-                ? 'bg-sky-500'
-                : 'bg-gray-300'
+                ? 'bg-gray-700 shadow-inner'
+                : 'bg-gray-300/80'
             }`}
           >
             <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${
+              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm ${
                 isChecked ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </Switch>
-          <h3 className="text-sm font-semibold text-gray-800">{category.name}</h3>
+          <h3 className="text-[15px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{category.name}</h3>
         </div>
-        <span className="text-xl font-semibold text-gray-800">{isOpen ? '−' : '+'}</span>
+        <div className={`text-gray-500 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-gray-700 ${isOpen ? 'rotate-45' : 'rotate-0'}`}>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </div>
       </div>
       {isOpen && (
-        <div className="mt-3 px-6 py-2 text-xs font-light tracking-wide text-gray-500">
-          <p>
-            <span className="font-medium text-gray-700">{t.description}</span>{' '}
-            {category.description || t.noDescription}
-          </p>
-          <p className="mt-2">
-            <span className="font-medium text-gray-700">{t.services}</span>{' '}
-            {category.cookie_service.map((service) => service.name).join(', ') || t.none}
-          </p>
+        <div className="px-6 pb-5 pt-1 bg-gray-50/50 backdrop-blur-sm border-t border-gray-200/40">
+          <div className="space-y-3 text-[13px] leading-relaxed text-gray-600 antialiased">
+            <p>
+              <span className="font-medium text-gray-800">{t.description}:</span>{' '}
+              <span className="text-gray-600">{category.description || t.noDescription}</span>
+            </p>
+            <p>
+              <span className="font-medium text-gray-800">{t.services}:</span>{' '}
+              <span className="text-gray-600">
+                {category.cookie_service.map((service) => service.name).join(', ') || t.none}
+              </span>
+            </p>
+          </div>
         </div>
       )}
     </div>
