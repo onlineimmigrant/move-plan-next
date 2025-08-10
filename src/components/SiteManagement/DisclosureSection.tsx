@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import Button from '@/ui/Button';
 
 interface DisclosureSectionProps {
   title: string;
@@ -76,7 +77,7 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
         className={`flex w-full items-center justify-between p-4 text-left transition-all duration-300 rounded-t-xl ${
           isOpen 
             ? 'bg-gradient-to-r from-sky-200/40 to-blue-50/20' 
-            : 'hover:bg-gray-50/40'
+            : 'hover:bg-gray-50/40 bg-gray-100/50'
         }`}
       >
         <div className="flex items-center space-x-3">
@@ -116,21 +117,21 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
             <div>{children}</div>
           </div>
           {hasChanges && (
-            <div className="flex justify-end gap-3 px-4 pb-4 border-t border-gray-200/60 bg-gray-50/30">
-              <button
+            <div className="flex justify-end gap-3 px-4 py-4 border-t border-gray-200/60 bg-gray-50/30">
+              <Button
+                variant='outline'
                 type="button"
                 onClick={onCancel}
-                className="inline-flex justify-center rounded-lg border border-gray-300/60 bg-white/80 px-4 py-2 text-xs font-light text-gray-600 shadow-sm hover:bg-gray-50/80 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 backdrop-blur-sm"
-              >
+                             >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant='primary'
                 type="button"
                 onClick={onSave}
-                className="inline-flex justify-center rounded-lg border border-transparent bg-sky-500 px-4 py-2 text-xs font-light text-white shadow-sm hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200"
-              >
+                    >
                 Save Section
-              </button>
+              </Button>
             </div>
           )}
         </div>

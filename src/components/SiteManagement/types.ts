@@ -131,6 +131,7 @@ export interface Settings {
   products?: any[]; // Product[] - keeping as any[] to avoid circular imports
   features?: any[]; // Feature[] - keeping as any[] to avoid circular imports
   faqs?: any[]; // FAQ[] - keeping as any[] to avoid circular imports
+  banners?: any[]; // Banner[] - keeping as any[] to avoid circular imports
   
   // Contact Information
   contact_email?: string;
