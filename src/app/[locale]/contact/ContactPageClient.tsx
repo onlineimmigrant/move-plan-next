@@ -13,7 +13,7 @@ const ContactPageClient = memo(() => {
   const logoImage = settings.image;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-50/50">
+    <div className="mt-8  bg-gradient-to-br from-sky-50 via-white to-sky-50/50">
       <div className="container mx-auto px-4 py-8 sm:py-12">
         {/* Header Section */}
         <div className="text-center mb-12">
