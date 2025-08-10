@@ -41,20 +41,27 @@ const LanguageSwitcherHorizontal: React.FC<LanguageSwitcherHorizontalProps> = ({
   }
 
   return (
-    <div className="flex justify-center space-x-2">
-      {languages.map((language) => (
-        <button
-          key={language.language_code}
-          onClick={() => changeLanguage(language)}
-          className={`px-0.5 py-0.5 font-light text-xs ${
-            language.language_code === selectedLanguage?.language_code
-              ? 'bg-gray-700 text-white'
-              : 'bg-transparent text-gray-700'
-          } hover:bg-gray-200 hover:text-white rounded-sm`}
-        >
-          {language.language_code.toUpperCase()}
-        </button>
-      ))}
+    <div className="flex justify-center">
+      <div className="flex space-x-1 p-1.5 bg-gray-100/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
+        {languages.map((language) => (
+          <button
+            key={language.language_code}
+            onClick={() => changeLanguage(language)}
+            className={`relative px-4 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 focus:ring-offset-transparent antialiased ${
+              language.language_code === selectedLanguage?.language_code
+                ? 'bg-white text-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
+                : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
+            }`}
+          >
+            <span className="relative z-10 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
+              {language.language_code.toUpperCase()}
+            </span>
+            {language.language_code === selectedLanguage?.language_code && (
+              <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent rounded-xl pointer-events-none"></div>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

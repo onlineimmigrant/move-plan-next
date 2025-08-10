@@ -52,18 +52,36 @@ export default function LanguageSwitcher() {
 
   return (
     <div className="relative inline-block text-left">
-      <select 
-        value={currentLocale}
-        onChange={(e) => handleLanguageChange(e.target.value as Locale)}
-        className="bg-gray-700 border border-neutral-600 rounded-md px-3 py-1 text-xs text-neutral-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400 focus:ring-offset-neutral-900"
-        aria-label="Select language"
-      >
-        {supportedLocales.map((locale: string) => (
-          <option key={locale} value={locale} className="bg-neutral-800 text-neutral-300">
-            {getLanguageName(locale)} {locale === defaultLanguage && '(Default)'}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select 
+          value={currentLocale}
+          onChange={(e) => handleLanguageChange(e.target.value as Locale)}
+          className="appearance-none bg-white/90 backdrop-blur-3xl border border-black/8 rounded-2xl px-4 py-2.5 pr-10 text-[13px] font-medium text-gray-700 hover:bg-white hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm hover:shadow-md antialiased cursor-pointer"
+          style={{
+            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          }}
+          aria-label="Select language"
+        >
+          {supportedLocales.map((locale: string) => (
+            <option key={locale} value={locale} className="bg-white text-gray-700 font-medium">
+              {getLanguageName(locale)} {locale === defaultLanguage && '(Default)'}
+            </option>
+          ))}
+        </select>
+        
+        {/* Custom dropdown arrow */}
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg 
+            className="w-4 h-4 text-gray-500 group-hover:text-gray-700 transition-colors duration-300" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }
