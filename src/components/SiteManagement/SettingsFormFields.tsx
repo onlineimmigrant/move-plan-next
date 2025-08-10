@@ -31,6 +31,12 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   const [sectionStates, setSectionStates] = useState<Record<string, boolean>>({});
   const [lastActiveSections, setLastActiveSections] = useState<Set<string>>(new Set());
 
+  // Debug: Track changes to cookie_services
+  useEffect(() => {
+    console.log('🍪 [SettingsFormFields] settings.cookie_services changed:', settings.cookie_services);
+    console.log('🍪 [SettingsFormFields] new count:', Array.isArray(settings.cookie_services) ? settings.cookie_services.length : 0);
+  }, [settings.cookie_services]);
+
   // Initialize section states only once
   useEffect(() => {
     const storedStates = sessionStorage.getItem('siteManagement_sectionStates');
@@ -313,8 +319,10 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             {section.subsections ? (
               <div className={getSubsectionGridClasses()}>
                 {section.subsections.map(subsection => {
+                  console.log('🔍 Processing subsection:', subsection.title, 'key:', subsection.key);
                   // Get item counts for badges
                   const getItemCount = (key: string) => {
+                    console.log('🔍 [getItemCount] called with key:', key, 'settings.cookie_services:', settings.cookie_services);
                     if (key === 'blog-posts' && settings.blog_posts) {
                       return Array.isArray(settings.blog_posts) ? settings.blog_posts.length : 0;
                     }
@@ -332,6 +340,17 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                     }
                     if (key === 'menu-items' && settings.menu_items) {
                       return Array.isArray(settings.menu_items) ? settings.menu_items.length : 0;
+                    }
+                    if (key === 'cookie-categories' && settings.cookie_categories) {
+                      return Array.isArray(settings.cookie_categories) ? settings.cookie_categories.length : 0;
+                    }
+                    if (key === 'cookie-services' && settings.cookie_services) {
+                      const count = Array.isArray(settings.cookie_services) ? settings.cookie_services.length : 0;
+                      console.log('🍪 Cookie services count calculation:', count, 'from array:', settings.cookie_services);
+                      return count;
+                    }
+                    if (key === 'cookie-consent' && settings.cookie_consent_records) {
+                      return Array.isArray(settings.cookie_consent_records) ? settings.cookie_consent_records.length : 0;
                     }
                     return undefined;
                   };
@@ -499,6 +518,31 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                           </svg>
                           Add Banner
+                        </div>
+                        : subsection.key === 'cookie-services' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Find the cookie services field and trigger add via a custom event
+                            const event = new CustomEvent('addCookieService');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addCookieService');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50/80 backdrop-blur-sm border border-blue-200 rounded-lg hover:bg-blue-100/80 hover:border-blue-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Service
                         </div>
                         : undefined
                       }

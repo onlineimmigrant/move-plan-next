@@ -20,7 +20,7 @@ import { BannerSelect } from './BannerSelect';
 // Cookie Management components
 import { CookieCategoriesSelect } from './CookieCategoriesSelect';
 import { CookieServicesSelect } from './CookieServicesSelect';
-import { CookieConsentRecordsSelect } from './CookieConsentRecordsSelect';
+import { CookieConsentRecordsSelect } from './CookieConsentRecordsSelectSimple';
 import { CookieConsentSelect } from './CookieConsentSelect';
 import { Settings, organizationTypes } from './types';
 
@@ -782,6 +782,8 @@ export const renderField = ({
 
     case 'cookie-services':
       console.log('🍪 Rendering cookie-services, allSettings:', allSettings);
+      const cookieServicesCount = Array.isArray(allSettings?.cookie_services) ? allSettings.cookie_services.length : 0;
+      console.log('🍪 Cookie services count for passing:', cookieServicesCount);
       return (
         <CookieServicesSelect
           value={allSettings?.cookie_services || []}

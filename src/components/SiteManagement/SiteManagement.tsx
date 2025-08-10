@@ -834,6 +834,48 @@ export default function SiteManagement() {
     };
   }, [selectedOrganization, session, handleSaveSettings]);
 
+  // Auto-save listener for cookie service changes
+  useEffect(() => {
+    let cookieServiceSaveTimeoutId: NodeJS.Timeout | null = null;
+    
+    const handleAutoSaveCookieServiceChanges = async (event: Event) => {
+      if (!selectedOrganization || !session?.access_token) return;
+      
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Auto-save triggered for cookie service changes:', customEvent.detail);
+      
+      // Clear any existing timeout to debounce rapid changes
+      if (cookieServiceSaveTimeoutId) {
+        clearTimeout(cookieServiceSaveTimeoutId);
+      }
+      
+      // Set a new timeout to batch rapid operations
+      cookieServiceSaveTimeoutId = setTimeout(async () => {
+        try {
+          // Get the current settings from the modal via a global variable
+          const settingsData = (window as any).__currentEditSettings;
+          if (settingsData) {
+            console.log('💾 Auto-saving settings with updated cookie service data...');
+            await handleSaveSettings(settingsData);
+            console.log('✅ Cookie service auto-save completed successfully');
+          }
+        } catch (error) {
+          console.warn('⚠️ Cookie service auto-save failed, changes remain in local state:', error);
+          // Auto-save failures shouldn't interrupt the user experience
+        }
+      }, 300); // 300ms debounce to batch rapid changes
+    };
+
+    window.addEventListener('autoSaveCookieServiceChanges', handleAutoSaveCookieServiceChanges);
+    
+    return () => {
+      if (cookieServiceSaveTimeoutId) {
+        clearTimeout(cookieServiceSaveTimeoutId);
+      }
+      window.removeEventListener('autoSaveCookieServiceChanges', handleAutoSaveCookieServiceChanges);
+    };
+  }, [selectedOrganization, session, handleSaveSettings]);
+
   // Auto-save listener for banner changes
   useEffect(() => {
     let bannerSaveTimeoutId: NodeJS.Timeout | null = null;

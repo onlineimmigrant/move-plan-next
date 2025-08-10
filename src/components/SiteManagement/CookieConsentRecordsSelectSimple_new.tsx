@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { DocumentTextIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 interface CookieConsentRecord {
@@ -9,8 +9,7 @@ interface CookieConsentRecord {
   ip_address?: string | null;
   consent_given: boolean;
   consent_data?: any | null;
-  user_id?: string | null; // Optional since anonymous users might not have user_id
-  organization_id?: string; // Optional field for organization linking
+  user_id: string;
   last_updated?: string | null;
   language_auto?: string | null;
 }
@@ -36,8 +35,7 @@ export const CookieConsentRecordsSelect: React.FC<CookieConsentRecordsSelectProp
     });
   };
 
-  const truncateText = (text: string | null | undefined, maxLength: number) => {
-    if (!text) return 'N/A';
+  const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
@@ -47,19 +45,9 @@ export const CookieConsentRecordsSelect: React.FC<CookieConsentRecordsSelectProp
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
-  // Dispatch event when consent records count changes
-  useEffect(() => {
-    const event = new CustomEvent('consentRecordsCountUpdate', {
-      detail: { count: value.length }
-    });
-    console.log('[CookieConsentRecordsSelect] Dispatching consentRecordsCountUpdate with count:', value.length);
-    window.dispatchEvent(event);
-  }, [value.length]);
-
   return (
     <div className="space-y-4">
-      <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6"
-      >
+      <div className="border rounded-xl p-4 bg-white/50">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-medium text-gray-900">User Consent Records</h3>
@@ -85,10 +73,7 @@ export const CookieConsentRecordsSelect: React.FC<CookieConsentRecordsSelectProp
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-gray-900">
-                          {record.user_id 
-                            ? `User ${truncateText(record.user_id, 8)}`
-                            : 'Anonymous User'
-                          }
+                          User {truncateText(record.user_id, 8)}
                         </span>
                         {record.consent_given ? (
                           <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600 border border-green-200">
