@@ -31,21 +31,31 @@ export interface BannerContent {
 
 export interface Banner {
   id: string;
+  created_at?: string;
+  updated_at?: string;
   position: BannerPosition;
   type: 'permanent' | 'closed';
-  is_enabled: boolean;
+  is_enabled?: boolean; // Make optional for database compatibility
+  is_active?: boolean; // Database field name
   content: BannerContent;
+  open_state?: BannerOpenState; // Database field name
+  openState?: BannerOpenState; // Frontend field name
+  priority?: number;
+  start_at?: string;
+  end_at?: string;
+  target_audience?: string;
   landing_content?: string;
-  openState?: BannerOpenState;
   dismissal_duration?: string;
+  comments?: string;
   page_paths?: string[] | null;
-  isOpen: boolean;
-  isDismissed: boolean;
-  isFixedAboveNavbar: boolean;
-  is_fixed_above_navbar?: boolean; // Match Supabase column
   organization_id?: string;
-  end_date_promotion?: string;
+  is_fixed_above_navbar?: boolean; // Database field name
+  isFixedAboveNavbar?: boolean; // Frontend field name
   end_date_promotion_is_displayed?: boolean;
+  end_date_promotion?: string;
+  // Computed/frontend fields
+  isOpen?: boolean;
+  isDismissed?: boolean;
 }
 
 // Deprecate BannerType in favor of Banner

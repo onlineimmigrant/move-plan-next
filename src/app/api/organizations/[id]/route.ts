@@ -341,9 +341,40 @@ export async function GET(
       return NextResponse.json({ error: 'Error fetching FAQs' }, { status: 500 });
     }
 
+    // Fetch the organization's banners
+    const { data: banners, error: bannersError } = await supabase
+      .from('banners')
+      .select(`
+        id,
+        position,
+        type,
+        is_active,
+        content,
+        landing_content,
+        open_state,
+        dismissal_duration,
+        page_paths,
+        is_fixed_above_navbar,
+        organization_id,
+        end_date_promotion,
+        end_date_promotion_is_displayed,
+        start_at,
+        end_at,
+        priority,
+        target_audience
+      `)
+      .eq('organization_id', orgId)
+      .order('priority', { ascending: true });
+
+    if (bannersError) {
+      console.error('Error fetching banners:', bannersError);
+      return NextResponse.json({ error: 'Error fetching banners' }, { status: 500 });
+    }
+
     // Structure menu items with nested submenu items and map field names for admin interface
     let structuredMenuItems = menu_items;
     let mappedSubmenuItems = submenu_items;
+    let mappedBanners = banners;
     
     if (menu_items && submenu_items && Array.isArray(menu_items) && Array.isArray(submenu_items)) {
       // Map submenu field names for admin interface compatibility
@@ -362,6 +393,18 @@ export async function GET(
       }));
     }
 
+    // Map banner field names for admin interface compatibility
+    if (banners && Array.isArray(banners)) {
+      mappedBanners = banners.map((banner: any) => ({
+        ...banner,
+        is_enabled: banner.is_active, // Map database is_active to frontend is_enabled
+        openState: banner.open_state, // Map database open_state to frontend openState
+        isFixedAboveNavbar: Boolean(banner.is_fixed_above_navbar), // Map database field to frontend field
+        isOpen: false, // Default for admin interface
+        isDismissed: false // Default for admin interface
+      }));
+    }
+
     return NextResponse.json({
       organization,
       settings: settings || null,
@@ -371,7 +414,8 @@ export async function GET(
       blog_posts: blog_posts || [],
       products: products || [],
       features: features || [],
-      faqs: faqs || []
+      faqs: faqs || [],
+      banners: mappedBanners || []
     });
 
   } catch (error) {
@@ -473,7 +517,7 @@ export async function PUT(
     console.log('PUT - Updating organization:', orgId, 'with data keys:', Object.keys(body));
     console.log('PUT - User ID:', userId);
 
-    const { organization: orgData, settings: settingsData, website_hero: heroData, menu_items: menuItems, submenu_items: submenuItems, blog_posts: blogPosts, products, features, faqs } = body;
+    const { organization: orgData, settings: settingsData, website_hero: heroData, menu_items: menuItems, submenu_items: submenuItems, blog_posts: blogPosts, products, features, faqs, banners } = body;
 
     // Get user's profile to check permissions
     const { data: profile, error: profileError } = await supabase
@@ -572,6 +616,7 @@ export async function PUT(
     let updatedProducts = null;
     let updatedFeatures = null;
     let updatedFaqs = null;
+    let updatedBanners = null;
 
     // Update organization if data provided
     if (orgData) {
@@ -598,6 +643,9 @@ export async function PUT(
         blog_posts, 
         menu_items, 
         submenu_items, 
+        banners, // Add banners to filtered fields
+        features, // Add features to filtered fields
+        faqs, // Add faqs to filtered fields
         name, 
         base_url, 
         base_url_local, 
@@ -1305,6 +1353,130 @@ export async function PUT(
     console.log('🚨 FAQ UPDATE TEMPORARILY DISABLED - Skipping FAQ processing');
     updatedFaqs = faqs || [];
 
+    // Update banners if data provided
+    if (banners && Array.isArray(banners)) {
+      console.log('Processing banners update:', banners.length, 'banners');
+      
+      // Get existing banners for this organization
+      const { data: existingBanners, error: existingBannersError } = await supabase
+        .from('banners')
+        .select('id')
+        .eq('organization_id', orgId);
+
+      if (existingBannersError) {
+        console.error('Error fetching existing banners:', existingBannersError);
+        return NextResponse.json({ error: 'Failed to fetch existing banners' }, { status: 500 });
+      }
+
+      const existingIds = new Set(existingBanners?.map(banner => banner.id) || []);
+      const incomingIds = new Set(banners.filter((banner: any) => banner.id).map((banner: any) => banner.id));
+
+      // Delete banners that are no longer in the new list
+      const idsToDelete = Array.from(existingIds).filter(id => !incomingIds.has(id));
+      
+      if (idsToDelete.length > 0) {
+        console.log('Deleting removed banners:', idsToDelete);
+        for (const bannerId of idsToDelete) {
+          const { error: deleteError } = await supabase
+            .from('banners')
+            .delete()
+            .eq('id', bannerId)
+            .eq('organization_id', orgId);
+
+          if (deleteError) {
+            console.error('Error deleting banner:', deleteError);
+            return NextResponse.json({ error: 'Failed to delete banner' }, { status: 500 });
+          }
+        }
+      }
+
+      // Handle banners (separate new inserts from updates)
+      if (banners.length > 0) {
+        const bannersToUpdate: any[] = [];
+        const bannersToInsert: any[] = [];
+
+        banners.forEach((banner: any) => {
+          console.log('Processing banner:', JSON.stringify(banner, null, 2));
+          
+          const baseBanner = {
+            position: banner.position || 'top',
+            type: banner.type || 'permanent',
+            is_active: convertToBoolean(banner.is_enabled || banner.is_active),
+            content: banner.content || { text: '', banner_background: '#3b82f6', banner_content_style: 'text-white' },
+            landing_content: banner.landing_content || null,
+            open_state: banner.openState || banner.open_state || 'absent',
+            dismissal_duration: banner.dismissal_duration || null,
+            page_paths: banner.page_paths || null,
+            is_fixed_above_navbar: convertToBoolean(banner.isFixedAboveNavbar || banner.is_fixed_above_navbar),
+            organization_id: orgId,
+            end_date_promotion: banner.end_date_promotion || null,
+            end_date_promotion_is_displayed: convertToBoolean(banner.end_date_promotion_is_displayed),
+            start_at: banner.start_at || new Date().toISOString(),
+            end_at: banner.end_at || null,
+            priority: banner.priority || 1,
+            target_audience: banner.target_audience || ['anonymous', 'member', 'returning']
+          };
+          
+          console.log('Converted banner object:', JSON.stringify(baseBanner, null, 2));
+
+          if (banner.id) {
+            // Existing banner - add to update list
+            bannersToUpdate.push({
+              id: banner.id,
+              ...baseBanner
+            });
+          } else {
+            // New banner - add to insert list (no id field)
+            bannersToInsert.push(baseBanner);
+          }
+        });
+
+        let processedBanners = [];
+
+        // Handle updates
+        if (bannersToUpdate.length > 0) {
+          console.log('Updating banners:', bannersToUpdate);
+          const { data: upsertedBanners, error: updateError } = await supabase
+            .from('banners')
+            .upsert(bannersToUpdate, { 
+              onConflict: 'id',
+              ignoreDuplicates: false 
+            })
+            .select();
+
+          if (updateError) {
+            console.error('Error updating banners:', updateError);
+            return NextResponse.json({ error: 'Failed to update banners' }, { status: 500 });
+          }
+
+          processedBanners.push(...(upsertedBanners || []));
+        }
+
+        // Handle inserts
+        if (bannersToInsert.length > 0) {
+          console.log('Inserting banners:', bannersToInsert);
+          const { data: insertedBanners, error: insertError } = await supabase
+            .from('banners')
+            .insert(bannersToInsert)
+            .select();
+
+          if (insertError) {
+            console.error('Error inserting banners:', insertError);
+            return NextResponse.json({ error: 'Failed to insert banners' }, { status: 500 });
+          }
+
+          processedBanners.push(...(insertedBanners || []));
+        }
+
+        updatedBanners = processedBanners;
+        console.log('Successfully processed banners:', processedBanners);
+      } else {
+        updatedBanners = [];
+      }
+    } else {
+      updatedBanners = banners || [];
+    }
+
     // Revalidate cached pages that might use this organization's data
     try {
       console.log('Revalidating cached data for organization:', orgId);
@@ -1338,6 +1510,19 @@ export async function PUT(
       }));
     }
 
+    // Map banner field names for admin interface compatibility (same as GET)
+    let mappedUpdatedBanners = updatedBanners;
+    if (updatedBanners && Array.isArray(updatedBanners)) {
+      mappedUpdatedBanners = updatedBanners.map((banner: any) => ({
+        ...banner,
+        is_enabled: banner.is_active, // Map database is_active to frontend is_enabled
+        openState: banner.open_state, // Map database open_state to frontend openState
+        isFixedAboveNavbar: Boolean(banner.is_fixed_above_navbar), // Map database field to frontend field
+        isOpen: false, // Default for admin interface
+        isDismissed: false // Default for admin interface
+      }));
+    }
+
     return NextResponse.json({
       success: true,
       organization: updatedOrg,
@@ -1354,7 +1539,9 @@ export async function PUT(
       })) || [],
       blog_posts: updatedBlogPosts || [],
       products: updatedProducts || [],
-      faqs: updatedFaqs || []
+      features: updatedFeatures || [],
+      faqs: updatedFaqs || [],
+      banners: mappedUpdatedBanners || []
     });
 
   } catch (error) {

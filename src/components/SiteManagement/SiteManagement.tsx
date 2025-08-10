@@ -367,7 +367,10 @@ export default function SiteManagement() {
           features: data.features || [],
           
           // FAQs from database
-          faqs: data.faqs || []
+          faqs: data.faqs || [],
+          
+          // Banners from database
+          banners: data.banners || []
         }
       };      console.log('Processed organization with settings:', orgWithSettings); // Debug log
       setSelectedOrganization(orgWithSettings);
@@ -828,6 +831,48 @@ export default function SiteManagement() {
         clearTimeout(productSaveTimeoutId);
       }
       window.removeEventListener('autoSaveProductChanges', handleAutoSaveProductChanges);
+    };
+  }, [selectedOrganization, session, handleSaveSettings]);
+
+  // Auto-save listener for banner changes
+  useEffect(() => {
+    let bannerSaveTimeoutId: NodeJS.Timeout | null = null;
+    
+    const handleAutoSaveBannerChanges = async (event: Event) => {
+      if (!selectedOrganization || !session?.access_token) return;
+      
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Auto-save triggered for banner changes:', customEvent.detail);
+      
+      // Clear any existing timeout to debounce rapid changes
+      if (bannerSaveTimeoutId) {
+        clearTimeout(bannerSaveTimeoutId);
+      }
+      
+      // Set a new timeout to batch rapid operations
+      bannerSaveTimeoutId = setTimeout(async () => {
+        try {
+          // Get the current settings from the modal via a global variable
+          const settingsData = (window as any).__currentEditSettings;
+          if (settingsData) {
+            console.log('💾 Auto-saving settings with updated banner data...');
+            await handleSaveSettings(settingsData);
+            console.log('✅ Banner auto-save completed successfully');
+          }
+        } catch (error) {
+          console.warn('⚠️ Banner auto-save failed, changes remain in local state:', error);
+          // Auto-save failures shouldn't interrupt the user experience
+        }
+      }, 300); // 300ms debounce to batch rapid changes
+    };
+
+    window.addEventListener('autoSaveBannerChanges', handleAutoSaveBannerChanges);
+    
+    return () => {
+      if (bannerSaveTimeoutId) {
+        clearTimeout(bannerSaveTimeoutId);
+      }
+      window.removeEventListener('autoSaveBannerChanges', handleAutoSaveBannerChanges);
     };
   }, [selectedOrganization, session, handleSaveSettings]);
 

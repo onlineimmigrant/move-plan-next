@@ -103,6 +103,15 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
     return 'grid grid-cols-1 md:grid-cols-2 gap-6';
   };
 
+  // Helper function to get subsection grid classes - hybrid CSS-only approach
+  const getSubsectionGridClasses = () => {
+    if (isNarrow) {
+      return 'grid grid-cols-1 gap-6';
+    }
+    // Simple CSS-only responsive: two columns on large screens (1024px+)
+    return 'grid grid-cols-1 lg:grid-cols-2 gap-6';
+  };
+
   const handleSectionChange = (sectionKey: string, field: keyof Settings, value: any) => {
     onChange(field as keyof Settings, value);
     
@@ -296,7 +305,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             onToggle={handleSectionToggle}
           >
             {section.subsections ? (
-              <div className="space-y-10">
+              <div className={getSubsectionGridClasses()}>
                 {section.subsections.map(subsection => {
                   // Get item counts for badges
                   const getItemCount = (key: string) => {
@@ -311,6 +320,9 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                     }
                     if (key === 'faqs' && settings.faqs) {
                       return Array.isArray(settings.faqs) ? settings.faqs.length : 0;
+                    }
+                    if (key === 'banners' && settings.banners) {
+                      return Array.isArray(settings.banners) ? settings.banners.length : 0;
                     }
                     if (key === 'menu-items' && settings.menu_items) {
                       return Array.isArray(settings.menu_items) ? settings.menu_items.length : 0;
@@ -456,6 +468,31 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                           </svg>
                           Add FAQ
+                        </div>
+                        : subsection.key === 'banners' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Find the banners field and trigger add via a custom event
+                            const event = new CustomEvent('addBanner');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addBanner');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-cyan-600 bg-cyan-50/80 backdrop-blur-sm border border-cyan-200 rounded-lg hover:bg-cyan-100/80 hover:border-cyan-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Banner
                         </div>
                         : undefined
                       }

@@ -1,0 +1,776 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Banner, BannerPosition, BannerContent, BannerOpenState } from '../banners/types';
+import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+
+interface BannerSelectProps {
+  name: string;
+  value: Banner[];
+  onChange: (field: string, banners: Banner[]) => void;
+}
+
+const bannerPositionOptions = [
+  { value: 'top', label: 'Top' },
+  { value: 'bottom', label: 'Bottom' },
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' }
+];
+
+const bannerTypeOptions = [
+  { value: 'permanent', label: 'Permanent' },
+  { value: 'closed', label: 'Dismissible' }
+];
+
+const openStateOptions = [
+  { value: 'absent', label: 'Hidden' },
+  { value: 'full', label: 'Full' },
+  { value: 'left-half', label: 'Left Half' },
+  { value: 'right-half', label: 'Right Half' },
+  { value: 'top-half', label: 'Top Half' },
+  { value: 'bottom-half', label: 'Bottom Half' },
+  { value: 'left-30', label: 'Left 30%' },
+  { value: 'left-70', label: 'Left 70%' },
+  { value: 'right-30', label: 'Right 30%' },
+  { value: 'right-70', label: 'Right 70%' },
+  { value: 'top-30', label: 'Top 30%' },
+  { value: 'top-70', label: 'Top 70%' },
+  { value: 'bottom-30', label: 'Bottom 30%' },
+  { value: 'bottom-70', label: 'Bottom 70%' }
+];
+
+export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], onChange }) => {
+  console.log('BannerSelect rendered with value:', value);
+  
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+  const [newBanner, setNewBanner] = useState<Partial<Banner>>({
+    position: 'top',
+    type: 'permanent',
+    is_enabled: true,
+    content: {
+      text: '',
+      banner_background: '#3b82f6',
+      banner_content_style: 'text-white'
+    },
+    openState: 'absent',
+    priority: 0,
+    start_at: undefined,
+    end_at: undefined,
+    target_audience: undefined,
+    landing_content: undefined,
+    dismissal_duration: undefined,
+    comments: undefined,
+    page_paths: undefined,
+    isFixedAboveNavbar: false,
+    end_date_promotion_is_displayed: false,
+    end_date_promotion: undefined
+  });
+
+  // Listen for add banner events
+  useEffect(() => {
+    const handleAddBanner = () => {
+      setShowAddForm(true);
+    };
+
+    window.addEventListener('addBanner', handleAddBanner);
+    return () => {
+      window.removeEventListener('addBanner', handleAddBanner);
+    };
+  }, []);
+
+  const generateId = () => {
+    return Math.random().toString(36).substr(2, 9);
+  };
+
+  const handleAdd = () => {
+    if (!newBanner.content?.text) return;
+
+    const banner: Banner = {
+      id: generateId(),
+      position: (newBanner.position as BannerPosition) || 'top',
+      type: (newBanner.type as 'permanent' | 'closed') || 'permanent',
+      is_enabled: newBanner.is_enabled ?? true,
+      is_active: newBanner.is_enabled ?? true, // Database field
+      content: {
+        text: newBanner.content?.text || '',
+        banner_background: newBanner.content?.banner_background || '#3b82f6',
+        banner_content_style: newBanner.content?.banner_content_style || 'text-white',
+        icon: newBanner.content?.icon,
+        link: newBanner.content?.link,
+        customContent: newBanner.content?.customContent
+      },
+      open_state: (newBanner.openState as BannerOpenState) || 'absent', // Database field
+      openState: (newBanner.openState as BannerOpenState) || 'absent', // Frontend field
+      priority: newBanner.priority ?? 0,
+      start_at: newBanner.start_at,
+      end_at: newBanner.end_at,
+      target_audience: newBanner.target_audience,
+      landing_content: newBanner.landing_content,
+      dismissal_duration: newBanner.dismissal_duration,
+      comments: newBanner.comments,
+      page_paths: newBanner.page_paths,
+      organization_id: newBanner.organization_id,
+      is_fixed_above_navbar: newBanner.isFixedAboveNavbar ?? false, // Database field
+      isFixedAboveNavbar: newBanner.isFixedAboveNavbar ?? false, // Frontend field
+      end_date_promotion: newBanner.end_date_promotion,
+      end_date_promotion_is_displayed: newBanner.end_date_promotion_is_displayed ?? false,
+      isOpen: false,
+      isDismissed: false
+    };
+
+    const newValue = [...value, banner];
+    onChange(name, newValue);
+    
+    // Dispatch auto-save event for banners
+    const autoSaveEvent = new CustomEvent('autoSaveBannerChanges', { 
+      detail: { 
+        type: 'banner_add',
+        updatedBanners: newValue 
+      }
+    });
+    window.dispatchEvent(autoSaveEvent);
+    console.log('🚀 Auto-save event dispatched for banner add');
+    
+    setShowAddForm(false);
+    
+    // Reset form
+    setNewBanner({
+      position: 'top',
+      type: 'permanent',
+      is_enabled: true,
+      content: {
+        text: '',
+        banner_background: '#3b82f6',
+        banner_content_style: 'text-white'
+      },
+      openState: 'absent',
+      priority: 0,
+      start_at: undefined,
+      end_at: undefined,
+      target_audience: undefined,
+      landing_content: undefined,
+      dismissal_duration: undefined,
+      comments: undefined,
+      page_paths: undefined,
+      isFixedAboveNavbar: false,
+      end_date_promotion_is_displayed: false,
+      end_date_promotion: undefined
+    });
+  };
+
+  const handleEdit = (banner: Banner) => {
+    setEditingBanner({ ...banner });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingBanner) return;
+
+    const newValue = value.map(banner => 
+      banner.id === editingBanner.id ? editingBanner : banner
+    );
+    
+    onChange(name, newValue);
+    
+    // Dispatch auto-save event for banners
+    const autoSaveEvent = new CustomEvent('autoSaveBannerChanges', { 
+      detail: { 
+        type: 'banner_edit',
+        updatedBanners: newValue 
+      }
+    });
+    window.dispatchEvent(autoSaveEvent);
+    console.log('🚀 Auto-save event dispatched for banner edit');
+    
+    setEditingBanner(null);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this banner?')) {
+      const newValue = value.filter(banner => banner.id !== id);
+      
+      onChange(name, newValue);
+      
+      // Dispatch auto-save event for banners
+      const autoSaveEvent = new CustomEvent('autoSaveBannerChanges', { 
+        detail: { 
+          type: 'banner_delete',
+          updatedBanners: newValue 
+        }
+      });
+      window.dispatchEvent(autoSaveEvent);
+      console.log('🚀 Auto-save event dispatched for banner delete');
+      
+      setEditingBanner(null);
+    }
+  };
+
+  const handleToggleEnabled = (id: string) => {
+    const newValue = value.map(banner => 
+      banner.id === id ? { ...banner, is_enabled: !banner.is_enabled } : banner
+    );
+    
+    onChange(name, newValue);
+    
+    // Dispatch auto-save event for banners
+    const autoSaveEvent = new CustomEvent('autoSaveBannerChanges', { 
+      detail: { 
+        type: 'banner_toggle',
+        updatedBanners: newValue 
+      }
+    });
+    window.dispatchEvent(autoSaveEvent);
+    console.log('🚀 Auto-save event dispatched for banner toggle');
+  };
+
+  const renderBannerForm = (
+    banner: Partial<Banner>, 
+    setBanner: (banner: Partial<Banner>) => void, 
+    onSave: () => void, 
+    onCancel: () => void,
+    isEditing: boolean = false
+  ) => (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Position */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Position *
+          </label>
+          <select
+            value={banner.position || 'top'}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, position: e.target.value as BannerPosition };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+          >
+            {bannerPositionOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Type */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Type *
+          </label>
+          <select
+            value={banner.type || 'permanent'}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, type: e.target.value as 'permanent' | 'closed' };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+          >
+            {bannerTypeOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Banner Text */}
+        <div className="md:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Banner Text *
+          </label>
+          <textarea
+            value={banner.content?.text || ''}
+            onChange={(e) => {
+              const updatedBanner = {
+                ...banner,
+                content: {
+                  ...banner.content,
+                  text: e.target.value
+                }
+              };
+              setBanner(updatedBanner);
+            }}
+            rows={3}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="Enter banner text"
+          />
+        </div>
+
+        {/* Background Color */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Background Color
+          </label>
+          <input
+            type="color"
+            value={banner.content?.banner_background || '#3b82f6'}
+            onChange={(e) => {
+              const updatedBanner = {
+                ...banner,
+                content: {
+                  ...banner.content,
+                  text: banner.content?.text || '',
+                  banner_background: e.target.value
+                }
+              };
+              setBanner(updatedBanner);
+            }}
+            className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+          />
+        </div>
+
+        {/* Text Style */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Text Style
+          </label>
+          <input
+            type="text"
+            value={banner.content?.banner_content_style || 'text-white'}
+            onChange={(e) => {
+              const updatedBanner = {
+                ...banner,
+                content: {
+                  ...banner.content,
+                  text: banner.content?.text || '',
+                  banner_content_style: e.target.value
+                }
+              };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="e.g., text-white, text-gray-900"
+          />
+        </div>
+
+        {/* Link URL */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Link URL (optional)
+          </label>
+          <input
+            type="url"
+            value={banner.content?.link?.url || ''}
+            onChange={(e) => {
+              const updatedBanner = {
+                ...banner,
+                content: {
+                  ...banner.content,
+                  text: banner.content?.text || '',
+                  link: {
+                    url: e.target.value,
+                    label: banner.content?.link?.label || 'Learn More',
+                    isExternal: banner.content?.link?.isExternal
+                  }
+                }
+              };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="https://example.com"
+          />
+        </div>
+
+        {/* Link Label */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Link Label (optional)
+          </label>
+          <input
+            type="text"
+            value={banner.content?.link?.label || ''}
+            onChange={(e) => {
+              const updatedBanner = {
+                ...banner,
+                content: {
+                  ...banner.content,
+                  text: banner.content?.text || '',
+                  link: {
+                    url: banner.content?.link?.url || '',
+                    label: e.target.value,
+                    isExternal: banner.content?.link?.isExternal
+                  }
+                }
+              };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="Learn More"
+          />
+        </div>
+
+        {/* Open State */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Display State
+          </label>
+          <select
+            value={banner.openState || 'absent'}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, openState: e.target.value as BannerOpenState };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+          >
+            {openStateOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Fixed Above Navbar */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="isFixedAboveNavbar"
+            checked={banner.isFixedAboveNavbar || false}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, isFixedAboveNavbar: e.target.checked };
+              setBanner(updatedBanner);
+            }}
+            className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 focus:ring-offset-0"
+          />
+          <label htmlFor="isFixedAboveNavbar" className="ml-2 text-xs text-gray-700">
+            Fixed Above Navbar
+          </label>
+        </div>
+
+        {/* Page Paths */}
+        <div className="md:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Page Paths (optional)
+          </label>
+          <textarea
+            value={Array.isArray(banner.page_paths) ? banner.page_paths.join('\n') : ''}
+            onChange={(e) => {
+              const paths = e.target.value.split('\n').filter(path => path.trim() !== '');
+              const updatedBanner = { 
+                ...banner, 
+                page_paths: paths.length > 0 ? paths : null 
+              };
+              setBanner(updatedBanner);
+            }}
+            rows={3}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="Enter page paths (one per line)&#10;e.g.:&#10;/home&#10;/about&#10;/contact"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Specify which pages this banner should appear on. Leave empty to show on all pages.
+          </p>
+        </div>
+
+        {/* Priority */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Priority
+          </label>
+          <input
+            type="number"
+            value={banner.priority || 0}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, priority: parseInt(e.target.value) || 0 };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="0"
+          />
+        </div>
+
+        {/* Start Date */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Start Date (optional)
+          </label>
+          <input
+            type="datetime-local"
+            value={banner.start_at || ''}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, start_at: e.target.value || undefined };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+          />
+        </div>
+
+        {/* End Date */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            End Date (optional)
+          </label>
+          <input
+            type="datetime-local"
+            value={banner.end_at || ''}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, end_at: e.target.value || undefined };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+          />
+        </div>
+
+        {/* Target Audience */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Target Audience (optional)
+          </label>
+          <input
+            type="text"
+            value={banner.target_audience || ''}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, target_audience: e.target.value || undefined };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="e.g., new-users, premium-customers"
+          />
+        </div>
+
+        {/* Landing Content */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Landing Content (optional)
+          </label>
+          <textarea
+            value={banner.landing_content || ''}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, landing_content: e.target.value || undefined };
+              setBanner(updatedBanner);
+            }}
+            rows={2}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="Additional content for landing pages"
+          />
+        </div>
+
+        {/* Dismissal Duration */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Dismissal Duration (optional)
+          </label>
+          <input
+            type="text"
+            value={banner.dismissal_duration || ''}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, dismissal_duration: e.target.value || undefined };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="e.g., 1d, 7d, 30d"
+          />
+        </div>
+
+        {/* Comments */}
+        <div className="md:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Comments (optional)
+          </label>
+          <textarea
+            value={banner.comments || ''}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, comments: e.target.value || undefined };
+              setBanner(updatedBanner);
+            }}
+            rows={2}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+            placeholder="Internal notes or comments"
+          />
+        </div>
+
+        {/* End Date Promotion */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Promotion End Date (optional)
+          </label>
+          <input
+            type="datetime-local"
+            value={banner.end_date_promotion || ''}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, end_date_promotion: e.target.value || undefined };
+              setBanner(updatedBanner);
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+          />
+        </div>
+
+        {/* Show Promotion End Date */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="end_date_promotion_is_displayed"
+            checked={banner.end_date_promotion_is_displayed || false}
+            onChange={(e) => {
+              const updatedBanner = { ...banner, end_date_promotion_is_displayed: e.target.checked };
+              setBanner(updatedBanner);
+            }}
+            className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 focus:ring-offset-0"
+          />
+          <label htmlFor="end_date_promotion_is_displayed" className="ml-2 text-xs text-gray-700">
+            Display Promotion End Date
+          </label>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
+        {/* Delete button - only show when editing existing banner */}
+        <div>
+          {isEditing && (
+            <button
+              type="button"
+              onClick={() => {
+                if (banner.id) {
+                  handleDelete(banner.id);
+                }
+              }}
+              className="px-3 py-2 text-xs font-medium text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/20 flex items-center gap-2"
+              title="Delete this banner"
+            >
+              <TrashIcon className="h-4 w-4" />
+              Delete
+            </button>
+          )}
+        </div>
+
+        {/* Save/Cancel buttons */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={!banner.content?.text || !banner.position}
+            className="px-4 py-2 bg-cyan-600 text-white text-sm font-medium rounded-lg hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isEditing ? 'Update Banner' : 'Add Banner'}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Add Form - Only for adding new banners - Positioned at top */}
+      {showAddForm && (
+        <div className="border border-cyan-300 rounded-lg p-4 bg-cyan-50 space-y-4">
+          <h4 className="text-sm font-medium text-cyan-900">
+            Add Banner
+          </h4>
+          {renderBannerForm(
+            newBanner,
+            setNewBanner,
+            handleAdd,
+            () => setShowAddForm(false),
+            false
+          )}
+        </div>
+      )}
+
+      {/* Banners List */}
+      <div className="space-y-2 max-h-[48rem] overflow-y-auto">
+        {value && value.length > 0 ? (
+          value.map((banner, index) => (
+            <div key={banner.id || index}>
+              {/* Main Banner Item */}
+              <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="flex items-center justify-between p-4 hover:bg-gray-50/80 transition-colors rounded-t-xl">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          banner.is_enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {banner.is_enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
+                          {banner.position}
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {banner.type}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {banner.content.text || 'No text set'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Display: {openStateOptions.find(opt => opt.value === banner.openState)?.label || banner.openState}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleEnabled(banner.id)}
+                      className={`p-1.5 rounded-lg transition-all duration-200 ${
+                        banner.is_enabled 
+                          ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
+                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                      }`}
+                      title={banner.is_enabled ? 'Disable banner' : 'Enable banner'}
+                    >
+                      {banner.is_enabled ? (
+                        <EyeIcon className="h-4 w-4" />
+                      ) : (
+                        <EyeSlashIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(banner)}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                      title="Edit banner"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Edit Form - Positioned below the item being edited */}
+              {editingBanner && editingBanner.id === banner.id && (
+                <div className="mt-2 border border-blue-300 rounded-lg p-4 bg-blue-50 space-y-4">
+                  <h4 className="text-sm font-medium text-blue-900">
+                    Edit Banner
+                  </h4>
+                  {renderBannerForm(
+                    editingBanner,
+                    (banner) => setEditingBanner(banner as Banner),
+                    handleSaveEdit,
+                    () => setEditingBanner(null),
+                    true
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          /* Empty State */
+          !showAddForm && (
+            <div className="text-center py-8 px-4 bg-gray-50/50 rounded-lg border-2 border-dashed border-gray-300">
+            <div className="text-gray-400 mb-3">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v1a1 1 0 01-1 1h-1v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7H3a1 1 0 01-1-1V5a1 1 0 011-1h4zM9 3v1h6V3H9zM5 7v11a1 1 0 001 1h12a1 1 0 001-1V7H5z" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-medium text-gray-900 mb-1">No banners configured</h3>
+            <p className="text-xs text-gray-500 mb-4">Get started by adding your first banner</p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-cyan-600 bg-cyan-50/80 backdrop-blur-sm border border-cyan-200 rounded-lg hover:bg-cyan-100/80 hover:border-cyan-300 transition-all duration-200 shadow-sm"
+            >
+              <PlusIcon className="h-3.5 w-3.5" />
+              Add First Banner
+            </button>
+          </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+};
