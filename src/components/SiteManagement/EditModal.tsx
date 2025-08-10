@@ -167,11 +167,18 @@ export default function EditModal({
 
   const handleSettingChange = (field: keyof Settings, value: any) => {
     console.log(`[EditModal] Setting change: ${field} = ${value}`);
+    if (field === 'cookie_services') {
+      console.log(`[EditModal] Cookie services change - new count: ${Array.isArray(value) ? value.length : 0}`);
+    }
     setSettings(prev => {
       const newSettings = {
         ...prev,
         [field]: value
       };
+      if (field === 'cookie_services') {
+        console.log(`[EditModal] Updated settings.cookie_services:`, newSettings.cookie_services);
+        console.log(`[EditModal] New cookie services count:`, Array.isArray(newSettings.cookie_services) ? newSettings.cookie_services.length : 0);
+      }
       console.log(`[EditModal] New settings state:`, newSettings);
       return newSettings;
     });

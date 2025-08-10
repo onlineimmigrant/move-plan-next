@@ -20,8 +20,40 @@ export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({
   actionContent,
   itemCount
 }) => {
+  // Debug logging for itemCount
+  console.log(`🔍 [SubsectionDisclosure] "${title}" - itemCount:`, itemCount, typeof itemCount);
+  
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [dynamicCount, setDynamicCount] = useState<number | undefined>(itemCount);
   const subsectionRef = useRef<HTMLDivElement>(null);
+
+  // Listen for count updates if this is Cookie Services or Consent Records subsection
+  useEffect(() => {
+    if (title === 'Cookie Services') {
+      const handleCountUpdate = (event: CustomEvent) => {
+        console.log('🔢 SubsectionDisclosure received cookieServices count update:', event.detail.count);
+        setDynamicCount(event.detail.count);
+      };
+
+      window.addEventListener('cookieServicesCountUpdate', handleCountUpdate as EventListener);
+      return () => {
+        window.removeEventListener('cookieServicesCountUpdate', handleCountUpdate as EventListener);
+      };
+    } else if (title === 'Consent Records') {
+      const handleCountUpdate = (event: CustomEvent) => {
+        console.log('🔢 SubsectionDisclosure received consentRecords count update:', event.detail.count);
+        setDynamicCount(event.detail.count);
+      };
+
+      window.addEventListener('consentRecordsCountUpdate', handleCountUpdate as EventListener);
+      return () => {
+        window.removeEventListener('consentRecordsCountUpdate', handleCountUpdate as EventListener);
+      };
+    }
+  }, [title]);
+
+  // Use dynamic count if available for Cookie Services or Consent Records, otherwise fall back to itemCount prop
+  const displayCount = (title === 'Cookie Services' || title === 'Consent Records') ? dynamicCount : itemCount;
 
   // Load state from localStorage if storageKey is provided
   useEffect(() => {
@@ -82,15 +114,25 @@ export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({
                 {title}
               </h4>
               {/* Item count badge */}
-              {typeof itemCount === 'number' && itemCount >= 0 && (
-                <span className={`inline-flex items-center justify-center w-5 h-5 text-xs font-semibold rounded-full transition-colors duration-300 ${
-                  isOpen 
-                    ? 'bg-sky-100 text-sky-600 ring-1 ring-sky-200/40' 
-                    : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-                }`}>
-                  {itemCount}
-                </span>
-              )}
+              {(() => {
+                console.log(`🎯 [SubsectionDisclosure] "${title}" badge render check:`, {
+                  itemCount,
+                  displayCount,
+                  type: typeof displayCount,
+                  isNumber: typeof displayCount === 'number',
+                  isValidCount: typeof displayCount === 'number' && displayCount >= 0,
+                  shouldShow: typeof displayCount === 'number' && displayCount >= 0
+                });
+                return typeof displayCount === 'number' && displayCount >= 0 && (
+                  <span className={`inline-flex items-center justify-center w-5 h-5 text-xs font-semibold rounded-full transition-colors duration-300 ${
+                    isOpen 
+                      ? 'bg-sky-100 text-sky-600 ring-1 ring-sky-200/40' 
+                      : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                  }`}>
+                    {displayCount}
+                  </span>
+                );
+              })()}
             </div>
             <div className="flex items-center gap-2">
               {/* Action button if provided */}
