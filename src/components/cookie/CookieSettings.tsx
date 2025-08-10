@@ -98,10 +98,17 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
     const fetchUserConsent = async (essentialServiceIds: number[]) => {
       try {
         const accessToken = session?.access_token;
+        const organizationId = process.env.NEXT_PUBLIC_TENANT_ID;
+        
         const headers: Record<string, string> = accessToken
           ? { Authorization: `Bearer ${accessToken}` }
           : {};
-        const response = await fetch('/api/cookies/consent', {
+          
+        const url = organizationId 
+          ? `/api/cookies/consent?organization_id=${organizationId}`
+          : '/api/cookies/consent';
+          
+        const response = await fetch(url, {
           headers,
           credentials: 'include', // Fallback to cookies
         });
@@ -197,6 +204,11 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
   const saveConsentSettings = async () => {
     try {
       const accessToken = session?.access_token || '';
+      const organizationId = process.env.NEXT_PUBLIC_TENANT_ID;
+      if (!organizationId) {
+        throw new Error('Organization ID not found');
+      }
+
       const headers: Record<string, string> = accessToken
         ? {
             'Content-Type': 'application/json',
@@ -210,6 +222,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
         body: JSON.stringify({
           consent_given: true,
           services: consent.services,
+          organization_id: organizationId,
         }),
       });
       if (!response.ok) {

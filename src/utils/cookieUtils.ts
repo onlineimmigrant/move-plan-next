@@ -18,6 +18,12 @@ export function setCookie(name: string, value: string, days: number) {
     services: number[],
     accessToken?: string
   ) {
+    // Get organization ID from environment variable
+    const organizationId = process.env.NEXT_PUBLIC_TENANT_ID;
+    if (!organizationId) {
+      throw new Error('Organization ID not found');
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -32,6 +38,7 @@ export function setCookie(name: string, value: string, days: number) {
       body: JSON.stringify({
         consent_given: consentGiven,
         services,
+        organization_id: organizationId,
       }),
     });
     if (!response.ok) {

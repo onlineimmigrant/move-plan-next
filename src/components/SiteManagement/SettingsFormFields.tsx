@@ -11,6 +11,11 @@ interface SettingsFormFieldsProps {
   onImageUpload: (field: 'image' | 'favicon' | 'hero_image') => void;
   uploadingImages: Set<string>;
   isNarrow?: boolean;
+  cookieData?: {
+    cookie_categories?: any[];
+    cookie_services?: any[];
+    cookie_consent_records?: any[];
+  };
 }
 
 const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({ 
@@ -18,7 +23,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   onChange, 
   onImageUpload, 
   uploadingImages,
-  isNarrow = false
+  isNarrow = false,
+  cookieData
 }) => {
   const [sectionChanges, setSectionChanges] = useState<Record<string, Partial<Settings>>>({});
   const [originalSectionValues, setOriginalSectionValues] = useState<Record<string, Partial<Settings>>>({});
@@ -233,8 +239,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                 onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
                 onImageUpload,
                 uploadingImages,
-                allSettings: settings
-              } as any);
+                allSettings: { ...settings, ...cookieData }
+              });
               
               return fieldComponent ? (
                 <div key={field.name}>
@@ -255,8 +261,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                 onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
                 onImageUpload,
                 uploadingImages,
-                allSettings: settings
-              } as any);
+                allSettings: { ...settings, ...cookieData }
+              });
               
               return fieldComponent ? (
                 <div key={field.name}>
@@ -272,19 +278,19 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
           {fullSpanFields.map((field: any) => {
             const fieldComponent = renderField({
               field,
-            value: (settings as any)[field.name],
-            onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
-            onImageUpload,
-            uploadingImages,
-            allSettings: settings
-          } as any);
+              value: (settings as any)[field.name],
+              onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
+              onImageUpload,
+              uploadingImages,
+              allSettings: { ...settings, ...cookieData }
+            });
           
-          return fieldComponent ? (
-            <div key={field.name}>
-              {fieldComponent as unknown as React.ReactElement}
-            </div>
-          ) : null;
-        })}
+            return fieldComponent ? (
+              <div key={field.name}>
+                {fieldComponent as unknown as React.ReactElement}
+              </div>
+            ) : null;
+          })}
         </div>
       </div>
     );
