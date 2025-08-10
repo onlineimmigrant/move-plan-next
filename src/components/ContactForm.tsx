@@ -245,22 +245,34 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Error Alert */}
+      {/* Apple-style Error Alert */}
       {errors.submit && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 backdrop-blur-sm">
+        <div className="relative overflow-hidden rounded-2xl border border-red-200/60 bg-red-50/80 backdrop-blur-sm p-4 shadow-sm"
+             style={{
+               backdropFilter: 'blur(12px) saturate(180%)',
+               WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+             }}>
           <div className="flex items-center">
-            <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-3 flex-shrink-0" />
-            <p className="text-sm text-red-700 font-medium">{errors.submit}</p>
+            <div className="flex-shrink-0 w-8 h-8 bg-red-100/80 rounded-full flex items-center justify-center mr-3">
+              <ExclamationTriangleIcon className="h-4 w-4 text-red-600" />
+            </div>
+            <p className="text-[14px] text-red-700 font-medium antialiased">{errors.submit}</p>
           </div>
         </div>
       )}
 
-      {/* Success Toast */}
+      {/* Apple-style Success Toast */}
       {success && (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4 backdrop-blur-sm">
+        <div className="relative overflow-hidden rounded-2xl border border-green-200/60 bg-green-50/80 backdrop-blur-sm p-4 shadow-sm"
+             style={{
+               backdropFilter: 'blur(12px) saturate(180%)',
+               WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+             }}>
           <div className="flex items-center">
-            <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-            <p className="text-sm text-green-700 font-medium">
+            <div className="flex-shrink-0 w-8 h-8 bg-green-100/80 rounded-full flex items-center justify-center mr-3">
+              <CheckCircleIcon className="h-4 w-4 text-green-600" />
+            </div>
+            <p className="text-[14px] text-green-700 font-medium antialiased">
               Ticket submitted successfully! We'll get back to you soon.
             </p>
           </div>
@@ -268,13 +280,20 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
       )}
 
       <form onSubmit={submit} className="space-y-6">
-        {/* Personal Information Section */}
-        <div className="rounded-2xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm bg-white/95">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Name Field */}
+        {/* Apple-style Personal Information Section */}
+        <div className="relative overflow-hidden bg-white/50 backdrop-blur-sm rounded-2xl border border-gray-200/40 p-6 shadow-sm"
+             style={{
+               backdropFilter: 'blur(12px) saturate(180%)',
+               WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+             }}>
+          {/* Subtle top highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
+          
+          <h3 className="text-[17px] font-semibold text-gray-900 mb-6 tracking-[-0.01em] antialiased">Personal Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Apple-style Name Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-[13px] font-medium text-gray-700 mb-3 antialiased">
                 Full Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -283,17 +302,23 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                 value={form.name}
                 onChange={updateForm}
                 className={`w-full px-4 py-3 border ${
-                  errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-sky-500 focus:ring-sky-500/20'
-                } rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 bg-white/80 backdrop-blur-sm`}
+                  errors.name 
+                    ? 'border-red-300/60 focus:border-red-400 focus:ring-red-400/20' 
+                    : 'border-gray-200/60 focus:border-gray-400 focus:ring-gray-400/20'
+                } rounded-xl focus:outline-none focus:ring-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] bg-white/60 backdrop-blur-sm text-[15px] antialiased placeholder:text-gray-500`}
+                style={{
+                  backdropFilter: 'blur(8px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                }}
                 placeholder="Enter your full name"
                 autoComplete="name"
               />
-              {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+              {errors.name && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.name}</p>}
             </div>
 
-            {/* Email Field */}
+            {/* Apple-style Email Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-[13px] font-medium text-gray-700 mb-3 antialiased">
                 Email Address <span className="text-red-500">*</span>
               </label>
               <input
@@ -302,17 +327,23 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                 value={form.email}
                 onChange={updateForm}
                 className={`w-full px-4 py-3 border ${
-                  errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-sky-500 focus:ring-sky-500/20'
-                } rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 bg-white/80 backdrop-blur-sm`}
+                  errors.email 
+                    ? 'border-red-300/60 focus:border-red-400 focus:ring-red-400/20' 
+                    : 'border-gray-200/60 focus:border-gray-400 focus:ring-gray-400/20'
+                } rounded-xl focus:outline-none focus:ring-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] bg-white/60 backdrop-blur-sm text-[15px] antialiased placeholder:text-gray-500`}
+                style={{
+                  backdropFilter: 'blur(8px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                }}
                 placeholder="your.email@example.com"
                 autoComplete="email"
               />
-              {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+              {errors.email && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.email}</p>}
             </div>
 
-            {/* Phone Field */}
+            {/* Apple-style Phone Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-[13px] font-medium text-gray-700 mb-3 antialiased">
                 Phone Number <span className="text-red-500">*</span>
               </label>
               <input
@@ -321,17 +352,23 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                 value={form.phone}
                 onChange={updateForm}
                 className={`w-full px-4 py-3 border ${
-                  errors.phone ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-sky-500 focus:ring-sky-500/20'
-                } rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 bg-white/80 backdrop-blur-sm`}
+                  errors.phone 
+                    ? 'border-red-300/60 focus:border-red-400 focus:ring-red-400/20' 
+                    : 'border-gray-200/60 focus:border-gray-400 focus:ring-gray-400/20'
+                } rounded-xl focus:outline-none focus:ring-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] bg-white/60 backdrop-blur-sm text-[15px] antialiased placeholder:text-gray-500`}
+                style={{
+                  backdropFilter: 'blur(8px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                }}
                 placeholder="+44 123 456 7890"
                 autoComplete="tel"
               />
-              {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}
+              {errors.phone && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.phone}</p>}
             </div>
 
-            {/* Subject Field */}
+            {/* Apple-style Subject Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-[13px] font-medium text-gray-700 mb-3 antialiased">
                 Subject <span className="text-red-500">*</span>
               </label>
               <input
@@ -340,33 +377,50 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                 value={form.subject}
                 onChange={updateForm}
                 className={`w-full px-4 py-3 border ${
-                  errors.subject ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-sky-500 focus:ring-sky-500/20'
-                } rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 bg-white/80 backdrop-blur-sm`}
+                  errors.subject 
+                    ? 'border-red-300/60 focus:border-red-400 focus:ring-red-400/20' 
+                    : 'border-gray-200/60 focus:border-gray-400 focus:ring-gray-400/20'
+                } rounded-xl focus:outline-none focus:ring-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] bg-white/60 backdrop-blur-sm text-[15px] antialiased placeholder:text-gray-500`}
+                style={{
+                  backdropFilter: 'blur(8px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                }}
                 placeholder="Brief description of your inquiry"
               />
-              {errors.subject && <p className="mt-1 text-xs text-red-600">{errors.subject}</p>}
+              {errors.subject && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.subject}</p>}
             </div>
           </div>
         </div>
 
-        {/* Contact Preferences Section */}
-        <div className="rounded-2xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm bg-white/95">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Preferences</h3>
+        {/* Apple-style Contact Preferences Section */}
+        <div className="relative overflow-hidden bg-white/50 backdrop-blur-sm rounded-2xl border border-gray-200/40 p-6 shadow-sm"
+             style={{
+               backdropFilter: 'blur(12px) saturate(180%)',
+               WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+             }}>
+          {/* Subtle top highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
           
-          {/* Preferred Contact Method */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <h3 className="text-[17px] font-semibold text-gray-900 mb-6 tracking-[-0.01em] antialiased">Contact Preferences</h3>
+          
+          {/* Apple-style Preferred Contact Method */}
+          <div className="mb-8">
+            <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
               Preferred Contact Method
             </label>
             <div className="grid grid-cols-2 gap-3">
               {contacts.map(({ value, label, icon, color }) => (
                 <label
                   key={value}
-                  className={`flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                  className={`group cursor-pointer flex items-center justify-center p-4 border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-xl hover:scale-[1.02] ${
                     form.preferredContact === value 
-                      ? 'border-sky-500 bg-sky-50 shadow-md' 
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-gray-400/60 bg-gray-50/80 shadow-sm' 
+                      : 'border-gray-200/40 hover:border-gray-300/60 hover:bg-gray-50/40'
                   }`}
+                  style={{
+                    backdropFilter: 'blur(8px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                  }}
                 >
                   <input
                     type="radio"
@@ -376,26 +430,31 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                     onChange={updateForm}
                     className="sr-only"
                   />
-                  <span className={`flex items-center gap-2 text-sm font-medium ${color}`}>
-                    {icon} {label}
+                  <span className="flex items-center gap-2 text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">
+                    <span className={`${color} transition-all duration-300 group-hover:scale-105`}>{icon}</span>
+                    {label}
                   </span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Preferred Date */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          {/* Apple-style Preferred Date */}
+          <div className="mb-8">
+            <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
               Preferred Date
             </label>
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-2 gap-3 mb-4">
               <label
-                className={`flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                className={`group cursor-pointer flex items-center justify-center p-4 border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-xl hover:scale-[1.02] ${
                   dateMode === 'any' 
-                    ? 'border-sky-500 bg-sky-50 shadow-md' 
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'border-gray-400/60 bg-gray-50/80 shadow-sm' 
+                    : 'border-gray-200/40 hover:border-gray-300/60 hover:bg-gray-50/40'
                 }`}
+                style={{
+                  backdropFilter: 'blur(8px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                }}
               >
                 <input
                   type="radio"
@@ -405,14 +464,18 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                   onChange={() => toggleDate('any')}
                   className="sr-only"
                 />
-                <span className="text-sm font-medium text-gray-700">Any Date</span>
+                <span className="text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">Any Date</span>
               </label>
               <label
-                className={`flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                className={`group cursor-pointer flex items-center justify-center p-4 border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-xl hover:scale-[1.02] ${
                   dateMode === 'choose' 
-                    ? 'border-sky-500 bg-sky-50 shadow-md' 
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'border-gray-400/60 bg-gray-50/80 shadow-sm' 
+                    : 'border-gray-200/40 hover:border-gray-300/60 hover:bg-gray-50/40'
                 }`}
+                style={{
+                  backdropFilter: 'blur(8px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                }}
               >
                 <input
                   type="radio"
@@ -422,7 +485,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                   onChange={() => toggleDate('choose')}
                   className="sr-only"
                 />
-                <span className="text-sm font-medium text-gray-700">Choose Date</span>
+                <span className="text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">Choose Date</span>
               </label>
             </div>
             {showDate && (
@@ -433,27 +496,35 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                 onChange={updateDate}
                 onBlur={() => setShowDate(false)}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
+                className="w-full px-4 py-3 border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] bg-white/60 backdrop-blur-sm text-[15px] antialiased"
+                style={{
+                  backdropFilter: 'blur(8px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                }}
                 autoFocus
               />
             )}
-            {errors.date && <p className="mt-1 text-xs text-red-600">{errors.date}</p>}
+            {errors.date && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.date}</p>}
           </div>
 
-          {/* Preferred Time */}
+          {/* Apple-style Preferred Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
               Preferred Time Range
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {timeRanges.map(range => (
                 <label
                   key={range}
-                  className={`flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                  className={`group cursor-pointer flex items-center justify-center p-4 border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-xl hover:scale-[1.02] ${
                     time === range 
-                      ? 'border-sky-500 bg-sky-50 shadow-md' 
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-gray-400/60 bg-gray-50/80 shadow-sm' 
+                      : 'border-gray-200/40 hover:border-gray-300/60 hover:bg-gray-50/40'
                   }`}
+                  style={{
+                    backdropFilter: 'blur(8px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+                  }}
                 >
                   <input
                     type="radio"
@@ -468,20 +539,26 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                     }}
                     className="sr-only"
                   />
-                  <span className="text-sm font-medium text-gray-700">{range}</span>
+                  <span className="text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">{range}</span>
                 </label>
               ))}
             </div>
-            {errors.timeRange && <p className="mt-1 text-xs text-red-600">{errors.timeRange}</p>}
+            {errors.timeRange && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.timeRange}</p>}
           </div>
         </div>
 
-        {/* Message Section */}
-        <div className="rounded-2xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm bg-white/95">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Message</h3>
+        {/* Apple-style Message Section */}
+        <div 
+          className="bg-white/60 border border-black/8 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+          style={{
+            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          }}
+        >
+          <h3 className="text-[15px] font-semibold text-gray-800 mb-6 tracking-[-0.01em] antialiased">Your Message</h3>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
               Message <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -489,77 +566,131 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
               value={form.message}
               onChange={updateForm}
               rows={5}
-              className={`w-full px-4 py-3 border ${
-                errors.message ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-sky-500 focus:ring-sky-500/20'
-              } rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 bg-white/80 backdrop-blur-sm resize-none`}
+              className={`w-full px-4 py-4 border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-xl focus:outline-none focus:ring-2 resize-none bg-white/60 backdrop-blur-sm text-[15px] leading-relaxed antialiased ${
+                errors.message 
+                  ? 'border-red-300/60 focus:border-red-400 focus:ring-red-400/20' 
+                  : 'border-gray-200/60 focus:border-gray-400 focus:ring-gray-400/20'
+              }`}
+              style={{
+                backdropFilter: 'blur(8px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+              }}
               placeholder="Please describe your inquiry in detail. How can we help you?"
             />
-            {errors.message && <p className="mt-1 text-xs text-red-600">{errors.message}</p>}
-            <p className="mt-2 text-xs text-gray-500">
+            {errors.message && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.message}</p>}
+            <p className="mt-3 text-[11px] text-gray-500 antialiased">
               Characters: {form.message.length} (minimum 10 required)
             </p>
           </div>
         </div>
 
-        {/* Security Section */}
-        <div className="rounded-2xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm bg-white/95">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Verification</h3>
+        {/* Apple-style Security Section */}
+        <div 
+          className="bg-white/60 border border-black/8 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+          style={{
+            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          }}
+        >
+          <h3 className="text-[15px] font-semibold text-gray-800 mb-6 tracking-[-0.01em] antialiased">Security Verification</h3>
           
-          {/* Math Challenge */}
+          {/* Apple-style Math Challenge */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Security Question <span className="text-red-500">*</span>
+            <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
+              What is {math.num1} + {math.num2}? <span className="text-red-500">*</span>
             </label>
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="bg-sky-50 border border-sky-200 rounded-lg px-4 py-2">
-                <span className="text-lg font-mono font-bold text-sky-700">
-                  {math.num1} + {math.num2} = ?
-                </span>
-              </div>
-            </div>
             <input
               type="number"
               name="mathAnswer"
               value={form.mathAnswer}
               onChange={updateForm}
-              className={`w-24 px-4 py-3 border ${
-                errors.mathAnswer ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-sky-500 focus:ring-sky-500/20'
-              } rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 bg-white/80 backdrop-blur-sm text-center font-mono`}
+              className={`w-32 px-4 py-3 border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-xl focus:outline-none focus:ring-2 bg-white/60 backdrop-blur-sm text-[15px] antialiased ${
+                errors.mathAnswer 
+                  ? 'border-red-300/60 focus:border-red-400 focus:ring-red-400/20' 
+                  : 'border-gray-200/60 focus:border-gray-400 focus:ring-gray-400/20'
+              }`}
+              style={{
+                backdropFilter: 'blur(8px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+              }}
               placeholder="Answer"
             />
-            {errors.mathAnswer && <p className="mt-1 text-xs text-red-600">{errors.mathAnswer}</p>}
-          </div>
-
-          {/* Honeypot Field - Hidden */}
-          <div className="hidden">
-            <input
-              type="text"
-              name="honeypot"
-              value={form.honeypot}
-              onChange={updateForm}
-              tabIndex={-1}
-              autoComplete="off"
-            />
+            {errors.mathAnswer && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.mathAnswer}</p>}
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="pt-4">
-          <Button 
-            variant="start" 
-            type="submit" 
-            disabled={submitting} 
-            className="w-full py-4 text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:transform-none disabled:shadow-md"
-          >
-            {submitting ? (
-              <span className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                Submitting...
-              </span>
-            ) : (
-              'Submit Ticket'
-            )}
-          </Button>
+        {/* Apple-style Submit Button */}
+        <div className="pt-8">
+          <div className="relative group">
+            {/* Subtle glow effect behind button */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"></div>
+            
+            <Button 
+              variant="start" 
+              type="submit" 
+              disabled={submitting} 
+              className={`
+                relative w-full py-4 px-8 text-[15px] font-semibold tracking-[-0.01em] antialiased
+                shadow-[0_8px_30px_rgba(0,0,0,0.12)] 
+                hover:shadow-[0_16px_50px_rgba(0,0,0,0.20)] 
+                active:shadow-[0_4px_20px_rgba(0,0,0,0.15)]
+                transform hover:scale-[1.02] active:scale-[0.98]
+                transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
+                disabled:transform-none disabled:shadow-[0_4px_20px_rgba(0,0,0,0.08)] disabled:scale-100
+                disabled:opacity-60 disabled:cursor-not-allowed
+                before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-r 
+                before:from-white/10 before:via-white/5 before:to-transparent 
+                before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300
+                overflow-hidden
+                ${submitting ? 'animate-pulse' : ''}
+              `}
+            >
+              {/* Inner gradient overlay for premium feel */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
+              
+              {/* Button content with enhanced styling */}
+              <div className="relative flex items-center justify-center gap-3">
+                {submitting ? (
+                  <>
+                    <div className="relative">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
+                      <div className="absolute inset-0 animate-ping rounded-full h-5 w-5 border border-white/20"></div>
+                    </div>
+                    <span className="antialiased font-medium">
+                      Processing your request...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="antialiased font-semibold">
+                      Submit Support Ticket
+                    </span>
+                    <svg 
+                      className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M13 7l5 5m0 0l-5 5m5-5H6" 
+                      />
+                    </svg>
+                  </>
+                )}
+              </div>
+              
+              {/* Subtle shimmer effect */}
+              <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer pointer-events-none"></div>
+            </Button>
+          </div>
+          
+          {/* Subtle helper text */}
+          <p className="text-center text-[11px] text-gray-500 mt-4 antialiased">
+            We typically respond within 24 hours
+          </p>
         </div>
       </form>
     </div>

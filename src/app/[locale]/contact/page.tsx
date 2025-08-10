@@ -15,8 +15,8 @@ export async function generateMetadata() {
 
 export default function ContactPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Contact Us</h1>
+    <div className=" container mx-auto px-4 py-16">
+      <h1 className="text-3xl font-bold my-16">Contact Us</h1>
       <Suspense fallback={<div>Loading...</div>}>
         <ContactForm />
       </Suspense>
