@@ -79,6 +79,7 @@ export async function GET(request: Request) {
           url_name,
           description,
           description_translation,
+          description_translation,
           is_displayed,
           website_menuitem_id,
           organization_id
@@ -126,7 +127,7 @@ export async function GET(request: Request) {
     console.log('Filtered menu items:', JSON.stringify(filteredData, null, 2), 'for organization_id:', organizationId);
     return NextResponse.json(filteredData, {
       status: 200,
-      headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' },
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }, // Temporarily disable cache for testing
     });
   } catch (error) {
     console.error('Server error in /api/menu:', error);
