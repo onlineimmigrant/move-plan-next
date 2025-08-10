@@ -132,6 +132,9 @@ export interface Settings {
   features?: any[]; // Feature[] - keeping as any[] to avoid circular imports
   faqs?: any[]; // FAQ[] - keeping as any[] to avoid circular imports
   banners?: any[]; // Banner[] - keeping as any[] to avoid circular imports
+  cookie_categories?: CookieCategory[]; // Cookie consent management - global categories
+  cookie_services?: CookieService[]; // Cookie services management - organization-specific
+  cookie_consent_records?: CookieConsentRecord[]; // User consent records - operational data
   
   // Contact Information
   contact_email?: string;
@@ -170,3 +173,42 @@ export const organizationTypes = [
   { value: 'services', label: 'General Services', icon: '🔧' },
   { value: 'general', label: 'General Organization', icon: '🏢' },
 ];
+
+// Cookie Consent Management Types
+export interface CookieService {
+  id?: number;
+  created_at?: string;
+  name: string;
+  description: string;
+  active: boolean;
+  category_id?: number;
+  processing_company?: string;
+  data_processor_cookie_policy_url?: string;
+  data_processor_privacy_policy_url?: string;
+  data_protection_officer_contact?: string;
+  retention_period?: string;
+  name_translation?: Record<string, string>;
+  description_translation?: Record<string, string>;
+  organization_id?: string; // empty means belongs to all organizations
+}
+
+export interface CookieCategory {
+  id?: number;
+  name: string;
+  description: string;
+  name_translation?: Record<string, string>;
+  description_translation?: Record<string, string>;
+  cookie_service: CookieService[];
+}
+
+export interface CookieConsentRecord {
+  id?: number;
+  created_at?: string;
+  ip_address?: string;
+  consent_given: boolean;
+  consent_data?: Record<string, any>;
+  user_id?: string | null; // Optional since anonymous users might not have user_id
+  organization_id: string; // New required field for direct organization linking
+  last_updated?: string;
+  language_auto?: string;
+}

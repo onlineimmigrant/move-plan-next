@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Organization API</title>
+</head>
+<body>
+    <h1>Testing Organization API Cookie Data</h1>
+    <button onclick="testAPI()">Test API</button>
+    <pre id="result">Click the button to test the API</pre>
+    
+    <script>
+    async function testAPI() {
+        const resultElement = document.getElementById('result');
+        resultElement.textContent = 'Testing...';
+        
+        try {
+            // Get the service role key from the URL parameters or set manually
+            const serviceKey = new URLSearchParams(window.location.search).get('key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTgyNjE0NSwiZXhwIjoyMDI1NDAyMTQ1fQ.GsrIpZt_F3iw0DkQbX4iYXJLWW-fKoTN1e8SkYZqhNE';
+            
+            const response = await fetch('/api/organizations/de0d5c21-787f-49c2-a665-7ff8e599c891', {
+                headers: {
+                    'Authorization': 'Bearer ' + serviceKey,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            resultElement.textContent = JSON.stringify({
+                success: true,
+                cookie_categories_count: data.cookie_categories?.length || 0,
+                cookie_services_count: data.cookie_services?.length || 0,
+                cookie_consent_records_count: data.cookie_consent_records?.length || 0,
+                organization_name: data.organization?.name || 'Unknown',
+                cookie_categories: data.cookie_categories || [],
+                cookie_services: data.cookie_services || []
+            }, null, 2);
+            
+        } catch (error) {
+            resultElement.textContent = `Error: ${error.message}`;
+        }
+    }
+    </script>
+</body>
+</html>

@@ -4,6 +4,14 @@ import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const organization_id = url.searchParams.get('organization_id');
+    
+    // Validate that organization_id is provided
+    if (!organization_id) {
+      return NextResponse.json({ error: 'organization_id query parameter is required' }, { status: 400 });
+    }
+
     // Log the cookies to debug if they're being sent
     const cookieStore = await cookies();
    // console.log('Request cookies in GET /api/cookies/consent:', await cookieStore.getAll());
@@ -39,10 +47,11 @@ export async function GET(request: Request) {
       }
     }
 
-    // Fetch the latest consent record for the user (authenticated or anonymous)
+    // Fetch the latest consent record for the user (authenticated or anonymous) within the organization
     let consentQuery = supabaseServer
       .from('cookie_consent')
       .select('id')
+      .eq('organization_id', organization_id)
       .order('created_at', { ascending: false })
       .limit(1);
 
@@ -83,7 +92,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { consent_given, services } = await request.json();
+  const { consent_given, services, organization_id } = await request.json();
+
+  // Validate that organization_id is provided
+  if (!organization_id) {
+    return NextResponse.json({ error: 'organization_id is required' }, { status: 400 });
+  }
 
   try {
     // Log the cookies to debug if they're being sent
@@ -121,10 +135,14 @@ export async function POST(request: Request) {
       }
     }
 
-    // Insert into cookie_consent with the correct user_id
+    // Insert into cookie_consent with the correct user_id and organization_id
     const { data: consentData, error: consentError } = await supabaseServer
       .from('cookie_consent')
-      .insert({ consent_given, user_id: userId })
+      .insert({ 
+        consent_given, 
+        user_id: userId,
+        organization_id: organization_id 
+      })
       .select('id')
       .single();
 

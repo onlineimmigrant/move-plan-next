@@ -17,6 +17,11 @@ import { ProductSelect } from './ProductSelect';
 import { FeatureSelect } from './FeatureSelect';
 import { FAQSelect } from './FAQSelect';
 import { BannerSelect } from './BannerSelect';
+// Cookie Management components
+import { CookieCategoriesSelect } from './CookieCategoriesSelect';
+import { CookieServicesSelect } from './CookieServicesSelect';
+import { CookieConsentRecordsSelect } from './CookieConsentRecordsSelect';
+import { CookieConsentSelect } from './CookieConsentSelect';
 import { Settings, organizationTypes } from './types';
 
 interface SubSectionConfig {
@@ -37,7 +42,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners' | 'cookie-consent' | 'cookie-categories' | 'cookie-services' | 'cookie-consent-records';
   placeholder?: string;
   span?: 'full' | 'half';
 }
@@ -135,7 +140,23 @@ interface BannersFieldConfig extends BaseFieldConfig {
   type: 'banners';
 }
 
-export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig | BannersFieldConfig;
+interface CookieConsentFieldConfig extends BaseFieldConfig {
+  type: 'cookie-consent';
+}
+
+interface CookieCategoriesFieldConfig extends BaseFieldConfig {
+  type: 'cookie-categories';
+}
+
+interface CookieServicesFieldConfig extends BaseFieldConfig {
+  type: 'cookie-services';
+}
+
+interface CookieConsentRecordsFieldConfig extends BaseFieldConfig {
+  type: 'cookie-consent-records';
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig | BannersFieldConfig | CookieConsentFieldConfig | CookieCategoriesFieldConfig | CookieServicesFieldConfig | CookieConsentRecordsFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -442,6 +463,37 @@ export const sectionsConfig: SectionConfig[] = [
         ]
       }
     ]
+  },
+
+  {
+    title: 'Consent Management',
+    key: 'consent',
+    subsections: [
+      {
+        title: 'Cookie Categories',
+        key: 'cookie-categories',
+        columns: 1,
+        fields: [
+          { name: 'cookie_categories', label: 'Global Cookie Categories', type: 'cookie-categories', span: 'full' }
+        ]
+      },
+      {
+        title: 'Cookie Services',
+        key: 'cookie-services',
+        columns: 1,
+        fields: [
+          { name: 'cookie_services', label: 'Organization Cookie Services', type: 'cookie-services', span: 'full' }
+        ]
+      },
+      {
+        title: 'Consent Records',
+        key: 'cookie-consent',
+        columns: 1,
+        fields: [
+          { name: 'cookie_consent_records', label: 'User Consent History', type: 'cookie-consent-records', span: 'full' }
+        ]
+      }
+    ]
   }
 ];
 
@@ -711,6 +763,42 @@ export const renderField = ({
         />
       );
     
+    case 'cookie-consent':
+      return (
+        <CookieConsentSelect
+          value={Array.isArray(value) ? value : []}
+          onChange={(categories) => handleChange(field.name, categories)}
+        />
+      );
+
+    case 'cookie-categories':
+      console.log('🍪 Rendering cookie-categories, allSettings:', allSettings);
+      return (
+        <CookieCategoriesSelect
+          value={allSettings?.cookie_categories || []}
+          onChange={(categories: any) => handleChange(field.name, categories)}
+        />
+      );
+
+    case 'cookie-services':
+      console.log('🍪 Rendering cookie-services, allSettings:', allSettings);
+      return (
+        <CookieServicesSelect
+          value={allSettings?.cookie_services || []}
+          onChange={(services: any) => handleChange(field.name, services)}
+          availableCategories={allSettings?.cookie_categories || []}
+        />
+      );
+
+    case 'cookie-consent-records':
+      console.log('🍪 Rendering cookie-consent-records, allSettings:', allSettings);
+      return (
+        <CookieConsentRecordsSelect
+          value={allSettings?.cookie_consent_records || []}
+          onChange={(records: any) => handleChange(field.name, records)}
+        />
+      );
+
     default:
       return null;
   }

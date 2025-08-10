@@ -35,6 +35,8 @@ export default function EditModal({
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 }); // Mouse position for tooltip
   const [activeTab, setActiveTab] = useState<'settings' | 'deployment'>('settings'); // New tab state
   const [previewRefreshKey, setPreviewRefreshKey] = useState<number>(0); // Add refresh key for LivePreview
+  const [isLoadingDetailedData, setIsLoadingDetailedData] = useState(false); // New loading state
+  const [detailedOrganizationData, setDetailedOrganizationData] = useState<any>(null); // Store the full org data with cookies
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef<number>(0);
   const dragStartWidth = useRef<number>(0);
@@ -45,6 +47,35 @@ export default function EditModal({
   const hasUnsavedChanges = useMemo(() => {
     return JSON.stringify(settings) !== JSON.stringify(originalSettings);
   }, [settings, originalSettings]);
+
+  // Fetch detailed organization data including cookies
+  const fetchDetailedOrganizationData = useCallback(async (organizationId: string) => {
+    if (!session?.access_token) return null;
+    
+    setIsLoadingDetailedData(true);
+    try {
+      const response = await fetch(`/api/organizations/${organizationId}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch organization data: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('[EditModal] Fetched detailed organization data:', data);
+      setDetailedOrganizationData(data);
+      return data;
+    } catch (error) {
+      console.error('[EditModal] Error fetching detailed organization data:', error);
+      return null;
+    } finally {
+      setIsLoadingDetailedData(false);
+    }
+  }, [session]);
 
   // Check for mobile on mount and resize
   useEffect(() => {
@@ -68,6 +99,12 @@ export default function EditModal({
   // Initialize settings when organization changes
   useEffect(() => {
     console.log(`[EditModal] Organization changed:`, organization);
+    
+    // Fetch detailed organization data if we have an organization ID
+    if (organization?.id && session?.access_token) {
+      fetchDetailedOrganizationData(organization.id);
+    }
+    
     if (organization?.settings) {
       console.log('Loading organization settings:', organization.settings); // Debug log
       const loadedSettings = {
@@ -121,7 +158,7 @@ export default function EditModal({
       setSettings(defaultSettings);
       setOriginalSettings(defaultSettings);
     }
-  }, [organization]);
+  }, [organization, session, fetchDetailedOrganizationData]);
 
   // Expose current settings globally for auto-save functionality
   useEffect(() => {
@@ -240,51 +277,60 @@ export default function EditModal({
   const handleMouseMoveRef = useRef<(e: MouseEvent) => void>();
   const handleMouseUpRef = useRef<() => void>();
 
-  handleMouseMoveRef.current = useCallback((e: MouseEvent) => {
-    if (!isDraggingRef.current || !containerRef.current || isCollapsed || isMobile) return;
-
-    // Cancel any pending animation frame
-    if (animationFrameId.current) {
-      cancelAnimationFrame(animationFrameId.current);
-    }
-
-    // Use requestAnimationFrame to throttle updates
-    animationFrameId.current = requestAnimationFrame(() => {
-      if (!containerRef.current || !isDraggingRef.current) return;
+  // Initialize handlers once on mount only
+  useEffect(() => {
+    handleMouseMoveRef.current = (e: MouseEvent) => {
+      if (!isDraggingRef.current || !containerRef.current) return;
       
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const deltaX = e.clientX - dragStartX.current;
-      const deltaWidthPercent = (deltaX / containerRect.width) * 100;
-      const newWidth = dragStartWidth.current + deltaWidthPercent;
+      // Get current values from state/refs at execution time
+      const currentIsCollapsed = isCollapsed;
+      const currentIsMobile = isMobile;
       
-      // Constrain between 20% and 75% to ensure both panels have minimum usable width
-      const constrainedWidth = Math.min(75, Math.max(20, newWidth));
-      setLeftPanelWidth(constrainedWidth);
-    });
-  }, [isCollapsed, isMobile]);
+      if (currentIsCollapsed || currentIsMobile) return;
 
-  handleMouseUpRef.current = useCallback(() => {
-    isDraggingRef.current = false;
-    setIsDragging(false);
-    
-    // Cancel any pending animation frame
-    if (animationFrameId.current) {
-      cancelAnimationFrame(animationFrameId.current);
-    }
-    
-    // Clean up immediately
-    if (handleMouseMoveRef.current) {
-      document.removeEventListener('mousemove', handleMouseMoveRef.current);
-    }
-    if (handleMouseUpRef.current) {
-      document.removeEventListener('mouseup', handleMouseUpRef.current);
-    }
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    (document.body.style as any).webkitUserSelect = '';
-    (document.body.style as any).mozUserSelect = '';
-    (document.body.style as any).msUserSelect = '';
-  }, []);
+      // Cancel any pending animation frame
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+
+      // Use requestAnimationFrame to throttle updates
+      animationFrameId.current = requestAnimationFrame(() => {
+        if (!containerRef.current || !isDraggingRef.current) return;
+        
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const deltaX = e.clientX - dragStartX.current;
+        const deltaWidthPercent = (deltaX / containerRect.width) * 100;
+        const newWidth = dragStartWidth.current + deltaWidthPercent;
+        
+        // Constrain between 20% and 75% to ensure both panels have minimum usable width
+        const constrainedWidth = Math.min(75, Math.max(20, newWidth));
+        setLeftPanelWidth(constrainedWidth);
+      });
+    };
+
+    handleMouseUpRef.current = () => {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      
+      // Cancel any pending animation frame
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+      
+      // Clean up immediately
+      if (handleMouseMoveRef.current) {
+        document.removeEventListener('mousemove', handleMouseMoveRef.current);
+      }
+      if (handleMouseUpRef.current) {
+        document.removeEventListener('mouseup', handleMouseUpRef.current);
+      }
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      (document.body.style as any).webkitUserSelect = '';
+      (document.body.style as any).mozUserSelect = '';
+      (document.body.style as any).msUserSelect = '';
+    };
+  }, []); // Empty dependency array - initialize once only
 
   // Create stable event handler references
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -303,7 +349,7 @@ export default function EditModal({
     if (!containerRef.current || isMobile || isCollapsed) return;
     
     dragStartX.current = e.clientX;
-    dragStartWidth.current = leftPanelWidth;
+    dragStartWidth.current = leftPanelWidth; // Use current state value at the time of mouse down
     isDraggingRef.current = true;
     setIsDragging(true);
     
@@ -315,7 +361,7 @@ export default function EditModal({
     (document.body.style as any).webkitUserSelect = 'none';
     (document.body.style as any).mozUserSelect = 'none';
     (document.body.style as any).msUserSelect = 'none';
-  }, [isMobile, isCollapsed, leftPanelWidth]);
+  }, [isMobile, isCollapsed]); // Remove all handler references, keep only primitive values
 
   // Cleanup animation frame on unmount only
   useEffect(() => {
@@ -333,7 +379,7 @@ export default function EditModal({
       (document.body.style as any).mozUserSelect = '';
       (document.body.style as any).msUserSelect = '';
     };
-  }, [handleMouseMove, handleMouseUp]);
+  }, []); // Empty dependency array - cleanup only on unmount
 
   if (!isOpen || !organization) return null;
 
@@ -567,6 +613,7 @@ export default function EditModal({
                       onImageUpload={handleImageUpload}
                       uploadingImages={uploadingImages}
                       isNarrow={false}
+                      cookieData={detailedOrganizationData}
                     />
                   ) : (
                     <SiteDeployment
@@ -644,6 +691,7 @@ export default function EditModal({
                       onImageUpload={handleImageUpload}
                       uploadingImages={uploadingImages}
                       isNarrow={leftPanelWidth < 40}
+                      cookieData={detailedOrganizationData}
                     />
                   ) : (
                     <SiteDeployment
