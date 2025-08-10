@@ -70,6 +70,20 @@ const Header: React.FC<HeaderProps> = ({
     setIsMounted(true);
     console.log('Menu items in Header:', JSON.stringify(menuItems, null, 2));
     console.log('Fixed banners height in Header:', fixedBannersHeight);
+    
+    // Debug: Check submenu descriptions
+    menuItems?.forEach((item) => {
+      if (item.website_submenuitem?.length) {
+        console.log(`Menu "${item.display_name}" submenus:`, 
+          item.website_submenuitem.map(sub => ({
+            id: sub.id,
+            name: sub.name,
+            description: sub.description,
+            description_translation: sub.description_translation
+          }))
+        );
+      }
+    });
   }, [menuItems, fixedBannersHeight]);
 
   const getIconName = (reactIcons: ReactIcon | ReactIcon[] | null | undefined): string | undefined => {
@@ -120,19 +134,19 @@ const Header: React.FC<HeaderProps> = ({
                   <>
                     <button
                       type="button"
-                      className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                      className="group cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
                       title={translatedDisplayName}
                       aria-label={t.openMenuFor(translatedDisplayName)}
                     >
                       {settings?.menu_items_are_text ? (
-                        <span className="text-base font-medium text-gray-700">{translatedDisplayName}</span>
+                        <span className="text-[15px] font-medium text-gray-700 group-hover:text-gray-900 tracking-[-0.01em] transition-colors duration-300">{translatedDisplayName}</span>
                       ) : item.image ? (
                         <Image
                           src={item.image}
                           alt={translatedDisplayName}
                           width={24}
                           height={24}
-                          className="h-6 w-6 text-gray-600"
+                          className="h-6 w-6 text-gray-600 transition-all duration-300 group-hover:scale-105"
                           onError={() =>
                             console.error(
                               `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
@@ -140,44 +154,115 @@ const Header: React.FC<HeaderProps> = ({
                           }
                         />
                       ) : (
-                        renderIcon(getIconName(item.react_icons))
+                        <div className="transition-all duration-300 group-hover:scale-105">
+                          {renderIcon(getIconName(item.react_icons))}
+                        </div>
                       )}
+                      <svg className="ml-1.5 h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-all duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
                     </button>
-                    <div className="absolute right-0 w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
-                      {displayedSubItems.map((subItem) => {
-                        // Get translated content for submenu item
-                        const translatedSubItemName = currentLocale 
-                          ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
-                          : subItem.name;
+                    
+                    {/* Full-width Apple-style mega menu */}
+                    <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-screen max-w-7xl bg-white/95 backdrop-blur-3xl border border-black/8 rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.15)] z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in fade-in-0 zoom-in-95"
+                      style={{
+                        backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+                        WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+                      }}
+                    >
+                      {/* Subtle top highlight */}
+                      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
+                      
+                      {/* Inner glow for depth */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none"></div>
+                      
+                      <div className="relative p-8">
+                        <div className="mb-6">
+                          <h3 className="text-[18px] font-semibold text-gray-900 mb-2 tracking-[-0.02em] antialiased">{translatedDisplayName}</h3>
+                          <p className="text-[13px] text-gray-600 antialiased opacity-90">Explore our {translatedDisplayName.toLowerCase()} options and services</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {displayedSubItems.map((subItem, index) => {
+                            const translatedSubItemName = currentLocale 
+                              ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
+                              : subItem.name;
 
-                        return (
-                          <LocalizedLink
-                            key={subItem.id}
-                            href={subItem.url_name}
-                            className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
-                          >
-                            {translatedSubItemName}
-                          </LocalizedLink>
-                        );
-                      })}
+                            const translatedDescription = currentLocale && subItem.description_translation && subItem.description
+                              ? getTranslatedMenuContent(subItem.description, subItem.description_translation, currentLocale)
+                              : subItem.description;
+
+                            const displayDescription = translatedDescription || `Learn more about ${translatedSubItemName.toLowerCase()} and discover how it can help you.`;
+
+                            return (
+                              <LocalizedLink
+                                key={subItem.id}
+                                href={subItem.url_name}
+                                className="group/item relative overflow-hidden flex flex-col p-5 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:shadow-md border border-gray-200/40"
+                              >
+                                {/* Hover shine effect */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
+                                
+                                <div className="relative z-10 flex items-start space-x-4">
+                                  <div className="flex-shrink-0 p-2 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm">
+                                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="text-[15px] font-semibold text-gray-900 mb-2 tracking-[-0.01em] antialiased group-hover/item:text-gray-800 transition-colors duration-300">
+                                      {translatedSubItemName}
+                                    </h4>
+                                    <p className="text-[12px] text-gray-600 leading-relaxed antialiased opacity-80 group-hover/item:opacity-100 transition-opacity duration-300">
+                                      {displayDescription}
+                                    </p>
+                                  </div>
+                                  <svg className="w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              </LocalizedLink>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Featured section at bottom */}
+                        <div className="mt-8 pt-6 border-t border-gray-200/50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="text-[14px] font-medium text-gray-700 antialiased">Need help deciding?</h4>
+                              <p className="text-[12px] text-gray-500 antialiased">Contact our team for personalized recommendations</p>
+                            </div>
+                            <button
+                              onClick={() => setIsContactOpen(true)}
+                              className="px-4 py-2.5 bg-gray-700 hover:bg-gray-800 text-white text-[13px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] shadow-sm hover:shadow-md antialiased"
+                            >
+                              Get Help
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Bottom accent */}
+                      <div className="absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-black/6 to-transparent"></div>
                     </div>
                   </>
                 ) : (
                   <LocalizedLink
                     href={item.url_name}
-                    className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                    className="cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group antialiased"
                     title={translatedDisplayName}
                     aria-label={t.goTo(translatedDisplayName)}
                   >
                     {settings?.menu_items_are_text ? (
-                      <span className="text-base font-medium text-gray-700">{translatedDisplayName}</span>
+                      <span className="text-[15px] font-medium text-gray-700 group-hover:text-gray-900 tracking-[-0.01em] transition-colors duration-300">{translatedDisplayName}</span>
                     ) : item.image ? (
                       <Image
                         src={item.image}
                         alt={translatedDisplayName}
                         width={24}
                         height={24}
-                        className="h-4 w-6 text-gray-600"
+                        className="h-6 w-6 text-gray-600 transition-all duration-300 group-hover:scale-105"
                         onError={() =>
                           console.error(
                             `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
@@ -185,7 +270,9 @@ const Header: React.FC<HeaderProps> = ({
                         }
                       />
                     ) : (
-                      renderIcon(getIconName(item.react_icons))
+                      <div className="transition-all duration-300 group-hover:scale-105">
+                        {renderIcon(getIconName(item.react_icons))}
+                      </div>
                     )}
                   </LocalizedLink>
                 )}
@@ -197,9 +284,11 @@ const Header: React.FC<HeaderProps> = ({
   );
 
   const renderMobileMenuItems = () => (
-    <>
+    <div className="space-y-3">
       {menuItems.length === 0 ? (
-        <span className="block px-6 py-6 text-gray-500">{t.noMenuItems}</span>
+        <div className="p-6 text-center">
+          <span className="text-[14px] text-gray-500 antialiased">{t.noMenuItems}</span>
+        </div>
       ) : (
         menuItems
           .filter((item) => item.is_displayed && item.display_name !== 'Profile')
@@ -218,59 +307,139 @@ const Header: React.FC<HeaderProps> = ({
               : item.display_name;
 
             return (
-              <Disclosure key={item.id}>
-                {({ open }) => (
-                  <div>
-                    {displayedSubItems.length > 0 ? (
-                      <>
+              <div key={item.id} className="relative">
+                {displayedSubItems.length > 0 ? (
+                  <Disclosure>
+                    {({ open }) => (
+                      <div className="relative overflow-hidden bg-white/50 backdrop-blur-sm rounded-2xl border border-gray-200/40">
                         <Disclosure.Button
-                          className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                          className="group cursor-pointer flex items-center justify-between w-full p-4 hover:bg-gray-50/70 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
                           aria-label={t.toggleMenu(translatedDisplayName)}
                         >
-                          <span className="text-base font-medium text-gray-700">{translatedDisplayName}</span>
-                          {open ? (
-                            <MinusIcon className="h-5 w-5" aria-hidden="true" />
-                          ) : (
-                            <PlusIcon className="h-5 w-5" aria-hidden="true" />
-                          )}
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                              {settings?.menu_items_are_text ? (
+                                <span className="text-[14px] font-medium text-gray-700 antialiased">
+                                  {translatedDisplayName.charAt(0).toUpperCase()}
+                                </span>
+                              ) : item.image ? (
+                                <Image
+                                  src={item.image}
+                                  alt={translatedDisplayName}
+                                  width={20}
+                                  height={20}
+                                  className="h-5 w-5 transition-all duration-300 group-hover:scale-105"
+                                  onError={() =>
+                                    console.error(
+                                      `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
+                                    )
+                                  }
+                                />
+                              ) : (
+                                <div className="transition-all duration-300 group-hover:scale-105">
+                                  {renderIcon(getIconName(item.react_icons))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-left">
+                              <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{translatedDisplayName}</span>
+                              <p className="text-[12px] text-gray-600 antialiased opacity-80">
+                                {displayedSubItems.length} {displayedSubItems.length === 1 ? 'option' : 'options'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="transition-all duration-300 group-hover:scale-105">
+                            {open ? (
+                              <MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                            ) : (
+                              <PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                            )}
+                          </div>
                         </Disclosure.Button>
-                        <Disclosure.Panel className="pl-8">
+                        <Disclosure.Panel className="p-4 pt-0 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-300">
                           {displayedSubItems.map((subItem) => {
                             // Get translated content for submenu item
                             const translatedSubItemName = currentLocale 
                               ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
                               : subItem.name;
 
+                            const translatedDescription = currentLocale && subItem.description_translation && subItem.description
+                              ? getTranslatedMenuContent(subItem.description, subItem.description_translation, currentLocale)
+                              : subItem.description;
+
+                            const displayDescription = translatedDescription || `Learn more about ${translatedSubItemName.toLowerCase()}`;
+
                             return (
                               <LocalizedLink
                                 key={subItem.id}
                                 href={subItem.url_name}
                                 onClick={() => setIsOpen(false)}
-                                className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+                                className="group/sub relative overflow-hidden flex items-center space-x-3 p-3 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-xl border border-gray-200/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
                               >
-                                {translatedSubItemName}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/sub:translate-x-full transition-transform duration-700 ease-out"></div>
+                                <div className="relative z-10 w-8 h-8 bg-white/80 rounded-lg flex items-center justify-center">
+                                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </div>
+                                <div className="relative z-10 flex-1">
+                                  <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em] mb-1 block">{translatedSubItemName}</span>
+                                  <p className="text-[11px] text-gray-600 antialiased opacity-70">{displayDescription}</p>
+                                </div>
+                                <svg className="relative z-10 w-4 h-4 text-gray-400 group-hover/sub:text-gray-600 group-hover/sub:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
                               </LocalizedLink>
                             );
                           })}
                         </Disclosure.Panel>
-                      </>
-                    ) : (
-                      <LocalizedLink
-                        href={item.url_name}
-                        onClick={() => setIsOpen(false)}
-                        className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                        aria-label={t.goTo(translatedDisplayName)}
-                      >
-                        <span className="text-base font-medium text-gray-700">{translatedDisplayName}</span>
-                      </LocalizedLink>
+                      </div>
                     )}
-                  </div>
+                  </Disclosure>
+                ) : (
+                  <LocalizedLink
+                    href={item.url_name}
+                    onClick={() => setIsOpen(false)}
+                    className="group cursor-pointer flex items-center space-x-3 w-full p-4 bg-white/50 hover:bg-gray-50/70 backdrop-blur-sm rounded-2xl border border-gray-200/40 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                    aria-label={t.goTo(translatedDisplayName)}
+                  >
+                    <div className="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      {settings?.menu_items_are_text ? (
+                        <span className="text-[14px] font-medium text-gray-700 antialiased">
+                          {translatedDisplayName.charAt(0).toUpperCase()}
+                        </span>
+                      ) : item.image ? (
+                        <Image
+                          src={item.image}
+                          alt={translatedDisplayName}
+                          width={20}
+                          height={20}
+                          className="h-5 w-5 transition-all duration-300 group-hover:scale-105"
+                          onError={() =>
+                            console.error(
+                              `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
+                            )
+                          }
+                        />
+                      ) : (
+                        <div className="transition-all duration-300 group-hover:scale-105">
+                          {renderIcon(getIconName(item.react_icons))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{translatedDisplayName}</span>
+                    </div>
+                    <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </LocalizedLink>
                 )}
-              </Disclosure>
+              </div>
             );
           })
       )}
-    </>
+    </div>
   );
 
   if (!isMounted) {
@@ -279,10 +448,16 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <nav
-      className={`fixed left-0 right-0 z-40 opacity-95 transition-all duration-200 ${
-        isScrolled ? 'border-gray-200 bg-white' : 'bg-transparent'
+      className={`fixed left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        isScrolled 
+          ? 'bg-white/95 backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
+          : 'bg-white/80 backdrop-blur-2xl'
       }`}
-      style={{ top: `${fixedBannersHeight}px` }}
+      style={{ 
+        top: `${fixedBannersHeight}px`,
+        backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+      }}
     >
       <div
         className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 pl-8 sm:px-6 flex justify-between items-center`}
@@ -350,42 +525,98 @@ const Header: React.FC<HeaderProps> = ({
             <div className="relative group">
               <button
                 type="button"
-                className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
                 title={t.profile}
                 aria-label={t.openProfileMenu}
               >
-                <UserIcon className="h-6 w-6 text-gray-600" />
+                <UserIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-all duration-300 group-hover:scale-105" />
               </button>
-              <div className="absolute right-0 w-56 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block">
-                <LocalizedLink
-                  href="/account"
-                  className="block px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
-                >
-                  {t.account}
-                </LocalizedLink>
-                <button
-                  type="button"
-                  onClick={() => {
-                    console.log('Opening contact modal');
-                    setIsOpen(false);
-                    setIsContactOpen(true);
-                  }}
-                  className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 text-sm font-medium transition-colors duration-200"
-                >
-                  {t.contact}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    console.log('Logging out');
-                    setIsOpen(false);
-                    logout();
-                    router.push('/');
-                  }}
-                  className="block w-full text-left px-8 py-4 text-gray-700 hover:bg-sky-50 rounded-md text-sm font-medium transition-colors duration-200"
-                >
-                  {t.logout}
-                </button>
+              
+              {/* Apple-style profile dropdown */}
+              <div className="absolute right-0 mt-2 w-72 bg-white/95 backdrop-blur-3xl border border-black/8 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                style={{
+                  backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+                  WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+                }}
+              >
+                {/* Top highlight */}
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
+                
+                <div className="p-6">
+                  {/* Profile header */}
+                  <div className="flex items-center space-x-4 mb-6 pb-4 border-b border-gray-200/50">
+                    <div className="w-12 h-12 bg-gray-100/80 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <UserIcon className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">Profile</h3>
+                      <p className="text-[12px] text-gray-600 antialiased opacity-80">Manage your account settings</p>
+                    </div>
+                  </div>
+                  
+                  {/* Menu items */}
+                  <div className="space-y-1">
+                    <LocalizedLink
+                      href="/account"
+                      className="group/item relative overflow-hidden flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50/70 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01]"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-500 ease-out"></div>
+                      <div className="relative z-10 w-8 h-8 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                        <UserIcon className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <div className="relative z-10 flex-1">
+                        <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.account}</span>
+                        <p className="text-[11px] text-gray-600 antialiased opacity-70">Account settings and preferences</p>
+                      </div>
+                      <svg className="relative z-10 w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </LocalizedLink>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        console.log('Opening contact modal');
+                        setIsOpen(false);
+                        setIsContactOpen(true);
+                      }}
+                      className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-3 rounded-xl hover:bg-gray-50/70 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01]"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-500 ease-out"></div>
+                      <div className="relative z-10 w-8 h-8 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                        <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                      <div className="relative z-10 flex-1 text-left">
+                        <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.contact}</span>
+                        <p className="text-[11px] text-gray-600 antialiased opacity-70">Get help and support</p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        console.log('Logging out');
+                        setIsOpen(false);
+                        logout();
+                        router.push('/');
+                      }}
+                      className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-3 rounded-xl hover:bg-red-50/70 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] text-red-600 hover:text-red-700 mt-2 border-t border-gray-200/50 pt-4"
+                    >
+                      <div className="relative z-10 w-8 h-8 bg-red-100/80 rounded-lg flex items-center justify-center">
+                        <ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
+                      </div>
+                      <div className="relative z-10 flex-1 text-left">
+                        <span className="text-[14px] font-medium antialiased tracking-[-0.01em]">{t.logout}</span>
+                        <p className="text-[11px] text-red-500 antialiased opacity-70">Sign out of your account</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Bottom accent */}
+                <div className="absolute inset-x-4 bottom-0 h-px bg-gradient-to-r from-transparent via-black/6 to-transparent"></div>
               </div>
             </div>
           ) : (
@@ -396,11 +627,11 @@ const Header: React.FC<HeaderProps> = ({
                 setIsOpen(false);
                 setIsLoginOpen(true);
               }}
-              className="cursor-pointer flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+              className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
               title={t.login}
               aria-label={t.openLoginModal}
             >
-              <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600" />
+              <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-all duration-300 group-hover:scale-105" />
             </button>
           )}
           </div>
@@ -425,79 +656,137 @@ const Header: React.FC<HeaderProps> = ({
               console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
               setIsOpen(!isOpen);
             }}
-            className="cursor-pointer text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-md p-1 transition-all duration-200"
+            className="group cursor-pointer p-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-50/50 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
             aria-label={isOpen ? t.closeMenu : t.openMenu}
           >
-            {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+            <div className="transition-all duration-300 group-hover:scale-105">
+              {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+            </div>
           </button>
         </div>
       </div>
 
       {isOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white shadow-lg max-h-[70vh] overflow-y-auto">
-          {renderMobileMenuItems()}
-          {isLoggedIn ? (
-            <Disclosure>
-              {({ open }) => (
-                <div>
-                  <Disclosure.Button
-                    className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-                    aria-label="Toggle profile menu"
-                  >
-                    <span className="text-base font-medium text-gray-700">Profile</span>
-                    {open ? (
-                      <MinusIcon className="h-5 w-5" aria-hidden="true" />
-                    ) : (
-                      <PlusIcon className="h-5 w-5" aria-hidden="true" />
-                    )}
-                  </Disclosure.Button>
-                  <Disclosure.Panel className="pl-8">
-                    <LocalizedLink
-                      href="/account"
-                      onClick={() => setIsOpen(false)}
-                      className="block px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
+        <div className="md:hidden bg-white/95 backdrop-blur-3xl border-t border-black/8 shadow-[0_10px_40px_rgba(0,0,0,0.1)] max-h-[70vh] overflow-y-auto"
+          style={{
+            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          }}
+        >
+          <div className="p-6">
+            {renderMobileMenuItems()}
+            
+            {/* Profile section */}
+            {isLoggedIn ? (
+              <Disclosure>
+                {({ open }) => (
+                  <div className="relative overflow-hidden border-t border-gray-200/50 mt-6 pt-6">
+                    <Disclosure.Button
+                      className="group cursor-pointer flex items-center justify-between w-full p-4 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                      aria-label="Toggle profile menu"
                     >
-                      {t.account}
-                    </LocalizedLink>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsOpen(false);
-                        setIsContactOpen(true);
-                      }}
-                      className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-gray-200 border-b border-gray-200 transition-colors duration-200"
-                    >
-                      {t.contact}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsOpen(false);
-                        logout();
-                        router.push('/');
-                      }}
-                      className="block w-full text-left px-6 py-6 text-gray-700 hover:bg-sky-50 rounded-md font-medium transition-colors duration-200"
-                    >
-                      {t.logout}
-                    </button>
-                  </Disclosure.Panel>
-                </div>
-              )}
-            </Disclosure>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                setIsLoginOpen(true);
-              }}
-              className="cursor-pointer flex items-center justify-between w-full px-6 py-6 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
-              aria-label={t.openLoginModal}
-            >
-              <span className="text-base font-medium text-gray-700">{t.login}</span>
-              <ArrowLeftOnRectangleIcon className="h-5 w-5 text-gray-600" />
-            </button>
-          )}
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                          <UserIcon className="h-5 w-5 text-gray-600" />
+                        </div>
+                        <div className="text-left">
+                          <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">Profile</span>
+                          <p className="text-[12px] text-gray-600 antialiased opacity-80">Account & settings</p>
+                        </div>
+                      </div>
+                      <div className="transition-all duration-300 group-hover:scale-105">
+                        {open ? (
+                          <MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                        ) : (
+                          <PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                        )}
+                      </div>
+                    </Disclosure.Button>
+                    <Disclosure.Panel className="mt-3 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                      <LocalizedLink
+                        href="/account"
+                        onClick={() => setIsOpen(false)}
+                        className="group/item relative overflow-hidden flex items-center space-x-3 p-4 bg-white/50 hover:bg-gray-50/70 backdrop-blur-sm rounded-xl border border-gray-200/40 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
+                        <div className="relative z-10 w-8 h-8 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                          <UserIcon className="h-4 w-4 text-gray-600" />
+                        </div>
+                        <div className="relative z-10 flex-1">
+                          <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.account}</span>
+                          <p className="text-[11px] text-gray-600 antialiased opacity-70">Settings & preferences</p>
+                        </div>
+                        <svg className="relative z-10 w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </LocalizedLink>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsContactOpen(true);
+                        }}
+                        className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-4 bg-white/50 hover:bg-gray-50/70 backdrop-blur-sm rounded-xl border border-gray-200/40 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
+                        <div className="relative z-10 w-8 h-8 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                          <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </div>
+                        <div className="relative z-10 flex-1 text-left">
+                          <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.contact}</span>
+                          <p className="text-[11px] text-gray-600 antialiased opacity-70">Get help & support</p>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsOpen(false);
+                          logout();
+                          router.push('/');
+                        }}
+                        className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-4 bg-red-50/60 hover:bg-red-50/80 backdrop-blur-sm rounded-xl border border-red-200/40 text-red-600 hover:text-red-700 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                      >
+                        <div className="relative z-10 w-8 h-8 bg-red-100/80 rounded-lg flex items-center justify-center">
+                          <ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
+                        </div>
+                        <div className="relative z-10 flex-1 text-left">
+                          <span className="text-[14px] font-medium antialiased tracking-[-0.01em]">{t.logout}</span>
+                          <p className="text-[11px] text-red-500 antialiased opacity-70">Sign out of account</p>
+                        </div>
+                      </button>
+                    </Disclosure.Panel>
+                  </div>
+                )}
+              </Disclosure>
+            ) : (
+              <div className="border-t border-gray-200/50 mt-6 pt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsLoginOpen(true);
+                  }}
+                  className="group cursor-pointer flex items-center justify-between w-full p-4 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                  aria-label={t.openLoginModal}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <ArrowLeftOnRectangleIcon className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div className="text-left">
+                      <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{t.login}</span>
+                      <p className="text-[12px] text-gray-600 antialiased opacity-80">Sign in to your account</p>
+                    </div>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -29,8 +29,11 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         website_submenuitem(
           id,
           name,
+          name_translation,
           url_name,
           order,
+          description,
+          description_translation,
           menu_item_id
         )
       `)
@@ -106,7 +109,10 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
       website_submenuitem: item.website_submenuitem?.map((submenu: any) => ({
         id: submenu.id,
         name: submenu.name,
+        name_translation: submenu.name_translation,
         url_name: submenu.url_name,
+        description: submenu.description,
+        description_translation: submenu.description_translation,
         is_displayed: true, // Default since field doesn't exist
         is_new_window: false, // Default since field doesn't exist
         order: submenu.order,
@@ -120,7 +126,10 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
       submenu_items: item.website_submenuitem?.map((submenu: any) => ({
         id: submenu.id,
         name: submenu.name,
+        name_translation: submenu.name_translation,
         url: submenu.url_name,
+        description: submenu.description,
+        description_translation: submenu.description_translation,
         is_visible: true,
         is_new_window: false,
         order_position: submenu.order,
