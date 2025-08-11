@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { ArrowTopRightOnSquareIcon, PencilIcon, GlobeAltIcon, AcademicCapIcon, BuildingOfficeIcon, UserGroupIcon, CogIcon, HeartIcon, HomeIcon, BanknotesIcon, ShieldCheckIcon, BeakerIcon, ChartBarIcon, ScaleIcon, CurrencyDollarIcon, BriefcaseIcon, SparklesIcon, UserIcon, WrenchScrewdriverIcon, CheckCircleIcon, ClockIcon, ExclamationTriangleIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
+import React from 'react';
+import { ArrowTopRightOnSquareIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { Organization, organizationTypes } from './types';
-import Button from '@/ui/Button';
 
 interface OrganizationCardProps {
   organization: Organization;
@@ -9,32 +8,61 @@ interface OrganizationCardProps {
 }
 
 export default function OrganizationCard({ organization, onEdit }: OrganizationCardProps) {
-  const [imageLoadFailed, setImageLoadFailed] = useState(false);
-  const [faviconLoadFailed, setFaviconLoadFailed] = useState(false);
 
   const getTypeInfo = (type: string) => {
     return organizationTypes.find(t => t.value === type) || { label: type, icon: '🏢' };
   };
 
-  const getTypeIcon = (type: string) => {
-    const icons = {
-      'immigration': UserIcon,
-      'solicitor': ScaleIcon,
-      'finance': CurrencyDollarIcon,
-      'education': AcademicCapIcon,
-      'job': BriefcaseIcon,
-      'beauty': SparklesIcon,
-      'doctor': HeartIcon,
-      'services': WrenchScrewdriverIcon,
-      'general': BuildingOfficeIcon,
-    };
-    return icons[type as keyof typeof icons] || BuildingOfficeIcon;
+  // Generate a consistent color for a given URL/domain
+  const getWebsiteColor = (url: string) => {
+    try {
+      // Clean up URL - ensure it has protocol
+      let cleanUrl = url;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        cleanUrl = `https://${url}`;
+      }
+      
+      const domain = new URL(cleanUrl).hostname;
+      
+      // Generate a hash from the domain name
+      let hash = 0;
+      for (let i = 0; i < domain.length; i++) {
+        const char = domain.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      
+      // Define a curated set of beautiful colors
+      const colors = [
+        { bg: 'bg-blue-500', text: 'text-white', ring: 'ring-blue-200' },
+        { bg: 'bg-purple-500', text: 'text-white', ring: 'ring-purple-200' },
+        { bg: 'bg-pink-500', text: 'text-white', ring: 'ring-pink-200' },
+        { bg: 'bg-indigo-500', text: 'text-white', ring: 'ring-indigo-200' },
+        { bg: 'bg-teal-500', text: 'text-white', ring: 'ring-teal-200' },
+        { bg: 'bg-green-500', text: 'text-white', ring: 'ring-green-200' },
+        { bg: 'bg-orange-500', text: 'text-white', ring: 'ring-orange-200' },
+        { bg: 'bg-red-500', text: 'text-white', ring: 'ring-red-200' },
+        { bg: 'bg-cyan-500', text: 'text-white', ring: 'ring-cyan-200' },
+        { bg: 'bg-violet-500', text: 'text-white', ring: 'ring-violet-200' },
+        { bg: 'bg-emerald-500', text: 'text-white', ring: 'ring-emerald-200' },
+        { bg: 'bg-rose-500', text: 'text-white', ring: 'ring-rose-200' },
+        { bg: 'bg-slate-500', text: 'text-white', ring: 'ring-slate-200' },
+        { bg: 'bg-amber-500', text: 'text-white', ring: 'ring-amber-200' },
+        { bg: 'bg-lime-500', text: 'text-white', ring: 'ring-lime-200' }
+      ];
+      
+      // Use hash to select color consistently
+      const colorIndex = Math.abs(hash) % colors.length;
+      return colors[colorIndex];
+    } catch (error) {
+      console.error('Error generating website color:', error);
+      return { bg: 'bg-gray-500', text: 'text-white', ring: 'ring-gray-200' };
+    }
   };
 
   const typeInfo = getTypeInfo(organization.type);
-  const TypeIcon = getTypeIcon(organization.type);
 
-  // Extract domain from URL for logo/favicon
+  // Extract domain from URL for reference
   const getDomainFromUrl = (url: string) => {
     try {
       return new URL(url).hostname;
@@ -46,137 +74,91 @@ export default function OrganizationCard({ organization, onEdit }: OrganizationC
   const primaryUrl = organization.base_url || organization.base_url_local;
   const domain = primaryUrl ? getDomainFromUrl(primaryUrl) : null;
 
-  // Get deployment status info
-  const getDeploymentStatusInfo = () => {
-    const status = organization.deployment_status || 'not_deployed';
-    switch (status) {
-      case 'ready':
-        return {
-          icon: CheckCircleIcon,
-          text: 'Deployed',
-          className: 'text-green-600 bg-green-50 border-green-200'
-        };
-      case 'building':
-        return {
-          icon: ClockIcon,
-          text: 'Building',
-          className: 'text-yellow-600 bg-yellow-50 border-yellow-200'
-        };
-      case 'created':
-        return {
-          icon: ClockIcon,
-          text: 'Queued',
-          className: 'text-blue-600 bg-blue-50 border-blue-200'
-        };
-      case 'error':
-        return {
-          icon: ExclamationTriangleIcon,
-          text: 'Failed',
-          className: 'text-red-600 bg-red-50 border-red-200'
-        };
-      default:
-        return {
-          icon: CloudArrowUpIcon,
-          text: 'Not Deployed',
-          className: 'text-gray-600 bg-gray-50 border-gray-200'
-        };
-    }
-  };
-
-  const deploymentStatus = getDeploymentStatusInfo();
-
-  // Determine which icon to show based on availability and load states
-  const renderIcon = () => {
-    // Priority 1: Custom settings image (if available and not failed)
-    if (organization.settings?.image && !imageLoadFailed) {
-      return (
-        <img
-          src={organization.settings.image}
-          alt=""
-          className="w-7 h-7 rounded-lg"
-          onError={() => setImageLoadFailed(true)}
-        />
-      );
-    }
-    
-    // Priority 2: Domain favicon (if available and not failed)
-    if (domain && !faviconLoadFailed) {
-      return (
-        <img
-          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
-          alt=""
-          className="w-7 h-7"
-          onError={() => setFaviconLoadFailed(true)}
-        />
-      );
-    }
-    
-    // Priority 3: Type-based icon (fallback)
-    return <TypeIcon className="w-7 h-7 text-gray-500" />;
-  };
-
   return (
-    <div className="bg-white rounded-xl border border-gray-200/60 hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 backdrop-blur-sm">
-      {/* Header */}
-      <div className="p-6">
-        <div className="flex items-center space-x-4">
-          {/* Icon/Logo */}
-          <div className="w-12 h-12 rounded-xl bg-gray-50/50 border border-gray-200/60 flex items-center justify-center backdrop-blur-sm">
-            {renderIcon()}
-          </div>
-          
-          {/* Name and Type */}
-          <div className="flex-1">
-            <h3 className="text-lg font-light text-gray-900 tracking-tight">{organization.name}</h3>
-            <div className="flex items-center gap-3 mt-1">
-              <p className="text-sm text-gray-500 font-light capitalize">{typeInfo.label}</p>
-              {/* Deployment Status Badge */}
-              <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium ${deploymentStatus.className}`}>
-                <deploymentStatus.icon className="h-3 w-3" />
-                {deploymentStatus.text}
-              </div>
+    <div 
+      onClick={() => onEdit(organization)}
+      className="group relative overflow-hidden bg-white/95 rounded-2xl border border-black/8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_50px_rgba(0,0,0,0.12)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] cursor-pointer"
+      style={{
+        backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+      }}
+    >
+      {/* Subtle gradient overlay for premium feel */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-gray-100/20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      {/* Main Content */}
+      <div className="relative p-8">
+        <div className="flex items-start justify-between gap-6">
+          {/* Left Side - Organization Info */}
+          <div className="flex-1 min-w-0">
+            {/* Organization Info */}
+            <div className="pt-2">
+              <h3 className="text-[20px] font-semibold text-gray-900 tracking-[-0.02em] antialiased truncate leading-tight mb-2">
+                {organization.name}
+              </h3>
+              <p className="text-[15px] text-gray-600 font-medium antialiased capitalize">
+                {typeInfo.label}
+              </p>
             </div>
           </div>
-          
-          {/* Edit Button */}
-          <Button
-            onClick={() => onEdit(organization)}
-            variant="outline"
-            className="text-sm font-light border-gray-200/60 text-gray-600 hover:text-sky-600 hover:border-sky-200 transition-colors duration-200"
-          >
-            Edit
-          </Button>
+
+          {/* Right Side - Live Site Preview */}
+          {organization.base_url && (
+            <div className="flex-shrink-0 w-24 h-16">
+              <div className="w-full h-full rounded-lg border border-black/6 overflow-hidden shadow-sm backdrop-blur-sm group/preview">
+                {(() => {
+                  const websiteColor = getWebsiteColor(organization.base_url);
+                  return (
+                    <div className={`w-full h-full ${websiteColor.bg} transition-all duration-300 group-hover/preview:scale-105 ring-1 ${websiteColor.ring}`}>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* URLs */}
+      {/* Apple-style URLs Footer - Fully optimized */}
       {(organization.base_url || organization.base_url_local) && (
-        <div className="flex justify-between items-center border-t border-gray-200/60 px-6 py-4 space-y-3 bg-gray-50/30">
-          {organization.base_url && (
-            <a 
-              href={organization.base_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-x-2 text-sky-600 hover:text-sky-500 text-sm font-light transition-colors duration-200 group"
-            >
-              <GlobeAltIcon className="w-4 h-4" />
-              Live Site
-              <ArrowTopRightOnSquareIcon className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
-            </a>
-          )}
-          
-          {organization.base_url_local && (
-            <a 
-              href={organization.base_url_local} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-x-2 text-gray-600 hover:text-gray-700 text-sm font-light transition-colors duration-200 group"
-            >
-              <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-              Development
-              <ArrowTopRightOnSquareIcon className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
-            </a>
-          )}
+        <div 
+          className="relative border-t border-black/6 px-8 py-6 bg-gray-50/50"
+          style={{
+            backdropFilter: 'blur(16px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+          }}
+        >
+          <div className="flex items-center justify-between space-x-8">
+            {organization.base_url && (
+              <a 
+                href={organization.base_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-x-2 text-gray-700 hover:text-gray-900 text-[13px] font-medium antialiased transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group/link hover:scale-[1.02] flex-1"
+              >
+                <div className="flex items-center gap-x-2 flex-1 min-w-0">
+                  <span className="truncate">Live Site</span>
+                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-300 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 text-gray-500" />
+                </div>
+              </a>
+            )}
+            
+            {organization.base_url_local && (
+              <a 
+                href={organization.base_url_local} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-x-2 text-gray-600 hover:text-gray-800 text-[13px] font-medium antialiased transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group/dev hover:scale-[1.02] flex-1"
+              >
+                <div className="flex items-center gap-x-2 flex-1 min-w-0">
+                  <span className="truncate">Development</span>
+                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-300 group-hover/dev:translate-x-0.5 group-hover/dev:-translate-y-0.5 text-gray-500" />
+                </div>
+              </a>
+            )}
+          </div>
         </div>
       )}
     </div>

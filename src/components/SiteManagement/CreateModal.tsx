@@ -18,7 +18,14 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
   const [formData, setFormData] = useState({
     name: '',
     base_url_local: 'http://localhost:3100',
-    type: 'services' as const
+    type: 'services' as const,
+    // AI Management fields
+    ai_endpoint: '',
+    ai_model: '',
+    ai_chat_enabled: false,
+    ai_content_generation: false,
+    ai_analytics: false,
+    ai_management_url: ''
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [showTooltip, setShowTooltip] = useState(false);
@@ -58,7 +65,14 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
       setFormData({
         name: '',
         base_url_local: 'http://localhost:3100',
-        type: 'services' as const
+        type: 'services' as const,
+        // AI Management fields
+        ai_endpoint: '',
+        ai_model: '',
+        ai_chat_enabled: false,
+        ai_content_generation: false,
+        ai_analytics: false,
+        ai_management_url: ''
       });
       setPreviewUrl('');
     }
@@ -89,10 +103,11 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
   };
 
@@ -237,47 +252,61 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
     >
       <div className="bg-white/95 backdrop-blur-sm w-full h-full flex flex-col font-light" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 px-3 sm:px-4 py-2.5 sticky top-0 z-10">
+        <header className="bg-white/95 border-b border-black/6 px-4 sm:px-6 py-4 sticky top-0 z-10 shadow-[0_1px_20px_rgba(0,0,0,0.04)]"
+          style={{
+            backdropFilter: 'blur(32px) saturate(180%) brightness(105%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(180%) brightness(105%)',
+          }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center text-white font-light text-lg shadow-sm">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-semibold text-[20px] antialiased shadow-sm border border-black/5"
+                  style={{
+                    backdropFilter: 'blur(12px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+                  }}
+                >
                   +
                 </div>
                 
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-lg font-light tracking-tight text-gray-900 truncate">
+                  <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-gray-900 antialiased truncate mb-1">
                     Create New Site
                   </h1>
-                  <p className="text-sm font-light text-gray-600/80 mt-0.5 truncate">
+                  <p className="text-[14px] font-medium text-gray-600 antialiased truncate leading-tight">
                     Set up your organization and preview inspirational sites
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 ml-4">
+            <div className="flex items-center space-x-3 ml-4">
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading || !formData.name.trim()}
-                className={`px-4 py-2 rounded-xl text-sm font-light tracking-wide transition-all duration-300 shadow-sm hover:shadow-md transform ${
+                className={`px-6 py-3 rounded-2xl text-[14px] font-semibold antialiased tracking-[-0.01em] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm ${
                   !isLoading && formData.name.trim()
-                    ? 'bg-sky-500 hover:bg-sky-600 text-white hover:scale-105'
-                    : 'bg-gray-200/60 text-gray-500 cursor-not-allowed'
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white hover:scale-[1.02] active:scale-[0.98] shadow-[0_4px_20px_rgba(59,130,246,0.15)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)]'
+                    : 'bg-gray-100/80 text-gray-500 cursor-not-allowed border border-gray-200/50'
                 } disabled:opacity-75 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                style={!isLoading && formData.name.trim() ? {
+                  backdropFilter: 'blur(16px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(16px) saturate(150%)',
+                } : undefined}
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="hidden sm:inline font-light">Creating...</span>
+                    <span className="hidden sm:inline">Creating...</span>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                     </svg>
-                    <span className="hidden sm:inline font-light">Create Site</span>
-                    <span className="sm:hidden font-light">Create</span>
+                    <span className="hidden sm:inline">Create Site</span>
+                    <span className="sm:hidden">Create</span>
                   </div>
                 )}
               </Button>
@@ -285,10 +314,14 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
               <button
                 onClick={onClose}
                 disabled={isLoading}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white/60 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100/60 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] border border-gray-200/30"
+                style={{
+                  backdropFilter: 'blur(12px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+                }}
                 title="Close"
               >
-                <XMarkIcon className="w-5 h-5" />
+                <XMarkIcon className="w-5 h-5" strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -415,6 +448,121 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
                       value={formData.type}
                       onChange={handleTypeChange}
                     />
+
+                    {/* AI Management Section */}
+                    <div className="pt-6 border-t border-gray-200/60">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                          AI Management
+                        </h3>
+                        <p className="text-sm text-gray-600 font-light">
+                          Configure AI settings and management features for this organization
+                        </p>
+                      </div>
+                      
+                      {/* AI API Endpoint */}
+                      <div className="mb-4">
+                        <label htmlFor="ai_endpoint-mobile" className="block text-sm font-light text-gray-700 mb-3">
+                          AI API Endpoint
+                        </label>
+                        <input
+                          type="url"
+                          id="ai_endpoint-mobile"
+                          name="ai_endpoint"
+                          value={formData.ai_endpoint || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-200/60 rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300 transition-all duration-300 font-light"
+                          placeholder="https://api.openai.com/v1"
+                          disabled={isLoading}
+                        />
+                      </div>
+
+                      {/* AI Model */}
+                      <div className="mb-4">
+                        <label htmlFor="ai_model-mobile" className="block text-sm font-light text-gray-700 mb-3">
+                          AI Model
+                        </label>
+                        <select
+                          id="ai_model-mobile"
+                          name="ai_model"
+                          value={formData.ai_model || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-200/60 rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300 transition-all duration-300 font-light appearance-none cursor-pointer"
+                          disabled={isLoading}
+                        >
+                          <option value="">Select AI Model</option>
+                          <option value="gpt-4">GPT-4</option>
+                          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                          <option value="claude-3-opus">Claude 3 Opus</option>
+                          <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                          <option value="gemini-pro">Gemini Pro</option>
+                        </select>
+                      </div>
+
+                      {/* AI Features */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-light text-gray-700 mb-3">
+                          AI Features
+                        </label>
+                        <div className="space-y-3">
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="ai_chat_enabled"
+                              checked={formData.ai_chat_enabled || false}
+                              onChange={handleInputChange}
+                              className="w-4 h-4 text-sky-600 bg-white/80 border-gray-300 rounded focus:ring-sky-500 focus:ring-2 transition-colors"
+                              disabled={isLoading}
+                            />
+                            <span className="text-sm font-light text-gray-700">Enable AI Chat</span>
+                          </label>
+                          
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="ai_content_generation"
+                              checked={formData.ai_content_generation || false}
+                              onChange={handleInputChange}
+                              className="w-4 h-4 text-sky-600 bg-white/80 border-gray-300 rounded focus:ring-sky-500 focus:ring-2 transition-colors"
+                              disabled={isLoading}
+                            />
+                            <span className="text-sm font-light text-gray-700">AI Content Generation</span>
+                          </label>
+                          
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="ai_analytics"
+                              checked={formData.ai_analytics || false}
+                              onChange={handleInputChange}
+                              className="w-4 h-4 text-sky-600 bg-white/80 border-gray-300 rounded focus:ring-sky-500 focus:ring-2 transition-colors"
+                              disabled={isLoading}
+                            />
+                            <span className="text-sm font-light text-gray-700">AI Analytics</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* AI Management URL */}
+                      <div>
+                        <label htmlFor="ai_management_url-mobile" className="block text-sm font-light text-gray-700 mb-3">
+                          AI Management URL
+                        </label>
+                        <input
+                          type="url"
+                          id="ai_management_url-mobile"
+                          name="ai_management_url"
+                          value={formData.ai_management_url || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-200/60 rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300 transition-all duration-300 font-light"
+                          placeholder="/admin/ai/management"
+                          disabled={isLoading}
+                        />
+                        <p className="mt-2 text-xs text-gray-500 font-light">
+                          URL path for AI management interface (relative to base URL)
+                        </p>
+                      </div>
+                    </div>
                   </form>
                 </div>
               </div>
@@ -528,6 +676,121 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
                       value={formData.type}
                       onChange={handleTypeChange}
                     />
+
+                    {/* AI Management Section */}
+                    <div className="pt-6 border-t border-gray-200/60">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                          AI Management
+                        </h3>
+                        <p className="text-sm text-gray-600 font-light">
+                          Configure AI settings and management features for this organization
+                        </p>
+                      </div>
+                      
+                      {/* AI API Endpoint */}
+                      <div className="mb-4">
+                        <label htmlFor="ai_endpoint" className="block text-sm font-light text-gray-700 mb-3">
+                          AI API Endpoint
+                        </label>
+                        <input
+                          type="url"
+                          id="ai_endpoint"
+                          name="ai_endpoint"
+                          value={formData.ai_endpoint || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-200/60 rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300 transition-all duration-300 font-light"
+                          placeholder="https://api.openai.com/v1"
+                          disabled={isLoading}
+                        />
+                      </div>
+
+                      {/* AI Model */}
+                      <div className="mb-4">
+                        <label htmlFor="ai_model" className="block text-sm font-light text-gray-700 mb-3">
+                          AI Model
+                        </label>
+                        <select
+                          id="ai_model"
+                          name="ai_model"
+                          value={formData.ai_model || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-200/60 rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300 transition-all duration-300 font-light appearance-none cursor-pointer"
+                          disabled={isLoading}
+                        >
+                          <option value="">Select AI Model</option>
+                          <option value="gpt-4">GPT-4</option>
+                          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                          <option value="claude-3-opus">Claude 3 Opus</option>
+                          <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                          <option value="gemini-pro">Gemini Pro</option>
+                        </select>
+                      </div>
+
+                      {/* AI Features */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-light text-gray-700 mb-3">
+                          AI Features
+                        </label>
+                        <div className="space-y-3">
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="ai_chat_enabled"
+                              checked={formData.ai_chat_enabled || false}
+                              onChange={handleInputChange}
+                              className="w-4 h-4 text-sky-600 bg-white/80 border-gray-300 rounded focus:ring-sky-500 focus:ring-2 transition-colors"
+                              disabled={isLoading}
+                            />
+                            <span className="text-sm font-light text-gray-700">Enable AI Chat</span>
+                          </label>
+                          
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="ai_content_generation"
+                              checked={formData.ai_content_generation || false}
+                              onChange={handleInputChange}
+                              className="w-4 h-4 text-sky-600 bg-white/80 border-gray-300 rounded focus:ring-sky-500 focus:ring-2 transition-colors"
+                              disabled={isLoading}
+                            />
+                            <span className="text-sm font-light text-gray-700">AI Content Generation</span>
+                          </label>
+                          
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="ai_analytics"
+                              checked={formData.ai_analytics || false}
+                              onChange={handleInputChange}
+                              className="w-4 h-4 text-sky-600 bg-white/80 border-gray-300 rounded focus:ring-sky-500 focus:ring-2 transition-colors"
+                              disabled={isLoading}
+                            />
+                            <span className="text-sm font-light text-gray-700">AI Analytics</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* AI Management URL */}
+                      <div>
+                        <label htmlFor="ai_management_url" className="block text-sm font-light text-gray-700 mb-3">
+                          AI Management URL
+                        </label>
+                        <input
+                          type="url"
+                          id="ai_management_url"
+                          name="ai_management_url"
+                          value={formData.ai_management_url || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-200/60 rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300 transition-all duration-300 font-light"
+                          placeholder="/admin/ai/management"
+                          disabled={isLoading}
+                        />
+                        <p className="mt-2 text-xs text-gray-500 font-light">
+                          URL path for AI management interface (relative to base URL)
+                        </p>
+                      </div>
+                    </div>
                   </form>
                 </div>
               </div>

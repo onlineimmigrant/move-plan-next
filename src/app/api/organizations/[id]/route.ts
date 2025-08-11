@@ -744,6 +744,7 @@ export async function PUT(
         faqs, // Add faqs to filtered fields
         cookie_services, // Add cookie services to filtered fields
         cookie_consent_records, // Add cookie consent records to filtered fields
+        ai_agents, // Add ai_agents to filtered fields - they're stored in ai_models_default table
         name, 
         base_url, 
         base_url_local, 
