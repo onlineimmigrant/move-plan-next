@@ -18,7 +18,7 @@ export default function Header({ canCreateMore, onCreateNew, onTestAuth, onSearc
   };
 
   return (
-    <div className="border-b border-gray-200/60 sticky top-0 z-20 backdrop-blur-xl bg-white/80">
+    <div className="border-b border-gray-200/60 sticky top-0 z-20 backdrop-blur-xl">
       <div className="px-4 sm:px-6 lg:px-8 py-6">
         {/* Desktop: Title and Search on same line, Mobile: Stacked */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">

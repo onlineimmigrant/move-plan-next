@@ -22,6 +22,7 @@ import { CookieCategoriesSelect } from './CookieCategoriesSelect';
 import { CookieServicesSelect } from './CookieServicesSelect';
 import { CookieConsentRecordsSelect } from './CookieConsentRecordsSelectSimple';
 import { CookieConsentSelect } from './CookieConsentSelect';
+import { AIAgentsSelect } from './AIAgentsSelect';
 import { Settings, organizationTypes } from './types';
 
 interface SubSectionConfig {
@@ -42,7 +43,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners' | 'cookie-consent' | 'cookie-categories' | 'cookie-services' | 'cookie-consent-records';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners' | 'cookie-consent' | 'cookie-categories' | 'cookie-services' | 'cookie-consent-records' | 'ai-agents';
   placeholder?: string;
   span?: 'full' | 'half';
 }
@@ -156,7 +157,11 @@ interface CookieConsentRecordsFieldConfig extends BaseFieldConfig {
   type: 'cookie-consent-records';
 }
 
-export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig | BannersFieldConfig | CookieConsentFieldConfig | CookieCategoriesFieldConfig | CookieServicesFieldConfig | CookieConsentRecordsFieldConfig;
+interface AIAgentsFieldConfig extends BaseFieldConfig {
+  type: 'ai-agents';
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig | BannersFieldConfig | CookieConsentFieldConfig | CookieCategoriesFieldConfig | CookieServicesFieldConfig | CookieConsentRecordsFieldConfig | AIAgentsFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -175,6 +180,15 @@ export const headerStyleOptions = [
   { name: 'Minimal', value: 'minimal' },
   { name: 'Centered', value: 'centered' },
   { name: 'Sidebar', value: 'sidebar' }
+];
+
+export const aiModelOptions = [
+  { name: 'Select AI Model', value: '' },
+  { name: 'GPT-4', value: 'gpt-4' },
+  { name: 'GPT-3.5 Turbo', value: 'gpt-3.5-turbo' },
+  { name: 'Claude 3 Opus', value: 'claude-3-opus' },
+  { name: 'Claude 3 Sonnet', value: 'claude-3-sonnet' },
+  { name: 'Gemini Pro', value: 'gemini-pro' }
 ];
 
 export const textSizeOptions = [
@@ -494,6 +508,20 @@ export const sectionsConfig: SectionConfig[] = [
         ]
       }
     ]
+  },
+  {
+    title: 'AI Management',
+    key: 'ai-management',
+    subsections: [
+      {
+        title: 'AI Agents',
+        key: 'ai-agents',
+        columns: 1,
+        fields: [
+          { name: 'ai_agents', label: 'AI Agents', type: 'ai-agents', span: 'full' }
+        ]
+      }
+    ]
   }
 ];
 
@@ -798,6 +826,16 @@ export const renderField = ({
         <CookieConsentRecordsSelect
           value={allSettings?.cookie_consent_records || []}
           onChange={(records: any) => handleChange(field.name, records)}
+        />
+      );
+
+    case 'ai-agents':
+      return (
+        <AIAgentsSelect
+          value={Array.isArray(allSettings?.ai_agents) ? allSettings.ai_agents : []}
+          onChange={(agents: any) => handleChange(field.name, agents)}
+          organizationId={allSettings?.organization_id}
+          session={allSettings?.session}
         />
       );
 

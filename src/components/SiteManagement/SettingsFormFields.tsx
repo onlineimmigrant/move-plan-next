@@ -16,6 +16,8 @@ interface SettingsFormFieldsProps {
     cookie_services?: any[];
     cookie_consent_records?: any[];
   };
+  session?: any;
+  organizationId?: string;
 }
 
 const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({ 
@@ -24,7 +26,9 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   onImageUpload, 
   uploadingImages,
   isNarrow = false,
-  cookieData
+  cookieData,
+  session,
+  organizationId
 }) => {
   const [sectionChanges, setSectionChanges] = useState<Record<string, Partial<Settings>>>({});
   const [originalSectionValues, setOriginalSectionValues] = useState<Record<string, Partial<Settings>>>({});
@@ -101,22 +105,19 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
     }
   };
 
-  // Helper function to get grid classes based on narrow state
+  // Helper function to get grid classes - always single column for better UX
   const getGridClasses = (columns: number = 2) => {
-    if (isNarrow) {
-      return 'grid grid-cols-1 gap-6';
-    }
-    if (columns === 4) {
-      return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
-    }
-    if (columns === 3) {
-      return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
-    }
-    return 'grid grid-cols-1 md:grid-cols-2 gap-6';
+    // Always use single column layout for better readability and consistent UX
+    return 'grid grid-cols-1 gap-6';
   };
 
   // Helper function to get subsection grid classes - hybrid CSS-only approach
-  const getSubsectionGridClasses = () => {
+  const getSubsectionGridClasses = (sectionKey?: string) => {
+    // AI Management section should always be full width (single column)
+    if (sectionKey === 'ai-management') {
+      return 'grid grid-cols-1 gap-6';
+    }
+    
     if (isNarrow) {
       return 'grid grid-cols-1 gap-6';
     }
@@ -245,7 +246,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                 onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
                 onImageUpload,
                 uploadingImages,
-                allSettings: { ...settings, ...cookieData }
+                allSettings: { ...settings, ...cookieData, organization_id: organizationId, session }
               });
               
               return fieldComponent ? (
@@ -267,7 +268,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                 onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
                 onImageUpload,
                 uploadingImages,
-                allSettings: { ...settings, ...cookieData }
+                allSettings: { ...settings, ...cookieData, organization_id: organizationId, session }
               });
               
               return fieldComponent ? (
@@ -288,7 +289,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
               onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
               onImageUpload,
               uploadingImages,
-              allSettings: { ...settings, ...cookieData }
+              allSettings: { ...settings, ...cookieData, organization_id: organizationId, session }
             });
           
             return fieldComponent ? (
@@ -317,7 +318,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             onToggle={handleSectionToggle}
           >
             {section.subsections ? (
-              <div className={getSubsectionGridClasses()}>
+              <div className={getSubsectionGridClasses(section.key)}>
                 {section.subsections.map(subsection => {
                   console.log('🔍 Processing subsection:', subsection.title, 'key:', subsection.key);
                   // Get item counts for badges
@@ -543,6 +544,31 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                           </svg>
                           Add Service
+                        </div>
+                        : subsection.key === 'ai-agents' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Find the ai agents field and trigger add via a custom event
+                            const event = new CustomEvent('addAIAgent');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addAIAgent');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50/80 backdrop-blur-sm border border-sky-200 rounded-lg hover:bg-sky-100/80 hover:border-sky-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add AI Agent
                         </div>
                         : undefined
                       }

@@ -33,10 +33,10 @@ export default function SiteManagement() {
 
   useEffect(() => {
     console.log('Session state:', session);
-    if (session) {
+    if (session?.access_token) {
       fetchOrganizations();
     }
-  }, [session]);
+  }, [session?.access_token]);
 
   // Update filtered organizations when organizations change or search is empty
   useEffect(() => {
@@ -1032,7 +1032,7 @@ export default function SiteManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-white font-light">
+    <div className="min-h-screen font-light">
       <div className="max-w-7xl mx-auto">
 
 

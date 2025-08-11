@@ -49,14 +49,14 @@ export default function EditModal({
   }, [settings, originalSettings]);
 
   // Fetch detailed organization data including cookies
-  const fetchDetailedOrganizationData = useCallback(async (organizationId: string) => {
-    if (!session?.access_token) return null;
+  const fetchDetailedOrganizationData = useCallback(async (organizationId: string, sessionToken: string) => {
+    if (!sessionToken) return null;
     
     setIsLoadingDetailedData(true);
     try {
       const response = await fetch(`/api/organizations/${organizationId}`, {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${sessionToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -75,7 +75,7 @@ export default function EditModal({
     } finally {
       setIsLoadingDetailedData(false);
     }
-  }, [session]);
+  }, []);
 
   // Check for mobile on mount and resize
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function EditModal({
     
     // Fetch detailed organization data if we have an organization ID
     if (organization?.id && session?.access_token) {
-      fetchDetailedOrganizationData(organization.id);
+      fetchDetailedOrganizationData(organization.id, session.access_token);
     }
     
     if (organization?.settings) {
@@ -158,7 +158,7 @@ export default function EditModal({
       setSettings(defaultSettings);
       setOriginalSettings(defaultSettings);
     }
-  }, [organization, session, fetchDetailedOrganizationData]);
+  }, [organization, session]);
 
   // Expose current settings globally for auto-save functionality
   useEffect(() => {
@@ -422,18 +422,28 @@ export default function EditModal({
       
       <div className="bg-white/95 backdrop-blur-sm w-full h-full flex flex-col font-light" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 px-3 sm:px-4 py-2.5 sticky top-0 z-10">
+        <header className="bg-white/95 border-b border-black/6 px-4 sm:px-6 py-4 sticky top-0 z-10 shadow-[0_1px_20px_rgba(0,0,0,0.04)]"
+          style={{
+            backdropFilter: 'blur(32px) saturate(180%) brightness(105%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(180%) brightness(105%)',
+          }}
+        >
           <div className="flex items-center justify-between">
             {/* Left Side - Title and Description */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-4">
                 {/* Organization Icon/Avatar or Logo */}
-                <div className="flex w-10 h-10 rounded-xl items-center justify-center shadow-sm overflow-hidden">
+                <div className="flex w-12 h-12 rounded-2xl items-center justify-center shadow-sm border border-black/5 overflow-hidden"
+                  style={{
+                    backdropFilter: 'blur(12px) saturate(150%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+                  }}
+                >
                   {settings.image ? (
                     <img 
                       src={settings.image} 
                       alt={organization.name}
-                      className="w-full h-full object-cover rounded-xl cursor-pointer transition-transform duration-200 hover:scale-105"
+                      className="w-full h-full object-cover rounded-2xl cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105"
                       onMouseEnter={(e) => {
                         if (settings.image) {
                           setHoveredImage(settings.image);
@@ -452,17 +462,17 @@ export default function EditModal({
                       }}
                     />
                   ) : null}
-                  <div className={`w-full h-full bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center text-white font-light text-lg ${settings.image ? 'hidden' : ''}`}>
+                  <div className={`w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-semibold text-[18px] antialiased ${settings.image ? 'hidden' : ''}`}>
                     {organization.name.charAt(0).toUpperCase()}
                   </div>
                 </div>
                 
                 {/* Title Section */}
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-lg font-light tracking-tight text-gray-900 truncate">
-                    {isMobile ? 'Settings' : `${organization.name}`}
+                  <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-gray-900 antialiased truncate mb-1">
+                    {isMobile ? 'Settings' : organization.name}
                   </h1>
-                  <p className="text-sm font-light text-gray-600/80 mt-0.5 truncate">
+                  <p className="text-[14px] font-medium text-gray-600 antialiased truncate leading-tight">
                     {isMobile ? organization.name : 'Configure your site settings and see changes in real-time'}
                   </p>
                 </div>
@@ -470,37 +480,41 @@ export default function EditModal({
             </div>
 
             {/* Right Side - Actions */}
-            <div className="flex items-center space-x-2 ml-4">
+            <div className="flex items-center space-x-3 ml-4">
               {/* Save Button */}
               <Button
                 onClick={handleSave}
                 disabled={isLoading || !hasUnsavedChanges}
-                className={`px-4 py-2 rounded-xl text-sm font-light tracking-wide transition-all duration-300 shadow-sm hover:shadow-md transform ${
+                className={`px-6 py-3 rounded-2xl text-[14px] font-semibold antialiased tracking-[-0.01em] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm ${
                   hasUnsavedChanges && !isLoading
-                    ? 'bg-sky-500 hover:bg-sky-600 text-white hover:scale-105'
-                    : 'bg-gray-200/60 text-gray-500 cursor-not-allowed'
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white hover:scale-[1.02] active:scale-[0.98] shadow-[0_4px_20px_rgba(59,130,246,0.15)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)]'
+                    : 'bg-gray-100/80 text-gray-500 cursor-not-allowed border border-gray-200/50'
                 } disabled:opacity-75 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                style={hasUnsavedChanges && !isLoading ? {
+                  backdropFilter: 'blur(16px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(16px) saturate(150%)',
+                } : undefined}
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="hidden sm:inline font-light">Saving...</span>
+                    <span className="hidden sm:inline">Saving...</span>
                   </div>
                 ) : hasUnsavedChanges ? (
                   <div className="flex items-center space-x-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="hidden sm:inline font-light">Save Changes</span>
-                    <span className="sm:hidden font-light">Save</span>
+                    <span className="hidden sm:inline">Save Changes</span>
+                    <span className="sm:hidden">Save</span>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="hidden sm:inline font-light">No Changes</span>
-                    <span className="sm:hidden font-light">Saved</span>
+                    <span className="hidden sm:inline">Saved</span>
+                    <span className="sm:hidden">✓</span>
                   </div>
                 )}
               </Button>
@@ -509,15 +523,17 @@ export default function EditModal({
               <button
                 onClick={onClose}
                 disabled={isLoading}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white/60 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100/60 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] border border-gray-200/30"
+                style={{
+                  backdropFilter: 'blur(12px) saturate(150%)',
+                  WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+                }}
                 title="Close"
               >
-                <XMarkIcon className="w-5 h-5" />
+                <XMarkIcon className="w-5 h-5" strokeWidth={2} />
               </button>
             </div>
           </div>
-
-  
         </header>
 
         {/* Content */}
@@ -621,6 +637,8 @@ export default function EditModal({
                       uploadingImages={uploadingImages}
                       isNarrow={false}
                       cookieData={detailedOrganizationData}
+                      session={session}
+                      organizationId={organization.id}
                     />
                   ) : (
                     <SiteDeployment
@@ -699,6 +717,8 @@ export default function EditModal({
                       uploadingImages={uploadingImages}
                       isNarrow={leftPanelWidth < 40}
                       cookieData={detailedOrganizationData}
+                      session={session}
+                      organizationId={organization.id}
                     />
                   ) : (
                     <SiteDeployment

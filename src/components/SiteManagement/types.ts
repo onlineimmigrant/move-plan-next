@@ -140,6 +140,15 @@ export interface Settings {
   contact_email?: string;
   contact_phone?: string;
   
+  // AI Management
+  ai_endpoint?: string;
+  ai_model?: string;
+  ai_chat_enabled?: boolean;
+  ai_content_generation?: boolean;
+  ai_analytics?: boolean;
+  ai_management_url?: string;
+  ai_agents?: AIAgent[];
+  
   // Legacy fields for compatibility
   id?: string;
   organization_id?: string;
@@ -173,6 +182,22 @@ export const organizationTypes = [
   { value: 'services', label: 'General Services', icon: '🔧' },
   { value: 'general', label: 'General Organization', icon: '🏢' },
 ];
+
+// AI Management Types
+export interface AIAgent {
+  id?: number;
+  organization_id?: string;
+  name: string;
+  api_key: string;
+  endpoint: string;
+  max_tokens: number;
+  system_message: string;
+  user_role_to_access: string;
+  is_active: boolean;
+  icon: string | null;
+  role: string;
+  task: string;
+}
 
 // Cookie Consent Management Types
 export interface CookieService {
