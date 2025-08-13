@@ -2,12 +2,2002 @@
 > move-plan-next@0.1.0 dev
 > next dev
 
- ⚠ Port 3000 is in use, using available port 3002 instead.
    ▲ Next.js 15.3.4
-   - Local:        http://localhost:3002
-   - Network:      http://192.168.1.251:3002
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.251:3000
    - Environments: .env.local, .env
 
  ✓ Starting...
- ✓ Ready in 1386ms
-[?25h
+ ✓ Ready in 1197ms
+ ○ Compiling /api/pricing-comparison ...
+ ✓ Compiled /api/pricing-comparison in 538ms (458 modules)
+Fetching pricing plans for organization: 1 product: null
+Error fetching pricing plans: {
+  code: 'PGRST200',
+  details: "Searched for a foreign key relationship between 'pricingplan' and 'products' in the schema 'public', but no matches were found.",
+  hint: "Perhaps you meant 'product' instead of 'products'.",
+  message: "Could not find a relationship between 'pricingplan' and 'products' in the schema cache"
+}
+ GET /api/pricing-comparison?type=plans&organizationId=1 500 in 811ms
+ ✓ Compiled in 20ms
+ ✓ Compiled /middleware in 148ms (202 modules)
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+  {
+  url: 'https://codedharmony.co.uk',
+  name: 'Coded Harmony | Business Management Systems',
+  @type: 'WebPage',
+  @context: 'https://schema.org',
+  publisher: {
+  logo: {
+  url: 'https://codedharmony.co.uk/images/og-image.jpg',
+  @type: 'ImageObject'
+},
+  name: 'CodedHarmony',
+  @type: 'Organization'
+},
+  description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+}
+],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [ 'en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl' ]
+}
+🌐 MIDDLEWARE DEBUG:
+   - Pathname: /
+   - Cookie locale: en
+   - DB settings.language: en
+   - DB default locale: en
+   - Final default locale: en
+   - Supported locales: [ 'en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl' ]
+   - Headers origin: null
+   - Headers referer: http://localhost:3000/
+📋 MIDDLEWARE RESULT:
+   - Response status: 200
+   - Response headers location: null
+ ○ Compiling /[locale] ...
+ ✓ Compiled /[locale] in 4.2s (4006 modules)
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+RootLayout - currentDomain: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 Type: general
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Fetching homepage data with baseUrl: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching homepage data for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+RootLayout - settings loaded: true
+RootLayout - organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - called with organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - querying database for organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetched hero data: {
+  id: 2,
+  name: 'codedharmony',
+  font_family: 'Lato',
+  h1_title: 'Crafted Business Management',
+  is_seo_title: true,
+  seo_title: 'By professionals for professionals',
+  p_description: 'Professional Tools, Unbeatable Value\n\n',
+  h1_text_color: 'gray-700',
+  h1_text_color_gradient_from: 'indigo-200',
+  h1_text_color_gradient_to: 'sky-400',
+  is_h1_gradient_text: true,
+  h1_text_size: 'text-6xl',
+  h1_text_size_mobile: 'text-5xl',
+  image: null,
+  title_alighnement: 'center',
+  title_block_width: 'xs',
+  is_bg_gradient: false,
+  is_image_full_page: false,
+  title_block_columns: 1,
+  image_first: false,
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  background_color: 'white',
+  background_color_gradient_from: 'sky-50',
+  background_color_gradient_to: 'sky-200',
+  h1_text_color_gradient_via: 'gray-700',
+  background_color_gradient_via: 'gray-100',
+  button_main_get_started: 'Get Started',
+  button_explore: 'Explore',
+  animation_element: null,
+  h1_title_translation: {
+    de: 'Handwerkliches Unternehmensmanagement',
+    en: 'Crafted Business Management',
+    es: 'Gestión Empresarial Artesanal',
+    fr: "Gestion d'Entreprise Artisanale",
+    it: 'Gestione Aziendale Artigianale',
+    ja: 'クラフトビジネスマネジメント',
+    nl: 'Vakkundig Bedrijfsbeheer',
+    pl: 'Rzemieślnicze Zarządzanie Biznesem',
+    pt: 'Gestão Empresarial Artesanal',
+    ru: 'Искусное Управление Бизнесом',
+    zh: '精工商业管理'
+  },
+  p_description_translation: {
+    de: 'Erschließen Sie Ihr Wachstum',
+    en: 'Unlock Your Growth',
+    es: 'Desbloquea Tu Crecimiento',
+    fr: 'Libérez Votre Croissance',
+    it: 'Sblocca la Tua Crescita',
+    ja: '成長をアンロック',
+    nl: 'Ontgrendel Uw Groei',
+    pl: 'Odblokuj Swój Rozwój',
+    pt: 'Desbloqueie Seu Crescimento',
+    ru: 'Раскройте Свой Рост',
+    zh: '释放您的增长潜力'
+  },
+  p_description_color: 'gray-600',
+  p_description_size: null,
+  p_description_size_mobile: null,
+  p_description_weight: null
+}
+fetchMenuItems - fetched 3 menu items with submenu data
+RootLayout - menuItems: 3 items fetched
+supabaseClient - NEXT_PUBLIC_SUPABASE_URL: https://rgbmdfaoowqbgshjuwwm.supabase.co
+supabaseClient - NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8
+supabaseClient - NEXT_PUBLIC_SUPABASE_PROJECT_ID: rgbmdfaoowqbgshjuwwm
+Fixed banners for height calc: []
+Calculated fixed banners height: 0
+supabaseClient - Auth state changed: INITIAL_SESSION Session: null
+Fetched brands data: [
+  {
+    id: 5,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//twilio_gray.svg',
+    name: 'twilio',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 4,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//react_gray.svg',
+    name: 'react',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 28,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//cloudflare.svg',
+    name: 'Cloudflare',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 2,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//stripe_gray.svg',
+    name: 'stripe',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  }
+]
+Fetched FAQs data: [
+  {
+    id: '75abcce2-10cc-4e38-a8dc-2a61d1879a08',
+    created_at: '2025-06-01T14:50:27.385238+00:00',
+    order: 1,
+    display_order: null,
+    question: 'What is a Business Management System (BMS)?',
+    answer: '\n' +
+      'A Business Management System (BMS) is an all-in-one software solution that integrates various business operations, such as CRM, payments, marketing, and customer management. Coded Harmony’s BMS provides a seamless platform to manage all aspects of your business efficiently.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '79907be8-c463-4a74-991a-df06a2fdc837',
+    created_at: '2025-06-01T14:52:12.695833+00:00',
+    order: 2,
+    display_order: null,
+    question: 'How does the Site Management feature work?',
+    answer: '\n' +
+      'The Site Management feature enables you to build and customize a high-performance website with built-in SEO tools and content management capabilities. Unlike other site builders like Wix or Webflow, it offers an integrated solution tailored to business needs, ensuring optimal performance and visibility.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 'c62e438b-1237-4095-b682-7942063f8884',
+    created_at: '2025-06-01T14:53:06.513276+00:00',
+    order: 3,
+    display_order: null,
+    question: 'Which modules does our BMS include?',
+    answer: '\n' +
+      'Coded Harmony’s BMS includes modules such as CRM, Booking, Subscriptions, Billing & Payments, Site Management, Email Management, Marketing, Client Connect Hub, Workflow, Blog Management, Staff Management, Training, Support, and the cornerstone Cases module, which logs all client processes and documents.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 'd25cd195-4363-4a91-9737-737592929f10',
+    created_at: '2025-06-01T14:54:14.764181+00:00',
+    order: 4,
+    display_order: null,
+    question: 'How can the CRM module benefit my business?',
+    answer: '\n' +
+      'The CRM module helps manage customer interactions, track leads, maintain customer histories, and analyze sales patterns. It provides a comprehensive view of customer relationships, supporting better business decisions, increased sales, and improved client retention.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '021b969a-6b5a-4850-a9d6-f57f1e0ed4db',
+    created_at: '2025-06-01T14:55:30.672836+00:00',
+    order: 5,
+    display_order: null,
+    question: 'What’s the benefit of the Client Connect Hub module?',
+    answer: '\n' +
+      'The Client Connect Hub enables communication with customers across multiple platforms from one dashboard, ensuring no message is missed and improving customer engagement and satisfaction.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '529d84f9-a57a-4776-bd23-1b8eb41b3740',
+    created_at: '2025-06-01T14:57:22.371701+00:00',
+    order: 6,
+    display_order: null,
+    question: 'Why should I choose Coded Harmony’s BMS over others in the market?',
+    answer: '\n' +
+      'Coded Harmony’s BMS offers a comprehensive, integrated solution with diverse modules like CRM, Booking, and Client Connect Hub, prioritizing usability and unmatched customer support. Unlike platforms such as Wix or WordPress, it provides a tailored, high-performance system with built-in SEO optimization and clean construction, saving time and resources.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  }
+]
+ GET / 200 in 6413ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1304ms (3996 modules)
+RootLayout - currentDomain: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 Type: general
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+RootLayout - settings loaded: true
+RootLayout - organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - called with organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - querying database for organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - fetched 3 menu items with submenu data
+RootLayout - menuItems: 3 items fetched
+supabaseClient - NEXT_PUBLIC_SUPABASE_URL: https://rgbmdfaoowqbgshjuwwm.supabase.co
+supabaseClient - NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8
+supabaseClient - NEXT_PUBLIC_SUPABASE_PROJECT_ID: rgbmdfaoowqbgshjuwwm
+Fixed banners for height calc: []
+Calculated fixed banners height: 0
+supabaseClient - Auth state changed: INITIAL_SESSION Session: null
+ GET /_next/static/chunks/main-app.js?v=1754992021256 404 in 2496ms
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+  {
+  url: 'https://codedharmony.co.uk',
+  name: 'Coded Harmony | Business Management Systems',
+  @type: 'WebPage',
+  @context: 'https://schema.org',
+  publisher: {
+  logo: {
+  url: 'https://codedharmony.co.uk/images/og-image.jpg',
+  @type: 'ImageObject'
+},
+  name: 'CodedHarmony',
+  @type: 'Organization'
+},
+  description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+}
+],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [ 'en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl' ]
+}
+🌐 MIDDLEWARE DEBUG:
+   - Pathname: /
+   - Cookie locale: en
+   - DB settings.language: en
+   - DB default locale: en
+   - Final default locale: en
+   - Supported locales: [ 'en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl' ]
+   - Headers origin: null
+   - Headers referer: http://localhost:3000/
+📋 MIDDLEWARE RESULT:
+   - Response status: 200
+   - Response headers location: null
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+RootLayout - currentDomain: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Fetching homepage data with baseUrl: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching homepage data for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 Type: general
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Fetched hero data: {
+  id: 2,
+  name: 'codedharmony',
+  font_family: 'Lato',
+  h1_title: 'Crafted Business Management',
+  is_seo_title: true,
+  seo_title: 'By professionals for professionals',
+  p_description: 'Professional Tools, Unbeatable Value\n\n',
+  h1_text_color: 'gray-700',
+  h1_text_color_gradient_from: 'indigo-200',
+  h1_text_color_gradient_to: 'sky-400',
+  is_h1_gradient_text: true,
+  h1_text_size: 'text-6xl',
+  h1_text_size_mobile: 'text-5xl',
+  image: null,
+  title_alighnement: 'center',
+  title_block_width: 'xs',
+  is_bg_gradient: false,
+  is_image_full_page: false,
+  title_block_columns: 1,
+  image_first: false,
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  background_color: 'white',
+  background_color_gradient_from: 'sky-50',
+  background_color_gradient_to: 'sky-200',
+  h1_text_color_gradient_via: 'gray-700',
+  background_color_gradient_via: 'gray-100',
+  button_main_get_started: 'Get Started',
+  button_explore: 'Explore',
+  animation_element: null,
+  h1_title_translation: {
+    de: 'Handwerkliches Unternehmensmanagement',
+    en: 'Crafted Business Management',
+    es: 'Gestión Empresarial Artesanal',
+    fr: "Gestion d'Entreprise Artisanale",
+    it: 'Gestione Aziendale Artigianale',
+    ja: 'クラフトビジネスマネジメント',
+    nl: 'Vakkundig Bedrijfsbeheer',
+    pl: 'Rzemieślnicze Zarządzanie Biznesem',
+    pt: 'Gestão Empresarial Artesanal',
+    ru: 'Искусное Управление Бизнесом',
+    zh: '精工商业管理'
+  },
+  p_description_translation: {
+    de: 'Erschließen Sie Ihr Wachstum',
+    en: 'Unlock Your Growth',
+    es: 'Desbloquea Tu Crecimiento',
+    fr: 'Libérez Votre Croissance',
+    it: 'Sblocca la Tua Crescita',
+    ja: '成長をアンロック',
+    nl: 'Ontgrendel Uw Groei',
+    pl: 'Odblokuj Swój Rozwój',
+    pt: 'Desbloqueie Seu Crescimento',
+    ru: 'Раскройте Свой Рост',
+    zh: '释放您的增长潜力'
+  },
+  p_description_color: 'gray-600',
+  p_description_size: null,
+  p_description_size_mobile: null,
+  p_description_weight: null
+}
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+RootLayout - settings loaded: true
+RootLayout - organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - called with organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - querying database for organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetched brands data: [
+  {
+    id: 5,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//twilio_gray.svg',
+    name: 'twilio',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 4,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//react_gray.svg',
+    name: 'react',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 28,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//cloudflare.svg',
+    name: 'Cloudflare',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 2,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//stripe_gray.svg',
+    name: 'stripe',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  }
+]
+fetchMenuItems - fetched 3 menu items with submenu data
+RootLayout - menuItems: 3 items fetched
+Fixed banners for height calc: []
+Calculated fixed banners height: 0
+RootLayout - currentDomain: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetched FAQs data: [
+  {
+    id: '75abcce2-10cc-4e38-a8dc-2a61d1879a08',
+    created_at: '2025-06-01T14:50:27.385238+00:00',
+    order: 1,
+    display_order: null,
+    question: 'What is a Business Management System (BMS)?',
+    answer: '\n' +
+      'A Business Management System (BMS) is an all-in-one software solution that integrates various business operations, such as CRM, payments, marketing, and customer management. Coded Harmony’s BMS provides a seamless platform to manage all aspects of your business efficiently.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '79907be8-c463-4a74-991a-df06a2fdc837',
+    created_at: '2025-06-01T14:52:12.695833+00:00',
+    order: 2,
+    display_order: null,
+    question: 'How does the Site Management feature work?',
+    answer: '\n' +
+      'The Site Management feature enables you to build and customize a high-performance website with built-in SEO tools and content management capabilities. Unlike other site builders like Wix or Webflow, it offers an integrated solution tailored to business needs, ensuring optimal performance and visibility.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 'c62e438b-1237-4095-b682-7942063f8884',
+    created_at: '2025-06-01T14:53:06.513276+00:00',
+    order: 3,
+    display_order: null,
+    question: 'Which modules does our BMS include?',
+    answer: '\n' +
+      'Coded Harmony’s BMS includes modules such as CRM, Booking, Subscriptions, Billing & Payments, Site Management, Email Management, Marketing, Client Connect Hub, Workflow, Blog Management, Staff Management, Training, Support, and the cornerstone Cases module, which logs all client processes and documents.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 'd25cd195-4363-4a91-9737-737592929f10',
+    created_at: '2025-06-01T14:54:14.764181+00:00',
+    order: 4,
+    display_order: null,
+    question: 'How can the CRM module benefit my business?',
+    answer: '\n' +
+      'The CRM module helps manage customer interactions, track leads, maintain customer histories, and analyze sales patterns. It provides a comprehensive view of customer relationships, supporting better business decisions, increased sales, and improved client retention.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '021b969a-6b5a-4850-a9d6-f57f1e0ed4db',
+    created_at: '2025-06-01T14:55:30.672836+00:00',
+    order: 5,
+    display_order: null,
+    question: 'What’s the benefit of the Client Connect Hub module?',
+    answer: '\n' +
+      'The Client Connect Hub enables communication with customers across multiple platforms from one dashboard, ensuring no message is missed and improving customer engagement and satisfaction.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '529d84f9-a57a-4776-bd23-1b8eb41b3740',
+    created_at: '2025-06-01T14:57:22.371701+00:00',
+    order: 6,
+    display_order: null,
+    question: 'Why should I choose Coded Harmony’s BMS over others in the market?',
+    answer: '\n' +
+      'Coded Harmony’s BMS offers a comprehensive, integrated solution with diverse modules like CRM, Booking, and Client Connect Hub, prioritizing usability and unmatched customer support. Unlike platforms such as Wix or WordPress, it provides a tailored, high-performance system with built-in SEO optimization and clean construction, saving time and resources.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  }
+]
+ GET / 200 in 392ms
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 Type: general
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+RootLayout - settings loaded: true
+RootLayout - organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - called with organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - querying database for organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - fetched 3 menu items with submenu data
+RootLayout - menuItems: 3 items fetched
+Fixed banners for height calc: []
+Calculated fixed banners height: 0
+ GET /_next/static/chunks/main-app.js?v=1754992050499 404 in 169ms
+ ✓ Compiled /api/pricing-comparison in 209ms (2209 modules)
+Fetching pricing plans for organization: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 product: 216
+Error fetching pricing plans: {
+  code: '42703',
+  details: null,
+  hint: null,
+  message: 'column pricingplan.order_number does not exist'
+}
+ GET /api/pricing-comparison?organizationId=6695b959-45ef-44b4-a68c-9cd0fe0e25a3&type=plans&productId=216 500 in 457ms
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+  {
+  url: 'https://codedharmony.co.uk',
+  name: 'Coded Harmony | Business Management Systems',
+  @type: 'WebPage',
+  @context: 'https://schema.org',
+  publisher: {
+  logo: {
+  url: 'https://codedharmony.co.uk/images/og-image.jpg',
+  @type: 'ImageObject'
+},
+  name: 'CodedHarmony',
+  @type: 'Organization'
+},
+  description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+}
+],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [ 'en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl' ]
+}
+🌐 MIDDLEWARE DEBUG:
+   - Pathname: /
+   - Cookie locale: en
+   - DB settings.language: en
+   - DB default locale: en
+   - Final default locale: en
+   - Supported locales: [ 'en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl' ]
+   - Headers origin: null
+   - Headers referer: http://localhost:3000/
+📋 MIDDLEWARE RESULT:
+   - Response status: 200
+   - Response headers location: null
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+RootLayout - currentDomain: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 Type: general
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Fetching homepage data with baseUrl: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching homepage data for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+RootLayout - settings loaded: true
+RootLayout - organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - called with organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - querying database for organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetched hero data: {
+  id: 2,
+  name: 'codedharmony',
+  font_family: 'Lato',
+  h1_title: 'Crafted Business Management',
+  is_seo_title: true,
+  seo_title: 'By professionals for professionals',
+  p_description: 'Professional Tools, Unbeatable Value\n\n',
+  h1_text_color: 'gray-700',
+  h1_text_color_gradient_from: 'indigo-200',
+  h1_text_color_gradient_to: 'sky-400',
+  is_h1_gradient_text: true,
+  h1_text_size: 'text-6xl',
+  h1_text_size_mobile: 'text-5xl',
+  image: null,
+  title_alighnement: 'center',
+  title_block_width: 'xs',
+  is_bg_gradient: false,
+  is_image_full_page: false,
+  title_block_columns: 1,
+  image_first: false,
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  background_color: 'white',
+  background_color_gradient_from: 'sky-50',
+  background_color_gradient_to: 'sky-200',
+  h1_text_color_gradient_via: 'gray-700',
+  background_color_gradient_via: 'gray-100',
+  button_main_get_started: 'Get Started',
+  button_explore: 'Explore',
+  animation_element: null,
+  h1_title_translation: {
+    de: 'Handwerkliches Unternehmensmanagement',
+    en: 'Crafted Business Management',
+    es: 'Gestión Empresarial Artesanal',
+    fr: "Gestion d'Entreprise Artisanale",
+    it: 'Gestione Aziendale Artigianale',
+    ja: 'クラフトビジネスマネジメント',
+    nl: 'Vakkundig Bedrijfsbeheer',
+    pl: 'Rzemieślnicze Zarządzanie Biznesem',
+    pt: 'Gestão Empresarial Artesanal',
+    ru: 'Искусное Управление Бизнесом',
+    zh: '精工商业管理'
+  },
+  p_description_translation: {
+    de: 'Erschließen Sie Ihr Wachstum',
+    en: 'Unlock Your Growth',
+    es: 'Desbloquea Tu Crecimiento',
+    fr: 'Libérez Votre Croissance',
+    it: 'Sblocca la Tua Crescita',
+    ja: '成長をアンロック',
+    nl: 'Ontgrendel Uw Groei',
+    pl: 'Odblokuj Swój Rozwój',
+    pt: 'Desbloqueie Seu Crescimento',
+    ru: 'Раскройте Свой Рост',
+    zh: '释放您的增长潜力'
+  },
+  p_description_color: 'gray-600',
+  p_description_size: null,
+  p_description_size_mobile: null,
+  p_description_weight: null
+}
+fetchMenuItems - fetched 3 menu items with submenu data
+RootLayout - menuItems: 3 items fetched
+supabaseClient - NEXT_PUBLIC_SUPABASE_URL: https://rgbmdfaoowqbgshjuwwm.supabase.co
+supabaseClient - NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYm1kZmFvb3dxYmdzaGp1d3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzkxNTIsImV4cCI6MjA1NzM1NTE1Mn0.sjcyJPSZvgiSbxeFMU9HX19GBHkm4XXP1LC-OxChKI8
+supabaseClient - NEXT_PUBLIC_SUPABASE_PROJECT_ID: rgbmdfaoowqbgshjuwwm
+Fixed banners for height calc: []
+Calculated fixed banners height: 0
+supabaseClient - Auth state changed: INITIAL_SESSION Session: null
+Fetched brands data: [
+  {
+    id: 5,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//twilio_gray.svg',
+    name: 'twilio',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 4,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//react_gray.svg',
+    name: 'react',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 28,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//cloudflare.svg',
+    name: 'Cloudflare',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 2,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//stripe_gray.svg',
+    name: 'stripe',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  }
+]
+RootLayout - currentDomain: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetched FAQs data: [
+  {
+    id: '75abcce2-10cc-4e38-a8dc-2a61d1879a08',
+    created_at: '2025-06-01T14:50:27.385238+00:00',
+    order: 1,
+    display_order: null,
+    question: 'What is a Business Management System (BMS)?',
+    answer: '\n' +
+      'A Business Management System (BMS) is an all-in-one software solution that integrates various business operations, such as CRM, payments, marketing, and customer management. Coded Harmony’s BMS provides a seamless platform to manage all aspects of your business efficiently.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '79907be8-c463-4a74-991a-df06a2fdc837',
+    created_at: '2025-06-01T14:52:12.695833+00:00',
+    order: 2,
+    display_order: null,
+    question: 'How does the Site Management feature work?',
+    answer: '\n' +
+      'The Site Management feature enables you to build and customize a high-performance website with built-in SEO tools and content management capabilities. Unlike other site builders like Wix or Webflow, it offers an integrated solution tailored to business needs, ensuring optimal performance and visibility.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 'c62e438b-1237-4095-b682-7942063f8884',
+    created_at: '2025-06-01T14:53:06.513276+00:00',
+    order: 3,
+    display_order: null,
+    question: 'Which modules does our BMS include?',
+    answer: '\n' +
+      'Coded Harmony’s BMS includes modules such as CRM, Booking, Subscriptions, Billing & Payments, Site Management, Email Management, Marketing, Client Connect Hub, Workflow, Blog Management, Staff Management, Training, Support, and the cornerstone Cases module, which logs all client processes and documents.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 'd25cd195-4363-4a91-9737-737592929f10',
+    created_at: '2025-06-01T14:54:14.764181+00:00',
+    order: 4,
+    display_order: null,
+    question: 'How can the CRM module benefit my business?',
+    answer: '\n' +
+      'The CRM module helps manage customer interactions, track leads, maintain customer histories, and analyze sales patterns. It provides a comprehensive view of customer relationships, supporting better business decisions, increased sales, and improved client retention.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '021b969a-6b5a-4850-a9d6-f57f1e0ed4db',
+    created_at: '2025-06-01T14:55:30.672836+00:00',
+    order: 5,
+    display_order: null,
+    question: 'What’s the benefit of the Client Connect Hub module?',
+    answer: '\n' +
+      'The Client Connect Hub enables communication with customers across multiple platforms from one dashboard, ensuring no message is missed and improving customer engagement and satisfaction.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '529d84f9-a57a-4776-bd23-1b8eb41b3740',
+    created_at: '2025-06-01T14:57:22.371701+00:00',
+    order: 6,
+    display_order: null,
+    question: 'Why should I choose Coded Harmony’s BMS over others in the market?',
+    answer: '\n' +
+      'Coded Harmony’s BMS offers a comprehensive, integrated solution with diverse modules like CRM, Booking, and Client Connect Hub, prioritizing usability and unmatched customer support. Unlike platforms such as Wix or WordPress, it provides a tailored, high-performance system with built-in SEO optimization and clean construction, saving time and resources.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  }
+]
+ GET / 200 in 1445ms
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 Type: general
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+RootLayout - settings loaded: true
+RootLayout - organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - called with organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - querying database for organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - fetched 3 menu items with submenu data
+RootLayout - menuItems: 3 items fetched
+Fixed banners for height calc: []
+Calculated fixed banners height: 0
+ GET /_next/static/chunks/main-app.js?v=1754992087637 404 in 241ms
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+  {
+  url: 'https://codedharmony.co.uk',
+  name: 'Coded Harmony | Business Management Systems',
+  @type: 'WebPage',
+  @context: 'https://schema.org',
+  publisher: {
+  logo: {
+  url: 'https://codedharmony.co.uk/images/og-image.jpg',
+  @type: 'ImageObject'
+},
+  name: 'CodedHarmony',
+  @type: 'Organization'
+},
+  description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+}
+],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [ 'en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl' ]
+}
+🌐 MIDDLEWARE DEBUG:
+   - Pathname: /
+   - Cookie locale: en
+   - DB settings.language: en
+   - DB default locale: en
+   - Final default locale: en
+   - Supported locales: [ 'en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl' ]
+   - Headers origin: null
+   - Headers referer: null
+📋 MIDDLEWARE RESULT:
+   - Response status: 200
+   - Response headers location: null
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+RootLayout - currentDomain: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 Type: general
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Fetching homepage data with baseUrl: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching homepage data for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+RootLayout - settings loaded: true
+RootLayout - organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - called with organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - querying database for organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetched hero data: {
+  id: 2,
+  name: 'codedharmony',
+  font_family: 'Lato',
+  h1_title: 'Crafted Business Management',
+  is_seo_title: true,
+  seo_title: 'By professionals for professionals',
+  p_description: 'Professional Tools, Unbeatable Value\n\n',
+  h1_text_color: 'gray-700',
+  h1_text_color_gradient_from: 'indigo-200',
+  h1_text_color_gradient_to: 'sky-400',
+  is_h1_gradient_text: true,
+  h1_text_size: 'text-6xl',
+  h1_text_size_mobile: 'text-5xl',
+  image: null,
+  title_alighnement: 'center',
+  title_block_width: 'xs',
+  is_bg_gradient: false,
+  is_image_full_page: false,
+  title_block_columns: 1,
+  image_first: false,
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  background_color: 'white',
+  background_color_gradient_from: 'sky-50',
+  background_color_gradient_to: 'sky-200',
+  h1_text_color_gradient_via: 'gray-700',
+  background_color_gradient_via: 'gray-100',
+  button_main_get_started: 'Get Started',
+  button_explore: 'Explore',
+  animation_element: null,
+  h1_title_translation: {
+    de: 'Handwerkliches Unternehmensmanagement',
+    en: 'Crafted Business Management',
+    es: 'Gestión Empresarial Artesanal',
+    fr: "Gestion d'Entreprise Artisanale",
+    it: 'Gestione Aziendale Artigianale',
+    ja: 'クラフトビジネスマネジメント',
+    nl: 'Vakkundig Bedrijfsbeheer',
+    pl: 'Rzemieślnicze Zarządzanie Biznesem',
+    pt: 'Gestão Empresarial Artesanal',
+    ru: 'Искусное Управление Бизнесом',
+    zh: '精工商业管理'
+  },
+  p_description_translation: {
+    de: 'Erschließen Sie Ihr Wachstum',
+    en: 'Unlock Your Growth',
+    es: 'Desbloquea Tu Crecimiento',
+    fr: 'Libérez Votre Croissance',
+    it: 'Sblocca la Tua Crescita',
+    ja: '成長をアンロック',
+    nl: 'Ontgrendel Uw Groei',
+    pl: 'Odblokuj Swój Rozwój',
+    pt: 'Desbloqueie Seu Crescimento',
+    ru: 'Раскройте Свой Рост',
+    zh: '释放您的增长潜力'
+  },
+  p_description_color: 'gray-600',
+  p_description_size: null,
+  p_description_size_mobile: null,
+  p_description_weight: null
+}
+fetchMenuItems - fetched 3 menu items with submenu data
+RootLayout - menuItems: 3 items fetched
+Fixed banners for height calc: []
+Calculated fixed banners height: 0
+RootLayout - currentDomain: http://localhost:3000
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Querying organization for URL: http://localhost:3000
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetched brands data: [
+  {
+    id: 5,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//twilio_gray.svg',
+    name: 'twilio',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 4,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//react_gray.svg',
+    name: 'react',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 28,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//cloudflare.svg',
+    name: 'Cloudflare',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 2,
+    web_storage_address: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/brands//stripe_gray.svg',
+    name: 'stripe',
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  }
+]
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+Organization found for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3 Type: general
+Environment variables: {
+  NODE_ENV: 'development',
+  NEXT_PUBLIC_VERCEL_ENV: undefined,
+  NEXT_PUBLIC_VERCEL_URL: undefined,
+  NEXT_PUBLIC_TENANT_ID: 'de0d5c21-787f-49c2-a665-7ff8e599c891'
+}
+Fetching organization for URL: http://localhost:3000 isLocal: true
+Using cached organization ID for URL: http://localhost:3000 ID: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetching settings for organization_id: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Settings fetched successfully: {
+  id: 7,
+  site: 'Coded Harmony',
+  image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony_logo.svg',
+  organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3',
+  menu_width: '5xl',
+  menu_items_are_text: true,
+  footer_color: 'gray-700',
+  favicon: 'codedharmony.ico',
+  seo_title: 'Coded Harmony | Business Management Systems',
+  seo_description: 'Unlock Your Growth',
+  seo_keywords: null,
+  seo_og_image: 'https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/logo//codedharmony.png',
+  seo_twitter_card: 'summary_large_image',
+  seo_structured_data: [
+    {
+      url: 'https://codedharmony.co.uk',
+      name: 'Coded Harmony | Business Management Systems',
+      '@type': 'WebPage',
+      '@context': 'https://schema.org',
+      publisher: [Object],
+      description: 'Crafted Business Management SaaS solutions. Unlock Your Grow.'
+    }
+  ],
+  domain: 'codedharmony.co.uk',
+  billing_panel_stripe: null,
+  google_tag: null,
+  language: 'en',
+  with_language_switch: true,
+  supported_locales: [
+    'en', 'es', 'fr',
+    'de', 'ru', 'it',
+    'pt', 'zh', 'ja',
+    'pl'
+  ]
+}
+RootLayout - settings loaded: true
+RootLayout - organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - called with organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+fetchMenuItems - querying database for organizationId: 6695b959-45ef-44b4-a68c-9cd0fe0e25a3
+Fetched FAQs data: [
+  {
+    id: '75abcce2-10cc-4e38-a8dc-2a61d1879a08',
+    created_at: '2025-06-01T14:50:27.385238+00:00',
+    order: 1,
+    display_order: null,
+    question: 'What is a Business Management System (BMS)?',
+    answer: '\n' +
+      'A Business Management System (BMS) is an all-in-one software solution that integrates various business operations, such as CRM, payments, marketing, and customer management. Coded Harmony’s BMS provides a seamless platform to manage all aspects of your business efficiently.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '79907be8-c463-4a74-991a-df06a2fdc837',
+    created_at: '2025-06-01T14:52:12.695833+00:00',
+    order: 2,
+    display_order: null,
+    question: 'How does the Site Management feature work?',
+    answer: '\n' +
+      'The Site Management feature enables you to build and customize a high-performance website with built-in SEO tools and content management capabilities. Unlike other site builders like Wix or Webflow, it offers an integrated solution tailored to business needs, ensuring optimal performance and visibility.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 'c62e438b-1237-4095-b682-7942063f8884',
+    created_at: '2025-06-01T14:53:06.513276+00:00',
+    order: 3,
+    display_order: null,
+    question: 'Which modules does our BMS include?',
+    answer: '\n' +
+      'Coded Harmony’s BMS includes modules such as CRM, Booking, Subscriptions, Billing & Payments, Site Management, Email Management, Marketing, Client Connect Hub, Workflow, Blog Management, Staff Management, Training, Support, and the cornerstone Cases module, which logs all client processes and documents.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: 'd25cd195-4363-4a91-9737-737592929f10',
+    created_at: '2025-06-01T14:54:14.764181+00:00',
+    order: 4,
+    display_order: null,
+    question: 'How can the CRM module benefit my business?',
+    answer: '\n' +
+      'The CRM module helps manage customer interactions, track leads, maintain customer histories, and analyze sales patterns. It provides a comprehensive view of customer relationships, supporting better business decisions, increased sales, and improved client retention.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '021b969a-6b5a-4850-a9d6-f57f1e0ed4db',
+    created_at: '2025-06-01T14:55:30.672836+00:00',
+    order: 5,
+    display_order: null,
+    question: 'What’s the benefit of the Client Connect Hub module?',
+    answer: '\n' +
+      'The Client Connect Hub enables communication with customers across multiple platforms from one dashboard, ensuring no message is missed and improving customer engagement and satisfaction.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  },
+  {
+    id: '529d84f9-a57a-4776-bd23-1b8eb41b3740',
+    created_at: '2025-06-01T14:57:22.371701+00:00',
+    order: 6,
+    display_order: null,
+    question: 'Why should I choose Coded Harmony’s BMS over others in the market?',
+    answer: '\n' +
+      'Coded Harmony’s BMS offers a comprehensive, integrated solution with diverse modules like CRM, Booking, and Client Connect Hub, prioritizing usability and unmatched customer support. Unlike platforms such as Wix or WordPress, it provides a tailored, high-performance system with built-in SEO optimization and clean construction, saving time and resources.\n' +
+      '\n',
+    product_sub_type_id: null,
+    section: null,
+    display_home_page: true,
+    organization_id: '6695b959-45ef-44b4-a68c-9cd0fe0e25a3'
+  }
+]
+ GET / 200 in 469ms
+fetchMenuItems - fetched 3 menu items with submenu data
+RootLayout - menuItems: 3 items fetched
+Fixed banners for height calc: []
+Calculated fixed banners height: 0
+ GET /_next/static/chunks/main-app.js?v=1754992090617 404 in 228ms

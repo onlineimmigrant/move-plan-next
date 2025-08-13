@@ -1,8 +1,10 @@
 "use client";
 
-import React, { Suspense, memo } from 'react';
+import React, { Suspense, memo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { HomePageData } from '@/types/home_page_data';
+import PricingModal from '@/components/PricingModal';
+import { useSettings } from '@/context/SettingsContext';
 
 // Optimized lazy loading with loading components
 const Hero = dynamic(() => import('@/components/HomePageSections/Hero'), { 
@@ -88,12 +90,115 @@ class ErrorBoundary extends React.Component<
   }
 }
 
+interface PricingComparison {
+  id: number;
+  created_at: string;
+  name: string;
+  description: string;
+  name_translation: Record<string, string>;
+  description_translation: Record<string, string>;
+  organization_id: number;
+}
+
 interface HomePageProps {
   data: HomePageData;
 }
 
 // Memoized component for better performance
 const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+  const [pricingComparison, setPricingComparison] = useState<PricingComparison | null>(null);
+  const [isLoadingPricing, setIsLoadingPricing] = useState(false);
+  const { settings } = useSettings();
+
+  // Fetch pricing comparison data with organization_id
+  useEffect(() => {
+    const fetchPricingData = async () => {
+      if (!settings?.organization_id) return;
+      
+      setIsLoadingPricing(true);
+      try {
+        const url = `/api/pricing-comparison?organizationId=${encodeURIComponent(settings.organization_id)}`;
+        console.log('Fetching pricing comparison for organization:', settings.organization_id);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setPricingComparison(data);
+          console.log('Pricing comparison data fetched successfully:', data);
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.log('Error fetching pricing comparison:', errorData);
+          // Set null on error to indicate no data available
+          setPricingComparison(null);
+        }
+      } catch (error) {
+        console.log('Network error fetching pricing comparison:', error);
+        // Set null on error to indicate no data available
+        setPricingComparison(null);
+      } finally {
+        setIsLoadingPricing(false);
+      }
+    };
+
+    fetchPricingData();
+  }, [settings?.organization_id]); // Only depend on organization_id to prevent infinite loops
+
+  // Handle hash-based routing for pricing modal
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      setIsPricingModalOpen(hash === '#pricing');
+    };
+
+    // Check initial hash on mount with a small delay to ensure DOM is ready
+    const checkInitialHash = () => {
+      setTimeout(handleHashChange, 0);
+    };
+    
+    checkInitialHash();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Also listen for popstate to catch browser back/forward navigation
+    window.addEventListener('popstate', handleHashChange);
+
+    // Handle programmatic navigation (for links that don't trigger hashchange)
+    const handleClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a[href="#pricing"]');
+      if (link) {
+        e.preventDefault();
+        window.location.hash = '#pricing';
+        handleHashChange();
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+      document.removeEventListener('click', handleClick);
+    };
+  }, []);
+
+  // Handle modal close
+  const handleClosePricingModal = () => {
+    setIsPricingModalOpen(false);
+    // Remove hash from URL
+    if (window.location.hash === '#pricing') {
+      history.pushState(null, '', window.location.pathname + window.location.search);
+    }
+  };
+
   // Early validation
   if (!data) {
     return (
@@ -178,6 +283,13 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
           </section>
         </ErrorBoundary>
       )}
+
+      {/* Pricing Modal */}
+      <PricingModal 
+        isOpen={isPricingModalOpen}
+        onClose={handleClosePricingModal}
+        pricingComparison={pricingComparison}
+      />
     </main>
   );
 });
