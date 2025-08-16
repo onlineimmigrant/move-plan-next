@@ -239,8 +239,13 @@ export async function GET(
         id,
         menu_item_id,
         name,
+        name_translation,
         url_name,
         order,
+        description,
+        description_translation,
+        is_displayed,
+        image,
         organization_id
       `)
       .eq('organization_id', orgId)
