@@ -11,6 +11,7 @@ interface SubmenuItem {
   description?: string;
   description_translation?: Record<string, any>;
   is_displayed?: boolean;
+  image?: string | null;
   organization_id?: string | null;
 }
 

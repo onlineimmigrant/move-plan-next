@@ -11,7 +11,8 @@ interface SubMenuItem {
   description?: string;
   description_translation?: Record<string, any>;
   is_displayed?: boolean;
-  website_menuitem_id?: number;
+  image?: string | null;
+  menu_item_id?: number;
   organization_id: string | null;
 }
 
@@ -27,7 +28,6 @@ interface MenuItem {
   is_displayed: boolean;
   is_displayed_on_footer: boolean;
   order: number;
-  image?: string;
   react_icon_id?: number;
   react_icons?: ReactIcon | ReactIcon[];
   website_submenuitem?: SubMenuItem[];
@@ -67,7 +67,6 @@ export async function GET(request: Request) {
         is_displayed,
         is_displayed_on_footer,
         "order",
-        image,
         react_icon_id,
         organization_id,
         react_icons (icon_name),
@@ -77,17 +76,17 @@ export async function GET(request: Request) {
           name_translation,
           order,
           url_name,
+          image,
           description,
           description_translation,
           description_translation,
           is_displayed,
-          website_menuitem_id,
+          menu_item_id,
           organization_id
         )
       `)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)
-      .order('order', { ascending: true })
-      .order('order', { ascending: true, referencedTable: 'website_submenuitem' });
+      .order('order', { ascending: true });
 
     if (error) {
       console.error('Supabase error in /api/menu:', error);
@@ -102,7 +101,32 @@ export async function GET(request: Request) {
       });
     }
 
+    // Fetch submenu items separately for all menu items
+    const menuItemIds = data.map(item => item.id);
+    const { data: submenuData, error: submenuError } = await supabase
+      .from('website_submenuitem')
+      .select(`
+        id,
+        name,
+        name_translation,
+        order,
+        url_name,
+        description,
+        description_translation,
+        is_displayed,
+        image,
+        menu_item_id,
+        organization_id
+      `)
+      .in('menu_item_id', menuItemIds)
+      .order('order', { ascending: true });
+
+    if (submenuError) {
+      console.error('Supabase error fetching submenu items:', submenuError);
+    }
+
     console.log('Raw menu items fetched:', JSON.stringify(data, null, 2));
+    console.log('Raw submenu items fetched:', JSON.stringify(submenuData, null, 2));
 
     // Filter and cast data to MenuItem[]
     const filteredData: MenuItem[] = data.map((item) => {
@@ -113,14 +137,19 @@ export async function GET(request: Request) {
         reactIcons = item.react_icons.length > 0 ? item.react_icons[0] : undefined;
       }
 
+      // Get submenu items for this menu item
+      const submenuItems = submenuData 
+        ? submenuData.filter((subItem: any) => 
+            subItem.menu_item_id === item.id &&
+            subItem.is_displayed !== false &&
+            (subItem.organization_id === null || subItem.organization_id === organizationId)
+          )
+        : [];
+
       return {
         ...item,
         react_icons: reactIcons,
-        website_submenuitem: (item.website_submenuitem || []).filter(
-          (subItem: SubMenuItem) =>
-            subItem.is_displayed !== false &&
-            (subItem.organization_id === null || subItem.organization_id === organizationId)
-        ),
+        website_submenuitem: submenuItems,
       };
     });
 

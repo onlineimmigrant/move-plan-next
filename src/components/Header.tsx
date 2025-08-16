@@ -164,7 +164,7 @@ const Header: React.FC<HeaderProps> = ({
                     </button>
                     
                     {/* Full-width Apple-style mega menu */}
-                    <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-screen max-w-7xl bg-white/95 backdrop-blur-3xl border border-black/8 rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.15)] z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in fade-in-0 zoom-in-95"
+                    <div className="fixed left-0 right-0 top-[calc(100%+0.5rem)] bg-white/95 backdrop-blur-3xl border border-black/8 rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.15)] z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in fade-in-0 zoom-in-95 mx-4 sm:mx-8"
                       style={{
                         backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
                         WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -176,13 +176,13 @@ const Header: React.FC<HeaderProps> = ({
                       {/* Inner glow for depth */}
                       <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none"></div>
                       
-                      <div className="relative p-8">
+                      <div className="relative px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
                         <div className="mb-6">
                           <h3 className="text-[18px] font-semibold text-gray-900 mb-2 tracking-[-0.02em] antialiased">{translatedDisplayName}</h3>
                           <p className="text-[13px] text-gray-600 antialiased opacity-90">Explore our {translatedDisplayName.toLowerCase()} options and services</p>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                           {displayedSubItems.map((subItem, index) => {
                             const translatedSubItemName = currentLocale 
                               ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
@@ -198,17 +198,36 @@ const Header: React.FC<HeaderProps> = ({
                               <LocalizedLink
                                 key={subItem.id}
                                 href={subItem.url_name}
-                                className="group/item relative overflow-hidden flex flex-col p-5 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:shadow-md border border-gray-200/40"
+                                className="group/item relative overflow-hidden flex bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:shadow-md border border-gray-200/40"
                               >
                                 {/* Hover shine effect */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
                                 
-                                <div className="relative z-10 flex items-start space-x-4">
-                                  <div className="flex-shrink-0 p-2 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm">
-                                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                  </div>
+                                {/* Image section - 1/3 width, full height */}
+                                <div className="relative w-1/3 flex-shrink-0">
+                                  {subItem.image ? (
+                                    <Image
+                                      src={subItem.image}
+                                      alt={translatedSubItemName}
+                                      fill
+                                      className="object-cover rounded-l-2xl"
+                                      onError={() =>
+                                        console.error(
+                                          `Failed to load image for submenu item ${translatedSubItemName}: ${subItem.image}`
+                                        )
+                                      }
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-l-2xl">
+                                      <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Content section - 2/3 width */}
+                                <div className="relative z-10 flex-1 flex items-center justify-between p-5">
                                   <div className="flex-1 min-w-0">
                                     <h4 className="text-[15px] font-semibold text-gray-900 mb-2 tracking-[-0.01em] antialiased group-hover/item:text-gray-800 transition-colors duration-300">
                                       {translatedSubItemName}
@@ -217,7 +236,7 @@ const Header: React.FC<HeaderProps> = ({
                                       {displayDescription}
                                     </p>
                                   </div>
-                                  <svg className="w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300 ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                   </svg>
                                 </div>
@@ -374,21 +393,43 @@ const Header: React.FC<HeaderProps> = ({
                                 key={subItem.id}
                                 href={subItem.url_name}
                                 onClick={() => setIsOpen(false)}
-                                className="group/sub relative overflow-hidden flex items-center space-x-3 p-3 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-xl border border-gray-200/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                                className="group/sub relative overflow-hidden flex bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-xl border border-gray-200/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
                               >
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/sub:translate-x-full transition-transform duration-700 ease-out"></div>
-                                <div className="relative z-10 w-8 h-8 bg-white/80 rounded-lg flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                
+                                {/* Image section - 1/3 width, full height */}
+                                <div className="relative w-1/3 flex-shrink-0 min-h-[60px]">
+                                  {subItem.image ? (
+                                    <Image
+                                      src={subItem.image}
+                                      alt={translatedSubItemName}
+                                      fill
+                                      className="object-cover rounded-l-xl"
+                                      onError={() =>
+                                        console.error(
+                                          `Failed to load image for submenu item ${translatedSubItemName}: ${subItem.image}`
+                                        )
+                                      }
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-l-xl">
+                                      <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Content section - 2/3 width */}
+                                <div className="relative z-10 flex-1 flex items-center justify-between p-3">
+                                  <div className="flex-1 min-w-0">
+                                    <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em] mb-1 block">{translatedSubItemName}</span>
+                                    <p className="text-[11px] text-gray-600 antialiased opacity-70 line-clamp-2">{displayDescription}</p>
+                                  </div>
+                                  <svg className="w-4 h-4 text-gray-400 group-hover/sub:text-gray-600 group-hover/sub:translate-x-1 transition-all duration-300 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                   </svg>
                                 </div>
-                                <div className="relative z-10 flex-1">
-                                  <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em] mb-1 block">{translatedSubItemName}</span>
-                                  <p className="text-[11px] text-gray-600 antialiased opacity-70">{displayDescription}</p>
-                                </div>
-                                <svg className="relative z-10 w-4 h-4 text-gray-400 group-hover/sub:text-gray-600 group-hover/sub:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
                               </LocalizedLink>
                             );
                           })}

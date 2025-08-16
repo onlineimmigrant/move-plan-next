@@ -34,10 +34,11 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
           order,
           description,
           description_translation,
+          image,
           menu_item_id
         )
       `)
-      .eq('organization_id', organizationId)
+      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
       .eq('is_displayed', true)
       .order('order', { ascending: true });
 
@@ -116,7 +117,8 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         is_displayed: true, // Default since field doesn't exist
         is_new_window: false, // Default since field doesn't exist
         order: submenu.order,
-        menu_item_id: submenu.menu_item_id
+        menu_item_id: submenu.menu_item_id,
+        image: submenu.image
       })) || [],
       // Legacy aliases for backward compatibility
       name: item.display_name,
@@ -133,7 +135,8 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         is_visible: true,
         is_new_window: false,
         order_position: submenu.order,
-        website_menuitem_id: submenu.menu_item_id
+        website_menuitem_id: submenu.menu_item_id,
+        image: submenu.image
       })) || []
     })) || [];
 

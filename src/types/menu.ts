@@ -13,6 +13,7 @@ export interface SubMenuItem {
   description_translation?: Record<string, string>;
   is_displayed?: boolean; // Added missing property
   is_new_window?: boolean;
+  image?: string | null; // Added image field for submenu item icons
   organization_id?: string | null;
 }
 
@@ -29,10 +30,10 @@ export interface MenuItem {
   description?: string;
   description_translation?: Record<string, string>;
   icon_name?: string | null;
-  image?: string | null; // Added missing property for menu item images
   react_icons?: ReactIcon | ReactIcon[] | null; // Added missing property for react icons
   website_submenuitem?: SubMenuItem[]; // Updated field name to match database
   organization_id: string | null;
+  image?: string | null; // Added image field for menu item icons
   
   // Legacy aliases for backward compatibility
   name?: string;
