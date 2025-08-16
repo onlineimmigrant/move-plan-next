@@ -29,7 +29,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'Compare all features',
     seeEverythingIncluded: 'See everything that\'s included in each plan',
     features: 'Features',
-    mostPopular: 'Most popular'
+    mostPopular: 'Most popular',
+    limitedTimeOffer: 'Limited Time Offer',
+    viewMore: 'View more',
+    viewLess: 'View less',
+    buyNow: 'Buy Now',
+    getStarted: 'Get Started'
   },
   es: { 
     monthly: 'Mensual',
@@ -37,7 +42,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'Comparar todas las características',
     seeEverythingIncluded: 'Ve todo lo que está incluido en cada plan',
     features: 'Características',
-    mostPopular: 'Más popular'
+    mostPopular: 'Más popular',
+    limitedTimeOffer: 'Oferta por tiempo limitado',
+    viewMore: 'Ver más',
+    viewLess: 'Ver menos',
+    buyNow: 'Comprar ahora',
+    getStarted: 'Comenzar'
   },
   fr: { 
     monthly: 'Mensuel',
@@ -45,7 +55,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'Comparer toutes les fonctionnalités',
     seeEverythingIncluded: 'Voir tout ce qui est inclus dans chaque plan',
     features: 'Fonctionnalités',
-    mostPopular: 'Le plus populaire'
+    mostPopular: 'Le plus populaire',
+    limitedTimeOffer: 'Offre à durée limitée',
+    viewMore: 'Voir plus',
+    viewLess: 'Voir moins',
+    buyNow: 'Acheter maintenant',
+    getStarted: 'Commencer'
   },
   de: { 
     monthly: 'Monatlich',
@@ -53,7 +68,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'Alle Funktionen vergleichen',
     seeEverythingIncluded: 'Sehen Sie alles, was in jedem Plan enthalten ist',
     features: 'Funktionen',
-    mostPopular: 'Am beliebtesten'
+    mostPopular: 'Am beliebtesten',
+    limitedTimeOffer: 'Zeitlich begrenztes Angebot',
+    viewMore: 'Mehr anzeigen',
+    viewLess: 'Weniger anzeigen',
+    buyNow: 'Jetzt kaufen',
+    getStarted: 'Loslegen'
   },
   ru: { 
     monthly: 'Ежемесячно',
@@ -61,7 +81,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'Сравнить все функции',
     seeEverythingIncluded: 'Посмотрите все, что включено в каждый план',
     features: 'Функции',
-    mostPopular: 'Популярный'
+    mostPopular: 'Популярный',
+    limitedTimeOffer: 'Ограниченное по времени предложение',
+    viewMore: 'Показать больше',
+    viewLess: 'Показать меньше',
+    buyNow: 'Купить сейчас',
+    getStarted: 'Начать'
   },
   it: { 
     monthly: 'Mensile',
@@ -69,7 +94,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'Confronta tutte le funzionalità',
     seeEverythingIncluded: 'Vedi tutto ciò che è incluso in ogni piano',
     features: 'Funzionalità',
-    mostPopular: 'Popolare'
+    mostPopular: 'Popolare',
+    limitedTimeOffer: 'Offerta a tempo limitato',
+    viewMore: 'Vedi di più',
+    viewLess: 'Vedi meno',
+    buyNow: 'Acquista ora',
+    getStarted: 'Inizia'
   },
   pt: { 
     monthly: 'Mensal',
@@ -77,7 +107,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'Compare todos os recursos',
     seeEverythingIncluded: 'Veja tudo o que está incluído em cada plano',
     features: 'Recursos',
-    mostPopular: 'Popular'
+    mostPopular: 'Popular',
+    limitedTimeOffer: 'Oferta por tempo limitado',
+    viewMore: 'Ver mais',
+    viewLess: 'Ver menos',
+    buyNow: 'Comprar agora',
+    getStarted: 'Começar'
   },
   pl: { 
     monthly: 'Miesięczny',
@@ -85,7 +120,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'Porównaj wszystkie funkcje',
     seeEverythingIncluded: 'Zobacz wszystko, co jest zawarte w każdym planie',
     features: 'Funkcje',
-    mostPopular: 'Najpopularniejszy'
+    mostPopular: 'Najpopularniejszy',
+    limitedTimeOffer: 'Oferta ograniczona czasowo',
+    viewMore: 'Zobacz więcej',
+    viewLess: 'Zobacz mniej',
+    buyNow: 'Kup teraz',
+    getStarted: 'Rozpocznij'
   },
   zh: { 
     monthly: '每月',
@@ -93,7 +133,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: '比较所有功能',
     seeEverythingIncluded: '查看每个计划包含的所有内容',
     features: '功能',
-    mostPopular: '最受欢迎'
+    mostPopular: '最受欢迎',
+    limitedTimeOffer: '限时优惠',
+    viewMore: '查看更多',
+    viewLess: '查看更少',
+    buyNow: '立即购买',
+    getStarted: '开始使用'
   },
   ja: { 
     monthly: '月額',
@@ -101,7 +146,12 @@ const PRICINGPLAN_TRANSLATIONS = {
     compareAllFeatures: 'すべての機能を比較',
     seeEverythingIncluded: '各プランに含まれるすべてを確認',
     features: '機能',
-    mostPopular: '最も人気'
+    mostPopular: '最も人気',
+    limitedTimeOffer: '期間限定オファー',
+    viewMore: 'もっと見る',
+    viewLess: '少なく表示',
+    buyNow: '今すぐ購入',
+    getStarted: '開始する'
   }
 };
 
@@ -123,6 +173,10 @@ interface SamplePricingPlan {
   realFeatures?: Feature[]; // Real feature objects with full data
   productSlug?: string; // Product slug for linking to product page
   order: number; // Order field for sorting plans
+  isPromotion?: boolean; // Promotion flag
+  promotionPrice?: number; // Promotional price
+  monthlyPromotionPrice?: number; // Monthly promotional price
+  annualPromotionPrice?: number; // Annual promotional price
 }
 
 interface PricingComparison {
@@ -390,6 +444,25 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       const planId = monthly?.id || annual?.id;
       const realFeatures = planId ? (planFeatures[planId] || []) : [];
 
+      // Handle promotion pricing
+      const monthlyIsPromotion = monthly?.is_promotion && monthly?.promotion_price !== undefined;
+      const annualIsPromotion = annual?.is_promotion && annual?.promotion_price !== undefined;
+      
+      let monthlyPromotionPrice = undefined;
+      let annualPromotionPrice = undefined;
+      
+      if (monthlyIsPromotion && monthly?.promotion_price !== undefined) {
+        monthlyPromotionPrice = parseFloat(monthly.promotion_price.toFixed(2));
+      }
+      
+      if (annualIsPromotion && annual?.promotion_price !== undefined) {
+        annualPromotionPrice = parseFloat(annual.promotion_price.toFixed(2));
+      } else if (monthlyIsPromotion && monthlyPromotionPrice !== undefined && monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
+        // Calculate annual promotion price from monthly promotion using discount
+        const discountMultiplier = (100 - monthly.annual_size_discount) / 100;
+        annualPromotionPrice = parseFloat((monthlyPromotionPrice * discountMultiplier).toFixed(2));
+      }
+
       return {
         name: productName,
         monthlyPrice: parseFloat(monthlyPrice.toFixed(2)),
@@ -397,7 +470,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         period: '/month',
         description: monthly?.description || annual?.description || '',
         features: [], // Will be populated after sorting and filtering
-        buttonText: monthly?.type === 'one_time' ? 'Buy Now' : 'Get Started',
+        buttonText: monthly?.type === 'one_time' ? 'Buy Now' : 'Get Started', // Will be translated in render
         // Add recurring interval data for total calculation
         monthlyRecurringCount: monthly?.recurring_interval_count || 1,
         annualRecurringCount: annual?.recurring_interval_count || 1,
@@ -412,6 +485,11 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         productSlug: monthly?.product?.slug || annual?.product?.slug || '',
         // Store the order for sorting
         order: monthly?.order_number || annual?.order_number || 999, // Default to 999 if no order specified
+        // Promotion fields
+        isPromotion: monthlyIsPromotion || annualIsPromotion,
+        promotionPrice: monthlyIsPromotion ? monthlyPromotionPrice : annualIsPromotion ? annualPromotionPrice : undefined,
+        monthlyPromotionPrice,
+        annualPromotionPrice,
       };
     }).sort((a, b) => a.order - b.order);
 
@@ -653,13 +731,45 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                       </div>
                       
                       <div className="flex items-baseline justify-center mb-8">
-                        <span className="text-4xl font-extralight text-gray-700">
-                          {currency}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
-                        </span>
-                        {!hasOneTimePlans && (
-                          <span className="text-sm text-gray-500 ml-1 font-light">
-                            {plan.period}
-                          </span>
+                        {plan.isPromotion ? (
+                          <div className="flex flex-col items-center">
+                            {/* Original price crossed out */}
+                            <span className="text-lg font-extralight text-sky-500 line-through mb-1">
+                              {currency}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
+                            </span>
+                            {/* Promotional price */}
+                            <div className="flex items-baseline">
+                              <span className="text-4xl font-extralight text-gray-700">
+                                {currency}{hasOneTimePlans 
+                                  ? (plan.monthlyPromotionPrice || plan.monthlyPrice).toFixed(2) 
+                                  : (isAnnual 
+                                    ? (plan.annualPromotionPrice || plan.annualPrice).toFixed(2) 
+                                    : (plan.monthlyPromotionPrice || plan.monthlyPrice).toFixed(2)
+                                  )
+                                }
+                              </span>
+                              {!hasOneTimePlans && (
+                                <span className="text-sm text-gray-500 ml-1 font-light">
+                                  {plan.period}
+                                </span>
+                              )}
+                            </div>
+                            {/* Limited Time Offer text */}
+                            <span className="text-xs text-gray-400 font-medium mt-1">
+                              {translations.limitedTimeOffer}
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-4xl font-extralight text-gray-700">
+                              {currency}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
+                            </span>
+                            {!hasOneTimePlans && (
+                              <span className="text-sm text-gray-500 ml-1 font-light">
+                                {plan.period}
+                              </span>
+                            )}
+                          </>
                         )}
                       </div>
 
@@ -668,12 +778,16 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                         <div className="text-center mb-4">
                           <span className="text-xs text-gray-400 font-light">
                             {isAnnual ? (
-                              // For annual: if we have real data, use actual annual price, otherwise calculate from monthly equivalent
+                              // For annual: use promotion price if available, otherwise regular price
                               plan.actualAnnualPrice ? 
                                 <>Total annual: {currency}{plan.actualAnnualPrice.toFixed(2)}</> :
-                                <>Total annual: {currency}{(plan.annualPrice * 12).toFixed(2)}</>
+                                plan.isPromotion && plan.annualPromotionPrice ?
+                                  <>Total annual: {currency}{(plan.annualPromotionPrice * 12).toFixed(2)}</> :
+                                  <>Total annual: {currency}{(plan.annualPrice * 12).toFixed(2)}</>
                             ) : (
-                              <>Total monthly: {currency}{(plan.monthlyPrice * plan.monthlyRecurringCount).toFixed(2)}</>
+                              plan.isPromotion && plan.monthlyPromotionPrice ?
+                                <>Total monthly: {currency}{(plan.monthlyPromotionPrice * plan.monthlyRecurringCount).toFixed(2)}</> :
+                                <>Total monthly: {currency}{(plan.monthlyPrice * plan.monthlyRecurringCount).toFixed(2)}</>
                             )}
                           </span>
                         </div>
@@ -687,7 +801,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                             : 'bg-gray-50 text-gray-800 hover:bg-gray-100 border border-gray-200'
                         }`}
                       >
-                        {plan.buttonText}
+                        {plan.buttonText === 'Buy Now' ? translations.buyNow : translations.getStarted}
                       </Link>
                     </div>
 
@@ -746,14 +860,14 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                                     >
                                       {isExpanded ? (
                                         <>
-                                          View less
+                                          {translations.viewLess}
                                           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                                           </svg>
                                         </>
                                       ) : (
                                         <>
-                                          View {plan.features.length - maxFeatures} more
+                                          {translations.viewMore} {plan.features.length - maxFeatures}
                                           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                           </svg>
@@ -798,10 +912,38 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                             <div className="text-sm font-semibold text-gray-700 mb-1">
                               {plan.name}
                             </div>
-                            <div className="text-lg font-extralight text-gray-600">
-                              {currency}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
-                              {!hasOneTimePlans && (
-                                <span className="text-xs text-gray-500">/mo</span>
+                            <div className="flex flex-col items-center">
+                              {plan.isPromotion ? (
+                                <>
+                                  {/* Original price crossed out */}
+                                  <span className="text-sm font-extralight text-sky-500 line-through">
+                                    {currency}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
+                                  </span>
+                                  {/* Promotional price */}
+                                  <div className="text-lg font-extralight text-gray-600">
+                                    {currency}{hasOneTimePlans 
+                                      ? (plan.monthlyPromotionPrice || plan.monthlyPrice) 
+                                      : (isAnnual 
+                                        ? (plan.annualPromotionPrice || plan.annualPrice) 
+                                        : (plan.monthlyPromotionPrice || plan.monthlyPrice)
+                                      )
+                                    }
+                                    {!hasOneTimePlans && (
+                                      <span className="text-xs text-gray-500">/mo</span>
+                                    )}
+                                  </div>
+                                  {/* Limited Time Offer text */}
+                                  <span className="text-xs text-gray-400 font-medium">
+                                    {translations.limitedTimeOffer}
+                                  </span>
+                                </>
+                              ) : (
+                                <div className="text-lg font-extralight text-gray-600">
+                                  {currency}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
+                                  {!hasOneTimePlans && (
+                                    <span className="text-xs text-gray-500">/mo</span>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </th>
