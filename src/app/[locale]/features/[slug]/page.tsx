@@ -37,6 +37,7 @@ interface PricingPlan {
   promotion_price?: number;
   product?: {
     links_to_image?: string;
+    is_displayed?: boolean;
   };
 }
 
