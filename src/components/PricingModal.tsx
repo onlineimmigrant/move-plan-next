@@ -120,6 +120,8 @@ interface SamplePricingPlan {
   annualSizeDiscount?: number; // New field for annual discount percentage
   planId?: number; // Plan ID for feature lookup
   realFeatures?: Feature[]; // Real feature objects with full data
+  productSlug?: string; // Product slug for linking to product page
+  order: number; // Order field for sorting plans
 }
 
 interface PricingComparison {
@@ -162,70 +164,7 @@ function usePricingTranslations() {
   };
 }
 
-const samplePlans: SamplePricingPlan[] = [
-  {
-    name: 'Starter',
-    monthlyPrice: 9,
-    annualPrice: 7,
-    period: '/month',
-    description: 'Perfect for individuals getting started',
-    features: [
-      'Up to 5 projects',
-      '10GB storage',
-      'Basic support',
-      'Standard templates',
-      'Email support'
-    ],
-    buttonText: 'Start Free Trial',
-    buttonVariant: 'secondary',
-    monthlyRecurringCount: 1, // Monthly: charge every 1 month
-    annualRecurringCount: 12,  // Annual: charge every 12 months
-    annualSizeDiscount: 0 // No discount for sample data
-  },
-  {
-    name: 'Professional',
-    monthlyPrice: 29,
-    annualPrice: 23,
-    period: '/month',
-    description: 'Best for growing businesses',
-    features: [
-      'Unlimited projects',
-      '100GB storage',
-      'Priority support',
-      'Premium templates',
-      'Advanced analytics',
-      'Team collaboration',
-      'API access'
-    ],
-    highlighted: true,
-    buttonText: 'Get Started',
-    buttonVariant: 'primary',
-    monthlyRecurringCount: 1, // Monthly: charge every 1 month
-    annualRecurringCount: 12,  // Annual: charge every 12 months
-    annualSizeDiscount: 0 // No discount for sample data
-  },
-  {
-    name: 'Enterprise',
-    monthlyPrice: 99,
-    annualPrice: 79,
-    period: '/month',
-    description: 'For large organizations',
-    features: [
-      'Everything in Professional',
-      'Unlimited storage',
-      '24/7 phone support',
-      'Custom integrations',
-      'Dedicated account manager',
-      'Advanced security',
-      'Custom contracts'
-    ],
-    buttonText: 'Contact Sales',
-    buttonVariant: 'secondary',
-    monthlyRecurringCount: 1, // Monthly: charge every 1 month
-    annualRecurringCount: 12,  // Annual: charge every 12 months
-    annualSizeDiscount: 0 // No discount for sample data
-  }
-];
+// No more sample data - using real database content only
 
 // Helper function to get all unique features across all plans
 const getAllFeatures = (plans: SamplePricingPlan[]): string[] => {
@@ -401,7 +340,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
 
   // Transform real pricing plans into display format
   const transformPricingPlans = (plans: PricingPlan[]): SamplePricingPlan[] => {
-    if (!plans || plans.length === 0) return samplePlans; // Fallback to sample data
+    if (!plans || plans.length === 0) return []; // Return empty array when no plans available
     
     // Group plans by product and create monthly/annual pairs
     const plansByProduct: { [key: string]: { monthly?: PricingPlan; annual?: PricingPlan } } = {};
@@ -455,9 +394,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         period: '/month',
         description: monthly?.description || annual?.description || 'No description available',
         features: displayFeatures,
-        highlighted: index === 1, // Highlight the second plan
         buttonText: monthly?.type === 'one_time' ? 'Buy Now' : 'Get Started',
-        buttonVariant: (index === 1 ? 'primary' : 'secondary') as 'primary' | 'secondary',
         // Add recurring interval data for total calculation
         monthlyRecurringCount: monthly?.recurring_interval_count || 1,
         annualRecurringCount: annual?.recurring_interval_count || 1,
@@ -468,8 +405,19 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         // Store the actual plan ID and features for feature comparison table
         planId: planId || 0,
         realFeatures: realFeatures || [],
+        // Add product slug for linking to product page
+        productSlug: monthly?.product?.slug || annual?.product?.slug || '',
+        // Store the order for sorting
+        order: monthly?.order_number || annual?.order_number || 999, // Default to 999 if no order specified
       };
-    });
+    }).sort((a, b) => a.order - b.order).map((plan, sortedIndex) => {
+      // After sorting, update the highlighted and buttonVariant based on sorted position
+      return {
+        ...plan,
+        highlighted: sortedIndex === 1, // Highlight the second plan after sorting
+        buttonVariant: (sortedIndex === 1 ? 'primary' : 'secondary') as 'primary' | 'secondary',
+      };
+    }); // Sort by order field
   };
 
   const displayPlans = transformPricingPlans(pricingPlans);
@@ -676,15 +624,16 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                         </span>
                       </div>
 
-                      <button
-                        className={`w-full py-3.5 px-6 rounded-full font-medium text-sm transition-all group-hover:scale-[1.02] ${
+                      <Link
+                        href={plan.productSlug ? `/products/${plan.productSlug}` : '#'}
+                        className={`inline-block w-full py-3.5 px-6 rounded-full font-medium text-sm transition-all group-hover:scale-[1.02] text-center ${
                           plan.buttonVariant === 'primary'
                             ? 'bg-gray-800 text-white hover:bg-gray-900'
                             : 'bg-gray-50 text-gray-800 hover:bg-gray-100 border border-gray-200'
                         }`}
                       >
                         {plan.buttonText}
-                      </button>
+                      </Link>
                     </div>
 
                     <div className="space-y-4">
