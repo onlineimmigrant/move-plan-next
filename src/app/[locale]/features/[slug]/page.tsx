@@ -35,6 +35,9 @@ interface PricingPlan {
   currency_symbol?: string;
   is_promotion?: boolean;
   promotion_price?: number;
+  product?: {
+    links_to_image?: string;
+  };
 }
 
 interface FeaturePageProps {
@@ -54,7 +57,7 @@ const colors = [
 // Loading Components
 function FeatureContentSkeleton() {
   return (
-    <div className="animate-pulse space-y-4 mb-24">
+    <div className="animate-pulse space-y-4 mb-16">
       <div className="h-4 bg-gray-200 rounded w-full"></div>
       <div className="h-4 bg-gray-200 rounded w-5/6"></div>
       <div className="h-4 bg-gray-200 rounded w-4/6"></div>
@@ -66,16 +69,16 @@ function FeatureContentSkeleton() {
 
 function PricingPlanCardSkeleton() {
   return (
-    <div className="h-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden animate-pulse">
       <div className="w-full p-8 flex justify-center">
-        <div className="w-36 h-36 bg-gray-200 rounded-full"></div>
+        <div className="w-24 h-24 bg-gray-200 rounded-2xl"></div>
       </div>
       <div className="p-6 space-y-3">
         <div className="h-3 bg-gray-200 rounded w-1/3"></div>
         <div className="h-5 bg-gray-200 rounded w-2/3"></div>
         <div className="h-4 bg-gray-200 rounded w-1/2 ml-auto"></div>
       </div>
-      <div className="px-6 py-4 border-t border-gray-100/50">
+      <div className="px-6 py-4 border-t border-gray-100">
         <div className="h-3 bg-gray-200 rounded w-1/4 ml-auto"></div>
       </div>
     </div>
@@ -85,16 +88,16 @@ function PricingPlanCardSkeleton() {
 function FeatureContent({ content, description }: { content: string; description?: string }) {
   if (!content && !description) {
     return (
-      <div className="rounded-2xl shadow-lg border border-gray-200 p-8 mb-24 backdrop-blur-sm bg-white/95 text-center">
-        <BeakerIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg">No content available for this feature.</p>
+      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-12 mb-20 text-center">
+        <BeakerIcon className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+        <p className="text-gray-500 text-xl font-extralight tracking-wide">No content available for this feature.</p>
       </div>
     );
   }
 
   return (
-    <section className="rounded-2xl shadow-lg border border-gray-200 p-8 mb-24 backdrop-blur-sm bg-white/95">
-      <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+    <section className="bg-white rounded-3xl border border-gray-200 shadow-sm p-12 mb-20">
+      <div className="prose prose-xl max-w-none text-gray-700 leading-relaxed prose-headings:font-extralight prose-headings:text-gray-800 prose-p:font-light prose-p:leading-relaxed">
         {parse(description || content || '')}
       </div>
     </section>
@@ -102,59 +105,80 @@ function FeatureContent({ content, description }: { content: string; description
 }
 
 function PricingPlanCard({ plan, color }: { plan: PricingPlan; color: string }) {
+  // Convert prices from cents to actual currency units
   const displayPrice = plan.is_promotion && plan.promotion_price 
-    ? plan.promotion_price 
-    : plan.price;
+    ? (plan.promotion_price / 100).toFixed(2)
+    : (plan.price / 100).toFixed(2);
   
-  const currencySymbol = plan.currency_symbol || plan.currency || '£';
+  const originalPrice = (plan.price / 100).toFixed(2);
+  
+  // Use currency_symbol field with fallback
+  const currencySymbol = plan.currency_symbol || '£';
+
+  // Get product image or fallback to color
+  const productImage = plan.product?.links_to_image;
 
   return (
-    <div className="h-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-sky-200 overflow-hidden flex flex-col transition-all duration-300 transform hover:-translate-y-1">
-      <div className="w-full h-auto p-8 flex-shrink-0 flex justify-center">
-        <div className={`w-36 h-36 ${color} rounded-2xl flex items-center justify-center shadow-lg`}>
-          <span className="text-white font-bold text-3xl drop-shadow-sm">
-            {plan.product_name.charAt(0).toUpperCase()}
-          </span>
-        </div>
+    <div className="group bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-gray-300 transition-all duration-500 overflow-hidden transform hover:-translate-y-1">
+      {/* Full-width Product Image or Color Header - 1/3 height */}
+      <div className="w-full h-32 relative group-hover:scale-105 transition-transform duration-300 origin-top">
+        {productImage ? (
+          <img 
+            src={productImage} 
+            alt={plan.product_name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className={`w-full h-full ${color} flex items-center justify-center`}>
+            <span className="text-white font-bold text-3xl drop-shadow-md">
+              {plan.product_name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
       </div>
-      
-      <div className="p-6 flex flex-col flex-grow gap-2">
+
+      {/* Card Content */}
+      <div className="p-8 text-center">
+        {/* Refined Badge */}
         {plan.measure && (
-          <span className="font-medium text-xs text-sky-500 tracking-widest hover:underline mb-1 cursor-pointer uppercase">
+          <span className="inline-block px-4 py-1.5 bg-gray-50 text-gray-600 text-xs font-medium rounded-full mb-4 uppercase tracking-widest border border-gray-100">
             {plan.measure}
           </span>
         )}
         
-        <h2 className="tracking-tight text-lg line-clamp-2 font-semibold text-gray-900 group-hover:text-sky-600 transition-colors duration-200 leading-tight">
+        {/* Elegant Title */}
+        <h3 className="text-xl font-extralight text-gray-700 mb-6 leading-tight tracking-tight">
           {plan.product_name}
-        </h2>
+        </h3>
         
-        <div className="flex justify-end items-baseline mt-auto">
+        {/* Refined Price Display */}
+        <div className="flex flex-col items-center mb-8">
           {plan.is_promotion && plan.promotion_price && (
-            <span className="text-sm text-gray-400 line-through mr-2">
-              {currencySymbol}{plan.price}
+            <span className="text-sm text-gray-400 line-through mb-1 font-light">
+              {currencySymbol}{originalPrice}
             </span>
           )}
           <div className="flex items-baseline">
-            <span className="text-gray-600 text-sm font-medium">{currencySymbol}</span>
-            <span className="text-2xl font-bold text-gray-900">{displayPrice}</span>
+            <span className="text-gray-600 text-lg font-extralight mr-1">{currencySymbol}</span>
+            <span className="text-4xl font-extralight text-gray-700 tracking-tight">{displayPrice}</span>
           </div>
-        </div>
-      </div>
-      
-      <div className="px-6 py-4 bg-gradient-to-r from-gray-50/80 to-transparent flex-shrink-0 flex justify-between items-center border-t border-gray-100/50">
-        {plan.measure && plan.measure.trim() !== '' ? (
-          <>
-            <span className="text-gray-500 text-xs font-medium uppercase tracking-wide group-hover:opacity-60 transition-opacity duration-200">
-              View Details
+          {plan.is_promotion && (
+            <span className="text-xs text-gray-400 font-medium mt-2 tracking-wide">
+              Limited Time Offer
             </span>
-            <ArrowRightIcon className="h-4 w-4 text-sky-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
-          </>
-        ) : (
-          <div className="flex-1 flex justify-end">
-            <ArrowRightIcon className="h-4 w-4 text-sky-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Elegant Refined Button */}
+        <Link
+          href={`/products/${plan.product_slug}`}
+          className="inline-flex items-center justify-center w-full py-3.5 px-6 bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-gray-700 rounded-full font-light text-sm hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 hover:text-gray-900 transition-all duration-300 shadow-sm hover:shadow-md group-hover:scale-[1.02] tracking-wide"
+        >
+          <span>Explore Product</span>
+          <svg className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </Link>
       </div>
     </div>
   );
@@ -199,48 +223,42 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
     }
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-20">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 py-12">
           <Suspense fallback={<FeatureContentSkeleton />}>
             <FeatureHeader feature={feature} />
             <FeatureContent content={feature.content} description={feature.description} />
 
             {associatedPricingPlans && associatedPricingPlans.length > 0 && (
-              <section className="mt-16">
-                {/* Enhanced Section Header */}
-                <div className="rounded-2xl shadow-lg border border-gray-200 p-6 mb-8 backdrop-blur-sm bg-white/95">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-gradient-to-br from-sky-500 to-sky-600 rounded-2xl shadow-lg">
-                      <ShoppingBagIcon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 tracking-tight">Available Products</h2>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {associatedPricingPlans.length} {associatedPricingPlans.length === 1 ? 'product' : 'products'} available with this feature
-                      </p>
-                    </div>
-                  </div>
+              <section className="mt-20">
+                {/* Elegant Section Header */}
+                <div className="text-center mb-16">
+                  <h2 className="text-3xl font-extralight text-gray-700 mb-4 tracking-tight">
+                    Available Products
+                  </h2>
+                  <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent mx-auto mb-6"></div>
+                  <p className="text-gray-500 font-light text-lg max-w-2xl mx-auto leading-relaxed">
+                    Discover {associatedPricingPlans.length} carefully crafted {associatedPricingPlans.length === 1 ? 'product' : 'products'} featuring this capability
+                  </p>
                 </div>
 
-                {/* Enhanced Pricing Plans Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Elegant Pricing Plans Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-5xl mx-auto">
                   {associatedPricingPlans.map((plan: PricingPlan, index: number) => (
-                    <Link key={plan.id} href={`/products/${plan.product_slug}`} className="group">
-                      <PricingPlanCard plan={plan} color={colors[index % colors.length]} />
-                    </Link>
+                    <PricingPlanCard key={plan.id} plan={plan} color={colors[index % colors.length]} />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Back to Features Link */}
-            <div className="mt-16 text-center">
+            {/* Elegant Back Navigation */}
+            <div className="mt-24 text-center">
               <Link 
                 href="/features"
-                className="inline-flex items-center space-x-2 px-6 py-3 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white/95 backdrop-blur-sm hover:bg-gray-50 hover:border-sky-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="inline-flex items-center space-x-3 px-8 py-4 border border-gray-200 text-sm font-light rounded-full text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 shadow-sm hover:shadow-md group"
               >
-                <ArrowRightIcon className="h-4 w-4 rotate-180" />
-                <span>Back to All Features</span>
+                <ArrowRightIcon className="h-4 w-4 rotate-180 group-hover:-translate-x-1 transition-transform duration-300" />
+                <span className="tracking-wide">Back to All Features</span>
               </Link>
             </div>
           </Suspense>

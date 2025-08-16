@@ -834,7 +834,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                                       {realFeature ? (
                                         <Link
                                           href={`/features/${realFeature.slug}`}
-                                          className="text-gray-600 text-sm font-light leading-relaxed hover:text-blue-600 hover:underline transition-colors"
+                                          className="text-gray-600 text-sm font-light leading-relaxed hover:text-sky-600 hover:underline transition-colors"
                                         >
                                           {feature}
                                         </Link>
