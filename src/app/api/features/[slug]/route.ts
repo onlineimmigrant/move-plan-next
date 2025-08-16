@@ -67,7 +67,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
           product:product_id (
             product_name,
             slug,
-            links_to_image
+            links_to_image,
+            is_displayed
           )
         )
       `)
@@ -87,6 +88,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
       return plans.map((plan: any) => {
         if (!plan || !plan.id) return null;
         const product = Array.isArray(plan.product) ? plan.product[0] : plan.product;
+        
+        // Filter out products where is_displayed is false
+        if (product?.is_displayed === false) {
+          return null;
+        }
+        
         return {
           id: plan.id.toString(),
           slug: plan.slug ?? plan.id.toString(),
@@ -101,6 +108,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
           promotion_price: plan.promotion_price ?? undefined,
           product: {
             links_to_image: product?.links_to_image ?? undefined,
+            is_displayed: product?.is_displayed ?? true,
           },
         };
       }).filter((plan: any) => plan !== null);

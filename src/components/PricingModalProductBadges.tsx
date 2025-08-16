@@ -71,7 +71,7 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
   };
 
   // Always reserve space for the component to prevent layout shifts
-  if (products.length <= 1) {
+  if (products.length === 0) {
     return (
       <div className="flex justify-center mb-6 h-8 sm:h-10 items-center">
         {/* Reserve space even when hidden to prevent layout shift */}
