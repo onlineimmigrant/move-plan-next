@@ -73,7 +73,7 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
   // Always reserve space for the component to prevent layout shifts
   if (products.length <= 1) {
     return (
-      <div className="flex justify-center mb-6 h-10 sm:h-12 items-center">
+      <div className="flex justify-center mb-6 h-8 sm:h-10 items-center">
         {/* Reserve space even when hidden to prevent layout shift */}
       </div>
     );
@@ -81,12 +81,12 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center mb-6 h-10 sm:h-12 items-center">
-        <div className="flex space-x-1 sm:space-x-1.5 bg-gray-50/60 backdrop-blur-sm p-1 sm:p-1.5 rounded-full border border-gray-200/40">
+      <div className="flex justify-center mb-6 h-8 sm:h-10 items-center">
+        <div className="flex space-x-1.5 sm:space-x-2">
           {Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
-              className="h-6 w-16 sm:h-8 sm:w-20 bg-gray-100 rounded-full animate-pulse"
+              className="h-6 w-16 sm:h-8 sm:w-20 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg animate-pulse shadow-sm border border-gray-200"
             />
           ))}
         </div>
@@ -96,28 +96,34 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
 
   if (error) {
     return (
-      <div className="flex justify-center mb-6 h-10 sm:h-12 items-center">
+      <div className="flex justify-center mb-6 h-8 sm:h-10 items-center">
         {/* Reserve space for error state to prevent layout shift */}
       </div>
     );
   }
 
   return (
-    <div className="flex justify-center mb-6 h-10 sm:h-12 items-center">
-      <div className="flex space-x-1 sm:space-x-1.5 bg-gray-50/60 backdrop-blur-sm p-1 sm:p-1.5 rounded-full border border-gray-200/40 transition-all duration-300 ease-out">
+    <div className="flex justify-center mb-6 h-8 sm:h-10 items-center">
+      <div className="flex space-x-1.5 sm:space-x-2">
         {products.map((product) => (
           <button
             key={product.id}
             onClick={() => handleProductClick(product)}
             className={`
-              px-2 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ease-out whitespace-nowrap transform
+              relative px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium 
+              transition-all duration-200 ease-out whitespace-nowrap transform hover:scale-105 active:scale-95
               ${selectedProductId === product.id
-                ? 'bg-white text-gray-800 shadow-sm border border-gray-200/60 scale-105'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 hover:scale-102 scale-100'
+                ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-lg hover:shadow-xl border border-gray-700'
+                : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 hover:from-gray-100 hover:to-gray-200 shadow-sm hover:shadow-md border border-gray-200 hover:border-gray-300'
+              }
+              before:absolute before:inset-0 before:rounded-lg before:opacity-0 before:transition-opacity
+              ${selectedProductId === product.id 
+                ? 'before:bg-gradient-to-r before:from-white/10 before:to-transparent hover:before:opacity-100' 
+                : 'before:bg-gradient-to-r before:from-white/50 before:to-transparent hover:before:opacity-100'
               }
             `}
           >
-            {product.product_name}
+            <span className="relative z-10">{product.product_name}</span>
           </button>
         ))}
       </div>

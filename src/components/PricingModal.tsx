@@ -15,9 +15,10 @@ import { PricingPlan } from '@/types/pricingplan';
 interface Feature {
   id: string;
   name: string;
-  content?: string;
+  content: string;
   slug: string;
-  type?: string; // Feature type for grouping (e.g., 'features', 'integrations', 'support')
+  type: 'features' | 'modules' | 'support';
+  order: number;
 }
 
 // Static translations for pricing modal
@@ -209,6 +210,11 @@ const getAllFeaturesGroupedByType = (plans: SamplePricingPlan[]): { [type: strin
     }
   });
   
+  // Sort features within each type group by their order field
+  Object.keys(featuresMap).forEach(type => {
+    featuresMap[type].sort((a, b) => (a.order || 999) - (b.order || 999));
+  });
+  
   return featuresMap;
 };
 
@@ -242,6 +248,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
   const [planFeatures, setPlanFeatures] = useState<Record<number, Feature[]>>({});
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(false);
+  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
   const currency = '£'; // Currency symbol used throughout the pricing
   const translations = usePricingTranslations();
   const pathname = usePathname();
@@ -358,7 +365,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       }
     });
     
-    return Object.entries(plansByProduct).map(([productName, { monthly, annual }], index) => {
+    const transformedPlans = Object.entries(plansByProduct).map(([productName, { monthly, annual }], index) => {
       const monthlyPrice = monthly?.price || 0;
       
       // Calculate annual price with priority:
@@ -379,21 +386,17 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         actualAnnualPrice = parseFloat((annualPrice * 12).toFixed(2)); // Calculate actual annual total
       }
       
-      // Get features for this plan - prioritize monthly plan features, then annual
       // Get features for this plan
       const planId = monthly?.id || annual?.id;
       const realFeatures = planId ? (planFeatures[planId] || []) : [];
-      const displayFeatures = (realFeatures && realFeatures.length > 0) 
-        ? realFeatures.map(feature => feature.name)
-        : []; // Empty array when no features available
 
       return {
         name: productName,
         monthlyPrice: parseFloat(monthlyPrice.toFixed(2)),
         annualPrice: parseFloat(annualPrice.toFixed(2)),
         period: '/month',
-        description: monthly?.description || annual?.description || 'No description available',
-        features: displayFeatures,
+        description: monthly?.description || annual?.description || '',
+        features: [], // Will be populated after sorting and filtering
         buttonText: monthly?.type === 'one_time' ? 'Buy Now' : 'Get Started',
         // Add recurring interval data for total calculation
         monthlyRecurringCount: monthly?.recurring_interval_count || 1,
@@ -410,17 +413,45 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         // Store the order for sorting
         order: monthly?.order_number || annual?.order_number || 999, // Default to 999 if no order specified
       };
-    }).sort((a, b) => a.order - b.order).map((plan, sortedIndex) => {
-      // After sorting, update the highlighted and buttonVariant based on sorted position
+    }).sort((a, b) => a.order - b.order);
+
+    // After sorting, filter features to exclude cheapest plan features from higher tier plans
+    const sortedPlans = transformedPlans.map((plan, sortedIndex) => {
+      const cheapestPlan = transformedPlans[0]; // First plan after sorting by price
+      const cheapestPlanFeatures = cheapestPlan.realFeatures || [];
+      
+      // For the cheapest plan, show all its features
+      // For higher tier plans, exclude features that exist in the cheapest plan
+      let filteredFeatures: Feature[] = [];
+      if (sortedIndex === 0) {
+        // Cheapest plan - show all features
+        filteredFeatures = plan.realFeatures || [];
+      } else {
+        // Higher tier plans - exclude cheapest plan features
+        filteredFeatures = (plan.realFeatures || []).filter(feature => 
+          !cheapestPlanFeatures.some(cheapFeature => cheapFeature.id === feature.id)
+        );
+      }
+
+      // Convert to display format with feature names
+      const displayFeatures = filteredFeatures.map(feature => feature.name);
+
       return {
         ...plan,
+        features: displayFeatures,
+        realFeatures: filteredFeatures, // Update real features to match filtered features
         highlighted: sortedIndex === 1, // Highlight the second plan after sorting
         buttonVariant: (sortedIndex === 1 ? 'primary' : 'secondary') as 'primary' | 'secondary',
       };
-    }); // Sort by order field
+    });
+
+    return sortedPlans;
   };
 
   const displayPlans = transformPricingPlans(pricingPlans);
+
+  // Check if any plans are one-time payments to hide annual/monthly toggle
+  const hasOneTimePlans = pricingPlans.some(plan => plan.type === 'one_time');
 
   // Get translated title and description
   const getTranslatedTitle = () => {
@@ -458,6 +489,10 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
+      // Update URL hash when modal opens
+      if (window.location.hash !== '#pricing') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search + '#pricing');
+      }
     }
 
     return () => {
@@ -472,7 +507,13 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
+        onClick={() => {
+          onClose();
+          // Remove hash when clicking backdrop
+          if (window.location.hash === '#pricing') {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+        }}
         aria-hidden="true"
       />
       
@@ -483,7 +524,13 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
           {/* Header */}
           <div className="relative bg-white px-6 py-6 sm:px-8 sm:py-8 flex-shrink-0 border-b border-gray-100">
             <button
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+                // Remove hash when clicking close button
+                if (window.location.hash === '#pricing') {
+                  window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                }
+              }}
               className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-50"
               aria-label="Close pricing modal"
             >
@@ -506,37 +553,39 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                 />
               </div>
               
-              {/* Pricing Toggle */}
-              <div className="flex justify-center">
-                <div className="relative bg-gray-50/70 p-0.5 rounded-full border border-gray-200/50 backdrop-blur-sm">
-                  <div className={` ${
-                    isAnnual ? 'transform translate-x-full' : 'transform translate-x-0'
-                  }`}></div>
-                  <button 
-                    onClick={() => setIsAnnual(false)}
-                    className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-out ${
-                      !isAnnual 
-                        ? 'text-gray-700 bg-white shadow-sm border border-gray-200/60' 
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {translations.monthly}
-                  </button>
-                  <button 
-                    onClick={() => setIsAnnual(true)}
-                    className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-out ${
-                      isAnnual 
-                        ? 'text-gray-700 bg-white shadow-sm border border-gray-200/60' 
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {translations.annual}
-                    <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
-                      %
-                    </span>
-                  </button>
+              {/* Pricing Toggle - Only show for recurring plans */}
+              {!hasOneTimePlans && (
+                <div className="flex justify-center">
+                  <div className="relative bg-gray-50/70 p-0.5 rounded-full border border-gray-200/50 backdrop-blur-sm">
+                    <div className={` ${
+                      isAnnual ? 'transform translate-x-full' : 'transform translate-x-0'
+                    }`}></div>
+                    <button 
+                      onClick={() => setIsAnnual(false)}
+                      className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-out ${
+                        !isAnnual 
+                          ? 'text-gray-700 bg-white shadow-sm border border-gray-200/60' 
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {translations.monthly}
+                    </button>
+                    <button 
+                      onClick={() => setIsAnnual(true)}
+                      className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-out ${
+                        isAnnual 
+                          ? 'text-gray-700 bg-white shadow-sm border border-gray-200/60' 
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {translations.annual}
+                      <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+                        %
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -585,13 +634,15 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                       <h3 className="text-xl font-semibold text-gray-700 mb-2">
                         {plan.name}
                       </h3>
-                      <p className="text-gray-500 mb-2 font-light text-sm leading-relaxed">
-                        {plan.description}
-                      </p>
+                      {plan.description && (
+                        <p className="text-gray-500 mb-2 font-light text-sm leading-relaxed">
+                          {plan.description}
+                        </p>
+                      )}
                       
-                      {/* Discount Badge - Above Price (with consistent height) */}
+                      {/* Discount Badge - Above Price (with consistent height) - Only for recurring plans */}
                       <div className="flex justify-center mb-4 h-7">
-                        {isAnnual && (
+                        {!hasOneTimePlans && isAnnual && (
                           <span className="bg-gradient-to-r from-sky-500 to-sky-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
                             Save {plan.annualSizeDiscount && plan.annualSizeDiscount > 0 
                               ? Math.round(plan.annualSizeDiscount)
@@ -603,26 +654,30 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                       
                       <div className="flex items-baseline justify-center mb-8">
                         <span className="text-4xl font-extralight text-gray-700">
-                          {currency}{isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2)}
+                          {currency}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
                         </span>
-                        <span className="text-sm text-gray-500 ml-1 font-light">
-                          {plan.period}
-                        </span>
+                        {!hasOneTimePlans && (
+                          <span className="text-sm text-gray-500 ml-1 font-light">
+                            {plan.period}
+                          </span>
+                        )}
                       </div>
 
-                      {/* Total Recurring Amount */}
-                      <div className="text-center mb-4">
-                        <span className="text-xs text-gray-400 font-light">
-                          {isAnnual ? (
-                            // For annual: if we have real data, use actual annual price, otherwise calculate from monthly equivalent
-                            plan.actualAnnualPrice ? 
-                              <>Total annual: {currency}{plan.actualAnnualPrice.toFixed(2)}</> :
-                              <>Total annual: {currency}{(plan.annualPrice * 12).toFixed(2)}</>
-                          ) : (
-                            <>Total monthly: {currency}{(plan.monthlyPrice * plan.monthlyRecurringCount).toFixed(2)}</>
-                          )}
-                        </span>
-                      </div>
+                      {/* Total Recurring Amount - Only for recurring plans */}
+                      {!hasOneTimePlans && (
+                        <div className="text-center mb-4">
+                          <span className="text-xs text-gray-400 font-light">
+                            {isAnnual ? (
+                              // For annual: if we have real data, use actual annual price, otherwise calculate from monthly equivalent
+                              plan.actualAnnualPrice ? 
+                                <>Total annual: {currency}{plan.actualAnnualPrice.toFixed(2)}</> :
+                                <>Total annual: {currency}{(plan.annualPrice * 12).toFixed(2)}</>
+                            ) : (
+                              <>Total monthly: {currency}{(plan.monthlyPrice * plan.monthlyRecurringCount).toFixed(2)}</>
+                            )}
+                          </span>
+                        </div>
+                      )}
 
                       <Link
                         href={plan.productSlug ? `/products/${plan.productSlug}` : '#'}
@@ -647,28 +702,69 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                             </li>
                           ))
                         ) : (
-                          plan.features.map((feature, featureIndex) => {
-                            // Check if this is a real feature with additional data
-                            const realFeature = plan.realFeatures?.find(rf => rf.name === feature);
-                            
+                          (() => {
+                            const maxFeatures = 7;
+                            const isExpanded = expandedFeatures[plan.name] || false;
+                            const featuresToShow = isExpanded ? plan.features : plan.features.slice(0, maxFeatures);
+                            const hasMoreFeatures = plan.features.length > maxFeatures;
+
                             return (
-                              <li key={featureIndex} className="flex items-start">
-                                <CheckIcon className="h-4 w-4 text-gray-400 shrink-0 mt-0.5 mr-3" />
-                                {realFeature ? (
-                                  <Link
-                                    href={`/features/${realFeature.slug}`}
-                                    className="text-gray-600 text-sm font-light leading-relaxed hover:text-blue-600 hover:underline transition-colors"
-                                  >
-                                    {feature}
-                                  </Link>
-                                ) : (
-                                  <span className="text-gray-600 text-sm font-light leading-relaxed">
-                                    {feature}
-                                  </span>
+                              <>
+                                {featuresToShow.map((feature, featureIndex) => {
+                                  // Check if this is a real feature with additional data
+                                  const realFeature = plan.realFeatures?.find(rf => rf.name === feature);
+                                  
+                                  return (
+                                    <li key={featureIndex} className="flex items-start">
+                                      <CheckIcon className="h-4 w-4 text-gray-400 shrink-0 mt-0.5 mr-3" />
+                                      {realFeature ? (
+                                        <Link
+                                          href={`/features/${realFeature.slug}`}
+                                          className="text-gray-600 text-sm font-light leading-relaxed hover:text-blue-600 hover:underline transition-colors"
+                                        >
+                                          {feature}
+                                        </Link>
+                                      ) : (
+                                        <span className="text-gray-600 text-sm font-light leading-relaxed">
+                                          {feature}
+                                        </span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                                
+                                {/* View more/less button */}
+                                {hasMoreFeatures && (
+                                  <li className="flex items-start">
+                                    <div className="h-4 w-4 shrink-0 mt-0.5 mr-3"></div>
+                                    <button
+                                      onClick={() => setExpandedFeatures(prev => ({
+                                        ...prev,
+                                        [plan.name]: !isExpanded
+                                      }))}
+                                      className="text-gray-500 text-sm font-medium hover:text-gray-700 hover:underline transition-colors flex items-center gap-1"
+                                    >
+                                      {isExpanded ? (
+                                        <>
+                                          View less
+                                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                          </svg>
+                                        </>
+                                      ) : (
+                                        <>
+                                          View {plan.features.length - maxFeatures} more
+                                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                          </svg>
+                                        </>
+                                      )}
+                                    </button>
+                                  </li>
                                 )}
-                              </li>
+                              </>
                             );
-                          })
+                          })()
                         )}
                       </ul>
                     </div>
@@ -703,8 +799,10 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                               {plan.name}
                             </div>
                             <div className="text-lg font-extralight text-gray-600">
-                              {currency}{isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                              <span className="text-xs text-gray-500">/mo</span>
+                              {currency}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
+                              {!hasOneTimePlans && (
+                                <span className="text-xs text-gray-500">/mo</span>
+                              )}
                             </div>
                           </th>
                         ))}

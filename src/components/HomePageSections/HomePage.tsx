@@ -154,15 +154,32 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
+      console.log('Hash changed to:', hash); // Debug log
       setIsPricingModalOpen(hash === '#pricing');
     };
 
-    // Check initial hash on mount with a small delay to ensure DOM is ready
+    // Handle custom modal open events
+    const handleOpenPricingModal = () => {
+      console.log('Custom pricing modal open event triggered');
+      setIsPricingModalOpen(true);
+      if (window.location.hash !== '#pricing') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search + '#pricing');
+      }
+    };
+
+    // Check initial hash on mount - multiple checks to ensure it works
     const checkInitialHash = () => {
-      setTimeout(handleHashChange, 0);
+      handleHashChange();
     };
     
+    // Immediate check
     checkInitialHash();
+    
+    // Check again after a short delay to handle any timing issues
+    setTimeout(checkInitialHash, 100);
+    
+    // Check again after DOM is fully ready
+    setTimeout(checkInitialHash, 500);
 
     // Listen for hash changes
     window.addEventListener('hashchange', handleHashChange);
@@ -170,32 +187,55 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
     // Also listen for popstate to catch browser back/forward navigation
     window.addEventListener('popstate', handleHashChange);
 
-    // Handle programmatic navigation (for links that don't trigger hashchange)
+    // Handle programmatic navigation and ensure hash changes are detected
+    const handleLocationChange = () => {
+      setTimeout(handleHashChange, 0);
+    };
+    
+    // Listen for any URL changes
+    window.addEventListener('load', handleHashChange);
+    
+    // Listen for custom pricing modal events
+    window.addEventListener('openPricingModal', handleOpenPricingModal);
+    
+    // Handle clicks on pricing links throughout the app
     const handleClick = (e: Event) => {
       const target = e.target as HTMLElement;
-      const link = target.closest('a[href="#pricing"]');
+      const link = target.closest('a[href="#pricing"], a[href*="#pricing"]');
       if (link) {
-        e.preventDefault();
-        window.location.hash = '#pricing';
-        handleHashChange();
+        console.log('Pricing link clicked, current hash:', window.location.hash); // Debug log
+        e.preventDefault(); // Prevent default navigation
+        
+        // Always open the modal, regardless of current hash
+        setIsPricingModalOpen(true);
+        
+        // Update hash if not already set
+        if (window.location.hash !== '#pricing') {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search + '#pricing');
+        }
       }
     };
 
-    document.addEventListener('click', handleClick);
+    document.addEventListener('click', handleClick, true); // Use capture phase
 
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
       window.removeEventListener('popstate', handleHashChange);
-      document.removeEventListener('click', handleClick);
+      window.removeEventListener('load', handleHashChange);
+      window.removeEventListener('openPricingModal', handleOpenPricingModal);
+      document.removeEventListener('click', handleClick, true);
     };
   }, []);
 
   // Handle modal close
   const handleClosePricingModal = () => {
+    console.log('Closing pricing modal'); // Debug log
     setIsPricingModalOpen(false);
     // Remove hash from URL
     if (window.location.hash === '#pricing') {
-      history.pushState(null, '', window.location.pathname + window.location.search);
+      // Use replaceState to avoid adding to browser history
+      const url = window.location.pathname + window.location.search;
+      window.history.replaceState(null, '', url);
     }
   };
 
