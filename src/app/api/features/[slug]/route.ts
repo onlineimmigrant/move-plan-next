@@ -61,9 +61,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
           measure,
           price,
           currency,
+          currency_symbol,
+          is_promotion,
+          promotion_price,
           product:product_id (
             product_name,
-            slug
+            slug,
+            links_to_image
           )
         )
       `)
@@ -92,6 +96,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
           measure: plan.measure ?? undefined,
           price: plan.price,
           currency: plan.currency,
+          currency_symbol: plan.currency_symbol ?? undefined,
+          is_promotion: plan.is_promotion ?? false,
+          promotion_price: plan.promotion_price ?? undefined,
+          product: {
+            links_to_image: product?.links_to_image ?? undefined,
+          },
         };
       }).filter((plan: any) => plan !== null);
     });

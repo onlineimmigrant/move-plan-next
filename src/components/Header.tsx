@@ -242,20 +242,7 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => {
-                          console.log('Pricing button clicked');
-                          // Trigger pricing modal by setting hash
-                          window.location.hash = '#pricing';
-                          // Also dispatch a hashchange event to ensure detection
-                          window.dispatchEvent(new Event('hashchange'));
-                          // Fallback: dispatch custom event
-                          window.dispatchEvent(new Event('openPricingModal'));
-                        }}
-                        className="text-gray-700 hover:text-gray-900 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 rounded-md px-2 py-1"
-                      >
-                        Pricing
-                      </button>
+    
                       {/* Bottom accent */}
                       <div className="absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-black/6 to-transparent"></div>
                     </div>

@@ -41,31 +41,35 @@ const FeatureCard = memo(({ feature, t }: { feature: Feature; t: any }) => {
 
   return (
     <Link href={`/features/${feature.slug}`} className="group h-full">
-      <div className="h-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-sky-200 overflow-hidden flex flex-col transition-all duration-300 transform hover:-translate-y-1">
-        <div className="relative">
-          <IconComponent className="h-6 w-6 text-sky-500 absolute top-4 right-4 group-hover:text-sky-600 transition-colors duration-200" />
-          <div className="p-6 flex flex-col flex-grow">
-            <h2 className="text-lg line-clamp-2 font-semibold text-gray-900 mb-3 group-hover:text-sky-600 transition-colors duration-200 leading-tight">
-              {feature.name}
-            </h2>
-            <div className="text-sm text-gray-600 font-light line-clamp-3 flex-grow leading-relaxed">
-              {truncatedContent}
-            </div>
-          </div>
+      <div className="h-full bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-gray-300 overflow-hidden flex flex-col transition-all duration-500 transform hover:-translate-y-1">
+        {/* Icon Header */}
+        <div className="w-full h-20 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative group-hover:from-gray-100 group-hover:to-gray-200 transition-all duration-300">
+          <IconComponent className="h-8 w-8 text-gray-600 group-hover:text-gray-800 group-hover:scale-110 transition-all duration-300" />
         </div>
-        <div className="px-6 py-4 bg-gradient-to-r from-gray-50/80 to-transparent flex-shrink-0 flex justify-between items-center border-t border-gray-100/50">
-          {feature.type ? (
-            <>
-              <span className="text-gray-500 text-xs font-medium uppercase tracking-wide group-hover:opacity-60 transition-opacity duration-200">
-                {feature.type}
-              </span>
-              <ArrowRightIcon className="h-4 w-4 text-sky-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
-            </>
-          ) : (
-            <div className="flex-1 flex justify-end">
-              <ArrowRightIcon className="h-4 w-4 text-sky-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
-            </div>
+        
+        {/* Content */}
+        <div className="p-6 flex flex-col flex-grow">
+          <h2 className="text-lg font-extralight text-gray-700 mb-3 group-hover:text-gray-900 transition-colors duration-200 leading-tight tracking-tight line-clamp-2">
+            {feature.name}
+          </h2>
+          <div className="text-sm text-gray-500 font-light line-clamp-3 flex-grow leading-relaxed mb-4">
+            {truncatedContent}
+          </div>
+          
+          {/* Type Badge */}
+          {feature.type && (
+            <span className="inline-block px-3 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded-full uppercase tracking-wide border border-gray-100 self-start">
+              {feature.type}
+            </span>
           )}
+        </div>
+        
+        {/* Bottom Section */}
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+          <div className="inline-flex items-center text-gray-500 text-xs font-medium uppercase tracking-wide group-hover:text-gray-700 transition-colors duration-200">
+            <span className="mr-2">Learn More</span>
+            <ArrowRightIcon className="h-3 w-3 group-hover:translate-x-1 transition-transform duration-200" />
+          </div>
         </div>
       </div>
     </Link>
@@ -76,19 +80,18 @@ FeatureCard.displayName = 'FeatureCard';
 
 // Loading Skeleton Component
 const FeatureCardSkeleton = memo(() => (
-  <div className="h-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+  <div className="h-full bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden animate-pulse">
+    <div className="w-full h-20 bg-gray-100"></div>
     <div className="p-6">
-      <div className="flex justify-between items-start mb-3">
-        <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-        <div className="h-6 w-6 bg-gray-200 rounded"></div>
-      </div>
-      <div className="space-y-2">
+      <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div>
+      <div className="space-y-2 mb-4">
         <div className="h-3 bg-gray-200 rounded w-full"></div>
         <div className="h-3 bg-gray-200 rounded w-2/3"></div>
       </div>
+      <div className="h-6 bg-gray-200 rounded-full w-20"></div>
     </div>
-    <div className="px-6 py-4 border-t border-gray-100/50">
-      <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+    <div className="px-6 py-4 border-t border-gray-100">
+      <div className="h-3 bg-gray-200 rounded w-24 ml-auto"></div>
     </div>
   </div>
 ));
@@ -220,24 +223,20 @@ export default function FeaturesPage() {
   // Early return for loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-20">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12">
           {/* Header Skeleton */}
-          <div className="rounded-3xl shadow-lg border border-gray-200 p-6 mb-8 backdrop-blur-sm bg-white/95">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-64"></div>
-              </div>
-              <div className="mt-4 sm:mt-0 animate-pulse">
-                <div className="h-12 bg-gray-200 rounded-lg w-80"></div>
-              </div>
+          <div className="text-center mb-16">
+            <div className="animate-pulse">
+              <div className="h-10 bg-gray-200 rounded w-48 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
+              <div className="h-12 bg-gray-200 rounded-full w-80 mx-auto"></div>
             </div>
           </div>
           
           {/* Features Grid Skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, index) => (
               <FeatureCardSkeleton key={index} />
             ))}
           </div>
@@ -249,17 +248,15 @@ export default function FeaturesPage() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <div className="rounded-3xl shadow-lg border border-red-200 p-8 backdrop-blur-sm bg-white/95">
-            <div className="p-6 bg-gradient-to-br from-red-100 to-red-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center">
-              <BeakerIcon className="w-12 h-12 text-red-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">{t.t.unableToLoadFeatures}</h2>
-            <p className="text-gray-600 mb-8">{error}</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-20">
+        <div className="max-w-4xl mx-auto px-6 sm:px-8 py-12 text-center">
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-12">
+            <BeakerIcon className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+            <h2 className="text-2xl font-extralight text-gray-700 mb-4 tracking-tight">{t.t.unableToLoadFeatures}</h2>
+            <p className="text-gray-500 font-light mb-8 leading-relaxed">{error}</p>
             <button
               onClick={fetchFeatures}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors duration-200"
+              className="inline-flex items-center px-8 py-3 bg-gray-800 text-white rounded-full font-medium text-sm hover:bg-gray-900 transition-all duration-300 shadow-sm hover:shadow-md"
             >
               {t.t.tryAgain}
             </button>
@@ -270,55 +267,44 @@ export default function FeaturesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Enhanced Header Section */}
-        <div className="rounded-3xl shadow-lg border border-gray-200 p-6 mb-8 backdrop-blur-sm bg-white/95">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-            <div className="flex items-center space-x-4 mb-6 sm:mb-0">
-              <div className="p-3 bg-gradient-to-br from-sky-500 to-sky-600 rounded-2xl shadow-lg">
-                <BeakerIcon className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t.t.featuresHeading}</h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  {filteredFeatures.length === 0 
-                    ? t.t.noFeaturesAvailable
-                    : `${t.t.showingFeatures} ${displayedFeatures.length} ${t.t.of} ${filteredFeatures.length} ${t.t.features.toLowerCase()}`
-                  }
-                </p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-20">
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12">
+        {/* Elegant Header Section */}
+        <div className="text-center mb-16">
+          <h1 className="text-3xl font-extralight text-gray-700 mb-4 tracking-tight">{t.t.featuresHeading}</h1>
+          <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent mx-auto mb-6"></div>
+          <p className="text-gray-500 font-light text-lg max-w-2xl mx-auto leading-relaxed mb-8">
+            {filteredFeatures.length === 0 
+              ? t.t.noFeaturesAvailable
+              : `Discover ${displayedFeatures.length} of ${filteredFeatures.length} available capabilities`
+            }
+          </p>
+          
+          {/* Elegant Search Input */}
+          <div className="relative max-w-md mx-auto">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
             </div>
-            
-            {/* Enhanced Search Input */}
-            <div className="relative w-full sm:w-80">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder={t.t.searchFeatures}
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full pl-12 pr-4 py-3 text-sm bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 transition-all duration-300 placeholder:text-gray-400"
-                aria-label={t.t.searchFeatures}
-              />
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-sky-500/5 to-cyan-500/5 pointer-events-none" />
-            </div>
+            <input
+              type="text"
+              placeholder={t.t.searchFeatures}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full pl-12 pr-4 py-3 text-sm bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-300 placeholder:text-gray-400"
+              aria-label={t.t.searchFeatures}
+            />
           </div>
         </div>
 
         {/* Features Content */}
         {filteredFeatures.length === 0 ? (
-          /* Enhanced Empty State */
-          <div className="rounded-3xl shadow-lg border border-gray-200 p-12 text-center backdrop-blur-sm bg-white/95">
-            <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
-              <BeakerIcon className="w-12 h-12 text-gray-500" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
-              {searchQuery ? `${t.t.noFeaturesFound} "${searchQuery}"` : t.t.noFeaturesAvailable}
+          /* Elegant Empty State */
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-12 text-center">
+            <BeakerIcon className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+            <h3 className="text-xl font-extralight text-gray-700 mb-3 tracking-tight">
+              {searchQuery ? `No features found for "${searchQuery}"` : t.t.noFeaturesAvailable}
             </h3>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
+            <p className="text-gray-500 font-light mb-8 max-w-md mx-auto leading-relaxed">
               {searchQuery 
                 ? t.t.tryAdjustingSearchFeatures
                 : t.t.featuresWillAppear
@@ -327,16 +313,16 @@ export default function FeaturesPage() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors duration-200"
+                className="inline-flex items-center px-8 py-3 border border-gray-200 text-sm font-light rounded-full text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 transition-all duration-300 shadow-sm hover:shadow-md"
               >
                 {t.t.clearSearch}
               </button>
             )}
           </div>
         ) : (
-          /* Enhanced Features Grid */
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          /* Elegant Features Grid */
+          <div className="space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
               {displayedFeatures.map((feature) => (
                 <FeatureCard key={feature.id} feature={feature} t={t} />
               ))}
@@ -345,15 +331,15 @@ export default function FeaturesPage() {
             {/* Load More Section */}
             {hasMoreFeatures && (
               <div className="text-center">
-                <div className="rounded-2xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm bg-white/95">
+                <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8">
                   <div className="flex flex-col items-center space-y-4">
-                    <p className="text-sm text-gray-600">
-                      {t.t.showingFeatures} {displayedFeatures.length} {t.t.of} {filteredFeatures.length} {t.t.features.toLowerCase()}
+                    <p className="text-sm text-gray-500 font-light">
+                      Showing {displayedFeatures.length} of {filteredFeatures.length} features
                     </p>
                     <button
                       onClick={handleLoadMore}
                       disabled={isLoadingMore}
-                      className="inline-flex items-center px-8 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      className="inline-flex items-center px-8 py-3 bg-gray-800 text-white rounded-full font-medium text-sm hover:bg-gray-900 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
                     >
                       {isLoadingMore ? (
                         <>
@@ -375,10 +361,10 @@ export default function FeaturesPage() {
             {/* Show all loaded message when all features are displayed */}
             {!hasMoreFeatures && filteredFeatures.length > ITEMS_PER_PAGE && (
               <div className="text-center">
-                <div className="rounded-2xl shadow-lg border border-gray-200 p-4 backdrop-blur-sm bg-white/95">
-                  <p className="text-sm text-gray-600 flex items-center justify-center">
-                    <BeakerIcon className="w-4 h-4 mr-2 text-sky-500" />
-                    {t.t.allFeaturesLoaded} ({filteredFeatures.length})
+                <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6">
+                  <p className="text-sm text-gray-500 font-light flex items-center justify-center">
+                    <BeakerIcon className="w-4 h-4 mr-2 text-gray-400" />
+                    All features loaded ({filteredFeatures.length})
                   </p>
                 </div>
               </div>
