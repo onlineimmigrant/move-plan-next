@@ -44,11 +44,13 @@ export async function GET(request: Request) {
           content,
           slug,
           type,
+          order,
           organization_id
         )
       `)
       .eq('pricingplan_id', planId)
-      .eq('feature.organization_id', organizationId);
+      .eq('feature.organization_id', organizationId)
+      .order('feature(order)', { ascending: true }); // Sort by feature order
 
     if (error) {
       console.error('Error fetching pricing plan features:', error);
@@ -70,9 +72,11 @@ export async function GET(request: Request) {
           content: feature.content || '',
           slug: feature.slug,
           type: feature.type || 'features', // Default to 'features' if no type
+          order: feature.order || 999, // Default to 999 if no order specified
         };
       })
-      .filter((feature: any) => feature !== null);
+      .filter((feature: any) => feature !== null)
+      .sort((a: any, b: any) => a.order - b.order); // Additional client-side sort for safety
 
     console.log(`Successfully fetched ${transformedFeatures.length} features for plan ${planId}`);
     return NextResponse.json(transformedFeatures);
