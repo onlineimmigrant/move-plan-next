@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Head from 'next/head';
 import { useRouter, usePathname } from 'next/navigation';
 import { useBasket } from '@/context/BasketContext';
 import { useAuth } from '@/context/AuthContext';
@@ -147,6 +148,9 @@ const Header: React.FC<HeaderProps> = ({
                           width={24}
                           height={24}
                           className="h-6 w-6 text-gray-600 transition-all duration-300 group-hover:scale-105"
+                          loading="lazy"
+                          placeholder="blur"
+                          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
                           onError={() =>
                             console.error(
                               `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
@@ -204,13 +208,17 @@ const Header: React.FC<HeaderProps> = ({
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
                                 
                                 {/* Image section - 1/3 width, full height */}
-                                <div className="relative w-1/3 flex-shrink-0">
+                                <div className="relative w-1/3 flex-shrink-0 min-h-[120px]">
                                   {subItem.image ? (
                                     <Image
                                       src={subItem.image}
                                       alt={translatedSubItemName}
                                       fill
+                                      sizes="(max-width: 768px) 100px, (max-width: 1200px) 120px, 140px"
                                       className="object-cover rounded-l-2xl"
+                                      loading="lazy"
+                                      placeholder="blur"
+                                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
                                       onError={() =>
                                         console.error(
                                           `Failed to load image for submenu item ${translatedSubItemName}: ${subItem.image}`
@@ -218,7 +226,7 @@ const Header: React.FC<HeaderProps> = ({
                                       }
                                     />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-l-2xl">
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-l-2xl min-h-[120px]">
                                       <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                       </svg>
@@ -380,7 +388,11 @@ const Header: React.FC<HeaderProps> = ({
                                       src={subItem.image}
                                       alt={translatedSubItemName}
                                       fill
+                                      sizes="(max-width: 768px) 80px, 100px"
                                       className="object-cover rounded-l-xl"
+                                      loading="lazy"
+                                      placeholder="blur"
+                                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA4MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
                                       onError={() =>
                                         console.error(
                                           `Failed to load image for submenu item ${translatedSubItemName}: ${subItem.image}`
@@ -388,7 +400,7 @@ const Header: React.FC<HeaderProps> = ({
                                       }
                                     />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-l-xl">
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-l-xl min-h-[60px]">
                                       <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                       </svg>
@@ -438,24 +450,56 @@ const Header: React.FC<HeaderProps> = ({
   );
 
   if (!isMounted) {
-    return null;
+    // Return a skeleton header to prevent layout shift during hydration
+    return (
+      <nav
+        className="fixed left-0 right-0 z-40 bg-white/80 backdrop-blur-2xl"
+        style={{ 
+          top: `${fixedBannersHeight}px`,
+          backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+        }}
+      >
+        <div className={`mx-auto max-w-7xl p-4 pl-8 sm:px-6 flex justify-between items-center min-h-[64px]`}>
+          <div className="flex items-center">
+            <div className="h-8 w-32 bg-gray-200 animate-pulse rounded"></div>
+          </div>
+          <div className="hidden md:flex items-center space-x-6">
+            <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
+          </div>
+          <div className="md:hidden">
+            <div className="h-6 w-6 bg-gray-200 animate-pulse rounded"></div>
+          </div>
+        </div>
+      </nav>
+    );
   }
 
   return (
-    <nav
-      className={`fixed left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
-          : 'bg-white/80 backdrop-blur-2xl'
-      }`}
-      style={{ 
-        top: `${fixedBannersHeight}px`,
-        backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-        WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-      }}
-    >
+    <>
+      {/* Preload critical resources for LCP optimization */}
+      {isMounted && settings?.image && (
+        <Head>
+          <link rel="preload" href={settings.image} as="image" type="image/svg+xml" />
+        </Head>
+      )}
+      
+      <nav
+        className={`fixed left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isScrolled 
+            ? 'bg-white/95 backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
+            : 'bg-white/80 backdrop-blur-2xl'
+        }`}
+        style={{ 
+          top: `${fixedBannersHeight}px`,
+          backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+        }}
+      >
       <div
-        className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 pl-8 sm:px-6 flex justify-between items-center`}
+        className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 pl-8 sm:px-6 flex justify-between items-center min-h-[64px]`}
       >
         <button
           type="button"
@@ -469,12 +513,15 @@ const Header: React.FC<HeaderProps> = ({
           disabled={!router}
         >
           {settings?.image ? (
-            <img
+            <Image
               src={settings.image}
               alt="Logo"
               width={40}
               height={40}
               className="h-8 w-auto"
+              priority={true}
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
               onError={(e) => {
                 console.error('Failed to load logo:', settings.image);
                 e.currentTarget.src = companyLogo;
@@ -782,6 +829,7 @@ const Header: React.FC<HeaderProps> = ({
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </nav>
+    </>
   );
 };
 
