@@ -256,7 +256,7 @@ const Header: React.FC<HeaderProps> = ({
                               onClick={() => setIsContactOpen(true)}
                               className="px-4 py-2.5 bg-gray-700 hover:bg-gray-800 text-white text-[13px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] shadow-sm hover:shadow-md antialiased"
                             >
-                              Get Help
+                              Contact Us
                             </button>
                           </div>
                         </div>
@@ -336,30 +336,6 @@ const Header: React.FC<HeaderProps> = ({
                           aria-label={t.toggleMenu(translatedDisplayName)}
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                              {settings?.menu_items_are_text ? (
-                                <span className="text-[14px] font-medium text-gray-700 antialiased">
-                                  {translatedDisplayName.charAt(0).toUpperCase()}
-                                </span>
-                              ) : item.image ? (
-                                <Image
-                                  src={item.image}
-                                  alt={translatedDisplayName}
-                                  width={20}
-                                  height={20}
-                                  className="h-5 w-5 transition-all duration-300 group-hover:scale-105"
-                                  onError={() =>
-                                    console.error(
-                                      `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
-                                    )
-                                  }
-                                />
-                              ) : (
-                                <div className="transition-all duration-300 group-hover:scale-105">
-                                  {renderIcon(getIconName(item.react_icons))}
-                                </div>
-                              )}
-                            </div>
                             <div className="text-left">
                               <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{translatedDisplayName}</span>
                               <p className="text-[12px] text-gray-600 antialiased opacity-80">
@@ -444,36 +420,14 @@ const Header: React.FC<HeaderProps> = ({
                     className="group cursor-pointer flex items-center space-x-3 w-full p-4 bg-white/50 hover:bg-gray-50/70 backdrop-blur-sm rounded-2xl border border-gray-200/40 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
                     aria-label={t.goTo(translatedDisplayName)}
                   >
-                    <div className="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                      {settings?.menu_items_are_text ? (
-                        <span className="text-[14px] font-medium text-gray-700 antialiased">
-                          {translatedDisplayName.charAt(0).toUpperCase()}
-                        </span>
-                      ) : item.image ? (
-                        <Image
-                          src={item.image}
-                          alt={translatedDisplayName}
-                          width={20}
-                          height={20}
-                          className="h-5 w-5 transition-all duration-300 group-hover:scale-105"
-                          onError={() =>
-                            console.error(
-                              `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
-                            )
-                          }
-                        />
-                      ) : (
-                        <div className="transition-all duration-300 group-hover:scale-105">
-                          {renderIcon(getIconName(item.react_icons))}
-                        </div>
-                      )}
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-1 text-left">
+                        <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{translatedDisplayName}</span>
+                      </div>
+                      <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
-                    <div className="flex-1 text-left">
-                      <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{translatedDisplayName}</span>
-                    </div>
-                    <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
                   </LocalizedLink>
                 )}
               </div>
@@ -727,9 +681,6 @@ const Header: React.FC<HeaderProps> = ({
                       aria-label="Toggle profile menu"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                          <UserIcon className="h-5 w-5 text-gray-600" />
-                        </div>
                         <div className="text-left">
                           <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">Profile</span>
                           <p className="text-[12px] text-gray-600 antialiased opacity-80">Account & settings</p>
@@ -813,9 +764,6 @@ const Header: React.FC<HeaderProps> = ({
                   aria-label={t.openLoginModal}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                      <ArrowLeftOnRectangleIcon className="h-5 w-5 text-gray-600" />
-                    </div>
                     <div className="text-left">
                       <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{t.login}</span>
                       <p className="text-[12px] text-gray-600 antialiased opacity-80">Sign in to your account</p>

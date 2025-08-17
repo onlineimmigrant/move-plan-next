@@ -196,23 +196,28 @@ export default function HelpCenterContainer() {
   };
 
   return (
-    <div className="w-full h-screen bg-gray-50 flex flex-col">
-      {/* Custom Header */}
-      <header className="z-11 px-4 sm:px-8 flex justify-between items-center bg-white border-b border-gray-200 h-16">
+    <div className="w-full h-screen bg-gradient-to-b from-gray-50/50 to-white flex flex-col">
+      {/* Apple-style Header */}
+      <header className="z-11 px-4 sm:px-8 flex justify-between items-center bg-white/95 backdrop-blur-3xl border-b border-gray-200/30 h-20 shadow-[0_1px_20px_rgba(0,0,0,0.08)]"
+        style={{
+          backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+        }}
+      >
         {/* Logo */}
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200 mr-6"
+          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] mr-8 hover:scale-105 antialiased"
           aria-label="Go to homepage"
         >
           {/* Mobile - Use favicon with proper URL logic */}
           <img
             src={getFaviconUrl(settings?.favicon || undefined)}
             alt="Logo"
-            width={24}
-            height={24}
-            className="h-6 w-6 sm:hidden"
+            width={28}
+            height={28}
+            className="h-7 w-7 sm:hidden rounded-lg "
             onError={(e) => {
               console.error('Failed to load favicon:', settings?.favicon);
               e.currentTarget.style.display = 'none';
@@ -224,16 +229,16 @@ export default function HelpCenterContainer() {
             <img
               src={settings.image}
               alt="Logo"
-              width={30}
-              height={30}
-              className="hidden sm:block h-8 w-auto"
+              width={36}
+              height={36}
+              className="hidden sm:block h-9 w-auto rounded-lg "
               onError={(e) => {
                 console.error('Failed to load logo:', settings.image);
                 e.currentTarget.style.display = 'none';
               }}
             />
           ) : (
-            <span className="text-gray-500 hidden sm:block">Logo</span>
+            <span className="text-gray-500 hidden sm:block font-light text-lg antialiased">Logo</span>
           )}
           
           <span className="sr-only tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
@@ -242,9 +247,9 @@ export default function HelpCenterContainer() {
         </button>
         
         {/* Header Title */}
-        <div className='flex items-center space-x-3'>
-          <h1 className="text-base sm:text-2xl font-bold text-gray-900">{getHeaderTitle()}</h1>
-          <span className="hidden sm:flex ml-3 px-2 py-1 text-xs bg-sky-100 text-sky-700 rounded-full">
+        <div className='flex items-center space-x-4'>
+          <h1 className="text-lg sm:text-xl font-medium text-gray-900 tracking-[-0.02em] antialiased">{getHeaderTitle()}</h1>
+          <span className="hidden sm:flex ml-4 px-4 py-2 text-[12px] font-medium bg-sky-50/80 text-sky-600 rounded-full border border-sky-200/50 backdrop-blur-sm antialiased">
             {t.supportKnowledgeBase}
           </span>
         </div>
@@ -255,13 +260,32 @@ export default function HelpCenterContainer() {
         </div>
       </header>
       
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden bg-white">
-        {renderCurrentView()}
+      {/* Apple-style Main Content */}
+      <div className="flex-1 overflow-hidden relative">
+        {/* Glass background container */}
+        <div className="absolute inset-0 bg-white/60 backdrop-blur-3xl"
+          style={{
+            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          }}
+        />
+        
+        {/* Content */}
+        <div className="relative h-full">
+          {renderCurrentView()}
+        </div>
       </div>
       
-      {/* Bottom Navigation Tabs */}
-      <div className="bg-white border-t border-gray-200">
+      {/* Apple-style Bottom Navigation Tabs */}
+      <div className="bg-white/90 backdrop-blur-2xl border-t border-gray-200/40 shadow-[0_-1px_10px_rgba(0,0,0,0.04)]"
+        style={{
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+        }}
+      >
+        {/* Subtle top highlight */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        
         <ChatHelpTabs
           activeTab={activeTab}
           onTabChange={handleTabChange}
