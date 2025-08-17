@@ -305,7 +305,7 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
         </ErrorBoundary>
       )}
 
-      {/* FAQ Section - Least critical, lazy load */}
+      {/* FAQ Section - Least critical, lazy load 
       {(data.faqs?.length ?? 0) > 0 && (
         <ErrorBoundary 
           fallback={
@@ -322,7 +322,7 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
             </div>
           </section>
         </ErrorBoundary>
-      )}
+      )}*/}
 
       {/* Pricing Modal */}
       <PricingModal 

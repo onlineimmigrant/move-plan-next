@@ -137,112 +137,113 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/30">
-      {/* Header */}
-      <header className="z-11 px-6 sm:px-10 flex justify-between items-center bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 h-20 shadow-sm">
-       
-        
-           
-              {/* Logo */}
-              <button
-                type="button"
-                onClick={() => router.push('/')}
-                className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-300 ease-out mr-8 hover:scale-105"
-                aria-label="Go to homepage"
-              >
-                {/* Mobile - Use favicon with proper URL logic */}
-                <img
-                  src={getFaviconUrl(settings?.favicon || undefined)}
-                  alt="Logo"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7 sm:hidden rounded-lg"
-                  onError={(e) => {
-                    console.error('Failed to load favicon:', settings?.favicon);
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-                
-                {/* Desktop - Use main logo */}
-                {settings?.image ? (
-                  <img
-                    src={settings.image}
-                    alt="Logo"
-                    width={36}
-                    height={36}
-                    className="hidden sm:block h-9 w-auto rounded-lg"
-                    onError={(e) => {
-                      console.error('Failed to load logo:', settings.image);
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <span className="text-gray-500 hidden sm:block font-light text-lg">Logo</span>
-                )}
-                
-                <span className="sr-only tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
-                  {settings?.site || 'Coded Harmony'}
-                </span>
-              </button>
-              
-              <div className='flex items-center space-x-4'>
-              <h1 className="text-lg sm:text-3xl font-light text-gray-900 tracking-tight">{getHeaderTitle()}</h1>
-              <span className="hidden sm:flex ml-4 px-4 py-2 text-xs font-medium bg-sky-50 text-sky-600 rounded-full border border-sky-100">
-                {t.supportKnowledgeBase}
-              </span>
-              </div>
-            
-            
-            
-
-              
-              {/* Language Switcher - Absolute Right */}
-              <div className="relative z-50">
-                <ModernLanguageSwitcher zIndex={9999} />
-              </div>
-            
+    <div className="min-h-screen bg-gradient-to-b from-gray-50/50 to-white">
+      {/* Apple-style Header */}
+      <header className="z-11 px-6 sm:px-10 flex justify-between items-center bg-white/95 backdrop-blur-3xl border-b border-gray-200/30 sticky top-0 h-20 shadow-[0_1px_20px_rgba(0,0,0,0.08)]"
+        style={{
+          backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+        }}
+      >
+        {/* Logo */}
+        <button
+          type="button"
+          onClick={() => router.push('/')}
+          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] mr-8 hover:scale-105 antialiased"
+          aria-label="Go to homepage"
+        >
+          {/* Mobile - Use favicon with proper URL logic */}
+          <img
+            src={getFaviconUrl(settings?.favicon || undefined)}
+            alt="Logo"
+            width={28}
+            height={28}
+            className="h-7 w-7 sm:hidden rounded-lg shadow-sm"
+            onError={(e) => {
+              console.error('Failed to load favicon:', settings?.favicon);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
           
-       
+          {/* Desktop - Use main logo */}
+          {settings?.image ? (
+            <img
+              src={settings.image}
+              alt="Logo"
+              width={36}
+              height={36}
+              className="hidden sm:block h-9 w-auto rounded-lg shadow-sm"
+              onError={(e) => {
+                console.error('Failed to load logo:', settings.image);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <span className="text-gray-500 hidden sm:block font-light text-lg antialiased">Logo</span>
+          )}
+          
+          <span className="sr-only tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
+            {settings?.site || 'Coded Harmony'}
+          </span>
+        </button>
+        
+        <div className='flex items-center space-x-4'>
+          <h1 className="text-lg sm:text-3xl font-semibold text-gray-900 tracking-[-0.02em] antialiased">{getHeaderTitle()}</h1>
+          <span className="hidden sm:flex ml-4 px-4 py-2 text-[12px] font-medium bg-sky-50/80 text-sky-600 rounded-full border border-sky-200/50 backdrop-blur-sm antialiased">
+            {t.supportKnowledgeBase}
+          </span>
+        </div>
+        
+        {/* Language Switcher - Absolute Right */}
+        <div className="relative z-50">
+          <ModernLanguageSwitcher zIndex={9999} />
+        </div>
       </header>
 
-      {/* Mobile Navigation */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
+      {/* Apple-style Mobile Navigation */}
+      <div className="bg-white/90 backdrop-blur-2xl border-b border-gray-200/40 sticky top-20 z-10 shadow-[0_1px_10px_rgba(0,0,0,0.04)]"
+        style={{
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+        }}
+      >
         <div className="px-4 sm:px-6">
-          <div className="flex items-center justify-between py-3">
-            <div className="flex space-x-1 overflow-x-auto flex-1">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex space-x-2 overflow-x-auto flex-1 scrollbar-hide">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
-                    className={`flex items-center px-3 py-2 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
+                    className={`flex items-center px-4 py-2.5 text-[13px] font-medium rounded-xl whitespace-nowrap transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased tracking-[-0.01em] ${
                       isActive
-                        ? 'bg-sky-100 text-sky-700'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                        ? 'bg-sky-100/80 text-sky-700 shadow-sm backdrop-blur-sm scale-105'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/60 hover:scale-102'
                     }`}
                   >
-                    <tab.icon className={`mr-1 h-3 w-3 ${isActive ? 'text-sky-600' : 'text-gray-400'}`} />
+                    <tab.icon className={`mr-2 h-4 w-4 ${isActive ? 'text-sky-600' : 'text-gray-400'} transition-colors duration-300`} />
                     {tab.label}
                   </button>
                 );
               })}
             </div>
-  
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="px-4 sm:px-6 lg:px-8 py-8 pt-8">
-        {/* Breadcrumb */}
-        <div className="mb-6">
-          <nav className="flex items-center space-x-2 text-sm text-gray-500">
-            <span>{t.helpCenter}</span>
+      <main className="px-4 sm:px-6 lg:px-8 py-12 pt-8">
+        {/* Apple-style Breadcrumb */}
+        <div className="mb-8">
+          <nav className="flex items-center space-x-3 text-[14px] text-gray-500 antialiased">
+            <span className="hover:text-gray-700 transition-colors duration-200 cursor-pointer">{t.helpCenter}</span>
             {activeTab !== 'welcome' && (
               <>
-                <span>/</span>
-                <span className="text-gray-900 font-medium">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-gray-900 font-medium tracking-[-0.01em]">
                   {tabs.find(tab => tab.id === activeTab)?.label}
                 </span>
               </>
@@ -250,16 +251,50 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
           </nav>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[700px] flex flex-col relative">
-          {renderActiveTab()}
+        {/* Apple-style Content Container */}
+        <div className="relative">
+          {/* Glass background container */}
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-3xl border border-gray-200/40 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)]"
+            style={{
+              backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+            }}
+          />
+          
+          {/* Subtle top highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent rounded-t-3xl" />
+          
+          {/* Inner glow for depth */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none" />
+          
+          {/* Content */}
+          <div className="relative h-[700px] flex flex-col overflow-hidden rounded-3xl">
+            {renderActiveTab()}
+          </div>
+          
+          {/* Bottom accent */}
+          <div className="absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-gray-200/60 to-transparent rounded-b-3xl" />
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-sm text-gray-500">
-            <p>{t.needMoreHelp}</p>
+      {/* Apple-style Footer */}
+      <footer className="bg-white/60 backdrop-blur-2xl border-t border-gray-200/40 mt-16"
+        style={{
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <h3 className="text-[18px] font-semibold text-gray-900 mb-3 tracking-[-0.01em] antialiased">
+              {t.needMoreHelp}
+            </h3>
+            <p className="text-[14px] text-gray-600 antialiased max-w-md mx-auto leading-relaxed">
+              Our support team is here to help you get the most out of our platform
+            </p>
+            <button className="mt-6 px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white text-[14px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 shadow-sm hover:shadow-md antialiased tracking-[-0.01em]">
+              Contact Support
+            </button>
           </div>
         </div>
       </footer>
