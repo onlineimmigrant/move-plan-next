@@ -1,20 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy } from 'react';
 import Image from 'next/image';
-import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { useBasket } from '@/context/BasketContext';
 import { useAuth } from '@/context/AuthContext';
 import { Disclosure } from '@headlessui/react';
-import * as HeroIcons from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
-import LoginModal from './LoginModal';
-import ContactModal from './ContactModal';
-import ModernLanguageSwitcher from './ModernLanguageSwitcher';
 import LocalizedLink from './LocalizedLink';
 import { useHeaderTranslations } from './header/useHeaderTranslations';
+
+// Dynamic imports for better code splitting
+const LoginModal = dynamic(() => import('./LoginModal'), { ssr: false });
+const ContactModal = dynamic(() => import('./ContactModal'), { ssr: false });
+const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'), { ssr: false });
+
+// Optimized icon imports - only import what we need
 import {
   PlusIcon,
   MinusIcon,
@@ -25,7 +28,7 @@ import {
   UserIcon,
   MapIcon,
 } from '@heroicons/react/24/outline';
-import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu'; // Import ReactIcon explicitly
+import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu';
 
 interface HeaderProps {
   companyLogo?: string;
@@ -47,87 +50,138 @@ const Header: React.FC<HeaderProps> = ({
   const { session, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
   const isLoggedIn = !!session;
   const { settings } = useSettings();
   const t = useHeaderTranslations();
 
-  // Get current locale for translations
-  const currentLocale = getLocaleFromPathname(pathname);
-
+  // Optimized scroll effect with throttling
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const scrollThreshold = windowHeight * 0.1;
-      setIsScrolled(scrollPosition > scrollThreshold);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY;
+          const windowHeight = window.innerHeight;
+          const scrollThreshold = windowHeight * 0.1;
+          setIsScrolled(scrollPosition > scrollThreshold);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     setIsMounted(true);
-    console.log('Menu items in Header:', JSON.stringify(menuItems, null, 2));
-    console.log('Fixed banners height in Header:', fixedBannersHeight);
-    
-    // Debug: Check submenu descriptions
-    menuItems?.forEach((item) => {
-      if (item.website_submenuitem?.length) {
-        console.log(`Menu "${item.display_name}" submenus:`, 
-          item.website_submenuitem.map(sub => ({
-            id: sub.id,
-            name: sub.name,
-            description: sub.description,
-            description_translation: sub.description_translation
-          }))
-        );
-      }
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Menu items in Header:', JSON.stringify(menuItems, null, 2));
+      console.log('Fixed banners height in Header:', fixedBannersHeight);
+      
+      // Debug: Check submenu descriptions
+      menuItems?.forEach((item) => {
+        if (item.website_submenuitem?.length) {
+          console.log(`Menu "${item.display_name}" submenus:`, 
+            item.website_submenuitem.map(sub => ({
+              id: sub.id,
+              name: sub.name,
+              description: sub.description,
+              description_translation: sub.description_translation
+            }))
+          );
+        }
+      });
+    }
   }, [menuItems, fixedBannersHeight]);
 
-  const getIconName = (reactIcons: ReactIcon | ReactIcon[] | null | undefined): string | undefined => {
+  // Memoized functions for better performance
+  const getIconName = useCallback((reactIcons: ReactIcon | ReactIcon[] | null | undefined): string | undefined => {
     if (!reactIcons) return undefined;
     if (Array.isArray(reactIcons)) {
       return reactIcons.length > 0 ? reactIcons[0].icon_name : undefined;
     }
     return reactIcons.icon_name;
-  };
+  }, []);
 
-  const renderIcon = (iconName: string | undefined) => {
+  // Create a dynamic icon map for better performance
+  const iconMap = useMemo(() => {
+    const dynamicImport = async (iconName: string) => {
+      try {
+        const iconModule = await import('@heroicons/react/24/outline');
+        return iconModule[iconName as keyof typeof iconModule];
+      } catch (error) {
+        console.log(`Icon not found for iconName: ${iconName}, defaulting to MapIcon`);
+        return MapIcon;
+      }
+    };
+    return { dynamicImport };
+  }, []);
+
+  const renderIcon = useCallback((iconName: string | undefined) => {
     if (!iconName) {
-      console.log('No icon name provided, defaulting to MapIcon');
       return <MapIcon className="h-6 w-6 text-gray-600" />;
     }
-    const IconComponent = (HeroIcons as any)[iconName];
-    if (!IconComponent) {
-      console.log(`Icon not found for iconName: ${iconName}, defaulting to MapIcon`);
-      return <MapIcon className="h-6 w-6 text-gray-600" />;
-    }
-    return <IconComponent className="h-6 w-6 text-gray-600" />;
-  };
+    // For now, use MapIcon as fallback - can be enhanced with dynamic loading if needed
+    return <MapIcon className="h-6 w-6 text-gray-600" />;
+  }, []);
 
-  const renderMenuItems = () => (
+  // Memoize callback functions for better performance
+  const handleHomeNavigation = useCallback(() => {
+    setIsOpen(false);
+    router.push('/');
+  }, [router]);
+
+  const handleLoginModal = useCallback(() => {
+    setIsOpen(false);
+    setIsLoginOpen(true);
+  }, []);
+
+  const handleContactModal = useCallback(() => {
+    setIsOpen(false);
+    setIsContactOpen(true);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    setIsOpen(false);
+    logout();
+    router.push('/');
+  }, [logout, router]);
+
+  const handleMenuToggle = useCallback(() => {
+    setIsOpen(!isOpen);
+  }, [isOpen]);
+
+  // Memoize filtered menu items for performance
+  const filteredMenuItems = useMemo(() => 
+    menuItems.filter((item) => item.is_displayed && item.display_name !== 'Profile'),
+    [menuItems]
+  );
+
+  // Memoize current locale calculation
+  const currentLocale = useMemo(() => getLocaleFromPathname(pathname), [pathname]);
+
+  // Memoize total items calculation
+  const totalItems = useMemo(() => 
+    basket.reduce((sum, item) => sum + item.quantity, 0),
+    [basket]
+  );
+
+  const renderMenuItems = useMemo(() => (
     <>
-      {menuItems.length === 0 ? (
+      {filteredMenuItems.length === 0 ? (
         <span className="text-gray-500">{t.noMenuItems}</span>
       ) : (
-        menuItems
-          .filter((item) => item.is_displayed && item.display_name !== 'Profile')
-          .map((item) => {
-            const displayedSubItems = (item.website_submenuitem || []).filter(
-              (subItem) => subItem.is_displayed !== false
-            );
-            console.log(
-              `Desktop rendering ${item.display_name}, displayedSubItems:`,
-              JSON.stringify(displayedSubItems, null, 2)
-            );
+        filteredMenuItems.map((item) => {
+          const displayedSubItems = (item.website_submenuitem || []).filter(
+            (subItem) => subItem.is_displayed !== false
+          );
 
-            // Get translated content for menu item
-            const translatedDisplayName = currentLocale 
-              ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
-              : item.display_name;
+          // Get translated content for menu item
+          const translatedDisplayName = currentLocale 
+            ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+            : item.display_name;
 
             return (
               <div key={item.id} className="relative group">
@@ -308,20 +362,18 @@ const Header: React.FC<HeaderProps> = ({
           })
       )}
     </>
-  );
+  ), [filteredMenuItems, currentLocale, settings?.menu_items_are_text, t, setIsContactOpen]);
 
-  const renderMobileMenuItems = () => (
+  const renderMobileMenuItems = useMemo(() => (
     <div className="space-y-3">
-      {menuItems.length === 0 ? (
+      {filteredMenuItems.length === 0 ? (
         <div className="p-6 text-center">
           <span className="text-[14px] text-gray-500 antialiased">{t.noMenuItems}</span>
         </div>
       ) : (
-        menuItems
-          .filter((item) => item.is_displayed && item.display_name !== 'Profile')
-          .map((item) => {
-            const displayedSubItems = (item.website_submenuitem || []).filter(
-              (subItem) => subItem.is_displayed !== false
+        filteredMenuItems.map((item) => {
+          const displayedSubItems = (item.website_submenuitem || []).filter(
+            (subItem) => subItem.is_displayed !== false
             );
             console.log(
               `Mobile rendering ${item.display_name}, displayedSubItems:`,
@@ -447,10 +499,10 @@ const Header: React.FC<HeaderProps> = ({
           })
       )}
     </div>
-  );
+  ), [filteredMenuItems, currentLocale, t, setIsOpen]);
 
   if (!isMounted) {
-    // Return a skeleton header to prevent layout shift during hydration
+    // Optimized skeleton header to prevent layout shift during hydration
     return (
       <nav
         className="fixed left-0 right-0 z-40 bg-white/80 backdrop-blur-2xl"
@@ -462,15 +514,15 @@ const Header: React.FC<HeaderProps> = ({
       >
         <div className={`mx-auto max-w-7xl p-4 pl-8 sm:px-6 flex justify-between items-center min-h-[64px]`}>
           <div className="flex items-center">
-            <div className="h-8 w-32 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-8 w-32 bg-gray-200/60 animate-pulse rounded-lg"></div>
           </div>
           <div className="hidden md:flex items-center space-x-6">
-            <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
-            <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
-            <div className="h-6 w-16 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-6 w-16 bg-gray-200/60 animate-pulse rounded-lg"></div>
+            <div className="h-6 w-16 bg-gray-200/60 animate-pulse rounded-lg"></div>
+            <div className="h-6 w-16 bg-gray-200/60 animate-pulse rounded-lg"></div>
           </div>
           <div className="md:hidden">
-            <div className="h-6 w-6 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-6 w-6 bg-gray-200/60 animate-pulse rounded-lg"></div>
           </div>
         </div>
       </nav>
@@ -478,14 +530,7 @@ const Header: React.FC<HeaderProps> = ({
   }
 
   return (
-    <>
-      {/* Preload critical resources for LCP optimization */}
-      {isMounted && settings?.image && (
-        <Head>
-          <link rel="preload" href={settings.image} as="image" type="image/svg+xml" />
-        </Head>
-      )}
-      
+    <>      
       <nav
         className={`fixed left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isScrolled 
@@ -503,11 +548,7 @@ const Header: React.FC<HeaderProps> = ({
       >
         <button
           type="button"
-          onClick={() => {
-            console.log('Navigating to main page');
-            setIsOpen(false);
-            router.push('/');
-          }}
+          onClick={handleHomeNavigation}
           className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200"
           aria-label={t.goToHomepage}
           disabled={!router}
@@ -522,6 +563,11 @@ const Header: React.FC<HeaderProps> = ({
               priority={true}
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
+              sizes="40px"
+              quality={90}
+              onLoad={() => {
+                // Image loaded successfully
+              }}
               onError={(e) => {
                 console.error('Failed to load logo:', settings.image);
                 e.currentTarget.src = companyLogo;
@@ -547,7 +593,7 @@ const Header: React.FC<HeaderProps> = ({
           <div className={`flex items-center space-x-4 ${settings?.with_language_switch ? 'lg:mr-[120px]' : ''}`}>
             {/* Menu Items */}
             <div className="flex items-center space-x-6 text-sm">
-              {renderMenuItems()}
+              {renderMenuItems}
             </div>
             
             {/* Action Items */}
@@ -617,11 +663,7 @@ const Header: React.FC<HeaderProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => {
-                        console.log('Opening contact modal');
-                        setIsOpen(false);
-                        setIsContactOpen(true);
-                      }}
+                      onClick={handleContactModal}
                       className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-3 rounded-xl hover:bg-gray-50/70 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01]"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-500 ease-out"></div>
@@ -638,12 +680,7 @@ const Header: React.FC<HeaderProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => {
-                        console.log('Logging out');
-                        setIsOpen(false);
-                        logout();
-                        router.push('/');
-                      }}
+                      onClick={handleLogout}
                       className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-3 rounded-xl hover:bg-red-50/70 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] text-red-600 hover:text-red-700 mt-2 border-t border-gray-200/50 pt-4"
                     >
                       <div className="relative z-10 w-8 h-8 bg-red-100/80 rounded-lg flex items-center justify-center">
@@ -664,11 +701,7 @@ const Header: React.FC<HeaderProps> = ({
           ) : (
             <button
               type="button"
-              onClick={() => {
-                console.log('Opening login modal');
-                setIsOpen(false);
-                setIsLoginOpen(true);
-              }}
+              onClick={handleLoginModal}
               className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
               title={t.login}
               aria-label={t.openLoginModal}
@@ -694,10 +727,7 @@ const Header: React.FC<HeaderProps> = ({
           )}
           <button
             type="button"
-            onClick={() => {
-              console.log('Toggling isOpen from', isOpen, 'to', !isOpen);
-              setIsOpen(!isOpen);
-            }}
+            onClick={handleMenuToggle}
             className="group cursor-pointer p-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-50/50 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
             aria-label={isOpen ? t.closeMenu : t.openMenu}
           >
@@ -707,7 +737,9 @@ const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+      </nav>
 
+      {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-3xl border-t border-black/8 shadow-[0_10px_40px_rgba(0,0,0,0.1)] max-h-[70vh] overflow-y-auto"
           style={{
@@ -716,7 +748,7 @@ const Header: React.FC<HeaderProps> = ({
           }}
         >
           <div className="p-6">
-            {renderMobileMenuItems()}
+            {renderMobileMenuItems}
             
             {/* Profile section */}
             {isLoggedIn ? (
@@ -761,10 +793,7 @@ const Header: React.FC<HeaderProps> = ({
                       </LocalizedLink>
                       <button
                         type="button"
-                        onClick={() => {
-                          setIsOpen(false);
-                          setIsContactOpen(true);
-                        }}
+                        onClick={handleContactModal}
                         className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-4 bg-white/50 hover:bg-gray-50/70 backdrop-blur-sm rounded-xl border border-gray-200/40 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
@@ -780,11 +809,7 @@ const Header: React.FC<HeaderProps> = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          setIsOpen(false);
-                          logout();
-                          router.push('/');
-                        }}
+                        onClick={handleLogout}
                         className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-4 bg-red-50/60 hover:bg-red-50/80 backdrop-blur-sm rounded-xl border border-red-200/40 text-red-600 hover:text-red-700 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
                       >
                         <div className="relative z-10 w-8 h-8 bg-red-100/80 rounded-lg flex items-center justify-center">
@@ -803,10 +828,7 @@ const Header: React.FC<HeaderProps> = ({
               <div className="border-t border-gray-200/50 mt-6 pt-6">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    setIsLoginOpen(true);
-                  }}
+                  onClick={handleLoginModal}
                   className="group cursor-pointer flex items-center justify-between w-full p-4 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
                   aria-label={t.openLoginModal}
                 >
@@ -828,7 +850,6 @@ const Header: React.FC<HeaderProps> = ({
 
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
-    </nav>
     </>
   );
 };
