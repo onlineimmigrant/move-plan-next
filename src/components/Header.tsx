@@ -174,9 +174,9 @@ const Header: React.FC<HeaderProps> = ({
         <span className="text-gray-500">{t.noMenuItems}</span>
       ) : (
         filteredMenuItems.map((item) => {
-          const displayedSubItems = (item.website_submenuitem || []).filter(
-            (subItem) => subItem.is_displayed !== false
-          );
+          const displayedSubItems = (item.website_submenuitem || [])
+            .filter((subItem) => subItem.is_displayed !== false)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
 
           // Get translated content for menu item
           const translatedDisplayName = currentLocale 
@@ -372,9 +372,10 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       ) : (
         filteredMenuItems.map((item) => {
-          const displayedSubItems = (item.website_submenuitem || []).filter(
-            (subItem) => subItem.is_displayed !== false
-            );
+          const displayedSubItems = (item.website_submenuitem || [])
+            .filter((subItem) => subItem.is_displayed !== false)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+            
             console.log(
               `Mobile rendering ${item.display_name}, displayedSubItems:`,
               JSON.stringify(displayedSubItems, null, 2)
