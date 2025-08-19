@@ -367,7 +367,7 @@ const Header: React.FC<HeaderProps> = ({
   const renderMobileMenuItems = useMemo(() => (
     <div className="space-y-3">
       {filteredMenuItems.length === 0 ? (
-        <div className="p-6 text-center">
+        <div className="p-6 text-center h-[50vh] flex items-center justify-center">
           <span className="text-[14px] text-gray-500 antialiased">{t.noMenuItems}</span>
         </div>
       ) : (
@@ -412,7 +412,9 @@ const Header: React.FC<HeaderProps> = ({
                             )}
                           </div>
                         </Disclosure.Button>
-                        <Disclosure.Panel className="p-4 pt-0 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                        <Disclosure.Panel className="p-4 pt-0 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-300 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide">
+                          {/* Gradient fade at top for visual hierarchy */}
+                          <div className="sticky top-0 h-4 bg-gradient-to-b from-white/90 to-transparent pointer-events-none z-10 -mt-2"></div>
                           {displayedSubItems.map((subItem) => {
                             // Get translated content for submenu item
                             const translatedSubItemName = currentLocale 
@@ -474,6 +476,8 @@ const Header: React.FC<HeaderProps> = ({
                               </LocalizedLink>
                             );
                           })}
+                          {/* Gradient fade at bottom for visual hierarchy */}
+                          <div className="sticky bottom-0 h-4 bg-gradient-to-t from-white/90 to-transparent pointer-events-none z-10 -mb-2"></div>
                         </Disclosure.Panel>
                       </div>
                     )}
@@ -742,13 +746,14 @@ const Header: React.FC<HeaderProps> = ({
 
       {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-3xl border-t border-black/8 shadow-[0_10px_40px_rgba(0,0,0,0.1)] max-h-[70vh] overflow-y-auto"
+        <div className="md:hidden fixed inset-0 bg-white/95 backdrop-blur-3xl border-t border-black/8 shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-y-auto z-30"
           style={{
+            top: `${fixedBannersHeight + 64}px`, // Position below the header
             backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
             WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
           }}
         >
-          <div className="p-6">
+          <div className="p-6 pb-8">
             {renderMobileMenuItems}
             
             {/* Profile section */}
@@ -774,7 +779,7 @@ const Header: React.FC<HeaderProps> = ({
                         )}
                       </div>
                     </Disclosure.Button>
-                    <Disclosure.Panel className="mt-3 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                    <Disclosure.Panel className="mt-3 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-300 max-h-[calc(100vh-400px)] overflow-y-auto scrollbar-hide">
                       <LocalizedLink
                         href="/account"
                         onClick={() => setIsOpen(false)}
@@ -845,6 +850,19 @@ const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
             )}
+            
+            {/* Close button at bottom for better UX */}
+            <div className="mt-8 pt-6 border-t border-gray-200/50">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="w-full group cursor-pointer flex items-center justify-center p-4 bg-gray-100/60 hover:bg-gray-200/60 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                aria-label="Close menu"
+              >
+                <XMarkIcon className="h-5 w-5 text-gray-600 mr-2" />
+                <span className="text-[14px] font-medium text-gray-700 antialiased tracking-[-0.01em]">Close Menu</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
