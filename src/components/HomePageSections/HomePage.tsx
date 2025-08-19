@@ -155,14 +155,25 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
     const handleHashChange = () => {
       const hash = window.location.hash;
       console.log('Hash changed to:', hash); // Debug log
-      setIsPricingModalOpen(hash === '#pricing');
+      
+      // Check if hash starts with '#pricing' (supports both #pricing and #pricing#product_name)
+      const hashParts = hash.split('#').filter(Boolean);
+      const isPricingHash = hashParts.length > 0 && hashParts[0] === 'pricing';
+      
+      setIsPricingModalOpen(isPricingHash);
     };
 
     // Handle custom modal open events
     const handleOpenPricingModal = () => {
       console.log('Custom pricing modal open event triggered');
       setIsPricingModalOpen(true);
-      if (window.location.hash !== '#pricing') {
+      
+      // Only set basic pricing hash if no pricing hash exists
+      const hash = window.location.hash;
+      const hashParts = hash.split('#').filter(Boolean);
+      const hasPricingHash = hashParts.length > 0 && hashParts[0] === 'pricing';
+      
+      if (!hasPricingHash) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search + '#pricing');
       }
     };
@@ -209,8 +220,12 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
         // Always open the modal, regardless of current hash
         setIsPricingModalOpen(true);
         
-        // Update hash if not already set
-        if (window.location.hash !== '#pricing') {
+        // Only set basic pricing hash if no pricing hash exists
+        const hash = window.location.hash;
+        const hashParts = hash.split('#').filter(Boolean);
+        const hasPricingHash = hashParts.length > 0 && hashParts[0] === 'pricing';
+        
+        if (!hasPricingHash) {
           window.history.replaceState(null, '', window.location.pathname + window.location.search + '#pricing');
         }
       }
@@ -231,8 +246,12 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
   const handleClosePricingModal = () => {
     console.log('Closing pricing modal'); // Debug log
     setIsPricingModalOpen(false);
-    // Remove hash from URL
-    if (window.location.hash === '#pricing') {
+    
+    // Remove hash from URL if it starts with 'pricing'
+    const hash = window.location.hash;
+    const hashParts = hash.split('#').filter(Boolean);
+    
+    if (hashParts.length > 0 && hashParts[0] === 'pricing') {
       // Use replaceState to avoid adding to browser history
       const url = window.location.pathname + window.location.search;
       window.history.replaceState(null, '', url);
