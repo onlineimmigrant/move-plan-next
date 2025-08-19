@@ -1,3 +1,33 @@
+/*
+ * Advanced Product Pricing Linking System
+ * 
+ * This PricingModal component now supports advanced URL-based product linking:
+ * 
+ * URL Formats:
+ * - /#pricing                    -> Opens modal with first available product
+ * - /#pricing#product_name       -> Opens modal with specific product (by name)
+ * - /#pricing#product_id         -> Opens modal with specific product (by ID)
+ * - /#pricing#product_slug       -> Opens modal with specific product (by slug)
+ * 
+ * Examples:
+ * - /#pricing#basic_plan         -> Selects product with name "Basic Plan"
+ * - /#pricing#123                -> Selects product with ID 123
+ * - /#pricing#premium_package    -> Selects product with name "Premium Package"
+ * 
+ * Product Name Conversion:
+ * Product names are converted to URL-safe identifiers by:
+ * 1. Converting to lowercase
+ * 2. Replacing non-alphanumeric characters with underscores
+ * 3. Removing duplicate underscores
+ * 4. Trimming underscores from start/end
+ * 
+ * Fallback Logic:
+ * 1. Try to match by converted product name
+ * 2. Try to match by product ID
+ * 3. Try to match by product slug
+ * 4. Fall back to first product if no matches found
+ */
+
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -10,6 +40,21 @@ import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTra
 import PricingModalProductBadges from '@/components/PricingModalProductBadges';
 import { PricingComparisonProduct } from '@/types/product';
 import { PricingPlan } from '@/types/pricingplan';
+
+// Utility function to generate product-specific pricing URLs (can be used externally)
+export function generateProductPricingUrl(product: PricingComparisonProduct, baseUrl?: string): string {
+  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '');
+  const productIdentifier = product.product_name ? 
+    product.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
+    product.id.toString();
+  return `${base}#pricing#${productIdentifier}`;
+}
+
+// Utility function to generate basic pricing URL
+export function generateBasicPricingUrl(baseUrl?: string): string {
+  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '');
+  return `${base}#pricing`;
+}
 
 // Feature interface for pricing modal
 interface Feature {
@@ -303,6 +348,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   const [planFeatures, setPlanFeatures] = useState<Record<number, Feature[]>>({});
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(false);
   const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
+  const [initialProductIdentifier, setInitialProductIdentifier] = useState<string | null>(null);
   const currency = '£'; // Currency symbol used throughout the pricing
   const translations = usePricingTranslations();
   const pathname = usePathname();
@@ -311,11 +357,69 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   // Get current locale for content translations
   const currentLocale = getLocaleFromPathname(pathname);
 
-  // Handle product selection
+  // Parse URL fragment to extract product identifier
+  const parseProductFromHash = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    
+    const hash = window.location.hash;
+    // Support formats: #pricing#product_name, #pricing#product_id, or just #pricing
+    const hashParts = hash.split('#').filter(Boolean);
+    
+    if (hashParts.length >= 2 && hashParts[0] === 'pricing') {
+      return hashParts[1]; // Return the product identifier
+    }
+    
+    return null;
+  }, []);
+
+  // Update URL hash when product changes
+  const updateUrlHash = useCallback((product?: PricingComparisonProduct | null) => {
+    if (typeof window === 'undefined') return;
+    
+    const baseHash = '#pricing';
+    let newHash = baseHash;
+    
+    if (product) {
+      // Use product name as identifier, fallback to ID
+      const productIdentifier = product.product_name ? 
+        product.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
+        product.id.toString();
+      newHash = `${baseHash}#${productIdentifier}`;
+    }
+    
+    if (window.location.hash !== newHash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search + newHash);
+    }
+  }, []);
+
+  // Generate pricing link for a specific product (utility function for external use)
+  const generateProductPricingLink = useCallback((product: PricingComparisonProduct, baseUrl?: string) => {
+    const base = baseUrl || window.location.origin + window.location.pathname;
+    const productIdentifier = product.product_name ? 
+      product.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
+      product.id.toString();
+    return `${base}#pricing#${productIdentifier}`;
+  }, []);
+
+  // Helper function to remove pricing hash from URL
+  const removePricingHash = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
+    const hash = window.location.hash;
+    const hashParts = hash.split('#').filter(Boolean);
+    
+    // Remove hash if it starts with 'pricing'
+    if (hashParts.length > 0 && hashParts[0] === 'pricing') {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
+
+  // Handle product selection with URL update
   const handleProductSelect = useCallback((product: PricingComparisonProduct) => {
     setSelectedProduct(product);
+    updateUrlHash(product);
     console.log('Selected product in pricing modal:', product);
-  }, []);
+  }, [updateUrlHash]);
 
   // Fetch pricing plans when selected product changes
   useEffect(() => {
@@ -567,16 +671,34 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      // Update URL hash when modal opens
-      if (window.location.hash !== '#pricing') {
-        window.history.replaceState(null, '', window.location.pathname + window.location.search + '#pricing');
+      
+      // Capture the initial product identifier from URL hash when modal opens
+      const productIdentifier = parseProductFromHash();
+      setInitialProductIdentifier(productIdentifier);
+      
+      if (productIdentifier) {
+        console.log('PricingModal: Detected product identifier in URL:', productIdentifier);
+      } else {
+        console.log('PricingModal: No product identifier in URL, will use default');
       }
+      
+      // Update URL hash when modal opens (if no specific product is targeted)
+      const currentHash = window.location.hash;
+      const hashParts = currentHash.split('#').filter(Boolean);
+      
+      if (hashParts.length === 0 || (hashParts.length === 1 && hashParts[0] !== 'pricing')) {
+        // No hash or incorrect hash, set to #pricing
+        window.history.replaceState(null, '', window.location.pathname + window.location.search + '#pricing');
+      } else if (hashParts.length === 1 && hashParts[0] === 'pricing') {
+        // Just #pricing, leave as is for now (will be updated when product is selected)
+      }
+      // If hashParts.length >= 2, we already have a product identifier, keep it as is
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, parseProductFromHash]);
 
   if (!isOpen) return null;
 
@@ -588,9 +710,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         onClick={() => {
           onClose();
           // Remove hash when clicking backdrop
-          if (window.location.hash === '#pricing') {
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          }
+          removePricingHash();
         }}
         aria-hidden="true"
       />
@@ -605,9 +725,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
               onClick={() => {
                 onClose();
                 // Remove hash when clicking close button
-                if (window.location.hash === '#pricing') {
-                  window.history.replaceState(null, '', window.location.pathname + window.location.search);
-                }
+                removePricingHash();
               }}
               className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-50"
               aria-label="Close pricing modal"
@@ -628,6 +746,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                 <PricingModalProductBadges
                   onProductSelect={handleProductSelect}
                   selectedProductId={selectedProduct?.id}
+                  initialProductIdentifier={initialProductIdentifier}
                 />
               </div>
               

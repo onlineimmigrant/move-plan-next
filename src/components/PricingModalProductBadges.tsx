@@ -7,11 +7,13 @@ import { useSettings } from '@/context/SettingsContext';
 interface PricingModalProductBadgesProps {
   onProductSelect?: (product: PricingComparisonProduct) => void;
   selectedProductId?: number;
+  initialProductIdentifier?: string | null;
 }
 
 const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
   onProductSelect,
-  selectedProductId
+  selectedProductId,
+  initialProductIdentifier
 }) => {
   const [products, setProducts] = useState<PricingComparisonProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,11 +66,57 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
           setProducts(data);
           console.log('Pricing comparison products fetched successfully:', data);
           
-          // Auto-select the first product if none is selected and callback is provided
+          // Advanced product selection logic
           if (data.length > 0 && !selectedProductId && onProductSelect) {
+            let productToSelect = data[0]; // Default to first product
+            
+            // If we have an initial product identifier, try to find a matching product
+            if (initialProductIdentifier) {
+              console.log('PricingModalProductBadges: Looking for product with identifier:', initialProductIdentifier);
+              console.log('PricingModalProductBadges: Available products:', data.map((p: PricingComparisonProduct) => ({
+                id: p.id,
+                name: p.product_name,
+                slug: p.slug,
+                computed_identifier: p.product_name ? 
+                  p.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
+                  'no_name'
+              })));
+              
+              // Try to find product by converted name first
+              const foundByName = data.find((product: PricingComparisonProduct) => {
+                if (!product.product_name) return false;
+                const productIdentifier = product.product_name
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, '_')
+                  .replace(/_+/g, '_')
+                  .replace(/^_|_$/g, '');
+                return productIdentifier === initialProductIdentifier;
+              });
+              
+              // Try to find product by ID if name search fails
+              const foundById = !foundByName ? data.find((product: PricingComparisonProduct) => 
+                product.id.toString() === initialProductIdentifier
+              ) : null;
+              
+              // Try to find by slug if both above fail
+              const foundBySlug = !foundByName && !foundById ? data.find((product: PricingComparisonProduct) => 
+                product.slug === initialProductIdentifier
+              ) : null;
+              
+              const foundProduct = foundByName || foundById || foundBySlug;
+              
+              if (foundProduct) {
+                productToSelect = foundProduct;
+                const matchType = foundByName ? 'name' : foundById ? 'id' : 'slug';
+                console.log(`PricingModalProductBadges: Found matching product by ${matchType}:`, foundProduct);
+              } else {
+                console.log('PricingModalProductBadges: No matching product found for identifier:', initialProductIdentifier, 'Using first product as fallback');
+              }
+            }
+            
             // Use setTimeout to prevent immediate re-render during initial load
             setTimeout(() => {
-              onProductSelect(data[0]);
+              onProductSelect(productToSelect);
             }, 0);
           }
         } else {
@@ -85,7 +133,7 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
     };
 
     fetchPricingComparisonProducts();
-  }, [settings?.organization_id]); // Removed selectedProductId and onProductSelect from dependencies to prevent re-fetching
+  }, [settings?.organization_id, initialProductIdentifier]); // Include initialProductIdentifier to handle product selection when URL changes
 
   const handleProductClick = (product: PricingComparisonProduct) => {
     if (onProductSelect) {
