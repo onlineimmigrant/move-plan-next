@@ -98,6 +98,41 @@ const validateAndNormalizeUrl = (url: string): string => {
 
 const getCurrentISOString = (): string => new Date().toISOString();
 
+// Helper function to safely format dates to ISO string
+const formatDateToISO = (dateString: string | null | undefined): string => {
+  if (!dateString) {
+    return getCurrentISOString();
+  }
+  
+  try {
+    const date = new Date(dateString);
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.warn(`Sitemap - Invalid date format: ${dateString}, using current time`);
+      return getCurrentISOString();
+    }
+    return date.toISOString();
+  } catch (error) {
+    console.warn(`Sitemap - Error parsing date: ${dateString}, using current time`);
+    return getCurrentISOString();
+  }
+};
+
+// Helper function to validate lastmod format for XML sitemap
+const validateLastmod = (lastmod: string): string => {
+  // Ensure the date is in valid ISO format and remove any milliseconds for cleaner XML
+  try {
+    const date = new Date(lastmod);
+    if (isNaN(date.getTime())) {
+      return getCurrentISOString().split('.')[0] + 'Z';
+    }
+    // Remove milliseconds for cleaner sitemap
+    return date.toISOString().split('.')[0] + 'Z';
+  } catch (error) {
+    return getCurrentISOString().split('.')[0] + 'Z';
+  }
+};
+
 // GET handler for the sitemap
 export async function GET(request: NextRequest): Promise<Response> {
   try {
@@ -206,28 +241,28 @@ export async function GET(request: NextRequest): Promise<Response> {
     // Process additional static pages
     const additionalStaticPages: SitemapPage[] = (staticPagesData || []).map((page: StaticPageData) => ({
       url: `${actualBaseUrl}${page.url_path}`,
-      lastmod: page.last_modified ? new Date(page.last_modified).toISOString() : currentTime,
+      lastmod: formatDateToISO(page.last_modified),
       priority: page.priority || 1.0,
     }));
 
     // Process blog posts
     const dynamicPages: SitemapPage[] = (posts || []).map((post: BlogPostData) => ({
       url: `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
-      lastmod: post.last_modified || currentTime,
+      lastmod: formatDateToISO(post.last_modified),
       priority: 0.8,
     }));
 
     // Process features
     const dynamicFeaturePages: SitemapPage[] = (features || []).map((feature: FeatureData) => ({
       url: `${baseUrl}/features/${feature.slug}`,
-      lastmod: feature.created_at || currentTime,
+      lastmod: formatDateToISO(feature.created_at),
       priority: 0.8,
     }));
 
     // Process products
     const dynamicProductsPages: SitemapPage[] = (products || []).map((product: ProductData) => ({
       url: `${baseUrl}/products/${product.slug}`,
-      lastmod: product.updated_at || currentTime,
+      lastmod: formatDateToISO(product.updated_at),
       priority: 0.8,
     }));
 
@@ -273,7 +308,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     const fallbackBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const fallbackPages: SitemapPage[] = [{
       url: `${fallbackBaseUrl}/`,
-      lastmod: getCurrentISOString(),
+      lastmod: formatDateToISO(null), // Use the helper function for consistency
       priority: 1.0,
     }];
 
@@ -360,7 +395,7 @@ function generateSitemap(pages: SitemapPage[]): string {
   // Ensure at least the homepage is included
   const finalPages = pages.length > 0 ? pages : [{
     url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-    lastmod: getCurrentISOString(),
+    lastmod: formatDateToISO(null),
     priority: 1.0,
   }];
 
@@ -378,7 +413,7 @@ function generateSitemap(pages: SitemapPage[]): string {
 ${validPages
   .map(page => `  <url>
     <loc>${escapeXml(page.url)}</loc>
-    <lastmod>${page.lastmod}</lastmod>
+    <lastmod>${validateLastmod(page.lastmod)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>${page.priority.toFixed(1)}</priority>
   </url>`)
