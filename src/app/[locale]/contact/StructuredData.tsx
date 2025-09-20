@@ -1,4 +1,3 @@
-import Script from 'next/script';
 import { headers } from 'next/headers';
 
 export default function ContactStructuredData() {
@@ -54,30 +53,27 @@ export default function ContactStructuredData() {
 
   return (
     <>
-      <Script
+      <script
         id="contact-webpage-structured-data"
         type="application/ld+json"
-        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageData, null, 2)
+          __html: JSON.stringify(webPageData)
         }}
       />
       
-      <Script
+      <script
         id="contact-breadcrumb-structured-data"
         type="application/ld+json"
-        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbData, null, 2)
+          __html: JSON.stringify(breadcrumbData)
         }}
       />
       
-      <Script
+      <script
         id="contact-page-structured-data"
         type="application/ld+json"
-        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(contactPageData, null, 2)
+          __html: JSON.stringify(contactPageData)
         }}
       />
     </>

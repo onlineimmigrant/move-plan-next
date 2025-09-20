@@ -240,6 +240,10 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
       }
     );
 
+    // Add FAQ structured data for this page
+    const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname);
+    seoData.faqs = pageFAQs;
+
     console.log('[fetchPageSEOData] Page SEO data fetched:', seoData.title);
     return seoData;
   } catch (error: any) {
@@ -248,8 +252,79 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
   }
 }
 
+// Helper function to fetch and add FAQ structured data for any page
+async function addFAQStructuredData(
+  organizationId: string, 
+  structuredData: Array<Record<string, any>>, 
+  pathname: string
+): Promise<{ question: string; answer: string }[]> {
+  try {
+    let faqQuery = supabaseServer
+      .from('faq')
+      .select('question, answer')
+      .eq('organization_id', organizationId);
+
+    // For home page, only get FAQs marked for home page display
+    if (pathname === '' || pathname === '/' || pathname === '/home') {
+      faqQuery = faqQuery.eq('display_home_page', true);
+    }
+    // For other pages, get all FAQs (you can add more specific logic here)
+    // This ensures all pages can have relevant FAQ structured data
+
+    const { data: faqs, error } = await faqQuery;
+
+    if (error) {
+      console.error('[addFAQStructuredData] Error fetching FAQs:', error.message);
+      return [];
+    }
+
+    const validFAQs = (faqs || []).filter(
+      (faq): faq is { question: string; answer: string } =>
+        typeof faq.question === 'string' &&
+        faq.question.trim() !== '' &&
+        typeof faq.answer === 'string' &&
+        faq.answer.trim() !== ''
+    );
+
+    if (validFAQs.length > 0) {
+      structuredData.push({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: validFAQs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer.replace(/\n/g, ' ').trim(),
+          },
+        })),
+      });
+      console.log('[addFAQStructuredData] Added FAQ structured data for', pathname, 'with', validFAQs.length, 'FAQs');
+    }
+
+    return validFAQs;
+  } catch (error: any) {
+    console.error('[addFAQStructuredData] Error:', error.message);
+    return [];
+  }
+}
+
 // Generate dynamic page metadata for pages not in database
 async function generateDynamicPageSEO(pathname: string, baseUrl: string, organizationId: string): Promise<SEOData> {
+  // Check if this is a product page
+  const productMatch = pathname.match(/^\/products\/([^\/]+)$/);
+  if (productMatch) {
+    const productSlug = productMatch[1];
+    console.log('[generateDynamicPageSEO] Detected product page, using fetchProductSEOData for:', productSlug);
+    return fetchProductSEOData(productSlug, baseUrl);
+  }
+
+  // Check if this is an FAQ page
+  if (pathname === '/faq' || pathname === '/faqs') {
+    console.log('[generateDynamicPageSEO] Detected FAQ page, adding FAQ structured data');
+    return generateFAQPageSEO(baseUrl, organizationId);
+  }
+
   const settings = await getSettings(baseUrl);
   const siteName = settings?.site || 'App';
   
@@ -257,6 +332,29 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
   const pageTitle = generatePageTitle(pathname);
   const pageDescription = generatePageDescription(pathname);
   
+  const structuredData: Array<Record<string, any>> = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: pageTitle,
+      description: pageDescription,
+      url: canonicalUrl,
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: getBreadcrumbStructuredData({
+        pathname,
+        domain: baseUrl,
+        overrides: [{ segment: pathname, label: pageTitle }],
+        extraCrumbs: [],
+      }),
+    }
+  ];
+
+  // Add FAQ structured data for this page
+  const pageFAQs = await addFAQStructuredData(organizationId, structuredData, pathname);
+
   const seoData: SEOData = {
     title: `${pageTitle} | ${siteName}`,
     description: pageDescription,
@@ -264,26 +362,8 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
     canonicalUrl,
     seo_og_image: settings?.seo_og_image ?? undefined,
     seo_og_url: canonicalUrl,
-    structuredData: [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        name: pageTitle,
-        description: pageDescription,
-        url: canonicalUrl,
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: getBreadcrumbStructuredData({
-          pathname,
-          domain: baseUrl,
-          overrides: [{ segment: pathname, label: pageTitle }],
-          extraCrumbs: [],
-        }),
-      }
-    ],
-    faqs: [],
+    structuredData,
+    faqs: pageFAQs,
   };
 
   console.log('[generateDynamicPageSEO] Generated dynamic SEO for:', pathname, 'title:', pageTitle);
@@ -352,13 +432,80 @@ function generatePageKeywords(pathname: string): string[] {
   return keywordMap[pathname] || ['page', 'information', 'company'];
 }
 
-export async function fetchProductSEOData(id: string, baseUrl: string): Promise<SEOData> {
+// Generate SEO data for FAQ pages with FAQ structured data
+async function generateFAQPageSEO(baseUrl: string, organizationId: string): Promise<SEOData> {
+  const settings = await getSettings(baseUrl);
+  const siteName = settings?.site || 'App';
+  
+  const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/faq`;
+  const pageTitle = 'Frequently Asked Questions';
+  const pageDescription = 'Find answers to common questions and learn more about our services and products.';
+  
+  // Fetch all FAQs for the organization
+  const { data: faqs, error: faqsError } = await supabaseServer
+    .from('faq')
+    .select('id, question, answer')
+    .eq('organization_id', organizationId)
+    .order('order', { ascending: true });
+
+  const validFAQs = isFAQArray(faqs) ? faqs.filter(isValidFAQ) : [];
+
+  const seoData: SEOData = {
+    title: `${pageTitle} | ${siteName}`,
+    description: pageDescription,
+    keywords: ['FAQ', 'questions', 'answers', 'help', 'support'],
+    canonicalUrl,
+    seo_og_image: settings?.seo_og_image ?? undefined,
+    seo_og_url: canonicalUrl,
+    structuredData: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: pageTitle,
+        description: pageDescription,
+        url: canonicalUrl,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: getBreadcrumbStructuredData({
+          pathname: '/faq',
+          domain: baseUrl,
+          overrides: [{ segment: 'faq', label: 'FAQ' }],
+          extraCrumbs: [],
+        }),
+      }
+    ],
+    faqs: validFAQs,
+  };
+
+  // Add FAQ structured data if we have FAQs
+  if (validFAQs.length > 0) {
+    seoData.structuredData.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: validFAQs.map(faq => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer.replace(/\n/g, ' ').replace(/<[^>]*>/g, '').trim(),
+        },
+      })),
+    });
+  }
+
+  console.log('[generateFAQPageSEO] Generated FAQ page SEO with', validFAQs.length, 'FAQs');
+  return seoData;
+}
+
+export async function fetchProductSEOData(slug: string, baseUrl: string): Promise<SEOData> {
   try {
     const organizationId = await getOrganizationId(baseUrl);
-    console.log('[fetchProductSEOData] Base URL:', baseUrl, 'Organization ID:', organizationId, 'Product ID:', id);
+    console.log('[fetchProductSEOData] Base URL:', baseUrl, 'Organization ID:', organizationId, 'Product Slug:', slug);
     if (!organizationId) {
       console.error('[fetchProductSEOData] Organization not found');
-      return await fetchDefaultSEOData(baseUrl, `/products/${id}`);
+      return await fetchDefaultSEOData(baseUrl, `/products/${slug}`);
     }
 
     const [settings, { data: product, error: productError }] = await Promise.all([
@@ -367,6 +514,7 @@ export async function fetchProductSEOData(id: string, baseUrl: string): Promise<
         .from('product')
         .select(`
           id,
+          slug,
           product_name,
           product_description,
           metadescription_for_page,
@@ -376,14 +524,14 @@ export async function fetchProductSEOData(id: string, baseUrl: string): Promise<
           product_sub_type_id,
           organization_id
         `)
-        .eq('id', id)
+        .eq('slug', slug)
         .eq('organization_id', organizationId)
         .single(),
     ]);
 
     if (productError || !product) {
-      console.error('[fetchProductSEOData] Error fetching product:', productError?.message || 'No product found', 'id:', id, 'organization_id:', organizationId);
-      return await fetchDefaultSEOData(baseUrl, `/products/${id}`);
+      console.error('[fetchProductSEOData] Error fetching product:', productError?.message || 'No product found', 'slug:', slug, 'organization_id:', organizationId);
+      return await fetchDefaultSEOData(baseUrl, `/products/${slug}`);
     }
 
     console.log('[fetchProductSEOData] Product found:', product.product_name);
@@ -394,7 +542,7 @@ export async function fetchProductSEOData(id: string, baseUrl: string): Promise<
         : settings.seo_keywords.split(',').map((k: string) => k.trim())
       : [];
 
-    const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/products/${product.id}`;
+    const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/products/${product.slug || product.id}`;
     const description = product.metadescription_for_page
       ? product.metadescription_for_page.slice(0, 160)
       : product.product_description
@@ -457,9 +605,9 @@ export async function fetchProductSEOData(id: string, baseUrl: string): Promise<
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: getBreadcrumbStructuredData({
-          pathname: `/products/${product.id}`,
+          pathname: `/products/${product.slug || product.id}`,
           domain: baseUrl,
-          overrides: [{ segment: product.id.toString(), label: product.product_name }],
+          overrides: [{ segment: (product.slug || product.id).toString(), label: product.product_name }],
           extraCrumbs: [],
         }),
       },
@@ -580,7 +728,7 @@ export async function fetchProductSEOData(id: string, baseUrl: string): Promise<
     return seoData;
   } catch (error: any) {
     console.error('[fetchProductSEOData] Failed to fetch product SEO data:', error.message);
-    return await fetchDefaultSEOData(baseUrl, `/products/${id}`);
+    return await fetchDefaultSEOData(baseUrl, `/products/${slug}`);
   }
 }
 

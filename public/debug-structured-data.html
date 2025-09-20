@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structured Data Debug Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .script-block { 
+            background: #f5f5f5; 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+        }
+        .script-content { 
+            background: white; 
+            padding: 10px; 
+            border-radius: 3px; 
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .validation-links {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .validation-links a {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 8px 15px;
+            background: #007cba;
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+        }
+        .validation-links a:hover { background: #005a8b; }
+        .current-url { 
+            background: #fff3cd; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Structured Data Debug Tool</h1>
+    
+    <div class="current-url">
+        <strong>Current URL:</strong> <span id="current-url"></span>
+    </div>
+    
+    <div class="validation-links">
+        <h3>🧪 Test Your Structured Data:</h3>
+        <a href="#" id="google-test" target="_blank">Google Rich Results Test</a>
+        <a href="#" id="schema-validator" target="_blank">Schema.org Validator</a>
+        <a href="#" id="facebook-debugger" target="_blank">Facebook Sharing Debugger</a>
+        <a href="#" id="twitter-validator" target="_blank">Twitter Card Validator</a>
+    </div>
+    
+    <h2>📋 Found Structured Data Scripts:</h2>
+    <div id="structured-data-container"></div>
+    
+    <h2>🔍 All Meta Tags:</h2>
+    <div id="meta-tags-container"></div>
+
+    <script>
+        function updateCurrentUrl() {
+            const currentUrl = window.location.href;
+            document.getElementById('current-url').textContent = currentUrl;
+            
+            // Update validation links
+            const encodedUrl = encodeURIComponent(currentUrl);
+            document.getElementById('google-test').href = `https://search.google.com/test/rich-results?url=${encodedUrl}`;
+            document.getElementById('schema-validator').href = `https://validator.schema.org/#url=${encodedUrl}`;
+            document.getElementById('facebook-debugger').href = `https://developers.facebook.com/tools/debug/?q=${encodedUrl}`;
+            document.getElementById('twitter-validator').href = `https://cards-dev.twitter.com/validator`;
+        }
+
+        function findStructuredData() {
+            const container = document.getElementById('structured-data-container');
+            const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+            
+            if (scripts.length === 0) {
+                container.innerHTML = '<p style="color: red;">❌ No structured data scripts found!</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            scripts.forEach((script, index) => {
+                const div = document.createElement('div');
+                div.className = 'script-block';
+                
+                let content;
+                try {
+                    const parsed = JSON.parse(script.textContent);
+                    content = JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                    content = script.textContent;
+                }
+                
+                div.innerHTML = `
+                    <h4>📄 Script ${index + 1} (ID: ${script.id || 'no-id'})</h4>
+                    <div class="script-content">${content}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function findMetaTags() {
+            const container = document.getElementById('meta-tags-container');
+            const metaTags = document.querySelectorAll('meta, title');
+            
+            container.innerHTML = '';
+            metaTags.forEach((tag, index) => {
+                const div = document.createElement('div');
+                div.className = 'script-block';
+                
+                let content = tag.outerHTML;
+                
+                div.innerHTML = `
+                    <div class="script-content">${content}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // Run on page load
+        updateCurrentUrl();
+        findStructuredData();
+        findMetaTags();
+        
+        // Auto-refresh every 2 seconds to catch dynamic changes
+        setInterval(() => {
+            findStructuredData();
+            findMetaTags();
+        }, 2000);
+        
+        console.log('🔍 Structured Data Debug Tool loaded');
+        console.log('📋 Found structured data scripts:', document.querySelectorAll('script[type="application/ld+json"]').length);
+    </script>
+</body>
+</html>

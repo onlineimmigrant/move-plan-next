@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test FAQ Structured Data</title>
+</head>
+<body>
+    <h1>Test FAQ Structure Implementation</h1>
+    <p>This is a test to verify that FAQ structured data is being added to all pages.</p>
+    
+    <script>
+        // Test the SEO implementation
+        fetch('/api/test-seo?path=/about')
+            .then(response => response.json())
+            .then(data => {
+                console.log('SEO Data:', data);
+                document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            });
+    </script>
+    
+    <pre id="result">Loading...</pre>
+</body>
+</html>
