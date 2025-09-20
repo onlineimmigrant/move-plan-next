@@ -31,20 +31,55 @@ export function getBreadcrumbStructuredData({
   try {
     // Normalize domain and pathname
     const normalizedDomain = domain.replace(/\/+$/, '');
-    const normalizedPathname = pathname.trim() === '' || pathname === '/' ? '/' : pathname.replace(/\/+$/, '').replace(/\?.*$/, '');
+    let normalizedPathname = pathname.trim() === '' || pathname === '/' ? '/' : pathname.replace(/\/+$/, '').replace(/\?.*$/, '');
+    
+    // Remove locale prefixes from pathname for breadcrumb generation
+    const localePattern = /^\/(?:en|es|fr|de|ru|it|pt|zh|ja|pl|nl)(?:\/|$)/;
+    const isLocalePath = localePattern.test(normalizedPathname);
+    
+    if (isLocalePath) {
+      // Extract locale and remaining path
+      const pathParts = normalizedPathname.split('/').filter(Boolean);
+      const locale = pathParts[0];
+      const remainingPath = pathParts.slice(1).join('/');
+      
+      console.log('getBreadcrumbStructuredData - Detected locale path:', { 
+        originalPathname: pathname,
+        normalizedPathname,
+        locale,
+        remainingPath,
+        isHomePage: remainingPath === ''
+      });
+      
+      // If it's just a locale (like /fr), treat as homepage and return immediately
+      if (remainingPath === '') {
+        console.log('getBreadcrumbStructuredData - Locale homepage detected, returning Home only');
+        return [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: normalizedDomain + '/',
+          }
+        ];
+      } else {
+        normalizedPathname = '/' + remainingPath;
+      }
+    }
     
     console.log('getBreadcrumbStructuredData Input:', { 
       originalPathname: pathname, 
       normalizedPathname, 
       originalDomain: domain,
-      normalizedDomain 
+      normalizedDomain,
+      isLocalePath
     });
 
     const breadcrumbs: { label: string; url: string }[] = [
       { label: 'Home', url: normalizedDomain + '/' },
     ];
 
-    // Handle root path case
+    // Handle root path case (including locale home pages)
     if (normalizedPathname === '/') {
       return breadcrumbs.map((crumb, index) => ({
         '@type': 'ListItem',

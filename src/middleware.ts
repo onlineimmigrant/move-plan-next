@@ -66,9 +66,15 @@ export default async function middleware(request: NextRequest) {
   });
 
   const response = intlMiddleware(request);
+  
+  // Add pathname to headers for SEO system access in layout
+  response.headers.set('x-pathname', pathname);
+  response.headers.set('x-url', request.nextUrl.pathname);
+  
   console.log('📋 MIDDLEWARE RESULT:');
   console.log('   - Response status:', response.status);
   console.log('   - Response headers location:', response.headers.get('location'));
+  console.log('   - Added x-pathname header:', pathname);
   
   return response;
 }
