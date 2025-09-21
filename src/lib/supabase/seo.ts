@@ -1,4 +1,6 @@
-import { supabaseServer } from '@/lib/supabaseServerClient';
+import { supabase } from '@/lib/supabase';
+
+const supabaseServer = supabase;
 import { getOrganizationId, getSettings } from '../getSettings';
 import { getBreadcrumbStructuredData } from '../getBreadcrumbs';
 
@@ -241,7 +243,7 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
     );
 
     // Add FAQ structured data for this page
-    const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname);
+    const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
     seoData.faqs = pageFAQs;
 
     console.log('[fetchPageSEOData] Page SEO data fetched:', seoData.title);
@@ -256,9 +258,22 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
 async function addFAQStructuredData(
   organizationId: string, 
   structuredData: Array<Record<string, any>>, 
-  pathname: string
+  pathname: string,
+  existingFAQs: { question: string; answer: string }[] = []
 ): Promise<{ question: string; answer: string }[]> {
   try {
+    console.log('[addFAQStructuredData] Processing FAQ structured data for', pathname);
+    
+    // Don't duplicate FAQ data if it already exists
+    const existingStructuredData = structuredData.filter(item => 
+      item['@type'] === 'FAQPage' || item['@type'] === 'Question'
+    );
+    
+    if (existingStructuredData.length > 0) {
+      console.log('[addFAQStructuredData] FAQ structured data already exists for', pathname, '- skipping');
+      return existingFAQs;
+    }
+
     let faqQuery = supabaseServer
       .from('faq')
       .select('question, answer')
@@ -275,7 +290,7 @@ async function addFAQStructuredData(
 
     if (error) {
       console.error('[addFAQStructuredData] Error fetching FAQs:', error.message);
-      return [];
+      return existingFAQs;
     }
 
     const validFAQs = (faqs || []).filter(
@@ -290,7 +305,7 @@ async function addFAQStructuredData(
       structuredData.push({
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
-        mainEntity: validFAQs.map((faq) => ({
+        mainEntity: validFAQs.map((faq: { question: string; answer: string }) => ({
           '@type': 'Question',
           name: faq.question,
           acceptedAnswer: {
@@ -302,10 +317,10 @@ async function addFAQStructuredData(
       console.log('[addFAQStructuredData] Added FAQ structured data for', pathname, 'with', validFAQs.length, 'FAQs');
     }
 
-    return validFAQs;
+    return [...existingFAQs, ...validFAQs];
   } catch (error: any) {
     console.error('[addFAQStructuredData] Error:', error.message);
-    return [];
+    return existingFAQs;
   }
 }
 
@@ -353,7 +368,7 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
   ];
 
   // Add FAQ structured data for this page
-  const pageFAQs = await addFAQStructuredData(organizationId, structuredData, pathname);
+  const pageFAQs = await addFAQStructuredData(organizationId, structuredData, pathname, []);
 
   const seoData: SEOData = {
     title: `${pageTitle} | ${siteName}`,
@@ -591,12 +606,16 @@ export async function fetchProductSEOData(slug: string, baseUrl: string): Promis
         .eq('product_id', product.id),
     ]);
 
-    // Process FAQs
+    // Process FAQs - store them for later use in centralized FAQ system
     if (!faqsResult.error && isFAQArray(faqsResult.data)) {
+      // Set initial FAQ data for backward compatibility
       seoData.faqs = faqsResult.data.filter(isValidFAQ);
       console.log('[fetchProductSEOData] FAQs fetched:', seoData.faqs.length);
     } else if (faqsResult.error) {
       console.error('[fetchProductSEOData] Error fetching FAQs:', faqsResult.error.message);
+      seoData.faqs = [];
+    } else {
+      seoData.faqs = [];
     }
 
     // Process structured data - add BreadcrumbList first
@@ -651,22 +670,31 @@ export async function fetchProductSEOData(slug: string, baseUrl: string): Promis
       }
     );
 
+    // Convert FAQ data to the expected format and add using centralized function
+    const productFAQs: { question: string; answer: string }[] = [];
     if (isFAQArray(faqsResult.data) && faqsResult.data.length > 0) {
-      seoData.structuredData.push({
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: faqsResult.data
-          .filter(isValidFAQ)
-          .map((faq) => ({
-            '@type': 'Question',
-            name: faq.question,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: faq.answer.replace(/\n/g, ' ').trim(),
-            },
-          })),
-      });
+      faqsResult.data
+        .filter(isValidFAQ)
+        .forEach((faq) => {
+          if (faq.question && faq.answer) {
+            productFAQs.push({
+              question: faq.question,
+              answer: faq.answer
+            });
+          }
+        });
     }
+
+    // Add FAQ structured data using centralized function to prevent duplication
+    const finalFAQs = await addFAQStructuredData(
+      product.organization_id, 
+      seoData.structuredData, 
+      `/products/${product.slug || product.id}`,
+      productFAQs
+    );
+
+    // Update the final FAQ list in seoData
+    seoData.faqs = finalFAQs;
 
     if (isVideoArray(videosResult.data) && videosResult.data.length > 0) {
       videosResult.data
@@ -739,27 +767,6 @@ export async function fetchDefaultSEOData(baseUrl: string, pathname: string): Pr
       getOrganizationId(baseUrl),
     ]);
 
-    let siteFaqs: { question: string; answer: string }[] = [];
-    if (organizationId && (pathname === '' || pathname === '/' || pathname === '/home')) {
-      const { data: faqs, error } = await supabaseServer
-        .from('faq')
-        .select('question, answer')
-        .eq('organization_id', organizationId)
-        .eq('display_home_page', true);
-      if (!error) {
-        siteFaqs = (faqs || []).filter(
-          (faq): faq is { question: string; answer: string } =>
-            typeof faq.question === 'string' &&
-            faq.question.trim() !== '' &&
-            typeof faq.answer === 'string' &&
-            faq.answer.trim() !== ''
-        );
-        console.log('[fetchDefaultSEOData] FAQs fetched:', siteFaqs.length);
-      } else {
-        console.error('[fetchDefaultSEOData] Error fetching default FAQs:', error.message);
-      }
-    }
-
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
     const structuredData: Array<Record<string, any>> = [
       {
@@ -781,19 +788,10 @@ export async function fetchDefaultSEOData(baseUrl: string, pathname: string): Pr
       }
     ];
 
-    if (siteFaqs.length > 0) {
-      structuredData.push({
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: siteFaqs.map((faq) => ({
-          '@type': 'Question',
-          name: faq.question,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: faq.answer.replace(/\n/g, ' ').trim(),
-          },
-        })),
-      });
+    // Add FAQ structured data using the centralized function
+    let siteFaqs: { question: string; answer: string }[] = [];
+    if (organizationId) {
+      siteFaqs = await addFAQStructuredData(organizationId, structuredData, pathname, []);
     }
 
     const seoData: SEOData = {
