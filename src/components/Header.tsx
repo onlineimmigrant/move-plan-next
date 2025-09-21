@@ -130,8 +130,17 @@ const Header: React.FC<HeaderProps> = ({
   // Memoize callback functions for better performance
   const handleHomeNavigation = useCallback(() => {
     setIsOpen(false);
-    router.push('/');
-  }, [router]);
+    // Preserve current locale when navigating to home page
+    const pathSegments = pathname.split('/');
+    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
+    const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
+    
+    if (currentLocale) {
+      router.push(`/${currentLocale}`);
+    } else {
+      router.push('/');
+    }
+  }, [router, pathname]);
 
   const handleLoginModal = useCallback(() => {
     setIsOpen(false);
@@ -146,8 +155,17 @@ const Header: React.FC<HeaderProps> = ({
   const handleLogout = useCallback(() => {
     setIsOpen(false);
     logout();
-    router.push('/');
-  }, [logout, router]);
+    // Preserve current locale when navigating to home page after logout
+    const pathSegments = pathname.split('/');
+    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
+    const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
+    
+    if (currentLocale) {
+      router.push(`/${currentLocale}`);
+    } else {
+      router.push('/');
+    }
+  }, [logout, router, pathname]);
 
   const handleMenuToggle = useCallback(() => {
     setIsOpen(!isOpen);

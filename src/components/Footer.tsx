@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { MenuItem, SubMenuItem } from '@/types/menu';
 import LanguageSwitcher from './LanguageSwitcher';
+import LocalizedLink from './LocalizedLink';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 
 // Static translations for footer
@@ -227,12 +227,12 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                 return (
                   <div key={item.id} className="col-span-1 min-h-[200px]">
                     <h3 className="text-base font-semibold mb-4">
-                      <Link
+                      <LocalizedLink
                         href={item.url_name || '#'}
                         className="hover:text-neutral-300 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                       >
                         {translatedDisplayName}
-                      </Link>
+                      </LocalizedLink>
                     </h3>
                     <ul className="space-y-2">
                       {item.website_submenuitem
@@ -245,12 +245,12 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
                           return (
                             <li key={subItem.id}>
-                              <Link
+                              <LocalizedLink
                                 href={subItem.url_name || '#'}
                                 className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                               >
                                 {translatedSubItemName}
-                              </Link>
+                              </LocalizedLink>
                             </li>
                           );
                         })}
@@ -262,12 +262,12 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
               {groupedItemsWithoutSubitems.map((group, index) => (
                 <div key={`group-${index}`} className="col-span-1 min-h-[200px]">
                   <h3 className="text-base font-semibold mb-4">
-                    <Link
+                    <LocalizedLink
                       href={group[0]?.url_name || '#'}
                       className="hover:text-neutral-300 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                     >
                       {itemsWithSubitems.length ? '' : translations.links}
-                    </Link>
+                    </LocalizedLink>
                   </h3>
                   <ul className="space-y-2">
                     {group.map((item) => {
@@ -278,12 +278,12 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
                       return (
                         <li key={item.id}>
-                          <Link
+                          <LocalizedLink
                             href={item.url_name || '#'}
                             className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                           >
                             {translatedDisplayName}
-                          </Link>
+                          </LocalizedLink>
                         </li>
                       );
                     })}

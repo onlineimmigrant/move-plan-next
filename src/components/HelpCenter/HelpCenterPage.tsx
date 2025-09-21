@@ -148,7 +148,18 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
         {/* Logo */}
         <button
           type="button"
-          onClick={() => router.push('/')}
+          onClick={() => {
+            // Preserve current locale when navigating to home page
+            const pathSegments = window.location.pathname.split('/');
+            const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
+            const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
+            
+            if (currentLocale) {
+              router.push(`/${currentLocale}`);
+            } else {
+              router.push('/');
+            }
+          }}
           className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] mr-8 hover:scale-105 antialiased"
           aria-label="Go to homepage"
         >

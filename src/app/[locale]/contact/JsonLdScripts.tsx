@@ -24,21 +24,21 @@ export default function JsonLdScripts({
     const webPageScript = document.createElement('script');
     webPageScript.type = 'application/ld+json';
     webPageScript.setAttribute('data-contact-page', 'webpage');
-    webPageScript.textContent = JSON.stringify(webPageSchema);
+    webPageScript.textContent = JSON.stringify(webPageSchema, null, 2);
     document.head.appendChild(webPageScript);
 
     // Create and inject Breadcrumb schema
     const breadcrumbScript = document.createElement('script');
     breadcrumbScript.type = 'application/ld+json';
     breadcrumbScript.setAttribute('data-contact-page', 'breadcrumb');
-    breadcrumbScript.textContent = JSON.stringify(breadcrumbSchema);
+    breadcrumbScript.textContent = JSON.stringify(breadcrumbSchema, null, 2);
     document.head.appendChild(breadcrumbScript);
 
     // Create and inject ContactPage schema
     const contactScript = document.createElement('script');
     contactScript.type = 'application/ld+json';
     contactScript.setAttribute('data-contact-page', 'contact');
-    contactScript.textContent = JSON.stringify(contactPageSchema);
+    contactScript.textContent = JSON.stringify(contactPageSchema, null, 2);
     document.head.appendChild(contactScript);
 
     // Cleanup function

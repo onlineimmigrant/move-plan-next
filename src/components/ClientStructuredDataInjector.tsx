@@ -37,14 +37,14 @@ export default function ClientStructuredDataInjector({ baseUrl }: StructuredData
     const breadcrumbScript = document.createElement('script');
     breadcrumbScript.type = 'application/ld+json';
     breadcrumbScript.setAttribute('data-structured-data', 'true');
-    breadcrumbScript.textContent = JSON.stringify(breadcrumbData);
+    breadcrumbScript.textContent = JSON.stringify(breadcrumbData, null, 2);
     document.head.appendChild(breadcrumbScript);
     
     // Inject webpage structured data
     const webPageScript = document.createElement('script');
     webPageScript.type = 'application/ld+json';
     webPageScript.setAttribute('data-structured-data', 'true');
-    webPageScript.textContent = JSON.stringify(webPageData);
+    webPageScript.textContent = JSON.stringify(webPageData, null, 2);
     document.head.appendChild(webPageScript);
     
     console.log('✅ [ClientStructuredDataInjector] Structured data injected for:', pathname);
