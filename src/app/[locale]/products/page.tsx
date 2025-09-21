@@ -1,7 +1,9 @@
 import { supabase, getOrganizationId } from '../../../lib/supabase';
 import { getBaseUrl } from '../../../lib/utils';
+import { fetchProductsListingSEOData } from '../../../lib/supabase/seo';
 import ClientProductsPage from './ClientProductsPage';
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 
 // Enhanced type definitions with better type safety
 type Product = {
@@ -113,10 +115,55 @@ function ProductsLoading() {
   );
 }
 
+// Generate metadata for SEO
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}): Promise<Metadata> {
+  try {
+    // Enhanced URL determination with better fallback logic
+    let baseUrl = getBaseUrl(true);
+    if (!baseUrl || baseUrl === 'http://localhost:3000') {
+      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    }
+
+    // Await searchParams before using
+    const resolvedSearchParams = await searchParams;
+
+    // Fetch SEO data for products listing
+    const seoData = await fetchProductsListingSEOData(baseUrl, resolvedSearchParams.category);
+
+    return {
+      title: seoData.title || 'Products',
+      description: seoData.description || 'Browse our complete product catalog',
+      keywords: Array.isArray(seoData.keywords) ? seoData.keywords.join(', ') : seoData.keywords,
+      openGraph: {
+        title: seoData.title || 'Products',
+        description: seoData.description || 'Browse our complete product catalog',
+        url: seoData.canonicalUrl,
+        images: seoData.seo_og_image ? [{ url: seoData.seo_og_image }] : [],
+      },
+      alternates: {
+        canonical: seoData.canonicalUrl,
+      },
+      other: {
+        'structured-data': JSON.stringify(seoData.structuredData || []),
+      },
+    };
+  } catch (error) {
+    console.error('Error generating products page metadata:', error);
+    return {
+      title: 'Products',
+      description: 'Browse our complete product catalog',
+    };
+  }
+}
+
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: { category?: string };
+  searchParams: Promise<{ category?: string }>;
 }) {
   // Skip Supabase queries during Vercel static build
   const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
@@ -146,7 +193,10 @@ export default async function ProductsPage({
   let productSubTypes: ProductSubType[] = [];
   let error: string | null = null;
   const isAdmin = false;
-  const categoryId = searchParams.category;
+  
+  // Await searchParams before using
+  const resolvedSearchParams = await searchParams;
+  const categoryId = resolvedSearchParams.category;
 
   try {
     // Parallel data fetching for better performance
