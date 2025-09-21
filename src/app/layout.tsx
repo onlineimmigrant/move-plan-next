@@ -76,7 +76,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const settings = await getSettingsWithFallback(currentDomain);
   const siteName = getSiteName(settings);
-  const locale = getLocaleFromSettings(settings);
+  
+  // Extract locale from pathname - pathname format: /en/... or /sk/... etc
+  let currentLocale = 'en'; // default fallback
+  const metadataLocaleMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+  if (metadataLocaleMatch) {
+    currentLocale = metadataLocaleMatch[1];
+  }
+  console.log('🌐 [Layout generateMetadata] Detected locale from pathname:', currentLocale);
 
   // Enhanced metadata with SEO system data
   return {
@@ -95,7 +102,7 @@ export async function generateMetadata(): Promise<Metadata> {
         height: 630, 
         alt: seoData.title || siteName 
       }],
-      locale: locale,
+      locale: currentLocale,
       type: 'website',
     },
     
@@ -128,6 +135,41 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const currentDomain = await getDomain();
   console.log('RootLayout - currentDomain:', currentDomain);
   
+  // Get current pathname to extract locale
+  const headersList = await headers();
+  
+  // Get current pathname from headers with fallbacks
+  function getPathnameFromHeaders(headersList: Headers): string {
+    const xPathname = headersList.get('x-pathname');
+    const xUrl = headersList.get('x-url');
+    const referer = headersList.get('referer');
+    
+    if (xPathname) return xPathname;
+    if (xUrl) return xUrl;
+    
+    // Extract from referer as fallback
+    if (referer) {
+      try {
+        const url = new URL(referer);
+        return url.pathname;
+      } catch (e) {
+        console.warn('⚠️ [RootLayout] Could not parse referer URL:', referer);
+      }
+    }
+    
+    return '/';
+  }
+  
+  const pathname = getPathnameFromHeaders(headersList);
+  
+  // Extract locale from pathname for dynamic language setting
+  let currentLocale = 'en'; // default fallback
+  const layoutLocaleMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+  if (layoutLocaleMatch) {
+    currentLocale = layoutLocaleMatch[1];
+  }
+  console.log('🌐 [RootLayout] Detected locale from pathname:', currentLocale);
+  
   const organization = await getOrganization(currentDomain);
   const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
   
@@ -139,7 +181,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
   console.log('RootLayout - menuItems:', menuItems.length, 'items fetched');
   
-  const language = getLanguageFromSettings(settings);
+  // Use dynamic locale instead of static language from settings
+  const language = currentLocale;
 
   const headerData = {
     image_for_privacy_settings: settings.image,

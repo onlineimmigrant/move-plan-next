@@ -34,7 +34,7 @@ export default function TestStructuredData() {
         id="test-breadcrumb-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(testBreadcrumb)
+          __html: JSON.stringify(testBreadcrumb, null, 2)
         }}
       />
       
@@ -42,7 +42,7 @@ export default function TestStructuredData() {
         id="test-webpage-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(testWebPage)
+          __html: JSON.stringify(testWebPage, null, 2)
         }}
       />
     </>

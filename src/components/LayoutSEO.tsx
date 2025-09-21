@@ -76,7 +76,7 @@ export default async function LayoutSEO() {
         }
         
         try {
-          const jsonString = JSON.stringify(structuredDataItem);
+          const jsonString = JSON.stringify(structuredDataItem, null, 2);
           console.log(`✅ [LayoutSEO] Rendering structured data ${index}:`, structuredDataItem['@type']);
           
           return (
@@ -112,7 +112,7 @@ export default async function LayoutSEO() {
                   text: faq.answer.replace(/\n/g, ' ').trim(),
                 },
               })),
-            })
+            }, null, 2)
           }}
         />
       )}

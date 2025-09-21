@@ -1,4 +1,5 @@
-import { getDomain } from '@/lib/layout-utils';
+import { getDomain, getSettingsWithFallback } from '@/lib/layout-utils';
+import { getSiteName } from '@/lib/getSettings';
 import { fetchPageSEOData, fetchDefaultSEOData } from '@/lib/supabase/seo';
 import { headers } from 'next/headers';
 
@@ -42,6 +43,10 @@ export default async function SimpleLayoutSEO() {
     console.log('🔄 [SimpleLayoutSEO] Falling back to default SEO data for:', pathname, error);
     seoData = await fetchDefaultSEOData(currentDomain, pathname);
   }
+
+  // Get settings for site name
+  const settings = await getSettingsWithFallback(currentDomain);
+  const siteName = getSiteName(settings);
   
   console.log('📊 [SimpleLayoutSEO] SEO data summary:', {
     title: seoData.title,
@@ -57,11 +62,15 @@ export default async function SimpleLayoutSEO() {
 
   return (
     <>
+      {/* =============================================== */}
+      {/* STRUCTURED DATA (JSON-LD) */}
+      {/* =============================================== */}
+      
       {/* Render SEO structured data from the database */}
       {seoData.structuredData.map((structuredDataItem, index) => {
         try {
-          // Use compact JSON without indentation for valid structured data
-          const jsonString = JSON.stringify(structuredDataItem);
+          // Use pretty-printed JSON with indentation for better readability in view source
+          const jsonString = JSON.stringify(structuredDataItem, null, 2);
           console.log(`✅ [SimpleLayoutSEO] Rendering structured data ${index}:`, structuredDataItem['@type']);
           
           return (
@@ -79,28 +88,6 @@ export default async function SimpleLayoutSEO() {
           return null;
         }
       })}
-      
-      {/* Only render FAQ structured data if it's the homepage and we have FAQs */}
-      {seoData.faqs && seoData.faqs.length > 0 && (pathname === '/' || pathname.match(/^\/[a-z]{2}$/) || pathname.match(/^\/[a-z]{2}\/$/)) && (
-        <script
-          id="layout-faq-structured-data"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'FAQPage',
-              mainEntity: seoData.faqs.map(faq => ({
-                '@type': 'Question',
-                name: faq.question,
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: faq.answer.replace(/\n/g, ' ').replace(/<[^>]*>/g, '').trim(),
-                },
-              })),
-            })
-          }}
-        />
-      )}
     </>
   );
 }

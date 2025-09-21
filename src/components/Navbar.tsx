@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import LocalizedLink from '@/components/LocalizedLink';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation'; // Add usePathname
 import { useBasket } from '../context/BasketContext';
@@ -63,23 +64,59 @@ function Navbar() {
 
   const handleMainPage = () => {
     setIsOpen(false);
-    router.push('/');
+    // Preserve current locale when navigating to home page
+    const pathSegments = pathname.split('/');
+    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
+    const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
+    
+    if (currentLocale) {
+      router.push(`/${currentLocale}`);
+    } else {
+      router.push('/');
+    }
   };
 
   const handleLogoutAction = () => {
     setIsOpen(false);
     logout();
-    router.push('/login');
+    // Preserve current locale when navigating to login
+    const pathSegments = pathname.split('/');
+    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
+    const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
+    
+    if (currentLocale) {
+      router.push(`/${currentLocale}/login`);
+    } else {
+      router.push('/login');
+    }
   };
 
   const handleShowLogin = () => {
     setIsOpen(false);
-    router.push('/login');
+    // Preserve current locale when navigating to login
+    const pathSegments = pathname.split('/');
+    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
+    const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
+    
+    if (currentLocale) {
+      router.push(`/${currentLocale}/login`);
+    } else {
+      router.push('/login');
+    }
   };
 
   const handleShowRegister = () => {
     setIsOpen(false);
-    router.push('/register');
+    // Preserve current locale when navigating to register
+    const pathSegments = pathname.split('/');
+    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
+    const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
+    
+    if (currentLocale) {
+      router.push(`/${currentLocale}/register`);
+    } else {
+      router.push('/register');
+    }
   };
 
   const CONNECTED_APP_URL = 'https://app.letspring.com';
@@ -199,12 +236,12 @@ function Navbar() {
 
                 {/* Basket Icon (Desktop) */}
                 {isMounted && totalItems > 0 && (
-                  <Link href="/basket" className="relative">
+                  <LocalizedLink href="/basket" className="relative">
                     <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
                     <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                       {totalItems}
                     </span>
-                  </Link>
+                  </LocalizedLink>
                 )}
 
                 {/* Profile Menu (Links to connected app) */}
@@ -264,12 +301,12 @@ function Navbar() {
               <>
                 {/* Basket Icon (Desktop) */}
                 {isMounted && totalItems > 0 && (
-                  <Link href="/basket" className="relative">
+                  <LocalizedLink href="/basket" className="relative">
                     <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
                     <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                       {totalItems}
                     </span>
-                  </Link>
+                  </LocalizedLink>
                 )}
 
                 {/* Login */}
@@ -300,12 +337,12 @@ function Navbar() {
           {/* Mobile icons (Basket icon before toggle button) */}
           <div className="flex items-center md:hidden">
             {isMounted && totalItems > 0 && (
-              <Link href="/basket" className="relative mr-4 order-1">
+              <LocalizedLink href="/basket" className="relative mr-4 order-1">
                 <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                   {totalItems}
                 </span>
-              </Link>
+              </LocalizedLink>
             )}
             <button
               onClick={handleToggle}

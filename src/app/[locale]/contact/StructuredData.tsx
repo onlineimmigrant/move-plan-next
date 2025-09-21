@@ -57,7 +57,7 @@ export default function ContactStructuredData() {
         id="contact-webpage-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webPageData)
+          __html: JSON.stringify(webPageData, null, 2)
         }}
       />
       
@@ -65,7 +65,7 @@ export default function ContactStructuredData() {
         id="contact-breadcrumb-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbData)
+          __html: JSON.stringify(breadcrumbData, null, 2)
         }}
       />
       
@@ -73,7 +73,7 @@ export default function ContactStructuredData() {
         id="contact-page-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(contactPageData)
+          __html: JSON.stringify(contactPageData, null, 2)
         }}
       />
     </>
