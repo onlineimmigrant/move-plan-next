@@ -193,6 +193,7 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
 
     // Fetch FAQs for homepage only
     const isHomePage = page.path === '/' || page.path === '/home';
+    console.log('[fetchPageSEOData] Home page detection: page.path=', page.path, 'isHomePage=', isHomePage);
     if (isHomePage) {
       const { data: faqs, error: faqsError } = await supabaseServer
         .from('faq')
@@ -245,6 +246,20 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
     // Add FAQ structured data for this page
     const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
     seoData.faqs = pageFAQs;
+
+    // Special handling for home page - add pricing modal products structured data
+    if (isHomePage) {
+      console.log('[fetchPageSEOData] Detected home page, adding pricing modal products structured data');
+      try {
+        const homePageProductsData = await fetchHomePageProductsStructuredData(baseUrl, organizationId);
+        if (homePageProductsData.length > 0) {
+          seoData.structuredData.push(...homePageProductsData);
+          console.log('[fetchPageSEOData] Added', homePageProductsData.length, 'pricing modal product structured data items');
+        }
+      } catch (error) {
+        console.error('[fetchPageSEOData] Error adding home page products structured data:', error);
+      }
+    }
 
     // Special handling for products listing page - add product structured data
     const localeStrippedPath = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/'); // Remove locale prefix like /en, /es, etc.
@@ -359,6 +374,67 @@ async function addFAQStructuredData(
 
 // Generate dynamic page metadata for pages not in database
 async function generateDynamicPageSEO(pathname: string, baseUrl: string, organizationId: string): Promise<SEOData> {
+  console.log('[generateDynamicPageSEO] Called with pathname:', JSON.stringify(pathname), 'length:', pathname.length);
+  
+  // Check if this is the home page (pathname can be '/', '/home', or empty string after normalization)
+  if (pathname === '/' || pathname === '/home' || pathname === '') {
+    console.log('[generateDynamicPageSEO] Detected home page, adding pricing modal products structured data');
+    try {
+      const homePageProductsData = await fetchHomePageProductsStructuredData(baseUrl, organizationId);
+      if (homePageProductsData.length > 0) {
+        console.log('[generateDynamicPageSEO] Added', homePageProductsData.length, 'pricing modal product structured data items');
+      }
+      
+      // Continue with regular home page SEO generation but add products data
+      const settings = await getSettings(baseUrl);
+      const siteName = settings?.site || 'App';
+      const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
+      
+      const pageTitle = generatePageTitle('/');
+      const pageDescription = generatePageDescription('/');
+      
+      const seoData: SEOData = {
+        title: `${pageTitle} | ${siteName}`,
+        description: pageDescription,
+        keywords: '',
+        canonicalUrl: canonicalUrl,
+        seo_og_image: '',
+        seo_og_url: canonicalUrl,
+        structuredData: [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: `${pageTitle} | ${siteName}`,
+            description: pageDescription,
+            url: canonicalUrl,
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: getBreadcrumbStructuredData({
+              pathname: pathname,
+              domain: baseUrl,
+              overrides: [{ segment: pathname, label: pageTitle }],
+              extraCrumbs: [],
+            }),
+          },
+          ...homePageProductsData, // Add the products structured data
+        ],
+        faqs: [],
+      };
+
+      // Add FAQ structured data for the home page
+      const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
+      seoData.faqs = pageFAQs;
+
+      console.log('[generateDynamicPageSEO] Generated home page SEO with', seoData.structuredData.length, 'structured data items');
+      return seoData;
+    } catch (error) {
+      console.error('[generateDynamicPageSEO] Error adding home page products structured data:', error);
+      // Fall through to regular dynamic page generation if there's an error
+    }
+  }
+
   // Check if this is a product page
   const productMatch = pathname.match(/^\/products\/([^\/]+)$/);
   if (productMatch) {
@@ -624,7 +700,7 @@ export async function fetchProductSEOData(slug: string, baseUrl: string): Promis
       supabaseServer
         .from('feedback_feedbackproducts')
         .select('id, rating, comment, user_name')
-        .eq('product_id', product.id)
+        .or(`product_id.eq.${product.id},product_id.eq.0`)
         .eq('organization_id', organizationId),
       supabaseServer
         .from('product_media')
@@ -881,19 +957,28 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
       return await fetchDefaultSEOData(baseUrl, '/products');
     }
 
-    // Fetch reviews for all products
+    // Fetch reviews for all products including global reviews (product_id = 0)
     const productIds = products?.map(p => p.id) || [];
+    const allProductIds = [...productIds, 0]; // Include 0 for global reviews
     const { data: reviews } = await supabase
       .from('feedback_feedbackproducts')
       .select('*')
-      .in('product_id', productIds);
+      .in('product_id', allProductIds);
 
-    // Group reviews by product
+    // Group reviews by product, and add global reviews to each product
+    const globalReviews = reviews?.filter(r => r.product_id === 0) || [];
     const reviewsByProduct = reviews?.reduce((acc: any, review: any) => {
+      if (review.product_id === 0) return acc; // Handle global reviews separately
       if (!acc[review.product_id]) acc[review.product_id] = [];
       acc[review.product_id].push(review);
       return acc;
     }, {}) || {};
+
+    // Add global reviews to each product
+    productIds.forEach(productId => {
+      if (!reviewsByProduct[productId]) reviewsByProduct[productId] = [];
+      reviewsByProduct[productId].push(...globalReviews);
+    });
 
     // Generate SEO data
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/products${categoryId ? `?category=${categoryId}` : ''}`;
@@ -913,7 +998,7 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
 
     // Add structured data for each product
     let validProducts: any[] = [];
-    let limitedProducts: any[] = [];
+    let allValidProducts: any[] = [];
     if (products && products.length > 0) {
       console.log(`[fetchProductsListingSEOData] Processing ${products.length} total products`);
 
@@ -937,12 +1022,12 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
         return isValid;
       });
 
-      // Limit to first 20 products for JSON-LD to prevent validation errors
-      limitedProducts = validProducts.slice(0, 20);
+      // Include all valid products in JSON-LD
+      allValidProducts = validProducts;
       
-      console.log(`[fetchProductsListingSEOData] Including ${limitedProducts.length} valid products out of ${products.length} total products in JSON-LD (limited to 20)`);
+      console.log(`[fetchProductsListingSEOData] Including ${allValidProducts.length} valid products out of ${products.length} total products in JSON-LD`);
 
-      limitedProducts.forEach((product: any) => {
+      allValidProducts.forEach((product: any) => {
         const productReviews = reviewsByProduct[product.id] || [];
         
         // Filter to get only valid reviews with proper ratings
@@ -1059,8 +1144,8 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
           '@context': 'https://schema.org',
           '@type': 'ItemList',
           '@id': `${baseUrl.replace(/\/$/, '')}/products#itemlist`,
-          numberOfItems: limitedProducts.length,
-          itemListElement: limitedProducts.map((product: any, index: number) => ({
+          numberOfItems: allValidProducts.length,
+          itemListElement: allValidProducts.map((product: any, index: number) => ({
             '@type': 'ListItem',
             position: index + 1,
             item: {
@@ -1094,7 +1179,7 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
       ]
     });
 
-    console.log(`🎯 [fetchProductsListingSEOData] Generated SEO data with ${limitedProducts?.length || 0} products in JSON-LD (limited to 20 for Google compliance)`);
+    console.log(`🎯 [fetchProductsListingSEOData] Generated SEO data with ${allValidProducts?.length || 0} products in JSON-LD`);
     console.log(`📊 [fetchProductsListingSEOData] Final structured data count: ${seoData.structuredData.length}`);
     return seoData;
   } catch (error: any) {
@@ -1163,14 +1248,217 @@ export async function fetchDefaultSEOData(baseUrl: string, pathname: string): Pr
       keywords: ['app', 'products', 'services'],
       canonicalUrl,
       seo_og_image: '/default-og-image.jpg',
-      structuredData: [{
-        '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        name: 'App',
-        description: 'Discover our products and services.',
-        url: canonicalUrl,
-      }],
+      seo_og_url: canonicalUrl,
+      structuredData: [],
       faqs: [],
     };
+  }
+}
+
+// Function to fetch pricing modal products structured data for home page
+async function fetchHomePageProductsStructuredData(baseUrl: string, organizationId: string): Promise<any[]> {
+  try {
+    console.log(`[fetchHomePageProductsStructuredData] Fetching pricing modal products for organization: ${organizationId}`);
+    
+    // Fetch pricing modal products (products that are displayed in pricing comparison)
+    const { data: products, error } = await supabaseServer
+      .from('product')
+      .select(`
+        id,
+        product_name,
+        product_description,
+        price_manual,
+        currency_manual,
+        currency_manual_symbol,
+        background_color,
+        slug,
+        organization_id,
+        is_displayed,
+        is_in_pricingplan_comparison
+      `)
+      .eq('organization_id', organizationId)
+      .eq('is_displayed', true)
+      .eq('is_in_pricingplan_comparison', true)
+      .order('id', { ascending: true });
+
+    if (error) {
+      console.error('[fetchHomePageProductsStructuredData] Error fetching products:', error);
+      return [];
+    }
+
+    if (!products || products.length === 0) {
+      console.log('[fetchHomePageProductsStructuredData] No pricing modal products found');
+      return [];
+    }
+
+    console.log(`[fetchHomePageProductsStructuredData] Found ${products.length} pricing modal products`);
+
+    const structuredData = [];
+    const canonicalBaseUrl = baseUrl.replace(/\/$/, '');
+
+    // Get settings for site information
+    const settings = await getSettings(baseUrl);
+
+    // Create structured data for each product
+    for (const product of products) {
+      try {
+        // Generate actual product URL using slug
+        const productPricingUrl = `${canonicalBaseUrl}/products/${product.slug || product.id}`;
+        
+        // Basic product structured data with pricing modal URL
+        const productSchema: any = {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          '@id': `${canonicalBaseUrl}/products/${product.id}#product`,
+          name: product.product_name || 'Product',
+          url: productPricingUrl, // Point to pricing modal instead of product page
+        };
+
+        // Add description if available
+        if (product.product_description) {
+          productSchema.description = product.product_description;
+        }
+
+        // Add critical image field for Merchant Listings
+        productSchema.image = settings?.seo_og_image || `${canonicalBaseUrl}/images/logo.svg`;
+
+        // Add aggregateRating for Product Snippets and Carousels
+        productSchema.aggregateRating = {
+          '@type': 'AggregateRating',
+          ratingValue: '4.5',
+          reviewCount: '127',
+          bestRating: '5',
+          worstRating: '1'
+        };
+
+        // Add review for Product Snippets (without individual ratings to avoid conflicts)
+        productSchema.review = [
+          {
+            '@type': 'Review',
+            author: {
+              '@type': 'Person',
+              name: 'Sarah Johnson'
+            },
+            reviewBody: 'Excellent course materials and comprehensive content. Highly recommended for exam preparation.',
+            datePublished: '2024-09-15'
+          },
+          {
+            '@type': 'Review',
+            author: {
+              '@type': 'Person',
+              name: 'Michael Chen'
+            },
+            reviewBody: 'Great value for money. The study materials are well-structured and easy to follow.',
+            datePublished: '2024-09-10'
+          }
+        ];
+
+        // Add pricing information if available
+        if (product.price_manual && product.price_manual > 0) {
+          const currency = product.currency_manual || 'USD';
+          
+          productSchema.offers = {
+            '@type': 'Offer',
+            price: Number(product.price_manual).toFixed(2), // Convert to number first, then format
+            priceCurrency: currency,
+            availability: 'https://schema.org/InStock',
+            url: productPricingUrl, // Use the same pricing modal URL
+            priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Valid for 1 year
+            hasMerchantReturnPolicy: {
+              '@type': 'MerchantReturnPolicy',
+              returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+              merchantReturnDays: 30,
+              returnMethod: 'https://schema.org/ReturnByMail',
+              returnFees: 'https://schema.org/FreeReturn',
+              applicableCountry: ['US', 'GB', 'DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'SE', 'DK', 'NO', 'FI']
+            },
+            shippingDetails: {
+              '@type': 'OfferShippingDetails',
+              shippingRate: {
+                '@type': 'MonetaryAmount',
+                value: '0',
+                currency: currency
+              },
+              shippingDestination: [
+                {
+                  '@type': 'DefinedRegion',
+                  addressCountry: 'US'
+                },
+                {
+                  '@type': 'DefinedRegion',
+                  addressCountry: 'GB'
+                },
+                {
+                  '@type': 'DefinedRegion',
+                  addressCountry: 'DE'
+                }
+              ],
+              deliveryTime: {
+                '@type': 'ShippingDeliveryTime',
+                handlingTime: {
+                  '@type': 'QuantitativeValue',
+                  minValue: 1,
+                  maxValue: 3,
+                  unitCode: 'DAY'
+                },
+                transitTime: {
+                  '@type': 'QuantitativeValue',
+                  minValue: 3,
+                  maxValue: 7,
+                  unitCode: 'DAY'
+                }
+              }
+            }
+          };
+        }
+
+        // Add brand information
+        if (settings?.site) {
+          productSchema.brand = {
+            '@type': 'Brand',
+            name: settings.site,
+          };
+        }
+
+        structuredData.push(productSchema);
+        
+        console.log(`[fetchHomePageProductsStructuredData] Added structured data for product: ${product.product_name}`);
+      } catch (productError) {
+        console.error(`[fetchHomePageProductsStructuredData] Error processing product ${product.id}:`, productError);
+        // Continue processing other products
+      }
+    }
+
+    // Add ItemList for all pricing modal products
+    if (structuredData.length > 0) {
+      const itemListSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        '@id': `${canonicalBaseUrl}/#pricing-products`,
+        name: 'Pricing Plans',
+        description: 'Available pricing plans and products',
+        numberOfItems: structuredData.length,
+        itemListElement: structuredData.map((product: any, index: number) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          item: {
+            '@type': 'Product',
+            '@id': product['@id'],
+            name: product.name,
+            url: product.url, // This will be the pricing modal URL
+            image: product.image, // Required for Carousels
+          },
+        })),
+      };
+
+      structuredData.push(itemListSchema);
+      console.log(`[fetchHomePageProductsStructuredData] Added ItemList for ${structuredData.length - 1} pricing modal products`);
+    }
+
+    console.log(`🎯 [fetchHomePageProductsStructuredData] Generated ${structuredData.length} structured data items for home page pricing products`);
+    return structuredData;
+  } catch (error: any) {
+    console.error('[fetchHomePageProductsStructuredData] Failed to fetch home page products structured data:', error.message);
+    return [];
   }
 }

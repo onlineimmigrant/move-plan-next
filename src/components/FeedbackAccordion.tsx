@@ -171,7 +171,12 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
         .eq('organization_id', organizationId);
 
       if (type === 'product' && productIdToUse) {
-        countQuery = countQuery.eq('product_id', productIdToUse);
+        // For specific product: include both product-specific (product_id = productIdToUse) 
+        // and organization-wide reviews (product_id = 0)
+        countQuery = countQuery.or(`product_id.eq.${productIdToUse},product_id.eq.0`);
+      } else if (type === 'all_products') {
+        // For all products page: include all reviews including global ones
+        // No additional filter needed as we want all reviews for the organization
       }
 
       const { count, error: countError } = await countQuery;
@@ -191,7 +196,8 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
         .eq('organization_id', organizationId);
 
       if (type === 'product' && productIdToUse) {
-        avgQuery = avgQuery.eq('product_id', productIdToUse);
+        // For specific product: include both product-specific and global reviews in average calculation
+        avgQuery = avgQuery.or(`product_id.eq.${productIdToUse},product_id.eq.0`);
       }
 
       const { data: allFeedbackData, error: allFeedbackError } = await avgQuery;
@@ -212,7 +218,8 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
         .range(start, end);
 
       if (type === 'product' && productIdToUse) {
-        feedbackQuery = feedbackQuery.eq('product_id', productIdToUse);
+        // For specific product: include both product-specific and global reviews
+        feedbackQuery = feedbackQuery.or(`product_id.eq.${productIdToUse},product_id.eq.0`);
       }
 
       if (user) {
@@ -231,18 +238,26 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
         return;
       }
 
-      const productIds = [...new Set(feedbackData.map(fb => fb.product_id))];
-      const { data: productsData, error: productsError } = await supabase
-        .from('product')
-        .select('id, slug, product_name')
-        .in('id', productIds)
-        .eq('organization_id', organizationId);
+      const productIds = [...new Set(feedbackData.map(fb => fb.product_id).filter(id => id !== 0))];
+      let productsData: Array<{id: number, slug: string, product_name: string}> = [];
+      
+      if (productIds.length > 0) {
+        const { data, error: productsError } = await supabase
+          .from('product')
+          .select('id, slug, product_name')
+          .in('id', productIds)
+          .eq('organization_id', organizationId);
 
-      if (productsError) throw productsError;
+        if (productsError) throw productsError;
+        productsData = data || [];
+      }
 
       const productMap = new Map(
-        (productsData || []).map(product => [product.id, { slug: product.slug, name: product.product_name }])
+        productsData.map(product => [product.id, { slug: product.slug, name: product.product_name }])
       );
+      
+      // Add entry for global reviews (product_id = 0)
+      productMap.set(0, { slug: 'organization', name: 'Organization Review' });
 
       const newFeedbacks: Feedback[] = feedbackData.map(fb => ({
         id: fb.id.toString(),
@@ -366,10 +381,16 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
                   {feedbacks.map(comment => (
                     <div key={comment.id} className="border-b border-gray-200 pb-6 sm:pb-8 last:border-b-0">
                       {comment.product && (
-                        <p className="text-sm text-teal-600 underline mb-3">
-                          <Link href={`/products/${comment.product.slug}`} className="hover:text-teal-800 transition-colors duration-200">
-                            {comment.product.name}
-                          </Link>
+                        <p className="text-sm mb-3">
+                          {comment.product.slug === 'organization' ? (
+                            <span className="text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-md">
+                              🏢 {comment.product.name}
+                            </span>
+                          ) : (
+                            <Link href={`/products/${comment.product.slug}`} className="text-teal-600 underline hover:text-teal-800 transition-colors duration-200">
+                              {comment.product.name}
+                            </Link>
+                          )}
                         </p>
                       )}
                       <div className="flex justify-between items-start">
