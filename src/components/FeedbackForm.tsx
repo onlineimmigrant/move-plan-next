@@ -19,6 +19,7 @@ interface FeedbackFormProps {
   onSubmit: () => void;
   isOpen: boolean;
   onClose: () => void;
+  isGlobalReview?: boolean; // New prop to indicate this is for organization-wide reviews
 }
 
 // Updated: Star component interface with onMouseEnter and onMouseLeave
@@ -74,7 +75,7 @@ const Star: React.FC<{
   </svg>
 );
 
-const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen, onClose }) => {
+const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen, onClose, isGlobalReview = false }) => {
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState<string>('');
@@ -377,6 +378,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
 
     const userIdToUse = isAdmin && selectedUserId ? selectedUserId : user.id;
     const submittedAtValue = isAdmin ? new Date(submittedAt).toISOString() : new Date().toISOString();
+    const productIdToSubmit = isGlobalReview ? 0 : productId; // Use 0 for global reviews
 
     const { error: insertError } = await supabase
       .from('feedback_feedbackproducts')
@@ -389,7 +391,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
         user_id: userIdToUse,
         user_name: userName.trim(),
         user_surname: userSurname.trim(),
-        product_id: productId,
+        product_id: productIdToSubmit,
       });
 
     if (insertError) {
@@ -452,7 +454,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
           onMouseDown={handleDragStart}
         >
           <h3 id="modal-title" className="text-xl font-bold text-gray-900">
-            Write a Review
+            {isGlobalReview ? 'Write an Organization Review' : 'Write a Review'}
           </h3>
           <button
             onClick={(e) => {
@@ -477,6 +479,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
             <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md p-3 mb-6" role="status">
               {success}
             </p>
+          )}
+
+          {isGlobalReview && (
+            <div className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md p-3 mb-6">
+              <p><strong>Organization Review:</strong> This review will be associated with all products from this organization and will appear on individual product pages as well as the general product listing.</p>
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
