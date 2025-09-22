@@ -3,6 +3,65 @@ import { getSupportedLocales } from './lib/language-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSettings } from './lib/getSettings';
 
+// Define known static routes that should always be handled by next-intl
+const KNOWN_ROUTES = [
+  '/',
+  '/about-us',
+  '/account',
+  '/admin',
+  '/basket',
+  '/become-affiliate-partner',
+  '/blog',
+  '/cancel',
+  '/checkout',
+  '/color-shades',
+  '/contact',
+  '/course',
+  '/developers',
+  '/education-hub',
+  '/faq',
+  '/features',
+  '/help-center',
+  '/investors',
+  '/login',
+  '/products',
+  '/referral-bonuses',
+  '/register',
+  '/register-free-trial',
+  '/reset-password',
+  '/sqe-2',
+  '/success',
+  '/support',
+  '/terms',
+  '/testik',
+  '/university-partner-programme'
+];
+
+// Check if a path matches known route patterns
+function isKnownRoute(pathname: string): boolean {
+  // Remove locale prefix for checking
+  const cleanPath = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
+  
+  // Check exact matches
+  if (KNOWN_ROUTES.includes(cleanPath)) {
+    return true;
+  }
+  
+  // Check known dynamic route patterns
+  const dynamicPatterns = [
+    /^\/sqe-2\/[^\/]+$/,
+    /^\/account\/[^\/]+$/,
+    /^\/admin\/[^\/]+$/,
+    /^\/features\/[^\/]+$/,
+    /^\/education-hub\/[^\/]+$/,
+    /^\/products\/[^\/]+$/,
+    // Add the [locale]/[slug] pattern - this should be handled by the component
+    // We'll let it through to next-intl but mark it for validation
+  ];
+  
+  return dynamicPatterns.some(pattern => pattern.test(cleanPath));
+}
+
 export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
@@ -64,6 +123,17 @@ export default async function middleware(request: NextRequest) {
     localePrefix: 'as-needed', // English has no prefix, others have prefixes
     localeDetection: false // Disable automatic browser language detection
   });
+
+  // For potentially dynamic content routes (single slug patterns), let them through
+  // but mark them for component-level validation
+  const cleanPath = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
+  const isDynamicSlugPattern = /^\/[^\/]+$/.test(cleanPath) && cleanPath !== '/';
+  
+  if (isDynamicSlugPattern && !isKnownRoute(pathname)) {
+    console.log('🔍 DYNAMIC ROUTE: Allowing potential [locale]/[slug] route:', pathname);
+    // Let it through to next-intl but the component will validate if content exists
+    // If no content exists, the component should call notFound()
+  }
 
   const response = intlMiddleware(request);
   

@@ -455,6 +455,46 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
     return generateFAQPageSEO(baseUrl, organizationId);
   }
 
+  // Check if this is a blog post (any path that could be a post slug)
+  // Skip known static pages and only check potential blog posts
+  const staticPages = ['/about', '/contact', '/products', '/services', '/privacy-policy', '/terms-of-service', '/cookie-policy', '/blog', '/investors'];
+  const isStaticPage = staticPages.includes(pathname) || pathname.startsWith('/products/') || pathname.startsWith('/api/');
+  
+  console.log('[generateDynamicPageSEO] Blog post detection debug:', {
+    pathname,
+    isStaticPage,
+    pathnameLengthCheck: pathname.length > 1,
+    pathIsNotRoot: pathname !== '/',
+    shouldCheckBlogPost: !isStaticPage && pathname !== '/' && pathname.length > 1
+  });
+  
+  if (!isStaticPage && pathname !== '/' && pathname.length > 1) {
+    console.log('[generateDynamicPageSEO] Potential blog post detected, checking for post:', pathname);
+    
+    try {
+      // Try to fetch post data directly from Supabase instead of using fetch
+      const slug = pathname.replace(/^\//, ''); // Remove leading slash
+      console.log('[generateDynamicPageSEO] Searching for post with slug:', slug, 'organizationId:', organizationId);
+      
+      const { data: post, error: postError } = await supabaseServer
+        .from('blog_post')
+        .select('*')
+        .eq('slug', slug)
+        .eq('organization_id', organizationId)
+        .eq('display_this_post', true)
+        .single();
+      
+      if (post && !postError) {
+        console.log('[generateDynamicPageSEO] Found blog post, generating Article structured data for:', post.title);
+        return generateBlogPostSEO(post, baseUrl, organizationId, pathname);
+      } else {
+        console.log('[generateDynamicPageSEO] No blog post found for slug:', slug, 'error:', postError?.message || 'No data');
+      }
+    } catch (error) {
+      console.error('[generateDynamicPageSEO] Error checking for blog post:', error);
+    }
+  }
+
   const settings = await getSettings(baseUrl);
   const siteName = settings?.site || 'App';
   
@@ -626,6 +666,92 @@ async function generateFAQPageSEO(baseUrl: string, organizationId: string): Prom
   }
 
   console.log('[generateFAQPageSEO] Generated FAQ page SEO with', validFAQs.length, 'FAQs');
+  return seoData;
+}
+
+// Generate SEO data for blog posts with Article structured data
+async function generateBlogPostSEO(post: any, baseUrl: string, organizationId: string, pathname: string): Promise<SEOData> {
+  const settings = await getSettings(baseUrl);
+  const siteName = settings?.site || 'App';
+  const currentDomain = settings?.domain ? `https://${settings.domain}` : baseUrl;
+  
+  const canonicalUrl = `${currentDomain}${pathname}`;
+  const pageTitle = post.title || 'Blog Post';
+  const pageDescription = post.description || `Learn about ${post.title.toLowerCase()}`;
+  
+  // Generate Article JSON-LD structured data
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "description": pageDescription,
+    "url": canonicalUrl,
+    "datePublished": post.created_on,
+    "dateModified": post.last_modified,
+    "author": post.is_company_author ? {
+      "@type": "Organization",
+      "name": siteName,
+      "url": currentDomain
+    } : {
+      "@type": "Person", 
+      "name": post.author ? `${post.author.first_name} ${post.author.last_name}` : "Author",
+      "url": `${currentDomain}/about-us`
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": siteName,
+      "url": currentDomain,
+      "logo": {
+        "@type": "ImageObject",
+        "url": settings?.image || `${currentDomain}/images/logo.svg`
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": canonicalUrl
+    },
+    "image": post.main_photo || post.additional_photo || `${currentDomain}/images/default-article.jpg`,
+    "articleSection": post.section || "General",
+    "keywords": post.keywords || post.title,
+    "wordCount": post.content ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0,
+    "inLanguage": "en"
+  };
+
+  const seoData: SEOData = {
+    title: `${pageTitle} | ${siteName}`,
+    description: pageDescription,
+    keywords: post.keywords ? [post.keywords] : [post.title],
+    canonicalUrl,
+    seo_og_image: post.main_photo || post.additional_photo || settings?.seo_og_image,
+    seo_og_url: canonicalUrl,
+    structuredData: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: pageTitle,
+        description: pageDescription,
+        url: canonicalUrl,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: getBreadcrumbStructuredData({
+          pathname,
+          domain: baseUrl,
+          overrides: [{ segment: pathname.replace(/^\//, ''), label: pageTitle }],
+          extraCrumbs: [],
+        }),
+      },
+      articleJsonLd // Add the Article structured data
+    ],
+    faqs: [],
+  };
+
+  // Add FAQ structured data for this blog post if available
+  const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
+  seoData.faqs = pageFAQs;
+
+  console.log('[generateBlogPostSEO] Generated blog post SEO with Article structured data for:', pageTitle);
   return seoData;
 }
 
