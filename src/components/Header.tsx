@@ -130,17 +130,9 @@ const Header: React.FC<HeaderProps> = ({
   // Memoize callback functions for better performance
   const handleHomeNavigation = useCallback(() => {
     setIsOpen(false);
-    // Preserve current locale when navigating to home page
-    const pathSegments = pathname.split('/');
-    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
-    const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
-    
-    if (currentLocale) {
-      router.push(`/${currentLocale}`);
-    } else {
-      router.push('/');
-    }
-  }, [router, pathname]);
+    // Always navigate to the actual home page (root) - don't preserve locale
+    router.push('/');
+  }, [router]);
 
   const handleLoginModal = useCallback(() => {
     setIsOpen(false);
@@ -155,17 +147,9 @@ const Header: React.FC<HeaderProps> = ({
   const handleLogout = useCallback(() => {
     setIsOpen(false);
     logout();
-    // Preserve current locale when navigating to home page after logout
-    const pathSegments = pathname.split('/');
-    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
-    const currentLocale = pathSegments[1] && supportedLocales.includes(pathSegments[1]) ? pathSegments[1] : null;
-    
-    if (currentLocale) {
-      router.push(`/${currentLocale}`);
-    } else {
-      router.push('/');
-    }
-  }, [logout, router, pathname]);
+    // Always navigate to the actual home page (root) after logout
+    router.push('/');
+  }, [logout, router]);
 
   const handleMenuToggle = useCallback(() => {
     setIsOpen(!isOpen);
@@ -349,7 +333,7 @@ const Header: React.FC<HeaderProps> = ({
                 ) : (
                   <LocalizedLink
                     href={item.url_name}
-                    className="cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group antialiased"
+                    className="cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50  rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group antialiased"
                     title={translatedDisplayName}
                     aria-label={t.goTo(translatedDisplayName)}
                   >
