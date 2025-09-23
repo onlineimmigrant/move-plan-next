@@ -47,7 +47,18 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
     // Iterate over each segment in the path to create breadcrumbs
     pathSegments.forEach((segment, index) => {
       accumulatedPath += `/${segment}`;
-      let formattedLabel = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+      
+      // Decode URL-encoded segment (handles Cyrillic and other non-ASCII characters)
+      let decodedSegment: string;
+      try {
+        decodedSegment = decodeURIComponent(segment);
+      } catch (error) {
+        // If decoding fails, use the original segment
+        console.warn('Failed to decode URL segment:', segment, error);
+        decodedSegment = segment;
+      }
+      
+      let formattedLabel = decodedSegment.charAt(0).toUpperCase() + decodedSegment.slice(1).replace(/-/g, ' ');
 
       // Check if there is an override for this segment
       const override = memoizedOverrides.find((o) => o.segment === segment);
