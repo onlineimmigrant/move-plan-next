@@ -48,10 +48,10 @@ export default function ModernLanguageSwitcher({
     const segments = pathname.split('/');
     const pathWithoutLocale = urlLocale ? segments.slice(2).join('/') : segments.slice(1).join('/');
     
-    // Handle English (default locale) differently - no prefix
+    // Handle the database default locale differently - no prefix
     let newPath: string;
-    if (newLocale === 'en') {
-      // English doesn't use a prefix, go to root or path without locale prefix
+    if (newLocale === defaultLanguage) {
+      // Default language doesn't use a prefix, go to root or path without locale prefix
       newPath = pathWithoutLocale ? `/${pathWithoutLocale}` : '/';
     } else {
       // Other languages use locale prefix
