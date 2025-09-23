@@ -25,8 +25,8 @@ export default function LocalizedLink({
   const pathname = usePathname();
   const { settings } = useSettings();
   
-  const currentLocale = getCurrentLocale(pathname);
   const defaultLocale = settings?.language || 'en';
+  const currentLocale = getCurrentLocale(pathname, defaultLocale);
   
   // Create localized URL that preserves current language
   const localizedHref = createLocalizedUrl(href, currentLocale, defaultLocale);
