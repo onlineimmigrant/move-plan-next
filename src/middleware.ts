@@ -107,11 +107,11 @@ export default async function middleware(request: NextRequest) {
   // The database default language is used for content display, not URL structure
 
   // Use next-intl middleware with dynamic supported locales
-  // Always use 'en' as the default locale for URL structure, regardless of database setting
+  // Use the database default language as the default locale (no prefix)
   const intlMiddleware = createMiddleware({
     locales: supportedLocales,
-    defaultLocale: 'en', // Always use English as the default (no prefix)
-    localePrefix: 'as-needed', // English has no prefix, others have prefixes
+    defaultLocale: defaultLocale, // Use database default language (no prefix)
+    localePrefix: 'as-needed', // Default language has no prefix, others have prefixes
     localeDetection: false // Disable automatic browser language detection
   });
 
