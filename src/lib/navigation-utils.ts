@@ -3,9 +3,10 @@ import { DEFAULT_SUPPORTED_LOCALES, DEFAULT_LOCALE, type Locale } from './langua
 /**
  * Get the current locale from the pathname
  * @param pathname - Current pathname
+ * @param defaultLocale - Default locale from database settings
  * @returns Current locale or default locale
  */
-export function getCurrentLocale(pathname: string): Locale {
+export function getCurrentLocale(pathname: string, defaultLocale: string = DEFAULT_LOCALE): Locale {
   const pathSegments = pathname.split('/').filter(Boolean);
   const firstSegment = pathSegments[0];
   
@@ -13,7 +14,8 @@ export function getCurrentLocale(pathname: string): Locale {
     return firstSegment as Locale;
   }
   
-  return DEFAULT_LOCALE;
+  // Return the database default locale instead of hardcoded DEFAULT_LOCALE
+  return defaultLocale as Locale;
 }
 
 /**
