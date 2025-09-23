@@ -48,8 +48,16 @@ export default function ModernLanguageSwitcher({
     const segments = pathname.split('/');
     const pathWithoutLocale = urlLocale ? segments.slice(2).join('/') : segments.slice(1).join('/');
     
-    // Always use the locale prefix approach - let middleware handle the rest
-    const newPath = pathWithoutLocale ? `/${newLocale}/${pathWithoutLocale}` : `/${newLocale}`;
+    // Handle English (default locale) differently - no prefix
+    let newPath: string;
+    if (newLocale === 'en') {
+      // English doesn't use a prefix, go to root or path without locale prefix
+      newPath = pathWithoutLocale ? `/${pathWithoutLocale}` : '/';
+    } else {
+      // Other languages use locale prefix
+      newPath = pathWithoutLocale ? `/${newLocale}/${pathWithoutLocale}` : `/${newLocale}`;
+    }
+    
     router.push(newPath);
   };
 

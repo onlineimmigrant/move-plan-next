@@ -102,18 +102,9 @@ export default async function middleware(request: NextRequest) {
     console.error('Middleware - Error fetching settings:', error);
   }
 
-  // Handle root path explicitly - redirect to default locale if it's not 'en'
-  // This ensures the database default language is respected at the root
-  if (pathname === '/' && defaultLocale !== 'en') {
-    console.log('🔄 REDIRECTING: Root path to default locale:', defaultLocale);
-    return NextResponse.redirect(new URL(`/${defaultLocale}`, request.url));
-  }
-  
-  // Also handle explicit /en paths - redirect to root if English is not the database default
-  if (pathname === '/en' && defaultLocale !== 'en') {
-    console.log('🔄 REDIRECTING: /en to default locale:', defaultLocale);
-    return NextResponse.redirect(new URL(`/${defaultLocale}`, request.url));
-  }
+  // Note: We should NOT force redirects based on database default language
+  // The home page should always be accessible at `/` and language switching should work
+  // The database default language is used for content display, not URL structure
 
   // Use next-intl middleware with dynamic supported locales
   // Always use 'en' as the default locale for URL structure, regardless of database setting
