@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 const supabaseServer = supabase;
 import { getOrganizationId, getSettings } from '../getSettings';
 import { getBreadcrumbStructuredData } from '../getBreadcrumbs';
+import { SECTION_ROUTES } from '../postUtils';
 
 export interface SEOData {
   title?: string;
@@ -173,8 +174,71 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
       }
     }
 
-    // If no page found in database, create dynamic page metadata
+    // If no page found in database, check if this is home page first
     if (!page) {
+      // Check if this is the home page (pathname can be '/', '/home', or empty string after normalization)
+      const isHomePage = normalizedPath === '' || normalizedPath === '/' || normalizedPath === '/home';
+      
+      if (isHomePage) {
+        console.log('[fetchPageSEOData] No page found but this is home page, generating home page SEO');
+        
+        // Generate home page SEO data with products structured data
+        const settings = await getSettings(baseUrl);
+        const siteName = settings?.site || 'App';
+        const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
+        
+        const pageTitle = generatePageTitle('/');
+        const pageDescription = generatePageDescription('/');
+        
+        const seoData: SEOData = {
+          title: `${pageTitle} | ${siteName}`,
+          description: pageDescription,
+          keywords: generatePageKeywords('/'),
+          canonicalUrl: canonicalUrl,
+          seo_og_image: '',
+          seo_og_url: canonicalUrl,
+          structuredData: [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'WebPage',
+              name: `${pageTitle} | ${siteName}`,
+              description: pageDescription,
+              url: canonicalUrl,
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: getBreadcrumbStructuredData({
+                pathname: pathname,
+                domain: baseUrl,
+                overrides: [{ segment: pathname, label: pageTitle }],
+                extraCrumbs: [],
+              }),
+            }
+          ],
+          faqs: [],
+        };
+
+        // Add home page products structured data
+        try {
+          console.log('[fetchPageSEOData] Detected home page (no DB entry), adding pricing modal products structured data');
+          const homePageProductsData = await fetchHomePageProductsStructuredData(baseUrl, organizationId);
+          if (homePageProductsData.length > 0) {
+            seoData.structuredData.push(...homePageProductsData);
+            console.log('[fetchPageSEOData] Added', homePageProductsData.length, 'pricing modal product structured data items');
+          }
+        } catch (error) {
+          console.error('[fetchPageSEOData] Error adding home page products structured data:', error);
+        }
+
+        // Add FAQ structured data for the home page
+        const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
+        seoData.faqs = pageFAQs;
+
+        console.log('[fetchPageSEOData] Generated home page SEO (no DB entry) with', seoData.structuredData.length, 'structured data items');
+        return seoData;
+      }
+      
       console.log('[fetchPageSEOData] No page found, generating dynamic metadata for:', normalizedPath);
       return generateDynamicPageSEO(normalizedPath, baseUrl, organizationId);
     }
@@ -376,64 +440,7 @@ async function addFAQStructuredData(
 async function generateDynamicPageSEO(pathname: string, baseUrl: string, organizationId: string): Promise<SEOData> {
   console.log('[generateDynamicPageSEO] Called with pathname:', JSON.stringify(pathname), 'length:', pathname.length);
   
-  // Check if this is the home page (pathname can be '/', '/home', or empty string after normalization)
-  if (pathname === '/' || pathname === '/home' || pathname === '') {
-    console.log('[generateDynamicPageSEO] Detected home page, adding pricing modal products structured data');
-    try {
-      const homePageProductsData = await fetchHomePageProductsStructuredData(baseUrl, organizationId);
-      if (homePageProductsData.length > 0) {
-        console.log('[generateDynamicPageSEO] Added', homePageProductsData.length, 'pricing modal product structured data items');
-      }
-      
-      // Continue with regular home page SEO generation but add products data
-      const settings = await getSettings(baseUrl);
-      const siteName = settings?.site || 'App';
-      const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
-      
-      const pageTitle = generatePageTitle('/');
-      const pageDescription = generatePageDescription('/');
-      
-      const seoData: SEOData = {
-        title: `${pageTitle} | ${siteName}`,
-        description: pageDescription,
-        keywords: '',
-        canonicalUrl: canonicalUrl,
-        seo_og_image: '',
-        seo_og_url: canonicalUrl,
-        structuredData: [
-          {
-            '@context': 'https://schema.org',
-            '@type': 'WebPage',
-            name: `${pageTitle} | ${siteName}`,
-            description: pageDescription,
-            url: canonicalUrl,
-          },
-          {
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: getBreadcrumbStructuredData({
-              pathname: pathname,
-              domain: baseUrl,
-              overrides: [{ segment: pathname, label: pageTitle }],
-              extraCrumbs: [],
-            }),
-          },
-          ...homePageProductsData, // Add the products structured data
-        ],
-        faqs: [],
-      };
-
-      // Add FAQ structured data for the home page
-      const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
-      seoData.faqs = pageFAQs;
-
-      console.log('[generateDynamicPageSEO] Generated home page SEO with', seoData.structuredData.length, 'structured data items');
-      return seoData;
-    } catch (error) {
-      console.error('[generateDynamicPageSEO] Error adding home page products structured data:', error);
-      // Fall through to regular dynamic page generation if there's an error
-    }
-  }
+  // Note: Home page handling is done in fetchPageSEOData to avoid duplication
 
   // Check if this is a product page
   const productMatch = pathname.match(/^\/products\/([^\/]+)$/);
@@ -460,20 +467,35 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
   const staticPages = ['/about', '/contact', '/products', '/services', '/privacy-policy', '/terms-of-service', '/cookie-policy', '/blog', '/investors'];
   const isStaticPage = staticPages.includes(pathname) || pathname.startsWith('/products/') || pathname.startsWith('/api/');
   
+  // Check if this is a post-based route from postUtils
+  const isPostBasedRoute = Object.values(SECTION_ROUTES).some(route => pathname.startsWith(route)) || 
+                           (!isStaticPage && pathname !== '/' && pathname.length > 1);
+  
   console.log('[generateDynamicPageSEO] Blog post detection debug:', {
     pathname,
     isStaticPage,
+    isPostBasedRoute,
     pathnameLengthCheck: pathname.length > 1,
     pathIsNotRoot: pathname !== '/',
-    shouldCheckBlogPost: !isStaticPage && pathname !== '/' && pathname.length > 1
+    shouldCheckBlogPost: isPostBasedRoute
   });
   
-  if (!isStaticPage && pathname !== '/' && pathname.length > 1) {
+  if (isPostBasedRoute) {
     console.log('[generateDynamicPageSEO] Potential blog post detected, checking for post:', pathname);
     
     try {
-      // Try to fetch post data directly from Supabase instead of using fetch
-      const slug = pathname.replace(/^\//, ''); // Remove leading slash
+      // Extract slug from various route patterns
+      let slug = pathname.replace(/^\//, ''); // Remove leading slash
+      
+      // Handle sectioned routes (e.g., /sqe-2/some-post -> some-post)
+      for (const [sectionName, route] of Object.entries(SECTION_ROUTES)) {
+        if (pathname.startsWith(route + '/')) {
+          slug = pathname.replace(route + '/', '');
+          console.log(`[generateDynamicPageSEO] Detected ${sectionName} section route, extracted slug: ${slug}`);
+          break;
+        }
+      }
+      
       console.log('[generateDynamicPageSEO] Searching for post with slug:', slug, 'organizationId:', organizationId);
       
       const { data: post, error: postError } = await supabaseServer
