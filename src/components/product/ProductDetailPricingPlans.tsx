@@ -270,21 +270,21 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
           tabIndex={isOutOfStock ? -1 : 0}
           onClick={() => !isOutOfStock && handlePlanSelect(plan)}
           onKeyDown={(e) => !isOutOfStock && handleKeyDown(e, plan, idx)}
-          aria-label={`Select ${plan.package || 'Unknown'} plan, priced at ${
+          aria-label={`${t.selectPlan} ${plan.package || t.unknown} plan, priced at ${
             plan.currency_symbol
           }${plan.is_promotion && plan.promotion_price ? plan.promotion_price : plan.price}, ${
             normalizedStatus === 'in stock'
-              ? 'in stock'
+              ? t.inStock.toLowerCase()
               : normalizedStatus === 'low stock'
-              ? 'low stock'
-              : 'out of stock'
-          }${plan.is_promotion && plan.promotion_price !== undefined ? ', on sale' : ''}`}
+              ? t.lowStock.toLowerCase()
+              : t.outOfStock.toLowerCase()
+          }${plan.is_promotion && plan.promotion_price !== undefined ? `, ${t.onSale}` : ''}`}
         >
           <div className="relative pt-4 sm:pt-5 pb-5 sm:pb-6 min-h-[120px]">
             {/* Promotion Badge (Top-Left) */}
             {plan.is_promotion && plan.promotion_price !== undefined && (
               <span className="absolute top-0 right-0 -translate-y-1/3  px-2.5 py-1 text-xs font-medium text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full z-10 shadow-sm">
-                {plan.promotion_percent}% Off
+                {plan.promotion_percent}{t.percentOff}
               </span>
             )}
 
@@ -294,27 +294,27 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                 if (normalizedStatus === 'in stock') {
                   return (
                     <span className="inline-block px-2 py-0.5 text-xs font-medium text-green-700 bg-green-50 rounded-full shadow-sm">
-                      In Stock
+                      {t.inStock}
                     </span>
                   );
                 }
                 if (normalizedStatus === 'low stock') {
                   return (
                     <span className="inline-block px-2 py-0.5 text-xs font-medium text-yellow-700 bg-yellow-50 rounded-full shadow-sm">
-                      Low Stock
+                      {t.lowStock}
                     </span>
                   );
                 }
                 if (normalizedStatus === 'out of stock') {
                   return (
                     <span className="inline-block px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full shadow-sm">
-                      Out of Stock
+                      {t.outOfStock}
                     </span>
                   );
                 }
                 return (
                   <span className="inline-block px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full shadow-sm">
-                    Unknown
+                    {t.unknown}
                   </span>
                 );
               })()}
@@ -331,7 +331,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                     isActive ? 'text-sky-600' : 'text-gray-800'
                   } ${isOutOfStock ? 'text-gray-400' : ''}`}
                 >
-                  {plan.package || 'Product'}
+                  {plan.package || t.product}
                 </h2>
               </div>
             </div>
@@ -378,8 +378,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
       <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
         {activePlanCount === 0 || (selectedPlan && (selectedPlan.price === 0 || (selectedPlan.is_promotion && selectedPlan.promotion_price === 0))) ? (
           <Link href="/register-free-trial">
-            <Button variant="start" aria-label="Register for free trial">
-              Register
+            <Button variant="start" aria-label={t.registerForFreeTrial}>
+              {t.register}
               <RightArrowDynamic />
             </Button>
           </Link>

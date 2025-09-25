@@ -5,7 +5,7 @@ import { memo, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
-import ContactForm from '@/components/ContactForm';
+import ContactForm from '@/components/contact/ContactForm';
 import { useSettings } from '@/context/SettingsContext';
 
 const ContactPageClient = memo(() => {

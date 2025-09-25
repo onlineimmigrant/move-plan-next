@@ -1,0 +1,74 @@
+{
+    "resources": [
+       
+    
+        {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/property_plan_clean.svg",
+            "resource_type": "image",
+            "object_type": "0"
+          },
+  
+          
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/102m_plan.svg",
+            "resource_type": "image",
+            "object_type": "1"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_1_plan.svg",
+            "resource_type": "image",
+            "object_type": "2"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_2_plan.svg",
+            "resource_type": "image",
+            "object_type": "3"
+          },
+   
+
+  
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_3_plan.svg",
+            "resource_type": "image",
+            "object_type": "4"
+          },
+
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_4_plan.svg",
+            "resource_type": "image",
+            "object_type": "5"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/toilet_plan.svg",
+            "resource_type": "image",
+            "object_type": "6"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/kitchen_plan.svg",
+            "resource_type": "image",
+            "object_type": "7"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/entrance_ladder_plan.svg",
+            "resource_type": "image",
+            "object_type": "8"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/entrance_lift_plan.svg",
+            "resource_type": "image",
+            "object_type": "8"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/entrance_priemki_plan.svg",
+            "resource_type": "image",
+            "object_type": "8"
+          },
+ 
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/102m_plan_with_entrance.svg",
+            "resource_type": "image",
+            "object_type": "8"
+          }
+          
+    ]
+  }

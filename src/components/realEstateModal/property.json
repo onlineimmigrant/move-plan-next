@@ -1,0 +1,101 @@
+{
+    "resources": [
+        {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/property_sale.webp",
+            "resource_type": "image",
+            "object_type": "general"
+          },
+
+        {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_3_1.jpg",
+            "resource_type": "image",
+            "object_type": "room_3"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_3_2.jpg",
+            "resource_type": "image",
+            "object_type": "room_3"
+          },
+
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_3_3.jpg",
+            "resource_type": "image",
+            "object_type": "room_3"
+          },
+
+    
+
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_2_1.jpg",
+            "resource_type": "image",
+            "object_type": "room_2"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_2_2.jpg",
+            "resource_type": "image",
+            "object_type": "room_2"
+          },
+
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_2_3.jpg",
+            "resource_type": "image",
+            "object_type": "room_2"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_2_4.jpg",
+            "resource_type": "image",
+            "object_type": "room_2"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_2_5.jpg",
+            "resource_type": "image",
+            "object_type": "room_2"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_2_6.jpg",
+            "resource_type": "image",
+            "object_type": "room_2"
+          },
+ 
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_2_8.jpg",
+            "resource_type": "image",
+            "object_type": "room_2"
+          },
+  
+
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_1_1.jpg",
+            "resource_type": "image",
+            "object_type": "room_1"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_1_2.jpg",
+            "resource_type": "image",
+            "object_type": "room_1"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/room_4_1.jpg",
+            "resource_type": "image",
+            "object_type": "room_4"
+          },
+
+
+          {
+            "public_id": "/images/overview_video.mp4",
+            "resource_type": "video",
+            "object_type": "general"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/video_room_1_room_2.mp4",
+            "resource_type": "video",
+            "object_type": "room_2"
+          },
+          {
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/property_thumbnail.webp",
+            "resource_type": "image",
+            "object_type": "general"
+          }
+   
+    ]
+  }

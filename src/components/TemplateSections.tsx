@@ -38,6 +38,7 @@ interface TemplateSectionData {
   organization_id: string | null;
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
+  is_real_estate_modal?: boolean;
 }
 
 const TemplateSections: React.FC = () => {

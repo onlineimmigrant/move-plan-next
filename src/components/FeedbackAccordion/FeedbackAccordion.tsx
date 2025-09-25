@@ -7,6 +7,7 @@ import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { v4 as uuidv4 } from 'uuid';
 import FeedbackForm from './FeedbackForm';
 import Loading from '@/ui/Loading';
+import { useFeedbackTranslations } from './useFeedbackTranslations';
 
 // Interfaces
 interface User {
@@ -110,6 +111,7 @@ const renderStars = (rating: number, isHeader = false) => {
 
 // FeedbackAccordion Component
 const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageSize = 10 }) => {
+  const { t } = useFeedbackTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [overallAvgRating, setOverallAvgRating] = useState<number | null>(null);
@@ -121,6 +123,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
   const [productId, setProductId] = useState<number | null>(null);
   const [contentHeight, setContentHeight] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -163,6 +166,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
       }
 
       const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
 
       let countQuery = supabase
         .from('feedback_feedbackproducts')
@@ -257,7 +261,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
       );
       
       // Add entry for global reviews (product_id = 0)
-      productMap.set(0, { slug: 'organization', name: 'Organization Review' });
+      productMap.set(0, { slug: 'organization', name: t.organizationReview });
 
       const newFeedbacks: Feedback[] = feedbackData.map(fb => ({
         id: fb.id.toString(),
@@ -276,7 +280,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
       setFeedbacks(prev => (loadMore ? [...prev, ...newFeedbacks] : newFeedbacks));
     } catch (error: any) {
       console.error('Error fetching feedbacks:', error);
-      setError('Failed to load feedback. Please try again.');
+      setError(t.failedToLoadFeedback);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -298,6 +302,18 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
 
   if (isLoading) return <div className="text-center text-gray-500 py-12"><Loading /></div>;
   if (error) return <p className="text-center text-red-500 py-12">{error}</p>;
+  
+  // Hide component if no reviews exist and user is not authenticated
+  if (totalApprovedFeedbacks === 0 && !user) {
+    console.log('FeedbackAccordion: Hidden due to no reviews and no authenticated user');
+    return null;
+  }
+
+  console.log('FeedbackAccordion: Visible -', {
+    totalApprovedFeedbacks,
+    hasUser: !!user,
+    userEmail: user?.email || 'No email'
+  });
 
   return (
     <section className="py-8 bg-transparent">
@@ -308,6 +324,7 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
             className="w-full text-left py-6 px-4 sm:px-6 flex justify-between items-center text-gray-900 hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 rounded-t-lg transition-all duration-300 ease-in-out"
             aria-expanded={isOpen}
             aria-controls="feedback-content"
+            aria-label={t.expandCollapseReviews}
           >
             <div className="flex items-center space-x-1 sm:space-x-4">
               {overallAvgRating ? (
@@ -325,11 +342,11 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
               ) : (
                 <p className="text-base sm:text-lg text-gray-500"></p>
               )}
-              <span className="ml-2 text-base sm:text-xl font-semibold">Customer Reviews</span>
+              <span className="ml-2 text-base sm:text-xl font-semibold">{t.customerReviews}</span>
             </div>
             <div className="flex items-center space-x-2">
               <span className="hidden sm:flex text-base sm:text-lg text-gray-600">
-                {totalApprovedFeedbacks} {totalApprovedFeedbacks === 1 ? 'review' : 'reviews'}
+                {totalApprovedFeedbacks} {totalApprovedFeedbacks === 1 ? t.review : t.reviews}
               </span>
               <ChevronDownIcon
                 className={`h-5 w-5 sm:h-6 sm:w-6 text-gray-500 transform transition-transform duration-300 ease-in-out ${
@@ -355,9 +372,9 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
                 <button
                   onClick={toggleForm}
                   className="px-6 py-3 bg-teal-600 text-white rounded-lg shadow-sm hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-all duration-200"
-                  aria-label="Open review form modal"
+                  aria-label={t.openReviewFormModal}
                 >
-                  Write Review
+                  {t.writeReview}
                 </button>
               </div>
             )}
@@ -372,8 +389,8 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
 
             {feedbacks.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-lg">
-                <p className="text-gray-500 text-lg mb-2">No reviews yet</p>
-                <p className="text-gray-400 text-sm">Be the first to share your experience!</p>
+                <p className="text-gray-500 text-lg mb-2">{t.noReviewsYet}</p>
+                <p className="text-gray-400 text-sm">{t.beTheFirstToReview}</p>
               </div>
             ) : (
               <>
@@ -438,10 +455,10 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
                             />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                           </svg>
-                          Loading...
+                          {t.loading}
                         </span>
                       ) : (
-                        <span className="mb-8">Load more ...</span>
+                        <span className="mb-8">{t.loadMore}</span>
                       )}
                     </button>
                   </div>

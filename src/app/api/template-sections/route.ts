@@ -49,6 +49,7 @@ export async function GET(request: Request) {
         organization_id,
         is_reviews_section,
         is_help_center_section,
+        is_real_estate_modal,
         website_templatesection_metrics!templatesection_id (
           metric_id,
           website_metric!metric_id (

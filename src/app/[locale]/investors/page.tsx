@@ -11,7 +11,7 @@ import Masonry from '@/components/AnimateElements/Masonry';
 import Stepper from '@/components/AnimateElements/Stepper';
 import Privacy from '@/components/Privacy';
 import Terms from '@/components/Terms';
-import ContactModal from '@/components/ContactModal';
+import ContactModal from '@/components/contact/ContactModal';
 
 // Define TypeScript interfaces for Stepper
 interface StepContent {
