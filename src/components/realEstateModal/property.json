@@ -82,15 +82,11 @@
 
 
           {
-            "public_id": "/images/overview_video.mp4",
+            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/overview_video.mp4",
             "resource_type": "video",
             "object_type": "general"
           },
-          {
-            "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/video_room_1_room_2.mp4",
-            "resource_type": "video",
-            "object_type": "room_2"
-          },
+
           {
             "public_id": "https://rgbmdfaoowqbgshjuwwm.supabase.co/storage/v1/object/public/mstislavca/property_thumbnail.webp",
             "resource_type": "image",
