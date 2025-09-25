@@ -7,6 +7,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'Logout',
     profile: 'Profile',
     login: 'Login',
+    signIn: 'Sign In',
+    signOut: 'Sign Out',
+    
+    // Profile and account related
+    manageAccount: 'Manage your account settings',
+    accountSettings: 'Account settings and preferences',
+    getHelpSupport: 'Get help and support',
+    signOutAccount: 'Sign out of the account',
     
     // Aria labels and accessibility
     goToHomepage: 'Go to homepage',
@@ -31,6 +39,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'Cerrar sesión',
     profile: 'Perfil',
     login: 'Iniciar sesión',
+    signIn: 'Iniciar Sesión',
+    signOut: 'Cerrar Sesión',
+    
+    // Profile and account related
+    manageAccount: 'Gestiona la configuración de tu cuenta',
+    accountSettings: 'Configuración y preferencias de la cuenta',
+    getHelpSupport: 'Obtener ayuda y soporte',
+    signOutAccount: 'Cerrar sesión de la cuenta',
     
     // Aria labels and accessibility
     goToHomepage: 'Ir a la página principal',
@@ -55,6 +71,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'Se déconnecter',
     profile: 'Profil',
     login: 'Se connecter',
+    signIn: 'Se Connecter',
+    signOut: 'Se Déconnecter',
+    
+    // Profile and account related
+    manageAccount: 'Gérer les paramètres de votre compte',
+    accountSettings: 'Paramètres et préférences du compte',
+    getHelpSupport: 'Obtenir de l\'aide et du support',
+    signOutAccount: 'Se déconnecter du compte',
     
     // Aria labels and accessibility
     goToHomepage: 'Aller à la page d\'accueil',
@@ -79,6 +103,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'Abmelden',
     profile: 'Profil',
     login: 'Anmelden',
+    signIn: 'Anmelden',
+    signOut: 'Abmelden',
+    
+    // Profile and account related
+    manageAccount: 'Verwalten Sie Ihre Kontoeinstellungen',
+    accountSettings: 'Kontoeinstellungen und Präferenzen',
+    getHelpSupport: 'Hilfe und Support erhalten',
+    signOutAccount: 'Vom Konto abmelden',
     
     // Aria labels and accessibility
     goToHomepage: 'Zur Startseite gehen',
@@ -103,6 +135,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'Выйти',
     profile: 'Профиль',
     login: 'Войти',
+    signIn: 'Войти',
+    signOut: 'Выйти',
+    
+    // Profile and account related
+    manageAccount: 'Управление настройками вашего аккаунта',
+    accountSettings: 'Настройки и предпочтения аккаунта',
+    getHelpSupport: 'Получить помощь и поддержку',
+    signOutAccount: 'Выйти из аккаунта',
     
     // Aria labels and accessibility
     goToHomepage: 'Перейти на главную страницу',
@@ -127,6 +167,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'Esci',
     profile: 'Profilo',
     login: 'Accedi',
+    signIn: 'Accedi',
+    signOut: 'Esci',
+    
+    // Profile and account related
+    manageAccount: 'Gestisci le impostazioni del tuo account',
+    accountSettings: 'Impostazioni e preferenze dell\'account',
+    getHelpSupport: 'Ottieni aiuto e supporto',
+    signOutAccount: 'Esci dall\'account',
     
     // Aria labels and accessibility
     goToHomepage: 'Vai alla homepage',
@@ -151,6 +199,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'Sair',
     profile: 'Perfil',
     login: 'Entrar',
+    signIn: 'Entrar',
+    signOut: 'Sair',
+    
+    // Profile and account related
+    manageAccount: 'Gerencie as configurações da sua conta',
+    accountSettings: 'Configurações e preferências da conta',
+    getHelpSupport: 'Obter ajuda e suporte',
+    signOutAccount: 'Sair da conta',
     
     // Aria labels and accessibility
     goToHomepage: 'Ir para a página inicial',
@@ -175,6 +231,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'Wyloguj',
     profile: 'Profil',
     login: 'Zaloguj',
+    signIn: 'Zaloguj się',
+    signOut: 'Wyloguj się',
+    
+    // Profile and account related
+    manageAccount: 'Zarządzaj ustawieniami swojego konta',
+    accountSettings: 'Ustawienia i preferencje konta',
+    getHelpSupport: 'Uzyskaj pomoc i wsparcie',
+    signOutAccount: 'Wyloguj się z konta',
     
     // Aria labels and accessibility
     goToHomepage: 'Przejdź do strony głównej',
@@ -199,6 +263,14 @@ export const HEADER_TRANSLATIONS = {
     logout: '登出',
     profile: '个人资料',
     login: '登录',
+    signIn: '登录',
+    signOut: '登出',
+    
+    // Profile and account related
+    manageAccount: '管理您的账户设置',
+    accountSettings: '账户设置和偏好',
+    getHelpSupport: '获取帮助和支持',
+    signOutAccount: '退出账户',
     
     // Aria labels and accessibility
     goToHomepage: '转到主页',
@@ -223,6 +295,14 @@ export const HEADER_TRANSLATIONS = {
     logout: 'ログアウト',
     profile: 'プロフィール',
     login: 'ログイン',
+    signIn: 'サインイン',
+    signOut: 'サインアウト',
+    
+    // Profile and account related
+    manageAccount: 'アカウント設定の管理',
+    accountSettings: 'アカウント設定と環境設定',
+    getHelpSupport: 'ヘルプとサポートを取得',
+    signOutAccount: 'アカウントからサインアウト',
     
     // Aria labels and accessibility
     goToHomepage: 'ホームページに移動',

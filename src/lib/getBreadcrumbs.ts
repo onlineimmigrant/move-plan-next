@@ -95,7 +95,17 @@ export function getBreadcrumbStructuredData({
 
     pathSegments.forEach((segment, index) => {
       accumulatedPath += `/${segment}`;
-      let formattedLabel = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+      
+      // Decode URL-encoded segment (e.g., Cyrillic characters)
+      let decodedSegment = segment;
+      try {
+        decodedSegment = decodeURIComponent(segment);
+      } catch (error) {
+        console.warn('[getBreadcrumbStructuredData] Failed to decode segment:', segment, error);
+        decodedSegment = segment;
+      }
+      
+      let formattedLabel = decodedSegment.charAt(0).toUpperCase() + decodedSegment.slice(1).replace(/-/g, ' ');
 
       // Apply overrides
       const override = overrides.find((o) => o.segment === segment || o.segment === accumulatedPath);

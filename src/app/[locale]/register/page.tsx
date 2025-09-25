@@ -7,7 +7,7 @@ import { supabase, getOrganizationId } from '@/lib/supabase';
 import Privacy from '@/components/Privacy';
 import Terms from '@/components/Terms';
 import { useSettings } from '@/context/SettingsContext';
-import ContactModal from '@/components/ContactModal';
+import ContactModal from '@/components/contact/ContactModal';
 import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/ui/Button';

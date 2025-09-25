@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { FaEnvelope, FaPhone, FaTelegramPlane, FaWhatsapp } from 'react-icons/fa'
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import Toast from './Toast'
+import Toast from '../Toast'
 import Button from '@/ui/Button'
 import { supabase } from '@/lib/supabase'
 import { useSettings } from '@/context/SettingsContext'
+import { useContactTranslations } from './useContactTranslations'
 
 type ContactFormProps = {
   onSuccess?: () => void
@@ -14,6 +15,7 @@ type ContactFormProps = {
 
 export default function ContactForm({ onSuccess }: ContactFormProps) {
   const { settings } = useSettings()
+  const { t, getCharactersCountMessage } = useContactTranslations()
   const orgId = settings.organization_id
 
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
@@ -57,44 +59,44 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
   ], [])
 
   const contacts = useMemo(() => [
-    { value: 'email', label: 'Email', icon: <FaEnvelope className="w-4 h-4" />, color: 'text-blue-500' },
-    { value: 'phone', label: 'Phone', icon: <FaPhone className="w-4 h-4" />, color: 'text-green-500' },
-    { value: 'telegram', label: 'Telegram', icon: <FaTelegramPlane className="w-4 h-4" />, color: 'text-sky-500' },
-    { value: 'whatsapp', label: 'WhatsApp', icon: <FaWhatsapp className="w-4 h-4" />, color: 'text-emerald-500' },
-  ], [])
+    { value: 'email', label: t.contactByEmail, icon: <FaEnvelope className="w-4 h-4" />, color: 'text-blue-500' },
+    { value: 'phone', label: t.contactByPhone, icon: <FaPhone className="w-4 h-4" />, color: 'text-green-500' },
+    { value: 'telegram', label: t.contactByTelegram, icon: <FaTelegramPlane className="w-4 h-4" />, color: 'text-sky-500' },
+    { value: 'whatsapp', label: t.contactByWhatsapp, icon: <FaWhatsapp className="w-4 h-4" />, color: 'text-emerald-500' },
+  ], [t])
 
   // Enhanced validation with better error messages
   const validate = useCallback(() => {
     const err: Record<string, string> = {}
     
     if (!form.name.trim()) {
-      err.name = 'Name is required'
+      err.name = t.nameRequired
     } else if (form.name.trim().length < 2) {
-      err.name = 'Name must be at least 2 characters'
+      err.name = t.nameRequired
     }
     
     if (!form.email.trim()) {
-      err.email = 'Email is required'
+      err.email = t.emailRequired
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      err.email = 'Please enter a valid email address'
+      err.email = t.emailInvalid
     }
     
     if (!form.phone.trim()) {
-      err.phone = 'Phone number is required'
+      err.phone = t.phoneRequired
     } else if (!/^\+?\d{10,15}$/.test(form.phone.replace(/[\s\-\(\)]/g, ''))) {
-      err.phone = 'Please enter a valid phone number (10-15 digits)'
+      err.phone = t.phoneInvalid
     }
     
     if (!form.subject.trim()) {
-      err.subject = 'Subject is required'
+      err.subject = t.subjectRequired
     } else if (form.subject.trim().length < 5) {
-      err.subject = 'Subject must be at least 5 characters'
+      err.subject = t.subjectRequired
     }
     
     if (!form.message.trim()) {
-      err.message = 'Message is required'
+      err.message = t.messageRequired
     } else if (form.message.trim().length < 10) {
-      err.message = 'Message must be at least 10 characters'
+      err.message = t.messageMinLength
     }
     
     if (form.honeypot) {
@@ -102,11 +104,11 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
     }
     
     if (!form.mathAnswer || parseInt(form.mathAnswer) !== math.answer) {
-      err.mathAnswer = 'Please solve the math problem correctly'
+      err.mathAnswer = t.mathAnswerIncorrect
     }
     
     return err
-  }, [form, math.answer])
+  }, [form, math.answer, t])
 
   // Optimized form update function
   const updateForm = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -222,7 +224,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
       
     } catch (err) {
       console.error('Ticket submission error:', err)
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.'
+      const errorMessage = err instanceof Error ? err.message : t.submitErrorDetails
       setErrors({ submit: errorMessage })
     } finally {
       setSubmitting(false)
@@ -273,7 +275,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
               <CheckCircleIcon className="h-4 w-4 text-green-600" />
             </div>
             <p className="text-[14px] text-green-700 font-medium antialiased">
-              Ticket submitted successfully! We'll get back to you soon.
+              {t.submitSuccessDetails}
             </p>
           </div>
         </div>
@@ -289,12 +291,12 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
           {/* Subtle top highlight */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
           
-          <h3 className="text-[17px] font-semibold text-gray-900 mb-6 tracking-[-0.01em] antialiased">Personal Information</h3>
+          <h3 className="text-[17px] font-semibold text-gray-900 mb-6 tracking-[-0.01em] antialiased">{t.personalInformation}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Apple-style Name Field */}
             <div>
               <label className="block text-[13px] font-medium text-gray-700 mb-3 antialiased">
-                Full Name <span className="text-red-500">*</span>
+                {t.fullName} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -310,7 +312,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                   backdropFilter: 'blur(8px) saturate(150%)',
                   WebkitBackdropFilter: 'blur(8px) saturate(150%)',
                 }}
-                placeholder="Enter your full name"
+                placeholder={t.namePlaceholder}
                 autoComplete="name"
               />
               {errors.name && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.name}</p>}
@@ -319,7 +321,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             {/* Apple-style Email Field */}
             <div>
               <label className="block text-[13px] font-medium text-gray-700 mb-3 antialiased">
-                Email Address <span className="text-red-500">*</span>
+                {t.emailAddress} <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -335,7 +337,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                   backdropFilter: 'blur(8px) saturate(150%)',
                   WebkitBackdropFilter: 'blur(8px) saturate(150%)',
                 }}
-                placeholder="your.email@example.com"
+                placeholder={t.emailPlaceholder}
                 autoComplete="email"
               />
               {errors.email && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.email}</p>}
@@ -344,7 +346,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             {/* Apple-style Phone Field */}
             <div>
               <label className="block text-[13px] font-medium text-gray-700 mb-3 antialiased">
-                Phone Number <span className="text-red-500">*</span>
+                {t.phoneNumber} <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -360,7 +362,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                   backdropFilter: 'blur(8px) saturate(150%)',
                   WebkitBackdropFilter: 'blur(8px) saturate(150%)',
                 }}
-                placeholder="+44 123 456 7890"
+                placeholder={t.phonePlaceholder}
                 autoComplete="tel"
               />
               {errors.phone && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.phone}</p>}
@@ -369,7 +371,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             {/* Apple-style Subject Field */}
             <div>
               <label className="block text-[13px] font-medium text-gray-700 mb-3 antialiased">
-                Subject <span className="text-red-500">*</span>
+                {t.subject} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -385,7 +387,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                   backdropFilter: 'blur(8px) saturate(150%)',
                   WebkitBackdropFilter: 'blur(8px) saturate(150%)',
                 }}
-                placeholder="Brief description of your inquiry"
+                placeholder={t.subjectPlaceholder}
               />
               {errors.subject && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.subject}</p>}
             </div>
@@ -401,12 +403,12 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
           {/* Subtle top highlight */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
           
-          <h3 className="text-[17px] font-semibold text-gray-900 mb-6 tracking-[-0.01em] antialiased">Contact Preferences</h3>
+          <h3 className="text-[17px] font-semibold text-gray-900 mb-6 tracking-[-0.01em] antialiased">{t.contactPreferences}</h3>
           
           {/* Apple-style Preferred Contact Method */}
           <div className="mb-8">
             <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
-              Preferred Contact Method
+              {t.preferredContact}
             </label>
             <div className="grid grid-cols-2 gap-3">
               {contacts.map(({ value, label, icon, color }) => (
@@ -442,7 +444,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
           {/* Apple-style Preferred Date */}
           <div className="mb-8">
             <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
-              Preferred Date
+              {t.selectDate}
             </label>
             <div className="grid grid-cols-2 gap-3 mb-4">
               <label
@@ -464,7 +466,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                   onChange={() => toggleDate('any')}
                   className="sr-only"
                 />
-                <span className="text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">Any Date</span>
+                <span className="text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">{t.availableAnytime}</span>
               </label>
               <label
                 className={`group cursor-pointer flex items-center justify-center p-4 border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-xl hover:scale-[1.02] ${
@@ -485,7 +487,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                   onChange={() => toggleDate('choose')}
                   className="sr-only"
                 />
-                <span className="text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">Choose Date</span>
+                <span className="text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">{t.selectDate}</span>
               </label>
             </div>
             {showDate && (
@@ -510,7 +512,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
           {/* Apple-style Preferred Time */}
           <div>
             <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
-              Preferred Time Range
+              {t.preferredTime}
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {timeRanges.map(range => (
@@ -555,11 +557,11 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
           }}
         >
-          <h3 className="text-[15px] font-semibold text-gray-800 mb-6 tracking-[-0.01em] antialiased">Your Message</h3>
+          <h3 className="text-[15px] font-semibold text-gray-800 mb-6 tracking-[-0.01em] antialiased">{t.message}</h3>
           
           <div>
             <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
-              Message <span className="text-red-500">*</span>
+              {t.message} <span className="text-red-500">*</span>
             </label>
             <textarea
               name="message"
@@ -575,11 +577,11 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                 backdropFilter: 'blur(8px) saturate(150%)',
                 WebkitBackdropFilter: 'blur(8px) saturate(150%)',
               }}
-              placeholder="Please describe your inquiry in detail. How can we help you?"
+              placeholder={t.messagePlaceholder}
             />
             {errors.message && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.message}</p>}
             <p className="mt-3 text-[11px] text-gray-500 antialiased">
-              Characters: {form.message.length} (minimum 10 required)
+              {getCharactersCountMessage(form.message.length)}
             </p>
           </div>
         </div>
@@ -592,12 +594,12 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
           }}
         >
-          <h3 className="text-[15px] font-semibold text-gray-800 mb-6 tracking-[-0.01em] antialiased">Security Verification</h3>
+          <h3 className="text-[15px] font-semibold text-gray-800 mb-6 tracking-[-0.01em] antialiased">{t.securityVerification}</h3>
           
           {/* Apple-style Math Challenge */}
           <div>
             <label className="block text-[13px] font-medium text-gray-700 mb-4 antialiased">
-              What is {math.num1} + {math.num2}? <span className="text-red-500">*</span>
+              {t.mathChallengeLabel.replace('{num1}', math.num1.toString()).replace('{num2}', math.num2.toString())} <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -613,7 +615,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                 backdropFilter: 'blur(8px) saturate(150%)',
                 WebkitBackdropFilter: 'blur(8px) saturate(150%)',
               }}
-              placeholder="Answer"
+              placeholder={t.mathAnswerPlaceholder}
             />
             {errors.mathAnswer && <p className="mt-2 text-[11px] text-red-600 antialiased">{errors.mathAnswer}</p>}
           </div>
@@ -657,13 +659,13 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                       <div className="absolute inset-0 animate-ping rounded-full h-5 w-5 border border-white/20"></div>
                     </div>
                     <span className="antialiased font-medium">
-                      Processing your request...
+                      {t.submitting}
                     </span>
                   </>
                 ) : (
                   <>
                     <span className="antialiased font-semibold">
-                      Submit Support Ticket
+                      {t.submit}
                     </span>
                     <svg 
                       className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" 
@@ -689,7 +691,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
           
           {/* Subtle helper text */}
           <p className="text-center text-[11px] text-gray-500 mt-4 antialiased">
-            We typically respond within 24 hours
+            {t.responseTime}
           </p>
         </div>
       </form>

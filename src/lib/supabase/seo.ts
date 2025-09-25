@@ -185,7 +185,18 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
         // Generate home page SEO data with products structured data
         const settings = await getSettings(baseUrl);
         const siteName = settings?.site || 'App';
+        
+        // Decode pathname for human-readable URLs in structured data
+        let decodedPathname = pathname;
+        try {
+          decodedPathname = decodeURIComponent(pathname);
+        } catch (error) {
+          console.warn('[fetchPageSEOData] Failed to decode pathname:', pathname, error);
+          decodedPathname = pathname;
+        }
+        
         const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
+        const structuredDataUrl = `${baseUrl.replace(/\/$/, '')}${decodedPathname || '/'}`;
         
         const pageTitle = generatePageTitle('/');
         const pageDescription = generatePageDescription('/');
@@ -203,7 +214,7 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
               '@type': 'WebPage',
               name: `${pageTitle} | ${siteName}`,
               description: pageDescription,
-              url: canonicalUrl,
+              url: structuredDataUrl,
             },
             {
               '@context': 'https://schema.org',
@@ -243,7 +254,17 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
       return generateDynamicPageSEO(normalizedPath, baseUrl, organizationId);
     }
 
+    // Decode pathname for human-readable URLs in structured data
+    let decodedPathname = pathname;
+    try {
+      decodedPathname = decodeURIComponent(pathname);
+    } catch (error) {
+      console.warn('[fetchPageSEOData] Failed to decode pathname:', pathname, error);
+      decodedPathname = pathname;
+    }
+    
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
+    const structuredDataUrl = `${baseUrl.replace(/\/$/, '')}${decodedPathname || '/'}`;
     const seoData: SEOData = {
       title: page.title || generatePageTitle(normalizedPath),
       description: page.description || generatePageDescription(normalizedPath),
@@ -293,7 +314,7 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
         '@type': 'WebPage',
         name: seoData.title,
         description: seoData.description,
-        url: canonicalUrl,
+        url: structuredDataUrl,
       },
       {
         '@context': 'https://schema.org',
@@ -520,7 +541,18 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
   const settings = await getSettings(baseUrl);
   const siteName = settings?.site || 'App';
   
+  // Decode pathname for human-readable content
+  let decodedPathname = pathname;
+  try {
+    decodedPathname = decodeURIComponent(pathname);
+  } catch (error) {
+    console.warn('[generateDynamicPageSEO] Failed to decode pathname:', pathname, error);
+    decodedPathname = pathname;
+  }
+  
+  // Create both URLs: encoded for web standards, decoded for structured data
   const canonicalUrl = `${baseUrl.replace(/\/$/, '')}${pathname || '/'}`;
+  const structuredDataUrl = `${baseUrl.replace(/\/$/, '')}${decodedPathname || '/'}`;
   const pageTitle = generatePageTitle(pathname);
   const pageDescription = generatePageDescription(pathname);
   
@@ -530,7 +562,7 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
       '@type': 'WebPage',
       name: pageTitle,
       description: pageDescription,
-      url: canonicalUrl,
+      url: structuredDataUrl,
     },
     {
       '@context': 'https://schema.org',
@@ -580,8 +612,18 @@ function generatePageTitle(pathname: string): string {
     return pathMap[pathname];
   }
 
+  // Decode URL-encoded characters (e.g., Cyrillic text)
+  let decodedPathname = pathname;
+  try {
+    decodedPathname = decodeURIComponent(pathname);
+  } catch (error) {
+    console.warn('[generatePageTitle] Failed to decode pathname:', pathname, error);
+    // Use original pathname if decoding fails
+    decodedPathname = pathname;
+  }
+
   // Generate title from path segments
-  return pathname
+  return decodedPathname
     .split('/')
     .filter(Boolean)
     .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '))
@@ -697,7 +739,17 @@ async function generateBlogPostSEO(post: any, baseUrl: string, organizationId: s
   const siteName = settings?.site || 'App';
   const currentDomain = settings?.domain ? `https://${settings.domain}` : baseUrl;
   
+  // Decode pathname for human-readable URLs in structured data
+  let decodedPathname = pathname;
+  try {
+    decodedPathname = decodeURIComponent(pathname);
+  } catch (error) {
+    console.warn('[generateBlogPostSEO] Failed to decode pathname:', pathname, error);
+    decodedPathname = pathname;
+  }
+  
   const canonicalUrl = `${currentDomain}${pathname}`;
+  const structuredDataUrl = `${currentDomain}${decodedPathname}`;
   const pageTitle = post.title || 'Blog Post';
   const pageDescription = post.description || `Learn about ${post.title.toLowerCase()}`;
   
@@ -707,7 +759,7 @@ async function generateBlogPostSEO(post: any, baseUrl: string, organizationId: s
     "@type": "Article",
     "headline": post.title,
     "description": pageDescription,
-    "url": canonicalUrl,
+    "url": structuredDataUrl,
     "datePublished": post.created_on,
     "dateModified": post.last_modified,
     "author": post.is_company_author ? {
@@ -730,7 +782,7 @@ async function generateBlogPostSEO(post: any, baseUrl: string, organizationId: s
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": canonicalUrl
+      "@id": structuredDataUrl
     },
     "image": post.main_photo || post.additional_photo || `${currentDomain}/images/default-article.jpg`,
     "articleSection": post.section || "General",
@@ -752,7 +804,7 @@ async function generateBlogPostSEO(post: any, baseUrl: string, organizationId: s
         '@type': 'WebPage',
         name: pageTitle,
         description: pageDescription,
-        url: canonicalUrl,
+        url: structuredDataUrl,
       },
       {
         '@context': 'https://schema.org',

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useFeedbackTranslations } from './useFeedbackTranslations';
 
 // Interfaces
 interface User {
@@ -76,6 +77,7 @@ const Star: React.FC<{
 );
 
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen, onClose, isGlobalReview = false }) => {
+  const { t } = useFeedbackTranslations();
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState<string>('');
@@ -129,7 +131,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
         setIsAuthenticated(true);
         const { data: userData, error: userError } = await supabase
           .from('profiles')
-          .select('id, full_name, role')
+          .select('id, full_name, role, organization_id')
           .eq('id', user.id)
           .single();
 
@@ -160,27 +162,32 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
         }
         setReviewCount(count || 0);
 
-        if (userData.role === 'admin') {
+        if (userData.role === 'admin' && userData.organization_id) {
           const { data: usersData, error: usersError } = await supabase
             .from('profiles')
             .select('id, full_name')
-            .neq('id', user.id);
+            .eq('organization_id', userData.organization_id);
 
           if (usersError) {
-            setError('Failed to fetch users.');
+            setError('Failed to fetch users from organization.');
             return;
           }
 
-          const mappedUsers = usersData?.map(user => {
-            const { firstName, lastName } = parseFullName(user.full_name || '');
+          const mappedUsers = usersData?.map(userProfile => {
+            const { firstName, lastName } = parseFullName(userProfile.full_name || '');
             return {
-              id: user.id,
+              id: userProfile.id,
               first_name: firstName,
               last_name: lastName,
             };
           }) || [];
           setUsers(mappedUsers);
-          console.log('Users loaded:', mappedUsers);
+          
+          // Set current user as default selection
+          setSelectedUserId(user.id);
+          
+          console.log('Organization users loaded:', mappedUsers);
+          console.log('Current user set as default:', user.id);
         }
       } else {
         setIsAuthenticated(false);
@@ -328,25 +335,25 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
     setIsSubmitting(true);
 
     if (rating < 1 || rating > 5) {
-      setError('Please select a rating between 1 and 5 stars.');
+      setError(t.ratingRequired);
       setIsSubmitting(false);
       return;
     }
 
     if (!comment.trim()) {
-      setError('Please enter a comment.');
+      setError(t.commentRequired);
       setIsSubmitting(false);
       return;
     }
 
     if (comment.length > 500) {
-      setError('Comment must be less than 500 characters.');
+      setError(t.commentTooLong);
       setIsSubmitting(false);
       return;
     }
 
     if (!userName.trim()) {
-      setError('Please enter a first name.');
+      setError(t.firstNameRequired);
       setIsSubmitting(false);
       return;
     }
@@ -358,13 +365,13 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
     }
 
     if (isAdmin && !selectedUserId) {
-      setError('Please select a user to submit the review on behalf of.');
+      setError(t.pleaseSelectUser);
       setIsSubmitting(false);
       return;
     }
 
     if (isAdmin && !submittedAt) {
-      setError('Please select a submission date.');
+      setError(t.pleaseSelectSubmissionDate);
       setIsSubmitting(false);
       return;
     }
@@ -380,6 +387,19 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
     const submittedAtValue = isAdmin ? new Date(submittedAt).toISOString() : new Date().toISOString();
     const productIdToSubmit = isGlobalReview ? 0 : productId; // Use 0 for global reviews
 
+    // Get organization_id from the user who will be associated with this review
+    const { data: reviewerData, error: reviewerError } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', userIdToUse)
+      .single();
+
+    if (reviewerError || !reviewerData?.organization_id) {
+      setError('Failed to get user organization information.');
+      setIsSubmitting(false);
+      return;
+    }
+
     const { error: insertError } = await supabase
       .from('feedback_feedbackproducts')
       .insert({
@@ -392,10 +412,11 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
         user_name: userName.trim(),
         user_surname: userSurname.trim(),
         product_id: productIdToSubmit,
+        organization_id: reviewerData.organization_id,
       });
 
     if (insertError) {
-      setError('Failed to submit review. Please try again.');
+      setError(t.submissionError);
       setIsSubmitting(false);
       return;
     }
@@ -454,7 +475,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
           onMouseDown={handleDragStart}
         >
           <h3 id="modal-title" className="text-xl font-bold text-gray-900">
-            {isGlobalReview ? 'Write an Organization Review' : 'Write a Review'}
+            {isGlobalReview ? t.writeOrganizationReview : t.writeReviewModal}
           </h3>
           <button
             onClick={(e) => {
@@ -462,7 +483,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
               onClose();
             }}
             className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-full p-1 transition-colors duration-200"
-            aria-label="Close modal"
+            aria-label={t.closeModal}
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
@@ -491,7 +512,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
             {/* Rating Selector */}
             <div>
               <label htmlFor="rating" className="block text-sm font-semibold text-gray-900 mb-3">
-                Rating
+                {t.rating}
               </label>
               <div className="flex space-x-2 mb-2">
                 {Array.from({ length: 5 }, (_, index) => {
@@ -513,7 +534,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
               </div>
               {rating > 0 && (
                 <p className="text-sm text-gray-600 mt-1">
-                  You rated: {rating} star{rating !== 1 ? 's' : ''}
+                  {t.youRated}: {rating} {rating !== 1 ? t.stars : t.star}
                 </p>
               )}
             </div>
@@ -523,7 +544,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="user-select" className="block text-sm font-semibold text-gray-800 mb-2">
-                    Submit as User
+                    {t.submitAsUser}
                   </label>
                   <select
                     id="user-select"
@@ -535,9 +556,6 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                     className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors duration-200"
                     aria-label="Select user to submit review on behalf of"
                   >
-                    <option value="" disabled>
-                      Select a user
-                    </option>
                     {users.map(user => (
                       <option key={user.id} value={user.id}>
                         {user.first_name} {user.last_name}
@@ -548,7 +566,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
 
                 <div>
                   <label htmlFor="submitted-at" className="block text-sm font-semibold text-gray-800 mb-2">
-                    Submission Date
+                    {t.submissionDate}
                   </label>
                   <input
                     id="submitted-at"
@@ -566,7 +584,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="user-name" className="block text-sm font-semibold text-gray-900 mb-2">
-                  First Name
+                  {t.firstName}
                 </label>
                 <input
                   id="user-name"
@@ -574,13 +592,13 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors duration-200"
-                  placeholder="Enter first name"
+                  placeholder={t.enterFirstName}
                   aria-required="true"
                 />
               </div>
               <div>
                 <label htmlFor="user-surname" className="block text-sm font-semibold text-gray-900 mb-2">
-                  Last Name
+                  {t.lastName}
                 </label>
                 <input
                   id="user-surname"
@@ -588,7 +606,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                   value={userSurname}
                   onChange={(e) => setUserSurname(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors duration-200"
-                  placeholder="Enter last name"
+                  placeholder={t.enterLastName}
                 />
               </div>
             </div>
@@ -596,7 +614,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
             {/* Comment Field */}
             <div>
               <label htmlFor="comment" className="block text-sm font-semibold text-gray-900 mb-2">
-                Comment
+                {t.comment}
               </label>
               <textarea
                 id="comment"
@@ -605,11 +623,11 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                 className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y transition-colors duration-200"
                 rows={5}
                 maxLength={500}
-                placeholder="Write your review here..."
+                placeholder={t.writeReviewHerePlaceholder}
                 aria-required="true"
               />
               <p className="text-sm text-gray-500 mt-2">
-                {comment.length}/500 characters
+                {t.charactersCount.replace('{count}', comment.length.toString())}
               </p>
             </div>
 
@@ -621,7 +639,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                 className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200"
                 aria-label="Cancel and close modal"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 type="submit"
@@ -629,7 +647,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                 className={`px-6 py-2 bg-sky-600 text-white rounded-lg shadow-md hover:bg-sky-700 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-200 ${
                   isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
-                aria-label="Submit review"
+                aria-label={t.submitReviewAction}
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center">
@@ -656,7 +674,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
                     Submitting...
                   </span>
                 ) : (
-                  'Submit Review'
+                  t.submitReview
                 )}
               </button>
             </div>

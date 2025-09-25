@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import FeedbackAccordion from './FeedbackAccordion';
 import HelpCenterSection from './HelpCenterSection';
+import { RealEstateModal } from './realEstateModal';
 
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
@@ -94,6 +95,7 @@ interface TemplateSectionData {
   organization_id: string | null;
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
+  is_real_estate_modal?: boolean;
   max_faqs_display?: number;
 }
 
@@ -146,6 +148,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
           <FeedbackAccordion type="all_products" />
         ) : section.is_help_center_section ? (
           <HelpCenterSection section={section} />
+        ) : section.is_real_estate_modal ? (
+          <RealEstateModal />
         ) : (
           <>
             {/* Section Title and Description */}

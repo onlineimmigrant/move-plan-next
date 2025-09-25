@@ -14,7 +14,7 @@ import { useHeaderTranslations } from './header/useHeaderTranslations';
 
 // Dynamic imports for better code splitting
 const LoginModal = dynamic(() => import('./LoginModal'), { ssr: false });
-const ContactModal = dynamic(() => import('./ContactModal'), { ssr: false });
+const ContactModal = dynamic(() => import('./contact/ContactModal'), { ssr: false });
 const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'), { ssr: false });
 
 // Optimized icon imports - only import what we need
@@ -644,8 +644,8 @@ const Header: React.FC<HeaderProps> = ({
                       <UserIcon className="h-6 w-6 text-gray-600" />
                     </div>
                     <div>
-                      <h3 className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">Profile</h3>
-                      <p className="text-[12px] text-gray-600 antialiased opacity-80">Manage your account settings</p>
+                      <h3 className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{t.profile}</h3>
+                      <p className="text-[12px] text-gray-600 antialiased opacity-80">{t.manageAccount}</p>
                     </div>
                   </div>
                   
@@ -661,7 +661,7 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                       <div className="relative z-10 flex-1">
                         <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.account}</span>
-                        <p className="text-[11px] text-gray-600 antialiased opacity-70">Account settings and preferences</p>
+                        <p className="text-[11px] text-gray-600 antialiased opacity-70">{t.accountSettings}</p>
                       </div>
                       <svg className="relative z-10 w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -681,7 +681,7 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                       <div className="relative z-10 flex-1 text-left">
                         <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.contact}</span>
-                        <p className="text-[11px] text-gray-600 antialiased opacity-70">Get help and support</p>
+                        <p className="text-[11px] text-gray-600 antialiased opacity-70">{t.getHelpSupport}</p>
                       </div>
                     </button>
 
@@ -695,7 +695,7 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                       <div className="relative z-10 flex-1 text-left">
                         <span className="text-[14px] font-medium antialiased tracking-[-0.01em]">{t.logout}</span>
-                        <p className="text-[11px] text-red-500 antialiased opacity-70">Sign out of your account</p>
+                        <p className="text-[11px] text-red-500 antialiased opacity-70">{t.signOutAccount}</p>
                       </div>
                     </button>
                   </div>
@@ -769,8 +769,8 @@ const Header: React.FC<HeaderProps> = ({
                     >
                       <div className="flex items-center space-x-3">
                         <div className="text-left">
-                          <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">Profile</span>
-                          <p className="text-[12px] text-gray-600 antialiased opacity-80">Account & settings</p>
+                          <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{t.profile}</span>
+                          <p className="text-[12px] text-gray-600 antialiased opacity-80">{t.accountSettings}</p>
                         </div>
                       </div>
                       <div className="transition-all duration-300 group-hover:scale-105">
@@ -793,7 +793,7 @@ const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div className="relative z-10 flex-1">
                           <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.account}</span>
-                          <p className="text-[11px] text-gray-600 antialiased opacity-70">Settings & preferences</p>
+                          <p className="text-[11px] text-gray-600 antialiased opacity-70">{t.accountSettings}</p>
                         </div>
                         <svg className="relative z-10 w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -812,7 +812,7 @@ const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div className="relative z-10 flex-1 text-left">
                           <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.contact}</span>
-                          <p className="text-[11px] text-gray-600 antialiased opacity-70">Get help & support</p>
+                          <p className="text-[11px] text-gray-600 antialiased opacity-70">{t.getHelpSupport}</p>
                         </div>
                       </button>
                       <button
@@ -825,7 +825,7 @@ const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div className="relative z-10 flex-1 text-left">
                           <span className="text-[14px] font-medium antialiased tracking-[-0.01em]">{t.logout}</span>
-                          <p className="text-[11px] text-red-500 antialiased opacity-70">Sign out of account</p>
+                          <p className="text-[11px] text-red-500 antialiased opacity-70">{t.signOutAccount}</p>
                         </div>
                       </button>
                     </Disclosure.Panel>
@@ -843,7 +843,7 @@ const Header: React.FC<HeaderProps> = ({
                   <div className="flex items-center space-x-3">
                     <div className="text-left">
                       <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{t.login}</span>
-                      <p className="text-[12px] text-gray-600 antialiased opacity-80">Sign in to your account</p>
+                      <p className="text-[12px] text-gray-600 antialiased opacity-80">{t.signIn}</p>
                     </div>
                   </div>
                   <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

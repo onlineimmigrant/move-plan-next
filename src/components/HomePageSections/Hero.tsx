@@ -5,6 +5,7 @@ import parse from 'html-react-parser';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { FaPlayCircle } from 'react-icons/fa';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import DotGrid from '@/components/AnimateElements/DotGrid';
 import LetterGlitch from '@/components/AnimateElements/LetterGlitch';
@@ -44,6 +45,9 @@ interface HeroProps {
     button_main_get_started?: string;
     button_explore?: string;
     animation_element?: string; // Corrected from animation0876
+    button_main_above_description?: boolean;
+    button_main_is_for_video?: boolean;
+    button_url?: string;
   };
 }
 
@@ -287,6 +291,29 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
               {parse(translatedH1Title)}
             </h1>
 
+            {/* Button above description if button_main_above_description is true */}
+            {hero.button_main_above_description && hero.button_main_get_started && (
+              <div
+                className={`mt-6 flex items-center justify-${hero.title_alighnement || 'center'} gap-x-6`}
+              >
+                {hero.button_main_is_for_video ? (
+                  <Link
+                    href={hero.button_url || '/products'}
+                    className={`animate-hero-button-get-started ${isVisible ? 'animate' : ''} hover:opacity-80 transition-opacity`}
+                  >
+                    <FaPlayCircle className="h-16 w-16 text-white hover:text-gray-200" />
+                  </Link>
+                ) : (
+                  <Link
+                    href={hero.button_url || '/products'}
+                    className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
+                  >
+                    {hero.button_main_get_started}
+                  </Link>
+                )}
+              </div>
+            )}
+
             <p
               className={`mt-6 tracking-wide ${hero.p_description_size_mobile || 'text-lg'} sm:${hero.p_description_size || 'text-2xl'} text-${
                 hero.p_description_color || 'gray-600'
@@ -296,17 +323,28 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
               {parse(translatedPDescription)}
             </p>
 
-            <div
-              className={`mt-10 flex items-center justify-${hero.title_alighnement || 'center'} gap-x-6`}
-            >
-              <Link
-                href='/products'
-                className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
+            {/* Button below description if button_main_above_description is false or unset */}
+            {!hero.button_main_above_description && hero.button_main_get_started && (
+              <div
+                className={`mt-10 flex items-center justify-${hero.title_alighnement || 'center'} gap-x-6`}
               >
-                {hero?.button_main_get_started}
-              </Link>
-    
-            </div>
+                {hero.button_main_is_for_video ? (
+                  <Link
+                    href={hero.button_url || '/products'}
+                    className={`animate-hero-button-get-started ${isVisible ? 'animate' : ''} hover:opacity-80 transition-opacity`}
+                  >
+                    <FaPlayCircle className="h-4 w-4 text-white hover:text-gray-200" />
+                  </Link>
+                ) : (
+                  <Link
+                    href={hero.button_url || '/products'}
+                    className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
+                  >
+                    {hero.button_main_get_started}
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="order-1">

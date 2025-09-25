@@ -4,6 +4,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import ContactForm from './ContactForm';
 import { useSettings } from '@/context/SettingsContext';
+import { useContactTranslations } from './useContactTranslations';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface ContactModalProps {
 
 export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const { settings } = useSettings();
+  const { t } = useContactTranslations();
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -64,14 +66,14 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                         as="h2"
                         className="text-[24px] font-semibold text-gray-900 mb-2 tracking-[-0.02em] antialiased"
                       >
-                        Contact Us
+                        {t.modalTitle}
                       </Dialog.Title>
-                      <p className="text-[15px] text-gray-600 antialiased opacity-90">Get in touch with our team for support and assistance</p>
+                      <p className="text-[15px] text-gray-600 antialiased opacity-90">{t.modalSubtitle}</p>
                     </div>
                     <button
                       onClick={onClose}
                       className="group cursor-pointer flex items-center justify-center w-10 h-10 text-gray-500 hover:text-gray-700 hover:bg-gray-100/60 backdrop-blur-sm rounded-full focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased ml-4"
-                      aria-label="Close contact modal"
+                      aria-label={t.closeModal}
                     >
                       <svg
                         className="h-5 w-5 transition-all duration-300 group-hover:scale-105"

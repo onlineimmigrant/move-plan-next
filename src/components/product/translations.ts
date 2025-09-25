@@ -153,6 +153,17 @@ export const productTranslations = {
     buyOnAmazon: 'Buy on Amazon',
     getItOnAmazonKindle: 'Get it on Amazon Kindle',
     buyOnAmazonAriaLabel: 'Buy on Amazon',
+    register: 'Register',
+    registerForFreeTrial: 'Register for free trial',
+    
+    // Product status
+    unknown: 'Unknown',
+    lowStock: 'Low Stock',
+    onSale: 'on sale',
+    percentOff: '% Off',
+    
+    // Accessibility labels
+    selectPlan: 'Select plan',
     
     // Payment form validation
     pleaseEnterValidEmail: 'Please enter a valid email address',
@@ -427,6 +438,17 @@ export const productTranslations = {
     buyOnAmazon: 'Comprar en Amazon',
     getItOnAmazonKindle: 'Obtener en Amazon Kindle',
     buyOnAmazonAriaLabel: 'Comprar en Amazon',
+    register: 'Registrarse',
+    registerForFreeTrial: 'Registrarse para prueba gratuita',
+    
+    // Product status
+    unknown: 'Desconocido',
+    lowStock: 'Stock Bajo',
+    onSale: 'en oferta',
+    percentOff: '% Descuento',
+    
+    // Accessibility labels
+    selectPlan: 'Seleccionar plan',
     
     // Basket page
     shoppingBasket: 'Cesta de Compras',
@@ -667,6 +689,17 @@ export const productTranslations = {
     buyOnAmazon: 'Acheter sur Amazon',
     getItOnAmazonKindle: 'Obtenir sur Amazon Kindle',
     buyOnAmazonAriaLabel: 'Acheter sur Amazon',
+    register: 'S\'inscrire',
+    registerForFreeTrial: 'S\'inscrire pour un essai gratuit',
+    
+    // Product status
+    unknown: 'Inconnu',
+    lowStock: 'Stock Faible',
+    onSale: 'en promotion',
+    percentOff: '% de Réduction',
+    
+    // Accessibility labels
+    selectPlan: 'Sélectionner le plan',
     
     // Basket page
     shoppingBasket: 'Panier d\'Achat',
@@ -907,6 +940,17 @@ export const productTranslations = {
     buyOnAmazon: 'Bei Amazon kaufen',
     getItOnAmazonKindle: 'Bei Amazon Kindle erhalten',
     buyOnAmazonAriaLabel: 'Bei Amazon kaufen',
+    register: 'Registrieren',
+    registerForFreeTrial: 'Für kostenlosen Test registrieren',
+    
+    // Product status
+    unknown: 'Unbekannt',
+    lowStock: 'Wenig Lagerbestand',
+    onSale: 'im Angebot',
+    percentOff: '% Rabatt',
+    
+    // Accessibility labels
+    selectPlan: 'Plan auswählen',
     
     // Basket page
     shoppingBasket: 'Einkaufskorb',
@@ -1150,6 +1194,17 @@ export const productTranslations = {
     buyOnAmazon: 'Купить на Amazon',
     getItOnAmazonKindle: 'Получить на Amazon Kindle',
     buyOnAmazonAriaLabel: 'Купить на Amazon',
+    register: 'Регистрация',
+    registerForFreeTrial: 'Зарегистрироваться для бесплатной пробной версии',
+    
+    // Product status
+    unknown: 'Неизвестно',
+    lowStock: 'Мало на складе',
+    onSale: 'в продаже',
+    percentOff: '% скидка',
+    
+    // Accessibility labels
+    selectPlan: 'Выбрать план',
     
     // Basket translations
     shoppingBasket: 'Корзина Покупок',
@@ -1408,6 +1463,17 @@ export const productTranslations = {
     buyOnAmazon: 'Compra su Amazon',
     getItOnAmazonKindle: 'Ottieni su Amazon Kindle',
     buyOnAmazonAriaLabel: 'Compra su Amazon',
+    register: 'Registrati',
+    registerForFreeTrial: 'Registrati per prova gratuita',
+    
+    // Product status
+    unknown: 'Sconosciuto',
+    lowStock: 'Scorte Basse',
+    onSale: 'in offerta',
+    percentOff: '% di Sconto',
+    
+    // Accessibility labels
+    selectPlan: 'Seleziona piano',
     
     // Basket translations
     shoppingBasket: 'Carrello della Spesa',
@@ -1666,6 +1732,17 @@ export const productTranslations = {
     buyOnAmazon: 'Comprar na Amazon',
     getItOnAmazonKindle: 'Obter no Amazon Kindle',
     buyOnAmazonAriaLabel: 'Comprar na Amazon',
+    register: 'Registrar',
+    registerForFreeTrial: 'Registrar para teste gratuito',
+    
+    // Product status
+    unknown: 'Desconhecido',
+    lowStock: 'Estoque Baixo',
+    onSale: 'em promoção',
+    percentOff: '% Desconto',
+    
+    // Accessibility labels
+    selectPlan: 'Selecionar plano',
     
     // Basket translations
     shoppingBasket: 'Cesta de Compras',
@@ -1924,6 +2001,17 @@ export const productTranslations = {
     buyOnAmazon: 'Kup na Amazon',
     getItOnAmazonKindle: 'Pobierz na Amazon Kindle',
     buyOnAmazonAriaLabel: 'Kup na Amazon',
+    register: 'Zarejestruj się',
+    registerForFreeTrial: 'Zarejestruj się na bezpłatny okres próbny',
+    
+    // Product status
+    unknown: 'Nieznany',
+    lowStock: 'Mały zapas',
+    onSale: 'w sprzedaży',
+    percentOff: '% zniżki',
+    
+    // Accessibility labels
+    selectPlan: 'Wybierz plan',
     
     // Basket translations
     shoppingBasket: 'Koszyk Zakupowy',
@@ -2182,6 +2270,17 @@ export const productTranslations = {
     buyOnAmazon: '在亚马逊购买',
     getItOnAmazonKindle: '在Amazon Kindle获取',
     buyOnAmazonAriaLabel: '在亚马逊购买',
+    register: '注册',
+    registerForFreeTrial: '注册免费试用',
+    
+    // Product status
+    unknown: '未知',
+    lowStock: '库存不足',
+    onSale: '促销中',
+    percentOff: '% 折扣',
+    
+    // Accessibility labels
+    selectPlan: '选择计划',
     
     // Basket translations
     shoppingBasket: '购物篮',
@@ -2440,6 +2539,17 @@ export const productTranslations = {
     buyOnAmazon: 'Amazonで購入',
     getItOnAmazonKindle: 'Amazon Kindleで入手',
     buyOnAmazonAriaLabel: 'Amazonで購入',
+    register: '登録',
+    registerForFreeTrial: '無料トライアルに登録',
+    
+    // Product status
+    unknown: '不明',
+    lowStock: '在庫少',
+    onSale: 'セール中',
+    percentOff: '% オフ',
+    
+    // Accessibility labels
+    selectPlan: 'プランを選択',
     
     // Basket translations
     shoppingBasket: 'ショッピングバスケット',
