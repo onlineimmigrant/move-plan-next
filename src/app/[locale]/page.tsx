@@ -43,8 +43,26 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   try {
     console.log('Fetching homepage data with baseUrl:', baseUrl);
 
-    // Resolve organizationId
-    const organizationId = await getOrganizationId(baseUrl);
+    // Resolve organizationId - check for actual URL match first
+    let organizationId = null;
+    const isLocal = process.env.NODE_ENV === 'development';
+    
+    // Try to get organization by URL first (this should match the logic in products page)
+    const { data: orgData, error: orgError } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq(isLocal ? 'base_url_local' : 'base_url', baseUrl)
+      .maybeSingle();
+
+    if (orgData && !orgError) {
+      organizationId = orgData.id;
+      console.log('Found organization by URL:', baseUrl, 'ID:', organizationId);
+    } else {
+      // Fallback to getOrganizationId for tenant lookup
+      organizationId = await getOrganizationId(baseUrl);
+      console.log('Using fallback organization ID:', organizationId);
+    }
+
     if (!organizationId) {
       console.error('No organization found for URL:', baseUrl, 'and no valid NEXT_PUBLIC_TENANT_ID');
       return defaultData;

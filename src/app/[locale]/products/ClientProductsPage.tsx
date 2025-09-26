@@ -37,17 +37,67 @@ const ClientProductsPage = memo(function ClientProductsPage({
   initialSubTypes,
   initialError,
   isAdmin = true,
+  organizationType = 'services',
 }: {
   initialProducts: Product[];
   initialSubTypes: ProductSubType[];
   initialError: string | null;
   isAdmin?: boolean;
+  organizationType?: string;
 }) {
   const { t } = useProductTranslations();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubType, setActiveSubType] = useState<ProductSubType | null>(null);
   const [visibleItemsCount, setVisibleItemsCount] = useState<number>(8);
+
+  // Function to get page title based on organization type
+  const getPageTitle = (orgType: string): string => {
+    switch (orgType) {
+      case 'immigration':
+        return (t as any).immigrationServices || 'Immigration Services';
+      case 'solicitor':
+        return (t as any).legalServices || 'Legal Services';
+      case 'finance':
+        return (t as any).financialServices || 'Financial Services';
+      case 'education':
+        return (t as any).coursesEducation || 'Education & Training';
+      case 'job':
+        return (t as any).jobOpportunities || 'Jobs & Careers';
+      case 'beauty':
+        return (t as any).beautyServices || 'Beauty Services';
+      case 'doctor':
+        return (t as any).medicalServices || 'Medical Services';
+      case 'services':
+        return (t as any).ourServices || 'Our Services';
+      case 'realestate':
+        return (t as any).realEstate || 'Real Estate';
+      case 'construction':
+        return (t as any).constructionServices || 'Construction Services';
+      case 'software':
+        return (t as any).softwareServices || 'Software & SaaS';
+      case 'marketing':
+        return (t as any).marketingServices || 'Marketing & Advertising';
+      case 'consulting':
+        return (t as any).consultingServices || 'Consulting Services';
+      case 'automotive':
+        return (t as any).automotiveServices || 'Auto Services';
+      case 'hospitality':
+        return (t as any).hospitalityServices || 'Hotels & Tourism';
+      case 'retail':
+        return (t as any).retailServices || 'Retail & Online';
+      case 'healthcare':
+        return (t as any).healthcareServices || 'Healthcare Services';
+      case 'transportation':
+        return (t as any).transportationServices || 'Transport & Logistics';
+      case 'technology':
+        return (t as any).technologyServices || 'IT & Tech Services';
+      case 'general':
+        return t.products; // Use default translation for general organizations
+      default:
+        return t.products; // Fallback to default translation
+    }
+  };
   const [error, setError] = useState<string | null>(initialError);
   const [isFixed, setIsFixed] = useState(false);
   const [searchHeight, setSearchHeight] = useState(0);
@@ -167,7 +217,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-12 relative">
             <div className="relative group">
               <h1 className="text-center text-xl font-bold text-gray-900 tracking-wide mb-6 sm:mb-0">
-                {t.products}
+                {getPageTitle(organizationType)}
                 <span className="absolute bottom-4 sm:-bottom-2 left-1/2 sm:left-1/3 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
               {isAdmin && (

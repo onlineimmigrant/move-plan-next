@@ -1,11 +1,14 @@
 // src/components/Breadcrumbs.tsx
 'use client';
 
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { RiHomeFill } from 'react-icons/ri';
 import { IoIosArrowForward } from 'react-icons/io';
 import { useSettings } from '@/context/SettingsContext';
+import { useProductTranslations } from '@/components/product/useProductTranslations';
+import { getOrganizationWithType } from '@/lib/supabase';
+import { getBaseUrl } from '@/lib/utils';
 
 // Types
 interface Breadcrumb {
@@ -23,9 +26,124 @@ interface BreadcrumbsProps {
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs = [] }) => {
   const pathname = usePathname();
   const { settings } = useSettings();
+  const { t } = useProductTranslations();
+  const [organizationType, setOrganizationType] = useState<string>('services');
+
+  // Fetch organization type
+  useEffect(() => {
+    const fetchOrganizationType = async () => {
+      try {
+        const baseUrl = getBaseUrl(true);
+        const orgData = await getOrganizationWithType(baseUrl);
+        if (orgData?.type) {
+          setOrganizationType(orgData.type);
+        }
+      } catch (error) {
+        console.error('Error fetching organization type for breadcrumbs:', error);
+      }
+    };
+
+    fetchOrganizationType();
+  }, []);
+
+  // Function to get translated page title based on organization type
+  const getTranslatedPageTitle = (orgType: string): string => {
+    switch (orgType) {
+      case 'immigration':
+        return (t as any).immigrationServices || 'Immigration Services';
+      case 'solicitor':
+        return (t as any).legalServices || 'Legal Services';
+      case 'finance':
+        return (t as any).financialServices || 'Financial Services';
+      case 'education':
+        return (t as any).coursesEducation || 'Courses & Education';
+      case 'job':
+        return (t as any).jobOpportunities || 'Job Opportunities';
+      case 'beauty':
+        return (t as any).beautyServices || 'Beauty Services';
+      case 'doctor':
+        return (t as any).medicalServices || 'Medical Services';
+      case 'services':
+        return (t as any).ourServices || 'Our Services';
+      case 'realestate':
+        return (t as any).realEstate || 'Real Estate';
+      case 'construction':
+        return (t as any).constructionServices || 'Construction & Contracting';
+      case 'software':
+        return (t as any).softwareServices || 'Software & SaaS Services';
+      case 'marketing':
+        return (t as any).marketingServices || 'Marketing & Advertising';
+      case 'consulting':
+        return (t as any).consultingServices || 'Business Consulting';
+      case 'automotive':
+        return (t as any).automotiveServices || 'Automotive Services';
+      case 'hospitality':
+        return (t as any).hospitalityServices || 'Hotels & Hospitality';
+      case 'retail':
+        return (t as any).retailServices || 'Retail & E-commerce';
+      case 'healthcare':
+        return (t as any).healthcareServices || 'Healthcare Services';
+      case 'transportation':
+        return (t as any).transportationServices || 'Transportation & Logistics';
+      case 'technology':
+        return (t as any).technologyServices || 'IT & Technology Services';
+      case 'general':
+        return t.products || 'Products';
+      default:
+        return t.products || 'Products';
+    }
+  };
+
+  // Function to get blog page title based on organization type
+  const getBlogPageTitle = (orgType: string): string => {
+    switch (orgType) {
+      case 'immigration':
+        return (t as any).immigrationNewsUpdates || 'Immigration News & Updates';
+      case 'solicitor':
+        return (t as any).legalNewsInsights || 'Legal News & Insights';
+      case 'finance':
+        return (t as any).financialNewsAnalysis || 'Financial News & Analysis';
+      case 'education':
+        return (t as any).educationalArticlesResources || 'Educational Articles & Resources';
+      case 'job':
+        return (t as any).careerNewsOpportunities || 'Career News & Opportunities';
+      case 'beauty':
+        return (t as any).beautyTipsTrends || 'Beauty Tips & Trends';
+      case 'doctor':
+        return (t as any).medicalNewsHealthTips || 'Medical News & Health Tips';
+      case 'services':
+        return (t as any).serviceUpdatesNews || 'Service Updates & News';
+      case 'realestate':
+        return (t as any).realEstateNewsMarketUpdates || 'Real Estate News & Market Updates';
+      case 'construction':
+        return (t as any).constructionNewsProjectUpdates || 'Construction News & Project Updates';
+      case 'software':
+        return (t as any).softwareNewsProductUpdates || 'Software News & Product Updates';
+      case 'marketing':
+        return (t as any).marketingTipsStrategies || 'Marketing Tips & Strategies';
+      case 'consulting':
+        return (t as any).consultingInsightsBestPractices || 'Consulting Insights & Best Practices';
+      case 'automotive':
+        return (t as any).automotiveNewsServiceTips || 'Automotive News & Service Tips';
+      case 'hospitality':
+        return (t as any).hospitalityTrendsTips || 'Hospitality Trends & Tips';
+      case 'retail':
+        return (t as any).retailTrendsEcommerceTips || 'Retail Trends & E-commerce Tips';
+      case 'healthcare':
+        return (t as any).healthcareNewsWellnessTips || 'Healthcare News & Wellness Tips';
+      case 'transportation':
+        return (t as any).transportationLogisticsNews || 'Transportation & Logistics News';
+      case 'technology':
+        return (t as any).technologyNewsITInsights || 'Technology News & IT Insights';
+      case 'general':
+        return (t as any).latestNewsArticles || 'Latest News & Articles';
+      default:
+        return (t as any).blogPosts || 'Blog Posts';
+    }
+  };
 
   // Log renders to debug
-  console.log('Breadcrumbs rendered:', { pathname, overrides, extraCrumbs, settings });
+  console.log('Breadcrumbs rendered:', { pathname, overrides, extraCrumbs, settings, organizationType });
 
   // Memoize overrides and extraCrumbs to prevent unnecessary re-computation
   const memoizedOverrides = useMemo(() => overrides, [overrides]);
@@ -60,6 +178,16 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
       
       let formattedLabel = decodedSegment.charAt(0).toUpperCase() + decodedSegment.slice(1).replace(/-/g, ' ');
 
+      // Special handling for products page based on organization type
+      if (segment === 'products') {
+        formattedLabel = getTranslatedPageTitle(organizationType);
+      }
+
+      // Special handling for blog page based on organization type
+      if (segment === 'blog') {
+        formattedLabel = getBlogPageTitle(organizationType);
+      }
+
       // Check if there is an override for this segment
       const override = memoizedOverrides.find((o) => o.segment === segment);
       if (override) {
@@ -86,7 +214,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
     }
 
     return newBreadcrumbs;
-  }, [pathname, memoizedOverrides, memoizedExtraCrumbs]);
+  }, [pathname, memoizedOverrides, memoizedExtraCrumbs, organizationType]);
 
  
   if (!breadcrumbs || breadcrumbs.length === 0) {
