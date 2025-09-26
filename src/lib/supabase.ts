@@ -94,17 +94,17 @@ export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: s
       baseUrl: currentUrl,
     });
 
-    // Fallback to tenantId if provided
-    if (tenantId) {
-      console.log('Attempting fallback with tenantId:', tenantId);
+    // Fallback to direct ID lookup with tenantId if provided
+    if (tenantId && isValidUUID(tenantId)) {
+      console.log('Attempting fallback with tenantId as direct ID:', tenantId);
       const { data: tenantData, error: tenantError } = await supabase
         .from('organizations')
         .select('id, type')
-        .eq('tenant_id', tenantId)
+        .eq('id', tenantId)
         .single();
 
       if (tenantError || !tenantData) {
-        console.error('Error fetching organization by tenantId:', {
+        console.error('Error fetching organization by ID:', {
           message: tenantError?.message || 'No error message',
           code: tenantError?.code || 'No code',
           details: tenantError?.details || 'No details',
@@ -114,7 +114,7 @@ export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: s
         return null;
       }
 
-      console.log('Fetched organization with type by tenantId:', tenantData.id, tenantData.type);
+      console.log('Fetched organization with type by ID:', tenantData.id, tenantData.type);
       return { id: tenantData.id, type: tenantData.type };
     }
 
@@ -123,6 +123,11 @@ export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: s
 
   console.log('Fetched organization with type by baseUrl:', data.id, data.type);
   return { id: data.id, type: data.type };
+}
+
+function isValidUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
 }
 
 // Parse interval string to milliseconds

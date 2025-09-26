@@ -180,6 +180,7 @@ export const organizationTypes = [
   { value: 'beauty', label: 'Beauty Services', icon: '💄' },
   { value: 'doctor', label: 'Medical Services', icon: '🏥' },
   { value: 'services', label: 'General Services', icon: '🔧' },
+  { value: 'realestate', label: 'Real Estate', icon: '🏘️' },
   { value: 'general', label: 'General Organization', icon: '🏢' },
 ];
 

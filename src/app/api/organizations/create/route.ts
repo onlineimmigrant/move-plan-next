@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate organization type - exclude 'general' from allowed types
-    const validTypes = ['immigration', 'solicitor', 'finance', 'education', 'job', 'beauty', 'doctor', 'services'];
+    const validTypes = ['immigration', 'solicitor', 'finance', 'education', 'job', 'beauty', 'doctor', 'services', 'realestate'];
     if (!validTypes.includes(type)) {
       return NextResponse.json({ error: 'Invalid organization type. General type is not allowed for creation.' }, { status: 400 });
     }

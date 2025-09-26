@@ -99,6 +99,7 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
     const menuItems: MenuItem[] = data?.map((item: any) => ({
       id: item.id,
       display_name: item.display_name,
+      display_name_translation: item.display_name_translation,
       url_name: item.url_name,
       is_displayed: item.is_displayed,
       is_displayed_on_footer: item.is_displayed_on_footer,
@@ -122,6 +123,7 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
       })) || [],
       // Legacy aliases for backward compatibility
       name: item.display_name,
+      name_translation: item.display_name_translation,
       url: item.url_name,
       is_visible: item.is_displayed,
       order_position: item.order,

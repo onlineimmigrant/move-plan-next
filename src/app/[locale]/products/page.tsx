@@ -1,4 +1,4 @@
-import { supabase, getOrganizationId } from '../../../lib/supabase';
+import { supabase, getOrganizationId, getOrganizationWithType } from '../../../lib/supabase';
 import { getBaseUrl } from '../../../lib/utils';
 import { fetchProductsListingSEOData } from '../../../lib/supabase/seo';
 import ClientProductsPage from './ClientProductsPage';
@@ -176,6 +176,7 @@ export default async function ProductsPage({
           initialSubTypes={[]}
           initialError={null}
           isAdmin={false}
+          organizationType="services"
         />
       </Suspense>
     );
@@ -192,6 +193,7 @@ export default async function ProductsPage({
   let allProducts: Product[] = [];
   let productSubTypes: ProductSubType[] = [];
   let error: string | null = null;
+  let organizationType: string = 'services'; // Default fallback
   const isAdmin = false;
   
   // Await searchParams before using
@@ -200,13 +202,15 @@ export default async function ProductsPage({
 
   try {
     // Parallel data fetching for better performance
-    const [products, subTypes] = await Promise.all([
+    const [products, subTypes, organizationData] = await Promise.all([
       fetchProducts(baseUrl, categoryId),
-      fetchProductSubTypes(baseUrl)
+      fetchProductSubTypes(baseUrl),
+      getOrganizationWithType(baseUrl)
     ]);
     
     allProducts = products;
     productSubTypes = subTypes;
+    organizationType = organizationData?.type || 'services';
   } catch (err: any) {
     console.error('Error fetching data with primary baseUrl:', err.message);
     
@@ -215,13 +219,15 @@ export default async function ProductsPage({
     if (fallbackUrl !== baseUrl) {
       console.log('Trying fallback baseUrl:', fallbackUrl);
       try {
-        const [products, subTypes] = await Promise.all([
+        const [products, subTypes, organizationData] = await Promise.all([
           fetchProducts(fallbackUrl, categoryId),
-          fetchProductSubTypes(fallbackUrl)
+          fetchProductSubTypes(fallbackUrl),
+          getOrganizationWithType(fallbackUrl)
         ]);
         
         allProducts = products;
         productSubTypes = subTypes;
+        organizationType = organizationData?.type || 'services';
       } catch (fallbackErr: any) {
         console.error('Fallback fetch also failed:', fallbackErr.message);
         error = `Failed to load products data: ${fallbackErr.message}`;
@@ -238,6 +244,7 @@ export default async function ProductsPage({
         initialSubTypes={productSubTypes}
         initialError={error}
         isAdmin={isAdmin}
+        organizationType={organizationType}
       />
     </Suspense>
   );
