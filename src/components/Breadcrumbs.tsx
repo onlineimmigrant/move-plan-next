@@ -84,9 +84,11 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
       case 'healthcare':
         return (t as any).healthcareServices || 'Healthcare Services';
       case 'transportation':
-        return (t as any).transportationServices || 'Transportation & Logistics';
+        return (t as any).transportationServices || 'Transport & Logistics';
       case 'technology':
-        return (t as any).technologyServices || 'IT & Technology Services';
+        return (t as any).technologyServices || 'IT & Tech Services';
+      case 'platform':
+        return (t as any).platformServices || 'Business Platform Solutions';
       case 'general':
         return t.products || 'Products';
       default:
@@ -135,6 +137,8 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
         return (t as any).transportationLogisticsNews || 'Transportation & Logistics News';
       case 'technology':
         return (t as any).technologyNewsITInsights || 'Technology News & IT Insights';
+      case 'platform':
+        return (t as any).platformNewsUpdates || 'Platform News & Updates';
       case 'general':
         return (t as any).latestNewsArticles || 'Latest News & Articles';
       default:

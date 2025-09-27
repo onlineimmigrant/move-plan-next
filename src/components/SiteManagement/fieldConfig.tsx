@@ -657,12 +657,15 @@ export const renderField = ({
       );
     
     case 'organization-type':
+      // Disable organization type field for platform organizations to prevent losing privileges
+      const isPlatformOrg = (value || allSettings?.type) === 'platform';
       return (
         <OrganizationTypeSelect
           label={field.label}
           name={field.name}
           value={value || 'services'}
           onChange={handleChange}
+          disabled={isPlatformOrg}
         />
       );
     

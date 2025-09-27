@@ -25,7 +25,7 @@ interface CheckboxFieldProps extends BaseFieldProps {
   checked: boolean;
 }
 
-const fieldClasses = "w-full px-4 py-3 bg-white/50 backdrop-blur-sm border border-gray-200/60 rounded-xl text-gray-900 placeholder-gray-400/70 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300 transition-all duration-300 text-sm font-light shadow-sm hover:border-gray-300 hover:shadow-md hover:bg-white/70";
+const fieldClasses = "w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl text-gray-900 placeholder-gray-500/60 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400/60 transition-all duration-300 text-sm font-normal shadow-sm hover:border-gray-300/80 hover:shadow-md hover:bg-white/80 hover:backdrop-blur-md";
 
 export const TextField: React.FC<TextFieldProps> = ({ 
   label, 
@@ -36,8 +36,8 @@ export const TextField: React.FC<TextFieldProps> = ({
   placeholder,
   className = ''
 }) => (
-  <div className="space-y-1.5">
-    <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
+  <div className="modal-field-group">
+    <label className="modal-label">{label}</label>
     <input
       type={type}
       name={name}
@@ -58,8 +58,8 @@ export const TextAreaField: React.FC<TextAreaFieldProps> = ({
   placeholder,
   className = ''
 }) => (
-  <div className="space-y-1.5">
-    <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
+  <div className="modal-field-group">
+    <label className="modal-label">{label}</label>
     <textarea
       name={name}
       value={value || ''}
@@ -79,8 +79,8 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   options,
   className = ''
 }) => (
-  <div className="space-y-1.5">
-    <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
+  <div className="modal-field-group">
+    <label className="modal-label">{label}</label>
     <select
       name={name}
       value={value || ''}
@@ -103,17 +103,19 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
   onChange,
   className = ''
 }) => (
-  <div className={`flex items-center bg-white/60 backdrop-blur-sm border border-sky-200/60 rounded-xl p-4 hover:bg-white/80 hover:border-sky-300/60 transition-all duration-300 group shadow-sm ${className}`}>
-    <input
-      type="checkbox"
-      id={name}
-      name={name}
-      checked={checked || false}
-      onChange={(e) => onChange(name, e.target.checked)}
-      className="h-5 w-5 text-sky-500 focus:ring-sky-500/30 border-sky-300 rounded-md transition-all duration-300 bg-white/80 shadow-sm"
-    />
-    <label htmlFor={name} className="ml-3 text-xs font-light text-sky-900/80 cursor-pointer group-hover:text-sky-800 transition-colors duration-300">
-      {label}
-    </label>
+  <div className={`modal-field-group modal-field-group--compact ${className}`}>
+    <div className="flex items-center bg-white/60 backdrop-blur-sm border border-sky-200/60 rounded-xl p-4 hover:bg-white/80 hover:border-sky-300/60 transition-all duration-300 group shadow-sm">
+      <input
+        type="checkbox"
+        id={name}
+        name={name}
+        checked={checked || false}
+        onChange={(e) => onChange(name, e.target.checked)}
+        className="h-5 w-5 text-sky-500 focus:ring-sky-500/30 border-sky-300 rounded-md transition-all duration-300 bg-white/80 shadow-sm"
+      />
+      <label htmlFor={name} className="ml-3 modal-label !mb-0 cursor-pointer group-hover:text-sky-800 transition-colors duration-300">
+        {label}
+      </label>
+    </div>
   </div>
 );

@@ -14,19 +14,33 @@ interface OrganizationTypeSelectProps {
   name: string;
   value: string;
   onChange: (name: string, value: string) => void;
+  disabled?: boolean;
 }
 
 export const OrganizationTypeSelect: React.FC<OrganizationTypeSelectProps> = ({ 
   label, 
   name, 
   value = 'services',
-  onChange 
+  onChange,
+  disabled = false
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
 
-  const selectedType = organizationTypes.find(type => type.value === value) || organizationTypes[0];
+  // For platform organizations, include platform type but make it disabled
+  // For other organizations, filter out platform and general types
+  const availableTypes = organizationTypes.filter(type => {
+    if (value === 'platform') {
+      // Show all types including platform when current value is platform
+      return !['general'].includes(type.value);
+    } else {
+      // Hide platform and general for non-platform organizations
+      return !['platform', 'general'].includes(type.value);
+    }
+  });
+  
+  const selectedType = organizationTypes.find(type => type.value === value) || availableTypes[0];
 
   const updateButtonRect = () => {
     if (buttonRef.current) {
@@ -51,8 +65,10 @@ export const OrganizationTypeSelect: React.FC<OrganizationTypeSelectProps> = ({
   }, [isOpen]);
 
   const handleChange = (newValue: string) => {
-    onChange(name, newValue);
-    setIsOpen(false);
+    if (!disabled) {
+      onChange(name, newValue);
+      setIsOpen(false);
+    }
   };
 
   const dropdownContent = isOpen && buttonRect && createPortal(
@@ -64,25 +80,36 @@ export const OrganizationTypeSelect: React.FC<OrganizationTypeSelectProps> = ({
         width: buttonRect.width,
       }}
     >
-      {organizationTypes.map((type) => (
-        <button
-          key={type.value}
-          onClick={() => handleChange(type.value)}
-          className={`relative cursor-pointer select-none py-3 pl-4 pr-10 w-full text-left transition-colors duration-200 hover:bg-sky-50/80 hover:text-sky-900 ${
-            type.value === value ? 'bg-sky-100/60 text-sky-900' : 'text-gray-900'
-          }`}
-        >
-          <div className="flex items-center space-x-3">
-            <span className="text-xl">{type.icon}</span>
-            <span className="block truncate text-sm font-light">{type.label}</span>
-          </div>
-          {type.value === value && (
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-sky-600">
-              <CheckIcon className="h-5 w-5" aria-hidden="true" />
-            </span>
-          )}
-        </button>
-      ))}
+      {availableTypes.map((type) => {
+        const isDisabledType = type.value === 'platform' && disabled;
+        return (
+          <button
+            key={type.value}
+            onClick={() => !isDisabledType && handleChange(type.value)}
+            disabled={isDisabledType}
+            className={`relative select-none py-3 pl-4 pr-10 w-full text-left transition-colors duration-200 ${
+              isDisabledType
+                ? 'cursor-not-allowed opacity-50 text-gray-400 bg-gray-50/50'
+                : type.value === value 
+                  ? 'cursor-pointer bg-sky-100/60 text-sky-900 hover:bg-sky-50/80 hover:text-sky-900' 
+                  : 'cursor-pointer text-gray-900 hover:bg-sky-50/80 hover:text-sky-900'
+            }`}
+          >
+            <div className="flex items-center space-x-3">
+              <span className="text-xl">{type.icon}</span>
+              <span className="block truncate text-sm font-light">{type.label}</span>
+              {isDisabledType && (
+                <span className="text-gray-400 text-xs">🔒</span>
+              )}
+            </div>
+            {type.value === value && (
+              <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-sky-600">
+                <CheckIcon className="h-5 w-5" aria-hidden="true" />
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>,
     document.body
   );
@@ -93,8 +120,13 @@ export const OrganizationTypeSelect: React.FC<OrganizationTypeSelectProps> = ({
       <div className="relative">
         <button
           ref={buttonRef}
-          onClick={() => setIsOpen(!isOpen)}
-          className="relative w-full cursor-pointer rounded-xl bg-white/50 backdrop-blur-sm border border-gray-200/60 py-3 pl-4 pr-10 text-left shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-md hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className={`relative w-full rounded-xl bg-white/50 backdrop-blur-sm border border-gray-200/60 py-3 pl-4 pr-10 text-left shadow-sm transition-all duration-300 focus:outline-none ${
+            disabled 
+              ? 'cursor-not-allowed opacity-60 bg-gray-50/50' 
+              : 'cursor-pointer hover:border-gray-300 hover:shadow-md hover:bg-white/70 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-300'
+          }`}
         >
           <div className="flex items-center space-x-3">
             <span className="text-xl">{selectedType?.icon}</span>
@@ -107,16 +139,24 @@ export const OrganizationTypeSelect: React.FC<OrganizationTypeSelectProps> = ({
           </span>
         </button>
         
-        {dropdownContent}
+        {!disabled && dropdownContent}
         
         {/* Click outside handler */}
-        {isOpen && (
+        {isOpen && !disabled && (
           <div
             className="fixed inset-0 z-[99998]"
             onClick={() => setIsOpen(false)}
           />
         )}
       </div>
+      
+      {/* Help text for platform organizations */}
+      {disabled && value === 'platform' && (
+        <p className="text-xs text-amber-600 font-light mt-1 flex items-center space-x-1">
+          <span>🔒</span>
+          <span>Platform organization type cannot be changed to preserve administrative privileges</span>
+        </p>
+      )}
     </div>
   );
 };

@@ -18,6 +18,7 @@ interface SettingsFormFieldsProps {
   };
   session?: any;
   organizationId?: string;
+  resetKey?: number; // Add reset key to force re-initialization
 }
 
 const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({ 
@@ -28,7 +29,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   isNarrow = false,
   cookieData,
   session,
-  organizationId
+  organizationId,
+  resetKey = 0
 }) => {
   const [sectionChanges, setSectionChanges] = useState<Record<string, Partial<Settings>>>({});
   const [originalSectionValues, setOriginalSectionValues] = useState<Record<string, Partial<Settings>>>({});
@@ -41,10 +43,12 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
     console.log('🍪 [SettingsFormFields] new count:', Array.isArray(settings.cookie_services) ? settings.cookie_services.length : 0);
   }, [settings.cookie_services]);
 
-  // Initialize section states only once
+  // Initialize section states - reset when resetKey changes
   useEffect(() => {
+    console.log('[SettingsFormFields] Initializing section states, resetKey:', resetKey);
+    
     const storedStates = sessionStorage.getItem('siteManagement_sectionStates');
-    if (storedStates) {
+    if (storedStates && resetKey === 0) {
       try {
         const parsed = JSON.parse(storedStates);
         // Validate that stored states match current sections
@@ -52,29 +56,28 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
         sectionsConfig.forEach(section => {
           validatedStates[section.key] = parsed[section.key] || false;
         });
-        // If no sections are open, default to hero section
-        const hasOpenSection = Object.values(validatedStates).some(isOpen => isOpen);
-        if (!hasOpenSection) {
-          validatedStates.hero = true;
-        }
+        // All sections start closed - no need to default any section to open
         setSectionStates(validatedStates);
+        console.log('[SettingsFormFields] Loaded states from sessionStorage:', validatedStates);
       } catch {
         // Fallback to default if parsing fails
         const initialStates: Record<string, boolean> = {};
         sectionsConfig.forEach(section => {
-          initialStates[section.key] = section.key === 'hero';
+          initialStates[section.key] = false; // All sections start closed
         });
         setSectionStates(initialStates);
+        console.log('[SettingsFormFields] Fallback to default closed states');
       }
     } else {
       const initialStates: Record<string, boolean> = {};
       sectionsConfig.forEach(section => {
-        // Default hero section to be open, others closed
-        initialStates[section.key] = section.key === 'hero';
+        // All sections start closed by default
+        initialStates[section.key] = false;
       });
       setSectionStates(initialStates);
+      console.log('[SettingsFormFields] Set all sections to closed, resetKey:', resetKey);
     }
-  }, []);
+  }, [resetKey]);
 
   // Save section states to sessionStorage whenever they change
   useEffect(() => {
@@ -88,9 +91,100 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
     sessionStorage.removeItem('siteManagement_sectionStates');
     const initialStates: Record<string, boolean> = {};
     sectionsConfig.forEach(section => {
-      initialStates[section.key] = section.key === 'hero';
+      initialStates[section.key] = false; // All sections start closed
     });
     setSectionStates(initialStates);
+  };
+
+  // Helper function to check if a field has meaningful data
+  const hasFieldData = (fieldName: keyof Settings): boolean => {
+    const value = settings[fieldName];
+    if (value === null || value === undefined || value === '') return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (typeof value === 'boolean') return true; // Booleans are always considered "data"
+    return true; // Other truthy values
+  };
+
+  // Helper function to get detailed subsection statuses
+  const getSubsectionStatuses = (section: any) => {
+    if (!section.subsections) return [];
+    
+    return section.subsections.map((subsection: any) => {
+      const fieldStatuses = subsection.fields ? subsection.fields.map((field: any) => ({
+        hasData: hasFieldData(field.name),
+        isEmpty: !hasFieldData(field.name),
+        name: field.name
+      })) : [];
+      
+      const hasData = fieldStatuses.some((f: any) => f.hasData);
+      const isEmpty = fieldStatuses.every((f: any) => f.isEmpty);
+      const allFieldsFilled = fieldStatuses.length > 0 && fieldStatuses.every((f: any) => f.hasData);
+      
+      return {
+        hasData: allFieldsFilled, // Changed: only true if ALL fields are filled
+        isEmpty: !allFieldsFilled, // Changed: true if ANY field is missing
+        allFieldsFilled,
+        title: subsection.title,
+        fieldStatuses
+      };
+    });
+  };
+
+  // Helper function to get detailed field statuses for a subsection
+  const getFieldStatuses = (subsection: any) => {
+    if (!subsection.fields) return [];
+    
+    return subsection.fields.map((field: any) => ({
+      hasData: hasFieldData(field.name),
+      isEmpty: !hasFieldData(field.name),
+      name: field.label || field.name
+    }));
+  };
+
+  // Helper function to check if a section has data
+  const checkSectionData = (section: any) => {
+    if (section.fields) {
+      const hasData = section.fields.some((field: any) => hasFieldData(field.name));
+      const isEmpty = section.fields.every((field: any) => !hasFieldData(field.name));
+      return { hasData, isEmpty };
+    }
+    if (section.subsections) {
+      const subsectionStatuses = getSubsectionStatuses(section);
+      const hasData = subsectionStatuses.some((s: any) => s.hasData);
+      const isEmpty = subsectionStatuses.every((s: any) => s.isEmpty);
+      const allSubsectionsFilled = subsectionStatuses.length > 0 && subsectionStatuses.every((s: any) => s.allFieldsFilled);
+      
+      return { 
+        hasData, 
+        isEmpty, 
+        subsectionStatuses: subsectionStatuses.map((s: any) => ({
+          hasData: s.hasData,
+          isEmpty: s.isEmpty,
+          title: s.title
+        })),
+        allSubsectionsFilled
+      };
+    }
+    return { hasData: false, isEmpty: true };
+  };
+
+  // Helper function to check if a subsection has data
+  const checkSubsectionData = (subsection: any) => {
+    if (subsection.fields) {
+      const fieldStatuses = getFieldStatuses(subsection);
+      const hasData = fieldStatuses.some((f: any) => f.hasData);
+      const isEmpty = fieldStatuses.every((f: any) => f.isEmpty);
+      const allFieldsFilled = fieldStatuses.length > 0 && fieldStatuses.every((f: any) => f.hasData);
+      
+      return { 
+        hasData, 
+        isEmpty, 
+        fieldStatuses,
+        allFieldsFilled
+      };
+    }
+    return { hasData: false, isEmpty: true };
   };
 
   const handleSectionToggle = (sectionKey: string, isOpen: boolean) => {
@@ -316,6 +410,10 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             onCancel={() => handleSectionCancel(section.key)}
             isOpen={sectionStates[section.key] || false}
             onToggle={handleSectionToggle}
+            hasData={checkSectionData(section).hasData}
+            isEmpty={checkSectionData(section).isEmpty}
+            subsectionStatuses={checkSectionData(section).subsectionStatuses}
+            allSubsectionsFilled={checkSectionData(section).allSubsectionsFilled}
           >
             {section.subsections ? (
               <div className={getSubsectionGridClasses(section.key)}>
@@ -370,6 +468,11 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                       storageKey={`${section.key}_${subsection.key}`}
                       itemCount={getItemCount(subsection.key)}
                       actionContent={getActionContent()}
+                      resetKey={resetKey}
+                      hasData={checkSubsectionData(subsection).hasData}
+                      isEmpty={checkSubsectionData(subsection).isEmpty}
+                      fieldStatuses={checkSubsectionData(subsection).fieldStatuses}
+                      allFieldsFilled={checkSubsectionData(subsection).allFieldsFilled}
                       action={subsection.key === 'menu-items' ? 
                         <div
                           role="button"

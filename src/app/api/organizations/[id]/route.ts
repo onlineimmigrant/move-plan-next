@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { revalidateTag } from 'next/cache';
+import { logActivity, getOrganizationName } from '@/lib/activityLogger';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -140,27 +141,53 @@ export async function GET(
       console.log('User organization type:', currentOrg.type, 'Requested org ID:', orgId, 'User org ID:', profile.organization_id);
 
       // Permission validation logic for regular users
-      if (currentOrg.type === 'general') {
-        // GENERAL ORGANIZATION LOGIC
+      if (currentOrg.type === 'platform' || currentOrg.type === 'general') {
+        // PLATFORM/GENERAL ORGANIZATION LOGIC
         if (profile.role !== 'admin') {
           return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
         }
 
-        // Check if this organization was created by someone from the current general organization
-        const { data: generalOrgUsers, error: usersError } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('organization_id', profile.organization_id)
-          .or('role.eq.admin,is_site_creator.eq.true');
+        // Platform organization admins can access:
+        // 1. Their own platform organization 
+        // 2. Any child organization created by platform organization users
+        
+        // If requesting their own platform organization, allow access
+        if (orgId === profile.organization_id) {
+          console.log('✅ Platform admin accessing their own organization');
+          // Continue with the request - access granted
+        } else {
+          // Check if the requested organization was created by someone from the platform organization
+          const { data: platformOrgUsers, error: usersError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('organization_id', profile.organization_id)
+            .or('role.eq.admin,is_site_creator.eq.true');
 
-        if (usersError) {
-          return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
+          if (usersError) {
+            return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
+          }
+
+          const creatorEmails = platformOrgUsers?.map((user: any) => user.email) || [];
+          
+          // Check if the requested organization was created by a platform user
+          const { data: targetOrg, error: targetOrgError } = await supabase
+            .from('organizations')
+            .select('created_by_email')
+            .eq('id', orgId)
+            .single();
+            
+          if (targetOrgError || !targetOrg) {
+            return NextResponse.json({ error: 'Target organization not found' }, { status: 404 });
+          }
+          
+          if (!creatorEmails.includes(targetOrg.created_by_email)) {
+            return NextResponse.json({ error: 'Access denied. You can only access organizations created by your platform.' }, { status: 403 });
+          }
+          
+          console.log('✅ Platform admin accessing child organization created by platform user');
         }
-
-        const creatorEmails = generalOrgUsers?.map((user: any) => user.email) || [];
-        // Note: We'll skip the creator email check for service role testing
       } else {
-        // NON-GENERAL ORGANIZATION LOGIC
+        // CHILD ORGANIZATION LOGIC
         if (orgId !== profile.organization_id) {
           return NextResponse.json({ error: 'Access denied. You can only access your own organization.' }, { status: 403 });
         }
@@ -659,21 +686,39 @@ export async function PUT(
     });
 
     // Access control based on organization type
-    if (currentOrg.type === 'general') {
-      // General organizations: check admin role
-      console.log('PUT - General org access control');
+    if (currentOrg.type === 'platform' || currentOrg.type === 'general') {
+      // Platform/General organizations: check admin role and permissions
+      console.log('PUT - Platform/General org access control');
       if (profile.role !== 'admin') {
         console.log('PUT - Access denied: not admin');
         return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
       }
+      
+      // Platform admins can edit their own org or child organizations created by platform users
+      if (profile.organization_id !== orgId) {
+        // Check if the target organization was created by someone from the platform organization
+        const { data: platformOrgUsers, error: usersError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('organization_id', profile.organization_id)
+          .or('role.eq.admin,is_site_creator.eq.true');
+
+        if (usersError) {
+          return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
+        }
+
+        const creatorEmails = platformOrgUsers?.map((user: any) => user.email) || [];
+        
+        // We'll check the creator email later in the additional permission check
+      }
     } else {
-      // Non-general organizations: check if editing their own organization
-      console.log('PUT - Non-general org access control');
+      // Child organizations: check if editing their own organization
+      console.log('PUT - Child org access control');
       if (profile.organization_id !== orgId) {
         console.log('PUT - Access denied: not own organization');
         return NextResponse.json({ error: 'Access denied. You can only edit your own organization.' }, { status: 403 });
       }
-      // For non-general orgs, any member can edit their own org
+      // For child orgs, any member can edit their own org
     }
 
     // Verify user can edit this organization
@@ -687,9 +732,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    // Additional permission check only for general organizations
-    if (currentOrg.type === 'general') {
-      const { data: generalOrgUsers, error: usersError } = await supabase
+    // Additional permission check only for platform/general organizations
+    if (currentOrg.type === 'platform' || currentOrg.type === 'general') {
+      const { data: platformOrgUsers, error: usersError } = await supabase
         .from('profiles')
         .select('email')
         .eq('organization_id', profile.organization_id)
@@ -699,12 +744,12 @@ export async function PUT(
         return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
       }
 
-      const creatorEmails = generalOrgUsers?.map(user => user.email) || [];
+      const creatorEmails = platformOrgUsers?.map((user: any) => user.email) || [];
       if (!creatorEmails.includes(targetOrg.created_by_email)) {
         return NextResponse.json({ error: 'Access denied. You can only edit organizations created by your team.' }, { status: 403 });
       }
     }
-    // For non-general organizations, no additional check needed since they can only edit their own org
+    // For non-platform organizations, no additional check needed since they can only edit their own org
 
     let updatedOrg = null;
     let updatedSettings = null;
@@ -731,6 +776,17 @@ export async function PUT(
       if (orgUpdateError) {
         console.error('Error updating organization:', orgUpdateError);
         return NextResponse.json({ error: 'Failed to update organization' }, { status: 500 });
+      }
+
+      // Log the update activity
+      if (org) {
+        const organizationName = await getOrganizationName(orgId);
+        await logActivity({
+          organizationId: orgId,
+          action: 'updated',
+          details: `${organizationName} updated`,
+          userEmail: user.user.email
+        });
       }
 
       updatedOrg = org;

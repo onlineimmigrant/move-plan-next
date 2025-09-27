@@ -92,6 +92,8 @@ const ClientProductsPage = memo(function ClientProductsPage({
         return (t as any).transportationServices || 'Transport & Logistics';
       case 'technology':
         return (t as any).technologyServices || 'IT & Tech Services';
+      case 'platform':
+        return (t as any).platformServices || 'Business Platform Solutions';
       case 'general':
         return t.products; // Use default translation for general organizations
       default:

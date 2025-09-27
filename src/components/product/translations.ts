@@ -185,6 +185,7 @@ export const productTranslations = {
     healthcareServices: 'Healthcare Services',
     transportationServices: 'Transport & Logistics',
     technologyServices: 'IT & Tech Services',
+    platformServices: 'Business Platform Solutions',
     
     // Organization type based blog titles
     immigrationNewsUpdates: 'Immigration News & Updates',
@@ -206,6 +207,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'Healthcare News & Wellness Tips',
     transportationLogisticsNews: 'Transportation & Logistics News',
     technologyNewsITInsights: 'Technology News & IT Insights',
+    platformNewsUpdates: 'Platform News & Updates',
     latestNewsArticles: 'Latest News & Articles',
     blogPosts: 'Blog Posts',
     
@@ -514,6 +516,7 @@ export const productTranslations = {
     healthcareServices: 'Servicios Médicos',
     transportationServices: 'Transporte y Logística',
     technologyServices: 'Servicios de TI y Tecnología',
+    platformServices: 'Soluciones de Plataforma Empresarial',
     
     // Organization type based blog titles
     immigrationNewsUpdates: 'Noticias y Actualizaciones de Inmigración',
@@ -535,6 +538,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'Noticias de Atención Médica y Consejos de Bienestar',
     transportationLogisticsNews: 'Noticias de Transporte y Logística',
     technologyNewsITInsights: 'Noticias de Tecnología y Perspectivas de TI',
+    platformNewsUpdates: 'Noticias y Actualizaciones de Plataforma',
     latestNewsArticles: 'Últimas Noticias y Artículos',
     blogPosts: 'Publicaciones del Blog',
     
@@ -809,6 +813,7 @@ export const productTranslations = {
     healthcareServices: 'Services de Santé',
     transportationServices: 'Transport et Logistique',
     technologyServices: 'Services IT et Technologie',
+    platformServices: 'Solutions de Plateforme d\'Entreprise',
     
     // Organization type based blog titles
     immigrationNewsUpdates: 'Actualités et Mises à Jour d\'Immigration',
@@ -830,6 +835,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'Actualités Santé et Conseils Bien-être',
     transportationLogisticsNews: 'Actualités Transport et Logistique',
     technologyNewsITInsights: 'Actualités Technologie et Perspectives IT',
+    platformNewsUpdates: 'Actualités et Mises à Jour de Plateforme',
     latestNewsArticles: 'Dernières Actualités et Articles',
     blogPosts: 'Articles de Blog',
     
@@ -1104,6 +1110,7 @@ export const productTranslations = {
     healthcareServices: 'Gesundheitsdienstleistungen',
     transportationServices: 'Transport & Logistik',
     technologyServices: 'IT & Technologiedienstleistungen',
+    platformServices: 'Geschäftsplattform-Lösungen',
     
     // Organization type based blog titles
     immigrationNewsUpdates: 'Einwanderungsnachrichten & Updates',
@@ -1125,6 +1132,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'Gesundheitsnachrichten & Wellness-Tipps',
     transportationLogisticsNews: 'Transport- & Logistiknachrichten',
     technologyNewsITInsights: 'Technologie-Nachrichten & IT-Einblicke',
+    platformNewsUpdates: 'Plattform-Nachrichten & Updates',
     latestNewsArticles: 'Neueste Nachrichten & Artikel',
     blogPosts: 'Blog-Beiträge',
     
@@ -1402,6 +1410,7 @@ export const productTranslations = {
     healthcareServices: 'Услуги Здравоохранения',
     transportationServices: 'Транспорт и Доставка',
     technologyServices: 'ИТ и Технологические Услуги',
+    platformServices: 'Платформенные Решения',
     
     // Organization type based blog titles
     immigrationNewsUpdates: 'Новости и Обновления по Иммиграции',
@@ -1423,6 +1432,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'Новости Здравоохранения и Советы по Благополучию',
     transportationLogisticsNews: 'Новости Транспорта и Логистики',
     technologyNewsITInsights: 'Технологические Новости и ИТ Идеи',
+    platformNewsUpdates: 'Новости и Обновления Платформы',
     latestNewsArticles: 'Последние Новости и Статьи',
     blogPosts: 'Записи Блога',
     
@@ -1715,6 +1725,7 @@ export const productTranslations = {
     healthcareServices: 'Servizi Sanitari',
     transportationServices: 'Trasporti e Logistica',
     technologyServices: 'Servizi IT e Tecnologia',
+    platformServices: 'Soluzioni di Piattaforma Aziendale',
     
     // Organization type based blog titles
     immigrationNewsUpdates: 'Notizie e Aggiornamenti sull\'Immigrazione',
@@ -1736,6 +1747,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'Notizie Sanitarie e Consigli Benessere',
     transportationLogisticsNews: 'Notizie Trasporti e Logistica',
     technologyNewsITInsights: 'Notizie Tecnologia e Approfondimenti IT',
+    platformNewsUpdates: 'Notizie e Aggiornamenti Piattaforma',
     latestNewsArticles: 'Ultime Notizie e Articoli',
     blogPosts: 'Post del Blog',
     
@@ -2028,6 +2040,7 @@ export const productTranslations = {
     healthcareServices: 'Serviços de Saúde',
     transportationServices: 'Transporte e Logística',
     technologyServices: 'Serviços de TI e Tecnologia',
+    platformServices: 'Soluções de Plataforma Empresarial',
     
     // Organization type based blog titles
     immigrationNewsUpdates: 'Notícias e Atualizações de Imigração',
@@ -2049,6 +2062,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'Notícias de Saúde e Dicas de Bem-estar',
     transportationLogisticsNews: 'Notícias de Transporte e Logística',
     technologyNewsITInsights: 'Notícias de Tecnologia e Insights de TI',
+    platformNewsUpdates: 'Notícias e Atualizações da Plataforma',
     latestNewsArticles: 'Últimas Notícias e Artigos',
     blogPosts: 'Posts do Blog',
     
@@ -2341,6 +2355,7 @@ export const productTranslations = {
     healthcareServices: 'Usługi Opieki Zdrowotnej',
     transportationServices: 'Transport i Logistyka',
     technologyServices: 'Usługi IT i Technologiczne',
+    platformServices: 'Rozwiązania Platformy Biznesowej',
     
     // Organization type based blog titles
     immigrationNewsUpdates: 'Wiadomości i Aktualizacje Imigracyjne',
@@ -2362,6 +2377,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'Wiadomości Zdrowotne i Porady Wellness',
     transportationLogisticsNews: 'Wiadomości Transportu i Logistyki',
     technologyNewsITInsights: 'Wiadomości Technologiczne i Spostrzeżenia IT',
+    platformNewsUpdates: 'Wiadomości i Aktualizacje Platformy',
     latestNewsArticles: 'Najnowsze Wiadomości i Artykuły',
     blogPosts: 'Posty Blogowe',
     
@@ -2654,6 +2670,7 @@ export const productTranslations = {
     healthcareServices: '医疗保健服务',
     transportationServices: '运输与物流',
     technologyServices: 'IT与技术服务',
+    platformServices: '商业平台解决方案',
     
     // Organization type based blog titles
     immigrationNewsUpdates: '移民新闻与更新',
@@ -2675,6 +2692,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: '医疗新闻与健康贴士',
     transportationLogisticsNews: '运输与物流新闻',
     technologyNewsITInsights: '技术新闻与IT见解',
+    platformNewsUpdates: '平台新闻与更新',
     latestNewsArticles: '最新新闻与文章',
     blogPosts: '博客文章',
     
@@ -2967,6 +2985,7 @@ export const productTranslations = {
     healthcareServices: 'ヘルスケアサービス',
     transportationServices: '輸送・物流',
     technologyServices: 'IT・テクノロジーサービス',
+    platformServices: 'ビジネスプラットフォームソリューション',
     
     // Organization type based blog titles
     immigrationNewsUpdates: '入国管理ニュースと更新情報',
@@ -2988,6 +3007,7 @@ export const productTranslations = {
     healthcareNewsWellnessTips: 'ヘルスケアニュースとウェルネスのヒント',
     transportationLogisticsNews: '輸送・物流ニュース',
     technologyNewsITInsights: 'テクノロジーニュースとIT洞察',
+    platformNewsUpdates: 'プラットフォームニュースとアップデート',
     latestNewsArticles: '最新ニュースと記事',
     blogPosts: 'ブログ投稿',
     

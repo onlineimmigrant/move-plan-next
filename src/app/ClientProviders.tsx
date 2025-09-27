@@ -226,7 +226,7 @@ function BannerAwareContent({
       <div style={{ marginTop: `${fixedBannersHeight}px` }} className="w-full">
         {showNavbarFooter ? (
           <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
-            <main className="pt-4 w-full">
+            <main className="w-full">
               {children}
               <TemplateHeadingSections />
               <TemplateSections />
@@ -235,7 +235,7 @@ function BannerAwareContent({
             </main>
           </NavbarFooterWrapper>
         ) : (
-          <main className="pt-4 w-full">
+          <main className="w-full">
             {children}
             <TemplateHeadingSections />
             <TemplateSections />

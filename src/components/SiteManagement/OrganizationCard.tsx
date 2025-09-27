@@ -1,166 +1,232 @@
-import React from 'react';
-import { ArrowTopRightOnSquareIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect } from 'react';
+import { 
+  ArrowTopRightOnSquareIcon, 
+  GlobeAltIcon, 
+  EllipsisVerticalIcon,
+  DocumentDuplicateIcon,
+  ChartBarIcon,
+  ArrowPathIcon,
+  TrashIcon,
+  RocketLaunchIcon,
+  LinkIcon
+} from '@heroicons/react/24/outline';
 import { Organization, organizationTypes } from './types';
+import Button from '@/ui/Button';
 
 interface OrganizationCardProps {
   organization: Organization;
   onEdit: (org: Organization) => void;
+  onDeploy?: (org: Organization) => void;
+  onClone?: (org: Organization) => void;
+  onDelete?: (org: Organization) => void;
+  isLoading?: boolean;
 }
 
-export default function OrganizationCard({ organization, onEdit }: OrganizationCardProps) {
+export default function OrganizationCard({ 
+  organization, 
+  onEdit, 
+  onDeploy, 
+  onClone, 
+  onDelete,
+  isLoading = false
+}: OrganizationCardProps) {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
+
+  const handleEdit = async () => {
+    setIsButtonLoading(true);
+    await onEdit(organization);
+    // Note: The loading will be cleared when the component receives isLoading=false
+  };
+
+  // Clear local loading state when external loading changes
+  useEffect(() => {
+    if (!isLoading) {
+      setIsButtonLoading(false);
+    }
+  }, [isLoading]);
 
   const getTypeInfo = (type: string) => {
     return organizationTypes.find(t => t.value === type) || { label: type, icon: '🏢' };
   };
 
-  // Generate a consistent color for a given URL/domain
-  const getWebsiteColor = (url: string) => {
+  const copyToClipboard = async (text: string, type: string) => {
     try {
-      // Clean up URL - ensure it has protocol
-      let cleanUrl = url;
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        cleanUrl = `https://${url}`;
-      }
-      
-      const domain = new URL(cleanUrl).hostname;
-      
-      // Generate a hash from the domain name
-      let hash = 0;
-      for (let i = 0; i < domain.length; i++) {
-        const char = domain.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32-bit integer
-      }
-      
-      // Define a curated set of beautiful colors
-      const colors = [
-        { bg: 'bg-blue-500', text: 'text-white', ring: 'ring-blue-200' },
-        { bg: 'bg-purple-500', text: 'text-white', ring: 'ring-purple-200' },
-        { bg: 'bg-pink-500', text: 'text-white', ring: 'ring-pink-200' },
-        { bg: 'bg-indigo-500', text: 'text-white', ring: 'ring-indigo-200' },
-        { bg: 'bg-teal-500', text: 'text-white', ring: 'ring-teal-200' },
-        { bg: 'bg-green-500', text: 'text-white', ring: 'ring-green-200' },
-        { bg: 'bg-orange-500', text: 'text-white', ring: 'ring-orange-200' },
-        { bg: 'bg-red-500', text: 'text-white', ring: 'ring-red-200' },
-        { bg: 'bg-cyan-500', text: 'text-white', ring: 'ring-cyan-200' },
-        { bg: 'bg-violet-500', text: 'text-white', ring: 'ring-violet-200' },
-        { bg: 'bg-emerald-500', text: 'text-white', ring: 'ring-emerald-200' },
-        { bg: 'bg-rose-500', text: 'text-white', ring: 'ring-rose-200' },
-        { bg: 'bg-slate-500', text: 'text-white', ring: 'ring-slate-200' },
-        { bg: 'bg-amber-500', text: 'text-white', ring: 'ring-amber-200' },
-        { bg: 'bg-lime-500', text: 'text-white', ring: 'ring-lime-200' }
-      ];
-      
-      // Use hash to select color consistently
-      const colorIndex = Math.abs(hash) % colors.length;
-      return colors[colorIndex];
-    } catch (error) {
-      console.error('Error generating website color:', error);
-      return { bg: 'bg-gray-500', text: 'text-white', ring: 'ring-gray-200' };
+      await navigator.clipboard.writeText(text);
+      // You could add a toast notification here
+      console.log(`${type} copied to clipboard`);
+    } catch (err) {
+      console.error('Failed to copy:', err);
     }
   };
 
   const typeInfo = getTypeInfo(organization.type);
-
-  // Extract domain from URL for reference
-  const getDomainFromUrl = (url: string) => {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return null;
-    }
-  };
-
-  const primaryUrl = organization.base_url || organization.base_url_local;
-  const domain = primaryUrl ? getDomainFromUrl(primaryUrl) : null;
+  const isPlatform = organization.type === 'platform';
 
   return (
     <div 
-      onClick={() => onEdit(organization)}
-      className="group relative overflow-hidden bg-white/95 rounded-2xl border border-black/8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_50px_rgba(0,0,0,0.12)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] cursor-pointer"
-      style={{
-        backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-        WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-      }}
+      className={`group relative overflow-hidden rounded-xl border cursor-pointer transition-all duration-200 ${
+        isPlatform 
+          ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200/60 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100/50' 
+          : 'bg-white border-gray-200/80 hover:border-gray-300 hover:shadow-lg hover:shadow-gray-100/50'
+      }`}
     >
-      {/* Subtle gradient overlay for premium feel */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-gray-100/20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      
       {/* Main Content */}
-      <div className="relative p-8">
-        <div className="flex items-start justify-between gap-6">
-          {/* Left Side - Organization Info */}
+      <div className="p-6">
+        {/* Header with org info and actions */}
+        <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-w-0">
-            {/* Organization Info */}
-            <div className="pt-2">
-              <h3 className="text-[20px] font-semibold text-gray-900 tracking-[-0.02em] antialiased truncate leading-tight mb-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl">{typeInfo.icon}</span>
+              <h3 className="text-lg font-semibold text-gray-900 truncate">
                 {organization.name}
               </h3>
-              <p className="text-[15px] text-gray-600 font-medium antialiased capitalize">
-                {typeInfo.label}
-              </p>
+              {isPlatform && (
+                <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-medium">
+                  Platform
+                </span>
+              )}
             </div>
+            <p className="text-sm text-gray-600 capitalize mb-3">
+              {typeInfo.label}
+            </p>
           </div>
+          
+          {/* Quick Actions Dropdown */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDropdown(!showDropdown);
+              }}
+              className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+            >
+              <EllipsisVerticalIcon className="w-5 h-5" />
+            </button>
+            
+            {showDropdown && (
+              <>
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowDropdown(false)}
+                />
+                
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 top-8 z-20 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                  {organization.base_url && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(organization.base_url!, 'Live URL');
+                        setShowDropdown(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                      Copy Live URL
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDropdown(false);
+                      // Add analytics functionality
+                      console.log('View Analytics for:', organization.name);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <ChartBarIcon className="w-4 h-4" />
+                    View Analytics
+                  </button>
+                  
 
-          {/* Right Side - Live Site Preview */}
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDropdown(false);
+                      // Add sync functionality
+                      console.log('Sync Changes for:', organization.name);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <ArrowPathIcon className="w-4 h-4" />
+                    Sync Changes
+                  </button>
+                  
+                  {onClone && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDropdown(false);
+                        onClone(organization);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      <DocumentDuplicateIcon className="w-4 h-4" />
+                      Clone Site
+                    </button>
+                  )}
+                  
+                  <hr className="my-1" />
+                  
+                  {onDelete && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDropdown(false);
+                        if (confirm(`Are you sure you want to delete "${organization.name}"?`)) {
+                          onDelete(organization);
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                      Delete Site
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Status Indicators */}
+        <div className="mb-4 flex items-center gap-2">
           {organization.base_url && (
-            <div className="flex-shrink-0 w-24 h-16">
-              <div className="w-full h-full rounded-lg border border-black/6 overflow-hidden shadow-sm backdrop-blur-sm group/preview">
-                {(() => {
-                  const websiteColor = getWebsiteColor(organization.base_url);
-                  return (
-                    <div className={`w-full h-full ${websiteColor.bg} transition-all duration-300 group-hover/preview:scale-105 ring-1 ${websiteColor.ring}`}>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-md">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              Live
+            </span>
+          )}
+          {organization.base_url_local && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-md">
+              <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
+              Development
+            </span>
+          )}
+          {!organization.base_url && !organization.base_url_local && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-md">
+              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+              Draft
+            </span>
           )}
         </div>
-      </div>
 
-      {/* Apple-style URLs Footer - Fully optimized */}
-      {(organization.base_url || organization.base_url_local) && (
-        <div 
-          className="relative border-t border-black/6 px-8 py-6 bg-gray-50/50"
-          style={{
-            backdropFilter: 'blur(16px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(160%)',
-          }}
-        >
-          <div className="flex items-center justify-between space-x-8">
-            {organization.base_url && (
-              <a 
-                href={organization.base_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-x-2 text-gray-700 hover:text-gray-900 text-[13px] font-medium antialiased transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group/link hover:scale-[1.02] flex-1"
-              >
-                <div className="flex items-center gap-x-2 flex-1 min-w-0">
-                  <span className="truncate">Live Site</span>
-                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-300 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 text-gray-500" />
-                </div>
-              </a>
-            )}
-            
-            {organization.base_url_local && (
-              <a 
-                href={organization.base_url_local} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-x-2 text-gray-600 hover:text-gray-800 text-[13px] font-medium antialiased transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group/dev hover:scale-[1.02] flex-1"
-              >
-                <div className="flex items-center gap-x-2 flex-1 min-w-0">
-                  <span className="truncate">Development</span>
-                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-300 group-hover/dev:translate-x-0.5 group-hover/dev:-translate-y-0.5 text-gray-500" />
-                </div>
-              </a>
-            )}
-          </div>
+        {/* Action Buttons */}
+        <div className="flex">
+          <Button
+            variant="manage"
+            onClick={handleEdit}
+            loading={isButtonLoading || isLoading}
+            loadingText="Loading..."
+          >
+            Manage Site
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

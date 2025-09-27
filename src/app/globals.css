@@ -279,7 +279,7 @@ html, body {
   cursor: ew-resize;
 }
 
-/* Scrollbar hiding utilities */
+/* Scrollbar utilities */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* Internet Explorer 10+ */
   scrollbar-width: none;  /* Firefox */
@@ -287,4 +287,23 @@ html, body {
 
 .scrollbar-hide::-webkit-scrollbar { 
   display: none;  /* Safari and Chrome */
+}
+
+/* Thin scrollbar for activity display */
+.scrollbar-thin {
+  scrollbar-width: thin;  /* Firefox */
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background-color: rgb(209 213 219);
+  border-radius: 2px;
+}
+
+.scrollbar-track-gray-100::-webkit-scrollbar-track {
+  background-color: rgb(243 244 246);
 }

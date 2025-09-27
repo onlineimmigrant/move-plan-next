@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 import LoadingStates from './LoadingStates';
 import Header from './Header';
 import ErrorDisplay from './ErrorDisplay';
@@ -10,10 +11,12 @@ import CreateModal from './CreateModal';
 import DeploymentModal from './DeploymentModal';
 import EditModal from './EditModal';
 import AccessRestricted from './AccessRestricted';
+import PlatformStatsWidget from './PlatformStatsWidget';
 import { Organization, Settings, UserProfile, HeroData } from './types';
 
 export default function SiteManagement() {
   const { session, isLoading } = useAuth();
+  const headerRef = useRef<{ focusSearch: () => void }>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [filteredOrganizations, setFilteredOrganizations] = useState<Organization[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -28,8 +31,11 @@ export default function SiteManagement() {
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
   const [createdOrganization, setCreatedOrganization] = useState<Organization | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeSort, setActiveSort] = useState('name');
   const [displayLimit, setDisplayLimit] = useState(6);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadingOrganizationId, setLoadingOrganizationId] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('Session state:', session);
@@ -38,28 +44,159 @@ export default function SiteManagement() {
     }
   }, [session?.access_token]);
 
-  // Update filtered organizations when organizations change or search is empty
+  // Update filtered organizations when organizations, search, filter, or sort changes
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredOrganizations(organizations.slice(0, displayLimit));
+    let filtered = [...organizations];
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((org: Organization) =>
+        org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        org.type.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
-  }, [organizations, searchQuery, displayLimit]);
+    
+    // Apply type filter
+    if (activeFilter !== 'all') {
+      filtered = filtered.filter((org: Organization) => org.type === activeFilter);
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (activeSort) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'type':
+          return a.type.localeCompare(b.type);
+        case 'created':
+          return (new Date(b.created_at || '').getTime() || 0) - (new Date(a.created_at || '').getTime() || 0);
+        case 'updated':
+          return (new Date(b.created_at || '').getTime() || 0) - (new Date(a.created_at || '').getTime() || 0);
+        default:
+          return 0;
+      }
+    });
+    
+    // Sort to put platform organizations first regardless of other sorting
+    filtered.sort((a, b) => {
+      if (a.type === 'platform' && b.type !== 'platform') return -1;
+      if (b.type === 'platform' && a.type !== 'platform') return 1;
+      return 0;
+    });
+    
+    // Apply display limit only if no search query
+    if (!searchQuery.trim()) {
+      filtered = filtered.slice(0, displayLimit);
+    }
+    
+    setFilteredOrganizations(filtered);
+  }, [organizations, searchQuery, activeFilter, activeSort, displayLimit]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    
-    if (!query.trim()) {
-      // If no search query, show limited organizations
-      setFilteredOrganizations(organizations.slice(0, displayLimit));
-    } else {
-      // Filter organizations based on search query (show all matching results)
-      const filtered = organizations.filter((org: Organization) =>
-        org.name.toLowerCase().includes(query.toLowerCase()) ||
-        org.type.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredOrganizations(filtered);
+  };
+
+  const handleFilterChange = (filter: string) => {
+    setActiveFilter(filter);
+  };
+
+  const handleSortChange = (sort: string) => {
+    setActiveSort(sort);
+  };
+
+  const handleDeployOrganization = (organization: Organization) => {
+    // Open deployment modal or trigger deployment
+    setSelectedOrganization(organization);
+    setCreatedOrganization(organization);
+    setIsDeploymentModalOpen(true);
+  };
+
+  const handleCloneOrganization = async (organization: Organization) => {
+    try {
+      setError(null);
+      // Implement cloning logic
+      console.log('Cloning organization:', organization.name);
+      // You would typically call an API endpoint here
+      // await cloneOrganization(organization.id);
+      // fetchOrganizations(); // Refresh the list
+    } catch (err: any) {
+      setError(err.message || 'Failed to clone organization');
     }
   };
+
+  const logActivity = async (organizationId: string, action: 'created' | 'updated' | 'deployed' | 'deleted', details?: string) => {
+    try {
+      if (!session?.access_token) return;
+      
+      await fetch('/api/activities', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          organization_id: organizationId,
+          action,
+          details,
+          user_email: session.user?.email
+        })
+      });
+    } catch (err) {
+      console.error('Failed to log activity:', err);
+      // Don't throw - activity logging shouldn't break the main flow
+    }
+  };
+
+  const handleDeleteOrganization = async (organization: Organization) => {
+    try {
+      setError(null);
+      
+      if (!session?.access_token) {
+        throw new Error('No access token available');
+      }
+
+      const response = await fetch(`/api/organizations/${organization.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete organization');
+      }
+
+      // Log the deletion activity
+      await logActivity(organization.id, 'deleted', `Organization "${organization.name}" was deleted`);
+
+      // Remove from local state
+      setOrganizations(prev => prev.filter(org => org.id !== organization.id));
+      setFilteredOrganizations(prev => prev.filter(org => org.id !== organization.id));
+      
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete organization');
+    }
+  };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onCreateNew: () => {
+      if (canCreateMore) {
+        handleCreateNew();
+      }
+    },
+    onFocusSearch: () => {
+      headerRef.current?.focusSearch();
+    },
+    onEscape: () => {
+      // Close any open modals
+      if (isCreateModalOpen) setIsCreateModalOpen(false);
+      if (isEditModalOpen) setIsEditModalOpen(false);
+      if (isDeploymentModalOpen) setIsDeploymentModalOpen(false);
+    }
+  });
 
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
@@ -162,7 +299,7 @@ export default function SiteManagement() {
           const userOrganization = data.organizations.find((org: Organization) => org.id === orgId);
           if (userOrganization) {
             console.log(`User's organization type: ${userOrganization.type}`);
-            console.log(`Is admin of general org: ${data.profile.role === 'admin' && userOrganization.type === 'general'}`);
+            console.log(`Is admin of platform org: ${data.profile.role === 'admin' && userOrganization.type === 'platform'}`);
           } else {
             console.log('User organization not found in organizations list');
           }
@@ -244,6 +381,8 @@ export default function SiteManagement() {
   const handleEditOrganization = async (organization: Organization) => {
     try {
       setError(null);
+      setLoadingOrganizationId(organization.id);
+      setIsEditing(true);
       
       if (!session?.access_token) {
         throw new Error('No access token available');
@@ -378,6 +517,9 @@ export default function SiteManagement() {
 
     } catch (err: any) {
       setError(err.message || 'Failed to load organization details');
+    } finally {
+      setLoadingOrganizationId(null);
+      setIsEditing(false);
     }
   };
 
@@ -998,6 +1140,8 @@ export default function SiteManagement() {
     setIsEditModalOpen(false);
     setSelectedOrganization(null);
     setError(null);
+    setLoadingOrganizationId(null);
+    setIsEditing(false);
   };
 
   const closeCreateModal = () => {
@@ -1038,26 +1182,44 @@ export default function SiteManagement() {
 
         {/* Header */}
         <Header 
+          ref={headerRef}
           canCreateMore={canCreateMore}
           onCreateNew={handleCreateNew}
           onTestAuth={testAuth}
           onSearch={handleSearch}
+          onFilterChange={handleFilterChange}
+          onSortChange={handleSortChange}
+          totalOrganizations={organizations.length}
+          organizations={organizations}
+          activeFilter={activeFilter}
+          activeSort={activeSort}
         />
 
         {/* Error Display */}
         <ErrorDisplay error={error} />
 
         {/* Main Content Area */}
-        <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="px-4 sm:px-6 lg:px-8 pt-80 sm:pt-48 pb-6">
           {/* Organizations Grid */}
           <OrganizationsGrid
             organizations={filteredOrganizations}
             canCreateMore={canCreateMore}
             onCreateNew={handleCreateNew}
             onEditOrganization={handleEditOrganization}
+            onDeployOrganization={handleDeployOrganization}
+            onCloneOrganization={handleCloneOrganization}
+            onDeleteOrganization={handleDeleteOrganization}
             onLoadMore={handleLoadMore}
             hasMore={hasMoreOrganizations}
             isLoadingMore={isLoadingMore}
+            loadingOrganizationId={loadingOrganizationId}
+          />
+          
+          {/* Platform Stats Widget - Now below organization cards */}
+          <PlatformStatsWidget 
+            organizations={organizations}
+            profile={profile}
+            session={session}
           />
         </div>
 
@@ -1075,8 +1237,8 @@ export default function SiteManagement() {
               const orgId = profile.organization_id || profile.current_organization_id;
               const userOrg = orgId ? organizations.find(org => org.id === orgId) : null;
               return userOrg ? (
-                <span className={profile.role === 'admin' && userOrg.type === 'general' ? 'font-medium text-emerald-600' : 'text-sky-700'}>
-                  {' '}| Org Type: {userOrg.type} | Admin of General Org: {profile.role === 'admin' && userOrg.type === 'general' ? 'YES' : 'No'}
+                <span className={profile.role === 'admin' && userOrg.type === 'platform' ? 'font-medium text-emerald-600' : 'text-sky-700'}>
+                  {' '}| Org Type: {userOrg.type} | Admin of Platform Org: {profile.role === 'admin' && userOrg.type === 'platform' ? 'YES' : 'No'}
                 </span>
               ) : (
                 <span className="text-red-500"> | No Organization Found</span>

@@ -125,8 +125,8 @@ export const ColorSelect: React.FC<ColorSelectProps> = ({
   );
 
   return (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-light text-gray-600 mb-1">{label}</label>
+    <div className="modal-field-group">
+      <label className="modal-label">{label}</label>
       <div className="relative">
         <button
           ref={buttonRef}

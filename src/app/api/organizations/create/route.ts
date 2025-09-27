@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { logActivity } from '@/lib/activityLogger';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,10 +39,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name and type are required' }, { status: 400 });
     }
 
-    // Validate organization type - exclude 'general' from allowed types
-    const validTypes = ['immigration', 'solicitor', 'finance', 'education', 'job', 'beauty', 'doctor', 'services', 'realestate'];
+    // Validate organization type - exclude 'general' and 'platform' from allowed types
+    const validTypes = [
+      'immigration', 'solicitor', 'finance', 'education', 'job', 'beauty', 'doctor', 'services', 'realestate',
+      'construction', 'software', 'marketing', 'consulting', 'automotive', 'hospitality', 'retail', 'healthcare', 'transportation', 'technology'
+    ];
     if (!validTypes.includes(type)) {
-      return NextResponse.json({ error: 'Invalid organization type. General type is not allowed for creation.' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid organization type. General and Platform types are not allowed for creation.' }, { status: 400 });
     }
 
     // Check user's profile and permissions
@@ -80,8 +84,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Could not verify current organization' }, { status: 500 });
     }
 
-    if (currentOrg.type !== 'general') {
-      return NextResponse.json({ error: 'Only users in general organizations can create new sites' }, { status: 403 });
+    if (currentOrg.type !== 'platform') {
+      return NextResponse.json({ error: 'Only users in platform organizations can create new sites' }, { status: 403 });
     }
 
     // Check creation limit for users with is_site_creator = true (they can create only one organization)
@@ -156,6 +160,14 @@ export async function POST(request: NextRequest) {
       console.error('Failed to create organization:', createError);
       return NextResponse.json({ error: 'Failed to create organization', details: createError.message }, { status: 500 });
     }
+
+    // Log the creation activity
+    await logActivity({
+      organizationId: newOrg.id,
+      action: 'created',
+      details: `${name} created`,
+      userEmail: user.user.email
+    });
 
     // Generate Vercel project name and base URL
     const projectName = `${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${newOrg.id.slice(0, 8)}`;

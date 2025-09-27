@@ -29,7 +29,7 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [showTooltip, setShowTooltip] = useState(false);
-  const [leftPanelWidth, setLeftPanelWidth] = useState(40);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(75); // 75% settings, 25% preview
   const [isDragging, setIsDragging] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -50,7 +50,7 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
         setLeftPanelWidth(100);
       } else {
         setIsCollapsed(false);
-        setLeftPanelWidth(40);
+        setLeftPanelWidth(75);
       }
     };
     
@@ -130,23 +130,23 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
       if (!isCollapsed) {
         setLeftPanelWidth(0);
       } else {
-        setLeftPanelWidth(40);
+        setLeftPanelWidth(75);
       }
     }
   };
 
   const handleDoubleClick = () => {
     if (isMobile) return;
-    setLeftPanelWidth(40);
+    setLeftPanelWidth(75);
     setIsCollapsed(false);
   };
 
   const handlePreviewModeChange = (mode: 'desktop' | 'mobile') => {
     setPreviewMode(mode);
     if (mode === 'desktop') {
-      setLeftPanelWidth(30);
+      setLeftPanelWidth(25); // Minimal settings for desktop preview
     } else {
-      setLeftPanelWidth(60);
+      setLeftPanelWidth(80); // More settings visible for mobile preview
     }
   };
 

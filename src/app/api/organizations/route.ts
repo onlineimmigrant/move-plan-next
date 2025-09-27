@@ -62,11 +62,11 @@ export async function GET(request: NextRequest) {
     let organizations: any[] = [];
     let canCreateMore = false;
 
-    if (currentOrg.type === 'general') {
-      // GENERAL ORGANIZATION LOGIC (unchanged)
-      // Only admins in general organizations can view all organizations they manage
+    if (currentOrg.type === 'platform') {
+      // PLATFORM ORGANIZATION LOGIC
+      // Only admins in platform organizations can view all organizations they manage
       if (profile.role !== 'admin') {
-        return NextResponse.json({ error: 'Access denied. Admin role required for general organization access.' }, { status: 403 });
+        return NextResponse.json({ error: 'Access denied. Admin role required for platform organization access.' }, { status: 403 });
       }
 
       // Get organizations created by users from this specific general organization
@@ -76,34 +76,63 @@ export async function GET(request: NextRequest) {
         .eq('organization_id', profile.organization_id)
         .or('role.eq.admin,is_site_creator.eq.true');
 
-      console.log('General org users with creation rights:', { generalOrgUsers, usersError });
+      console.log('Platform org users with creation rights:', { generalOrgUsers, usersError });
 
       if (usersError) {
-        console.error('Error fetching general org users:', usersError);
+        console.error('Error fetching platform org users:', usersError);
         return NextResponse.json({ error: 'Error fetching organization users' }, { status: 500 });
       }
 
       const creatorEmails = generalOrgUsers?.map(user => user.email) || [];
       console.log('Creator emails to filter by:', creatorEmails);
 
-      // Get organizations created by these users
-      const { data: managedOrganizations, error: organizationsError } = await supabase
-        .from('organizations')
-        .select('id, name, type, base_url, base_url_local, created_at, created_by_email')
-        .neq('type', 'general') // Exclude general organizations from the list
-        .in('created_by_email', creatorEmails); // Only show organizations created by users from this general org
-
-      console.log('Managed organizations query result:', { managedOrganizations, organizationsError });
-
-      if (organizationsError) {
-        console.error('Error fetching managed organizations:', organizationsError);
-        return NextResponse.json({ error: 'Error fetching organizations' }, { status: 500 });
+      // Get both the platform organization itself AND child organizations created by platform users
+      const queries = [];
+      
+      // 1. Get the platform organization itself
+      queries.push(
+        supabase
+          .from('organizations')
+          .select('id, name, type, base_url, base_url_local, created_at, created_by_email')
+          .eq('id', profile.organization_id)
+      );
+      
+      // 2. Get child organizations created by platform users
+      if (creatorEmails.length > 0) {
+        queries.push(
+          supabase
+            .from('organizations')
+            .select('id, name, type, base_url, base_url_local, created_at, created_by_email')
+            .not('type', 'in', '(platform,general)') // Exclude other platform and general organizations
+            .in('created_by_email', creatorEmails)
+        );
       }
+      
+      const results = await Promise.all(queries);
+      const platformOrgResult = results[0];
+      const childOrgsResult = results[1];
+      
+      if (platformOrgResult.error) {
+        console.error('Error fetching platform organization:', platformOrgResult.error);
+        return NextResponse.json({ error: 'Error fetching platform organization' }, { status: 500 });
+      }
+      
+      let allOrganizations = platformOrgResult.data || [];
+      
+      if (childOrgsResult && !childOrgsResult.error) {
+        allOrganizations = [...allOrganizations, ...(childOrgsResult.data || [])];
+      } else if (childOrgsResult?.error) {
+        console.error('Error fetching child organizations:', childOrgsResult.error);
+      }
+      
+      const managedOrganizations = allOrganizations;
 
-      // Transform the data - all organizations shown will have admin access for general org admins
+      console.log('Managed organizations query result:', { managedOrganizations });
+
+      // Transform the data - platform org shows actual role, child orgs show admin access
       organizations = managedOrganizations?.map(org => ({
         ...org,
-        user_role: 'admin', // General org admins have admin access to all managed organizations
+        user_role: org.id === profile.organization_id ? profile.role : 'admin', // Platform org shows actual role, child orgs show admin
         user_status: 'active'
       })) || [];
 
@@ -111,8 +140,8 @@ export async function GET(request: NextRequest) {
       canCreateMore = profile.is_site_creator === true;
 
     } else {
-      // NON-GENERAL ORGANIZATION LOGIC (new)
-      // Users in non-general organizations can access their own organization
+      // NON-PLATFORM ORGANIZATION LOGIC (new)
+      // Users in non-platform organizations can access their own organization
       // and any sites created by their organization's creator email
       console.log('Processing non-general organization access');
 
@@ -132,7 +161,7 @@ export async function GET(request: NextRequest) {
       organizations = [currentOrgData];
 
       // Check if they can create more (only if they have site creation permissions and are in their original org)
-      canCreateMore = false; // Non-general org users typically cannot create more organizations
+      canCreateMore = false; // Non-platform org users typically cannot create more organizations
     }
 
     return NextResponse.json({

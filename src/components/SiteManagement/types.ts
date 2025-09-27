@@ -181,8 +181,23 @@ export const organizationTypes = [
   { value: 'doctor', label: 'Medical Services', icon: '🏥' },
   { value: 'services', label: 'General Services', icon: '🔧' },
   { value: 'realestate', label: 'Real Estate', icon: '🏘️' },
+  { value: 'construction', label: 'Construction Services', icon: '🏗️' },
+  { value: 'software', label: 'Software & SaaS', icon: '💻' },
+  { value: 'marketing', label: 'Marketing & Advertising', icon: '📢' },
+  { value: 'consulting', label: 'Consulting Services', icon: '💼' },
+  { value: 'automotive', label: 'Auto Services', icon: '🚗' },
+  { value: 'hospitality', label: 'Hotels & Tourism', icon: '🏨' },
+  { value: 'retail', label: 'Retail & Online', icon: '🛍️' },
+  { value: 'healthcare', label: 'Healthcare Services', icon: '🏥' },
+  { value: 'transportation', label: 'Transport & Logistics', icon: '🚚' },
+  { value: 'technology', label: 'IT & Tech Services', icon: '🔧' },
   { value: 'general', label: 'General Organization', icon: '🏢' },
+  { value: 'platform', label: 'Business Platform Solutions', icon: '🏗️' },
 ];
+// 
+// Note: 'platform' and 'general' types are filtered out from OrganizationTypeSelect dropdown
+// Only 'platform' organization admins can create child organizations
+// 'general' remains for backward compatibility but should be migrated to 'platform'
 
 // AI Management Types
 export interface AIAgent {

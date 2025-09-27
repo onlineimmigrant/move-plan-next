@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createVercelClient, generateSiteEnvironmentVariables } from '@/lib/vercel';
+import { logActivity, getOrganizationName } from '@/lib/activityLogger';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -212,6 +213,15 @@ export async function POST(request: NextRequest) {
       console.error('Error creating deployment record:', deploymentError);
       // Don't fail the deployment for tracking errors
     }
+
+    // Log the deployment activity
+    const organizationName = await getOrganizationName(organizationId);
+    await logActivity({
+      organizationId,
+      action: 'deployed',
+      details: `${organizationName} deployed`,
+      userEmail: user.user.email
+    });
 
     return NextResponse.json({
       success: true,

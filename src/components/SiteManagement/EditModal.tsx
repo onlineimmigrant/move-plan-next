@@ -1,10 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { XMarkIcon, Cog6ToothIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Organization, Settings } from './types';
 import SettingsFormFields from './SettingsFormFields';
 import LivePreview from './LivePreview';
 import SiteDeployment from './SiteDeployment';
-import Button from '@/ui/Button';
+import EditModalHeader from './components/EditModalHeader';
+import ResizablePanels from './components/ResizablePanels';
+import MobileSettingsOverlay from './components/MobileSettingsOverlay';
+import { useResizablePanels } from './hooks/useResizablePanels';
+import { useAutoSave } from './hooks/useAutoSave';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import './styles/modal-design-system.css';
 
 interface EditModalProps {
   isOpen: boolean;
@@ -26,30 +31,46 @@ export default function EditModal({
   const [settings, setSettings] = useState<Settings>({} as Settings);
   const [originalSettings, setOriginalSettings] = useState<Settings>({} as Settings);
   const [uploadingImages, setUploadingImages] = useState<Set<string>>(new Set());
-  const [leftPanelWidth, setLeftPanelWidth] = useState(30); // Changed to 30% initially (minimal)
-  const [isDragging, setIsDragging] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop'); // New state for preview mode
-  const [hoveredImage, setHoveredImage] = useState<string | null>(null); // New state for image hover
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 }); // Mouse position for tooltip
-  const [activeTab, setActiveTab] = useState<'settings' | 'deployment'>('settings'); // New tab state
-  const [previewRefreshKey, setPreviewRefreshKey] = useState<number>(0); // Add refresh key for LivePreview
-  const [isLoadingDetailedData, setIsLoadingDetailedData] = useState(false); // New loading state
-  const [detailedOrganizationData, setDetailedOrganizationData] = useState<any>(null); // Store the full org data with cookies
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dragStartX = useRef<number>(0);
-  const dragStartWidth = useRef<number>(0);
-  const animationFrameId = useRef<number>(0);
-  const isDraggingRef = useRef<boolean>(false);
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [hoveredImage, setHoveredImage] = useState<string | null>(null);
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [activeTab, setActiveTab] = useState<'settings' | 'deployment'>('settings');
+  const [previewRefreshKey, setPreviewRefreshKey] = useState<number>(0);
+  const [isLoadingDetailedData, setIsLoadingDetailedData] = useState(false);
+  const [detailedOrganizationData, setDetailedOrganizationData] = useState<any>(null);
+  const [sectionsResetKey, setSectionsResetKey] = useState<number>(0);
 
-  // Compute hasUnsavedChanges using useMemo to avoid re-renders on every change
-  const hasUnsavedChanges = useMemo(() => {
-    return JSON.stringify(settings) !== JSON.stringify(originalSettings);
-  }, [settings, originalSettings]);
+  // Use custom hooks for complex functionality
+  const resizablePanels = useResizablePanels({ 
+    initialWidth: 75, 
+    isMobile, 
+    isCollapsed 
+  });
+
+  // Auto-save functionality
+  const autoSave = useAutoSave({
+    settings,
+    originalSettings,
+    onSave: async (newSettings) => {
+      await onSave(newSettings);
+      setOriginalSettings({ ...newSettings });
+      setPreviewRefreshKey(prev => prev + 1);
+    },
+    debounceMs: 3000,
+    enabled: isOpen
+  });
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSave: () => handleSave(),
+    onClose: onClose,
+    disabled: !isOpen || isLoading
+  });
 
   // Fetch detailed organization data including cookies
-  const fetchDetailedOrganizationData = useCallback(async (organizationId: string, sessionToken: string) => {
+  const fetchDetailedOrganizationData = async (organizationId: string, sessionToken: string) => {
     if (!sessionToken) return null;
     
     setIsLoadingDetailedData(true);
@@ -75,7 +96,7 @@ export default function EditModal({
     } finally {
       setIsLoadingDetailedData(false);
     }
-  }, []);
+  };
 
   // Check for mobile on mount and resize
   useEffect(() => {
@@ -84,10 +105,8 @@ export default function EditModal({
       setIsMobile(mobile);
       if (mobile) {
         setIsCollapsed(true); // Start collapsed on mobile
-        setLeftPanelWidth(100); // Full width when expanded on mobile
       } else {
         setIsCollapsed(false);
-        setLeftPanelWidth(30); // 30% on desktop
       }
     };
     
@@ -95,6 +114,17 @@ export default function EditModal({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Reset section states when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Clear all section states to ensure all sections start closed
+      sessionStorage.removeItem('siteManagement_sectionStates');
+      // Increment resetKey to force SettingsFormFields to re-initialize
+      setSectionsResetKey(prev => prev + 1);
+      console.log('[EditModal] Modal opened - reset all section states to closed, resetKey incremented');
+    }
+  }, [isOpen]);
 
   // Initialize settings when organization changes
   useEffect(() => {
@@ -227,7 +257,7 @@ export default function EditModal({
   };
 
   const handleSave = async () => {
-    if (!hasUnsavedChanges) return;
+    if (!autoSave.hasUnsavedChanges) return;
     
     console.log(`[EditModal] Starting save process with settings:`, settings);
     console.log(`[EditModal] Original settings:`, originalSettings);
@@ -247,146 +277,57 @@ export default function EditModal({
     }
   };
 
-  const handleDoubleClick = () => {
-    if (isMobile) return; // No double-click reset on mobile
-    setLeftPanelWidth(30); // Reset to 30/70 split
-    setIsCollapsed(false);
-  };
-
   // Preview mode toggle functions
   const handlePreviewModeChange = (mode: 'desktop' | 'mobile') => {
     setPreviewMode(mode);
     if (mode === 'desktop') {
       // Desktop mode: maximize preview (minimize settings)
-      setLeftPanelWidth(20); // Minimal settings panel
+      resizablePanels.setLeftPanelWidth(25);
     } else {
       // Mobile mode: maximize settings (minimize preview)
-      setLeftPanelWidth(70); // Minimal preview panel
+      resizablePanels.setLeftPanelWidth(80);
     }
   };
 
   const toggleCollapse = () => {
-    if (isMobile) {
-      setIsCollapsed(!isCollapsed);
-    } else {
-      setIsCollapsed(!isCollapsed);
-      if (!isCollapsed) {
-        // Collapsing - minimize to icon
-        setLeftPanelWidth(0);
-      } else {
-        // Expanding - restore to 30%
-        setLeftPanelWidth(30);
-      }
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const handleImageHover = (image: string | null, position?: { x: number; y: number }) => {
+    setHoveredImage(image);
+    if (position) {
+      setMousePosition(position);
     }
   };
 
-  // Optimized mouse handlers using refs to avoid circular dependencies
-  const handleMouseMoveRef = useRef<(e: MouseEvent) => void>();
-  const handleMouseUpRef = useRef<() => void>();
-
-  // Initialize handlers once on mount only
-  useEffect(() => {
-    handleMouseMoveRef.current = (e: MouseEvent) => {
-      if (!isDraggingRef.current || !containerRef.current) return;
-      
-      // Get current values from state/refs at execution time
-      const currentIsCollapsed = isCollapsed;
-      const currentIsMobile = isMobile;
-      
-      if (currentIsCollapsed || currentIsMobile) return;
-
-      // Cancel any pending animation frame
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-      }
-
-      // Use requestAnimationFrame to throttle updates
-      animationFrameId.current = requestAnimationFrame(() => {
-        if (!containerRef.current || !isDraggingRef.current) return;
-        
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const deltaX = e.clientX - dragStartX.current;
-        const deltaWidthPercent = (deltaX / containerRect.width) * 100;
-        const newWidth = dragStartWidth.current + deltaWidthPercent;
-        
-        // Constrain between 20% and 75% to ensure both panels have minimum usable width
-        const constrainedWidth = Math.min(75, Math.max(20, newWidth));
-        setLeftPanelWidth(constrainedWidth);
-      });
-    };
-
-    handleMouseUpRef.current = () => {
-      isDraggingRef.current = false;
-      setIsDragging(false);
-      
-      // Cancel any pending animation frame
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-      }
-      
-      // Clean up immediately
-      if (handleMouseMoveRef.current) {
-        document.removeEventListener('mousemove', handleMouseMoveRef.current);
-      }
-      if (handleMouseUpRef.current) {
-        document.removeEventListener('mouseup', handleMouseUpRef.current);
-      }
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      (document.body.style as any).webkitUserSelect = '';
-      (document.body.style as any).mozUserSelect = '';
-      (document.body.style as any).msUserSelect = '';
-    };
-  }, []); // Empty dependency array - initialize once only
-
-  // Create stable event handler references
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    handleMouseMoveRef.current?.(e);
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    handleMouseUpRef.current?.();
-  }, []);
-
-  // Resize functionality - optimized
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!containerRef.current || isMobile || isCollapsed) return;
-    
-    dragStartX.current = e.clientX;
-    dragStartWidth.current = leftPanelWidth; // Use current state value at the time of mouse down
-    isDraggingRef.current = true;
-    setIsDragging(true);
-    
-    // Add event listeners immediately
-    document.addEventListener('mousemove', handleMouseMove, { passive: false });
-    document.addEventListener('mouseup', handleMouseUp, { passive: false });
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    (document.body.style as any).webkitUserSelect = 'none';
-    (document.body.style as any).mozUserSelect = 'none';
-    (document.body.style as any).msUserSelect = 'none';
-  }, [isMobile, isCollapsed]); // Remove all handler references, keep only primitive values
-
-  // Cleanup animation frame on unmount only
-  useEffect(() => {
-    return () => {
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-      }
-      // Cleanup any lingering drag state
-      isDraggingRef.current = false;
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      (document.body.style as any).webkitUserSelect = '';
-      (document.body.style as any).mozUserSelect = '';
-      (document.body.style as any).msUserSelect = '';
-    };
-  }, []); // Empty dependency array - cleanup only on unmount
+  // Tab content rendering
+  const renderTabContent = () => {
+    if (activeTab === 'settings') {
+      return (
+        <SettingsFormFields
+          settings={settings}
+          onChange={handleSettingChange}
+          onImageUpload={handleImageUpload}
+          uploadingImages={uploadingImages}
+          isNarrow={resizablePanels.leftPanelWidth < 40}
+          cookieData={detailedOrganizationData}
+          session={session}
+          organizationId={organization?.id}
+          resetKey={sectionsResetKey}
+        />
+      );
+    } else {
+      return (
+        <SiteDeployment
+          organization={organization!}
+          session={session}
+          onDeploymentComplete={(baseUrl) => {
+            setSettings(prev => ({ ...prev, base_url: baseUrl }));
+          }}
+        />
+      );
+    }
+  };
 
   if (!isOpen || !organization) return null;
 
@@ -400,392 +341,64 @@ export default function EditModal({
         }
       }}
     >
-      {/* Image Hover Modal */}
-      {hoveredImage && (
-        <div 
-          className="fixed z-[60] pointer-events-none"
-          style={{
-            left: `${mousePosition.x + 10}px`,
-            top: `${mousePosition.y + 10}px`,
-          }}
-        >
-          <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-2">
-            <img 
-              src={hoveredImage} 
-              alt="Organization Logo Preview"
-              className="rounded-md"
-              style={{ width: '120px', height: '120px', objectFit: 'contain' }}
-            />
-          </div>
-        </div>
-      )}
-      
       <div className="bg-white/95 backdrop-blur-sm w-full h-full flex flex-col font-light" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <header className="bg-white/95 border-b border-black/6 px-4 sm:px-6 py-4 sticky top-0 z-10 shadow-[0_1px_20px_rgba(0,0,0,0.04)]"
-          style={{
-            backdropFilter: 'blur(32px) saturate(180%) brightness(105%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(180%) brightness(105%)',
-          }}
+        <EditModalHeader
+          organization={organization!}
+          settings={settings}
+          isMobile={isMobile}
+          isLoading={isLoading}
+          hasUnsavedChanges={autoSave.hasUnsavedChanges}
+          isAutoSaving={autoSave.isAutoSaving}
+          lastAutoSave={autoSave.lastAutoSave}
+          hoveredImage={hoveredImage}
+          mousePosition={mousePosition}
+          onSave={handleSave}
+          onClose={onClose}
+          onImageHover={handleImageHover}
+        />
+
+        {/* Mobile Settings Overlay */}
+        <MobileSettingsOverlay
+          isOpen={isMobile && isCollapsed}
+          organization={organization!}
+          settings={settings}
+          hoveredImage={hoveredImage}
+          mousePosition={mousePosition}
+          onClose={toggleCollapse}
+          onImageHover={handleImageHover}
         >
-          <div className="flex items-center justify-between">
-            {/* Left Side - Title and Description */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-4">
-                {/* Organization Icon/Avatar or Logo */}
-                <div className="flex w-12 h-12 rounded-2xl items-center justify-center shadow-sm border border-black/5 overflow-hidden"
-                  style={{
-                    backdropFilter: 'blur(12px) saturate(150%)',
-                    WebkitBackdropFilter: 'blur(12px) saturate(150%)',
-                  }}
-                >
-                  {settings.image ? (
-                    <img 
-                      src={settings.image} 
-                      alt={organization.name}
-                      className="w-full h-full object-cover rounded-2xl cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105"
-                      onMouseEnter={(e) => {
-                        if (settings.image) {
-                          setHoveredImage(settings.image);
-                          setMousePosition({ x: e.clientX, y: e.clientY });
-                        }
-                      }}
-                      onMouseMove={(e) => {
-                        setMousePosition({ x: e.clientX, y: e.clientY });
-                      }}
-                      onMouseLeave={() => setHoveredImage(null)}
-                      onError={(e) => {
-                        // Fallback to avatar if image fails to load
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-semibold text-[18px] antialiased ${settings.image ? 'hidden' : ''}`}>
-                    {organization.name.charAt(0).toUpperCase()}
-                  </div>
-                </div>
-                
-                {/* Title Section */}
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-gray-900 antialiased truncate mb-1">
-                    {isMobile ? 'Settings' : organization.name}
-                  </h1>
-                  <p className="text-[14px] font-medium text-gray-600 antialiased truncate leading-tight">
-                    {isMobile ? organization.name : 'Configure your site settings and see changes in real-time'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side - Actions */}
-            <div className="flex items-center space-x-3 ml-4">
-              {/* Save Button */}
-              <Button
-                onClick={handleSave}
-                disabled={isLoading || !hasUnsavedChanges}
-                className={`px-6 py-3 rounded-2xl text-[14px] font-semibold antialiased tracking-[-0.01em] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm ${
-                  hasUnsavedChanges && !isLoading
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white hover:scale-[1.02] active:scale-[0.98] shadow-[0_4px_20px_rgba(59,130,246,0.15)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)]'
-                    : 'bg-gray-100/80 text-gray-500 cursor-not-allowed border border-gray-200/50'
-                } disabled:opacity-75 disabled:cursor-not-allowed disabled:hover:scale-100`}
-                style={hasUnsavedChanges && !isLoading ? {
-                  backdropFilter: 'blur(16px) saturate(150%)',
-                  WebkitBackdropFilter: 'blur(16px) saturate(150%)',
-                } : undefined}
-              >
-                {isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="hidden sm:inline">Saving...</span>
-                  </div>
-                ) : hasUnsavedChanges ? (
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="hidden sm:inline">Save Changes</span>
-                    <span className="sm:hidden">Save</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="hidden sm:inline">Saved</span>
-                    <span className="sm:hidden">✓</span>
-                  </div>
-                )}
-              </Button>
-
-              {/* Close Button */}
-              <button
-                onClick={onClose}
-                disabled={isLoading}
-                className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100/60 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] border border-gray-200/30"
-                style={{
-                  backdropFilter: 'blur(12px) saturate(150%)',
-                  WebkitBackdropFilter: 'blur(12px) saturate(150%)',
-                }}
-                title="Close"
-              >
-                <XMarkIcon className="w-5 h-5" strokeWidth={2} />
-              </button>
-            </div>
+          {/* Enhanced Tab Navigation */}
+          <div className="modal-tabs">
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`modal-tab ${activeTab === 'settings' ? 'active' : ''}`}
+            >
+              Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('deployment')}
+              className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''}`}
+            >
+              Deployment
+            </button>
           </div>
-        </header>
 
-        {/* Content */}
-        <div className={`flex-1 flex overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`} ref={containerRef}>
-          {/* Collapsed Settings Button (Desktop) */}
-          {isCollapsed && !isMobile && (
-            <div className="w-16 bg-white/60 backdrop-blur-sm border-r border-gray-200/60 flex flex-col items-center justify-start pt-6">
-              <button
-                onClick={toggleCollapse}
-                className="w-10 h-10 bg-sky-500 hover:bg-sky-600 text-white rounded-xl shadow-sm transition-all duration-300 hover:scale-105 flex items-center justify-center group"
-                title="Open Settings"
-              >
-                <Cog6ToothIcon className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-              </button>
-            </div>
-          )}
+          {/* Tab Content */}
+          {renderTabContent()}
+        </MobileSettingsOverlay>
 
-          {/* Mobile Settings Overlay */}
-          {isMobile && isCollapsed && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
-              onClick={(e) => {
-                // Only close overlay if clicking the backdrop itself
-                if (e.target === e.currentTarget) {
-                  toggleCollapse();
-                }
-              }}
-            >
-              <div className="bg-white/95 backdrop-blur-sm w-full h-full flex flex-col font-light" onMouseDown={(e) => e.stopPropagation()}>
-                <div className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    {/* Organization Icon/Avatar or Logo */}
-                    <div className="flex w-8 h-8 rounded-xl items-center justify-center shadow-sm overflow-hidden">
-                      {settings.image ? (
-                        <img 
-                          src={settings.image} 
-                          alt={organization.name}
-                          className="w-full h-full object-cover rounded-xl cursor-pointer transition-transform duration-200 hover:scale-105"
-                          onMouseEnter={(e) => {
-                            if (settings.image) {
-                              setHoveredImage(settings.image);
-                              setMousePosition({ x: e.clientX, y: e.clientY });
-                            }
-                          }}
-                          onMouseMove={(e) => {
-                            setMousePosition({ x: e.clientX, y: e.clientY });
-                          }}
-                          onMouseLeave={() => setHoveredImage(null)}
-                          onError={(e) => {
-                            // Fallback to avatar if image fails to load
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            target.nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null}
-                      <div className={`w-full h-full bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center text-white font-light text-sm ${settings.image ? 'hidden' : ''}`}>
-                        {organization.name.charAt(0).toUpperCase()}
-                      </div>
-                    </div>
-                    <h3 className="text-lg font-light tracking-tight text-gray-900">Settings</h3>
-                  </div>
-                  <button
-                    onClick={toggleCollapse}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-xl hover:bg-white/60 backdrop-blur-sm"
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-6 pb-12 space-y-1" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                  {/* Tab Navigation */}
-                  <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-xl">
-                    <button
-                      onClick={() => setActiveTab('settings')}
-                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        activeTab === 'settings'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Settings
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('deployment')}
-                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        activeTab === 'deployment'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Deployment
-                    </button>
-                  </div>
-
-                  {/* Tab Content */}
-                  {activeTab === 'settings' ? (
-                    <SettingsFormFields
-                      settings={settings}
-                      onChange={handleSettingChange}
-                      onImageUpload={handleImageUpload}
-                      uploadingImages={uploadingImages}
-                      isNarrow={false}
-                      cookieData={detailedOrganizationData}
-                      session={session}
-                      organizationId={organization.id}
-                    />
-                  ) : (
-                    <SiteDeployment
-                      organization={organization}
-                      session={session}
-                      onDeploymentComplete={(baseUrl) => {
-                        // Update the organization's base_url when deployment completes
-                        setSettings(prev => ({ ...prev, base_url: baseUrl }));
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Left Panel - Form (Desktop) */}
-          {!isCollapsed && !isMobile && (
-            <div 
-              className={`overflow-y-auto border-r border-gray-200/60 bg-white/50 backdrop-blur-sm ${
-                isDragging ? 'transition-none' : 'transition-all duration-150 ease-out'
-              }`}
-              style={{ 
-                width: `${leftPanelWidth}%`,
-                willChange: isDragging ? 'width' : 'auto',
-                contain: isDragging ? 'layout style' : 'none'
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="pb-12 p-6 font-light" onMouseDown={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-light tracking-tight text-gray-900">
-                    {activeTab === 'settings' ? 'Settings' : 'Deployment'}
-                  </h3>
-                  <button
-                    onClick={toggleCollapse}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-xl hover:bg-white/60 backdrop-blur-sm"
-                    title="Minimize to icon"
-                  >
-                    <ChevronLeftIcon className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Tab Navigation */}
-                <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-xl">
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      activeTab === 'settings'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Settings
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('deployment')}
-                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      activeTab === 'deployment'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Deployment
-                  </button>
-                </div>
-
-                <div onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                  {/* Tab Content */}
-                  {activeTab === 'settings' ? (
-                    <SettingsFormFields
-                      settings={settings}
-                      onChange={handleSettingChange}
-                      onImageUpload={handleImageUpload}
-                      uploadingImages={uploadingImages}
-                      isNarrow={leftPanelWidth < 40}
-                      cookieData={detailedOrganizationData}
-                      session={session}
-                      organizationId={organization.id}
-                    />
-                  ) : (
-                    <SiteDeployment
-                      organization={organization}
-                      session={session}
-                      onDeploymentComplete={(baseUrl) => {
-                        // Update the organization's base_url when deployment completes
-                        setSettings(prev => ({ ...prev, base_url: baseUrl }));
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Resize Handle (Desktop only, when not collapsed) */}
-          {!isCollapsed && !isMobile && (
-            <div
-              className={`w-2 bg-gray-200/60 hover:bg-sky-400/60 cursor-col-resize transition-all duration-150 relative group ${
-                isDragging ? 'bg-sky-500/60 w-3' : ''
-              }`}
-              onMouseDown={handleMouseDown}
-              onDoubleClick={handleDoubleClick}
-              title="Drag to resize panels, double-click to reset. Use Desktop/Mobile buttons for quick layouts."
-            >
-              {/* Visual indicator with improved styling */}
-              <div className={`absolute inset-y-0 left-1/2 transform -translate-x-1/2 transition-all duration-150 ${
-                isDragging ? 'w-2 bg-sky-600/60' : 'w-1 bg-gray-400/60 group-hover:bg-sky-500/60'
-              }`}>
-                <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-150 ${
-                  isDragging ? 'w-4 h-8 bg-sky-600/80' : 'w-3 h-6 bg-gray-400/60 group-hover:bg-sky-500/60'
-                } rounded-full flex items-center justify-center backdrop-blur-sm`}>
-                  <div className={`rounded-full transition-all duration-150 ${
-                    isDragging ? 'w-1 h-4 bg-white/80' : 'w-0.5 h-3 bg-white/80'
-                  }`}></div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Right Panel - Live Preview */}
-          <div 
-            className={`relative overflow-hidden ${
-              isDragging ? 'transition-none' : 'transition-all duration-150 ease-out'
-            }`}
-            style={{ 
-              width: isCollapsed && !isMobile ? '100%' : 
-                     isMobile ? '100%' :
-                     `${100 - leftPanelWidth}%`,
-              willChange: isDragging ? 'width' : 'auto',
-              contain: isDragging ? 'layout style' : 'none'
-            }}
-          >
-            {/* Mobile Settings Toggle Button */}
-            {isMobile && !isCollapsed && (
-              <div className="absolute top-3 right-4 z-10">
-                <button
-                  onClick={toggleCollapse}
-                  className="w-11 h-11 bg-sky-500 hover:bg-sky-600 text-white rounded-xl shadow-sm transition-all duration-300 hover:scale-105 flex items-center justify-center backdrop-blur-sm"
-                  title="Open Settings"
-                >
-                  <Cog6ToothIcon className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-            
+        {/* Desktop Resizable Panels */}
+        <ResizablePanels
+          leftPanelWidth={resizablePanels.leftPanelWidth}
+          isDragging={resizablePanels.isDragging}
+          isCollapsed={isCollapsed}
+          isMobile={isMobile}
+          containerRef={resizablePanels.containerRef}
+          onMouseDown={resizablePanels.handleMouseDown}
+          onDoubleClick={resizablePanels.handleDoubleClick}
+          onToggleCollapse={toggleCollapse}
+          previewContent={
             <LivePreview
               settings={settings}
               organizationUrl={organization.base_url || organization.base_url_local || ''}
@@ -793,8 +406,27 @@ export default function EditModal({
               onPreviewModeChange={handlePreviewModeChange}
               refreshKey={previewRefreshKey}
             />
+          }
+        >
+          {/* Enhanced Tab Navigation */}
+          <div className="modal-tabs">
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`modal-tab ${activeTab === 'settings' ? 'active' : ''}`}
+            >
+              Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('deployment')}
+              className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''}`}
+            >
+              Deployment
+            </button>
           </div>
-        </div>
+
+          {/* Tab Content */}
+          {renderTabContent()}
+        </ResizablePanels>
       </div>
     </div>
   );
