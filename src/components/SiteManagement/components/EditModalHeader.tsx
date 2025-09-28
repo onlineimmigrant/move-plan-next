@@ -109,7 +109,7 @@ export default function EditModalHeader({
                 {isMobile ? 'Settings' : organization.name}
               </h1>
               <p className="modal-subtitle">
-                {isMobile ? organization.name : 'Configure your site settings and see changes in real-time'}
+                {isMobile ? organization.name : 'Settings'}
               </p>
               
               {/* Enhanced Auto-save Status */}

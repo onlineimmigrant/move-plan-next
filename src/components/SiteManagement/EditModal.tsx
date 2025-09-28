@@ -9,6 +9,7 @@ import MobileSettingsOverlay from './components/MobileSettingsOverlay';
 import { useResizablePanels } from './hooks/useResizablePanels';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { Cog6ToothIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
 import './styles/modal-design-system.css';
 
 interface EditModalProps {
@@ -374,12 +375,14 @@ export default function EditModal({
               onClick={() => setActiveTab('settings')}
               className={`modal-tab ${activeTab === 'settings' ? 'active' : ''}`}
             >
+              <Cog6ToothIcon className="w-4 h-4 mr-2" />
               Settings
             </button>
             <button
               onClick={() => setActiveTab('deployment')}
               className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''}`}
             >
+              <RocketLaunchIcon className="w-4 h-4 mr-2" />
               Deployment
             </button>
           </div>
@@ -414,12 +417,14 @@ export default function EditModal({
               onClick={() => setActiveTab('settings')}
               className={`modal-tab ${activeTab === 'settings' ? 'active' : ''}`}
             >
+              <Cog6ToothIcon className="w-4 h-4 mr-2" />
               Settings
             </button>
             <button
               onClick={() => setActiveTab('deployment')}
               className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''}`}
             >
+              <RocketLaunchIcon className="w-4 h-4 mr-2" />
               Deployment
             </button>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CloudArrowUpIcon, CheckCircleIcon, ExclamationTriangleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import { Organization } from './types';
@@ -21,15 +21,90 @@ interface DeploymentStatus {
 
 export default function SiteDeployment({ organization, session, onDeploymentComplete }: SiteDeploymentProps) {
   const [isDeploying, setIsDeploying] = useState(false);
-  const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStatus>({
-    status: organization.deployment_status || 'not_deployed',
-    baseUrl: organization.base_url || undefined,
-    vercelProjectId: organization.vercel_project_id || undefined,
-    vercelDeploymentId: organization.vercel_deployment_id || undefined,
-  });
+  const [isInitializing, setIsInitializing] = useState(true);
+  
+  // Initialize deployment status with smarter detection
+  const getInitialDeploymentStatus = (): DeploymentStatus => {
+    // Strong indicators of deployment
+    const hasVercelProject = organization.vercel_project_id;
+    const hasBaseUrl = organization.base_url;
+    const hasVercelUrl = organization.base_url && (
+      organization.base_url.includes('.vercel.app') || 
+      organization.base_url.includes('vercel.com')
+    );
+    
+    // If we have strong deployment indicators, assume it's deployed
+    if ((hasVercelProject && hasBaseUrl) || hasVercelUrl) {
+      return {
+        status: 'ready',
+        baseUrl: organization.base_url || undefined,
+        deployedUrl: organization.base_url || undefined,
+        vercelProjectId: organization.vercel_project_id || undefined,
+        vercelDeploymentId: organization.vercel_deployment_id || undefined,
+      };
+    }
+    
+    // Check if deployment status indicates it's ready but missing URLs
+    if (organization.deployment_status === 'ready' && organization.vercel_project_id) {
+      return {
+        status: 'ready',
+        baseUrl: organization.base_url || undefined,
+        vercelProjectId: organization.vercel_project_id || undefined,
+        vercelDeploymentId: organization.vercel_deployment_id || undefined,
+      };
+    }
+    
+    // Fall back to the stored deployment status
+    return {
+      status: organization.deployment_status || 'not_deployed',
+      baseUrl: organization.base_url || undefined,
+      vercelProjectId: organization.vercel_project_id || undefined,
+      vercelDeploymentId: organization.vercel_deployment_id || undefined,
+    };
+  };
+  
+  const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStatus>(getInitialDeploymentStatus());
   const [gitRepository, setGitRepository] = useState('https://github.com/onlineimmigrant/move-plan-next');
   const [gitBranch, setGitBranch] = useState('main');
   const [error, setError] = useState<string | null>(null);
+
+  // Validate deployment status on component mount
+  useEffect(() => {
+    const validateDeploymentStatus = async () => {
+      // If we have a Vercel project ID and deployment ID, verify the status
+      if (organization.vercel_project_id && organization.vercel_deployment_id && session?.access_token) {
+        try {
+          const response = await fetch(
+            `/api/organizations/deploy?organizationId=${organization.id}&deploymentId=${organization.vercel_deployment_id}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`
+              }
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.data && data.data.deploymentStatus) {
+              setDeploymentStatus(prev => ({
+                ...prev,
+                status: data.data.deploymentStatus,
+                baseUrl: data.data.baseUrl || prev.baseUrl,
+                deployedUrl: data.data.deployedUrl || prev.deployedUrl,
+              }));
+            }
+          }
+        } catch (err) {
+          console.error('Failed to validate deployment status:', err);
+          // Don't update status on error - keep the initial detection
+        }
+      }
+      setIsInitializing(false);
+    };
+
+    validateDeploymentStatus();
+  }, [organization.id, organization.vercel_project_id, organization.vercel_deployment_id, session?.access_token]);
 
   const handleDeploy = async () => {
     setIsDeploying(true);
@@ -137,6 +212,10 @@ export default function SiteDeployment({ organization, session, onDeploymentComp
   };
 
   const getStatusIcon = () => {
+    if (isInitializing) {
+      return <ClockIcon className="h-5 w-5 text-blue-500 animate-spin" />;
+    }
+    
     switch (deploymentStatus.status) {
       case 'ready':
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
@@ -151,6 +230,10 @@ export default function SiteDeployment({ organization, session, onDeploymentComp
   };
 
   const getStatusText = () => {
+    if (isInitializing) {
+      return 'Checking Status...';
+    }
+    
     switch (deploymentStatus.status) {
       case 'ready':
         return 'Deployed Successfully';
@@ -168,6 +251,10 @@ export default function SiteDeployment({ organization, session, onDeploymentComp
   };
 
   const getStatusColor = () => {
+    if (isInitializing) {
+      return 'text-blue-600 bg-blue-50 border-blue-200';
+    }
+    
     switch (deploymentStatus.status) {
       case 'ready':
         return 'text-green-600 bg-green-50 border-green-200';

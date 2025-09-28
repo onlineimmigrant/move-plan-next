@@ -11,6 +11,7 @@ interface BaseFieldProps {
 
 interface TextFieldProps extends BaseFieldProps {
   type?: 'text' | 'email' | 'tel' | 'url';
+  disabled?: boolean;
 }
 
 interface TextAreaFieldProps extends BaseFieldProps {
@@ -34,7 +35,8 @@ export const TextField: React.FC<TextFieldProps> = ({
   onChange, 
   type = 'text',
   placeholder,
-  className = ''
+  className = '',
+  disabled = false
 }) => (
   <div className="modal-field-group">
     <label className="modal-label">{label}</label>
@@ -42,9 +44,10 @@ export const TextField: React.FC<TextFieldProps> = ({
       type={type}
       name={name}
       value={value || ''}
-      onChange={(e) => onChange(name, e.target.value)}
-      className={`${fieldClasses} ${className}`}
+      onChange={(e) => !disabled && onChange(name, e.target.value)}
+      className={`${fieldClasses} ${className} ${disabled ? 'opacity-60 cursor-not-allowed bg-gray-100/80' : ''}`}
       placeholder={placeholder}
+      disabled={disabled}
     />
   </div>
 );

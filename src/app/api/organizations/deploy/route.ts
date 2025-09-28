@@ -29,7 +29,11 @@ export async function POST(request: NextRequest) {
 
     const userId = user.user.id;
     const body = await request.json();
-    const { organizationId, gitRepository, branch = 'main' } = body;
+    const { 
+      organizationId, 
+      gitRepository = 'https://github.com/onlineimmigrant/move-plan-next', // Default repository
+      branch = 'main' 
+    } = body;
 
     console.log('Deployment request:', { organizationId, gitRepository, branch, userId });
 
@@ -85,10 +89,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Initialize Vercel client
+    // Initialize Vercel client with correct team ID
     let vercelClient;
     try {
-      vercelClient = createVercelClient();
+      vercelClient = createVercelClient(
+        process.env.VERCEL_TOKEN,
+        'team_O74MS093TrJebFniPVoMmj3F' // Correct team ID provided by user
+      );
     } catch (error) {
       console.error('Vercel client initialization error:', error);
       return NextResponse.json({ 
@@ -303,7 +310,10 @@ export async function GET(request: NextRequest) {
     let vercelStatus = null;
     if (deployment.vercel_deployment_id) {
       try {
-        const vercelClient = createVercelClient();
+        const vercelClient = createVercelClient(
+          process.env.VERCEL_TOKEN,
+          'team_O74MS093TrJebFniPVoMmj3F' // Correct team ID for deployment status checks
+        );
         const vercelDeployment = await vercelClient.getDeployment(deployment.vercel_deployment_id);
         vercelStatus = {
           state: vercelDeployment.state,

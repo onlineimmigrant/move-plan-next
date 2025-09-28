@@ -86,7 +86,7 @@ export default function MobileSettingsOverlay({
                 {organization.name.charAt(0).toUpperCase()}
               </div>
             </div>
-            <h3 className="text-lg font-light tracking-tight text-gray-900">Settings</h3>
+            <h3 className="text-lg font-light tracking-tight text-gray-900">{organization.name}</h3>
           </div>
           <button
             onClick={onClose}

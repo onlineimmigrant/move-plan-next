@@ -349,8 +349,23 @@ export default function SiteManagement() {
         throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Return the created organization data instead of closing immediately
-      return data.organization; // Return just the organization object from the response
+      // Check if automatic deployment was successful
+      if (data.deployment) {
+        console.log('✅ Organization created with automatic Vercel project:', data.deployment);
+        
+        // Show success message about Vercel project creation
+        const deploymentMessage = data.deployment.message || 'Vercel project created successfully';
+        
+        // Store deployment info for user feedback
+        if (data.deployment.dashboardUrl) {
+          console.log('🚀 Vercel Dashboard URL:', data.deployment.dashboardUrl);
+        }
+      } else if (data.deploymentError) {
+        console.warn('⚠️ Organization created but automatic deployment failed:', data.deploymentError);
+      }
+
+      // Return the created organization data
+      return data.organization;
 
     } catch (err: any) {
       setError(err.message || 'Failed to create organization');
@@ -364,11 +379,27 @@ export default function SiteManagement() {
   const handleOrganizationCreated = async (organization: Organization) => {
     console.log('SiteManagement: handleOrganizationCreated called with:', organization);
     
-    // Store the created organization for the deployment modal
-    setCreatedOrganization(organization);
-    
-    // Open the deployment modal immediately
-    setIsDeploymentModalOpen(true);
+    // Check if organization already has Vercel project (from automatic deployment)
+    if (organization.vercel_project_id) {
+      console.log('✅ Organization created with Vercel project, skipping deployment modal');
+      
+      // Show success message with deployment info
+      const message = organization.deployment_status === 'created' 
+        ? `Organization "${organization.name}" created successfully with Vercel project! You can deploy it manually from the site management interface.`
+        : `Organization "${organization.name}" created successfully!`;
+      
+      // You can add a toast/notification here if you have one
+      console.log(message);
+      
+    } else {
+      console.log('⚠️ Organization created without Vercel project, opening deployment modal');
+      
+      // Store the created organization for the deployment modal
+      setCreatedOrganization(organization);
+      
+      // Open the deployment modal for manual deployment
+      setIsDeploymentModalOpen(true);
+    }
     
     // Refresh the organizations list to include the new one
     await fetchOrganizations();

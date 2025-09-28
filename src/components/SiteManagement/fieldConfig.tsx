@@ -46,6 +46,7 @@ interface BaseFieldConfig {
   type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners' | 'cookie-consent' | 'cookie-categories' | 'cookie-services' | 'cookie-consent-records' | 'ai-agents';
   placeholder?: string;
   span?: 'full' | 'half';
+  disabled?: boolean;
 }
 
 interface TextFieldConfig extends BaseFieldConfig {
@@ -250,9 +251,8 @@ export const sectionsConfig: SectionConfig[] = [
           { name: 'name', label: 'Organization Name', type: 'text', placeholder: 'Enter organization name' },
           { name: 'site', label: 'Site Title', type: 'text', placeholder: 'Enter your site title' },
           { name: 'type', label: 'Organization Type', type: 'organization-type' },
-           { name: 'base_url', label: 'Base URL (Vercel Address)', type: 'url', placeholder: 'https://your-site.vercel.app'},
-          { name: 'base_url_local', label: 'Local URL', type: 'url', placeholder: 'http://localhost:3100'}
-  
+          { name: 'base_url', label: 'Base URL (Auto-managed by Vercel)', type: 'url', placeholder: 'https://your-site.vercel.app', disabled: true }
+          // { name: 'base_url_local', label: 'Local URL', type: 'url', placeholder: 'http://localhost:3100'}
         ]
       },
             {
@@ -563,6 +563,7 @@ export const renderField = ({
           onChange={handleChange}
           type={field.type}
           placeholder={field.placeholder}
+          disabled={field.disabled}
         />
       );
     

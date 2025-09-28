@@ -55,7 +55,6 @@ export default function ResizablePanels({
         >
           <div className="modal-panel-content" onMouseDown={(e) => e.stopPropagation()}>
             <div className="modal-panel-header">
-              <h3 className="modal-panel-title">Settings</h3>
               <button
                 onClick={onToggleCollapse}
                 className="modal-minimize-btn"

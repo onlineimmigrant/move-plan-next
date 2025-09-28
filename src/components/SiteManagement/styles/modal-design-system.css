@@ -516,8 +516,8 @@
 .modal-panel-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }
 
 .modal-panel-title {
@@ -528,20 +528,31 @@
 }
 
 .modal-minimize-btn {
-  color: var(--modal-neutral-400);
-  background-color: transparent;
-  border: none;
-  padding: 0.5rem;
-  border-radius: var(--modal-radius-md);
-  transition: var(--modal-transition);
+  color: var(--modal-neutral-500);
+  background-color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.375rem;
+  border-radius: var(--modal-radius-lg);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
 }
 
 .modal-minimize-btn:hover {
-  color: var(--modal-neutral-600);
-  background-color: rgba(255, 255, 255, 0.6);
+  color: var(--modal-neutral-700);
+  background-color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modal-minimize-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .modal-resize-handle {
@@ -809,34 +820,110 @@
 /* Tab Navigation Enhancement */
 .modal-tabs {
   display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1.5rem;
-  background-color: var(--modal-neutral-100);
-  padding: 0.25rem;
-  border-radius: var(--modal-radius-md);
+  gap: 0.125rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.375rem;
+  border-radius: var(--modal-radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .modal-tab {
   flex: 1;
-  padding: 0.5rem 1rem;
-  border-radius: var(--modal-radius);
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--modal-radius-md);
   font-size: 0.875rem;
   font-weight: 500;
-  transition: var(--modal-transition);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   cursor: pointer;
   background-color: transparent;
   color: var(--modal-text-secondary);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+}
+
+.modal-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.05));
+  opacity: 0;
+  transition: opacity 0.25s ease;
 }
 
 .modal-tab:hover {
   color: var(--modal-text-primary);
+  transform: translateY(-1px);
+}
+
+.modal-tab:hover::before {
+  opacity: 0.5;
 }
 
 .modal-tab.active {
-  background-color: var(--modal-surface);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 1));
   color: var(--modal-text-primary);
-  box-shadow: var(--modal-shadow-sm);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  transform: translateY(-1px);
+}
+
+.modal-tab.active::before {
+  opacity: 0;
+}
+
+.modal-tab:active {
+  transform: translateY(0);
+}
+
+.modal-tab:focus {
+  outline: none;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.modal-tab svg {
+  transition: transform 0.2s ease;
+}
+
+.modal-tab:hover svg,
+.modal-tab.active svg {
+  transform: scale(1.1);
+}
+
+/* Mobile tab adjustments */
+@media (max-width: 640px) {
+  .modal-tabs {
+    margin-bottom: 1rem;
+    padding: 0.25rem;
+  }
+  
+  .modal-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    min-height: 2rem;
+  }
+  
+  .modal-tab svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-right: 0.375rem;
+  }
 }
 
 /* Glassmorphism Enhancement */

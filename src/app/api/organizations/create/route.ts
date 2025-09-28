@@ -247,6 +247,149 @@ export async function POST(request: NextRequest) {
       console.warn('Organization created but hero creation failed. Manual hero creation may be required.');
     }
 
+    // Automatically trigger Vercel deployment after organization creation
+    let deploymentResult = null;
+    let deploymentError = null;
+    
+    // Only attempt Vercel deployment if token is available
+    if (!process.env.VERCEL_TOKEN) {
+      console.warn('VERCEL_TOKEN not available - skipping automatic Vercel deployment');
+      deploymentError = 'VERCEL_TOKEN environment variable not configured';
+    } else {
+      try {
+        console.log('Attempting automatic Vercel deployment for new organization...');
+        console.log('VERCEL_TOKEN available:', !!process.env.VERCEL_TOKEN);
+        console.log('VERCEL_TOKEN length:', process.env.VERCEL_TOKEN?.length || 0);
+        
+        // Import deployment logic dynamically to avoid circular dependencies
+        const { createVercelClient, generateSiteEnvironmentVariables } = await import('@/lib/vercel');
+        console.log('Successfully imported Vercel client functions');
+        
+        // Initialize Vercel client with correct team ID
+        console.log('Creating Vercel client...');
+        console.log('Using team ID: team_O74MS093TrJebFniPVoMmj3F');
+        const vercelClient = createVercelClient(
+          process.env.VERCEL_TOKEN,
+          'team_O74MS093TrJebFniPVoMmj3F' // Correct team ID provided by user
+        );
+        console.log('Vercel client created successfully with team ID');
+        
+        // Debug: Check what the token has access to
+        try {
+          console.log('Testing Vercel API access...');
+          const projects = await vercelClient.listProjects();
+          console.log('Current accessible projects count:', projects.projects?.length || 0);
+          console.log('Sample project names:', projects.projects?.slice(0, 3).map(p => p.name) || []);
+        } catch (debugError) {
+          console.warn('Failed to list existing projects:', debugError);
+        }
+        
+        const finalProjectName = `${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${newOrg.id.slice(0, 8)}`;
+        
+        console.log('Creating Vercel project automatically:', finalProjectName);
+        
+        // Create Vercel project
+        const vercelProject = await vercelClient.createProject(finalProjectName, 'nextjs');
+        console.log('Vercel project created automatically:', vercelProject.id);
+        
+        // Connect GitHub repository immediately after project creation
+        const gitRepository = 'https://github.com/onlineimmigrant/move-plan-next';
+        console.log('Connecting GitHub repository to project:', gitRepository);
+        
+        try {
+          await vercelClient.connectGitRepository(vercelProject.id, gitRepository);
+          console.log('GitHub repository connected successfully');
+          
+          // Wait a moment for the connection to propagate
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          // Attempt to trigger deployment
+          console.log('Attempting to trigger initial deployment...');
+          try {
+            const deployment = await vercelClient.deployProject(vercelProject.id, finalProjectName);
+            console.log('Initial deployment triggered successfully:', deployment.uid);
+            
+            // Update deployment status and ID
+            await supabase
+              .from('organizations')
+              .update({
+                vercel_deployment_id: deployment.uid,
+                deployment_status: 'building'
+              })
+              .eq('id', newOrg.id);
+              
+          } catch (deployError) {
+            console.warn('Initial deployment failed (this is common for new repo connections):', deployError);
+            // Continue without failing - user can deploy manually
+          }
+          
+        } catch (gitError) {
+          console.warn('GitHub repository connection failed:', gitError);
+          console.log('Project created but Git connection failed - user will need to connect manually');
+        }
+        
+        // Generate environment variables
+        const envVars = generateSiteEnvironmentVariables(newOrg.id, newOrg.name, baseUrl);
+        
+        // Set environment variables
+        try {
+          await vercelClient.setEnvironmentVariables(vercelProject.id, envVars);
+          console.log('Environment variables set automatically');
+        } catch (envError) {
+          console.warn('Environment variables setup failed during auto-deployment:', envError);
+        }
+        
+        // Update organization with Vercel project info
+        const { error: autoUpdateError } = await supabase
+          .from('organizations')
+          .update({
+            base_url: baseUrl,
+            vercel_project_id: vercelProject.id,
+            deployment_status: 'created', // Project created, ready for manual deployment
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', newOrg.id);
+
+        if (autoUpdateError) {
+          console.warn('Failed to update organization with Vercel project info:', autoUpdateError);
+        }
+        
+        deploymentResult = {
+          vercelProjectId: vercelProject.id,
+          projectName: finalProjectName,
+          baseUrl: baseUrl,
+          status: 'created',
+          dashboardUrl: `https://vercel.com/dashboard/projects/${vercelProject.id}`,
+          githubRepository: gitRepository,
+          message: 'Vercel project created successfully with GitHub repository connection.'
+        };
+        
+        console.log('Automatic Vercel project creation completed successfully');
+        
+      } catch (autoDeployError: any) {
+        console.error('❌ Automatic Vercel deployment failed:', autoDeployError);
+        console.error('Error details:', {
+          message: autoDeployError.message,
+          stack: autoDeployError.stack,
+          name: autoDeployError.name
+        });
+        
+        // Provide specific guidance for 403 errors
+        if (autoDeployError.message.includes('403') || autoDeployError.message.includes('Not authorized')) {
+          console.error('🚨 VERCEL TOKEN PERMISSION ISSUE:');
+          console.error('1. Check that your VERCEL_TOKEN has "Full Access" scope');
+          console.error('2. Verify the token is associated with the correct team');
+          console.error('3. Try regenerating the token at https://vercel.com/account/tokens');
+          deploymentError = 'VERCEL_TOKEN permission denied - check token scope and team access';
+        } else {
+          deploymentError = autoDeployError.message;
+        }
+        
+        // Don't fail the organization creation - just log the deployment failure
+        console.log('Organization created successfully, but automatic Vercel deployment failed');
+      }
+    }
+
     return NextResponse.json({
       success: true,
       organization: {
@@ -254,10 +397,14 @@ export async function POST(request: NextRequest) {
         name: newOrg.name,
         type: newOrg.type,
         base_url_local: newOrg.base_url_local,
-        base_url: updatedOrg?.base_url || baseUrl // Use updated value or fallback to generated one
+        base_url: updatedOrg?.base_url || baseUrl,
+        vercel_project_id: deploymentResult?.vercelProjectId || null,
+        deployment_status: deploymentResult?.status || 'not_deployed'
       },
       settings: newSettings || null,
-      website_hero: newHero || null
+      website_hero: newHero || null,
+      deployment: deploymentResult,
+      deploymentError: deploymentError
     });
 
   } catch (error) {
