@@ -19,6 +19,7 @@ interface EditModalProps {
   onSave: (settings: Settings) => void;
   isLoading: boolean;
   session: any; // Add session prop
+  readOnly?: boolean; // Add read-only mode for sample exploration
 }
 
 export default function EditModal({ 
@@ -27,7 +28,8 @@ export default function EditModal({
   onClose, 
   onSave, 
   isLoading,
-  session 
+  session,
+  readOnly = false
 }: EditModalProps) {
   const [settings, setSettings] = useState<Settings>({} as Settings);
   const [originalSettings, setOriginalSettings] = useState<Settings>({} as Settings);
@@ -315,6 +317,7 @@ export default function EditModal({
           session={session}
           organizationId={organization?.id}
           resetKey={sectionsResetKey}
+          readOnly={readOnly}
         />
       );
     } else {
@@ -357,6 +360,7 @@ export default function EditModal({
           onSave={handleSave}
           onClose={onClose}
           onImageHover={handleImageHover}
+          readOnly={readOnly}
         />
 
         {/* Mobile Settings Overlay */}

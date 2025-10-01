@@ -9,12 +9,13 @@ interface OrganizationsGridProps {
   onCreateNew: () => void;
   onEditOrganization: (org: Organization) => void;
   onDeployOrganization?: (org: Organization) => void;
-  onCloneOrganization?: (org: Organization) => void;
+  onCloneOrganization?: (org: Organization, customName: string) => void;
   onDeleteOrganization?: (org: Organization) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
   loadingOrganizationId?: string | null;
+  mostRecentOrganizationId?: string | null;
 }
 
 export default function OrganizationsGrid({ 
@@ -28,7 +29,8 @@ export default function OrganizationsGrid({
   onLoadMore,
   hasMore = false,
   isLoadingMore = false,
-  loadingOrganizationId = null
+  loadingOrganizationId = null,
+  mostRecentOrganizationId = null
 }: OrganizationsGridProps) {
   if (organizations.length === 0) {
     return (
@@ -76,6 +78,7 @@ export default function OrganizationsGrid({
                   onClone={onCloneOrganization}
                   onDelete={onDeleteOrganization}
                   isLoading={loadingOrganizationId === org.id}
+                  isMostRecent={mostRecentOrganizationId === org.id}
                 />
               </div>
             ))}

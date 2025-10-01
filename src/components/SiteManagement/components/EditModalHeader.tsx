@@ -17,6 +17,7 @@ interface EditModalHeaderProps {
   onSave: () => void;
   onClose: () => void;
   onImageHover: (image: string | null, position?: { x: number; y: number }) => void;
+  readOnly?: boolean;
 }
 
 export default function EditModalHeader({
@@ -28,6 +29,7 @@ export default function EditModalHeader({
   isAutoSaving,
   lastAutoSave,
   hoveredImage,
+  readOnly = false,
   mousePosition,
   onSave,
   onClose,
@@ -135,16 +137,24 @@ export default function EditModalHeader({
 
           {/* Right Side - Actions */}
           <div className="modal-actions">
-            {/* Enhanced Save Button */}
-            <button
-              onClick={onSave}
-              disabled={isLoading || !hasUnsavedChanges}
-              className={`modal-save-btn ${
-                hasUnsavedChanges && !isLoading
-                  ? 'modal-save-btn-active'
-                  : 'modal-save-btn-disabled'
-              }`}
-            >
+            {/* Sample Organization Read-Only Badge */}
+            {readOnly && (
+              <div className="px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg border border-blue-200">
+                🔍 Sample Exploration
+              </div>
+            )}
+            
+            {/* Enhanced Save Button - Hidden in read-only mode */}
+            {!readOnly && (
+              <button
+                onClick={onSave}
+                disabled={isLoading || !hasUnsavedChanges}
+                className={`modal-save-btn ${
+                  hasUnsavedChanges && !isLoading
+                    ? 'modal-save-btn-active'
+                    : 'modal-save-btn-disabled'
+                }`}
+              >
               {isLoading ? (
                 <>
                   <div className="modal-spinner"></div>
@@ -168,6 +178,7 @@ export default function EditModalHeader({
                 </>
               )}
             </button>
+            )}
 
             {/* Enhanced Close Button */}
             <button

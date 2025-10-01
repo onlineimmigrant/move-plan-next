@@ -1,6 +1,16 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
+/* Hide scrollbar utility classes */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 
 /* Define variables for base styles */
 .prose {

@@ -16,14 +16,17 @@ interface TextFieldProps extends BaseFieldProps {
 
 interface TextAreaFieldProps extends BaseFieldProps {
   rows?: number;
+  disabled?: boolean;
 }
 
 interface SelectFieldProps extends BaseFieldProps {
   options: Array<{ name: string; value: string }>;
+  disabled?: boolean;
 }
 
 interface CheckboxFieldProps extends BaseFieldProps {
   checked: boolean;
+  disabled?: boolean;
 }
 
 const fieldClasses = "w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl text-gray-900 placeholder-gray-500/60 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400/60 transition-all duration-300 text-sm font-normal shadow-sm hover:border-gray-300/80 hover:shadow-md hover:bg-white/80 hover:backdrop-blur-md";
@@ -59,17 +62,19 @@ export const TextAreaField: React.FC<TextAreaFieldProps> = ({
   onChange, 
   rows = 3,
   placeholder,
-  className = ''
+  className = '',
+  disabled = false
 }) => (
   <div className="modal-field-group">
     <label className="modal-label">{label}</label>
     <textarea
       name={name}
       value={value || ''}
-      onChange={(e) => onChange(name, e.target.value)}
+      onChange={(e) => !disabled && onChange(name, e.target.value)}
       rows={rows}
-      className={`${fieldClasses} resize-none ${className}`}
+      className={`${fieldClasses} resize-none ${className} ${disabled ? 'opacity-60 cursor-not-allowed bg-gray-100/80' : ''}`}
       placeholder={placeholder}
+      disabled={disabled}
     />
   </div>
 );
@@ -80,15 +85,17 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   value, 
   onChange, 
   options,
-  className = ''
+  className = '',
+  disabled = false
 }) => (
   <div className="modal-field-group">
     <label className="modal-label">{label}</label>
     <select
       name={name}
       value={value || ''}
-      onChange={(e) => onChange(name, e.target.value)}
-      className={`${fieldClasses} appearance-none cursor-pointer ${className}`}
+      onChange={(e) => !disabled && onChange(name, e.target.value)}
+      className={`${fieldClasses} appearance-none cursor-pointer ${className} ${disabled ? 'opacity-60 cursor-not-allowed bg-gray-100/80' : ''}`}
+      disabled={disabled}
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
@@ -104,19 +111,21 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
   name, 
   checked, 
   onChange,
-  className = ''
+  className = '',
+  disabled = false
 }) => (
   <div className={`modal-field-group modal-field-group--compact ${className}`}>
-    <div className="flex items-center bg-white/60 backdrop-blur-sm border border-sky-200/60 rounded-xl p-4 hover:bg-white/80 hover:border-sky-300/60 transition-all duration-300 group shadow-sm">
+    <div className={`flex items-center bg-white/60 backdrop-blur-sm border border-sky-200/60 rounded-xl p-4 hover:bg-white/80 hover:border-sky-300/60 transition-all duration-300 group shadow-sm ${disabled ? 'opacity-60 cursor-not-allowed bg-gray-100/80' : ''}`}>
       <input
         type="checkbox"
         id={name}
         name={name}
         checked={checked || false}
-        onChange={(e) => onChange(name, e.target.checked)}
+        onChange={(e) => !disabled && onChange(name, e.target.checked)}
         className="h-5 w-5 text-sky-500 focus:ring-sky-500/30 border-sky-300 rounded-md transition-all duration-300 bg-white/80 shadow-sm"
+        disabled={disabled}
       />
-      <label htmlFor={name} className="ml-3 modal-label !mb-0 cursor-pointer group-hover:text-sky-800 transition-colors duration-300">
+      <label htmlFor={name} className={`ml-3 modal-label !mb-0 cursor-pointer group-hover:text-sky-800 transition-colors duration-300 ${disabled ? 'cursor-not-allowed' : ''}`}>
         {label}
       </label>
     </div>

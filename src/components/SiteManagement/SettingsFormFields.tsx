@@ -19,6 +19,7 @@ interface SettingsFormFieldsProps {
   session?: any;
   organizationId?: string;
   resetKey?: number; // Add reset key to force re-initialization
+  readOnly?: boolean; // Add read-only mode
 }
 
 const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({ 
@@ -28,6 +29,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   uploadingImages,
   isNarrow = false,
   cookieData,
+  readOnly = false,
   session,
   organizationId,
   resetKey = 0
@@ -340,7 +342,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                 onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
                 onImageUpload,
                 uploadingImages,
-                allSettings: { ...settings, ...cookieData, organization_id: organizationId, session }
+                allSettings: { ...settings, ...cookieData, organization_id: organizationId, session },
+                readOnly
               });
               
               return fieldComponent ? (
@@ -362,7 +365,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
                 onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
                 onImageUpload,
                 uploadingImages,
-                allSettings: { ...settings, ...cookieData, organization_id: organizationId, session }
+                allSettings: { ...settings, ...cookieData, organization_id: organizationId, session },
+                readOnly
               });
               
               return fieldComponent ? (
@@ -383,7 +387,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
               onChange: (name: string, value: any) => handleSectionChange(sectionKey, name as keyof Settings, value),
               onImageUpload,
               uploadingImages,
-              allSettings: { ...settings, ...cookieData, organization_id: organizationId, session }
+              allSettings: { ...settings, ...cookieData, organization_id: organizationId, session },
+              readOnly
             });
           
             return fieldComponent ? (

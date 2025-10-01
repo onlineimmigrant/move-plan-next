@@ -12,7 +12,129 @@ import DeploymentModal from './DeploymentModal';
 import EditModal from './EditModal';
 import AccessRestricted from './AccessRestricted';
 import PlatformStatsWidget from './PlatformStatsWidget';
+// import SampleOrganizationsShowcase from '../SampleOrganizationsShowcase';
 import { Organization, Settings, UserProfile, HeroData } from './types';
+import { GlobeAltIcon, AcademicCapIcon, DocumentTextIcon, BuildingOfficeIcon, BeakerIcon, CogIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+
+// Inline Sample Organizations Component
+interface SampleOrganizationsInlineProps {
+  onExplore: (sampleOrg: any) => void;
+  onClone: (sampleOrg: any) => void;
+}
+
+const SampleOrganizationsInline: React.FC<SampleOrganizationsInlineProps> = ({ onExplore, onClone }) => {
+  const [samples, setSamples] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/organizations/samples')
+      .then(res => res.json())
+      .then(data => {
+        const allOrgs = (data.sampleTypes || []).flatMap((type: any) => type.organizations || []);
+        setSamples(allOrgs);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const getTypeIcon = (type: string) => {
+    const icons: { [key: string]: any } = {
+      immigration: GlobeAltIcon, education: AcademicCapIcon, legal: DocumentTextIcon,
+      consulting: BuildingOfficeIcon, technology: BeakerIcon, miner: BeakerIcon, realestate: BuildingOfficeIcon
+    };
+    return icons[type] || CogIcon;
+  };
+
+  const getTypeColor = (type: string) => {
+    const colors: { [key: string]: string } = {
+      immigration: 'from-blue-500 to-indigo-600', education: 'from-emerald-500 to-teal-600',
+      legal: 'from-amber-500 to-orange-600', consulting: 'from-purple-500 to-violet-600',
+      technology: 'from-pink-500 to-rose-600', miner: 'from-gray-600 to-gray-700',
+      realestate: 'from-green-500 to-emerald-600'
+    };
+    return colors[type] || 'from-gray-500 to-gray-600';
+  };
+
+  const getTypeName = (type: string) => {
+    const names: { [key: string]: string } = {
+      immigration: 'Immigration', education: 'Education', legal: 'Legal',
+      consulting: 'Consulting', technology: 'Technology', miner: 'Mining',
+      realestate: 'Real Estate'
+    };
+    return names[type] || 'Other';
+  };
+
+  if (loading) return <div className="mb-8 py-4 text-center text-gray-500">Loading samples...</div>;
+  if (samples.length === 0) return null;
+
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">Sample Organizations</h3>
+          <p className="text-sm text-gray-600">Explore different organization types</p>
+        </div>
+        <div className="flex space-x-1">
+          <button onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50">
+            <ChevronLeftIcon className="w-4 h-4 text-gray-600" />
+          </button>
+          <button onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50">
+            <ChevronRightIcon className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+      </div>
+      <div ref={scrollRef} className="flex space-x-4 overflow-x-auto pb-2 scrollbar-none">
+        {samples.map((org: any) => {
+          const TypeIcon = getTypeIcon(org.type);
+          const typeColor = getTypeColor(org.type);
+          return (
+            <div key={org.id} className="flex-shrink-0 w-48 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 overflow-hidden">
+              <div className={`bg-gradient-to-br ${typeColor} p-4 relative`}>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <TypeIcon className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-medium text-sm truncate">{getTypeName(org.type)}</p>
+                  </div>
+                </div>
+                {org.base_url && <div className="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full"></div>}
+              </div>
+              <div className="p-4">
+                <p className="text-sm font-medium text-gray-900 mb-1 truncate">{org.name}</p>
+                <p className="text-xs text-gray-500 mb-3">Sample organization</p>
+                <div className="space-y-2">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onExplore(org); }}
+                    className="w-full flex items-center justify-center space-x-1 text-xs text-gray-600 hover:text-gray-800 py-1.5 px-2 rounded border border-gray-200 hover:border-gray-300 transition-colors"
+                  >
+                    <EyeIcon className="w-3 h-3" />
+                    <span>Explore</span>
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onClone(org); }}
+                    className="w-full flex items-center justify-center text-xs text-white bg-sky-600 hover:bg-sky-700 py-1.5 px-2 rounded transition-colors"
+                  >
+                    <span>Clone Site</span>
+                  </button>
+                  {org.base_url && (
+                    <div className="text-center">
+                      <div className="inline-flex items-center space-x-1 text-xs text-green-600 font-medium">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span>Live</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 export default function SiteManagement() {
   const { session, isLoading } = useAuth();
@@ -24,6 +146,7 @@ export default function SiteManagement() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeploymentModalOpen, setIsDeploymentModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isReadOnlyMode, setIsReadOnlyMode] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -36,6 +159,7 @@ export default function SiteManagement() {
   const [displayLimit, setDisplayLimit] = useState(6);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadingOrganizationId, setLoadingOrganizationId] = useState<string | null>(null);
+  const [mostRecentOrganizationId, setMostRecentOrganizationId] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('Session state:', session);
@@ -61,8 +185,24 @@ export default function SiteManagement() {
       filtered = filtered.filter((org: Organization) => org.type === activeFilter);
     }
     
-    // Apply sorting
-    filtered.sort((a, b) => {
+    // Find the most recently created/updated organization (excluding platform orgs)
+    const nonPlatformOrgs = filtered.filter(org => org.type !== 'platform' && org.type !== 'general');
+    const mostRecentOrg = nonPlatformOrgs.length > 0 
+      ? nonPlatformOrgs.reduce((latest, current) => {
+          const latestTime = new Date(latest.created_at || '').getTime() || 0;
+          const currentTime = new Date(current.created_at || '').getTime() || 0;
+          return currentTime > latestTime ? current : latest;
+        })
+      : null;
+
+    // Update the most recent organization ID for highlighting
+    setMostRecentOrganizationId(mostRecentOrg?.id || null);
+
+    // Apply sorting to non-platform organizations
+    const platformOrgs = filtered.filter(org => org.type === 'platform' || org.type === 'general');
+    const otherOrgs = filtered.filter(org => org.type !== 'platform' && org.type !== 'general');
+    
+    otherOrgs.sort((a, b) => {
       switch (activeSort) {
         case 'name':
           return a.name.localeCompare(b.name);
@@ -76,13 +216,23 @@ export default function SiteManagement() {
           return 0;
       }
     });
+
+    // Custom sorting: Platform first, then most recent org, then the rest
+    const sortedOrgs = [];
     
-    // Sort to put platform organizations first regardless of other sorting
-    filtered.sort((a, b) => {
-      if (a.type === 'platform' && b.type !== 'platform') return -1;
-      if (b.type === 'platform' && a.type !== 'platform') return 1;
-      return 0;
-    });
+    // Add platform organizations first
+    sortedOrgs.push(...platformOrgs);
+    
+    // Add the most recent organization right after platform orgs (if it exists and isn't already added)
+    if (mostRecentOrg && !platformOrgs.includes(mostRecentOrg)) {
+      sortedOrgs.push(mostRecentOrg);
+    }
+    
+    // Add remaining organizations (excluding the most recent one if it was already added)
+    const remainingOrgs = otherOrgs.filter(org => org !== mostRecentOrg);
+    sortedOrgs.push(...remainingOrgs);
+    
+    filtered = sortedOrgs;
     
     // Apply display limit only if no search query
     if (!searchQuery.trim()) {
@@ -111,16 +261,57 @@ export default function SiteManagement() {
     setIsDeploymentModalOpen(true);
   };
 
-  const handleCloneOrganization = async (organization: Organization) => {
+  const handleCloneOrganization = async (organization: Organization, customName: string) => {
+    console.log('SiteManagement handleCloneOrganization called with:', {
+      orgName: organization.name,
+      customName: customName,
+      customNameLength: customName?.length || 0
+    });
+    
+    // Validation to catch empty customName
+    if (!customName || !customName.trim()) {
+      console.error('Empty customName received in handleCloneOrganization');
+      setError('Clone modal did not provide organization name. Please try again.');
+      return;
+    }
+    
     try {
       setError(null);
-      // Implement cloning logic
-      console.log('Cloning organization:', organization.name);
-      // You would typically call an API endpoint here
-      // await cloneOrganization(organization.id);
-      // fetchOrganizations(); // Refresh the list
+      
+      if (!session?.access_token) {
+        throw new Error('No access token available');
+      }
+
+      console.log('Cloning organization:', organization.name, 'with new name:', customName);
+
+      const response = await fetch(`/api/organizations/${organization.id}/clone`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customName: customName
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to clone organization');
+      }
+
+      const result = await response.json();
+      console.log('Organization cloned successfully:', result);
+
+      // Log the cloning activity
+      await logActivity(result.organization.id, 'created', `Organization "${result.organization.name}" was cloned from "${organization.name}"`);
+
+      // Refresh the organizations list to show the new cloned organization
+      fetchOrganizations();
+      
     } catch (err: any) {
       setError(err.message || 'Failed to clone organization');
+      throw err; // Re-throw so OrganizationCard can handle loading states
     }
   };
 
@@ -176,7 +367,10 @@ export default function SiteManagement() {
       setFilteredOrganizations(prev => prev.filter(org => org.id !== organization.id));
       
     } catch (err: any) {
-      setError(err.message || 'Failed to delete organization');
+      const errorMessage = err.message || 'Failed to delete organization';
+      setError(errorMessage);
+      // Re-throw the error so the OrganizationCard can handle loading states
+      throw new Error(errorMessage);
     }
   };
 
@@ -409,11 +603,50 @@ export default function SiteManagement() {
     console.log('SiteManagement: Finished handling organization creation');
   };
 
+  const handleExploreSample = async (sampleOrg: any) => {
+    // Convert sample to Organization format and open in EditModal in read-only mode
+    const orgForEdit: Organization = {
+      id: sampleOrg.id,
+      name: sampleOrg.name,
+      type: sampleOrg.type,
+      base_url: sampleOrg.base_url,
+      base_url_local: sampleOrg.base_url_local || '',
+      created_at: sampleOrg.created_at,
+      created_by_email: sampleOrg.created_by_email || '',
+      // Add other required Organization fields with defaults
+      settings: sampleOrg.settings || {}
+    };
+    setIsReadOnlyMode(true); // Set read-only mode
+    await handleEditOrganization(orgForEdit);
+  };
+
+  const handleCloneSample = async (sampleOrg: any) => {
+    // Show clone modal with custom name input
+    const customName = prompt(`Enter a name for your cloned ${sampleOrg.type} organization:`, `My ${sampleOrg.name}`);
+    if (customName && customName.trim()) {
+      const orgForClone: Organization = {
+        id: sampleOrg.id,
+        name: sampleOrg.name,
+        type: sampleOrg.type,
+        base_url: sampleOrg.base_url,
+        base_url_local: sampleOrg.base_url_local || '',
+        created_at: sampleOrg.created_at,
+        created_by_email: sampleOrg.created_by_email || '',
+        settings: sampleOrg.settings || {}
+      };
+      await handleCloneOrganization(orgForClone, customName.trim());
+    }
+  };
+
   const handleEditOrganization = async (organization: Organization) => {
     try {
       setError(null);
       setLoadingOrganizationId(organization.id);
       setIsEditing(true);
+      // Ensure read-only mode is reset for regular organizations (unless explicitly set)
+      if (!isReadOnlyMode) {
+        setIsReadOnlyMode(false);
+      }
       
       if (!session?.access_token) {
         throw new Error('No access token available');
@@ -1173,6 +1406,7 @@ export default function SiteManagement() {
     setError(null);
     setLoadingOrganizationId(null);
     setIsEditing(false);
+    setIsReadOnlyMode(false); // Reset read-only mode when closing
   };
 
   const closeCreateModal = () => {
@@ -1231,6 +1465,12 @@ export default function SiteManagement() {
 
         {/* Main Content Area */}
         <div className="px-4 sm:px-6 lg:px-8 pt-80 sm:pt-48 pb-6">
+          {/* Sample Organizations Horizontal Scroll */}
+          <SampleOrganizationsInline 
+            onExplore={handleExploreSample}
+            onClone={handleCloneSample}
+          />
+          
           {/* Organizations Grid */}
           <OrganizationsGrid
             organizations={filteredOrganizations}
@@ -1244,6 +1484,7 @@ export default function SiteManagement() {
             hasMore={hasMoreOrganizations}
             isLoadingMore={isLoadingMore}
             loadingOrganizationId={loadingOrganizationId}
+            mostRecentOrganizationId={mostRecentOrganizationId}
           />
           
           {/* Platform Stats Widget - Now below organization cards */}
@@ -1307,6 +1548,7 @@ export default function SiteManagement() {
           onSave={handleSaveSettings}
           isLoading={isEditing}
           session={session}
+          readOnly={isReadOnlyMode}
         />
       </div>
     </div>

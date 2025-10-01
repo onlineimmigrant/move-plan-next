@@ -532,6 +532,7 @@ interface RenderFieldProps {
   onImageUpload?: (field: 'image' | 'favicon' | 'hero_image') => void;
   uploadingImages?: Set<string>;
   allSettings?: any; // For accessing other field values (like supported languages)
+  readOnly?: boolean;
 }
 
 export const renderField = ({ 
@@ -540,10 +541,13 @@ export const renderField = ({
   onChange, 
   onImageUpload, 
   uploadingImages,
-  allSettings 
+  allSettings,
+  readOnly = false
 }: RenderFieldProps): React.ReactElement | null => {
   const handleChange = (name: string, newValue: any) => {
-    onChange(name, newValue);
+    if (!readOnly) {
+      onChange(name, newValue);
+    }
   };
 
   const getDisplayValue = () => {
@@ -563,7 +567,7 @@ export const renderField = ({
           onChange={handleChange}
           type={field.type}
           placeholder={field.placeholder}
-          disabled={field.disabled}
+          disabled={field.disabled || readOnly}
         />
       );
     
@@ -576,6 +580,7 @@ export const renderField = ({
           onChange={handleChange}
           rows={(field as TextAreaFieldConfig).rows}
           placeholder={field.placeholder}
+          disabled={readOnly}
         />
       );
     
@@ -587,6 +592,7 @@ export const renderField = ({
           value={value}
           onChange={handleChange}
           options={(field as SelectFieldConfig).options}
+          disabled={readOnly}
         />
       );
     
@@ -598,63 +604,74 @@ export const renderField = ({
           value={value}
           checked={Boolean(value)}
           onChange={handleChange}
+          disabled={readOnly}
         />
       );
     
     case 'color':
       return (
-        <ColorSelect
-          label={field.label}
-          name={field.name}
-          value={value || '#6b7280'}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <ColorSelect
+            label={field.label}
+            name={field.name}
+            value={value || '#6b7280'}
+            onChange={handleChange}
+          />
+        </div>
       );
       
     case 'animation':
       return (
-        <AnimationSelect
-          label={field.label}
-          name={field.name}
-          value={value || ''}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <AnimationSelect
+            label={field.label}
+            name={field.name}
+            value={value || ''}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'image':
       if (!onImageUpload || !uploadingImages) return null;
       return (
-        <ImageUploadField
-          label={field.label}
-          field={(field as ImageFieldConfig).field}
-          value={value}
-          onChange={onChange}
-          onImageUpload={onImageUpload}
-          uploadingImages={uploadingImages}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <ImageUploadField
+            label={field.label}
+            field={(field as ImageFieldConfig).field}
+            value={value}
+            onChange={onChange}
+            onImageUpload={onImageUpload}
+            uploadingImages={uploadingImages}
+          />
+        </div>
       );
     
     case 'multi-language':
       return (
-        <MultiLanguageSelect
-          label={field.label}
-          name={field.name}
-          value={Array.isArray(value) ? value : (value ? [value] : ['en'])}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <MultiLanguageSelect
+            label={field.label}
+            name={field.name}
+            value={Array.isArray(value) ? value : (value ? [value] : ['en'])}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'single-language':
       const supportedLanguagesField = (field as SingleLanguageFieldConfig).supportedLanguagesField;
       const supportedLanguages = allSettings?.[supportedLanguagesField] || ['en'];
       return (
-        <SingleLanguageSelect
-          label={field.label}
-          name={field.name}
-          value={value || 'en'}
-          supportedLanguages={Array.isArray(supportedLanguages) ? supportedLanguages : ['en']}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <SingleLanguageSelect
+            label={field.label}
+            name={field.name}
+            value={value || 'en'}
+            supportedLanguages={Array.isArray(supportedLanguages) ? supportedLanguages : ['en']}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'organization-type':
@@ -666,7 +683,7 @@ export const renderField = ({
           name={field.name}
           value={value || 'services'}
           onChange={handleChange}
-          disabled={isPlatformOrg}
+          disabled={isPlatformOrg || readOnly}
         />
       );
     
@@ -675,141 +692,169 @@ export const renderField = ({
       const translationsSupportedLanguages = allSettings?.[translationsSupportedLanguagesField] || ['en'];
       
       return (
-        <TranslationsField
-          field={field}
-          value={value || {}}
-          onChange={handleChange}
-          supportedLanguages={Array.isArray(translationsSupportedLanguages) ? translationsSupportedLanguages : ['en']}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <TranslationsField
+            field={field}
+            value={value || {}}
+            onChange={handleChange}
+            supportedLanguages={Array.isArray(translationsSupportedLanguages) ? translationsSupportedLanguages : ['en']}
+          />
+        </div>
       );
     
     case 'alignment':
       return (
-        <AlignmentSelect
-          label={field.label}
-          name={field.name}
-          value={value || 'left'}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <AlignmentSelect
+            label={field.label}
+            name={field.name}
+            value={value || 'left'}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'text-size':
       return (
-        <TextSizeSelect
-          label={field.label}
-          name={field.name}
-          value={value || 'text-base'}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <TextSizeSelect
+            label={field.label}
+            name={field.name}
+            value={value || 'text-base'}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'text-weight':
       return (
-        <TextWeightSelect
-          label={field.label}
-          name={field.name}
-          value={value || 'normal'}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <TextWeightSelect
+            label={field.label}
+            name={field.name}
+            value={value || 'normal'}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'block-width':
       return (
-        <BlockWidthSelect
-          label={field.label}
-          name={field.name}
-          value={value || 'full'}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <BlockWidthSelect
+            label={field.label}
+            name={field.name}
+            value={value || 'full'}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'columns':
       return (
-        <ColumnsSelect
-          label={field.label}
-          name={field.name}
-          value={value || '1'}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <ColumnsSelect
+            label={field.label}
+            name={field.name}
+            value={value || '1'}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'menu-items':
       const submenuItems = allSettings?.submenu_items || [];
       return (
-        <MenuItemsSelect
-          label={field.label}
-          name={field.name}
-          value={Array.isArray(value) ? value : []}
-          submenuItems={Array.isArray(submenuItems) ? submenuItems : []}
-          onChange={handleChange}
-          onSubmenuChange={(submenuItems) => handleChange('submenu_items', submenuItems)}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <MenuItemsSelect
+            label={field.label}
+            name={field.name}
+            value={Array.isArray(value) ? value : []}
+            submenuItems={Array.isArray(submenuItems) ? submenuItems : []}
+            onChange={handleChange}
+            onSubmenuChange={(submenuItems) => handleChange('submenu_items', submenuItems)}
+          />
+        </div>
       );
     
     case 'blog-posts':
       return (
-        <BlogPostsSelect
-          label={field.label}
-          name={field.name}
-          value={Array.isArray(value) ? value : []}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <BlogPostsSelect
+            label={field.label}
+            name={field.name}
+            value={Array.isArray(value) ? value : []}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'products':
       return (
-        <ProductSelect
-          label={field.label}
-          name={field.name}
-          value={Array.isArray(value) ? value : []}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <ProductSelect
+            label={field.label}
+            name={field.name}
+            value={Array.isArray(value) ? value : []}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'features':
       return (
-        <FeatureSelect
-          label={field.label}
-          name={field.name}
-          value={Array.isArray(value) ? value : []}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <FeatureSelect
+            label={field.label}
+            name={field.name}
+            value={Array.isArray(value) ? value : []}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'faqs':
       return (
-        <FAQSelect
-          label={field.label}
-          name={field.name}
-          value={Array.isArray(value) ? value : []}
-          onChange={handleChange}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <FAQSelect
+            label={field.label}
+            name={field.name}
+            value={Array.isArray(value) ? value : []}
+            onChange={handleChange}
+          />
+        </div>
       );
     
     case 'banners':
       return (
-        <BannerSelect
-          name={field.name}
-          value={Array.isArray(value) ? value : []}
-          onChange={(fieldName, banners) => handleChange(fieldName, banners)}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <BannerSelect
+            name={field.name}
+            value={Array.isArray(value) ? value : []}
+            onChange={(fieldName, banners) => handleChange(fieldName, banners)}
+          />
+        </div>
       );
     
     case 'cookie-consent':
       return (
-        <CookieConsentSelect
-          value={Array.isArray(value) ? value : []}
-          onChange={(categories) => handleChange(field.name, categories)}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <CookieConsentSelect
+            value={Array.isArray(value) ? value : []}
+            onChange={(categories) => handleChange(field.name, categories)}
+          />
+        </div>
       );
 
     case 'cookie-categories':
       console.log('🍪 Rendering cookie-categories, allSettings:', allSettings);
       return (
-        <CookieCategoriesSelect
-          value={allSettings?.cookie_categories || []}
-          onChange={(categories: any) => handleChange(field.name, categories)}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <CookieCategoriesSelect
+            value={allSettings?.cookie_categories || []}
+            onChange={(categories: any) => handleChange(field.name, categories)}
+          />
+        </div>
       );
 
     case 'cookie-services':
@@ -817,30 +862,36 @@ export const renderField = ({
       const cookieServicesCount = Array.isArray(allSettings?.cookie_services) ? allSettings.cookie_services.length : 0;
       console.log('🍪 Cookie services count for passing:', cookieServicesCount);
       return (
-        <CookieServicesSelect
-          value={allSettings?.cookie_services || []}
-          onChange={(services: any) => handleChange(field.name, services)}
-          availableCategories={allSettings?.cookie_categories || []}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <CookieServicesSelect
+            value={allSettings?.cookie_services || []}
+            onChange={(services: any) => handleChange(field.name, services)}
+            availableCategories={allSettings?.cookie_categories || []}
+          />
+        </div>
       );
 
     case 'cookie-consent-records':
       console.log('🍪 Rendering cookie-consent-records, allSettings:', allSettings);
       return (
-        <CookieConsentRecordsSelect
-          value={allSettings?.cookie_consent_records || []}
-          onChange={(records: any) => handleChange(field.name, records)}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <CookieConsentRecordsSelect
+            value={allSettings?.cookie_consent_records || []}
+            onChange={(records: any) => handleChange(field.name, records)}
+          />
+        </div>
       );
 
     case 'ai-agents':
       return (
-        <AIAgentsSelect
-          value={Array.isArray(allSettings?.ai_agents) ? allSettings.ai_agents : []}
-          onChange={(agents: any) => handleChange(field.name, agents)}
-          organizationId={allSettings?.organization_id}
-          session={allSettings?.session}
-        />
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <AIAgentsSelect
+            value={Array.isArray(allSettings?.ai_agents) ? allSettings.ai_agents : []}
+            onChange={(agents: any) => handleChange(field.name, agents)}
+            organizationId={allSettings?.organization_id}
+            session={allSettings?.session}
+          />
+        </div>
       );
 
     default:

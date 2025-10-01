@@ -1907,3 +1907,147 @@ export async function PUT(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// DELETE - Delete organization
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Await params before accessing properties
+    const { id } = await params;
+    
+    // Get the authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Verify the user's session
+    const { data: user, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user.user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    const userId = user.user.id;
+    const orgId = id;
+
+    console.log('Delete organization request for:', orgId, 'by user:', userId);
+
+    // Get user's profile to check permissions
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role, organization_id, is_site_creator')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    }
+
+    // Check if user's organization is 'platform' type
+    if (!profile.organization_id) {
+      return NextResponse.json({ error: 'User must belong to an organization' }, { status: 403 });
+    }
+
+    const { data: currentOrg, error: currentOrgError } = await supabase
+      .from('organizations')
+      .select('type')
+      .eq('id', profile.organization_id)
+      .single();
+
+    if (currentOrgError || !currentOrg) {
+      return NextResponse.json({ error: 'Could not verify organization' }, { status: 500 });
+    }
+
+    // Permission validation - only platform admins can delete organizations
+    if (currentOrg.type === 'platform' || currentOrg.type === 'general') {
+      if (profile.role !== 'admin') {
+        return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
+      }
+
+      // Prevent deleting the platform organization itself
+      if (orgId === profile.organization_id) {
+        return NextResponse.json({ error: 'Cannot delete the platform organization' }, { status: 403 });
+      }
+
+      // Check if the organization to delete was created by someone from the platform
+      const { data: platformOrgUsers, error: usersError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('organization_id', profile.organization_id)
+        .or('role.eq.admin,is_site_creator.eq.true');
+
+      if (usersError) {
+        return NextResponse.json({ error: 'Error verifying permissions' }, { status: 500 });
+      }
+
+      const creatorEmails = platformOrgUsers?.map((user: any) => user.email) || [];
+      
+      const { data: targetOrg, error: targetOrgError } = await supabase
+        .from('organizations')
+        .select('created_by_email, name')
+        .eq('id', orgId)
+        .single();
+        
+      if (targetOrgError || !targetOrg) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      
+      if (!creatorEmails.includes(targetOrg.created_by_email)) {
+        return NextResponse.json({ error: 'Access denied. You can only delete organizations created by your platform.' }, { status: 403 });
+      }
+    } else {
+      return NextResponse.json({ error: 'Access denied. Only platform admins can delete organizations.' }, { status: 403 });
+    }
+
+    // Get organization name for logging before deletion
+    const { data: orgToDelete, error: orgFetchError } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', orgId)
+      .single();
+
+    if (orgFetchError || !orgToDelete) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    // Delete the organization (this will cascade delete related records due to foreign key constraints)
+    const { error: deleteError } = await supabase
+      .from('organizations')
+      .delete()
+      .eq('id', orgId);
+
+    if (deleteError) {
+      console.error('Error deleting organization:', deleteError);
+      return NextResponse.json({ error: 'Failed to delete organization' }, { status: 500 });
+    }
+
+    console.log('Organization deleted successfully:', orgId);
+
+    // Log the activity
+    try {
+      await logActivity({
+        organizationId: orgId,
+        action: 'deleted',
+        details: `Organization "${orgToDelete.name}" was deleted by admin`,
+        userEmail: user.user.email || 'unknown'
+      });
+    } catch (logError) {
+      console.warn('Failed to log deletion activity:', logError);
+      // Don't fail the request if logging fails
+    }
+
+    return NextResponse.json({ 
+      message: 'Organization deleted successfully',
+      organizationId: orgId,
+      organizationName: orgToDelete.name
+    });
+
+  } catch (error) {
+    console.error('Error deleting organization:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
