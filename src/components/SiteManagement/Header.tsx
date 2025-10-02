@@ -1,6 +1,7 @@
 import React, { useState, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { organizationTypes } from './types';
+import Button from '@/ui/Button';
 
 interface HeaderProps {
   canCreateMore: boolean;
@@ -88,26 +89,36 @@ const Header = forwardRef<{ focusSearch: () => void }, HeaderProps>(function Hea
                 Site Management
                 <span className="absolute -bottom-1 sm:-bottom-2 left-0 w-16 h-1 bg-sky-600 rounded-full" />
               </h1>
+              {/* Desktop Create Site Button */}
               {canCreateMore && (
-                <div className="relative">
-                  <button
-                    onClick={onCreateNew}
-                    className="inline-flex items-center px-3 sm:px-6 py-3 bg-gradient-to-r from-sky-600 to-indigo-600 text-white rounded-2xl hover:from-sky-700 hover:to-indigo-700 font-semibold transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-sky-200/50 transform hover:scale-105 animate-pulse hover:animate-none"
-                  >
-                    <svg className="w-5 h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span className="hidden sm:inline">Create New Site</span>
-                  </button>
-                  {totalOrganizations === 0 && (
-                    <div className="absolute -top-2 -right-2 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-                  )}
-                </div>
+                <Button
+                  variant="primary"
+                  onClick={onCreateNew}
+                  className="hidden sm:flex shadow-xl hover:shadow-2xl hover:shadow-sky-200/50 w-auto transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Site
+                </Button>
               )}
             </div>
-            <p className="text-gray-500 text-base font-medium">
+            <p className="text-gray-500 text-base font-medium mb-4 sm:mb-0">
               Deploy & Manage
             </p>
+            {/* Mobile Create Site Button - Full Width Below Description */}
+            {canCreateMore && (
+              <Button
+                variant="primary"
+                onClick={onCreateNew}
+                className="sm:hidden shadow-xl hover:shadow-2xl hover:shadow-sky-200/50 w-full transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create Site
+              </Button>
+            )}
           </div>
 
           {/* Enhanced Search */}

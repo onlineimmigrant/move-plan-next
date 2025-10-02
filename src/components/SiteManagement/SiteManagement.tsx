@@ -713,11 +713,7 @@ export default function SiteManagement() {
       console.log('User profile:', data.profile); // Debug log
       console.log('Organizations count:', data.organizations?.length); // Debug log
       
-      // Limit to first 6 organizations for initial display
-      const limitedOrganizations = data.organizations?.slice(0, 6) || [];
-      
       setOrganizations(data.organizations || []);
-      setFilteredOrganizations(limitedOrganizations);
       setProfile(data.profile);
       setCanCreateMore(data.canCreateMore);
       

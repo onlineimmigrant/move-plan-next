@@ -69,14 +69,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    console.log('Fetching activities for user:', user.email);
+    const url = new URL(request.url);
+    const organizationIds = url.searchParams.get('organization_ids');
 
-    // Simplified query - just get all activities without complex joins
-    const { data: activities, error } = await supabase
+    console.log('Fetching activities for user:', user.email, 'filtered by organization IDs:', organizationIds);
+
+    let query = supabase
       .from('organization_activities')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(10);
+
+    // Filter activities to only show those from specified organizations
+    if (organizationIds) {
+      const orgIdArray = organizationIds.split(',').filter(id => id.trim());
+      if (orgIdArray.length > 0) {
+        query = query.in('organization_id', orgIdArray);
+      }
+    }
+
+    const { data: activities, error } = await query;
 
     if (error) {
       console.error('Error fetching activities:', error);
@@ -85,11 +97,28 @@ export async function GET(request: NextRequest) {
 
     console.log('Activities fetched:', activities?.length || 0);
 
-    // Transform the data without organization join
+    // Fetch organization names separately to avoid join issues
+    let organizationsMap: Record<string, string> = {};
+    if (activities && activities.length > 0) {
+      const uniqueOrgIds = [...new Set(activities.map(a => a.organization_id))];
+      const { data: organizations } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .in('id', uniqueOrgIds);
+      
+      if (organizations) {
+        organizationsMap = organizations.reduce((acc, org) => ({
+          ...acc,
+          [org.id]: org.name
+        }), {});
+      }
+    }
+
+    // Transform the data with organization information
     const transformedActivities = activities?.map(activity => ({
       id: activity.id,
       organization_id: activity.organization_id,
-      organization_name: activity.details || `Activity ${activity.id?.slice(0, 8)}`, // Use details as name
+      organization_name: organizationsMap[activity.organization_id] || activity.details || `Activity ${activity.id?.slice(0, 8)}`,
       action: activity.action,
       details: activity.details,
       created_at: activity.created_at,

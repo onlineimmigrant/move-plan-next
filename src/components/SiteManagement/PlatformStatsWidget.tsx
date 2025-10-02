@@ -36,7 +36,14 @@ export default function PlatformStatsWidget({ organizations, profile, session }:
         setIsLoadingActivities(true);
         setActivitiesError(null);
         
-        const response = await fetch('/api/activities', {
+        // Add organization filter parameter - pass all organization IDs that the user can see
+        const url = new URL('/api/activities', window.location.origin);
+        const orgIds = organizations.map(org => org.id).join(',');
+        if (orgIds) {
+          url.searchParams.set('organization_ids', orgIds);
+        }
+        
+        const response = await fetch(url.toString(), {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json'
@@ -56,7 +63,8 @@ export default function PlatformStatsWidget({ organizations, profile, session }:
         console.info('💡 To enable real activity tracking, run the database migration: ./run-migration.sh');
         setActivitiesError('Database not configured yet');
         
-        // Fallback to sample data based on actual organizations
+        // Fallback to sample data based on organizations visible to current user
+        // The organizations array already contains only the organizations this user can see
         const sampleActivities = organizations.slice(0, 3).map((org, index) => {
           const actions: Array<'created' | 'updated' | 'deployed'> = ['created', 'updated', 'deployed'];
           const timeOffsets = [2 * 60 * 60 * 1000, 24 * 60 * 60 * 1000, 3 * 24 * 60 * 60 * 1000]; // 2h, 1d, 3d ago
@@ -78,7 +86,7 @@ export default function PlatformStatsWidget({ organizations, profile, session }:
     };
 
     fetchActivities();
-  }, [session?.access_token]);
+  }, [session?.access_token, organizations]);
 
   // Calculate stats
   const totalSites = organizations.length;
