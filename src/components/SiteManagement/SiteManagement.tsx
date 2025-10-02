@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 import LoadingStates from './LoadingStates';
@@ -10,22 +10,53 @@ import OrganizationsGrid from './OrganizationsGrid';
 import CreateModal from './CreateModal';
 import DeploymentModal from './DeploymentModal';
 import EditModal from './EditModal';
+import CloneModal from './CloneModal';
+import PreviewModal from './PreviewModal';
 import AccessRestricted from './AccessRestricted';
 import PlatformStatsWidget from './PlatformStatsWidget';
 // import SampleOrganizationsShowcase from '../SampleOrganizationsShowcase';
 import { Organization, Settings, UserProfile, HeroData } from './types';
-import { GlobeAltIcon, AcademicCapIcon, DocumentTextIcon, BuildingOfficeIcon, BeakerIcon, CogIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import Button from '@/ui/Button';
+import { GlobeAltIcon, AcademicCapIcon, DocumentTextIcon, BuildingOfficeIcon, BeakerIcon, CogIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon, FunnelIcon } from '@heroicons/react/24/outline';
 
 // Inline Sample Organizations Component
 interface SampleOrganizationsInlineProps {
   onExplore: (sampleOrg: any) => void;
-  onClone: (sampleOrg: any) => void;
+  onClone: (sampleOrg: any, customName: string) => void;
+  onPreview: (sampleOrg: any) => void;
+  searchQuery?: string;
 }
 
-const SampleOrganizationsInline: React.FC<SampleOrganizationsInlineProps> = ({ onExplore, onClone }) => {
+const SampleOrganizationsInline: React.FC<SampleOrganizationsInlineProps> = ({ onExplore, onClone, onPreview, searchQuery = '' }) => {
   const [samples, setSamples] = useState<any[]>([]);
+  const [filteredSamples, setFilteredSamples] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exploreLoading, setExploreLoading] = useState<string | null>(null);
+  const [cloneLoading, setCloneLoading] = useState<string | null>(null);
+  const [showCloneModal, setShowCloneModal] = useState(false);
+  const [selectedSampleForClone, setSelectedSampleForClone] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Modal handlers
+  const handleCloseCloneModal = () => {
+    setShowCloneModal(false);
+    setSelectedSampleForClone(null);
+  };
+
+  const handleConfirmClone = async (customName: string) => {
+    if (!selectedSampleForClone) return;
+    
+    setCloneLoading(selectedSampleForClone.id);
+    try {
+      await onClone(selectedSampleForClone, customName);
+      handleCloseCloneModal();
+    } catch (error) {
+      console.error('Clone failed:', error);
+      throw error; // Let the modal handle the error display
+    } finally {
+      setCloneLoading(null);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/organizations/samples')
@@ -33,10 +64,25 @@ const SampleOrganizationsInline: React.FC<SampleOrganizationsInlineProps> = ({ o
       .then(data => {
         const allOrgs = (data.sampleTypes || []).flatMap((type: any) => type.organizations || []);
         setSamples(allOrgs);
+        setFilteredSamples(allOrgs);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  // Filter samples based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredSamples(samples);
+    } else {
+      const filtered = samples.filter(sample => 
+        sample.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sample.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getTypeName(sample.type).toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredSamples(filtered);
+    }
+  }, [samples, searchQuery]);
 
   const getTypeIcon = (type: string) => {
     const icons: { [key: string]: any } = {
@@ -67,71 +113,129 @@ const SampleOrganizationsInline: React.FC<SampleOrganizationsInlineProps> = ({ o
 
   if (loading) return <div className="mb-8 py-4 text-center text-gray-500">Loading samples...</div>;
   if (samples.length === 0) return null;
+  if (searchQuery.trim() && filteredSamples.length === 0) return null;
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">Sample Organizations</h3>
-          <p className="text-sm text-gray-600">Explore different organization types</p>
+    <div className="mb-8 relative">
+      <div className="bg-gradient-to-r from-gray-50/80 to-white/80 backdrop-blur-sm border border-gray-200/40 rounded-2xl p-6 shadow-lg shadow-gray-100/50">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-1">Sample Sites</h3>
+            <p className="text-sm text-gray-500 font-medium">Explore different organization types</p>
+          </div>
+          <div className="flex space-x-2">
+            <button onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })} className="p-3 rounded-xl border-2 border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm">
+              <ChevronLeftIcon className="w-5 h-5 text-gray-600 hover:text-sky-600" />
+            </button>
+            <button onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })} className="p-3 rounded-xl border-2 border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm">
+              <ChevronRightIcon className="w-5 h-5 text-gray-600 hover:text-sky-600" />
+            </button>
+          </div>
         </div>
-        <div className="flex space-x-1">
-          <button onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50">
-            <ChevronLeftIcon className="w-4 h-4 text-gray-600" />
-          </button>
-          <button onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50">
-            <ChevronRightIcon className="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-      </div>
-      <div ref={scrollRef} className="flex space-x-4 overflow-x-auto pb-2 scrollbar-none">
-        {samples.map((org: any) => {
+        
+        <div ref={scrollRef} className="flex space-x-6 overflow-x-auto py-4 scrollbar-thin scrollbar-thumb-sky-300 scrollbar-track-gray-100 hover:scrollbar-thumb-sky-400 scroll-smooth mt-4">
+        {filteredSamples.map((org: any) => {
           const TypeIcon = getTypeIcon(org.type);
           const typeColor = getTypeColor(org.type);
           return (
-            <div key={org.id} className="flex-shrink-0 w-48 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 overflow-hidden">
-              <div className={`bg-gradient-to-br ${typeColor} p-4 relative`}>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                    <TypeIcon className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm truncate">{getTypeName(org.type)}</p>
+            <div key={org.id} className="relative flex-shrink-0 w-48 h-[180px] bg-white border border-gray-100 rounded-2xl hover:border-gray-200 hover:shadow-2xl hover:shadow-sky-100/50 transition-all duration-500 overflow-hidden cursor-pointer group hover:scale-[1.02] hover:-translate-y-1">
+              {/* Enhanced Background Overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br from-white/95 via-white/90 to-sky-50/80 backdrop-blur-sm transition-all duration-300 rounded-2xl z-10 ${
+                exploreLoading === org.id ? 'opacity-100 scale-100' : 'opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100'
+              }`}></div>
+              {/* Subtle shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out z-20 pointer-events-none"></div>
+              
+              {/* Header Section */}
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 relative border-b border-gray-200">
+                <div className="flex justify-center">
+                  <div className="w-8 h-8 bg-white border border-gray-200 rounded-lg flex items-center justify-center shadow-sm">
+                    <TypeIcon className="w-4 h-4 text-gray-600" />
                   </div>
                 </div>
-                {org.base_url && <div className="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full"></div>}
               </div>
-              <div className="p-4">
-                <p className="text-sm font-medium text-gray-900 mb-1 truncate">{org.name}</p>
-                <p className="text-xs text-gray-500 mb-3">Sample organization</p>
-                <div className="space-y-2">
+              
+              {/* Body Section */}
+              <div className="p-4 flex-grow flex flex-col justify-center items-center text-center">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-3 truncate">{getTypeName(org.type)}</p>
+                  <p className="text-xs font-normal text-gray-500 truncate">{org.name}</p>
+                </div>
+              </div>
+
+              {/* Centered Hover Action Buttons */}
+              <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 z-20 ${
+                exploreLoading === org.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}>
+                <div className="flex flex-col gap-3 px-6">
                   <button 
-                    onClick={(e) => { e.stopPropagation(); onExplore(org); }}
-                    className="w-full flex items-center justify-center space-x-1 text-xs text-gray-600 hover:text-gray-800 py-1.5 px-2 rounded border border-gray-200 hover:border-gray-300 transition-colors"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      onPreview(org);
+                    }}
+                    disabled={exploreLoading === org.id || cloneLoading === org.id}
+                    className="cursor-pointer inline-flex items-center justify-center font-medium rounded-lg px-4 py-2 text-sm transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm bg-sky-50 border border-sky-200 text-sky-700 hover:border-sky-300 hover:text-sky-800 hover:bg-sky-100 focus:ring-sky-500 min-w-[120px]"
                   >
-                    <EyeIcon className="w-3 h-3" />
-                    <span>Explore</span>
+                    <EyeIcon className="w-4 h-4 mr-2" />
+                    Preview
                   </button>
+                  
                   <button 
-                    onClick={(e) => { e.stopPropagation(); onClone(org); }}
-                    className="w-full flex items-center justify-center text-xs text-white bg-sky-600 hover:bg-sky-700 py-1.5 px-2 rounded transition-colors"
+                    onClick={async (e) => { 
+                      e.stopPropagation(); 
+                      setExploreLoading(org.id);
+                      try {
+                        await onExplore(org);
+                      } finally {
+                        setExploreLoading(null);
+                      }
+                    }}
+                    disabled={exploreLoading === org.id || cloneLoading === org.id}
+                    className="cursor-pointer inline-flex items-center justify-center font-medium rounded-lg px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-sm transition-all duration-300 group ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 focus:ring-gray-500 min-w-[120px]"
                   >
-                    <span>Clone Site</span>
+                    {exploreLoading === org.id ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin mr-2"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <EyeIcon className="w-4 h-4 mr-2" />
+                        Explore
+                      </>
+                    )}
                   </button>
-                  {org.base_url && (
-                    <div className="text-center">
-                      <div className="inline-flex items-center space-x-1 text-xs text-green-600 font-medium">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span>Live</span>
-                      </div>
-                    </div>
-                  )}
+                  
+                  <button 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setSelectedSampleForClone(org);
+                      setShowCloneModal(true);
+                    }}
+                    disabled={exploreLoading === org.id}
+                    className="cursor-pointer inline-flex items-center justify-center font-medium rounded-lg px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-sm transition-all duration-300 group ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 focus:ring-gray-500 min-w-[120px]"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Clone
+                  </button>
                 </div>
               </div>
             </div>
           );
         })}
+        </div>
       </div>
+      
+      {/* Clone Modal */}
+      <CloneModal
+        isOpen={showCloneModal}
+        onClose={handleCloseCloneModal}
+        onConfirm={handleConfirmClone}
+        sourceOrganizationName={selectedSampleForClone?.name || ''}
+        isLoading={cloneLoading === selectedSampleForClone?.id}
+      />
     </div>
   );
 };
@@ -156,10 +260,23 @@ export default function SiteManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeSort, setActiveSort] = useState('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [isSorting, setIsSorting] = useState(false);
   const [displayLimit, setDisplayLimit] = useState(6);
+  const [focusedOptionIndex, setFocusedOptionIndex] = useState(-1);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const sortButtonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [lastAccessTimes] = useState<Record<string, number>>({});
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadingOrganizationId, setLoadingOrganizationId] = useState<string | null>(null);
   const [mostRecentOrganizationId, setMostRecentOrganizationId] = useState<string | null>(null);
+  
+  // Preview Modal State
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewOrganization, setPreviewOrganization] = useState<Organization | null>(null);
+  const [isPreviewingSample, setIsPreviewingSample] = useState(false);
 
   useEffect(() => {
     console.log('Session state:', session);
@@ -198,23 +315,44 @@ export default function SiteManagement() {
     // Update the most recent organization ID for highlighting
     setMostRecentOrganizationId(mostRecentOrg?.id || null);
 
-    // Apply sorting to non-platform organizations
+    // Apply sorting to non-platform organizations with direction support
     const platformOrgs = filtered.filter(org => org.type === 'platform' || org.type === 'general');
     const otherOrgs = filtered.filter(org => org.type !== 'platform' && org.type !== 'general');
     
     otherOrgs.sort((a, b) => {
+      let comparison = 0;
+      
       switch (activeSort) {
         case 'name':
-          return a.name.localeCompare(b.name);
+          comparison = a.name.localeCompare(b.name);
+          break;
         case 'type':
-          return a.type.localeCompare(b.type);
+          comparison = a.type.localeCompare(b.type);
+          break;
         case 'created':
-          return (new Date(b.created_at || '').getTime() || 0) - (new Date(a.created_at || '').getTime() || 0);
+          comparison = (new Date(b.created_at || '').getTime() || 0) - (new Date(a.created_at || '').getTime() || 0);
+          break;
         case 'updated':
-          return (new Date(b.created_at || '').getTime() || 0) - (new Date(a.created_at || '').getTime() || 0);
+          comparison = (new Date(b.created_at || '').getTime() || 0) - (new Date(a.created_at || '').getTime() || 0);
+          break;
+        case 'status':
+          const getStatusPriority = (org: Organization) => {
+            if (org.base_url) return 0; // Live
+            if (org.base_url_local) return 1; // Dev
+            return 2; // Draft
+          };
+          comparison = getStatusPriority(a) - getStatusPriority(b);
+          break;
+        case 'accessed':
+          const aAccess = lastAccessTimes[a.id] || 0;
+          const bAccess = lastAccessTimes[b.id] || 0;
+          comparison = bAccess - aAccess;
+          break;
         default:
-          return 0;
+          comparison = 0;
       }
+      
+      return sortDirection === 'desc' ? -comparison : comparison;
     });
 
     // Custom sorting: Platform first, then most recent org, then the rest
@@ -240,7 +378,7 @@ export default function SiteManagement() {
     }
     
     setFilteredOrganizations(filtered);
-  }, [organizations, searchQuery, activeFilter, activeSort, displayLimit]);
+  }, [organizations, searchQuery, activeFilter, activeSort, sortDirection, displayLimit]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -250,8 +388,72 @@ export default function SiteManagement() {
     setActiveFilter(filter);
   };
 
+  // Memoized sort options with counts and enhanced data
+  const sortOptions = useMemo(() => {
+    const statusCount = {
+      live: organizations.filter(org => org.base_url).length,
+      dev: organizations.filter(org => org.base_url_local && !org.base_url).length,
+      draft: organizations.filter(org => !org.base_url && !org.base_url_local).length
+    };
+    
+    return [
+      { value: 'name', label: 'Name', description: `Alphabetical order (${organizations.length} sites)`, icon: '🔤' },
+      { value: 'type', label: 'Type', description: 'Group by organization type', icon: '🏷️' },
+      { value: 'created', label: 'Created Date', description: 'Newest first', icon: '📅' },
+      { value: 'updated', label: 'Last Updated', description: 'Recently modified', icon: '🔄' },
+      { value: 'status', label: 'Status', description: `Live→Dev→Draft (${statusCount.live}→${statusCount.dev}→${statusCount.draft})`, icon: '🚦' },
+      { value: 'accessed', label: 'Recently Accessed', description: 'Most recently viewed', icon: '👁️' }
+    ];
+  }, [organizations]);
+
   const handleSortChange = (sort: string) => {
-    setActiveSort(sort);
+    setIsSorting(true);
+    
+    // Toggle direction if same sort is selected
+    if (sort === activeSort) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setActiveSort(sort);
+      setSortDirection('asc');
+    }
+    
+    // Simulate loading for smooth UX
+    setTimeout(() => {
+      setIsSorting(false);
+      // Smooth scroll to top after sort
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 150);
+  };
+
+  const toggleSortDropdown = () => {
+    if (!showSortDropdown && sortButtonRef.current) {
+      const rect = sortButtonRef.current.getBoundingClientRect();
+      const dropdownWidth = 280; // Slightly wider for mobile
+      const dropdownHeight = 320; // Approximate height
+      
+      let left = rect.left;
+      let top = rect.top - 8;
+      
+      // Mobile positioning adjustments
+      if (window.innerWidth < 768) {
+        // Ensure dropdown doesn't go off right edge
+        if (left + dropdownWidth > window.innerWidth - 16) {
+          left = window.innerWidth - dropdownWidth - 16;
+        }
+        // Ensure dropdown doesn't go off left edge
+        if (left < 16) {
+          left = 16;
+        }
+        // If not enough space above, position below
+        if (top - dropdownHeight < 16) {
+          top = rect.bottom + 8;
+        }
+      }
+      
+      setDropdownPosition({ top, left });
+      setFocusedOptionIndex(-1);
+    }
+    setShowSortDropdown(!showSortDropdown);
   };
 
   const handleDeployOrganization = (organization: Organization) => {
@@ -391,6 +593,55 @@ export default function SiteManagement() {
       if (isDeploymentModalOpen) setIsDeploymentModalOpen(false);
     }
   });
+
+  // Close sort dropdown when clicking outside and handle keyboard navigation
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setShowSortDropdown(false);
+        setFocusedOptionIndex(-1);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!showSortDropdown) return;
+      
+      switch (event.key) {
+        case 'Escape':
+          setShowSortDropdown(false);
+          setFocusedOptionIndex(-1);
+          sortButtonRef.current?.focus();
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          setFocusedOptionIndex(prev => 
+            prev < sortOptions.length - 1 ? prev + 1 : 0
+          );
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          setFocusedOptionIndex(prev => 
+            prev > 0 ? prev - 1 : sortOptions.length - 1
+          );
+          break;
+        case 'Enter':
+        case ' ':
+          event.preventDefault();
+          if (focusedOptionIndex >= 0) {
+            handleSortChange(sortOptions[focusedOptionIndex].value);
+            setShowSortDropdown(false);
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showSortDropdown, focusedOptionIndex, sortOptions]);
 
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
@@ -616,8 +867,13 @@ export default function SiteManagement() {
       // Add other required Organization fields with defaults
       settings: sampleOrg.settings || {}
     };
-    setIsReadOnlyMode(true); // Set read-only mode
+    setIsReadOnlyMode(true); // Set read-only mode for sample exploration
     await handleEditOrganization(orgForEdit);
+  };
+
+  const handleEditRegularOrganization = async (organization: Organization) => {
+    setIsReadOnlyMode(false); // Ensure regular organizations are editable
+    await handleEditOrganization(organization);
   };
 
   const handleCloneSample = async (sampleOrg: any) => {
@@ -638,15 +894,53 @@ export default function SiteManagement() {
     }
   };
 
+  // Preview Modal Handlers
+  const handlePreviewOrganization = (organization: Organization) => {
+    setPreviewOrganization(organization);
+    setIsPreviewingSample(false);
+    setIsPreviewModalOpen(true);
+  };
+
+  const handlePreviewSample = (sampleOrg: any) => {
+    // Convert sample to Organization format for preview
+    const orgForPreview: Organization = {
+      id: sampleOrg.id,
+      name: sampleOrg.name,
+      type: sampleOrg.type,
+      base_url: sampleOrg.base_url,
+      base_url_local: sampleOrg.base_url_local || '',
+      created_at: sampleOrg.created_at,
+      created_by_email: sampleOrg.created_by_email || '',
+      settings: sampleOrg.settings || {}
+    };
+    setPreviewOrganization(orgForPreview);
+    setIsPreviewingSample(true);
+    setIsPreviewModalOpen(true);
+  };
+
+  const handleClosePreviewModal = () => {
+    setIsPreviewModalOpen(false);
+    setPreviewOrganization(null);
+    setIsPreviewingSample(false);
+  };
+
+  const handleOpenFullFromPreview = () => {
+    if (previewOrganization) {
+      handleClosePreviewModal();
+      if (isPreviewingSample) {
+        handleExploreSample(previewOrganization);
+      } else {
+        handleEditRegularOrganization(previewOrganization);
+      }
+    }
+  };
+
   const handleEditOrganization = async (organization: Organization) => {
     try {
       setError(null);
       setLoadingOrganizationId(organization.id);
       setIsEditing(true);
-      // Ensure read-only mode is reset for regular organizations (unless explicitly set)
-      if (!isReadOnlyMode) {
-        setIsReadOnlyMode(false);
-      }
+      // Note: isReadOnlyMode is managed by the caller (handleExploreSample sets it to true)
       
       if (!session?.access_token) {
         throw new Error('No access token available');
@@ -1441,15 +1735,19 @@ export default function SiteManagement() {
   }
 
   return (
-    <div className="min-h-screen font-light">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen font-light bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
+      <div className="max-w-7xl mx-auto relative">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-sky-100 to-indigo-100 rounded-full blur-3xl opacity-30 -z-10"></div>
+        <div className="absolute top-60 left-0 w-96 h-96 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full blur-3xl opacity-20 -z-10"></div>
 
 
-        {/* Header */}
-        <Header 
-          ref={headerRef}
-          canCreateMore={canCreateMore}
-          onCreateNew={handleCreateNew}
+        {/* Header with Glassmorphism Background */}
+        <div className="bg-white/80 backdrop-blur-md border border-white/20 rounded-xl shadow-md shadow-sky-100/30 mb-4 mx-4 sm:mx-6 lg:mx-8 py-1">
+          <Header
+            ref={headerRef}
+            canCreateMore={canCreateMore}
+            onCreateNew={handleCreateNew}
           onTestAuth={testAuth}
           onSearch={handleSearch}
           onFilterChange={handleFilterChange}
@@ -1458,34 +1756,145 @@ export default function SiteManagement() {
           organizations={organizations}
           activeFilter={activeFilter}
           activeSort={activeSort}
-        />
-
+          />
+        </div>
+        
         {/* Error Display */}
         <ErrorDisplay error={error} />
 
         {/* Main Content Area */}
-        <div className="px-4 sm:px-6 lg:px-8 pt-80 sm:pt-48 pb-6">
+        <div className="px-4 sm:px-6 lg:px-8 pb-12 pt-4 relative">
+          {/* Subtle pattern overlay */}
+          <div className="absolute inset-0 opacity-5 pointer-events-none" style={{backgroundImage: 'radial-gradient(circle at 20px 20px, #0ea5e9 1px, transparent 0)', backgroundSize: '40px 40px'}}></div>
           {/* Sample Organizations Horizontal Scroll */}
           <SampleOrganizationsInline 
             onExplore={handleExploreSample}
             onClone={handleCloneSample}
+            onPreview={handlePreviewSample}
+            searchQuery={searchQuery}
           />
           
-          {/* Organizations Grid */}
-          <OrganizationsGrid
-            organizations={filteredOrganizations}
-            canCreateMore={canCreateMore}
-            onCreateNew={handleCreateNew}
-            onEditOrganization={handleEditOrganization}
-            onDeployOrganization={handleDeployOrganization}
-            onCloneOrganization={handleCloneOrganization}
-            onDeleteOrganization={handleDeleteOrganization}
-            onLoadMore={handleLoadMore}
-            hasMore={hasMoreOrganizations}
-            isLoadingMore={isLoadingMore}
-            loadingOrganizationId={loadingOrganizationId}
-            mostRecentOrganizationId={mostRecentOrganizationId}
-          />
+          {/* Organizations Grid with Smooth Animations */}
+          <div className={`transition-all duration-300 ${isSorting ? 'opacity-50 scale-[0.98]' : 'opacity-100 scale-100'}`}>
+            <OrganizationsGrid
+              organizations={filteredOrganizations}
+              canCreateMore={canCreateMore}
+              onCreateNew={handleCreateNew}
+              onEditOrganization={handleEditRegularOrganization}
+              onPreviewOrganization={handlePreviewOrganization}
+              onDeployOrganization={handleDeployOrganization}
+              onCloneOrganization={handleCloneOrganization}
+              onDeleteOrganization={handleDeleteOrganization}
+              onLoadMore={handleLoadMore}
+              hasMore={hasMoreOrganizations}
+              isLoadingMore={isLoadingMore}
+              loadingOrganizationId={loadingOrganizationId}
+              mostRecentOrganizationId={mostRecentOrganizationId}
+            />
+          </div>
+          
+          {/* Organization Categories and Controls */}
+          <div className="mt-6 mb-8 relative">
+            {/* Section Divider */}
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-sky-400 to-indigo-400 rounded-full opacity-60"></div>
+            
+            {/* Combined Sort Badge and Filter Tabs with Create Controls */}
+            <div className="mb-6 pt-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                {/* Combined Sort Badge and Filter Tabs in Single Scroll Row */}
+                <div className="flex-1 relative">
+                  {/* Scroll fade indicators */}
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 to-transparent pointer-events-none z-10"></div>
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none z-10"></div>
+                  
+                  {/* Sort Badge - Outside scroll container to prevent clipping */}
+                  <div ref={sortDropdownRef}>
+                  </div>
+                  
+                  <div className="overflow-x-auto overflow-y-visible scrollbar-thin scrollbar-thumb-sky-300 scrollbar-track-gray-100 hover:scrollbar-thumb-sky-400 pb-3 scroll-smooth">
+                    <div className="flex gap-3 min-w-max px-2">
+                      {/* Sort Badge - Same size as other buttons */}
+                      <button
+                        ref={sortButtonRef}
+                        onClick={toggleSortDropdown}
+                        disabled={isSorting}
+                        className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+                          isSorting 
+                            ? 'bg-gradient-to-r from-purple-400 to-pink-400 text-white border-2 border-purple-200 cursor-wait' 
+                            : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-2 border-purple-300 shadow-lg shadow-purple-200/50 hover:from-purple-600 hover:to-pink-600'
+                        }`}
+                      >
+                        {isSorting ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                          </svg>
+                        )}
+                        <span>
+                          {isSorting ? 'Sorting...' : `Sort by ${sortOptions.find(opt => opt.value === activeSort)?.label || activeSort}`}
+                          {!isSorting && sortDirection === 'desc' ? ' ↓' : !isSorting ? ' ↑' : ''}
+                        </span>
+                        {!isSorting && (
+                          <svg className={`w-4 h-4 transition-transform duration-200 ${showSortDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        )}
+                      </button>
+                      
+                      {/* Filter Badge Tabs */}
+                      {[
+                        { label: 'All Sites', value: 'all', count: organizations.length },
+                        { label: 'Platform', value: 'platform', count: organizations.filter(org => org.type === 'platform').length },
+                        { label: 'Immigration', value: 'immigration', count: organizations.filter(org => org.type === 'immigration').length },
+                        { label: 'Education', value: 'education', count: organizations.filter(org => org.type === 'education').length },
+                        { label: 'Technology', value: 'technology', count: organizations.filter(org => org.type === 'technology').length }
+                      ].filter(option => option.count > 0 || option.value === 'all').map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => handleFilterChange(option.value)}
+                          className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+                            activeFilter === option.value
+                              ? 'bg-gradient-to-r from-sky-500 to-indigo-500 text-white border-2 border-sky-300 shadow-lg shadow-sky-200/50'
+                              : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-sky-300 hover:shadow-lg hover:shadow-sky-100/30 backdrop-blur-sm'
+                          }`}
+                        >
+                          {option.label}
+                          {option.count > 0 && (
+                            <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs ${
+                              activeFilter === option.value
+                                ? 'bg-sky-200 text-sky-800'
+                                : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {option.count}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Create Controls - Enhanced Mobile/Desktop Layout */}
+                <div className="flex justify-end lg:flex-shrink-0">
+              {/* Enhanced Create Site Button */}
+              {canCreateMore && (
+                <Button
+                  variant="primary"
+                  onClick={handleCreateNew}
+                  className="shadow-xl hover:shadow-2xl hover:shadow-sky-200/50 w-full sm:w-auto transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Site
+                </Button>
+              )}
+                </div>
+              </div>
+            </div>
           
           {/* Platform Stats Widget - Now below organization cards */}
           <PlatformStatsWidget 
@@ -1494,6 +1903,7 @@ export default function SiteManagement() {
             session={session}
           />
         </div>
+      </div>
 
                 {/* Debug Panel - Remove in production */}
         {process.env.NODE_ENV === 'development' && profile && (
@@ -1550,6 +1960,75 @@ export default function SiteManagement() {
           session={session}
           readOnly={isReadOnlyMode}
         />
+
+        {/* Preview Modal */}
+        <PreviewModal
+          isOpen={isPreviewModalOpen}
+          organization={previewOrganization}
+          onClose={handleClosePreviewModal}
+          onOpenFull={handleOpenFullFromPreview}
+          isSample={isPreviewingSample}
+        />
+
+        {/* Sort Dropdown - Enhanced with Keyboard Navigation */}
+        {showSortDropdown && (
+          <div 
+            ref={sortDropdownRef}
+            className="fixed z-[9999] w-72 sm:w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden backdrop-blur-xl" 
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              transform: 'translateY(-100%)'
+            }}
+          >
+            <div className="p-2">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">Sort Options</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Use ↑↓ keys to navigate, Enter to select, Esc to close</p>
+              </div>
+              <div className="py-2 space-y-1 max-h-80 overflow-y-auto">
+                {sortOptions.map((option, index) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      handleSortChange(option.value);
+                      setShowSortDropdown(false);
+                    }}
+                    onMouseEnter={() => setFocusedOptionIndex(index)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                      activeSort === option.value
+                        ? 'bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-2 border-purple-200'
+                        : focusedOptionIndex === index
+                        ? 'bg-gradient-to-r from-gray-50 to-blue-50 text-gray-800 border-2 border-blue-200'
+                        : 'hover:bg-gray-50 text-gray-700 border-2 border-transparent hover:border-gray-200'
+                    }`}
+                  >
+                    <span className="text-lg flex-shrink-0">{option.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm flex items-center gap-2">
+                        {option.label}
+                        {activeSort === option.value && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">{option.description}</div>
+                    </div>
+                    {activeSort === option.value && (
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse flex-shrink-0"></div>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
+                <p className="text-xs text-gray-500">
+                  💡 Tip: Click the same sort option again to reverse the order
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

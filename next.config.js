@@ -27,6 +27,16 @@ const nextConfig = {
         hostname: 'rgbmdfaoowqbgshjuwwm.storage.supabase.co',
         pathname: '/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+        pathname: '/**',
+      },
     ],
   },
   webpack: (config) => {

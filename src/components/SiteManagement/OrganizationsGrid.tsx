@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { GlobeAltIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { GlobeAltIcon, PlusIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Organization } from './types';
 import OrganizationCard from './OrganizationCard';
 
@@ -8,6 +8,7 @@ interface OrganizationsGridProps {
   canCreateMore: boolean;
   onCreateNew: () => void;
   onEditOrganization: (org: Organization) => void;
+  onPreviewOrganization?: (org: Organization) => void;
   onDeployOrganization?: (org: Organization) => void;
   onCloneOrganization?: (org: Organization, customName: string) => void;
   onDeleteOrganization?: (org: Organization) => void;
@@ -23,6 +24,7 @@ export default function OrganizationsGrid({
   canCreateMore, 
   onCreateNew, 
   onEditOrganization,
+  onPreviewOrganization,
   onDeployOrganization,
   onCloneOrganization,
   onDeleteOrganization,
@@ -34,21 +36,25 @@ export default function OrganizationsGrid({
 }: OrganizationsGridProps) {
   if (organizations.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center text-center py-20 px-4">
-        <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center mb-6 border border-gray-200">
-          <GlobeAltIcon className="w-8 h-8 text-gray-400" />
+      <div className="flex flex-col items-center justify-center text-center py-24 px-4 relative">
+        {/* Decorative background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-50/50 via-white to-indigo-50/50 rounded-3xl"></div>
+        <div className="relative z-10">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-100 to-indigo-100 flex items-center justify-center mb-8 border-2 border-sky-200 shadow-lg">
+            <GlobeAltIcon className="w-10 h-10 text-sky-600" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">No Sites Yet</h3>
+          <p className="text-gray-600 mb-10 max-w-md text-lg">Create your first organization site to get started with managing your digital presence.</p>
+          {canCreateMore && (
+            <button
+              onClick={onCreateNew}
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-sky-600 to-indigo-600 text-white rounded-2xl hover:from-sky-700 hover:to-indigo-700 font-semibold transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-sky-200/50 transform hover:scale-105"
+            >
+              <PlusIcon className="w-6 h-6 mr-3" />
+              Create Your First Site
+            </button>
+          )}
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-3">No Sites Yet</h3>
-        <p className="text-gray-600 mb-8 max-w-md">Create your first organization site to get started with managing your digital presence.</p>
-        {canCreateMore && (
-          <button
-            onClick={onCreateNew}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors duration-200 shadow-sm"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            Create Your First Site
-          </button>
-        )}
       </div>
     );
   }
@@ -64,16 +70,47 @@ export default function OrganizationsGrid({
   }
 
   return (
-    <div className="w-full mb-6">
+    <div className="w-full mb-4">
+      {/* Enhanced Header with Glassmorphism Background */}
+      <div className="bg-gradient-to-r from-gray-50/80 to-white/80 backdrop-blur-sm border border-gray-200/40 rounded-2xl p-6 shadow-lg shadow-gray-100/50 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">Active Sites</h3>
+            <p className="text-sm text-gray-500 font-medium">Deployed sites you manage</p>
+          </div>
+        <div className="flex space-x-2">
+          <button 
+            onClick={() => {
+              const container = document.querySelector('.organizations-scroll-container');
+              container?.scrollBy({ left: -200, behavior: 'smooth' });
+            }}
+            className="p-3 rounded-xl border-2 border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+          >
+            <ChevronLeftIcon className="w-5 h-5 text-gray-600 hover:text-sky-600" />
+          </button>
+          <button 
+            onClick={() => {
+              const container = document.querySelector('.organizations-scroll-container');
+              container?.scrollBy({ left: 200, behavior: 'smooth' });
+            }}
+            className="p-3 rounded-xl border-2 border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+          >
+            <ChevronRightIcon className="w-5 h-5 text-gray-600 hover:text-sky-600" />
+          </button>
+          </div>
+        </div>
+      </div>
+      
       {/* Horizontal Scrolling Container */}
       <div className="relative">
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-2">
+        <div className="organizations-scroll-container overflow-x-auto scrollbar-thin scrollbar-thumb-sky-300 scrollbar-track-gray-100 hover:scrollbar-thumb-sky-400 py-4 scroll-smooth">
           <div className="flex gap-4 lg:gap-5 min-w-max px-1">
             {organizations.map((org) => (
-              <div key={org.id} className="flex-shrink-0 w-80">
+              <div key={org.id} className="flex-shrink-0 w-48">
                 <OrganizationCard
                   organization={org}
                   onEdit={onEditOrganization}
+                  onPreview={onPreviewOrganization}
                   onDeploy={onDeployOrganization}
                   onClone={onCloneOrganization}
                   onDelete={onDeleteOrganization}
@@ -85,7 +122,7 @@ export default function OrganizationsGrid({
             
             {/* Load More Button in scrolling line */}
             {hasMore && onLoadMore && (
-              <div className="flex-shrink-0 w-80 flex items-center justify-center">
+              <div className="flex-shrink-0 w-48 flex items-center justify-center">
                 <button
                   onClick={onLoadMore}
                   disabled={isLoadingMore}

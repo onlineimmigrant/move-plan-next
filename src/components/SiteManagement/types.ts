@@ -175,7 +175,7 @@ export const organizationTypes = [
   { value: 'immigration', label: 'Immigration Services', icon: '🛂' },
   { value: 'solicitor', label: 'Legal Services', icon: '⚖️' },
   { value: 'finance', label: 'Financial Services', icon: '💰' },
-  { value: 'education', label: 'Education Services', icon: '🎓' },
+  { value: 'education', label: 'Education', icon: '🎓' },
   { value: 'job', label: 'Job Services', icon: '💼' },
   { value: 'beauty', label: 'Beauty Services', icon: '💄' },
   { value: 'doctor', label: 'Medical Services', icon: '🏥' },
@@ -192,7 +192,7 @@ export const organizationTypes = [
   { value: 'transportation', label: 'Transport & Logistics', icon: '🚚' },
   { value: 'technology', label: 'IT & Tech Services', icon: '🔧' },
   { value: 'general', label: 'General Organization', icon: '🏢' },
-  { value: 'platform', label: 'Business Platform Solutions', icon: '🏗️' },
+  { value: 'platform', label: 'Platform', icon: '🏗️' },
 ];
 // 
 // Note: 'platform' and 'general' types are filtered out from OrganizationTypeSelect dropdown

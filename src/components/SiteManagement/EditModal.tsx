@@ -40,6 +40,27 @@ export default function EditModal({
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [activeTab, setActiveTab] = useState<'settings' | 'deployment'>('settings');
+
+  // Force settings tab when in read-only mode
+  useEffect(() => {
+    if (readOnly && activeTab === 'deployment') {
+      setActiveTab('settings');
+    }
+  }, [readOnly, activeTab]);
+
+  // Force settings tab when in read-only mode
+  useEffect(() => {
+    if (readOnly && activeTab === 'deployment') {
+      setActiveTab('settings');
+    }
+  }, [readOnly, activeTab]);
+
+  // Force settings tab when in read-only mode
+  useEffect(() => {
+    if (readOnly && activeTab === 'deployment') {
+      setActiveTab('settings');
+    }
+  }, [readOnly, activeTab]);
   const [previewRefreshKey, setPreviewRefreshKey] = useState<number>(0);
   const [isLoadingDetailedData, setIsLoadingDetailedData] = useState(false);
   const [detailedOrganizationData, setDetailedOrganizationData] = useState<any>(null);
@@ -346,6 +367,26 @@ export default function EditModal({
       }}
     >
       <div className="bg-white/95 backdrop-blur-sm w-full h-full flex flex-col font-light" onClick={(e) => e.stopPropagation()}>
+        {/* Sample Exploration Banner */}
+        {readOnly && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200 px-6 py-3 flex items-center gap-3">
+            <div className="flex items-center gap-2 text-blue-700">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <strong>Sample Exploration Mode</strong>
+            </div>
+            <span className="text-blue-600 text-sm">
+              You're viewing a sample site configuration. All editing is disabled.
+            </span>
+            <div className="ml-auto">
+              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full border border-blue-200">
+                Read Only
+              </span>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <EditModalHeader
           organization={organization!}
@@ -383,8 +424,9 @@ export default function EditModal({
               Settings
             </button>
             <button
-              onClick={() => setActiveTab('deployment')}
-              className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''}`}
+              onClick={() => !readOnly && setActiveTab('deployment')}
+              className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''} ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={readOnly}
             >
               <RocketLaunchIcon className="w-4 h-4 mr-2" />
               Deployment
@@ -425,8 +467,9 @@ export default function EditModal({
               Settings
             </button>
             <button
-              onClick={() => setActiveTab('deployment')}
-              className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''}`}
+              onClick={() => !readOnly && setActiveTab('deployment')}
+              className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''} ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={readOnly}
             >
               <RocketLaunchIcon className="w-4 h-4 mr-2" />
               Deployment

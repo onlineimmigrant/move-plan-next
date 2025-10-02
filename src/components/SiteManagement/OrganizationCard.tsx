@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   ArrowTopRightOnSquareIcon, 
   GlobeAltIcon, 
   EllipsisVerticalIcon,
@@ -8,8 +8,23 @@ import {
   ArrowPathIcon,
   TrashIcon,
   RocketLaunchIcon,
-  LinkIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  // Organization type icons
+  UserGroupIcon,
+  ScaleIcon,
+  CurrencyDollarIcon,
+  AcademicCapIcon,
+  BriefcaseIcon,
+  SparklesIcon,
+  BuildingOffice2Icon,
+  WrenchScrewdriverIcon,
+  HomeIcon,
+  BuildingOfficeIcon,
+  ComputerDesktopIcon,
+  MegaphoneIcon,
+  TruckIcon,
+  BeakerIcon,
+  ShoppingCartIcon
 } from '@heroicons/react/24/outline';
 import { Organization, organizationTypes } from './types';
 import Button from '@/ui/Button';
@@ -18,6 +33,7 @@ import CloneModal from './CloneModal';
 interface OrganizationCardProps {
   organization: Organization;
   onEdit: (org: Organization) => void;
+  onPreview?: (org: Organization) => void;
   onDeploy?: (org: Organization) => void;
   onClone?: (org: Organization, customName: string) => void;
   onDelete?: (org: Organization) => void;
@@ -28,13 +44,13 @@ interface OrganizationCardProps {
 export default function OrganizationCard({ 
   organization, 
   onEdit, 
+  onPreview,
   onDeploy, 
   onClone, 
   onDelete,
   isLoading = false,
   isMostRecent = false
 }: OrganizationCardProps) {
-  const [showDropdown, setShowDropdown] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmationName, setDeleteConfirmationName] = useState('');
@@ -60,15 +76,34 @@ export default function OrganizationCard({
     return organizationTypes.find(t => t.value === type) || { label: type, icon: '🏢' };
   };
 
-  const copyToClipboard = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
-      console.log(`${type} copied to clipboard`);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
+  const getTypeIcon = (type: string) => {
+    const icons: { [key: string]: any } = {
+      immigration: UserGroupIcon,
+      solicitor: ScaleIcon,
+      finance: CurrencyDollarIcon,
+      education: AcademicCapIcon,
+      job: BriefcaseIcon,
+      beauty: SparklesIcon,
+      doctor: BuildingOffice2Icon,
+      services: WrenchScrewdriverIcon,
+      realestate: HomeIcon,
+      construction: BuildingOfficeIcon,
+      software: ComputerDesktopIcon,
+      marketing: MegaphoneIcon,
+      consulting: BriefcaseIcon,
+      automotive: TruckIcon,
+      hospitality: BuildingOffice2Icon,
+      retail: ShoppingCartIcon,
+      healthcare: BuildingOffice2Icon,
+      transportation: TruckIcon,
+      technology: BeakerIcon,
+      general: BuildingOfficeIcon,
+      platform: BuildingOfficeIcon
+    };
+    return icons[type] || BuildingOfficeIcon;
   };
+
+
 
   const handleCancelDelete = () => {
     if (isDeletionLoading) return; // Prevent canceling during deletion
@@ -98,7 +133,6 @@ export default function OrganizationCard({
     console.log('Clone button clicked, onClone:', !!onClone, 'isCloningLoading:', isCloningLoading);
     if (!onClone || isCloningLoading) return;
     
-    setShowDropdown(false);
     setShowCloneModal(true);
     console.log('Opening clone modal for:', organization.name);
   };
@@ -130,14 +164,21 @@ export default function OrganizationCard({
 
   return (
     <div 
-      className={`group relative rounded-xl border cursor-pointer transition-all duration-200 min-h-[280px] ${
+      className={`group relative rounded-2xl border-2 cursor-pointer transition-all duration-500 h-[180px] flex flex-col transform hover:scale-[1.02] hover:-translate-y-1 ${
         isMostRecent && !isPlatform
-          ? 'bg-white border-green-400 hover:border-green-500 hover:shadow-lg hover:shadow-green-100/50 ring-2 ring-green-200/50'
+          ? 'bg-gradient-to-br from-white to-green-50/30 border-green-300 hover:border-green-400 hover:shadow-2xl hover:shadow-green-200/50 ring-2 ring-green-200/50'
           : isPlatform 
-          ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200/60 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100/50' 
-          : 'bg-white border-gray-200/80 hover:border-gray-300 hover:shadow-lg hover:shadow-gray-100/50'
+          ? 'bg-gradient-to-br from-blue-50 via-white to-indigo-50/50 border-blue-200 hover:border-blue-300 hover:shadow-2xl hover:shadow-blue-200/50' 
+          : 'bg-gradient-to-br from-white via-gray-50/30 to-white border-gray-200 hover:border-sky-300 hover:shadow-2xl hover:shadow-sky-100/30'
       }`}
     >
+      {/* Subtle shine effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out rounded-2xl pointer-events-none"></div>
+      {/* Enhanced Background Overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br from-white/95 via-white/90 to-sky-50/70 backdrop-blur-md transition-all duration-300 rounded-2xl z-10 ${
+        isButtonLoading || isLoading ? 'opacity-100 scale-100' : 'opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100'
+      }`}></div>
+      
       {/* Cloning Overlay */}
       {isCloningLoading && (
         <div className="absolute inset-0 bg-white bg-opacity-90 rounded-xl flex items-center justify-center z-30">
@@ -148,171 +189,127 @@ export default function OrganizationCard({
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="p-8 h-full flex flex-col justify-between">
-        {/* Header with org info and actions */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl">{typeInfo.icon}</span>
-              <h3 className="text-lg font-semibold text-gray-900 truncate">
-                {organization.name}
-              </h3>
-              {isPlatform && (
-                <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-medium">
-                  Platform
-                </span>
-              )}
-              {isMostRecent && !isPlatform && (
-                <span className="inline-flex items-center px-2 py-1 rounded-md bg-green-100 text-green-700 text-xs font-medium animate-pulse">
-                  Recent
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-600 capitalize mb-3">
-              {typeInfo.label}
-            </p>
+      {/* Enhanced Header Section */}
+      <div className={`p-4 relative border-b-2 rounded-t-2xl ${
+        isPlatform 
+          ? 'bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50/30 border-blue-200/60' 
+          : 'bg-gradient-to-br from-gray-50 via-white to-sky-50/30 border-gray-200/80'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="w-10 h-10 bg-white border-2 border-gray-200 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 transform group-hover:scale-110">
+            {React.createElement(getTypeIcon(organization.type), { className: "w-4 h-4 text-gray-600" })}
           </div>
           
-          {/* Quick Actions Dropdown */}
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDropdown(!showDropdown);
-              }}
-              className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-            >
-              <EllipsisVerticalIcon className="w-5 h-5" />
-            </button>
-            
-            {showDropdown && (
-              <>
-                {/* Backdrop */}
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setShowDropdown(false)}
-                />
-                
-                {/* Dropdown Menu */}
-                <div className="absolute right-0 top-8 z-50 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 max-h-96 overflow-y-auto">
-                  {organization.base_url && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyToClipboard(organization.base_url!, 'Live URL');
-                        setShowDropdown(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                    >
-                      <LinkIcon className="w-4 h-4" />
-                      Copy Live URL
-                    </button>
-                  )}
-                  
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDropdown(false);
-                      // Add analytics functionality
-                      console.log('View Analytics for:', organization.name);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <ChartBarIcon className="w-4 h-4" />
-                    View Analytics
-                  </button>
-                  
-
-                  
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDropdown(false);
-                      // Add sync functionality
-                      console.log('Sync Changes for:', organization.name);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <ArrowPathIcon className="w-4 h-4" />
-                    Sync Changes
-                  </button>
-                  
-                  {onClone && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleClone();
-                      }}
-                      disabled={isCloningLoading}
-                      className={`w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors duration-200 ${
-                        isCloningLoading
-                          ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      {isCloningLoading ? (
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                      ) : (
-                        <DocumentDuplicateIcon className="w-4 h-4" />
-                      )}
-                      {isCloningLoading ? 'Cloning...' : 'Clone Site'}
-                    </button>
-                  )}
-                  
-               
-                  
-                  {onDelete && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowDropdown(false);
-                        setShowDeleteModal(true);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </>
+          <div className="flex items-center gap-1">
+            {organization.base_url && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 text-xs font-medium rounded-full border border-green-200">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                Live
+              </span>
+            )}
+            {organization.base_url_local && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 text-xs font-medium rounded-full border border-orange-200">
+                <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></div>
+                Dev
+              </span>
+            )}
+            {!organization.base_url && !organization.base_url_local && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 text-xs font-medium rounded-full border border-gray-200">
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                Draft
+              </span>
             )}
           </div>
         </div>
-
-        {/* Status Indicators */}
-        <div className="mb-4 flex items-center gap-2">
-          {organization.base_url && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-md">
-              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-              Live
-            </span>
-          )}
-          {organization.base_url_local && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-md">
-              <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
-              Development
-            </span>
-          )}
-          {!organization.base_url && !organization.base_url_local && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-md">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-              Draft
-            </span>
-          )}
+      </div>
+      
+      {/* Body Section */}
+      <div className="p-4 flex-grow flex flex-col justify-center items-center text-center">
+        <div>
+          <p className="text-sm font-semibold text-gray-900 mb-3 truncate">{typeInfo.label}</p>
+          <p className="text-xs font-normal text-gray-600 truncate">{organization.name}</p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex">
+        {/* Bottom content */}
+        <div>
+
+          {/* Platform and Recent badges - Hidden */}
+          <div className="flex items-center gap-1 justify-center flex-wrap">
+            {/* Badges removed as requested */}
+          </div>
+        </div>
+      </div>
+
+      {/* Centered Hover Action Buttons */}
+      <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 z-20 ${
+        isButtonLoading || isLoading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      }`}>
+        <div className="flex flex-col gap-3 px-6">
+          {onPreview && (
+            <Button
+              variant="light-outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview(organization);
+              }}
+              disabled={isButtonLoading || isLoading}
+              className="min-w-[120px] !bg-sky-50 !border-sky-200 !text-sky-700 hover:!bg-sky-100 hover:!border-sky-300"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Preview
+            </Button>
+          )}
+          
           <Button
-            variant="manage"
-            onClick={handleEdit}
+            variant="light-outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit();
+            }}
+            disabled={isButtonLoading || isLoading}
             loading={isButtonLoading || isLoading}
             loadingText="Loading..."
+            className="min-w-[120px]"
           >
-            Manage Site
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Update
           </Button>
+          
+          {onClone && (
+            <Button
+              variant="light-outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClone();
+              }}
+              disabled={isCloningLoading}
+              loading={isCloningLoading}
+              loadingText="Cloning..."
+              className="min-w-[120px]"
+            >
+              <DocumentDuplicateIcon className="w-4 h-4 mr-2" />
+              Clone
+            </Button>
+          )}
+          
+          {onDelete && (
+            <Button
+              variant="light-outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteModal(true);
+              }}
+              className="min-w-[120px] text-red-600 border-red-300 hover:border-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <TrashIcon className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
+          )}
         </div>
       </div>
 

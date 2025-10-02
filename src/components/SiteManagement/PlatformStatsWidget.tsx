@@ -118,53 +118,61 @@ export default function PlatformStatsWidget({ organizations, profile, session }:
   ];
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl p-4 sm:p-6 mb-6">
-      {/* Header - Mobile optimized */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+    <div className="relative bg-gradient-to-r from-gray-50/80 to-white/80 backdrop-blur-sm border border-gray-200/40 rounded-2xl p-6 shadow-lg shadow-gray-100/50 mb-8 transition-all duration-300">
+      
+      {/* Enhanced Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0 mb-6">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-gray-900">Platform Overview</h2>
-          <p className="text-sm text-gray-600 truncate">Managing {totalSites} organizations across your platform</p>
+          <h2 className="text-xl font-semibold text-gray-800 mb-1">Platform Overview</h2>
+          <p className="text-sm text-gray-500">Managing {totalSites} organizations across your platform</p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-medium">
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100/60 backdrop-blur-sm border border-gray-200/40 text-gray-700 text-sm font-medium shadow-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
             Platform Admin
           </span>
         </div>
       </div>
 
-      {/* Stats Grid - Better mobile layout */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+      {/* Enhanced Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white/70 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-white/50">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-              <div className={`p-1.5 sm:p-2 rounded-lg ${stat.bg} flex-shrink-0 self-start sm:self-auto`}>
-                <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${stat.color}`} />
+          <div key={index} className="group bg-white/30 backdrop-blur-sm rounded-xl p-4 sm:p-5 border border-gray-200/20 hover:bg-white/40 hover:border-gray-300/30 transition-all duration-300">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl ${stat.bg} flex-shrink-0 shadow-lg group-hover:shadow-xl transition-all duration-300`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
-              <div className="min-w-0">
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">{stat.label}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">{stat.value}</p>
+                <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Recent Activity - Mobile optimized */}
-      <div className="bg-white/70 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-white/50">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-gray-900 text-sm sm:text-base">Recent Activity</h3>
+      {/* Enhanced Recent Activity Section */}
+      <div className="bg-gradient-to-r from-gray-50/80 to-white/80 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-gray-200/40 shadow-lg shadow-gray-100/50">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Recent Activity</h3>
           {isLoadingActivities && (
-            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-gray-300 border-t-blue-600 animate-spin"></div>
+            <div className="w-5 h-5 rounded-full border-2 border-gray-300 border-t-blue-600 animate-spin"></div>
           )}
         </div>
         
         {activitiesError && (
-          <div className="text-xs sm:text-sm text-amber-700 mb-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
-            <div className="flex items-start gap-2">
-              <span className="flex-shrink-0">⚠️</span>
-              <div className="min-w-0">
-                <div className="font-medium">Using Sample Data</div>
-                <div className="text-xs text-amber-600 truncate">
+          <div className="text-sm text-amber-800 mb-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold mb-1">Using Sample Data</div>
+                <div className="text-xs text-amber-700">
                   Run database migration to see real activities
                 </div>
               </div>
@@ -172,33 +180,38 @@ export default function PlatformStatsWidget({ organizations, profile, session }:
           </div>
         )}
         
-        {/* Mobile-friendly scrollable container */}
+        {/* Enhanced Activity List */}
         <div className="relative">
-          <div className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            <div className="space-y-2 min-w-max pr-2 sm:pr-4">
+          <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-sky-300 scrollbar-track-gray-100 hover:scrollbar-thumb-sky-400">
+            <div className="space-y-3 min-w-max pr-4">
               {activities.length > 0 ? (
                 activities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm whitespace-nowrap">
-                    <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${getActivityColor(activity.action)}`}></div>
-                    <span className="font-medium text-gray-900 flex-shrink-0">
+                  <div key={activity.id} className="flex items-center gap-4 p-3 rounded-xl bg-white/30 backdrop-blur-sm hover:bg-white/40 border border-gray-200/20 hover:border-gray-300/30 transition-all duration-200">
+                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${getActivityColor(activity.action)} shadow-sm`}></div>
+                    <span className="font-medium text-gray-700 flex-shrink-0 text-sm">
                       {activity.details || `${activity.organization_name} ${getActivityText(activity.action)}`}
                     </span>
-                    <span className="text-gray-500 text-xs flex-shrink-0">
+                    <span className="text-gray-500 text-xs flex-shrink-0 font-normal">
                       {formatRelativeTime(activity.created_at)}
                     </span>
                   </div>
                 ))
               ) : (
-                <div className="text-xs sm:text-sm text-gray-500 text-center py-3">
-                  {isLoadingActivities ? 'Loading activities...' : 'No recent activity'}
+                <div className="text-center py-6">
+                  <div className="w-10 h-10 rounded-full bg-gray-100/60 backdrop-blur-sm flex items-center justify-center mx-auto mb-3">
+                    <ClockIcon className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <div className="text-sm text-gray-500 font-normal">
+                    {isLoadingActivities ? 'Loading activities...' : 'No recent activity'}
+                  </div>
                 </div>
               )}
             </div>
           </div>
           
-          {/* Scroll hint for mobile */}
+          {/* Enhanced scroll hint for mobile */}
           {activities.length > 0 && (
-            <div className="absolute right-0 top-0 bottom-0 w-3 sm:w-4 bg-gradient-to-l from-white/70 to-transparent pointer-events-none sm:hidden"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white/80 to-transparent pointer-events-none lg:hidden rounded-r-xl"></div>
           )}
         </div>
       </div>

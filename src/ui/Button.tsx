@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils'; // Utility for merging Tailwind classes
 
-type Variant = 'primary' | 'secondary' | 'start' | 'close' | 'link' | 'outline' | 'badge_primary' | 'badge_primary_circle' | 'manage'; // Added 'outline' and 'manage'
+type Variant = 'primary' | 'secondary' | 'start' | 'close' | 'link' | 'outline' | 'light-outline' | 'badge_primary' | 'badge_primary_circle' | 'manage'; // Added 'outline', 'light-outline' and 'manage'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -31,6 +31,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         'px-0 sm:px-0 text-sky-600 hover:text-sky-700 focus:ring-gray-500 hover:underline focus:outline-none focus:ring-2 focus:ring-sky-500',
       outline:
         'shadow-sm bg-transparent border border-gray-300 text-gray-700 hover:border-sky-600 hover:text-sky-600 focus:ring-sky-500',
+      'light-outline':
+        'shadow-sm bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
       manage:
         'relative w-full py-3.5 px-4 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 disabled:from-sky-400 disabled:to-sky-500 text-white font-medium rounded-xl shadow-lg hover:shadow-lg hover:shadow-blue-200/50 active:scale-[0.97] disabled:transform-none disabled:shadow-none transition-all duration-300',
     };

@@ -80,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({
       console.log('Menu items in Header:', JSON.stringify(menuItems, null, 2));
       console.log('Fixed banners height in Header:', fixedBannersHeight);
       
-      // Debug: Check submenu descriptions
+      // Debug: Check submenu descriptions and images
       menuItems?.forEach((item) => {
         if (item.website_submenuitem?.length) {
           console.log(`Menu "${item.display_name}" submenus:`, 
@@ -88,7 +88,11 @@ const Header: React.FC<HeaderProps> = ({
               id: sub.id,
               name: sub.name,
               description: sub.description,
-              description_translation: sub.description_translation
+              description_translation: sub.description_translation,
+              image: sub.image,
+              hasDescription: !!sub.description,
+              hasDescriptionTranslation: !!sub.description_translation,
+              hasImage: !!sub.image
             }))
           );
         }
@@ -248,11 +252,26 @@ const Header: React.FC<HeaderProps> = ({
                               ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
                               : subItem.name;
 
-                            const translatedDescription = currentLocale && subItem.description_translation && subItem.description
-                              ? getTranslatedMenuContent(subItem.description, subItem.description_translation, currentLocale)
-                              : subItem.description;
+                            // Properly handle description with translation logic
+                            const translatedDescription = subItem.description
+                              ? (currentLocale 
+                                  ? getTranslatedMenuContent(subItem.description, subItem.description_translation, currentLocale)
+                                  : subItem.description)
+                              : null;
 
                             const displayDescription = translatedDescription || `Learn more about ${translatedSubItemName.toLowerCase()} and discover how it can help you.`;
+
+                            // Debug: Track description logic
+                            if (process.env.NODE_ENV === 'development') {
+                              console.log(`Submenu "${subItem.name}" description logic:`, {
+                                originalDescription: subItem.description,
+                                hasTranslation: !!subItem.description_translation,
+                                currentLocale,
+                                translatedDescription,
+                                displayDescription,
+                                usingFallback: !translatedDescription
+                              });
+                            }
 
                             return (
                               <LocalizedLink
@@ -423,11 +442,26 @@ const Header: React.FC<HeaderProps> = ({
                               ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
                               : subItem.name;
 
-                            const translatedDescription = currentLocale && subItem.description_translation && subItem.description
-                              ? getTranslatedMenuContent(subItem.description, subItem.description_translation, currentLocale)
-                              : subItem.description;
+                            // Properly handle description with translation logic
+                            const translatedDescription = subItem.description
+                              ? (currentLocale 
+                                  ? getTranslatedMenuContent(subItem.description, subItem.description_translation, currentLocale)
+                                  : subItem.description)
+                              : null;
 
                             const displayDescription = translatedDescription || `Learn more about ${translatedSubItemName.toLowerCase()}`;
+
+                            // Debug: Track description logic (mobile)
+                            if (process.env.NODE_ENV === 'development') {
+                              console.log(`Mobile submenu "${subItem.name}" description logic:`, {
+                                originalDescription: subItem.description,
+                                hasTranslation: !!subItem.description_translation,
+                                currentLocale,
+                                translatedDescription,
+                                displayDescription,
+                                usingFallback: !translatedDescription
+                              });
+                            }
 
                             return (
                               <LocalizedLink

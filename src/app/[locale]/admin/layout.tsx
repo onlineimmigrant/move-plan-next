@@ -41,6 +41,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     custom: false,
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [isTablesHovered, setIsTablesHovered] = useState(false);
 
   // Get filtered sidebar links based on user permissions
   const filteredSidebarLinks = getFilteredSidebarLinks(sidebarLinks, isInGeneralOrganization);
@@ -80,7 +81,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const shouldShowTablesChildMenu =
     (isDesktop &&
       !excludedPaths.includes(pathname) &&
-      !pathname.startsWith('/admin/reports')) ||
+      !pathname.startsWith('/admin/reports') &&
+      isTablesHovered) ||
     (!isDesktop && activeSection === 'tables');
 
   if (!isAdmin) {
@@ -92,22 +94,38 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <BasketProvider>
         <ModalProvider>
           <div className="min-h-screen flex bg-gray-50">
-            <ParentMenu
-              isCollapsed={isParentMenuCollapsed}
-              setIsCollapsed={setIsParentMenuCollapsed}
-              setActiveSection={setActiveSection}
-            />
-            {shouldShowTablesChildMenu && (
-              <TablesChildMenu
-                isSidebarOpen={isSidebarOpen}
-                setIsSidebarOpen={setIsSidebarOpen}
-                sidebarLinks={filteredSidebarLinks}
-                openSections={openTablesSections}
-                setOpenSections={setOpenTablesSections}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
+            <div 
+              className="relative flex"
+              onMouseLeave={(e) => {
+                // Check if mouse is leaving the entire hover area
+                const rect = e.currentTarget.getBoundingClientRect();
+                const { clientX, clientY } = e;
+                
+                // If mouse is outside the hover container, close the tables menu
+                if (clientX < rect.left || clientX > rect.right || 
+                    clientY < rect.top || clientY > rect.bottom) {
+                  setTimeout(() => setIsTablesHovered(false), 100);
+                }
+              }}
+            >
+              <ParentMenu
+                isCollapsed={isParentMenuCollapsed}
+                setIsCollapsed={setIsParentMenuCollapsed}
+                setActiveSection={setActiveSection}
+                setIsTablesHovered={setIsTablesHovered}
               />
-            )}
+              {shouldShowTablesChildMenu && (
+                <TablesChildMenu
+                  isSidebarOpen={isSidebarOpen}
+                  setIsSidebarOpen={setIsSidebarOpen}
+                  sidebarLinks={filteredSidebarLinks}
+                  openSections={openTablesSections}
+                  setOpenSections={setOpenTablesSections}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                />
+              )}
+            </div>
             {activeSection === 'reports' && (
               <ReportsChildMenu
                 isSidebarOpen={isSidebarOpen}

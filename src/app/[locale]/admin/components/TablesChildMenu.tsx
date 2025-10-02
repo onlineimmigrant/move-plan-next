@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   XMarkIcon,
   ChevronDownIcon,
@@ -270,19 +270,13 @@ export default function TablesChildMenu({
           hasChanges = true;
         }
       });
-    } else {
-      Object.keys(newOpenSections).forEach((key) => {
-        if (newOpenSections[key as DisclosureKey]) {
-          newOpenSections[key as DisclosureKey] = false;
-          hasChanges = true;
-        }
-      });
     }
+    // Remove the else block that was automatically closing all sections
 
     if (hasChanges) {
       setOpenSections(newOpenSections);
     }
-  }, [searchQuery, sectionsToOpen, setOpenSections]);
+  }, [searchQuery, sectionsToOpen, setOpenSections, openSections]);
 
   const toggleSection = (section: DisclosureKey) =>
     setOpenSections((prev: Record<DisclosureKey, boolean>) => ({
@@ -301,9 +295,14 @@ export default function TablesChildMenu({
     );
 
   return (
-    <>
-      {/* Mobile narrow bar */}
-      <div className="pt-6 z-48 md:hidden inset-y-0 left-14 w-12 bg-white border-gray-200 flex flex-col items-center py-4 gap-6 border-r">
+    <div 
+      className="relative group"
+      onMouseEnter={() => setIsSidebarOpen(true)}
+    >
+      {/* Collapsed sidebar (mobile + desktop) */}
+      <div 
+        className="pt-6 z-48 fixed inset-y-0 left-14 w-12 bg-white border-gray-200 flex flex-col items-center py-4 gap-6 border-r"
+      >
         <button onClick={() => setIsSidebarOpen(true)} className="p-1 rounded-md hover:bg-gray-50">
           <MagnifyingGlassIcon className="h-3 w-3 text-gray-600" />
         </button>
@@ -324,12 +323,12 @@ export default function TablesChildMenu({
         })}
       </div>
 
-      {/* Main sidebar */}
+      {/* Expanded sidebar */}
       <aside
         className={cn(
-          " z-50 fixed inset-y-0 left-0 w-full px-8 sm:px-0 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-300 ease-in-out",
-          isSidebarOpen ? "translate-x-0 sm:ml-8" : "-translate-x-full",
-          "md:static md:w-56 md:min-h-screen md:ml-0 md:translate-x-0 md:transition-none"
+          "z-50 fixed inset-y-0 w-full px-8 sm:px-0 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-300 ease-in-out",
+          "left-14", // Always align to collapsed ParentMenu position
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex items-center justify-between p-4 px-2 border-gray-200">
@@ -371,6 +370,6 @@ export default function TablesChildMenu({
           ))}
         </nav>
       </aside>
-    </>
+    </div>
   );
 }
