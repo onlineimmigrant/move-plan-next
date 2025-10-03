@@ -74,12 +74,13 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Convert prices from cents to dollars (divide by 100)
+      // TEMP FIX: Don't divide prices by 100 as they appear to be already in currency units
+      // TODO: Verify if prices in database are stored in cents or currency units
       const processedPlans = plans?.map(plan => ({
         ...plan,
-        price: plan.price ? plan.price / 100 : plan.price,
-        monthly_price_calculated: plan.monthly_price_calculated ? plan.monthly_price_calculated / 100 : plan.monthly_price_calculated,
-        promotion_price: plan.promotion_price ? plan.promotion_price / 100 : plan.promotion_price,
+        price: plan.price,
+        monthly_price_calculated: plan.monthly_price_calculated,
+        promotion_price: plan.promotion_price,
       })) || [];
 
       console.log('Successfully fetched pricing plans:', processedPlans);

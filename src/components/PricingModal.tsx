@@ -596,10 +596,12 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         if (monthly?.promotion_percent !== undefined) {
           // Calculate promotion price from percentage of the converted price
           monthlyPromotionPrice = parseFloat((monthlyPrice * (1 - monthly.promotion_percent / 100)).toFixed(2));
+          console.log('🔴 Monthly promotion from PERCENT:', monthlyPromotionPrice, 'base price:', monthlyPrice, 'percent:', monthly.promotion_percent);
         } else if (monthly?.promotion_price !== undefined) {
           // TEMP FIX: Try using promotion_price directly without any division
           // This assumes promotion_price is already in the correct currency units
           monthlyPromotionPrice = monthly.promotion_price;
+          console.log('🔴 Monthly promotion from PRICE (no division):', monthlyPromotionPrice, 'original promotion_price:', monthly.promotion_price);
         }
       }
       
@@ -607,10 +609,12 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         if (annual?.promotion_percent !== undefined) {
           // Calculate promotion price from percentage of the converted price
           annualPromotionPrice = parseFloat((annualPrice * (1 - annual.promotion_percent / 100)).toFixed(2));
+          console.log('🔴 Annual promotion from PERCENT:', annualPromotionPrice, 'base price:', annualPrice, 'percent:', annual.promotion_percent);
         } else if (annual?.promotion_price !== undefined) {
           // TEMP FIX: Try using promotion_price directly without any division
           // This assumes promotion_price is already in the correct currency units
           annualPromotionPrice = annual.promotion_price;
+          console.log('🔴 Annual promotion from PRICE (no division):', annualPromotionPrice, 'original promotion_price:', annual.promotion_price);
         }
       } else if (monthlyIsPromotion && monthlyPromotionPrice !== undefined && monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
         // Calculate annual promotion price from monthly promotion using discount
