@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
+import { detectUserCurrency, getPriceForCurrency } from '@/lib/currency';
 import ProductDetailPricingPlans from '@/components/product/ProductDetailPricingPlans';
 import CategoryBarProductDetailPage from '@/components/product/CategoryBarProductDetailPage';
 import FAQSection from '@/components/HomePageSections/FAQSection';
@@ -12,6 +13,7 @@ import ProgressBar from '@/components/product/ProgressBar';
 import { getBasket } from '@/lib/basketUtils';
 import ProductDetailMediaDisplay from '@/components/product/ProductDetailMediaDisplay';
 import ProductHeader from '@/components/product/ProductHeader';
+import { headers } from 'next/headers';
 
 
 interface MediaItem {
@@ -72,6 +74,19 @@ interface PricingPlan {
   product_name?: string;
   links_to_image?: string;
   features?: Feature[];
+  // Multi-currency support
+  prices_multi_currency?: { 
+    [currency: string]: { 
+      price: number; 
+      symbol: string; 
+    } 
+  };
+  stripe_price_ids?: { [currency: string]: string };
+  base_currency?: string;
+  computed_price?: number;
+  computed_currency_symbol?: string;
+  computed_stripe_price_id?: string;
+  user_currency?: string;
   [key: string]: any;
 }
 
@@ -87,8 +102,8 @@ interface FAQ {
   [key: string]: any;
 }
 
-// Enhanced product data fetching with better error handling
-async function fetchProduct(slug: string, baseUrl: string): Promise<Product | null> {
+// Enhanced product data fetching with multi-currency support
+async function fetchProduct(slug: string, baseUrl: string, userCurrency: string = 'USD'): Promise<Product | null> {
   try {
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
@@ -132,7 +147,7 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
       throw new Error('Product not found');
     }
 
-    // Parallel data fetching for better performance
+    // Parallel data fetching for better performance with multi-currency support
     const [plansResult, mediaResult] = await Promise.all([
       supabase
         .from('pricingplan')
@@ -153,18 +168,41 @@ async function fetchProduct(slug: string, baseUrl: string): Promise<Product | nu
 
     let pricingPlans: PricingPlan[] = [];
     if (!plansResult.error && plansResult.data) {
-      pricingPlans = plansResult.data.map((plan) => ({
-        ...plan,
-        product_name: productData.product_name,
-        links_to_image: productData.links_to_image,
-        currency: plan.currency || productData.currency_manual || 'GBP',
-        currency_symbol: plan.currency_symbol || '£',
-        features: plan.pricingplan_features
-          ? plan.pricingplan_features
-            .map((pf: any) => pf.feature)
-            .filter((feature: any) => feature != null)
-          : [],
-      }));
+      pricingPlans = plansResult.data.map((plan) => {
+        // Use plan's base_currency to show correct currency per plan
+        const planBaseCurrency = plan.base_currency || 'USD';
+        const priceData = getPriceForCurrency(plan, planBaseCurrency);
+        
+        console.log(`[ProductDetail] Plan ${plan.id}: base_currency=${planBaseCurrency}, userCurrency=${userCurrency}, priceData:`, priceData);
+        
+        // Get Stripe price ID for the user's currency
+        let stripePriceId: string | undefined;
+        if (plan.stripe_price_ids && plan.stripe_price_ids[userCurrency]) {
+          stripePriceId = plan.stripe_price_ids[userCurrency];
+        } else if (plan.stripe_price_ids && plan.base_currency && plan.stripe_price_ids[plan.base_currency]) {
+          stripePriceId = plan.stripe_price_ids[plan.base_currency];
+        } else {
+          stripePriceId = plan.stripe_price_id;
+        }
+
+        return {
+          ...plan,
+          product_name: productData.product_name,
+          links_to_image: productData.links_to_image,
+          currency: plan.currency || productData.currency_manual || 'GBP',
+          currency_symbol: plan.currency_symbol || '£',
+          // Add computed currency-aware fields
+          computed_price: priceData?.price,
+          computed_currency_symbol: priceData?.symbol,
+          computed_stripe_price_id: stripePriceId,
+          user_currency: userCurrency,
+          features: plan.pricingplan_features
+            ? plan.pricingplan_features
+              .map((pf: any) => pf.feature)
+              .filter((feature: any) => feature != null)
+            : [],
+        };
+      });
     } else if (plansResult.error) {
       console.error('Error fetching pricing plans:', plansResult.error.message);
     }
@@ -246,10 +284,16 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   }
 
+  // Detect user currency from headers (set by middleware)
+  const headersList = headers();
+  const userCurrency = detectUserCurrency(headersList);
+  
+  console.log('ProductDetailPage baseUrl:', baseUrl, 'userCurrency:', userCurrency);
+
   let product: Product | null = null;
 
   try {
-    product = await fetchProduct(slug, baseUrl);
+    product = await fetchProduct(slug, baseUrl, userCurrency);
   } catch (err: any) {
     console.error('Error fetching data with primary baseUrl:', err.message);
     
@@ -258,7 +302,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     if (fallbackUrl !== baseUrl) {
       console.log('Trying fallback baseUrl:', fallbackUrl);
       try {
-        product = await fetchProduct(slug, fallbackUrl);
+        product = await fetchProduct(slug, fallbackUrl, userCurrency);
       } catch (fallbackErr: any) {
         console.error('Fallback fetch also failed:', fallbackErr.message);
         notFound();

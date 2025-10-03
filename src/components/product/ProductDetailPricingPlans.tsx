@@ -35,6 +35,11 @@ type PricingPlan = {
   product_name?: string;
   links_to_image?: string;
   features?: Feature[];
+  // Multi-currency support
+  computed_price?: number;
+  computed_currency_symbol?: string;
+  computed_stripe_price_id?: string;
+  user_currency?: string;
   [key: string]: any;
 };
 
@@ -271,8 +276,10 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
           onClick={() => !isOutOfStock && handlePlanSelect(plan)}
           onKeyDown={(e) => !isOutOfStock && handleKeyDown(e, plan, idx)}
           aria-label={`${t.selectPlan} ${plan.package || t.unknown} plan, priced at ${
-            plan.currency_symbol
-          }${plan.is_promotion && plan.promotion_price ? plan.promotion_price : plan.price}, ${
+            plan.computed_currency_symbol || plan.currency_symbol
+          }${plan.is_promotion && plan.promotion_price 
+            ? (plan.computed_price ? (plan.computed_price * (1 - (plan.promotion_percent || 0) / 100)).toFixed(2) : plan.promotion_price / 100) 
+            : (plan.computed_price || (plan.price / 100))}, ${
             normalizedStatus === 'in stock'
               ? t.inStock.toLowerCase()
               : normalizedStatus === 'low stock'
@@ -337,17 +344,27 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
             </div>
 
             <div className="min-h-[36px] sm:min-h-[48px] flex items-end justify-end">
-              {plan.is_promotion && plan.promotion_price !== undefined ? (
+              {plan.is_promotion && (plan.promotion_price !== undefined || plan.promotion_percent) ? (
                 <div className="flex flex-col items-end space-y-0.5">
                   <div className="flex items-baseline space-x-1.5">
                     <span className="text-2xl sm:text-2xl font-bold text-gray-800">
-                      {plan.currency_symbol}
-                      {(plan.promotion_price / 100).toFixed(2)}
+                      {plan.computed_currency_symbol || plan.currency_symbol}
+                      {(() => {
+                        // Use computed price if available (already in currency units)
+                        // Otherwise use legacy price (stored in cents, need to divide by 100)
+                        const basePrice = plan.computed_price || ((plan.price || 0) / 100);
+                        if (plan.promotion_percent) {
+                          return (basePrice * (1 - plan.promotion_percent / 100)).toFixed(2);
+                        } else if (plan.promotion_price) {
+                          return (plan.promotion_price / 100).toFixed(2);
+                        }
+                        return basePrice.toFixed(2);
+                      })()}
                     </span>
                   </div>
                   <span className="text-sm text-gray-400 font-medium line-through">
-                    {plan.currency_symbol}
-                    {(plan.price / 100).toFixed(2)}
+                    {plan.computed_currency_symbol || plan.currency_symbol}
+                    {(plan.computed_price || ((plan.price || 0) / 100)).toFixed(2)}
                   </span>
                 </div>
               ) : (
@@ -358,8 +375,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         isOutOfStock ? 'text-gray-400' : 'text-gray-800'
                       }`}
                     >
-                      {plan.currency_symbol}
-                      {(plan.price / 100).toFixed(2)}
+                      {plan.computed_currency_symbol || plan.currency_symbol}
+                      {(plan.computed_price || ((plan.price || 0) / 100)).toFixed(2)}
                     </span>
                   </div>
                   <span className="text-sm text-transparent">
@@ -376,7 +393,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
 </div>
 
       <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
-        {activePlanCount === 0 || (selectedPlan && (selectedPlan.price === 0 || (selectedPlan.is_promotion && selectedPlan.promotion_price === 0))) ? (
+        {activePlanCount === 0 || (selectedPlan && ((selectedPlan.computed_price || selectedPlan.price / 100) === 0 || (selectedPlan.is_promotion && (selectedPlan.promotion_price || 0) / 100 === 0))) ? (
           <Link href="/register-free-trial">
             <Button variant="start" aria-label={t.registerForFreeTrial}>
               {t.register}

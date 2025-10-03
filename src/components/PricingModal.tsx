@@ -37,6 +37,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { CheckIcon, XMarkIcon as XMarkIconSmall } from '@heroicons/react/20/solid';
 import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
+import { detectUserCurrency, getPriceForCurrency, SUPPORTED_CURRENCIES } from '@/lib/currency';
 import PricingModalProductBadges from '@/components/PricingModalProductBadges';
 import { PricingComparisonProduct } from '@/types/product';
 import { PricingPlan } from '@/types/pricingplan';
@@ -222,6 +223,8 @@ interface SamplePricingPlan {
   promotionPrice?: number; // Promotional price
   monthlyPromotionPrice?: number; // Monthly promotional price
   annualPromotionPrice?: number; // Annual promotional price
+  currencySymbol?: string; // Currency symbol for monthly price
+  annualCurrencySymbol?: string; // Currency symbol for annual price
 }
 
 interface PricingComparison {
@@ -349,13 +352,33 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(false);
   const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
   const [initialProductIdentifier, setInitialProductIdentifier] = useState<string | null>(null);
-  const currency = '£'; // Currency symbol used throughout the pricing
+  const [userCurrency, setUserCurrency] = useState('USD');
+  const [currencySymbol, setCurrencySymbol] = useState('$');
   const translations = usePricingTranslations();
   const pathname = usePathname();
   const { settings } = useSettings();
   
   // Get current locale for content translations
   const currentLocale = getLocaleFromPathname(pathname);
+
+  // Detect user currency when pricing plans are loaded
+  useEffect(() => {
+    // Only detect currency after pricing plans are loaded for smart base currency detection
+    if (pricingPlans.length > 0) {
+      const detectedCurrency = detectUserCurrency(undefined, undefined, pricingPlans);
+      setUserCurrency(detectedCurrency);
+      
+      // Set currency symbol based on detected currency
+      const currencySymbols: Record<string, string> = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'PLN': 'zł',
+        'RUB': '₽'
+      };
+      setCurrencySymbol(currencySymbols[detectedCurrency] || '$');
+    }
+  }, [pricingPlans]); // Depend on pricingPlans to re-run when they're loaded
 
   // Parse URL fragment to extract product identifier
   const parseProductFromHash = useCallback(() => {
@@ -430,13 +453,15 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       
       try {
         const productParam = selectedProduct?.id ? `&productId=${selectedProduct.id}` : '';
-        const url = `/api/pricing-comparison?organizationId=${encodeURIComponent(settings.organization_id)}&type=plans${productParam}`;
+        const currencyParam = `&currency=${userCurrency}`;
+        const url = `/api/pricing-comparison?organizationId=${encodeURIComponent(settings.organization_id)}&type=plans${productParam}${currencyParam}`;
         console.log('Fetching pricing plans:', url);
         
         const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-currency': userCurrency,
           },
         });
         
@@ -458,7 +483,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     };
 
     fetchPricingPlans();
-  }, [settings?.organization_id, selectedProduct?.id]);
+  }, [settings?.organization_id, selectedProduct?.id, userCurrency]);
 
   // Fetch features for pricing plans when they change
   useEffect(() => {
@@ -511,6 +536,9 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     const plansByProduct: { [key: string]: { monthly?: PricingPlan; annual?: PricingPlan } } = {};
     
     plans.forEach(plan => {
+      // Skip null or undefined plans
+      if (!plan) return;
+      
       const productKey = plan.package || `Product ${plan.product_id}`;
       if (!plansByProduct[productKey]) {
         plansByProduct[productKey] = {};
@@ -524,7 +552,13 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     });
     
     const transformedPlans = Object.entries(plansByProduct).map(([productName, { monthly, annual }], index) => {
-      const monthlyPrice = monthly?.price || 0;
+      // Get currency-aware prices using our utility function
+      const monthlyPriceResult = getPriceForCurrency(monthly, userCurrency);
+      const annualPriceResult = getPriceForCurrency(annual, userCurrency);
+      
+      // Use currency-aware prices or fallback to raw price (legacy system uses actual currency units)
+      const monthlyPrice = monthlyPriceResult?.price ?? (monthly?.price || 0);
+      const monthlyPriceSymbol = monthlyPriceResult?.symbol || currencySymbol;
       
       // Calculate annual price with priority:
       // 1. Use annual plan's monthly_price_calculated if available
@@ -532,35 +566,52 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       // 3. Fallback to monthly price
       let annualPrice = monthlyPrice;
       let actualAnnualPrice = undefined;
+      let annualPriceSymbol = monthlyPriceSymbol;
       
       if (annual?.monthly_price_calculated) {
-        // Direct annual plan exists
-        annualPrice = parseFloat(annual.monthly_price_calculated.toFixed(2));
-        actualAnnualPrice = annual.price ? parseFloat(annual.price.toFixed(2)) : undefined;
+        // Direct annual plan exists - use currency-aware pricing
+        annualPrice = annualPriceResult?.price ?? (annual?.price || monthlyPrice);
+        annualPriceSymbol = annualPriceResult?.symbol || currencySymbol;
+        actualAnnualPrice = annualPrice ? parseFloat((annualPrice * (annual.recurring_interval_count || 12)).toFixed(2)) : undefined;
       } else if (monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
         // Calculate annual price from monthly using discount
         const discountMultiplier = (100 - monthly.annual_size_discount) / 100;
         annualPrice = parseFloat((monthlyPrice * discountMultiplier).toFixed(2));
         actualAnnualPrice = parseFloat((annualPrice * 12).toFixed(2)); // Calculate actual annual total
+        annualPriceSymbol = monthlyPriceSymbol; // Use same symbol
       }
       
       // Get features for this plan
       const planId = monthly?.id || annual?.id;
       const realFeatures = planId ? (planFeatures[planId] || []) : [];
 
-      // Handle promotion pricing
-      const monthlyIsPromotion = monthly?.is_promotion && monthly?.promotion_price !== undefined;
-      const annualIsPromotion = annual?.is_promotion && annual?.promotion_price !== undefined;
+      // Handle promotion pricing with currency awareness
+      const monthlyIsPromotion = monthly?.is_promotion && (monthly?.promotion_price !== undefined || monthly?.promotion_percent !== undefined);
+      const annualIsPromotion = annual?.is_promotion && (annual?.promotion_price !== undefined || annual?.promotion_percent !== undefined);
       
       let monthlyPromotionPrice = undefined;
       let annualPromotionPrice = undefined;
       
-      if (monthlyIsPromotion && monthly?.promotion_price !== undefined) {
-        monthlyPromotionPrice = parseFloat(monthly.promotion_price.toFixed(2));
+      if (monthlyIsPromotion) {
+        if (monthly?.promotion_price !== undefined) {
+          // Use currency-aware promotion price or raw promotion price (legacy)
+          const monthlyPromoPriceResult = getPriceForCurrency({ ...monthly, price: monthly.promotion_price }, userCurrency);
+          monthlyPromotionPrice = monthlyPromoPriceResult?.price ?? monthly.promotion_price;
+        } else if (monthly?.promotion_percent !== undefined) {
+          // Calculate promotion price from percentage
+          monthlyPromotionPrice = parseFloat((monthlyPrice * (1 - monthly.promotion_percent / 100)).toFixed(2));
+        }
       }
       
-      if (annualIsPromotion && annual?.promotion_price !== undefined) {
-        annualPromotionPrice = parseFloat(annual.promotion_price.toFixed(2));
+      if (annualIsPromotion) {
+        if (annual?.promotion_price !== undefined) {
+          // Use currency-aware promotion price or raw promotion price (legacy)
+          const annualPromoPriceResult = getPriceForCurrency({ ...annual, price: annual.promotion_price }, userCurrency);
+          annualPromotionPrice = annualPromoPriceResult?.price ?? annual.promotion_price;
+        } else if (annual?.promotion_percent !== undefined) {
+          // Calculate promotion price from percentage
+          annualPromotionPrice = parseFloat((annualPrice * (1 - annual.promotion_percent / 100)).toFixed(2));
+        }
       } else if (monthlyIsPromotion && monthlyPromotionPrice !== undefined && monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
         // Calculate annual promotion price from monthly promotion using discount
         const discountMultiplier = (100 - monthly.annual_size_discount) / 100;
@@ -575,6 +626,9 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         description: monthly?.description || annual?.description || '',
         features: [], // Will be populated after sorting and filtering
         buttonText: monthly?.type === 'one_time' ? 'Buy Now' : 'Get Started', // Will be translated in render
+        // Add currency information
+        currencySymbol: monthlyPriceSymbol,
+        annualCurrencySymbol: annualPriceSymbol,
         // Add recurring interval data for total calculation
         monthlyRecurringCount: monthly?.recurring_interval_count || 1,
         annualRecurringCount: annual?.recurring_interval_count || 1,
@@ -853,26 +907,16 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                         {plan.isPromotion ? (
                           <div className="flex flex-col items-center">
                             {/* Original price crossed out */}
-                            <span className="text-lg font-extralight text-sky-500 line-through mb-1">
-                              {currency}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
+                            <span className="text-sm text-sky-500 line-through mr-2">
+                              {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
                             </span>
-                            {/* Promotional price */}
-                            <div className="flex items-baseline">
-                              <span className="text-4xl font-extralight text-gray-700">
-                                {currency}{hasOneTimePlans 
+                            {/* Promotional price - same style as normal prices */}
+                            <span className="text-4xl font-extralight text-gray-700">
+                                {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans 
                                   ? (plan.monthlyPromotionPrice || plan.monthlyPrice).toFixed(2) 
-                                  : (isAnnual 
-                                    ? (plan.annualPromotionPrice || plan.annualPrice).toFixed(2) 
-                                    : (plan.monthlyPromotionPrice || plan.monthlyPrice).toFixed(2)
-                                  )
+                                  : (isAnnual ? (plan.annualPromotionPrice || plan.annualPrice).toFixed(2) : (plan.monthlyPromotionPrice || plan.monthlyPrice).toFixed(2))
                                 }
-                              </span>
-                              {!hasOneTimePlans && (
-                                <span className="text-sm text-gray-500 ml-1 font-light">
-                                  {plan.period}
-                                </span>
-                              )}
-                            </div>
+                            </span>
                             {/* Limited Time Offer text */}
                             <span className="text-xs text-gray-400 font-medium mt-1">
                               {translations.limitedTimeOffer}
@@ -881,7 +925,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                         ) : (
                           <>
                             <span className="text-4xl font-extralight text-gray-700">
-                              {currency}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
+                              {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
                             </span>
                             {!hasOneTimePlans && (
                               <span className="text-sm text-gray-500 ml-1 font-light">
@@ -899,14 +943,14 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                             {isAnnual ? (
                               // For annual: use promotion price if available, otherwise regular price
                               plan.actualAnnualPrice ? 
-                                <>Total annual: {currency}{plan.actualAnnualPrice.toFixed(2)}</> :
+                                <>Total annual: {plan.annualCurrencySymbol || currencySymbol}{plan.actualAnnualPrice.toFixed(2)}</> :
                                 plan.isPromotion && plan.annualPromotionPrice ?
-                                  <>Total annual: {currency}{(plan.annualPromotionPrice * 12).toFixed(2)}</> :
-                                  <>Total annual: {currency}{(plan.annualPrice * 12).toFixed(2)}</>
+                                  <>Total annual: {plan.annualCurrencySymbol || currencySymbol}{(plan.annualPromotionPrice * 12).toFixed(2)}</> :
+                                  <>Total annual: {plan.annualCurrencySymbol || currencySymbol}{(plan.annualPrice * 12).toFixed(2)}</>
                             ) : (
                               plan.isPromotion && plan.monthlyPromotionPrice ?
-                                <>Total monthly: {currency}{(plan.monthlyPromotionPrice * plan.monthlyRecurringCount).toFixed(2)}</> :
-                                <>Total monthly: {currency}{(plan.monthlyPrice * plan.monthlyRecurringCount).toFixed(2)}</>
+                                <>Total monthly: {plan.currencySymbol || currencySymbol}{(plan.monthlyPromotionPrice * plan.monthlyRecurringCount).toFixed(2)}</> :
+                                <>Total monthly: {plan.currencySymbol || currencySymbol}{(plan.monthlyPrice * plan.monthlyRecurringCount).toFixed(2)}</>
                             )}
                           </span>
                         </div>
@@ -1035,12 +1079,12 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                               {plan.isPromotion ? (
                                 <>
                                   {/* Original price crossed out */}
-                                  <span className="text-sm font-extralight text-sky-500 line-through">
-                                    {currency}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
+                                  <span className="text-sm text-sky-500 line-through">
+                                    {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
                                   </span>
-                                  {/* Promotional price */}
+                                  {/* Promotional price - same style as normal prices */}
                                   <div className="text-lg font-extralight text-gray-600">
-                                    {currency}{hasOneTimePlans 
+                                    {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans 
                                       ? (plan.monthlyPromotionPrice || plan.monthlyPrice) 
                                       : (isAnnual 
                                         ? (plan.annualPromotionPrice || plan.annualPrice) 
@@ -1058,7 +1102,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                                 </>
                               ) : (
                                 <div className="text-lg font-extralight text-gray-600">
-                                  {currency}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
+                                  {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
                                   {!hasOneTimePlans && (
                                     <span className="text-xs text-gray-500">/mo</span>
                                   )}

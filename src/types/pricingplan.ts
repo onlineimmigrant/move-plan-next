@@ -26,6 +26,16 @@ export interface PricingPlan {
   // Integration fields
   stripe_price_id?: string;
   
+  // Multi-currency support
+  stripe_price_ids?: { [currency: string]: string };
+  prices_multi_currency?: { 
+    [currency: string]: { 
+      price: number; 
+      symbol: string; 
+    } 
+  };
+  base_currency?: string;
+  
   // Content and description
   package?: string;
   description?: string;

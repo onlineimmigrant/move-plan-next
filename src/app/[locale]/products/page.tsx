@@ -1,9 +1,11 @@
 import { supabase, getOrganizationId, getOrganizationWithType } from '../../../lib/supabase';
 import { getBaseUrl } from '../../../lib/utils';
 import { fetchProductsListingSEOData } from '../../../lib/supabase/seo';
+import { detectUserCurrency, getPriceForCurrency } from '../../../lib/currency';
 import ClientProductsPage from './ClientProductsPage';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 
 // Enhanced type definitions with better type safety
 type Product = {
@@ -17,6 +19,10 @@ type Product = {
   order: number;
   price_manual?: string | null;
   currency_manual_symbol?: string | null;
+  computed_min_price?: number | null;
+  computed_currency_symbol?: string | null;
+  computed_stripe_price_id?: string | null;
+  user_currency?: string;
   links_to_image?: string | null;
   [key: string]: any;
 };
@@ -29,8 +35,8 @@ type ProductSubType = {
   [key: string]: any;
 };
 
-// Optimized product fetching with better error handling
-async function fetchProducts(baseUrl: string, categoryId?: string): Promise<Product[]> {
+// Optimized product fetching with multi-currency support and backward compatibility
+async function fetchProducts(baseUrl: string, categoryId?: string, userCurrency: string = 'USD'): Promise<Product[]> {
   try {
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
@@ -40,7 +46,22 @@ async function fetchProducts(baseUrl: string, categoryId?: string): Promise<Prod
 
     let query = supabase
       .from('product')
-      .select('*')
+      .select(`
+        *,
+        pricingplans:pricingplan(
+          id,
+          price,
+          currency,
+          currency_symbol,
+          stripe_price_id,
+          is_active,
+          is_promotion,
+          promotion_percent,
+          prices_multi_currency,
+          stripe_price_ids,
+          base_currency
+        )
+      `)
       .eq('organization_id', organizationId)
       .eq('is_displayed', true);
 
@@ -56,8 +77,83 @@ async function fetchProducts(baseUrl: string, categoryId?: string): Promise<Prod
       throw new Error(`Failed to load products: ${error.message}`);
     }
 
-    console.log('Successfully fetched products:', data?.length || 0, 'items for organization:', organizationId);
-    return data || [];
+    // Process products with currency-aware pricing
+    const processedProducts = (data || []).map(product => {
+      const activePlans = product.pricingplans?.filter((plan: any) => plan.is_active) || [];
+      
+      let minPrice: number | null = null;
+      let currencySymbol: string | null = null;
+      let stripePriceId: string | null = null;
+      
+      if (activePlans.length > 0) {
+        const minPlan = activePlans.reduce((min: any, current: any) => {
+          // Get price using backward-compatible function
+          const currentPriceData = getPriceForCurrency(current, userCurrency);
+          const minPriceData = getPriceForCurrency(min, userCurrency);
+          
+          if (!currentPriceData) return min;
+          if (!minPriceData) return current;
+          
+          let currentEffectivePrice = currentPriceData.price;
+          let minEffectivePrice = minPriceData.price;
+          
+          // Apply promotions
+          if (current.is_promotion && current.promotion_percent) {
+            currentEffectivePrice = currentEffectivePrice * (1 - current.promotion_percent / 100);
+          }
+          if (min.is_promotion && min.promotion_percent) {
+            minEffectivePrice = minEffectivePrice * (1 - min.promotion_percent / 100);
+          }
+          
+          return currentEffectivePrice < minEffectivePrice ? current : min;
+        });
+        
+        // Use plan's base_currency to ensure each plan shows in its correct currency
+        // This fixes the issue where all plans were showing in GBP instead of their base currency
+        const planBaseCurrency = minPlan.base_currency || 'USD';
+        
+        // For now, use plan's base currency to show correct currency per plan
+        // TODO: Later we can add user currency preference with proper conversion
+        let finalPriceData = getPriceForCurrency(minPlan, planBaseCurrency);
+        
+        // If base currency fails, try user currency as fallback
+        if (!finalPriceData) {
+          finalPriceData = getPriceForCurrency(minPlan, userCurrency);
+        }
+        
+        console.log(`[${product.product_name}] Plan ${minPlan.id}: base_currency=${planBaseCurrency}, userCurrency=${userCurrency}, priceData:`, finalPriceData);
+        
+        if (finalPriceData) {
+          let finalPrice = finalPriceData.price; // Already divided by 100 in getPriceForCurrency
+          if (minPlan.is_promotion && minPlan.promotion_percent) {
+            finalPrice = finalPrice * (1 - minPlan.promotion_percent / 100);
+          }
+          
+          minPrice = finalPrice;
+          currencySymbol = finalPriceData.symbol;
+        }
+        
+        // Get Stripe price ID - try multi-currency first, then fallback
+        const stripePriceIds = minPlan.stripe_price_ids || {};
+        stripePriceId = stripePriceIds[userCurrency] || stripePriceIds[minPlan.base_currency || 'USD'] || minPlan.stripe_price_id;
+      }
+
+      const { pricingplans, ...productData } = product;
+      
+      return {
+        ...productData,
+        computed_min_price: minPrice,
+        computed_currency_symbol: currencySymbol,
+        computed_stripe_price_id: stripePriceId,
+        user_currency: userCurrency,
+        // Keep original fields as fallback (UNCHANGED)
+        price_manual: product.price_manual,
+        currency_manual_symbol: product.currency_manual_symbol
+      };
+    });
+
+    console.log('Successfully fetched products:', processedProducts?.length || 0, 'items for organization:', organizationId, 'currency:', userCurrency);
+    return processedProducts || [];
   } catch (err) {
     console.error('Error in fetchProducts:', err);
     throw err;
@@ -188,7 +284,12 @@ export default async function ProductsPage({
     baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   }
   
-  console.log('ProductsPage baseUrl:', baseUrl, 'VERCEL_URL:', process.env.VERCEL_URL);
+  // Detect user currency from headers (set by middleware)
+  // Note: We'll use individual plan base_currency for better accuracy in fetchProducts
+  const headersList = headers();
+  const userCurrency = detectUserCurrency(headersList);
+  
+  console.log('ProductsPage baseUrl:', baseUrl, 'userCurrency:', userCurrency, 'VERCEL_URL:', process.env.VERCEL_URL);
 
   let allProducts: Product[] = [];
   let productSubTypes: ProductSubType[] = [];
@@ -203,7 +304,7 @@ export default async function ProductsPage({
   try {
     // Parallel data fetching for better performance
     const [products, subTypes, organizationData] = await Promise.all([
-      fetchProducts(baseUrl, categoryId),
+      fetchProducts(baseUrl, categoryId, userCurrency),
       fetchProductSubTypes(baseUrl),
       getOrganizationWithType(baseUrl)
     ]);
@@ -220,7 +321,7 @@ export default async function ProductsPage({
       console.log('Trying fallback baseUrl:', fallbackUrl);
       try {
         const [products, subTypes, organizationData] = await Promise.all([
-          fetchProducts(fallbackUrl, categoryId),
+          fetchProducts(fallbackUrl, categoryId, userCurrency),
           fetchProductSubTypes(fallbackUrl),
           getOrganizationWithType(fallbackUrl)
         ]);

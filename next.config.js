@@ -8,6 +8,26 @@ const nextConfig = {
   experimental: {
     optimizeCss: false,
   },
+  // Enable geolocation for Vercel deployments
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        has: [
+          {
+            type: 'header',
+            key: 'x-vercel-ip-country',
+          },
+        ],
+        headers: [
+          {
+            key: 'x-user-country',
+            value: '%{x-vercel-ip-country}i',
+          },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
 

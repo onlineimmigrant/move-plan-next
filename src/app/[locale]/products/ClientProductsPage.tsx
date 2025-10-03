@@ -20,6 +20,10 @@ type Product = {
   order: number;
   price_manual?: string | null;
   currency_manual_symbol?: string | null;
+  computed_min_price?: number | null;
+  computed_currency_symbol?: string | null;
+  computed_stripe_price_id?: string | null;
+  user_currency?: string;
   links_to_image?: string | null;
   [key: string]: any;
 };
@@ -309,8 +313,12 @@ const ClientProductsPage = memo(function ClientProductsPage({
                       <div className="flex justify-between items-center mb-3">
                         <span className="text-gray-500 text-sm sm:text-base">{t.from}</span>
                         <div className="font-bold text-base sm:text-lg text-gray-700">
-                          <span>{product.currency_manual_symbol ?? ''}</span>
-                          <span>{product.price_manual ?? ''}</span>
+                          <span>
+                            {(product.computed_currency_symbol ?? product.currency_manual_symbol) ?? ''}
+                          </span>
+                          <span>
+                            {product.computed_min_price ?? product.price_manual ?? ''}
+                          </span>
                         </div>
                       </div>
                       <div className="flex justify-end">
