@@ -108,13 +108,22 @@ async function fetchProducts(baseUrl: string, categoryId?: string, userCurrency:
           return currentEffectivePrice < minEffectivePrice ? current : min;
         });
         
-        // Use plan's base_currency to ensure each plan shows in its correct currency
-        // This fixes the issue where all plans were showing in GBP instead of their base currency
+        // In production, prioritize geolocation-detected currency over plan's base currency
+        // In development, fallback to plan's base currency
+        const isProduction = process.env.NODE_ENV === 'production';
         const planBaseCurrency = minPlan.base_currency || 'USD';
         
-        // For now, use plan's base currency to show correct currency per plan
-        // TODO: Later we can add user currency preference with proper conversion
-        let finalPriceData = getPriceForCurrency(minPlan, planBaseCurrency);
+        const finalCurrency = isProduction ? userCurrency : planBaseCurrency;
+        
+        console.log('🏷️ PRODUCTS CURRENCY LOGIC:', {
+          userCurrency,
+          planBaseCurrency, 
+          isProduction,
+          finalCurrency,
+          productId: product.id
+        });
+        
+        let finalPriceData = getPriceForCurrency(minPlan, finalCurrency);
         
         // If base currency fails, try user currency as fallback
         if (!finalPriceData) {

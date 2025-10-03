@@ -169,11 +169,16 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
     let pricingPlans: PricingPlan[] = [];
     if (!plansResult.error && plansResult.data) {
       pricingPlans = plansResult.data.map((plan) => {
-        // Use plan's base_currency to show correct currency per plan
+        // In production, prioritize geolocation-detected currency over plan's base currency
+        // In development, fallback to plan's base currency
+        const isProduction = process.env.NODE_ENV === 'production';
         const planBaseCurrency = plan.base_currency || 'USD';
-        const priceData = getPriceForCurrency(plan, planBaseCurrency);
         
-        console.log(`[ProductDetail] Plan ${plan.id}: base_currency=${planBaseCurrency}, userCurrency=${userCurrency}, priceData:`, priceData);
+        const finalCurrency = isProduction ? userCurrency : planBaseCurrency;
+        
+        console.log(`[ProductDetail] Plan ${plan.id}: userCurrency=${userCurrency}, planBaseCurrency=${planBaseCurrency}, isProduction=${isProduction}, finalCurrency=${finalCurrency}`);
+        
+        const priceData = getPriceForCurrency(plan, finalCurrency);
         
         // Get Stripe price ID for the user's currency
         let stripePriceId: string | undefined;

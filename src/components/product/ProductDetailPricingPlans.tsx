@@ -277,8 +277,12 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
           onKeyDown={(e) => !isOutOfStock && handleKeyDown(e, plan, idx)}
           aria-label={`${t.selectPlan} ${plan.package || t.unknown} plan, priced at ${
             plan.computed_currency_symbol || plan.currency_symbol
-          }${plan.is_promotion && plan.promotion_price 
-            ? (plan.computed_price ? (plan.computed_price * (1 - (plan.promotion_percent || 0) / 100)).toFixed(2) : plan.promotion_price / 100) 
+          }${plan.is_promotion && (plan.promotion_price || plan.promotion_percent) 
+            ? (plan.computed_price 
+                ? (plan.promotion_percent 
+                    ? (plan.computed_price * (1 - plan.promotion_percent / 100)).toFixed(2)
+                    : plan.computed_price.toFixed(2))
+                : (plan.promotion_price ? plan.promotion_price.toFixed(2) : '0.00')) 
             : (plan.computed_price || (plan.price / 100))}, ${
             normalizedStatus === 'in stock'
               ? t.inStock.toLowerCase()
@@ -356,7 +360,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         if (plan.promotion_percent) {
                           return (basePrice * (1 - plan.promotion_percent / 100)).toFixed(2);
                         } else if (plan.promotion_price) {
-                          return (plan.promotion_price / 100).toFixed(2);
+                          // Use promotion_price directly (already in currency units)
+                          return plan.promotion_price.toFixed(2);
                         }
                         return basePrice.toFixed(2);
                       })()}
@@ -393,7 +398,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
 </div>
 
       <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
-        {activePlanCount === 0 || (selectedPlan && ((selectedPlan.computed_price || selectedPlan.price / 100) === 0 || (selectedPlan.is_promotion && (selectedPlan.promotion_price || 0) / 100 === 0))) ? (
+        {activePlanCount === 0 || (selectedPlan && ((selectedPlan.computed_price || selectedPlan.price / 100) === 0 || (selectedPlan.is_promotion && (selectedPlan.computed_price ? selectedPlan.computed_price === 0 : (selectedPlan.promotion_price || 0) === 0)))) ? (
           <Link href="/register-free-trial">
             <Button variant="start" aria-label={t.registerForFreeTrial}>
               {t.register}
