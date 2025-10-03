@@ -158,67 +158,78 @@ export default async function middleware(request: NextRequest) {
   response.headers.set('x-user-currency', currency);
   response.headers.set('x-user-country', country);
   
-  // Add language detection based on geolocation and browser preferences
+  // Add language detection and auto-redirect logic
   const acceptLanguage = request.headers.get('accept-language');
-  let detectedLanguage;
-  let shouldAutoSwitch = false;
+  let detectedLanguage = defaultLocale;
   
-  if (isLocal && !hasGeolocationData) {
-    // Local development: use database default language or fallback
-    detectedLanguage = defaultLocale;
-  } else {
-    // Production or with geolocation: use smart language detection
+  // Check for user language preference in session
+  const userLanguageChoice = request.cookies.get('userLanguageChoice')?.value;
+  const hasSeenLanguageBanner = request.cookies.get('languageBannerSeen')?.value;
+  
+  if (!isLocal && hasGeolocationData && !userLanguageChoice) {
+    // Production with geolocation and no user preference: use smart language detection
     detectedLanguage = detectLanguageFromSources(
       country,
       acceptLanguage || undefined,
-      settings, // Pass settings object instead of just supportedLocales array
+      settings,
       defaultLocale
     );
     
-    // Check if we should auto-switch (detected language is different from default)
+    // If detected language is different from default and supported, auto-redirect
     if (detectedLanguage !== defaultLocale && supportedLocales.includes(detectedLanguage)) {
-      shouldAutoSwitch = true;
+      const segments = pathname.split('/');
+      const currentHasLocale = supportedLocales.includes(segments[1]);
+      const currentLocale = currentHasLocale ? segments[1] : defaultLocale;
+      
+      // Only redirect if we're not already on the detected language
+      if (currentLocale !== detectedLanguage && !hasSeenLanguageBanner) {
+        const pathWithoutLocale = currentHasLocale ? segments.slice(2).join('/') : segments.slice(1).join('/');
+        const newPath = pathWithoutLocale ? `/${detectedLanguage}/${pathWithoutLocale}` : `/${detectedLanguage}`;
+        
+        // Set cookies for banner display (after redirect)
+        const redirectResponse = NextResponse.redirect(new URL(newPath, request.url));
+        
+        // Set banner cookies to show after redirect
+        redirectResponse.cookies.set('showLanguageBanner', 'true', {
+          maxAge: 60 * 5, // 5 minutes
+          path: '/',
+          sameSite: 'lax'
+        });
+        redirectResponse.cookies.set('bannerSourceLanguage', defaultLocale, {
+          maxAge: 60 * 5, // 5 minutes  
+          path: '/',
+          sameSite: 'lax'
+        });
+        redirectResponse.cookies.set('bannerTargetLanguage', detectedLanguage, {
+          maxAge: 60 * 5, // 5 minutes
+          path: '/',
+          sameSite: 'lax'
+        });
+        redirectResponse.cookies.set('detectedLanguage', detectedLanguage, {
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+          path: '/',
+          sameSite: 'lax'
+        });
+        
+        console.log('🌍 Auto-redirecting to detected language:', detectedLanguage, 'from country:', country);
+        return redirectResponse;
+      }
     }
   }
   
   response.headers.set('x-user-language', detectedLanguage);
-  response.headers.set('x-should-auto-switch', shouldAutoSwitch.toString());
+  response.headers.set('x-user-country', country);
   
-  // Set cookies for language detection and banner display
+  // Set detected language cookie for reference
   response.cookies.set('detectedLanguage', detectedLanguage, {
     maxAge: 60 * 60 * 24 * 30, // 30 days
     path: '/',
     sameSite: 'lax'
   });
   
-  // If auto-switch is needed and user hasn't dismissed, show banner
-  if (shouldAutoSwitch) {
-    const hasSeenBanner = request.cookies.get('languageBannerSeen')?.value;
-    const hasDismissed = request.cookies.get('languageBannerDismissed')?.value;
-    
-    if (!hasSeenBanner && !hasDismissed) {
-      // First time seeing auto-switch suggestion - show banner in detected language
-      response.cookies.set('showLanguageBanner', 'true', {
-        maxAge: 60 * 5, // 5 minutes
-        path: '/',
-        sameSite: 'lax'
-      });
-      response.cookies.set('bannerSourceLanguage', detectedLanguage, {
-        maxAge: 60 * 5, // 5 minutes
-        path: '/',
-        sameSite: 'lax'
-      });
-      response.cookies.set('bannerTargetLanguage', defaultLocale, {
-        maxAge: 60 * 5, // 5 minutes
-        path: '/',
-        sameSite: 'lax'
-      });
-    }
-  }
-  
   // Production logging (minimal)
-  if (shouldAutoSwitch) {
-    console.log('🌍 Language auto-switch triggered:', detectedLanguage, 'for country:', country);
+  if (detectedLanguage !== defaultLocale) {
+    console.log('🌍 Detected language:', detectedLanguage, 'for country:', country);
   }
   
   return response;

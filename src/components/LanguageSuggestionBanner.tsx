@@ -10,57 +10,58 @@ interface LanguageSuggestionBannerProps {
   currentLocale: string;
 }
 
-// Localized messages for the banner
+// Messages asking if user wants to stay in detected language or switch to default
+// These messages are shown in the DETECTED language asking if they want to stay
 const BANNER_MESSAGES = {
   'en': {
-    message: 'Would you like to continue in English?',
-    switchButton: 'Continue in English',
-    dismissButton: 'Stay here'
+    message: 'We switched you to English based on your location. Is this correct?',
+    switchButton: 'Switch to English', // This won't be used much since English is usually default
+    dismissButton: 'Yes, continue in English'
   },
   'es': {
-    message: '¿Te gustaría continuar en español?',
-    switchButton: 'Continuar en español', 
-    dismissButton: 'Quedarse aquí'
+    message: 'Te hemos cambiado al español según tu ubicación. ¿Es correcto?',
+    switchButton: 'Cambiar al inglés', 
+    dismissButton: 'Sí, continuar en español'
   },
   'fr': {
-    message: 'Souhaitez-vous continuer en français?',
-    switchButton: 'Continuer en français',
-    dismissButton: 'Rester ici'
+    message: 'Nous vous avons basculé en français selon votre localisation. Est-ce correct?',
+    switchButton: 'Changer vers l\'anglais',
+    dismissButton: 'Oui, continuer en français'
   },
   'de': {
-    message: 'Möchten Sie auf Deutsch fortfahren?',
-    switchButton: 'Auf Deutsch fortfahren',
-    dismissButton: 'Hier bleiben'
+    message: 'Wir haben Sie aufgrund Ihres Standorts auf Deutsch umgestellt. Ist das richtig?',
+    switchButton: 'Zu Englisch wechseln',
+    dismissButton: 'Ja, auf Deutsch fortfahren'
   },
   'ru': {
-    message: 'Хотите продолжить на русском языке?',
-    switchButton: 'Продолжить на русском',
-    dismissButton: 'Остаться здесь'
+    message: 'Мы переключили вас на русский язык на основе вашего местоположения. Это правильно?',
+    switchButton: 'Переключить на английский',
+    dismissButton: 'Да, продолжить на русском'
   },
   'it': {
-    message: 'Vuoi continuare in italiano?',
-    switchButton: 'Continua in italiano',
-    dismissButton: 'Resta qui'
+    message: 'Ti abbiamo cambiato in italiano in base alla tua posizione. È corretto?',
+    switchButton: 'Passa all\'inglese',
+    dismissButton: 'Sì, continua in italiano'
   },
   'pt': {
-    message: 'Gostaria de continuar em português?',
-    switchButton: 'Continuar em português',
-    dismissButton: 'Ficar aqui'
+    message: 'Mudamos para português com base na sua localização. Está correto?',
+    switchButton: 'Mudar para inglês',
+    dismissButton: 'Sim, continuar em português'
   },
   'zh': {
-    message: '您想继续使用中文吗？',
-    switchButton: '继续使用中文',
-    dismissButton: '留在这里'
+    message: '我们根据您的位置将您切换到中文。这样对吗？',
+    switchButton: '切换到英文',
+    dismissButton: '是的，继续使用中文'
   },
   'ja': {
-    message: '日本語で続けますか？',
-    switchButton: '日本語で続ける',
-    dismissButton: 'ここに留まる'
+    message: 'お客様の位置情報に基づいて日本語に切り替えました。これでよろしいですか？',
+    switchButton: '英語に切り替える',
+    dismissButton: 'はい、日本語で続ける'
   },
   'pl': {
-    message: 'Czy chcesz kontynuować w języku polskim?',
-    switchButton: 'Kontynuuj w języku polskim',
-    dismissButton: 'Zostań tutaj'
+    message: 'Przełączyliśmy Cię na język polski na podstawie Twojej lokalizacji. Czy to właściwe?',
+    switchButton: 'Przełącz na angielski',
+    dismissButton: 'Tak, kontynuuj w języku polskim'
   }
 };
 
@@ -76,21 +77,29 @@ export default function LanguageSuggestionBanner({ currentLocale }: LanguageSugg
   const [sourceLanguage, setSourceLanguage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('');
 
-  // Check for banner display cookies
+  // Check for banner display cookies with 2-second delay
   useEffect(() => {
-    const shouldShow = document.cookie.includes('showLanguageBanner=true');
-    const source = document.cookie.split(';')
-      .find(c => c.trim().startsWith('bannerSourceLanguage='))
-      ?.split('=')[1];
-    const target = document.cookie.split(';')
-      .find(c => c.trim().startsWith('bannerTargetLanguage='))
-      ?.split('=')[1];
+    const checkBannerCookies = () => {
+      const shouldShow = document.cookie.includes('showLanguageBanner=true');
+      const source = document.cookie.split(';')
+        .find(c => c.trim().startsWith('bannerSourceLanguage='))
+        ?.split('=')[1];
+      const target = document.cookie.split(';')
+        .find(c => c.trim().startsWith('bannerTargetLanguage='))
+        ?.split('=')[1];
+      const userChoice = localStorage.getItem('userLanguageChoice');
 
-    if (shouldShow && source && target) {
-      setShowBanner(true);
-      setSourceLanguage(source);
-      setTargetLanguage(target);
-    }
+      // Don't show if user has already made a choice in this session
+      if (shouldShow && source && target && !userChoice) {
+        setShowBanner(true);
+        setSourceLanguage(source);
+        setTargetLanguage(target);
+      }
+    };
+
+    // 2-second delay before showing banner
+    const timer = setTimeout(checkBannerCookies, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   // Don't show if no banner data
@@ -98,11 +107,11 @@ export default function LanguageSuggestionBanner({ currentLocale }: LanguageSugg
     return null;
   }
 
-  // Get messages in the detected (source) language
-  const messages = BANNER_MESSAGES[sourceLanguage as keyof typeof BANNER_MESSAGES] || BANNER_MESSAGES['en'];
+  // Get messages in the detected (target) language - the language user was redirected to
+  const messages = BANNER_MESSAGES[targetLanguage as keyof typeof BANNER_MESSAGES] || BANNER_MESSAGES['en'];
 
-  const handleAcceptSuggestion = () => {
-    // Navigate to target language
+  const handleSwitchToDefault = () => {
+    // Switch to default language (sourceLanguage)
     const supportedLocales = getSupportedLocales(settings as any);
     const segments = pathname.split('/');
     const hasLocalePrefix = supportedLocales.includes(segments[1]);
@@ -111,25 +120,28 @@ export default function LanguageSuggestionBanner({ currentLocale }: LanguageSugg
     // Get default language from settings
     const defaultLanguage = settings?.language || 'en';
     
-    // Navigate to target language
+    // Navigate to default language (sourceLanguage)
     let newPath: string;
-    if (targetLanguage === defaultLanguage) {
+    if (sourceLanguage === defaultLanguage) {
       // Default language doesn't use a prefix
       newPath = pathWithoutLocale ? `/${pathWithoutLocale}` : '/';
     } else {
       // Other languages use locale prefix
-      newPath = pathWithoutLocale ? `/${targetLanguage}/${pathWithoutLocale}` : `/${targetLanguage}`;
+      newPath = pathWithoutLocale ? `/${sourceLanguage}/${pathWithoutLocale}` : `/${sourceLanguage}`;
     }
     
-    // Mark as seen and dismiss
+    // Remember user's choice and mark as seen
+    localStorage.setItem('userLanguageChoice', sourceLanguage);
+    document.cookie = `userLanguageChoice=${sourceLanguage}; path=/; max-age=31536000`; // 1 year
     document.cookie = 'languageBannerSeen=true; path=/; max-age=31536000'; // 1 year
     setShowBanner(false);
     router.push(newPath);
   };
 
-  const handleDismiss = () => {
-    // Mark as dismissed and hide
-    document.cookie = 'languageBannerDismissed=true; path=/; max-age=604800'; // 7 days
+  const handleStayInCurrent = () => {
+    // Stay in current detected language (targetLanguage)
+    localStorage.setItem('userLanguageChoice', targetLanguage);
+    document.cookie = `userLanguageChoice=${targetLanguage}; path=/; max-age=31536000`; // 1 year
     document.cookie = 'languageBannerSeen=true; path=/; max-age=31536000'; // 1 year
     setShowBanner(false);
   };
@@ -163,24 +175,24 @@ export default function LanguageSuggestionBanner({ currentLocale }: LanguageSugg
             {/* Action buttons */}
             <div className="flex flex-col space-y-3">
               <button
-                onClick={handleAcceptSuggestion}
+                onClick={handleStayInCurrent}
                 className="w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-sky-600 to-purple-600 hover:from-sky-700 hover:to-purple-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               >
-                {messages.switchButton}
+                {messages.dismissButton}
               </button>
               
               <button
-                onClick={handleDismiss}
+                onClick={handleSwitchToDefault}
                 className="w-full inline-flex items-center justify-center px-6 py-3 bg-white/40 hover:bg-white/60 text-gray-700 font-medium rounded-2xl backdrop-blur-sm border border-white/30 hover:border-white/50 transform hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
               >
-                {messages.dismissButton}
+                {messages.switchButton}
               </button>
             </div>
           </div>
           
           {/* Close button */}
           <button
-            onClick={handleDismiss}
+            onClick={handleStayInCurrent}
             className="absolute top-4 right-4 p-1.5 rounded-xl bg-white/30 hover:bg-white/50 text-gray-600 hover:text-gray-800 backdrop-blur-sm transition-all duration-200"
             aria-label="Close"
           >
