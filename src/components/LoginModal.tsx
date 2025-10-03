@@ -36,7 +36,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 opacity-50" />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -52,8 +52,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg">
-                <div className="flex justify-end items-center mb-4">
+              <Dialog.Panel className="relative bg-white/90 backdrop-blur-md border border-white/20 rounded-2xl p-6 max-w-sm w-full shadow-lg">
+                {/* Glassmorphism gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl pointer-events-none" />
+                
+                <div className="relative flex justify-end items-center mb-4">
                   <Dialog.Title
                     as="h2"
                     className="sr-only text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
@@ -62,11 +65,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="cursor-pointer text-gray-600 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-full p-1"
+                    className="cursor-pointer bg-white/80 backdrop-blur-sm border border-white/30 text-gray-500 hover:text-gray-700 hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:ring-offset-2 rounded-xl p-2 transition-all duration-200 shadow-lg hover:shadow-xl"
                     aria-label="Close login modal"
                   >
                     <svg
-                      className="h-6 w-6"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

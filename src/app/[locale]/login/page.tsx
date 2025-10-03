@@ -22,26 +22,29 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side: Gradient background */}
-      <div className={`hidden md:flex w-1/2 bg-${backgroundColor} items-center justify-center`}>
-        <div className="text-white text-center">
-          <Link href='/'>
-          <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
+      {/* Left side: Enhanced gradient background */}
+      <div className={`hidden md:flex w-1/2 bg-gradient-to-br from-sky-600 via-sky-700 to-sky-800 items-center justify-center relative overflow-hidden`}>
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-400/20 to-transparent animate-pulse" />
+        
+        <div className="text-white text-center z-10 px-8">
+          <Link href='/' className="block group">
+          <h1 className="tracking-wide text-3xl sm:text-5xl font-bold bg-gradient-to-r from-white to-sky-100 bg-clip-text text-transparent mb-6 group-hover:scale-105 transition-transform duration-300">
             {t.welcomeTitle} 
           </h1>
           </Link>
-          <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
+          <p className="text-lg sm:text-xl text-sky-100 font-light leading-relaxed">
             {t.loginSubtitle}
           </p>
         </div>
       </div>
 
-      {/* Right side: Login form */}
-      <div className="w-full md:w-1/2 transparent flex items-center justify-center">
+      {/* Right side: Login form with glassmorphism */}
+      <div className="w-full md:w-1/2 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
       
-        <div className="w-full max-w-sm p-6 bg-transparent rounded-lg">
+        <div className="w-full max-w-sm p-6 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg mx-4">
 
-          <h1 className={`my-8 text-center tracking-wide text-xl sm:text-2xl font-extrabold text-${backgroundColor}`}>
+          <h1 className="mb-6 text-center tracking-wide text-xl sm:text-2xl font-bold text-gray-800">
             {t.loginButton}
           </h1>
 
@@ -53,7 +56,7 @@ export default function LoginPage() {
           <Privacy isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
           <Terms isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
 
-                        <Link href="/" >
+          <Link href="/" >
             <span className="my-16 flex justify-center hover:bg-gray-50">
               {settings.image ? (
                  <Tooltip content="Home" >

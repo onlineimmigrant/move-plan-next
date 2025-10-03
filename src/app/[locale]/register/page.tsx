@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import Privacy from '@/components/Privacy';
@@ -30,6 +30,8 @@ export default function RegisterPage() {
   const { settings } = useSettings();
   const { setSession } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
   const [isContactOpen, setIsContactOpen] = useState<boolean>(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
   const [isTermsOpen, setIsTermsOpen] = useState<boolean>(false);
@@ -168,39 +170,41 @@ export default function RegisterPage() {
   };
 
   const handleLogin = () => {
-    router.push('/login');
+    router.push(`/${locale}/login`);
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side: Gradient background */}
-      <div className="hidden md:flex w-1/2 bg-gradient-to-b from-sky-400 to-sky-700 items-center justify-center">
-       
-        <div className="text-white text-center">
-          <Link href="/">
-            <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
+      {/* Left side: Enhanced gradient background */}
+      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-sky-600 via-sky-700 to-sky-800 items-center justify-center relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-400/20 to-transparent animate-pulse" />
+        
+        <div className="text-white text-center z-10 px-8">
+          <Link href="/" className="block group">
+            <h1 className="tracking-wide text-3xl sm:text-5xl font-bold bg-gradient-to-r from-white to-sky-100 bg-clip-text text-transparent mb-6 group-hover:scale-105 transition-transform duration-300">
               {t.welcomeTitle}
             </h1>
           </Link>
-          <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
+          <p className="text-lg sm:text-xl text-sky-100 font-light leading-relaxed">
             {t.registerSubtitle}
           </p>
         </div>
       </div>
 
-      {/* Right side: Register form */}
-      <div className="w-full md:w-1/2 transparent flex items-center justify-center">
-        <div className="w-full max-w-sm p-6">
+      {/* Right side: Register form with glassmorphism */}
+      <div className="w-full md:w-1/2 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
+        <div className="w-full max-w-sm p-6 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg mx-4">
 
-          <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold text-gray-900">
+          <h1 className="mb-6 text-center tracking-wide text-xl sm:text-2xl font-bold text-gray-800">
             {t.registerTitle}
           </h1>
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           {success && <p className="text-teal-500 text-center mb-4">{success}</p>}
 
-            <form onSubmit={handleRegister} className="space-y-4">
-            <div className="space-y-4">
+            <form onSubmit={handleRegister} className="space-y-3">
+            <div className="space-y-3">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                   {t.username}
@@ -210,8 +214,9 @@ export default function RegisterPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3 py-2.5 bg-white/70 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all duration-200 placeholder:text-gray-500 text-gray-900"
                   required
+                  placeholder={t.username}
                 />
               </div>
               <div>
@@ -223,8 +228,9 @@ export default function RegisterPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3 py-2.5 bg-white/70 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all duration-200 placeholder:text-gray-500 text-gray-900"
                   required
+                  placeholder={t.email}
                 />
               </div>
               <div className="relative">
@@ -236,36 +242,36 @@ export default function RegisterPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3 py-2.5 bg-white/70 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all duration-200 placeholder:text-gray-500 text-gray-900 pr-10"
                   required
+                  placeholder={t.password}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-8 text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
+                  className="absolute top-7.5 right-0 pr-3 flex items-center hover:bg-gray-100/50 rounded-r-xl transition-colors duration-200 h-10"
                   aria-label={showPassword ? t.hidePassword : t.showPassword}
                 >
-                  {showPassword ? t.hide : t.show}
-
+                  <span className="text-sm text-gray-500 hover:text-gray-700">{showPassword ? t.hide : t.show}</span>
                 </button>
               </div>
             </div>
 
-            <div className="mt-16 space-y-4 text-base">
+            <div className="mt-6 space-y-3 text-base">
               <Button
-              variant='start'
+                variant="primary"
                 type="submit"
                 disabled={isLoading}
-                
+                className="w-full"
               >
                 {isLoading ? t.registerLoading : t.registerButton}
                  <RightArrowDynamic />
               </Button>
               <Button
-              variant='start'
+                variant="outline"
                 type="button"
                 onClick={handleLogin}
-                className=" bg-yellow-200 text-gray-400 "
+                className="w-full"
               >
                 {t.backToLogin}
                 <RightArrowDynamic />

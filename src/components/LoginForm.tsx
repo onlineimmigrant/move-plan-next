@@ -29,6 +29,9 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // Extract locale from pathname
+  const locale = pathname.split('/')[1];
 
   const t = useAuthTranslations();
 
@@ -97,11 +100,13 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
 
   const handleRegister = () => {
     try {
-      router.push('/register');
-      console.log('Navigation to /register');
+      const registerPath = locale ? `/${locale}/register` : '/register';
+      router.push(registerPath);
+      console.log(`Navigation to ${registerPath}`);
     } catch (navError: unknown) {
       console.error('Register navigation error:', (navError as Error).message);
-      window.location.href = '/register';
+      const fallbackPath = locale ? `/${locale}/register` : '/register';
+      window.location.href = fallbackPath;
     }
     if (onSuccess) onSuccess();
   };
@@ -197,10 +202,14 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
       {resetSuccess && <p className="text-green-500 text-center">{resetSuccess}</p>}
 
       {showForgotPassword ? (
-        <form onSubmit={handleForgotPassword} className="space-y-4">
-          <div className="space-y-4">
+        <div>
+          <h2 className="mb-6 text-center tracking-wide text-xl sm:text-2xl font-bold text-gray-800">
+            {t.passwordReset}
+          </h2>
+          <form onSubmit={handleForgotPassword} className="space-y-3">
+          <div className="space-y-3">
             <div>
-              <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700 mb-2">
                 {t.email}
               </label>
               <input
@@ -208,39 +217,39 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
                 type="email"
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2.5 bg-white/70 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all duration-200 placeholder:text-gray-500 text-gray-900"
                 required
+                placeholder={t.email}
               />
             </div>
           </div>
-          <div className="mt-16 space-y-4">
-            <Button variant="start" type="submit" disabled={isLoading}>
-              {isLoading ? t.resetPasswordLoading : t.resetPasswordButton}
+                    <div className="mt-6 space-y-3">
+            <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? t.loading : t.forgotPassword}
             </Button>
-            <Button
-              type="button"
-              variant="start"
-              onClick={() => setShowForgotPassword(false)}
-              className="bg-yellow-200 text-gray-400"
-            >
-              {t.backToLogin}
+            <Button type="button" variant="outline" onClick={() => setShowForgotPassword(false)} className="w-full">
+              {t.loginButton}
             </Button>
           </div>
         </form>
+        </div>
       ) : (
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-3">
+          <div className="space-y-3">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 {t.email}
               </label>
-              <input
+                                          <input
                 id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
-                required
+                className="relative block w-full px-3 py-2.5 bg-white/70 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all duration-200 placeholder:text-gray-500 text-gray-900"
+                placeholder={t.email}
               />
             </div>
             <div className="relative">
@@ -249,49 +258,54 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
               </label>
               <input
                 id="password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
-                required
+                className="relative block w-full px-3 py-2.5 bg-white/70 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all duration-200 placeholder:text-gray-500 text-gray-900 pr-10"
+                placeholder={t.password}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-8 text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
+                className="absolute top-7.5 right-0 pr-3 flex items-center hover:bg-gray-100/50 rounded-r-xl transition-colors duration-200 h-10"
                 aria-label={showPassword ? t.hidePassword : t.showPassword}
               >
-                {showPassword ? t.hide : t.show}
+                <span className="text-sm text-gray-500 hover:text-gray-700">
+                  {showPassword ? t.hide : t.show}
+                </span>
               </button>
             </div>
           </div>
-          <div className="mt-16 space-y-4 text-base">
-            <Button variant="start" type="submit" disabled={isLoading}>
+          <div className="mt-6 space-y-3 text-base">
+            <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
               {isLoading ? t.loginLoading : t.loginButton}
               <RightArrowDynamic />
             </Button>
             <Button
               type="button"
-              variant="start"
+              variant="outline"
               onClick={handleRegister}
-              className="bg-yellow-200 text-gray-400"
+              className="w-full"
             >
               {t.registerButton}
               <RightArrowDynamic />
             </Button>
           </div>
-          <div className="mt-4 flex justify-center space-x-4">
+          <div className="mt-6 flex justify-center space-x-6">
             <button
               type="button"
               onClick={onShowPrivacy}
-              className="text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
+              className="text-sm text-gray-500 hover:text-sky-600 focus:outline-none cursor-pointer transition-colors duration-200 underline hover:no-underline"
             >
               {t.privacy}
             </button>
             <button
               type="button"
               onClick={onShowTerms}
-              className="text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
+              className="text-sm text-gray-500 hover:text-sky-600 focus:outline-none cursor-pointer transition-colors duration-200 underline hover:no-underline"
             >
               {t.terms}
             </button>
@@ -300,7 +314,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
               onClick={() => setShowForgotPassword(true)}
               className="text-sm text-gray-600 hover:text-sky-600 focus:outline-none cursor-pointer"
             >
-              {t.forgotPassword}
+              {t.forgotPasswordQuestion}
             </button>
           </div>
         </form>

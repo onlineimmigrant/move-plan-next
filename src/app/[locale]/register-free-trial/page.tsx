@@ -214,39 +214,43 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side: Gradient background */}
-      <div className="hidden md:flex w-1/2 bg-gradient-to-b from-sky-400 to-sky-700 items-center justify-center">
-        <div className="text-white text-center">
-          <Link href="/">
-            <h1 className="tracking-widest text-xl sm:text-4xl font-extrabold bg-gradient-to-r from-sky-200 via-sky-300 to-white bg-clip-text text-transparent">
+      {/* Left side: Enhanced gradient background */}
+      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-sky-600 via-sky-700 to-sky-800 items-center justify-center relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-400/20 to-transparent animate-pulse" />
+        
+        <div className="text-white text-center z-10 px-8">
+          <Link href="/" className="block group">
+            <h1 className="tracking-wide text-3xl sm:text-5xl font-bold bg-gradient-to-r from-white to-sky-100 bg-clip-text text-transparent mb-6 group-hover:scale-105 transition-transform duration-300">
               {t.welcomeTitle}
             </h1>
           </Link>
-          <p className="mt-4 text-2xl font-semibold tracking-wide text-white">
+          <p className="text-lg sm:text-xl text-sky-100 font-light leading-relaxed">
             {t.registerFreeTrialSubtitle}
           </p>
         </div>
       </div>
 
-      {/* Right side: Register form */}
-      <div className="w-full md:w-1/2 transparent flex items-center justify-center">
-        <div className="w-full max-w-sm p-6">
-          <Link href="/">
-            <span className="absolute top-4 right-4 mb-16 flex justify-center hover:bg-gray-50">
-              {settings.image ? (
-                <Image
-                  src={settings.image}
-                  alt={t.logo}
-                  width={60}
-                  height={60}
-                  className="h-8 w-auto"
-                  onError={() => console.error('Failed to load logo:')}
-                />
-              ) : (
-                <span className="text-gray-500"></span>
-              )}
-            </span>
-          </Link>
+      {/* Right side: Register form with glassmorphism */}
+      <div className="w-full md:w-1/2 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative">
+        <Link href="/" className="absolute top-6 right-6 z-10">
+          <div className="p-3 rounded-xl hover:bg-gray-50/80 transition-all duration-200 group">
+            {settings.image ? (
+              <Image
+                src={settings.image}
+                alt={t.logo}
+                width={60}
+                height={60}
+                className="h-8 w-auto group-hover:scale-110 transition-transform duration-200"
+                onError={() => console.error('Failed to load logo:')}
+              />
+            ) : (
+              <span className="text-gray-400 text-sm">Home</span>
+            )}
+          </div>
+        </Link>
+        
+        <div className="w-full max-w-sm p-6 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg mx-4">
           <h1 className="my-8 text-center tracking-tight text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent">
             {t.registerFreeTrialTitle}
           </h1>
@@ -265,8 +269,9 @@ export default function RegisterPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3 py-2.5 bg-white/70 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all duration-200 placeholder:text-gray-500 text-gray-900"
                   required
+                  placeholder={t.username}
                 />
               </div>
               <div>
@@ -305,20 +310,21 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="mt-16 space-y-4 text-base">
+            <div className="mt-6 space-y-3 text-base">
               <Button
-                variant="start"
+                variant="primary"
                 type="submit"
                 disabled={isLoading}
+                className="w-full"
               >
                 {isLoading ? t.freeTrialLoading : t.registerButton}
                 <RightArrowDynamic />
               </Button>
               <Button
-                variant="start"
+                variant="outline"
                 type="button"
                 onClick={handleLogin}
-                className="bg-yellow-200 text-gray-400"
+                className="w-full"
               >
                 {t.backToLogin}
                 <RightArrowDynamic />

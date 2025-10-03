@@ -39,6 +39,8 @@ export const useAuthTranslations = () => {
     loginLoading: translations.loginLoading,
     rememberMe: translations.rememberMe,
     forgotPassword: translations.forgotPassword,
+    passwordReset: translations.passwordReset,
+    forgotPasswordQuestion: translations.forgotPasswordQuestion,
     noAccount: translations.noAccount,
     createAccount: translations.createAccount,
     backToLogin: translations.backToLogin,
