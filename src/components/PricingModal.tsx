@@ -593,24 +593,24 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       let annualPromotionPrice = undefined;
       
       if (monthlyIsPromotion) {
-        if (monthly?.promotion_price !== undefined) {
-          // Use currency-aware promotion price or raw promotion price (legacy)
-          const monthlyPromoPriceResult = getPriceForCurrency({ ...monthly, price: monthly.promotion_price }, userCurrency);
-          monthlyPromotionPrice = monthlyPromoPriceResult?.price ?? monthly.promotion_price;
-        } else if (monthly?.promotion_percent !== undefined) {
-          // Calculate promotion price from percentage
+        if (monthly?.promotion_percent !== undefined) {
+          // Calculate promotion price from percentage of the converted price
           monthlyPromotionPrice = parseFloat((monthlyPrice * (1 - monthly.promotion_percent / 100)).toFixed(2));
+        } else if (monthly?.promotion_price !== undefined) {
+          // TEMP FIX: Try using promotion_price directly without any division
+          // This assumes promotion_price is already in the correct currency units
+          monthlyPromotionPrice = monthly.promotion_price;
         }
       }
       
       if (annualIsPromotion) {
-        if (annual?.promotion_price !== undefined) {
-          // Use currency-aware promotion price or raw promotion price (legacy)
-          const annualPromoPriceResult = getPriceForCurrency({ ...annual, price: annual.promotion_price }, userCurrency);
-          annualPromotionPrice = annualPromoPriceResult?.price ?? annual.promotion_price;
-        } else if (annual?.promotion_percent !== undefined) {
-          // Calculate promotion price from percentage
+        if (annual?.promotion_percent !== undefined) {
+          // Calculate promotion price from percentage of the converted price
           annualPromotionPrice = parseFloat((annualPrice * (1 - annual.promotion_percent / 100)).toFixed(2));
+        } else if (annual?.promotion_price !== undefined) {
+          // TEMP FIX: Try using promotion_price directly without any division
+          // This assumes promotion_price is already in the correct currency units
+          annualPromotionPrice = annual.promotion_price;
         }
       } else if (monthlyIsPromotion && monthlyPromotionPrice !== undefined && monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
         // Calculate annual promotion price from monthly promotion using discount
