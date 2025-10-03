@@ -97,18 +97,10 @@ export default async function middleware(request: NextRequest) {
     // For now, we'll use USD as the default fallback
     // baseCurrency = settings?.base_currency || 'USD';
     
-    console.log('🌐 MIDDLEWARE DEBUG:');
-    console.log('   - Pathname:', pathname);
-    console.log('   - Cookie locale:', cookieLocale);
-    console.log('   - DB settings.language:', settings.language);
-    console.log('   - DB default locale:', dbDefaultLocale);
-    console.log('   - Final default locale:', defaultLocale);
-    console.log('   - Final base currency (fallback):', baseCurrency);
-    console.log('   - Supported locales:', supportedLocales);
-    console.log('   - Headers origin:', request.headers.get('origin'));
-    console.log('   - Headers referer:', request.headers.get('referer'));
+    // Settings loaded successfully
+    console.log('🌐 Middleware: Settings loaded, default locale:', defaultLocale);
   } catch (error) {
-    console.error('Middleware - Error fetching settings:', error);
+    console.error('Middleware: Failed to load settings, using fallback values');
   }
 
   // Note: We should NOT force redirects based on database default language
@@ -130,7 +122,6 @@ export default async function middleware(request: NextRequest) {
   const isDynamicSlugPattern = /^\/[^\/]+$/.test(cleanPath) && cleanPath !== '/';
   
   if (isDynamicSlugPattern && !isKnownRoute(pathname)) {
-    console.log('🔍 DYNAMIC ROUTE: Allowing potential [locale]/[slug] route:', pathname);
     // Let it through to next-intl but the component will validate if content exists
     // If no content exists, the component should call notFound()
   }
@@ -157,13 +148,11 @@ export default async function middleware(request: NextRequest) {
   
   let currency;
   if (isLocal && !hasGeolocationData) {
-    // Local development: use base currency fallback (will be GBP for your test data)
+    // Local development: use base currency fallback
     currency = baseCurrency;
-    console.log('   - Using local development base currency:', currency);
   } else {
     // Production or with geolocation: use country-based detection
     currency = getCurrencyByCountry(country, baseCurrency);
-    console.log('   - Using geolocation-based currency:', currency);
   }
   
   response.headers.set('x-user-currency', currency);
@@ -172,11 +161,11 @@ export default async function middleware(request: NextRequest) {
   // Add language detection based on geolocation and browser preferences
   const acceptLanguage = request.headers.get('accept-language');
   let detectedLanguage;
+  let shouldAutoSwitch = false;
   
   if (isLocal && !hasGeolocationData) {
     // Local development: use database default language or fallback
     detectedLanguage = defaultLocale;
-    console.log('   - Using local development default language:', detectedLanguage);
   } else {
     // Production or with geolocation: use smart language detection
     detectedLanguage = detectLanguageFromSources(
@@ -185,35 +174,52 @@ export default async function middleware(request: NextRequest) {
       settings, // Pass settings object instead of just supportedLocales array
       defaultLocale
     );
-    console.log('   - Using geolocation-based language detection:', detectedLanguage);
+    
+    // Check if we should auto-switch (detected language is different from default)
+    if (detectedLanguage !== defaultLocale && supportedLocales.includes(detectedLanguage)) {
+      shouldAutoSwitch = true;
+    }
   }
   
   response.headers.set('x-user-language', detectedLanguage);
+  response.headers.set('x-should-auto-switch', shouldAutoSwitch.toString());
   
-  // Set a cookie for the detected language (for client-side access)
+  // Set cookies for language detection and banner display
   response.cookies.set('detectedLanguage', detectedLanguage, {
     maxAge: 60 * 60 * 24 * 30, // 30 days
     path: '/',
     sameSite: 'lax'
   });
   
-  console.log('🌍 GEOLOCATION DEBUG:');
-  console.log('   - request.geo:', (request as any).geo);
-  console.log('   - geoCountry:', geoCountry);
-  console.log('   - cf-ipcountry header:', cfCountry);
-  console.log('   - x-vercel-ip-country header:', vercelCountry);
-  console.log('   - Final country:', country);
-  console.log('   - Base currency:', baseCurrency);
-  console.log('   - Detected currency:', currency);
-  console.log('   - Accept-Language header:', acceptLanguage);
-  console.log('   - Detected language:', detectedLanguage);
-  console.log('   - Country-based language:', getLanguageByCountry(country, 'en'));
-  console.log('   - All headers:', Object.fromEntries(request.headers.entries()));
+  // If auto-switch is needed and user hasn't dismissed, show banner
+  if (shouldAutoSwitch) {
+    const hasSeenBanner = request.cookies.get('languageBannerSeen')?.value;
+    const hasDismissed = request.cookies.get('languageBannerDismissed')?.value;
+    
+    if (!hasSeenBanner && !hasDismissed) {
+      // First time seeing auto-switch suggestion - show banner in detected language
+      response.cookies.set('showLanguageBanner', 'true', {
+        maxAge: 60 * 5, // 5 minutes
+        path: '/',
+        sameSite: 'lax'
+      });
+      response.cookies.set('bannerSourceLanguage', detectedLanguage, {
+        maxAge: 60 * 5, // 5 minutes
+        path: '/',
+        sameSite: 'lax'
+      });
+      response.cookies.set('bannerTargetLanguage', defaultLocale, {
+        maxAge: 60 * 5, // 5 minutes
+        path: '/',
+        sameSite: 'lax'
+      });
+    }
+  }
   
-  console.log('📋 MIDDLEWARE RESULT:');
-  console.log('   - Response status:', response.status);
-  console.log('   - Response headers location:', response.headers.get('location'));
-  console.log('   - Added x-pathname header:', pathname);
+  // Production logging (minimal)
+  if (shouldAutoSwitch) {
+    console.log('🌍 Language auto-switch triggered:', detectedLanguage, 'for country:', country);
+  }
   
   return response;
 }

@@ -286,17 +286,11 @@ export function detectLanguageFromSources(
 ): string {
   const supportedLanguages = getSupportedLocales(settings);
   
-  console.log('🌍 [Language Detection] Input sources:', { countryCode, acceptLanguage });
-  console.log('🌍 [Language Detection] Supported languages:', supportedLanguages);
-  
   // Priority 1: Country-based language
   if (countryCode) {
     const countryLanguage = getLanguageByCountry(countryCode, '');
     if (countryLanguage && supportedLanguages.includes(countryLanguage)) {
-      console.log(`🌍 [Language Detection] Country ${countryCode} → Language: ${countryLanguage} (supported)`);
       return countryLanguage;
-    } else if (countryLanguage) {
-      console.log(`🌍 [Language Detection] Country ${countryCode} → Language: ${countryLanguage} (not supported, skipping)`);
     }
   }
   
@@ -305,12 +299,10 @@ export function detectLanguageFromSources(
     const preferredLanguages = parseAcceptLanguage(acceptLanguage);
     const browserLanguage = getBestSupportedLanguage(preferredLanguages, supportedLanguages, '');
     if (browserLanguage && supportedLanguages.includes(browserLanguage)) {
-      console.log(`🌍 [Language Detection] Accept-Language ${acceptLanguage} → Language: ${browserLanguage} (supported)`);
       return browserLanguage;
     }
   }
   
   // Priority 3: Fallback
-  console.log(`🌍 [Language Detection] No supported language found, using fallback: ${fallback}`);
   return fallback;
 }
