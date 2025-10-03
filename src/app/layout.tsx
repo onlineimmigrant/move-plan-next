@@ -14,6 +14,7 @@ import LayoutSEO from '@/components/LayoutSEO';
 import TestStructuredData from '@/components/TestStructuredData';
 import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
 import ClientStructuredDataInjector from '@/components/ClientStructuredDataInjector';
+import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
 
 export const revalidate = 0;
 
@@ -209,6 +210,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           baseUrl={currentDomain}
           menuItems={menuItems}
         >
+          <LanguageSuggestionBanner currentLocale={currentLocale} />
           {children}
         </ClientProviders>
       </body>

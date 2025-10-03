@@ -3,6 +3,7 @@ import { getSupportedLocales } from './lib/language-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSettings } from './lib/getSettings';
 import { getCurrencyByCountry } from './lib/currency';
+import { getLanguageByCountry, detectLanguageFromSources } from './lib/language';
 
 // Define known static routes that should always be handled by next-intl
 const KNOWN_ROUTES = [
@@ -78,9 +79,10 @@ export default async function middleware(request: NextRequest) {
   let defaultLocale = cookieLocale || 'en'; // Use cookie first, then fallback
   let supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl']; // fallback
   let baseCurrency = 'GBP'; // Use GBP as fallback to match your test data
+  let settings: any = null; // Initialize settings variable outside try block
   
   try {
-    const settings = await getSettings(baseUrl);
+    settings = await getSettings(baseUrl);
     supportedLocales = getSupportedLocales(settings as any);
     const dbDefaultLocale = settings.language && supportedLocales.includes(settings.language) 
       ? settings.language 
@@ -167,6 +169,34 @@ export default async function middleware(request: NextRequest) {
   response.headers.set('x-user-currency', currency);
   response.headers.set('x-user-country', country);
   
+  // Add language detection based on geolocation and browser preferences
+  const acceptLanguage = request.headers.get('accept-language');
+  let detectedLanguage;
+  
+  if (isLocal && !hasGeolocationData) {
+    // Local development: use database default language or fallback
+    detectedLanguage = defaultLocale;
+    console.log('   - Using local development default language:', detectedLanguage);
+  } else {
+    // Production or with geolocation: use smart language detection
+    detectedLanguage = detectLanguageFromSources(
+      country,
+      acceptLanguage || undefined,
+      settings, // Pass settings object instead of just supportedLocales array
+      defaultLocale
+    );
+    console.log('   - Using geolocation-based language detection:', detectedLanguage);
+  }
+  
+  response.headers.set('x-user-language', detectedLanguage);
+  
+  // Set a cookie for the detected language (for client-side access)
+  response.cookies.set('detectedLanguage', detectedLanguage, {
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    path: '/',
+    sameSite: 'lax'
+  });
+  
   console.log('🌍 GEOLOCATION DEBUG:');
   console.log('   - request.geo:', (request as any).geo);
   console.log('   - geoCountry:', geoCountry);
@@ -175,6 +205,9 @@ export default async function middleware(request: NextRequest) {
   console.log('   - Final country:', country);
   console.log('   - Base currency:', baseCurrency);
   console.log('   - Detected currency:', currency);
+  console.log('   - Accept-Language header:', acceptLanguage);
+  console.log('   - Detected language:', detectedLanguage);
+  console.log('   - Country-based language:', getLanguageByCountry(country, 'en'));
   console.log('   - All headers:', Object.fromEntries(request.headers.entries()));
   
   console.log('📋 MIDDLEWARE RESULT:');
