@@ -143,7 +143,10 @@ export default async function middleware(request: NextRequest) {
   const geoCountry = (request as any).geo?.country;
   const cfCountry = request.headers.get('cf-ipcountry');
   const vercelCountry = request.headers.get('x-vercel-ip-country');
-  const country = geoCountry || cfCountry || vercelCountry || 'US';
+  const forwardedCountry = request.headers.get('x-forwarded-country');
+  const realIpCountry = request.headers.get('x-real-ip-country');
+  
+  const country = geoCountry || vercelCountry || cfCountry || forwardedCountry || realIpCountry || 'US';
   
   // For local development without geolocation, use smart base currency detection
   // In production, use geolocation-based currency
@@ -193,5 +196,7 @@ export const config = {
     '/((?!api|_next|_vercel|favicon.ico|sitemap.xml|robots.txt|.*\\.[a-zA-Z0-9]+$).*)',
     // Also include the root path
     '/'
-  ]
+  ],
+  // Enable Edge Runtime for Vercel geolocation
+  runtime: 'experimental-edge'
 };
