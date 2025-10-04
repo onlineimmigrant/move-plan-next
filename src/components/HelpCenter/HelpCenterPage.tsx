@@ -139,7 +139,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50/50 to-white">
       {/* Apple-style Header */}
-      <header className="z-11 px-6 sm:px-10 flex justify-between items-center bg-white/95 backdrop-blur-3xl border-b border-gray-200/30 sticky top-0 h-20 shadow-[0_1px_20px_rgba(0,0,0,0.08)]"
+      <header className="z-11 px-6 sm:px-10 flex justify-between items-center bg-white/95 backdrop-blur-3xl sticky top-0 h-20"
         style={{
           backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
           WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -169,7 +169,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
             alt="Logo"
             width={28}
             height={28}
-            className="h-7 w-7 sm:hidden rounded-lg shadow-sm"
+            className="h-7 w-7 sm:hidden rounded-lg"
             onError={(e) => {
               console.error('Failed to load favicon:', settings?.favicon);
               e.currentTarget.style.display = 'none';
@@ -183,7 +183,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
               alt="Logo"
               width={36}
               height={36}
-              className="hidden sm:block h-9 w-auto rounded-lg shadow-sm"
+              className="hidden sm:block h-9 w-auto rounded-lg"
               onError={(e) => {
                 console.error('Failed to load logo:', settings.image);
                 e.currentTarget.style.display = 'none';
@@ -200,7 +200,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
         
         <div className='flex items-center space-x-4'>
           <h1 className="text-lg sm:text-3xl font-semibold text-gray-900 tracking-[-0.02em] antialiased">{getHeaderTitle()}</h1>
-          <span className="hidden sm:flex ml-4 px-4 py-2 text-[12px] font-medium bg-sky-50/80 text-sky-600 rounded-full border border-sky-200/50 backdrop-blur-sm antialiased">
+          <span className="hidden sm:flex ml-4 px-4 py-2 text-[12px] font-medium bg-sky-50/80 text-sky-600 rounded-full backdrop-blur-sm antialiased">
             {t.supportKnowledgeBase}
           </span>
         </div>
@@ -212,7 +212,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
       </header>
 
       {/* Apple-style Mobile Navigation */}
-      <div className="bg-white/90 backdrop-blur-2xl border-b border-gray-200/40 sticky top-20 z-10 shadow-[0_1px_10px_rgba(0,0,0,0.04)]"
+      <div className="bg-white/90 backdrop-blur-2xl sticky top-20 z-10"
         style={{
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
@@ -227,13 +227,13 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
-                    className={`flex items-center px-4 py-2.5 text-[13px] font-medium rounded-xl whitespace-nowrap transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased tracking-[-0.01em] ${
+                    className={`flex items-center px-4 py-2.5 text-[13px] font-medium rounded-xl whitespace-nowrap transition-all duration-150 ease-out antialiased tracking-[-0.01em] ${
                       isActive
-                        ? 'bg-sky-100/80 text-sky-700 shadow-sm backdrop-blur-sm scale-105'
+                        ? 'bg-sky-100/80 text-sky-700 backdrop-blur-sm scale-105'
                         : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/60 hover:scale-102'
                     }`}
                   >
-                    <tab.icon className={`mr-2 h-4 w-4 ${isActive ? 'text-sky-600' : 'text-gray-400'} transition-colors duration-300`} />
+                    <tab.icon className={`mr-2 h-4 w-4 ${isActive ? 'text-sky-600' : 'text-gray-400'} transition-colors duration-150`} />
                     {tab.label}
                   </button>
                 );
@@ -265,7 +265,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
         {/* Apple-style Content Container */}
         <div className="relative">
           {/* Glass background container */}
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-3xl border border-gray-200/40 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)]"
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-3xl rounded-3xl"
             style={{
               backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
               WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -289,7 +289,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
       </main>
 
       {/* Apple-style Footer */}
-      <footer className="bg-white/60 backdrop-blur-2xl border-t border-gray-200/40 mt-16"
+      <footer className="bg-white/60 backdrop-blur-2xl mt-16"
         style={{
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
@@ -303,7 +303,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
             <p className="text-[14px] text-gray-600 antialiased max-w-md mx-auto leading-relaxed">
               Our support team is here to help you get the most out of our platform
             </p>
-            <button className="mt-6 px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white text-[14px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 shadow-sm hover:shadow-md antialiased tracking-[-0.01em]">
+            <button className="mt-6 px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white text-[14px] font-medium rounded-xl transition-all duration-150 ease-out hover:scale-105 antialiased tracking-[-0.01em]">
               Contact Support
             </button>
           </div>

@@ -80,7 +80,7 @@ export default function ModernLanguageSwitcher({
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
-        <Menu.Button className="group relative overflow-hidden inline-flex w-full justify-center items-center gap-x-2.5 rounded-2xl bg-white/90 backdrop-blur-3xl hover:bg-white/95 border border-black/8 hover:border-black/12 px-5 py-3 text-[14px] font-medium text-gray-700 hover:text-gray-900 shadow-sm hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400/25 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased transform hover:scale-[1.02] active:scale-[0.98]"
+        <Menu.Button className="group relative overflow-hidden inline-flex w-full justify-center items-center gap-x-2.5 rounded-2xl bg-white/90 backdrop-blur-3xl hover:bg-white/95 px-5 py-3 text-[14px] font-medium text-gray-700 hover:text-gray-900 shadow-sm hover:shadow-lg focus:outline-none transition-all duration-150 ease-out antialiased transform hover:scale-[1.01] active:scale-[0.98]"
           style={{
             backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
             WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -90,10 +90,10 @@ export default function ModernLanguageSwitcher({
           <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent rounded-2xl pointer-events-none"></div>
           
           <span className="relative z-10 text-[13px] font-semibold tracking-[-0.01em] transition-all duration-300 group-hover:scale-[1.02]">{currentLocale.toUpperCase()}</span>
-          <ChevronDownIcon className="relative z-10 -mr-1 h-4 w-4 text-gray-500 group-hover:text-gray-700 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-180 group-hover:scale-110" aria-hidden="true" />
+          <ChevronDownIcon className="relative z-10 -mr-1 h-4 w-4 text-gray-500 group-hover:text-gray-700 transition-all duration-150 ease-out group-hover:rotate-180" aria-hidden="true" />
           
           {/* Subtle shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-400 ease-out"></div>
         </Menu.Button>
       </div>
 
@@ -107,7 +107,7 @@ export default function ModernLanguageSwitcher({
         leaveTo="transform opacity-0 scale-95 translate-y-2"
       >
         <Menu.Items 
-          className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl bg-white/90 backdrop-blur-3xl shadow-[0_25px_80px_rgba(0,0,0,0.15)] border border-black/8 focus:outline-none overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300"
+          className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl bg-white/90 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] focus:outline-none overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200"
           style={{ 
             zIndex,
             backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -130,12 +130,12 @@ export default function ModernLanguageSwitcher({
                       active ? 'bg-gray-50/70 backdrop-blur-sm text-gray-900 shadow-sm' : 'text-gray-700'
                     } ${
                       locale === currentLocale ? 'bg-gray-100/80 text-gray-900 font-semibold shadow-inner' : ''
-                    } group relative overflow-hidden flex items-center w-full px-5 py-3.5 mx-2 rounded-xl text-[14px] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased ${
+                    } group relative overflow-hidden flex items-center w-full px-5 py-3.5 mx-2 rounded-xl text-[14px] transition-all duration-150 ease-out hover:scale-[1.01] antialiased ${
                       index !== supportedLocales.length - 1 ? 'mb-1' : ''
                     }`}
                   >
                     {/* Hover shine effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-500 ease-out"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-300 ease-out"></div>
                     
                     <span className="relative z-10 mr-4 text-[11px] font-bold text-gray-600 w-9 text-center bg-gray-100/90 backdrop-blur-sm rounded-lg px-2 py-1.5 shadow-sm">
                       {locale.toUpperCase()}

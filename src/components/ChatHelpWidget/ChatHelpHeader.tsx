@@ -60,11 +60,11 @@ export default function ChatHelpHeader({
   };
 
   return (
-    <div className="flex justify-between items-center mb-2 bg-white/95 backdrop-blur-sm px-6 py-4 shadow-sm rounded-t-2xl border-b border-gray-100 relative z-[100]">
+    <div className="flex justify-between items-center mb-2 bg-white/95 backdrop-blur-sm px-6 py-4 rounded-t-2xl relative z-[100]">
       <Tooltip variant="right" content={getTooltipContent()}>
         <button
           onClick={toggleSize}
-          className="cursor-pointer text-sky-500 hover:text-sky-600 hover:bg-sky-50 p-2.5 rounded-full transition-all duration-300 ease-out hover:scale-105"
+          className="cursor-pointer text-sky-500 hover:text-sky-600 hover:bg-sky-50 p-2.5 rounded-full transition-all duration-150 ease-out hover:scale-105"
         >
           {size === 'fullscreen' ? (
             <ArrowsPointingInIcon className="h-5 w-5" />
@@ -91,7 +91,7 @@ export default function ChatHelpHeader({
       <Tooltip content={t.close}>
         <button
           onClick={closeWidget}
-          className="cursor-pointer text-sky-500 hover:text-sky-600 hover:bg-sky-50 p-2.5 rounded-full transition-all duration-300 ease-out hover:scale-105"
+          className="cursor-pointer text-sky-500 hover:text-sky-600 hover:bg-sky-50 p-2.5 rounded-full transition-all duration-150 ease-out hover:scale-105"
         >
           <XMarkIcon className="h-5 w-5" />
         </button>

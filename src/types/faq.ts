@@ -12,5 +12,8 @@ export type FAQ = {
   product_sub_type_id?: number | null;
   organization_id: string | null;
   organisation_id?: string | null; // Support legacy field
+  // Help Center fields
+  is_help_center?: boolean;
+  help_center_order?: number;
   [key: string]: any; // Allow additional fields
 };

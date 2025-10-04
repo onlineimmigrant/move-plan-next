@@ -26,7 +26,7 @@ export default function ChatHelpTabs({
   const tabs = [
     {
       id: 'welcome' as const,
-      name: t.welcome,
+      name: 'Browse',
       icon: HomeIcon,
       color: 'text-sky-600',
       bgColor: 'bg-sky-50',
@@ -34,7 +34,7 @@ export default function ChatHelpTabs({
     },
     {
       id: 'conversation' as const,
-      name: t.liveSupport,
+      name: 'Live Chat',
       icon: ChatBubbleLeftRightIcon,
       color: 'text-sky-600',
       bgColor: 'bg-sky-50',
@@ -52,26 +52,39 @@ export default function ChatHelpTabs({
   ];
 
   return (
-    <div className={`flex border-t border-gray-100 bg-gray-50/50 backdrop-blur-sm rounded-b-2xl overflow-hidden ${isFullPage ? 'mb-8' : ''}`}>
-      {tabs.map((tab) => {
-        const Icon = tab.icon;
-        const isActive = activeTab === tab.id;
+    <div className="flex justify-center px-2">
+      <div className="relative bg-white/80 backdrop-blur-2xl p-1 sm:p-1.5 rounded-2xl border border-gray-200/50 w-full max-w-2xl">
+        {/* Background slider */}
+        <div 
+          className={`absolute top-1 sm:top-1.5 h-[calc(100%-8px)] sm:h-[calc(100%-12px)] bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-150 ease-out ${
+            activeTab === 'welcome' 
+              ? 'left-1 sm:left-1.5 w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]' 
+              : activeTab === 'conversation'
+              ? 'left-[calc(33.333%+1px)] sm:left-[calc(33.333%+1.5px)] w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]'
+              : 'left-[calc(66.666%+1px)] sm:left-[calc(66.666%+1.5px)] w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]'
+          }`}
+        />
         
-        return (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`flex-1 flex flex-col items-center py-4 px-3 text-sm font-light transition-all duration-300 ease-out transform ${
-              isActive
-                ? `${tab.color} ${tab.bgColor} border-t-2 ${tab.borderColor} shadow-sm scale-105`
-                : 'text-gray-500 hover:text-sky-600 hover:bg-white/80 hover:shadow-sm hover:scale-102'
-            }`}
-          >
-            <Icon className={`${isActive ? 'h-6 w-6' : 'h-5 w-5'} mb-1.5 transition-all duration-300`} />
-            <span className="font-thin tracking-wide">{tab.name}</span>
-          </button>
-        );
-      })}
+        <div className="relative flex">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={`relative px-3 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl text-[13px] sm:text-[15px] font-medium transition-all duration-150 ease-out antialiased tracking-[-0.01em] flex-1 ${
+                  isActive
+                    ? 'text-gray-900'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                {tab.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

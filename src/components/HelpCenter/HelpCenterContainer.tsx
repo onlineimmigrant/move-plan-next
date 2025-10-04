@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import ModernLanguageSwitcher from '@/components/ModernLanguageSwitcher';
 import { useHelpCenterTranslations } from '@/components/ChatHelpWidget/useHelpCenterTranslations';
@@ -18,8 +18,44 @@ const supabase = createClient(
 );
 
 export default function HelpCenterContainer() {
-  const [activeTab, setActiveTab] = useState<'welcome' | 'conversation' | 'ai'>('welcome');
-  const [currentView, setCurrentView] = useState<'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support'>('welcome');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  
+  // Map URL tab parameter to initial view
+  const getInitialView = (): 'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support' => {
+    switch (tabParam) {
+      case 'faq':
+        return 'faq';
+      case 'articles':
+      case 'knowledge-base':
+        return 'articles';
+      case 'conversation':
+      case 'live-support':
+        return 'conversation';
+      case 'ai':
+      case 'ai_agent':
+        return 'ai';
+      default:
+        return 'welcome';
+    }
+  };
+  
+  // Map URL tab parameter to active tab state
+  const getInitialTab = (): 'welcome' | 'conversation' | 'ai' => {
+    switch (tabParam) {
+      case 'conversation':
+      case 'live-support':
+        return 'conversation';
+      case 'ai':
+      case 'ai_agent':
+        return 'ai';
+      default:
+        return 'welcome';
+    }
+  };
+  
+  const [activeTab, setActiveTab] = useState<'welcome' | 'conversation' | 'ai'>(getInitialTab());
+  const [currentView, setCurrentView] = useState<'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support'>(getInitialView());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -36,22 +72,8 @@ export default function HelpCenterContainer() {
   };
 
   const getHeaderTitle = () => {
-    switch (currentView) {
-      case 'welcome':
-        return t.helpCenter;
-      case 'articles':
-      case 'knowledge-base':
-        return t.knowledgeBase;
-      case 'faq':
-        return t.faqs;
-      case 'conversation':
-      case 'live-support':
-        return t.liveSupport;
-      case 'ai':
-        return t.aiAssistant;
-      default:
-        return t.helpCenter;
-    }
+    // Always return "Help Center" for consistent branding
+    return t.helpCenter;
   };
 
   const handleSwitchToChatWidget = () => {
@@ -73,17 +95,20 @@ export default function HelpCenterContainer() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        // Use getSession instead of getUser to avoid "Auth session missing" errors
+        const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Error getting user:', error);
+          // Only log errors that aren't about missing sessions (which is normal for logged-out users)
+          if (!error.message.includes('Auth session missing')) {
+            console.error('Error getting session:', error);
+          }
           setIsAuthenticated(false);
           setUserId(null);
           setAccessToken(null);
-        } else if (user) {
+        } else if (session?.user) {
           setIsAuthenticated(true);
-          setUserId(user.id);
-          const { data: { session } } = await supabase.auth.getSession();
-          setAccessToken(session?.access_token || null);
+          setUserId(session.user.id);
+          setAccessToken(session.access_token || null);
         } else {
           setIsAuthenticated(false);
           setUserId(null);
@@ -114,11 +139,33 @@ export default function HelpCenterContainer() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Sync URL parameters with component state
+  useEffect(() => {
+    const newView = getInitialView();
+    const newTab = getInitialTab();
+    
+    if (newView !== currentView) {
+      setCurrentView(newView);
+    }
+    if (newTab !== activeTab) {
+      setActiveTab(newTab);
+    }
+  }, [tabParam]); // Only depend on tabParam, not on currentView or activeTab to avoid loops
+
   const handleTabChange = (tab: 'welcome' | 'conversation' | 'ai') => {
     // Allow navigation to all tabs - authentication check handled within each tab component
     setActiveTab(tab);
     setCurrentView(tab);
     setError(null);
+    
+    // Update URL based on tab
+    if (tab === 'welcome') {
+      router.push('/help-center', { scroll: false });
+    } else if (tab === 'conversation') {
+      router.push('/help-center?tab=conversation', { scroll: false });
+    } else if (tab === 'ai') {
+      router.push('/help-center?tab=ai_agent', { scroll: false });
+    }
   };
 
   const handleSpecialView = (view: 'faq' | 'knowledge-base' | 'live-support') => {
@@ -198,7 +245,7 @@ export default function HelpCenterContainer() {
   return (
     <div className="w-full h-screen bg-gradient-to-b from-gray-50/50 to-white flex flex-col">
       {/* Apple-style Header */}
-      <header className="z-11 px-4 sm:px-8 flex justify-between items-center bg-white/95 backdrop-blur-3xl border-b border-gray-200/30 h-20 shadow-[0_1px_20px_rgba(0,0,0,0.08)]"
+      <header className="z-11 px-4 sm:px-8 flex justify-between items-center bg-white/95 backdrop-blur-3xl h-20"
         style={{
           backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
           WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -208,7 +255,7 @@ export default function HelpCenterContainer() {
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] mr-8 hover:scale-105 antialiased"
+          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-150 ease-out mr-8 hover:scale-105 antialiased"
           aria-label="Go to homepage"
         >
           {/* Mobile - Use favicon with proper URL logic */}
@@ -246,12 +293,21 @@ export default function HelpCenterContainer() {
           </span>
         </button>
         
-        {/* Header Title */}
+        {/* Header Title - Clickable to return to welcome */}
         <div className='flex items-center space-x-4'>
-          <h1 className="text-lg sm:text-xl font-medium text-gray-900 tracking-[-0.02em] antialiased">{getHeaderTitle()}</h1>
-          <span className="hidden sm:flex ml-4 px-4 py-2 text-[12px] font-medium bg-sky-50/80 text-sky-600 rounded-full border border-sky-200/50 backdrop-blur-sm antialiased">
-            {t.supportKnowledgeBase}
-          </span>
+          <button
+            onClick={() => {
+              setActiveTab('welcome');
+              setCurrentView('welcome');
+              router.push('/help-center', { scroll: false });
+            }}
+            className="group transition-all duration-150 ease-out hover:scale-105"
+          >
+            <h1 className="text-lg sm:text-xl font-medium text-gray-900 tracking-[-0.02em] antialiased relative group-hover:text-sky-600 transition-colors">
+              {getHeaderTitle()}
+              <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full group-hover:w-20 transition-all duration-150" />
+            </h1>
+          </button>
         </div>
         
         {/* Language Switcher - Right Side */}
@@ -259,6 +315,16 @@ export default function HelpCenterContainer() {
           <ModernLanguageSwitcher zIndex={9999} />
         </div>
       </header>
+      
+      {/* Apple-style Tab Navigation - Moved to top */}
+      <div className="px-4 py-6 bg-gradient-to-b from-gray-50/50 to-white">
+        <ChatHelpTabs
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          isAuthenticated={isAuthenticated}
+          isFullPage={true}
+        />
+      </div>
       
       {/* Apple-style Main Content */}
       <div className="flex-1 overflow-hidden relative">
@@ -274,24 +340,6 @@ export default function HelpCenterContainer() {
         <div className="relative h-full">
           {renderCurrentView()}
         </div>
-      </div>
-      
-      {/* Apple-style Bottom Navigation Tabs */}
-      <div className="bg-white/90 backdrop-blur-2xl border-t border-gray-200/40 shadow-[0_-1px_10px_rgba(0,0,0,0.04)]"
-        style={{
-          backdropFilter: 'blur(16px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-        }}
-      >
-        {/* Subtle top highlight */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-        
-        <ChatHelpTabs
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          isAuthenticated={isAuthenticated}
-          isFullPage={true}
-        />
       </div>
     </div>
   );

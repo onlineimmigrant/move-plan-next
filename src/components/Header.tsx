@@ -46,6 +46,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
   const { basket } = useBasket();
   const { session, logout } = useAuth();
   const router = useRouter();
@@ -190,14 +191,20 @@ const Header: React.FC<HeaderProps> = ({
             : item.display_name;
 
             return (
-              <div key={item.id} className="relative group">
+              <div 
+                key={item.id} 
+                className="relative"
+                onMouseEnter={() => displayedSubItems.length > 0 && setOpenSubmenu(item.id)}
+                onMouseLeave={() => setOpenSubmenu(null)}
+              >
                 {displayedSubItems.length > 0 ? (
                   <>
                     <button
                       type="button"
-                      className="group cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
+                      className="group cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-xl focus:outline-none transition-all duration-150 ease-out antialiased"
                       title={translatedDisplayName}
                       aria-label={t.openMenuFor(translatedDisplayName)}
+                      onClick={() => setOpenSubmenu(openSubmenu === item.id ? null : item.id)}
                     >
                       {settings?.menu_items_are_text ? (
                         <span className="text-[15px] font-medium text-gray-700 group-hover:text-gray-900 tracking-[-0.01em] transition-colors duration-300">{translatedDisplayName}</span>
@@ -228,7 +235,9 @@ const Header: React.FC<HeaderProps> = ({
                     </button>
                     
                     {/* Full-width Apple-style mega menu */}
-                    <div className="fixed left-0 right-0 top-[calc(100%+0.5rem)] bg-white/95 backdrop-blur-3xl border border-black/8 rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.15)] z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in fade-in-0 zoom-in-95 mx-4 sm:mx-8"
+                    <div className={`fixed left-0 right-0 top-[calc(100%+0.5rem)] bg-white/90 backdrop-blur-3xl border border-gray-200/40 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] z-50 transition-all duration-200 ease-out animate-in fade-in-0 zoom-in-95 mx-4 sm:mx-8 ${
+                      openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
+                    }`}
                       style={{
                         backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
                         WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -277,10 +286,11 @@ const Header: React.FC<HeaderProps> = ({
                               <LocalizedLink
                                 key={subItem.id}
                                 href={subItem.url_name}
-                                className="group/item relative overflow-hidden flex bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] hover:shadow-md border border-gray-200/40"
+                                onClick={() => setOpenSubmenu(null)}
+                                className="group/item relative overflow-hidden flex bg-white/40 hover:bg-white/70 backdrop-blur-sm rounded-2xl transition-all duration-150 ease-out hover:scale-[1.01] hover:shadow-lg"
                               >
                                 {/* Hover shine effect */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-400 ease-out"></div>
                                 
                                 {/* Image section - 1/3 width, full height */}
                                 <div className="relative w-1/3 flex-shrink-0 min-h-[120px]">
@@ -301,8 +311,8 @@ const Header: React.FC<HeaderProps> = ({
                                       }
                                     />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-l-2xl min-h-[120px]">
-                                      <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-50/70 rounded-l-2xl min-h-[120px]">
+                                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                       </svg>
                                     </div>
@@ -310,17 +320,17 @@ const Header: React.FC<HeaderProps> = ({
                                 </div>
                                 
                                 {/* Content section - 2/3 width */}
-                                <div className="relative z-10 flex-1 flex items-center justify-between p-5">
+                                <div className="relative z-10 flex-1 flex items-center justify-between p-6">
                                   <div className="flex-1 min-w-0">
-                                    <h4 className="text-[15px] font-semibold text-gray-900 mb-2 tracking-[-0.01em] antialiased group-hover/item:text-gray-800 transition-colors duration-300">
+                                    <h4 className="text-[15px] font-semibold text-gray-900 mb-2 tracking-[-0.01em] antialiased group-hover/item:text-gray-700 transition-colors duration-300">
                                       {translatedSubItemName}
                                     </h4>
-                                    <p className="text-[12px] text-gray-600 leading-relaxed antialiased opacity-80 group-hover/item:opacity-100 transition-opacity duration-300">
+                                    <p className="text-[12px] text-gray-500 leading-relaxed antialiased opacity-90 group-hover/item:opacity-100 transition-opacity duration-300">
                                       {displayDescription}
                                     </p>
                                   </div>
-                                  <svg className="w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300 ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  <svg className="w-4 h-4 text-gray-300 group-hover/item:text-gray-500 group-hover/item:translate-x-1 transition-all duration-150 ease-out ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                                   </svg>
                                 </div>
                               </LocalizedLink>
@@ -337,7 +347,7 @@ const Header: React.FC<HeaderProps> = ({
                             </div>
                             <button
                               onClick={() => setIsContactOpen(true)}
-                              className="px-4 py-2.5 bg-gray-700 hover:bg-gray-800 text-white text-[13px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02] shadow-sm hover:shadow-md antialiased"
+                              className="px-5 py-2.5 bg-gray-600/90 hover:bg-gray-700/90 text-white text-[13px] font-medium rounded-xl transition-all duration-150 ease-out hover:scale-[1.01] shadow-sm hover:shadow-lg backdrop-blur-sm antialiased"
                             >
                               Contact Us
                             </button>
@@ -352,7 +362,8 @@ const Header: React.FC<HeaderProps> = ({
                 ) : (
                   <LocalizedLink
                     href={item.url_name}
-                    className="cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50  rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group antialiased"
+                    onClick={() => setOpenSubmenu(null)}
+                    className="cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50  rounded-xl focus:outline-none transition-all duration-150 ease-out group antialiased"
                     title={translatedDisplayName}
                     aria-label={t.goTo(translatedDisplayName)}
                   >

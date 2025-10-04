@@ -100,7 +100,7 @@ export default function AIAgentTab({
           <div className="text-center space-y-4">
 
         {/* Benefits */}
-          <div className="w-full max-w-md p-4 bg-sky-50 rounded-lg border border-sky-200">
+          <div className="w-full max-w-md p-4 bg-sky-50 rounded-lg">
             <p className="text-sm text-sky-800 leading-relaxed">
               {t.aiAgentBenefits}
             </p>
@@ -108,7 +108,7 @@ export default function AIAgentTab({
                     {/* Switch Button */}
           <button
             onClick={handleSwitchToChatWidget}
-            className="w-full max-w-md bg-gradient-to-r from-sky-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-sky-600 hover:to-blue-700 transition-all duration-200 font-medium flex items-center justify-center space-x-2 shadow-lg"
+            className="w-full max-w-md bg-gradient-to-r from-sky-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-sky-600 hover:to-blue-700 transition-all duration-150 ease-out font-medium flex items-center justify-center space-x-2"
           >
             <span>{t.switchToAIAgentMode}</span>
             <ArrowRightIcon className="h-5 w-5" />
@@ -120,7 +120,7 @@ export default function AIAgentTab({
             <h3 className="text-lg font-semibold text-gray-800 mb-4">{t.aiAgentsCanHelp}</h3>
             <div className="space-y-3">
               {aiCapabilities.map((capability, index) => (
-                <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
                   <span className="text-2xl">{capability.icon}</span>
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-800">{capability.title}</h4>

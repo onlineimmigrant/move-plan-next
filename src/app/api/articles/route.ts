@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const organizationId = searchParams.get('organizationId');
   const offset = parseInt(searchParams.get('offset') || '0');
   const limit = parseInt(searchParams.get('limit') || '20');
+  const helpCenterOnly = searchParams.get('helpCenterOnly') === 'true';
 
   try {
     let effectiveOrgId = organizationId;
@@ -24,13 +25,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, error, count } = await supabase
+    let query = supabase
       .from('blog_post')
-      .select('id, slug, title, description, content, display_as_blog_post,  subsection, author_name, created_on, display_this_post, main_photo', { count: 'exact' })
+      .select('id, slug, title, description, content, display_as_blog_post, subsection, author_name, created_on, display_this_post, main_photo, is_help_center, help_center_order', { count: 'exact' })
       .eq('display_this_post', true)
-      .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`)
-      .order('created_on', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`);
+
+    // Filter by Help Center if requested
+    if (helpCenterOnly) {
+      query = query.eq('is_help_center', true);
+    }
+
+    // Order: prioritize help_center_order if filtering by Help Center
+    if (helpCenterOnly) {
+      query = query.order('help_center_order', { ascending: true, nullsFirst: false });
+    }
+    
+    // Always add created_on as secondary sort
+    query = query.order('created_on', { ascending: false });
+
+    const { data, error, count } = await query.range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Error fetching articles:', error.message);
@@ -43,6 +57,24 @@ export async function GET(request: NextRequest) {
     const totalCount = count || 0;
     const hasMore = offset + limit < totalCount;
 
+    // Get category counts for all articles (not just the current page)
+    let categoryCounts: Record<string, number> = {};
+    if (offset === 0) { // Only fetch on first load to avoid redundant queries
+      const { data: allArticles } = await supabase
+        .from('blog_post')
+        .select('subsection')
+        .eq('display_this_post', true)
+        .or(`organization_id.eq.${effectiveOrgId},organization_id.is.null`);
+      
+      if (allArticles) {
+        categoryCounts = allArticles.reduce((acc: Record<string, number>, article: any) => {
+          const category = article.subsection || 'General';
+          acc[category] = (acc[category] || 0) + 1;
+          return acc;
+        }, {});
+      }
+    }
+
     // Calculate reading time based on word count (average 200 words per minute)
     const articlesWithReadTime = (data || []).map(article => ({
       ...article,
@@ -52,7 +84,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       data: articlesWithReadTime,
       hasMore,
-      total: totalCount
+      total: totalCount,
+      categoryCounts: offset === 0 ? categoryCounts : undefined
     });
   } catch (error) {
     console.error('Unexpected error:', error);

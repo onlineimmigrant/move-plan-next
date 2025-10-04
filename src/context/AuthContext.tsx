@@ -80,7 +80,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error('getSession error:', error.message);
-          setError(error.message);
+          // Don't set error for "Auth session missing" - it's normal for logged out users
+          if (!error.message.includes('Auth session missing')) {
+            setError(error.message);
+          }
+          setSession(null);
           return;
         }
         setSession(data.session);

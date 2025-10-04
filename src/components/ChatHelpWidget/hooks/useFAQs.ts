@@ -5,7 +5,7 @@ import { getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import type { FAQ } from '@/types/faq';
 
-export function useFAQs() {
+export function useFAQs(helpCenterOnly: boolean = false) {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,8 +28,17 @@ export function useFAQs() {
 
         setOrganizationId(orgId);
 
-        // Fetch FAQs
-        const response = await fetch(`/api/faq?organizationId=${orgId}&limit=20`);
+        // Fetch FAQs with optional Help Center filter
+        const params = new URLSearchParams({
+          organizationId: orgId,
+          limit: '20',
+        });
+        
+        if (helpCenterOnly) {
+          params.append('helpCenterOnly', 'true');
+        }
+
+        const response = await fetch(`/api/faq?${params.toString()}`);
         if (!response.ok) {
           throw new Error('Failed to fetch FAQs');
         }
@@ -45,7 +54,7 @@ export function useFAQs() {
     }
 
     fetchFAQs();
-  }, []);
+  }, [helpCenterOnly]);
 
   return { faqs, loading, error, organizationId };
 }

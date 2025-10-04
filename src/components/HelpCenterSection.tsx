@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import WelcomeTab from './ChatHelpWidget/WelcomeTab';
 import AIAgentTab from './ChatHelpWidget/AIAgentTab';
+import ConversationTab from './ChatHelpWidget/ConversationTab';
 import { WidgetSize } from './ChatWidget/types';
 import { useAuth } from '@/context/AuthContext';
 import { useHelpCenterTranslations } from './ChatHelpWidget/useHelpCenterTranslations';
@@ -27,7 +29,7 @@ interface HelpCenterSectionProps {
   section: HelpCenterSectionData;
 }
 
-type TabType = 'welcome' | 'ai';
+type TabType = 'welcome' | 'conversation' | 'ai';
 
 const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
   // Early return to avoid null/undefined issues
@@ -38,44 +40,66 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
   const [activeTab, setActiveTab] = useState<TabType>('welcome');
   const { session, isLoading } = useAuth();
   const { t } = useHelpCenterTranslations();
+  const router = useRouter();
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const tabNavRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to position tab nav below header when switching to conversation or ai tabs
+  useEffect(() => {
+    if (activeTab === 'conversation' || activeTab === 'ai') {
+      if (tabNavRef.current) {
+        const headerHeight = 80; // Height of the header from HelpCenterContainer
+        const tabNavTop = tabNavRef.current.getBoundingClientRect().top + window.scrollY;
+        const scrollToPosition = tabNavTop - headerHeight;
+        
+        window.scrollTo({
+          top: scrollToPosition,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [activeTab]);
 
   // Handler functions for tab navigation
   const handleTabChange = (tab: 'welcome' | 'conversation' | 'ai') => {
     if (tab === 'ai') {
-      setActiveTab('ai');
+      router.push('/help-center?tab=ai_agent');
+    } else if (tab === 'conversation') {
+      router.push('/help-center?tab=conversation');
     } else {
-      // For other tabs, navigate to full help center page
-      window.location.href = `/help-center?tab=${tab}`;
+      // For welcome/browse tab, navigate to help center base page
+      router.push('/help-center');
     }
   };
 
   const handleShowFAQ = () => {
-    window.location.href = '/help-center?tab=faq';
+    router.push('/help-center?tab=faq');
   };
 
   const handleShowKnowledgeBase = () => {
-    window.location.href = '/help-center?tab=articles';
+    router.push('/help-center?tab=articles');
   };
 
   const handleShowLiveSupport = () => {
-    window.location.href = '/help-center?tab=conversation';
+    router.push('/help-center?tab=conversation');
   };
 
   const handleGoToLogin = () => {
-    window.location.href = '/login';
+    router.push('/login');
   };
 
   const handleGoToRegister = () => {
-    window.location.href = '/register';
+    router.push('/register');
   };
 
   const handleSwitchToChatWidget = (forceFullscreen?: boolean) => {
     // Navigate to help center with AI tab and chat widget active
-    window.location.href = '/help-center?tab=ai&chat=true';
+    router.push('/help-center?tab=ai&chat=true');
   };
 
   return (
     <section
+      ref={sectionRef}
       className={`px-4 py-20 ${section.background_color ? `bg-${section.background_color}` : 'bg-gradient-to-b from-gray-50/50 to-white'}`}
     >
       <div className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto`}>
@@ -92,35 +116,52 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
         </div>
 
         {/* Apple-style Tab Navigation */}
-        <div className="flex justify-center mb-12">
-          <div className="relative bg-white/80 backdrop-blur-2xl p-1.5 rounded-2xl border border-gray-200/50 shadow-lg">
+        <div ref={tabNavRef} className="flex justify-center mb-12 px-2">
+          <div className="relative bg-white/80 backdrop-blur-2xl p-1 sm:p-1.5 rounded-2xl border border-gray-200/50 w-full max-w-2xl">
             {/* Background slider */}
             <div 
-              className={`absolute top-1.5 h-[calc(100%-12px)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                activeTab === 'welcome' ? 'left-1.5 w-[calc(50%-6px)]' : 'left-[calc(50%+1.5px)] w-[calc(50%-6px)]'
+              className={`absolute top-1 sm:top-1.5 h-[calc(100%-8px)] sm:h-[calc(100%-12px)] bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-150 ease-out ${
+                activeTab === 'welcome' 
+                  ? 'left-1 sm:left-1.5 w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]' 
+                  : activeTab === 'conversation'
+                  ? 'left-[calc(33.333%+1px)] sm:left-[calc(33.333%+1.5px)] w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]'
+                  : 'left-[calc(66.666%+1px)] sm:left-[calc(66.666%+1.5px)] w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]'
               }`}
             />
             
             <div className="relative flex">
               <button
                 onClick={() => setActiveTab('welcome')}
-                className={`relative px-8 py-3 rounded-xl text-[15px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased tracking-[-0.01em] min-w-[140px] ${
+                className={`relative px-3 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl text-[13px] sm:text-[15px] font-medium transition-all duration-150 ease-out antialiased tracking-[-0.01em] flex-1 ${
                   activeTab === 'welcome'
-                    ? 'text-gray-900 shadow-none'
+                    ? 'text-gray-900'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                {t.helpCenter}
+                <span className="hidden sm:inline">Browse</span>
+                <span className="sm:hidden">Browse</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('conversation')}
+                className={`relative px-3 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl text-[13px] sm:text-[15px] font-medium transition-all duration-150 ease-out antialiased tracking-[-0.01em] flex-1 ${
+                  activeTab === 'conversation'
+                    ? 'text-gray-900'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <span className="hidden sm:inline">Live Chat</span>
+                <span className="sm:hidden">Chat</span>
               </button>
               <button
                 onClick={() => setActiveTab('ai')}
-                className={`relative px-8 py-3 rounded-xl text-[15px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased tracking-[-0.01em] min-w-[140px] ${
+                className={`relative px-3 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl text-[13px] sm:text-[15px] font-medium transition-all duration-150 ease-out antialiased tracking-[-0.01em] flex-1 ${
                   activeTab === 'ai'
-                    ? 'text-gray-900 shadow-none'
+                    ? 'text-gray-900'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                {t.aiAssistant}
+                <span className="hidden sm:inline">{t.aiAssistant}</span>
+                <span className="sm:hidden">AI</span>
               </button>
             </div>
           </div>
@@ -129,7 +170,7 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
         {/* Apple-style Tab Content Container */}
         <div className="relative">
           {/* Content background with glass effect */}
-          <div className="absolute inset-0 bg-white/60 backdrop-blur-3xl border border-gray-200/30 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)]"
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-3xl rounded-3xl"
             style={{
               backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
               WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -152,6 +193,13 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
                 onShowKnowledgeBase={handleShowKnowledgeBase}
                 onShowLiveSupport={handleShowLiveSupport}
               />
+            ) : activeTab === 'conversation' ? (
+              <ConversationTab
+                size="fullscreen"
+                isAuthenticated={!!(session && !isLoading)}
+                userId={session?.user?.id || null}
+                accessToken={session?.access_token || null}
+              />
             ) : (
               <AIAgentTab
                 isAuthenticated={!!session && !isLoading}
@@ -164,9 +212,6 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
               />
             )}
           </div>
-          
-          {/* Bottom accent */}
-          <div className="absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-gray-200/60 to-transparent rounded-b-3xl" />
         </div>
       </div>
     </section>

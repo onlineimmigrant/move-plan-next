@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   const organizationId = searchParams.get('organizationId');
   const offset = parseInt(searchParams.get('offset') || '0');
   const limit = parseInt(searchParams.get('limit') || '20');
+  const helpCenterOnly = searchParams.get('helpCenterOnly') === 'true';
 
   if (!organizationId) {
     return NextResponse.json(
@@ -15,12 +16,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { data, error, count } = await supabase
+    let query = supabase
       .from('faq')
-      .select('id, order, display_order, question, answer, section, organization_id, product_sub_type_id', { count: 'exact' })
-      .eq('organization_id', organizationId)
-      .order('order', { ascending: true })
-      .range(offset, offset + limit - 1);
+      .select('id, order, display_order, question, answer, section, organization_id, product_sub_type_id, is_help_center, help_center_order', { count: 'exact' })
+      .eq('organization_id', organizationId);
+
+    // Filter by Help Center if requested
+    if (helpCenterOnly) {
+      query = query.eq('is_help_center', true);
+    }
+
+    // Order: prioritize help_center_order if filtering by Help Center
+    if (helpCenterOnly) {
+      query = query.order('help_center_order', { ascending: true, nullsFirst: false });
+    } else {
+      query = query.order('order', { ascending: true });
+    }
+
+    const { data, error, count } = await query.range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Error fetching FAQs:', error.message);
