@@ -5,13 +5,14 @@ export interface TemplateSection {
   section_title_translation?: Record<string, string>;
   section_description?: string;
   section_description_translation?: Record<string, string>;
-  text_style_variant?: 'default' | 'apple';
+  text_style_variant?: 'default' | 'apple' | 'codedharmony';
   background_color?: string;
   grid_columns?: number;
   is_full_width?: boolean;
   is_section_title_aligned_center?: boolean;
   is_section_title_aligned_right?: boolean;
   is_image_bottom?: boolean;
+  is_slider?: boolean;
   image_metrics_height?: string;
   order?: number;
   url_page?: string;

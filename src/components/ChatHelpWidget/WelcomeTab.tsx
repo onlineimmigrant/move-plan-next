@@ -109,9 +109,9 @@ export default function WelcomeTab({
       <div className="p-2 sm:p-6 lg:p-8 space-y-8 sm:space-y-10 mx-auto max-w-7xl">
         {/* Welcome Header - Enhanced Apple Style */}
         <div className="text-center space-y-6 sm:space-y-8">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 tracking-tight leading-none">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 tracking-tight leading-none">
             {t.howCanWeHelp}
-          </h1>
+          </h2>
           <p className="text-lg sm:text-xl text-gray-500 font-light max-w-2xl mx-auto leading-relaxed">
             {t.searchKnowledgeBase}
           </p>

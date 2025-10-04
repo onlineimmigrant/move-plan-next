@@ -30,10 +30,11 @@ interface TemplateSectionData {
   section_title_translation?: Record<string, string>;
   section_description?: string;
   section_description_translation?: Record<string, string>;
-  text_style_variant?: 'default' | 'apple';
+  text_style_variant?: 'default' | 'apple' | 'codedharmony';
   grid_columns: number;
   image_metrics_height?: string;
   is_image_bottom: boolean;
+  is_slider?: boolean;
   website_metric: Metric[];
   organization_id: string | null;
   is_reviews_section: boolean;

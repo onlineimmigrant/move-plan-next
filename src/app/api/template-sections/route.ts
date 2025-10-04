@@ -43,6 +43,7 @@ export async function GET(request: Request) {
         is_section_title_aligned_center,
         is_section_title_aligned_right,
         is_image_bottom,
+        is_slider,
         image_metrics_height,
         order,
         url_page,

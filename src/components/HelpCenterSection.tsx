@@ -16,7 +16,7 @@ interface HelpCenterSectionData {
   section_title_translation?: Record<string, string>;
   section_description?: string;
   section_description_translation?: Record<string, string>;
-  text_style_variant?: 'default' | 'apple';
+  text_style_variant?: 'default' | 'apple' | 'codedharmony';
   background_color?: string;
   is_full_width: boolean;
   is_section_title_aligned_center: boolean;
