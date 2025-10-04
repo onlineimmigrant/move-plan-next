@@ -39,7 +39,6 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         )
       `)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)
-      .eq('is_displayed', true)
       .order('order', { ascending: true });
 
     if (error) {
@@ -60,7 +59,6 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
           organization_id
         `)
         .eq('organization_id', organizationId)
-        .eq('is_displayed', true)
         .order('order', { ascending: true });
 
       if (basicError) {

@@ -236,8 +236,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     </h3>
                     <ul className="space-y-2">
                       {item.website_submenuitem
-                        ?.filter((subItem) => subItem.is_displayed !== false)
-                        .map((subItem) => {
+                        ?.map((subItem) => {
                           // Get translated content for submenu item
                           const translatedSubItemName = currentLocale 
                             ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
