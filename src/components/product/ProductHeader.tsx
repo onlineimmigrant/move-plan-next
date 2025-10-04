@@ -42,16 +42,16 @@ const ProductHeader = memo(function ProductHeader({ productSubType, productName 
     <div
       className={`
         w-full px-4 mx-auto max-w-7xl will-change-transform
-        transition-all duration-300 ease-in-out
+        transition-all duration-500 ease-out
         md:static md:bg-transparent md:shadow-none
         ${
           isFixed
-            ? 'fixed top-0 left-0 right-0 z-[51] bg-white/90 backdrop-blur-sm shadow-lg border-b border-gray-200'
+            ? 'fixed top-0 left-0 right-0 z-[51] bg-white/80 backdrop-blur-md shadow-2xl shadow-blue-100/20 border-b border-white/30'
             : 'relative'
         }
       `}
     >
-      <div className="flex flex-col bg-gradient-to-r from-sky-50 to-blue-50 sm:bg-transparent p-4 -mx-4 px-8 rounded-lg sm:rounded-none">
+      <div className="mt-4 flex flex-col bg-gradient-to-r from-sky-50 to-blue-50 sm:bg-transparent p-4 -mx-4 px-8">
         <Link
           href={productSubType ? `/products?category=${productSubType.id}` : '/products'}
           className="flex items-center transition-all duration-200 group font-medium text-xs text-sky-600 tracking-widest hover:text-sky-700 hover:underline mb-1"

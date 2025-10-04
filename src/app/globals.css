@@ -1,6 +1,18 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
+/* Smooth scrolling behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced scroll padding for better anchor navigation */
+html {
+  scroll-padding-top: 5rem;
+}
+
+
+
 /* Hide scrollbar utility classes */
 .scrollbar-none {
   -ms-overflow-style: none;
@@ -9,6 +21,62 @@
 
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+  background-size: 200px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Touch-friendly interactions */
+@media (hover: hover) {
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    transition: transform 0.3s ease;
+  }
+}
+
+/* Improved focus states */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.5);
 }
 
 

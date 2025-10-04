@@ -17,14 +17,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`;
 
     const variants: Record<Variant, string> = {
-      primary: 'shadow-lg bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500',
+      primary: 'shadow-lg bg-sky-600 text-white hover:bg-sky-700 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 focus:ring-sky-500',
       badge_primary: 'py-0.5 sm:py-1 px-1 sm:px-1.5 shadow hover:shadow-lg rounded-full text-[10px] sm:text-xs font-medium cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-300 flex items-center gap-1',
        badge_primary_circle: 'py-2 sm:py-2 px-2 sm:px-2 shadow hover:shadow-lg rounded-full text-[10px] sm:text-xs font-medium cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-300 flex items-center gap-1',
 
       secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
       
       start:
-        'w-full font-medium bg-sky-600 text-white font-semibold py-2 rounded-lg hover:bg-sky-700 active:bg-sky-800 focus:ring-2 focus:ring-sky-500 transition-all duration-200 shadow-md hover:shadow-lg',
+        'w-full font-medium bg-sky-600 text-white font-semibold py-2 rounded-lg hover:bg-sky-700 hover:shadow-xl hover:-translate-y-0.5 active:bg-sky-800 active:translate-y-0 focus:ring-2 focus:ring-sky-500 transition-all duration-300 ease-out shadow-md',
       close:
         'absolute top-2 right-2 text-gray-700 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-gray-500',
       link:
@@ -34,7 +34,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       'light-outline':
         'shadow-sm bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
       manage:
-        'relative w-full py-3.5 px-4 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 disabled:from-sky-400 disabled:to-sky-500 text-white font-medium rounded-xl shadow-lg hover:shadow-lg hover:shadow-blue-200/50 active:scale-[0.97] disabled:transform-none disabled:shadow-none transition-all duration-300',
+        'relative w-full py-3.5 px-4 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 disabled:from-sky-400 disabled:to-sky-500 text-white font-medium rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-200/50 hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0 disabled:transform-none disabled:shadow-none transition-all duration-300 ease-out',
     };
 
     return (

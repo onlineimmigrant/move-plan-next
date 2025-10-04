@@ -116,15 +116,15 @@ const CustomToast = memo(
 
 CustomToast.displayName = 'CustomToast';
 
-// Utility function for plan card styles
+// Enhanced utility function for plan card styles with glassmorphism
 const planCardStyles = (isOutOfStock: boolean, isActive: boolean) =>
-  `p-3 md:p-4 border rounded-xl transition-all duration-200 focus:ring-4 focus:ring-sky-500 focus:ring-opacity-50 focus:bg-sky-100 outline-none relative
+  `group relative p-4 md:p-6 border rounded-2xl transition-all duration-500 ease-out focus:ring-4 focus:ring-sky-500/50 focus:ring-opacity-50 outline-none transform hover:scale-[1.02] active:scale-[0.98]
   ${
     isOutOfStock
-      ? 'border-gray-300 bg-gray-50 cursor-not-allowed opacity-70'
+      ? 'border-gray-300/60 bg-white/30 backdrop-blur-sm cursor-not-allowed opacity-60'
       : isActive
-      ? 'border-sky-500 shadow-md shadow-sky-100 bg-sky-50 cursor-pointer'
-      : 'bg-white border-sky-200 hover:shadow-sm hover:bg-gray-50 cursor-pointer'
+      ? 'border-sky-400/60 shadow-xl shadow-sky-100/50 bg-white/80 backdrop-blur-md cursor-pointer ring-2 ring-sky-300/30'
+      : 'bg-white/70 backdrop-blur-sm border-white/40 hover:shadow-2xl hover:shadow-blue-100/30 hover:bg-white/90 hover:border-sky-300/50 cursor-pointer'
   }`;
 
 const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
@@ -255,7 +255,15 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
         ))}
       </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-3 sm:px-6 md:px-8 pb-4 md:pb-6">
+      {/* Glassmorphism background for pricing section */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-sky-50/40 to-blue-50/60 backdrop-blur-sm rounded-3xl border border-white/30 shadow-2xl shadow-blue-100/20"></div>
+        <div className="relative p-6 md:p-8">
+          <div className={`grid grid-cols-1 gap-6 sm:gap-8 ${
+            pricingPlans.length >= 3 
+              ? 'sm:grid-cols-2 lg:grid-cols-3' 
+              : 'sm:grid-cols-2'
+          }`}>
   {pricingPlans.map((plan, idx) => {
     const isActive = plan.slug === selectedPlan?.slug;
     const status = getStatus(plan);
@@ -263,13 +271,10 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
     const isOutOfStock = normalizedStatus === 'out of stock';
 
     return (
-      <div key={plan.id} className="pricing-wrapper">
+      <div key={plan.id} className="pricing-wrapper animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
         <div
           className={`
             ${planCardStyles(isOutOfStock, isActive)}
-            relative bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-5
-            transition-all duration-300 ease-in-out
-            ${isOutOfStock ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md cursor-pointer'}
           `}
           role="button"
           tabIndex={isOutOfStock ? -1 : 0}
@@ -291,36 +296,62 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
               : t.outOfStock.toLowerCase()
           }${plan.is_promotion && plan.promotion_price !== undefined ? `, ${t.onSale}` : ''}`}
         >
-          <div className="relative pt-4 sm:pt-5 pb-5 sm:pb-6 min-h-[120px]">
-            {/* Promotion Badge (Top-Left) */}
+          <div className="relative pt-6 sm:pt-8 pb-6 sm:pb-8 min-h-[140px]">
+            {/* Glassmorphism overlay for active cards */}
+            {isActive && (
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-50/80 via-blue-50/40 to-indigo-50/60 rounded-2xl"></div>
+            )}
+            
+            {/* Enhanced Promotion Badge */}
             {plan.is_promotion && plan.promotion_price !== undefined && (
-              <span className="absolute top-0 right-0 -translate-y-1/3  px-2.5 py-1 text-xs font-medium text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full z-10 shadow-sm">
-                {plan.promotion_percent}{t.percentOff}
-              </span>
+              <div className="absolute -top-3 -right-3 z-20">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-sm animate-pulse"></div>
+                  <span className="relative block px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-red-500 via-red-600 to-pink-600 rounded-full shadow-xl border-2 border-white/30 backdrop-blur-sm">
+                    <span className="flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      {plan.promotion_percent}{t.percentOff}
+                    </span>
+                  </span>
+                </div>
+              </div>
             )}
 
-            {/* Status Badge (Bottom-Left) */}
-            <div className="absolute bottom-0 left-0 translate-y-1/3 t px-2 py-0.5 text-xs font-medium rounded-full z-10">
+            {/* Enhanced Status Badge */}
+            <div className="absolute -bottom-2 -left-2 z-20">
               {(() => {
                 if (normalizedStatus === 'in stock') {
                   return (
-                    <span className="inline-block px-2 py-0.5 text-xs font-medium text-green-700 bg-green-50 rounded-full shadow-sm">
-                      {t.inStock}
-                    </span>
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full blur-sm opacity-60"></div>
+                      <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-green-800 bg-white/90 backdrop-blur-sm border border-green-200/60 rounded-full shadow-lg">
+                        <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full animate-pulse"></div>
+                        {t.inStock}
+                      </span>
+                    </div>
                   );
                 }
                 if (normalizedStatus === 'low stock') {
                   return (
-                    <span className="inline-block px-2 py-0.5 text-xs font-medium text-yellow-700 bg-yellow-50 rounded-full shadow-sm">
-                      {t.lowStock}
-                    </span>
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur-sm opacity-60"></div>
+                      <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-yellow-800 bg-white/90 backdrop-blur-sm border border-yellow-200/60 rounded-full shadow-lg">
+                        <div className="w-2 h-2 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full animate-pulse"></div>
+                        {t.lowStock}
+                      </span>
+                    </div>
                   );
                 }
                 if (normalizedStatus === 'out of stock') {
                   return (
-                    <span className="inline-block px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full shadow-sm">
-                      {t.outOfStock}
-                    </span>
+                    <div className="relative">
+                      <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white/70 backdrop-blur-sm border border-gray-200/60 rounded-full shadow-lg">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        {t.outOfStock}
+                      </span>
+                    </div>
                   );
                 }
                 return (
@@ -395,7 +426,9 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
       </div>
     );
   })}
-</div>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
         {activePlanCount === 0 || (selectedPlan && ((selectedPlan.computed_price || selectedPlan.price / 100) === 0 || (selectedPlan.is_promotion && (selectedPlan.computed_price ? selectedPlan.computed_price === 0 : (selectedPlan.promotion_price || 0) === 0)))) ? (
