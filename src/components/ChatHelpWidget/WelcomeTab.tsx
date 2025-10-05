@@ -1,17 +1,21 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MagnifyingGlassIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, RocketLaunchIcon, QuestionMarkCircleIcon, UserGroupIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, RocketLaunchIcon, QuestionMarkCircleIcon, UserGroupIcon, ChevronDownIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import * as Icons from '@heroicons/react/24/outline';
+import { MdOutlineFeaturedPlayList } from 'react-icons/md';
 import { WidgetSize } from '../ChatWidget/types';
 import { useFAQs } from './hooks/useFAQs';
 import { useArticles } from './hooks/useArticles';
-import { useFeatures, type Feature } from './hooks/useFeatures';
-import { usePricingPlans, type PricingPlan } from './hooks/usePricingPlans';
+import { useFeatures } from './hooks/useFeatures';
+import { usePricingPlans } from './hooks/usePricingPlans';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
 import type { FAQ } from '@/types/faq';
 import type { Article } from './hooks/useArticles';
-import * as Icons from '@heroicons/react/24/outline';
-import { MdOutlineFeaturedPlayList } from 'react-icons/md';
+import type { Feature } from './hooks/useFeatures';
+import type { PricingPlan } from './hooks/usePricingPlans';
+
+type HeroIconName = keyof typeof Icons;
 
 interface WelcomeTabProps {
   onTabChange: (tab: 'welcome' | 'conversation' | 'ai') => void;
@@ -33,18 +37,37 @@ export default function WelcomeTab({
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null);
   const [expandedPricingPlan, setExpandedPricingPlan] = useState<string | null>(null);
+  const [currentOfferingSlide, setCurrentOfferingSlide] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(3); // Default to 3 for desktop
+  
+  // Update items per view based on screen size
+  useEffect(() => {
+    const updateItemsPerView = () => {
+      if (window.innerWidth < 768) {
+        setItemsPerView(1); // Mobile: 1 card
+      } else if (window.innerWidth < 1024) {
+        setItemsPerView(2); // Tablet: 2 cards
+      } else {
+        setItemsPerView(3); // Desktop: 3 cards
+      }
+    };
+    
+    updateItemsPerView();
+    window.addEventListener('resize', updateItemsPerView);
+    return () => window.removeEventListener('resize', updateItemsPerView);
+  }, []);
   
   // Fetch Help Center items for display (when not searching)
   const { faqs: helpCenterFAQs, loading: faqLoading, error: faqError } = useFAQs(true);
   const { articles: helpCenterArticles, loading: articlesLoading, error: articlesError } = useArticles(true);
-  const { features: helpCenterFeatures, loading: featuresLoading, error: featuresError } = useFeatures(false);
+  const { features: helpCenterFeatures, loading: featuresLoading, error: featuresError } = useFeatures(true);
   const { pricingPlans: helpCenterPricingPlans, loading: pricingLoading, error: pricingError } = usePricingPlans(true);
   
   // Fetch ALL items for search functionality
   const { faqs: allFAQs, loading: allFaqsLoading } = useFAQs(false);
   const { articles: allArticles, loading: allArticlesLoading } = useArticles(false);
   const { features: allFeatures, loading: allFeaturesLoading } = useFeatures(false);
-  const { pricingPlans: allPricingPlans, loading: allPricingPlansLoading } = usePricingPlans(false);
+  const { pricingPlans: allPricingPlans, loading: allPricingLoading } = usePricingPlans(false);
   
   const { t } = useHelpCenterTranslations();
 
@@ -80,10 +103,7 @@ export default function WelcomeTab({
   );
 
   const hasSearchResults = searchQuery.trim() && (filteredFAQs.length > 0 || filteredArticles.length > 0 || filteredFeatures.length > 0 || filteredPricingPlans.length > 0);
-  const noSearchResults = searchQuery.trim() && filteredFAQs.length === 0 && filteredArticles.length === 0 && filteredFeatures.length === 0 && filteredPricingPlans.length === 0;
 
-  // Icon renderer for features
-  type HeroIconName = keyof typeof Icons;
   const renderFeatureIcon = (iconName?: string) => {
     if (!iconName || iconName.trim() === '') {
       return <MdOutlineFeaturedPlayList className="w-5 h-5 text-sky-500" />;
@@ -172,19 +192,88 @@ export default function WelcomeTab({
           </div>
         </div>
 
+        {/* Tab Navigation Badges - Only show when NOT searching */}
+        {!hasSearchResults && (
+          <div className="flex justify-center gap-3 pb-4 flex-wrap w-full px-4 sm:px-6">
+            <button
+              onClick={() => onShowFAQ?.()}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
+            >
+              <span className="text-base sm:text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.faqs}</span>
+              <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
+                {allFAQs.length}
+              </span>
+            </button>
+            <button
+              onClick={() => onShowKnowledgeBase?.()}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
+            >
+              <span className="text-base sm:text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.articles}</span>
+              <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
+                {allArticles.length}
+              </span>
+            </button>
+            <button
+              onClick={() => router.push('/help-center?tab=features')}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
+            >
+              <span className="text-base sm:text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.features || 'Features'}</span>
+              <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
+                {allFeatures.length}
+              </span>
+            </button>
+            <button
+              onClick={() => router.push('/help-center?tab=offerings')}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
+            >
+              <span className="text-base sm:text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.offerings || 'Offerings'}</span>
+              <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
+                {allPricingPlans.length}
+              </span>
+            </button>
+          </div>
+        )}
+
         {/* Search Results */}
         {hasSearchResults && (
-          <div className="space-y-8">
-            {/* Four-column layout for extra large screens: Offerings, Features, FAQs, Articles */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-12">
-              {/* FAQs Results Column */}
-              {filteredFAQs.length > 0 && (
+          <div className="space-y-8 w-full px-4 sm:px-6 lg:px-8">
+            {(() => {
+              // Count columns with results
+              const columnsWithResults = [
+                filteredFAQs.length > 0,
+                filteredArticles.length > 0,
+                filteredFeatures.length > 0,
+                filteredPricingPlans.length > 0,
+              ].filter(Boolean).length;
+
+              // Dynamic grid classes based on number of columns
+              const getGridClasses = () => {
+                switch (columnsWithResults) {
+                  case 1:
+                    return 'grid grid-cols-1 max-w-2xl mx-auto';
+                  case 2:
+                    return 'grid grid-cols-1 lg:grid-cols-2 max-w-5xl mx-auto gap-8 lg:gap-12';
+                  case 3:
+                    return 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 max-w-7xl mx-auto gap-8 lg:gap-12';
+                  case 4:
+                  default:
+                    return 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-12';
+                }
+              };
+
+              return (
+                <div className={getGridClasses()}>
+                  {/* FAQs Results Column */}
+                  {filteredFAQs.length > 0 && (
                 <div className="space-y-5">
                   <button
                     onClick={() => onShowFAQ?.()}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
                   >
                     <span className="text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.faqs}</span>
+                    <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
+                      {filteredFAQs.length}
+                    </span>
                     <svg className="w-4 h-4 text-gray-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -267,6 +356,9 @@ export default function WelcomeTab({
                   className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
                 >
                   <span className="text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.articles}</span>
+                  <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
+                    {filteredArticles.length}
+                  </span>
                   <svg className="w-4 h-4 text-gray-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -337,10 +429,13 @@ export default function WelcomeTab({
             {filteredFeatures.length > 0 && (
               <div className="space-y-5">
                 <button
-                  onClick={() => router.push('/help-center?tab=features')}
+                  onClick={() => router.push('/features')}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
                 >
-                  <span className="text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.features}</span>
+                  <span className="text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.features || 'Features'}</span>
+                  <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
+                    {filteredFeatures.length}
+                  </span>
                   <svg className="w-4 h-4 text-gray-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -351,79 +446,108 @@ export default function WelcomeTab({
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       {/* Multiple glass layers for depth */}
-                      <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border border-gray-200/40 rounded-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-white/80 group-hover:border-sky-200/60 group-hover:scale-[1.02] pointer-events-none"
+                      <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border border-gray-200/40 rounded-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-white/80 group-hover:border-sky-200/60 group-hover:scale-[1.02]"
                         style={{
                           backdropFilter: 'blur(24px) saturate(200%)',
                           WebkitBackdropFilter: 'blur(24px) saturate(200%)',
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-br from-sky-50/30 via-white/20 to-blue-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-sky-50/30 via-white/20 to-blue-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                       
                       {/* Subtle border glow on hover */}
-                      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+                      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                         style={{
                           background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(14, 165, 233, 0.1))',
                           filter: 'blur(1px)',
                         }}
                       />
                       
-                      <button
-                        onClick={() => setExpandedFeature(expandedFeature === feature.id ? null : feature.id)}
-                        className="relative w-full p-6 sm:p-8 text-left flex items-start justify-between group/button"
-                      >
-                        <div className="flex items-start gap-4 flex-1 pr-4 sm:pr-8">
-                          {/* Feature Icon */}
-                          <div className="flex-shrink-0 w-12 h-12 neomorphic rounded-2xl flex items-center justify-center">
-                            {renderFeatureIcon(feature.feature_image)}
+                      <div className="relative p-6 sm:p-8">
+                        <button
+                          onClick={() => setExpandedFeature(expandedFeature === feature.id ? null : feature.id)}
+                          className="w-full text-left flex items-start justify-between group/button"
+                        >
+                          <div className="flex items-start gap-3 flex-1 pr-4 sm:pr-8">
+                            {/* Feature Icon */}
+                            <div className="flex-shrink-0 w-10 h-10 neomorphic rounded-2xl flex items-center justify-center">
+                              {renderFeatureIcon(feature.feature_image)}
+                            </div>
+                            
+                            {/* Feature Title */}
+                            <div className="flex-1 min-w-0">
+                              <span className="text-gray-900 font-semibold text-base sm:text-[18px] leading-relaxed antialiased tracking-[-0.02em] group-hover/button:text-gray-800 transition-colors duration-500 block">
+                                {feature.name}
+                              </span>
+                              {feature.type && (
+                                <span className="inline-block mt-2 px-3 py-1 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
+                                  {feature.type}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           
-                          {/* Feature Title */}
-                          <div className="flex-1 min-w-0">
-                            <span className="text-gray-900 font-semibold text-base sm:text-[18px] leading-relaxed antialiased tracking-[-0.02em] group-hover/button:text-gray-800 transition-colors duration-500 block">
-                              {feature.name}
-                            </span>
-                            {feature.type && (
-                              <span className="inline-block mt-2 px-3 py-1 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
-                                {feature.type}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="relative flex-shrink-0 mt-1">
-                          {/* Button glass container */}
-                          <div className="absolute inset-0 bg-white/70 backdrop-blur-xl rounded-full border border-gray-200/40 group-hover/button:border-sky-300/60 transition-all duration-500"
-                            style={{
-                              backdropFilter: 'blur(16px) saturate(180%)',
-                              WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                            }}
-                          />
-                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/button:scale-110 group-hover/button:rotate-180">
-                            <ChevronDownIcon 
-                              className={`h-4 w-4 sm:h-5 sm:w-5 text-gray-500 group-hover/button:text-sky-600 transition-all duration-500 group-hover/button:scale-110 ${
-                                expandedFeature === feature.id ? 'rotate-180 text-sky-600' : ''
-                              }`}
+                          <div className="relative flex-shrink-0 mt-1">
+                            {/* Button glass container */}
+                            <div className="absolute inset-0 bg-white/70 backdrop-blur-xl rounded-full border border-gray-200/40 group-hover/button:border-sky-300/60 transition-all duration-500"
+                              style={{
+                                backdropFilter: 'blur(16px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                              }}
                             />
+                            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/button:scale-110 group-hover/button:rotate-180">
+                              <ChevronDownIcon 
+                                className={`h-4 w-4 sm:h-5 sm:w-5 text-gray-500 group-hover/button:text-sky-600 transition-all duration-500 group-hover/button:scale-110 ${
+                                  expandedFeature === feature.id ? 'rotate-180 text-sky-600' : ''
+                                }`}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                      
-                      {expandedFeature === feature.id && (
-                        <div className="px-6 sm:px-8 pb-6 sm:pb-8 pt-2">
-                          {feature.description && (
-                            <p className="text-gray-700 text-sm sm:text-base leading-relaxed mb-3">
-                              {feature.description}
-                            </p>
-                          )}
-                          <button
-                            onClick={() => router.push(`/features/${feature.slug}`)}
-                            className="text-sky-600 hover:text-sky-700 text-sm font-medium inline-flex items-center gap-1 transition-colors"
-                          >
-                            <span>View details</span>
-                            <span className="text-lg">↗</span>
-                          </button>
-                        </div>
-                      )}
+                        </button>
+                        
+                        {expandedFeature === feature.id && (
+                          <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200/40 animate-in slide-in-from-top-6 duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                            {/* Feature content with glass background */}
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-sky-50/30 backdrop-blur-sm rounded-2xl border border-sky-200/30 -m-4 sm:-m-6 p-4 sm:p-6"
+                                style={{
+                                  backdropFilter: 'blur(8px)',
+                                  WebkitBackdropFilter: 'blur(8px)',
+                                }}
+                              />
+                              <div className="relative p-4 sm:p-6">
+                                {feature.description && (
+                                  <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                                    {feature.description}
+                                  </p>
+                                )}
+                                
+                                {/* Content Preview */}
+                                {feature.content && (
+                                  <div className="text-gray-600 text-sm leading-relaxed mb-3">
+                                    <div 
+                                      dangerouslySetInnerHTML={{ 
+                                        __html: feature.content.length > 500 
+                                          ? feature.content.substring(0, 500).replace(/<[^>]*>/g, '') + '...' 
+                                          : feature.content 
+                                      }}
+                                      className="prose prose-sm max-w-none [&>p]:mb-2 [&>p:last-child]:mb-0"
+                                    />
+                                  </div>
+                                )}
+                                
+                                {/* Jump to Details Link with Arrow */}
+                                <button
+                                  onClick={() => router.push(`/features/${feature.slug}`)}
+                                  className="inline-flex items-center gap-1.5 text-sky-600 hover:text-sky-700 font-medium text-sm transition-all duration-300 group/link"
+                                >
+                                  <span>{feature.content && feature.content.length > 500 ? 'Continue reading' : 'View details'}</span>
+                                  <span className="text-base group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-300">↗</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -434,11 +558,14 @@ export default function WelcomeTab({
             {filteredPricingPlans.length > 0 && (
               <div className="space-y-5">
                 <button
-                  onClick={() => router.push('/help-center?tab=offerings')}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-amber-50 hover:to-amber-100/50 border border-gray-200/50 hover:border-amber-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
+                  onClick={() => router.push('/products')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
                 >
-                  <span className="text-lg font-semibold text-gray-700 group-hover:text-amber-600 transition-colors duration-300">{t.offerings}</span>
-                  <svg className="w-4 h-4 text-gray-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span className="text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.offerings || 'Offerings'}</span>
+                  <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
+                    {filteredPricingPlans.length}
+                  </span>
+                  <svg className="w-4 h-4 text-gray-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -447,101 +574,116 @@ export default function WelcomeTab({
                     <div key={plan.id} className="group relative"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      {/* Multiple glass layers for depth */}
-                      <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border border-gray-200/40 rounded-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-white/80 group-hover:border-amber-200/60 group-hover:scale-[1.02] pointer-events-none"
+                      {/* Glass morphism card */}
+                      <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border border-gray-200/40 rounded-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-white/80 group-hover:border-sky-200/60 group-hover:scale-[1.02]"
                         style={{
                           backdropFilter: 'blur(24px) saturate(200%)',
                           WebkitBackdropFilter: 'blur(24px) saturate(200%)',
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 via-white/20 to-yellow-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-sky-50/30 via-white/20 to-blue-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                       
-                      {/* Subtle border glow on hover */}
-                      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+                      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                         style={{
-                          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.1))',
+                          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(14, 165, 233, 0.1))',
                           filter: 'blur(1px)',
                         }}
                       />
                       
-                      <button
-                        onClick={() => setExpandedPricingPlan(expandedPricingPlan === plan.id ? null : plan.id)}
-                        className="relative w-full p-6 sm:p-8 text-left flex items-start justify-between group/button"
-                      >
-                        <div className="flex items-start gap-4 flex-1 pr-4 sm:pr-8">
-                          {/* Product Image or Icon */}
-                          <div className="flex-shrink-0 w-16 h-16 neomorphic rounded-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-yellow-50">
-                            {plan.links_to_image ? (
-                              <img src={plan.links_to_image} alt={plan.product_name} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-3xl">💎</span>
-                            )}
-                          </div>
-                          
-                          {/* Product Title and Price */}
-                          <div className="flex-1 min-w-0">
-                            <span className="text-gray-900 font-semibold text-base sm:text-[18px] leading-relaxed antialiased tracking-[-0.02em] group-hover/button:text-gray-800 transition-colors duration-500 block">
-                              {plan.product_name || plan.package}
-                            </span>
-                            {plan.measure && (
-                              <span className="inline-block mt-2 px-3 py-1 bg-amber-50 text-amber-600 text-xs font-medium rounded-full tracking-wide uppercase border border-amber-100">
-                                {plan.measure}
-                              </span>
-                            )}
-                            {/* Price Display */}
-                            <div className="mt-3 flex items-baseline gap-2 flex-wrap">
-                              <span className="text-2xl font-bold text-gray-900">
-                                {plan.currency_symbol}{(plan.is_promotion && plan.promotion_price ? plan.promotion_price : plan.price) / 100}
-                              </span>
-                              {plan.is_promotion && plan.promotion_price && (
-                                <span className="text-sm text-gray-400 line-through">
-                                  {plan.currency_symbol}{plan.price / 100}
-                                </span>
+                      <div className="relative p-6 sm:p-8">
+                        <button
+                          onClick={() => setExpandedPricingPlan(expandedPricingPlan === plan.id ? null : plan.id)}
+                          className="w-full text-left flex items-start justify-between group/button"
+                        >
+                          <div className="flex items-start gap-3 flex-1 pr-4 sm:pr-8">
+                            {/* Product Image or Icon */}
+                            <div className="flex-shrink-0 w-12 h-12 neomorphic rounded-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-yellow-50">
+                              {plan.links_to_image ? (
+                                <img src={plan.links_to_image} alt={plan.product_name} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-2xl">💎</span>
                               )}
                             </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <span className="text-gray-900 font-semibold text-base sm:text-[18px] leading-relaxed antialiased tracking-[-0.02em] group-hover/button:text-gray-800 transition-colors duration-500 block">
+                                {plan.product_name || plan.package}
+                              </span>
+                              {plan.measure && (
+                                <span className="inline-block mt-2 px-3 py-1 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
+                                  {plan.measure}
+                                </span>
+                              )}
+                              {/* Price Display */}
+                              <div className="mt-2 flex items-baseline gap-2">
+                                <span className="text-xl font-bold text-gray-900">
+                                  {plan.currency_symbol}{(plan.is_promotion && plan.promotion_price ? plan.promotion_price : plan.price) / 100}
+                                </span>
+                                {plan.is_promotion && plan.promotion_price && (
+                                  <span className="text-sm text-gray-400 line-through">
+                                    {plan.currency_symbol}{plan.price / 100}
+                                  </span>
+                                )}
+                                {plan.recurring_interval && plan.recurring_interval !== 'one_time' && (
+                                  <span className="text-sm text-gray-500">/ {plan.recurring_interval}</span>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="relative flex-shrink-0 mt-1">
-                          {/* Button glass container */}
-                          <div className="absolute inset-0 bg-white/70 backdrop-blur-xl rounded-full border border-gray-200/40 group-hover/button:border-amber-300/60 transition-all duration-500"
-                            style={{
-                              backdropFilter: 'blur(16px) saturate(180%)',
-                              WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                            }}
-                          />
-                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/button:scale-110 group-hover/button:rotate-180">
-                            <ChevronDownIcon 
-                              className={`h-4 w-4 sm:h-5 sm:w-5 text-gray-500 group-hover/button:text-amber-600 transition-all duration-500 group-hover/button:scale-110 ${
-                                expandedPricingPlan === plan.id ? 'rotate-180 text-amber-600' : ''
-                              }`}
+                          
+                          <div className="relative flex-shrink-0 mt-1">
+                            <div className="absolute inset-0 bg-white/70 backdrop-blur-xl rounded-full border border-gray-200/40 group-hover/button:border-sky-300/60 transition-all duration-500"
+                              style={{
+                                backdropFilter: 'blur(16px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                              }}
                             />
+                            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/button:scale-110 group-hover/button:rotate-180">
+                              <ChevronDownIcon 
+                                className={`h-4 w-4 sm:h-5 sm:w-5 text-gray-500 group-hover/button:text-sky-600 transition-all duration-500 group-hover/button:scale-110 ${
+                                  expandedPricingPlan === plan.id ? 'rotate-180 text-sky-600' : ''
+                                }`}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                      
-                      {expandedPricingPlan === plan.id && (
-                        <div className="px-6 sm:px-8 pb-6 sm:pb-8 pt-2">
-                          {plan.description && (
-                            <p className="text-gray-700 text-sm sm:text-base leading-relaxed mb-3">
-                              {plan.description}
-                            </p>
-                          )}
-                          <button
-                            onClick={() => router.push(`/products/${plan.product_slug || plan.product_id}`)}
-                            className="text-amber-600 hover:text-amber-700 text-sm font-medium inline-flex items-center gap-1 transition-colors"
-                          >
-                            <span>View details & purchase</span>
-                            <span className="text-lg">↗</span>
-                          </button>
-                        </div>
-                      )}
+                        </button>
+                        
+                        {expandedPricingPlan === plan.id && (
+                          <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200/40 animate-in slide-in-from-top-6 duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-sky-50/30 backdrop-blur-sm rounded-2xl border border-sky-200/30 -m-4 sm:-m-6 p-4 sm:p-6"
+                                style={{
+                                  backdropFilter: 'blur(8px)',
+                                  WebkitBackdropFilter: 'blur(8px)',
+                                }}
+                              />
+                              <div className="relative p-4 sm:p-6">
+                                {plan.description && (
+                                  <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                                    {plan.description}
+                                  </p>
+                                )}
+                                
+                                <button
+                                  onClick={() => router.push(`/products/${plan.product_slug || plan.product_id}`)}
+                                  className="inline-flex items-center gap-1.5 text-sky-600 hover:text-sky-700 font-medium text-sm transition-all duration-300 group/link"
+                                >
+                                  <span>View details & purchase</span>
+                                  <span className="text-base group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-300">↗</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
             </div>
+              );
+            })()}
 
             {/* No Results - Full Width */}
             {filteredFAQs.length === 0 && filteredArticles.length === 0 && filteredFeatures.length === 0 && filteredPricingPlans.length === 0 && (
@@ -670,6 +812,295 @@ export default function WelcomeTab({
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Featured Features - Enhanced Apple Style */}
+        {!searchQuery.trim() && helpCenterFeatures.length > 0 && (
+          <div className="pt-8 sm:pt-12 border-t border-gray-100 max-w-4xl mx-auto">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-4xl font-light text-gray-900 mb-3 sm:mb-4 tracking-tight">{t.featuredFeatures || 'Featured Features'}</h2>
+              <p className="text-base sm:text-lg text-gray-500 font-light">{t.featuredFeaturesDescription || 'Discover what makes us special'}</p>
+            </div>
+            <div className="space-y-4 sm:space-y-5">
+              {helpCenterFeatures.slice(0, 5).map((feature: Feature, index: number) => (
+                <div key={feature.id} className="group relative"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {/* Multiple glass layers for depth */}
+                  <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border border-gray-200/40 rounded-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-white/80 group-hover:border-purple-200/60 group-hover:scale-[1.02]"
+                    style={{
+                      backdropFilter: 'blur(24px) saturate(200%)',
+                      WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-white/20 to-pink-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  
+                  {/* Subtle border glow on hover */}
+                  <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1))',
+                      filter: 'blur(1px)',
+                    }}
+                  />
+                  
+                  <div className="relative p-6 sm:p-8">
+                    <button
+                      onClick={() => setExpandedFeature(expandedFeature === feature.id ? null : feature.id)}
+                      className="w-full text-left flex items-start justify-between group/button"
+                    >
+                      <div className="flex items-start gap-4 flex-1 pr-4 sm:pr-8">
+                        {/* Feature Icon */}
+                        <div className="flex-shrink-0 w-12 h-12 neomorphic rounded-2xl flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
+                          {renderFeatureIcon(feature.icon)}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <span className="text-gray-900 font-semibold text-base sm:text-[19px] leading-relaxed antialiased tracking-[-0.02em] group-hover/button:text-gray-800 transition-colors duration-500 block">
+                            {feature.name}
+                          </span>
+                          {feature.description && (
+                            <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                              {feature.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="relative flex-shrink-0 mt-1">
+                        {/* Button glass container */}
+                        <div className="absolute inset-0 bg-white/70 backdrop-blur-xl rounded-full border border-gray-200/40 group-hover/button:border-purple-300/60 transition-all duration-500"
+                          style={{
+                            backdropFilter: 'blur(16px) saturate(180%)',
+                            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                          }}
+                        />
+                        <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/button:scale-110 group-hover/button:rotate-180">
+                          <ChevronDownIcon 
+                            className={`h-4 w-4 sm:h-5 sm:w-5 text-gray-500 group-hover/button:text-purple-600 transition-all duration-500 group-hover/button:scale-110 ${
+                              expandedFeature === feature.id ? 'rotate-180 text-purple-600' : ''
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </button>
+                    
+                    {expandedFeature === feature.id && (
+                      <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200/40 animate-in slide-in-from-top-6 duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                        {/* Feature content with glass background */}
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-purple-50/30 backdrop-blur-sm rounded-2xl border border-purple-200/30 -m-4 sm:-m-6 p-4 sm:p-6"
+                            style={{
+                              backdropFilter: 'blur(8px)',
+                              WebkitBackdropFilter: 'blur(8px)',
+                            }}
+                          />
+                          <div className="relative p-4 sm:p-6">
+                            {feature.content && (
+                              <div 
+                                dangerouslySetInnerHTML={{ __html: feature.content.substring(0, 500) }}
+                                className="text-gray-700 font-normal leading-relaxed text-sm sm:text-[16px] antialiased tracking-[-0.01em] mb-4 prose prose-sm max-w-none"
+                              />
+                            )}
+                            
+                            {/* Jump to Details Link with Arrow */}
+                            <button
+                              onClick={() => router.push(`/features/${feature.slug}`)}
+                              className="mt-4 inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium text-sm transition-all duration-300 group/link"
+                            >
+                              <span>View full details</span>
+                              <span className="text-lg group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-300">↗</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Hot Offerings - Product Cards with Slider */}
+        {!searchQuery.trim() && helpCenterPricingPlans.length > 0 && (
+          <div className="pt-8 sm:pt-12 border-t border-gray-100 max-w-7xl mx-auto">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-4xl font-light text-gray-900 mb-3 sm:mb-4 tracking-tight">{t.hotOfferings || 'Hot Offerings'}</h2>
+              <p className="text-base sm:text-lg text-gray-500 font-light">{t.hotOfferingsDescription || 'Special pricing plans just for you'}</p>
+            </div>
+            
+            {/* Slider Container */}
+            <div className="relative overflow-hidden">
+              <div className="relative px-8 sm:px-12 md:px-16 lg:px-20">
+                {/* Cards Container - Flex-based slider */}
+                <div 
+                  className="flex gap-4 sm:gap-6 transition-transform duration-500 ease-in-out"
+                  style={{
+                    transform: `translateX(-${currentOfferingSlide * (100 / itemsPerView)}%)`,
+                  }}
+                >
+                  {helpCenterPricingPlans.map((plan: PricingPlan, index: number) => (
+                    <div
+                      key={plan.id}
+                      onClick={() => router.push(`/products/${plan.product_slug || plan.product_id}`)}
+                      className="group cursor-pointer flex-shrink-0"
+                      style={{ 
+                        width: itemsPerView === 1 
+                          ? 'calc(100% - 0px)' 
+                          : itemsPerView === 2 
+                          ? 'calc(50% - 12px)' 
+                          : 'calc(33.333% - 16px)',
+                        animationDelay: `${index * 100}ms` 
+                      }}
+                    >
+                      {/* Product Card - Similar to /products page */}
+                      <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full min-h-[420px]">
+                        {/* Product Image */}
+                        {plan.links_to_image && plan.links_to_image.trim() !== '' ? (
+                          <div className="w-full h-48 sm:h-52 flex-shrink-0 overflow-hidden">
+                            <img
+                              src={plan.links_to_image}
+                              alt={plan.product_name || plan.package || 'Product'}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              loading="lazy"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-full h-48 sm:h-52 flex-shrink-0 bg-gradient-to-br from-amber-50 to-yellow-50 flex items-center justify-center">
+                            <span className="text-6xl">💎</span>
+                          </div>
+                        )}
+                        
+                        {/* Card Content */}
+                        <div className="p-4 sm:p-6 flex flex-col flex-grow">
+                          {/* Product Name */}
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-sky-400 transition-colors duration-200 min-h-[3rem]">
+                            {plan.product_name || plan.package}
+                          </h3>
+                          
+                          {/* Package/Type and Measure Badges */}
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {plan.package && (
+                              <span className="inline-block px-3 py-1 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
+                                {plan.package}
+                              </span>
+                            )}
+                            {plan.measure && (
+                              <span className="inline-block px-3 py-1 bg-amber-50 text-amber-600 text-xs font-medium rounded-full tracking-wide uppercase border border-amber-100">
+                                {plan.measure}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Promotion Badge */}
+                          {plan.is_promotion && (
+                            <div className="mb-3">
+                              <span className="inline-block px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full tracking-wide uppercase border border-red-100">
+                                {plan.promotion_percent ? `-${plan.promotion_percent}%` : 'SALE'}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Description */}
+                          {plan.description && (
+                            <p className="text-sm text-gray-600 mb-4 line-clamp-2 flex-grow">
+                              {plan.description}
+                            </p>
+                          )}
+                          
+                          {/* Pricing Section */}
+                          <div className="mt-auto">
+                            <div className="flex items-baseline gap-2 mb-3">
+                              <div className="flex items-baseline gap-2">
+                                {plan.is_promotion && plan.promotion_price ? (
+                                  <>
+                                    <span className="text-xl sm:text-2xl font-bold text-red-600">
+                                      {plan.currency_symbol}{(plan.promotion_price / 100).toFixed(2)}
+                                    </span>
+                                    <span className="text-sm text-gray-400 line-through">
+                                      {plan.currency_symbol}{(plan.price / 100).toFixed(2)}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="text-xl sm:text-2xl font-bold text-gray-700">
+                                    {plan.currency_symbol}{(plan.price / 100).toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                              {plan.recurring_interval && plan.recurring_interval !== 'one_time' && (
+                                <span className="text-sm text-gray-500 font-medium">
+                                  / {plan.recurring_interval}
+                                </span>
+                              )}
+                            </div>
+                            
+                            {/* View Details Arrow */}
+                            <div className="flex justify-end">
+                              <span className="text-sky-400 transition-all duration-300 group-hover:translate-x-1">
+                                <ArrowRightIcon className="h-5 w-5" />
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Navigation Arrows */}
+                {helpCenterPricingPlans.length > itemsPerView && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentOfferingSlide(prev => Math.max(0, prev - 1));
+                      }}
+                      disabled={currentOfferingSlide === 0}
+                      className="absolute left-0 sm:-left-2 lg:-left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label="Previous offerings"
+                    >
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentOfferingSlide(prev => Math.min(helpCenterPricingPlans.length - itemsPerView, prev + 1));
+                      }}
+                      disabled={currentOfferingSlide >= helpCenterPricingPlans.length - itemsPerView}
+                      className="absolute right-0 sm:-right-2 lg:-right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label="Next offerings"
+                    >
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
+              
+              {/* Dot Indicators */}
+              {helpCenterPricingPlans.length > itemsPerView && (
+                <div className="flex justify-center gap-2 mt-6">
+                  {Array.from({ 
+                    length: Math.max(0, helpCenterPricingPlans.length - itemsPerView + 1)
+                  }).map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentOfferingSlide(index)}
+                      className={`transition-all duration-300 rounded-full ${
+                        index === currentOfferingSlide
+                          ? 'w-8 h-2 bg-amber-500'
+                          : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
+                      }`}
+                      aria-label={`Go to offering slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

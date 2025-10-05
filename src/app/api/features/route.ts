@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   let organizationId = searchParams.get('organization_id');
+  const helpCenter = searchParams.get('help_center');
 
   if (!organizationId) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -35,11 +36,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log('Fetching features for organization_id:', organizationId);
-    const { data, error } = await supabase
+    console.log('Fetching features for organization_id:', organizationId, 'helpCenter:', helpCenter);
+    let query = supabase
       .from('feature')
       .select('*')
       .eq('organization_id', organizationId);
+    
+    // Filter by is_help_center if requested
+    if (helpCenter === 'true') {
+      query = query.eq('is_help_center', true);
+    }
+    
+    const { data, error } = await query;
 
     if (error) {
       console.error('Supabase query error:', error);

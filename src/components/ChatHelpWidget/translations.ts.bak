@@ -209,12 +209,12 @@ export const helpCenterTranslations = {
     // Features section
     features: 'Características',
     featuresDescription: 'Explorar características del producto',
+    featuredFeatures: 'Características Destacadas',
+    featuredFeaturesDescription: 'Descubre lo que nos hace especiales',
     searchFeatures: 'Buscar características...',
     noFeaturesFound: 'No se encontraron características que coincidan con tu búsqueda.',
     viewFullDetails: 'Ver detalles completos',
     viewAllFeatures: 'Ver Todas las Características',
-    featuredFeatures: 'Características Destacadas',
-    featuredFeaturesDescription: 'Descubre lo que nos hace especiales',
     
     // Offerings section
     offerings: 'Ofertas',
@@ -222,8 +222,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'Buscar ofertas...',
     noOfferingsFound: 'No se encontraron ofertas que coincidan con tu búsqueda.',
     viewAllOfferings: 'Ver Todas las Ofertas',
-    hotOfferings: 'Ofertas Destacadas',
-    hotOfferingsDescription: 'Planes de precios especiales para ti',
     
     // Live support/conversation
     typeMessage: 'Escribe tu mensaje...',
@@ -361,8 +359,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: 'Aucune fonctionnalité trouvée correspondant à votre recherche.',
     viewFullDetails: 'Voir les détails complets',
     viewAllFeatures: 'Voir Toutes les Fonctionnalités',
-    featuredFeatures: 'Fonctionnalités en Vedette',
-    featuredFeaturesDescription: 'Découvrez ce qui nous rend spéciaux',
     
     // Offerings section
     offerings: 'Offres',
@@ -370,8 +366,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'Rechercher des offres...',
     noOfferingsFound: 'Aucune offre trouvée correspondant à votre recherche.',
     viewAllOfferings: 'Voir Toutes les Offres',
-    hotOfferings: 'Offres Spéciales',
-    hotOfferingsDescription: 'Plans tarifaires spéciaux pour vous',
     
     // Live support/conversation
     typeMessage: 'Tapez votre message...',
@@ -509,8 +503,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: 'Keine Funktionen gefunden, die Ihrer Suche entsprechen.',
     viewFullDetails: 'Vollständige Details anzeigen',
     viewAllFeatures: 'Alle Funktionen anzeigen',
-    featuredFeatures: 'Vorgestellte Funktionen',
-    featuredFeaturesDescription: 'Entdecken Sie, was uns besonders macht',
     
     // Offerings section
     offerings: 'Angebote',
@@ -518,8 +510,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'Angebote suchen...',
     noOfferingsFound: 'Keine Angebote gefunden, die Ihrer Suche entsprechen.',
     viewAllOfferings: 'Alle Angebote anzeigen',
-    hotOfferings: 'Top-Angebote',
-    hotOfferingsDescription: 'Spezielle Preispläne nur für Sie',
     
     // Live support/conversation
     typeMessage: 'Nachricht eingeben...',
@@ -657,8 +647,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: 'Функции, соответствующие вашему поиску, не найдены.',
     viewFullDetails: 'Посмотреть полную информацию',
     viewAllFeatures: 'Просмотреть все функции',
-    featuredFeatures: 'Избранные Функции',
-    featuredFeaturesDescription: 'Откройте для себя, что делает нас особенными',
     
     // Offerings section
     offerings: 'Предложения',
@@ -666,8 +654,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'Поиск предложений...',
     noOfferingsFound: 'Предложения, соответствующие вашему поиску, не найдены.',
     viewAllOfferings: 'Просмотреть все предложения',
-    hotOfferings: 'Горячие Предложения',
-    hotOfferingsDescription: 'Специальные тарифные планы специально для вас',
     
     // Live support/conversation
     typeMessage: 'Введите ваше сообщение...',
@@ -805,8 +791,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: 'Nenhum recurso encontrado que corresponda à sua pesquisa.',
     viewFullDetails: 'Ver detalhes completos',
     viewAllFeatures: 'Ver Todos os Recursos',
-    featuredFeatures: 'Recursos em Destaque',
-    featuredFeaturesDescription: 'Descubra o que nos torna especiais',
     
     // Offerings section
     offerings: 'Ofertas',
@@ -814,8 +798,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'Pesquisar ofertas...',
     noOfferingsFound: 'Nenhuma oferta encontrada que corresponda à sua pesquisa.',
     viewAllOfferings: 'Ver Todas as Ofertas',
-    hotOfferings: 'Ofertas Quentes',
-    hotOfferingsDescription: 'Planos de preços especiais para você',
     
     // Live support/conversation
     typeMessage: 'Digite sua mensagem...',
@@ -953,8 +935,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: 'Nessuna funzionalità trovata che corrisponda alla tua ricerca.',
     viewFullDetails: 'Visualizza dettagli completi',
     viewAllFeatures: 'Visualizza Tutte le Funzionalità',
-    featuredFeatures: 'Funzionalità in Evidenza',
-    featuredFeaturesDescription: 'Scopri cosa ci rende speciali',
     
     // Offerings section
     offerings: 'Offerte',
@@ -962,8 +942,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'Cerca offerte...',
     noOfferingsFound: 'Nessuna offerta trovata che corrisponda alla tua ricerca.',
     viewAllOfferings: 'Visualizza Tutte le Offerte',
-    hotOfferings: 'Offerte Speciali',
-    hotOfferingsDescription: 'Piani tariffari speciali per te',
     
     // Live support/conversation
     typeMessage: 'Digita il tuo messaggio...',
@@ -1101,8 +1079,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: 'Geen functies gevonden die overeenkomen met uw zoekopdracht.',
     viewFullDetails: 'Bekijk volledige details',
     viewAllFeatures: 'Bekijk Alle Functies',
-    featuredFeatures: 'Uitgelichte Functies',
-    featuredFeaturesDescription: 'Ontdek wat ons bijzonder maakt',
     
     // Offerings section
     offerings: 'Aanbiedingen',
@@ -1110,8 +1086,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'Zoek aanbiedingen...',
     noOfferingsFound: 'Geen aanbiedingen gevonden die overeenkomen met uw zoekopdracht.',
     viewAllOfferings: 'Bekijk Alle Aanbiedingen',
-    hotOfferings: 'Topdeals',
-    hotOfferingsDescription: 'Speciale prijsplannen voor u',
     
     // Live support/conversation
     typeMessage: 'Typ uw bericht...',
@@ -1249,8 +1223,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: 'Nie znaleziono funkcji pasujących do wyszukiwania.',
     viewFullDetails: 'Zobacz pełne szczegóły',
     viewAllFeatures: 'Zobacz Wszystkie Funkcje',
-    featuredFeatures: 'Wyróżnione Funkcje',
-    featuredFeaturesDescription: 'Odkryj, co nas wyróżnia',
     
     // Offerings section
     offerings: 'Oferty',
@@ -1258,8 +1230,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'Szukaj ofert...',
     noOfferingsFound: 'Nie znaleziono ofert pasujących do wyszukiwania.',
     viewAllOfferings: 'Zobacz Wszystkie Oferty',
-    hotOfferings: 'Gorące Oferty',
-    hotOfferingsDescription: 'Specjalne plany cenowe dla Ciebie',
     
     // Live support/conversation
     typeMessage: 'Wpisz swoją wiadomość...',
@@ -1397,8 +1367,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: '検索に一致する機能が見つかりませんでした。',
     viewFullDetails: '詳細を表示',
     viewAllFeatures: 'すべての機能を表示',
-    featuredFeatures: '注目の機能',
-    featuredFeaturesDescription: '私たちの特別な点をご覧ください',
     
     // Offerings section
     offerings: 'オファリング',
@@ -1406,8 +1374,6 @@ export const helpCenterTranslations = {
     searchOfferings: 'オファリングを検索...',
     noOfferingsFound: '検索に一致するオファリングが見つかりませんでした。',
     viewAllOfferings: 'すべてのオファリングを表示',
-    hotOfferings: '人気のオファー',
-    hotOfferingsDescription: '特別価格プラン',
     
     // Live support/conversation
     typeMessage: 'メッセージを入力...',
@@ -1545,8 +1511,6 @@ export const helpCenterTranslations = {
     noFeaturesFound: '没有找到符合您搜索的功能。',
     viewFullDetails: '查看完整详情',
     viewAllFeatures: '查看所有功能',
-    featuredFeatures: '精选功能',
-    featuredFeaturesDescription: '发现我们的特色',
     
     // Offerings section
     offerings: '产品',
@@ -1554,8 +1518,6 @@ export const helpCenterTranslations = {
     searchOfferings: '搜索产品...',
     noOfferingsFound: '没有找到符合您搜索的产品。',
     viewAllOfferings: '查看所有产品',
-    hotOfferings: '热门优惠',
-    hotOfferingsDescription: '为您提供特别价格方案',
     
     // Live support/conversation
     typeMessage: '输入您的消息...',

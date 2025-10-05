@@ -18,7 +18,7 @@ type HeroIconName = keyof typeof Icons;
 
 export default function FeaturesView({ size, onBack }: FeaturesViewProps) {
   const router = useRouter();
-  const [expandedFeature, setExpandedFeature] = useState<number | null>(null);
+  const [expandedFeature, setExpandedFeature] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { features, loading, error } = useFeatures();
   const { t } = useHelpCenterTranslations();

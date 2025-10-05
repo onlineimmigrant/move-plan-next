@@ -8,6 +8,7 @@ export interface Feature {
   created_at: string;
   name: string;
   feature_image?: string;
+  icon?: string;
   content: string | null;
   slug: string;
   display_content: boolean;
@@ -17,6 +18,7 @@ export interface Feature {
   description?: string;
   type_display?: string;
   organization_id: string | null;
+  is_help_center?: boolean;
 }
 
 export function useFeatures(helpCenterOnly: boolean = false) {
