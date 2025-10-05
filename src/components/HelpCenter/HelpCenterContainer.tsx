@@ -11,6 +11,8 @@ import ConversationTab from '@/components/ChatHelpWidget/ConversationTab';
 import ArticlesTab from '@/components/ChatHelpWidget/ArticlesTab';
 import AIAgentTab from '@/components/ChatHelpWidget/AIAgentTab';
 import FAQView from '@/components/ChatHelpWidget/FAQView';
+import FeaturesView from '@/components/ChatHelpWidget/FeaturesView';
+import OfferingsView from '@/components/ChatHelpWidget/OfferingsView';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,10 +24,14 @@ export default function HelpCenterContainer() {
   const tabParam = searchParams.get('tab');
   
   // Map URL tab parameter to initial view
-  const getInitialView = (): 'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support' => {
+  const getInitialView = (): 'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'features' | 'offerings' | 'knowledge-base' | 'live-support' => {
     switch (tabParam) {
       case 'faq':
         return 'faq';
+      case 'features':
+        return 'features';
+      case 'offerings':
+        return 'offerings';
       case 'articles':
       case 'knowledge-base':
         return 'articles';
@@ -55,7 +61,7 @@ export default function HelpCenterContainer() {
   };
   
   const [activeTab, setActiveTab] = useState<'welcome' | 'conversation' | 'ai'>(getInitialTab());
-  const [currentView, setCurrentView] = useState<'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support'>(getInitialView());
+  const [currentView, setCurrentView] = useState<'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'features' | 'offerings' | 'knowledge-base' | 'live-support'>(getInitialView());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -225,6 +231,20 @@ export default function HelpCenterContainer() {
       case 'faq':
         return (
           <FAQView
+            size="fullscreen"
+            onBack={() => setCurrentView('welcome')}
+          />
+        );
+      case 'features':
+        return (
+          <FeaturesView
+            size="fullscreen"
+            onBack={() => setCurrentView('welcome')}
+          />
+        );
+      case 'offerings':
+        return (
+          <OfferingsView
             size="fullscreen"
             onBack={() => setCurrentView('welcome')}
           />

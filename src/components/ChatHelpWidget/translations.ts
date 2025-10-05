@@ -58,6 +58,21 @@ export const helpCenterTranslations = {
     searchFAQs: 'Search FAQs...',
     noFAQsFound: 'No FAQs found matching your search.',
     
+    // Features section
+    features: 'Features',
+    featuresDescription: 'Explore product features',
+    searchFeatures: 'Search features...',
+    noFeaturesFound: 'No features found matching your search.',
+    viewFullDetails: 'View full details',
+    viewAllFeatures: 'View All Features',
+    
+    // Offerings section
+    offerings: 'Offerings',
+    offeringsDescription: 'Explore what we provide',
+    searchOfferings: 'Search offerings...',
+    noOfferingsFound: 'No offerings found matching your search.',
+    viewAllOfferings: 'View All Offerings',
+    
     // Live support/conversation
     typeMessage: 'Type your message...',
     send: 'Send',
@@ -186,6 +201,21 @@ export const helpCenterTranslations = {
     faqDescription: 'Obtén respuestas rápidas a preguntas comunes',
     searchFAQs: 'Buscar en preguntas frecuentes...',
     noFAQsFound: 'No se encontraron preguntas frecuentes que coincidan con tu búsqueda.',
+    
+    // Features section
+    features: 'Características',
+    featuresDescription: 'Explorar características del producto',
+    searchFeatures: 'Buscar características...',
+    noFeaturesFound: 'No se encontraron características que coincidan con tu búsqueda.',
+    viewFullDetails: 'Ver detalles completos',
+    viewAllFeatures: 'Ver Todas las Características',
+    
+    // Offerings section
+    offerings: 'Ofertas',
+    offeringsDescription: 'Explorar lo que ofrecemos',
+    searchOfferings: 'Buscar ofertas...',
+    noOfferingsFound: 'No se encontraron ofertas que coincidan con tu búsqueda.',
+    viewAllOfferings: 'Ver Todas las Ofertas',
     
     // Live support/conversation
     typeMessage: 'Escribe tu mensaje...',
@@ -316,6 +346,21 @@ export const helpCenterTranslations = {
     searchFAQs: 'Rechercher dans les FAQ...',
     noFAQsFound: 'Aucune FAQ trouvée correspondant à votre recherche.',
     
+    // Features section
+    features: 'Fonctionnalités',
+    featuresDescription: 'Explorer les fonctionnalités du produit',
+    searchFeatures: 'Rechercher des fonctionnalités...',
+    noFeaturesFound: 'Aucune fonctionnalité trouvée correspondant à votre recherche.',
+    viewFullDetails: 'Voir les détails complets',
+    viewAllFeatures: 'Voir Toutes les Fonctionnalités',
+    
+    // Offerings section
+    offerings: 'Offres',
+    offeringsDescription: 'Explorer ce que nous proposons',
+    searchOfferings: 'Rechercher des offres...',
+    noOfferingsFound: 'Aucune offre trouvée correspondant à votre recherche.',
+    viewAllOfferings: 'Voir Toutes les Offres',
+    
     // Live support/conversation
     typeMessage: 'Tapez votre message...',
     send: 'Envoyer',
@@ -444,6 +489,21 @@ export const helpCenterTranslations = {
     faqDescription: 'Schnelle Antworten auf häufige Fragen erhalten',
     searchFAQs: 'In FAQ suchen...',
     noFAQsFound: 'Keine FAQ gefunden, die Ihrer Suche entsprechen.',
+    
+    // Features section
+    features: 'Funktionen',
+    featuresDescription: 'Produktfunktionen erkunden',
+    searchFeatures: 'Funktionen suchen...',
+    noFeaturesFound: 'Keine Funktionen gefunden, die Ihrer Suche entsprechen.',
+    viewFullDetails: 'Vollständige Details anzeigen',
+    viewAllFeatures: 'Alle Funktionen anzeigen',
+    
+    // Offerings section
+    offerings: 'Angebote',
+    offeringsDescription: 'Erkunden Sie, was wir anbieten',
+    searchOfferings: 'Angebote suchen...',
+    noOfferingsFound: 'Keine Angebote gefunden, die Ihrer Suche entsprechen.',
+    viewAllOfferings: 'Alle Angebote anzeigen',
     
     // Live support/conversation
     typeMessage: 'Nachricht eingeben...',
@@ -574,6 +634,21 @@ export const helpCenterTranslations = {
     searchFAQs: 'Поиск в FAQ...',
     noFAQsFound: 'FAQ, соответствующие вашему поиску, не найдены.',
     
+    // Features section
+    features: 'Функции',
+    featuresDescription: 'Изучить функции продукта',
+    searchFeatures: 'Поиск функций...',
+    noFeaturesFound: 'Функции, соответствующие вашему поиску, не найдены.',
+    viewFullDetails: 'Посмотреть полную информацию',
+    viewAllFeatures: 'Просмотреть все функции',
+    
+    // Offerings section
+    offerings: 'Предложения',
+    offeringsDescription: 'Изучить, что мы предлагаем',
+    searchOfferings: 'Поиск предложений...',
+    noOfferingsFound: 'Предложения, соответствующие вашему поиску, не найдены.',
+    viewAllOfferings: 'Просмотреть все предложения',
+    
     // Live support/conversation
     typeMessage: 'Введите ваше сообщение...',
     send: 'Отправить',
@@ -702,6 +777,21 @@ export const helpCenterTranslations = {
     faqDescription: 'Obtenha respostas rápidas para perguntas comuns',
     searchFAQs: 'Pesquisar FAQ...',
     noFAQsFound: 'Nenhuma FAQ encontrada que corresponda à sua pesquisa.',
+    
+    // Features section
+    features: 'Recursos',
+    featuresDescription: 'Explorar recursos do produto',
+    searchFeatures: 'Pesquisar recursos...',
+    noFeaturesFound: 'Nenhum recurso encontrado que corresponda à sua pesquisa.',
+    viewFullDetails: 'Ver detalhes completos',
+    viewAllFeatures: 'Ver Todos os Recursos',
+    
+    // Offerings section
+    offerings: 'Ofertas',
+    offeringsDescription: 'Explorar o que oferecemos',
+    searchOfferings: 'Pesquisar ofertas...',
+    noOfferingsFound: 'Nenhuma oferta encontrada que corresponda à sua pesquisa.',
+    viewAllOfferings: 'Ver Todas as Ofertas',
     
     // Live support/conversation
     typeMessage: 'Digite sua mensagem...',
@@ -832,6 +922,21 @@ export const helpCenterTranslations = {
     searchFAQs: 'Cerca nelle FAQ...',
     noFAQsFound: 'Nessuna FAQ trovata che corrisponda alla tua ricerca.',
     
+    // Features section
+    features: 'Funzionalità',
+    featuresDescription: 'Esplora le funzionalità del prodotto',
+    searchFeatures: 'Cerca funzionalità...',
+    noFeaturesFound: 'Nessuna funzionalità trovata che corrisponda alla tua ricerca.',
+    viewFullDetails: 'Visualizza dettagli completi',
+    viewAllFeatures: 'Visualizza Tutte le Funzionalità',
+    
+    // Offerings section
+    offerings: 'Offerte',
+    offeringsDescription: 'Esplora ciò che offriamo',
+    searchOfferings: 'Cerca offerte...',
+    noOfferingsFound: 'Nessuna offerta trovata che corrisponda alla tua ricerca.',
+    viewAllOfferings: 'Visualizza Tutte le Offerte',
+    
     // Live support/conversation
     typeMessage: 'Digita il tuo messaggio...',
     send: 'Invia',
@@ -960,6 +1065,21 @@ export const helpCenterTranslations = {
     faqDescription: 'Krijg snelle antwoorden op veelgestelde vragen',
     searchFAQs: 'Zoek in FAQ...',
     noFAQsFound: 'Geen FAQ\'s gevonden die overeenkomen met uw zoekopdracht.',
+    
+    // Features section
+    features: 'Functies',
+    featuresDescription: 'Verken productfuncties',
+    searchFeatures: 'Zoek functies...',
+    noFeaturesFound: 'Geen functies gevonden die overeenkomen met uw zoekopdracht.',
+    viewFullDetails: 'Bekijk volledige details',
+    viewAllFeatures: 'Bekijk Alle Functies',
+    
+    // Offerings section
+    offerings: 'Aanbiedingen',
+    offeringsDescription: 'Ontdek wat we bieden',
+    searchOfferings: 'Zoek aanbiedingen...',
+    noOfferingsFound: 'Geen aanbiedingen gevonden die overeenkomen met uw zoekopdracht.',
+    viewAllOfferings: 'Bekijk Alle Aanbiedingen',
     
     // Live support/conversation
     typeMessage: 'Typ uw bericht...',
@@ -1090,6 +1210,21 @@ export const helpCenterTranslations = {
     searchFAQs: 'Szukaj w FAQ...',
     noFAQsFound: 'Nie znaleziono FAQ pasujących do wyszukiwania.',
     
+    // Features section
+    features: 'Funkcje',
+    featuresDescription: 'Poznaj funkcje produktu',
+    searchFeatures: 'Szukaj funkcji...',
+    noFeaturesFound: 'Nie znaleziono funkcji pasujących do wyszukiwania.',
+    viewFullDetails: 'Zobacz pełne szczegóły',
+    viewAllFeatures: 'Zobacz Wszystkie Funkcje',
+    
+    // Offerings section
+    offerings: 'Oferty',
+    offeringsDescription: 'Poznaj, co oferujemy',
+    searchOfferings: 'Szukaj ofert...',
+    noOfferingsFound: 'Nie znaleziono ofert pasujących do wyszukiwania.',
+    viewAllOfferings: 'Zobacz Wszystkie Oferty',
+    
     // Live support/conversation
     typeMessage: 'Wpisz swoją wiadomość...',
     send: 'Wyślij',
@@ -1219,6 +1354,21 @@ export const helpCenterTranslations = {
     searchFAQs: 'FAQを検索...',
     noFAQsFound: '検索に一致するFAQが見つかりませんでした。',
     
+    // Features section
+    features: '機能',
+    featuresDescription: '製品の機能を探索',
+    searchFeatures: '機能を検索...',
+    noFeaturesFound: '検索に一致する機能が見つかりませんでした。',
+    viewFullDetails: '詳細を表示',
+    viewAllFeatures: 'すべての機能を表示',
+    
+    // Offerings section
+    offerings: 'オファリング',
+    offeringsDescription: '提供内容を探索',
+    searchOfferings: 'オファリングを検索...',
+    noOfferingsFound: '検索に一致するオファリングが見つかりませんでした。',
+    viewAllOfferings: 'すべてのオファリングを表示',
+    
     // Live support/conversation
     typeMessage: 'メッセージを入力...',
     send: '送信',
@@ -1347,6 +1497,21 @@ export const helpCenterTranslations = {
     faqDescription: '快速获得常见问题的答案',
     searchFAQs: '搜索常见问题...',
     noFAQsFound: '没有找到符合您搜索的常见问题。',
+    
+    // Features section
+    features: '功能',
+    featuresDescription: '探索产品功能',
+    searchFeatures: '搜索功能...',
+    noFeaturesFound: '没有找到符合您搜索的功能。',
+    viewFullDetails: '查看完整详情',
+    viewAllFeatures: '查看所有功能',
+    
+    // Offerings section
+    offerings: '产品',
+    offeringsDescription: '探索我们的产品',
+    searchOfferings: '搜索产品...',
+    noOfferingsFound: '没有找到符合您搜索的产品。',
+    viewAllOfferings: '查看所有产品',
     
     // Live support/conversation
     typeMessage: '输入您的消息...',

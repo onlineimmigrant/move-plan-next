@@ -1,5 +1,65 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { supabase, stripe } from '@/lib/stripe-supabase';
+
+// GET endpoint for fetching pricing plans
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    let organizationId = searchParams.get('organization_id');
+
+    if (!organizationId) {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const { getOrganizationId } = await import('@/lib/supabase');
+      organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        console.error('Organization not found for baseUrl:', baseUrl);
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      console.log('Using fallback organization_id:', organizationId);
+    }
+
+    console.log('Fetching pricing plans for organization_id:', organizationId);
+
+    const { data, error } = await supabase
+      .from('pricingplan')
+      .select(`
+        *,
+        product!product_id(
+          id,
+          product_name,
+          slug,
+          links_to_image
+        )
+      `)
+      .eq('organization_id', organizationId)
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('Error fetching pricing plans:', error);
+      return NextResponse.json({ error: `Failed to fetch pricing plans: ${error.message}` }, { status: 500 });
+    }
+
+    console.log('Fetched pricing plans:', data?.length || 0, 'plans');
+
+    // Transform data to flatten product info
+    const transformed = data?.map(plan => {
+      // Handle both array and object format for product relation
+      const productData = Array.isArray(plan.product) ? plan.product[0] : plan.product;
+      
+      return {
+        ...plan,
+        product_name: productData?.product_name,
+        product_slug: productData?.slug,
+        links_to_image: productData?.links_to_image,
+      };
+    });
+
+    return NextResponse.json(transformed || []);
+  } catch (error: any) {
+    console.error('Error in GET /api/pricingplans:', error);
+    return NextResponse.json({ error: `Failed to fetch pricing plans: ${error.message}` }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {

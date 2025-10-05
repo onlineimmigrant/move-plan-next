@@ -243,10 +243,10 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
 
   return (
     <section
-      className={`px-4 py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-white'} min-h-[600px]`}
+      className={`${section.is_slider ? 'px-0' : 'px-4'} py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-white'} min-h-[600px]`}
     >
       <div
-        className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto space-y-12 py-4 sm:p-8 sm:rounded-xl`}
+        className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto space-y-12 ${section.is_slider ? 'py-4' : 'py-4 sm:p-8 sm:rounded-xl'}`}
       >
         {section.is_reviews_section ? (
           <FeedbackAccordion type="all_products" />
@@ -285,7 +285,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
             {section.is_slider ? (
               /* Slider/Carousel Mode */
               <div 
-                className="relative mx-auto px-4 sm:px-20 md:px-24 lg:px-28 xl:px-32 2xl:px-40 max-w-7xl w-full"
+                className="relative mx-auto px-0 sm:px-12 md:px-20 lg:px-24 xl:px-28 2xl:px-32 max-w-7xl w-full overflow-hidden"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
@@ -293,7 +293,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                 onTouchEnd={handleTouchEnd}
               >
                 {/* Carousel Container with padding for shadows */}
-                <div className="relative min-h-[450px] sm:min-h-[500px] md:min-h-[550px] flex items-center py-8 px-2 sm:px-4 md:px-6 lg:px-8">
+                <div className="relative min-h-[450px] sm:min-h-[500px] md:min-h-[550px] flex items-center py-8 px-12 sm:px-4 md:px-6 lg:px-8">
                   {/* Flex layout showing current slide items - always inline/horizontal */}
                   <div className="flex gap-x-4 sm:gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 transition-opacity duration-700 w-full justify-center">
                     {getCurrentSlideItems().map((metric) => {
@@ -357,7 +357,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                   <>
                     <button
                       onClick={prevSlide}
-                      className="absolute left-1 sm:left-2 md:left-4 lg:left-6 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10"
+                      className="absolute left-2 sm:left-4 md:left-6 lg:left-8 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10"
                       aria-label="Previous slide"
                     >
                       <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -366,7 +366,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                     </button>
                     <button
                       onClick={nextSlide}
-                      className="absolute right-1 sm:right-2 md:right-4 lg:right-6 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10"
+                      className="absolute right-2 sm:right-4 md:right-6 lg:right-8 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10"
                       aria-label="Next slide"
                     >
                       <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -45,16 +45,6 @@ interface FeaturePageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Enhanced color palette with better contrast
-const colors = [
-  'bg-gradient-to-br from-pink-500 to-pink-600',
-  'bg-gradient-to-br from-purple-500 to-purple-600',
-  'bg-gradient-to-br from-amber-400 to-amber-500',
-  'bg-gradient-to-br from-emerald-400 to-emerald-500',
-  'bg-gradient-to-br from-sky-400 to-sky-500',
-  'bg-gradient-to-br from-red-400 to-red-500',
-];
-
 // Loading Components
 function FeatureContentSkeleton() {
   return (
@@ -70,17 +60,25 @@ function FeatureContentSkeleton() {
 
 function PricingPlanCardSkeleton() {
   return (
-    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden animate-pulse">
-      <div className="w-full p-8 flex justify-center">
-        <div className="w-24 h-24 bg-gray-200 rounded-2xl"></div>
-      </div>
-      <div className="p-6 space-y-3">
-        <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-        <div className="h-5 bg-gray-200 rounded w-2/3"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/2 ml-auto"></div>
-      </div>
-      <div className="px-6 py-4 border-t border-gray-100">
-        <div className="h-3 bg-gray-200 rounded w-1/4 ml-auto"></div>
+    <div className="neomorphic rounded-3xl overflow-hidden animate-pulse h-full flex flex-col">
+      {/* Optional image header skeleton */}
+      <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-50"></div>
+      
+      <div className="p-8 sm:p-12 space-y-4 bg-gradient-to-br from-white to-gray-50 flex flex-col flex-grow">
+        {/* Badge skeleton */}
+        <div className="flex justify-center">
+          <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+        </div>
+        {/* Title skeleton */}
+        <div className="h-5 bg-gray-200 rounded w-2/3 mx-auto"></div>
+        {/* Price skeleton */}
+        <div className="flex-grow flex items-center justify-center">
+          <div className="h-10 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        {/* Arrow skeleton */}
+        <div className="flex justify-center">
+          <div className="h-6 w-6 bg-gray-200 rounded"></div>
+        </div>
       </div>
     </div>
   );
@@ -89,16 +87,16 @@ function PricingPlanCardSkeleton() {
 function FeatureContent({ content, description }: { content: string; description?: string }) {
   if (!content && !description) {
     return (
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-12 mb-20 text-center">
+      <div className="neomorphic rounded-3xl p-12 sm:p-16 mb-20 text-center">
         <BeakerIcon className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-        <p className="text-gray-500 text-xl font-extralight tracking-wide">No content available for this feature.</p>
+        <p className="text-gray-600 text-xl font-light tracking-wide">No content available for this feature.</p>
       </div>
     );
   }
 
   return (
-    <section className="bg-white rounded-3xl border border-gray-200 shadow-sm p-12 mb-20">
-      <div className="prose prose-xl max-w-none text-gray-700 leading-relaxed prose-headings:font-extralight prose-headings:text-gray-800 prose-p:font-light prose-p:leading-relaxed">
+    <section className="neomorphic rounded-3xl p-12 sm:p-16 mb-20">
+      <div className="prose prose-xl max-w-none text-gray-600 leading-relaxed prose-headings:font-semibold prose-headings:text-gray-900 prose-headings:tracking-[-0.02em] prose-p:font-normal prose-p:leading-relaxed prose-p:tracking-wider">
         {parse(description || content || '')}
       </div>
     </section>
@@ -116,72 +114,67 @@ function PricingPlanCard({ plan, color }: { plan: PricingPlan; color: string }) 
   // Use currency_symbol field with fallback
   const currencySymbol = plan.currency_symbol || '£';
 
-  // Get product image or fallback to color
+  // Get product image
   const productImage = plan.product?.links_to_image;
 
   return (
-    <div className="group bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-gray-300 transition-all duration-500 overflow-hidden transform hover:-translate-y-1">
-      {/* Full-width Product Image or Color Header - 1/3 height */}
-      <div className="w-full h-32 relative group-hover:scale-105 transition-transform duration-300 origin-top">
-        {productImage ? (
-          <img 
-            src={productImage} 
-            alt={plan.product_name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className={`w-full h-full ${color} flex items-center justify-center`}>
-            <span className="text-white font-bold text-3xl drop-shadow-md">
-              {plan.product_name.charAt(0).toUpperCase()}
-            </span>
+    <Link 
+      href={`/products/${plan.product_slug}`}
+      className="group block h-full"
+    >
+      <div className="h-full neomorphic rounded-3xl hover:scale-[1.02] transition-all duration-500 overflow-hidden flex flex-col">
+        {/* Product Image Header (if available) */}
+        {productImage && (
+          <div className="w-full h-32 relative overflow-hidden bg-gradient-to-br from-gray-50 to-white">
+            <img 
+              src={productImage} 
+              alt={plan.product_name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
           </div>
         )}
-      </div>
 
-      {/* Card Content */}
-      <div className="p-8 text-center">
-        {/* Refined Badge */}
-        {plan.measure && (
-          <span className="inline-block px-4 py-1.5 bg-gray-50 text-gray-600 text-xs font-medium rounded-full mb-4 uppercase tracking-widest border border-gray-100">
-            {plan.measure}
-          </span>
-        )}
-        
-        {/* Elegant Title */}
-        <h3 className="text-xl font-extralight text-gray-700 mb-6 leading-tight tracking-tight">
-          {plan.product_name}
-        </h3>
-        
-        {/* Refined Price Display */}
-        <div className="flex flex-col items-center mb-8">
-          {plan.is_promotion && plan.promotion_price && (
-            <span className="text-sm text-gray-400 line-through mb-1 font-light">
-              {currencySymbol}{originalPrice}
-            </span>
+        {/* Card Content */}
+        <div className="p-8 sm:p-12 flex flex-col flex-grow bg-gradient-to-br from-white to-gray-50 text-center gap-y-4">
+          {/* Refined Badge */}
+          {plan.measure && (
+            <div className="flex justify-center">
+              <span className="inline-block px-4 py-1.5 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
+                {plan.measure}
+              </span>
+            </div>
           )}
-          <div className="flex items-baseline">
-            <span className="text-gray-600 text-lg font-extralight mr-1">{currencySymbol}</span>
-            <span className="text-4xl font-extralight text-gray-700 tracking-tight">{displayPrice}</span>
+          
+          {/* Elegant Title */}
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 leading-relaxed tracking-[-0.02em]">
+            {plan.product_name}
+          </h3>
+          
+          {/* Refined Price Display */}
+          <div className="flex flex-col items-center flex-grow justify-center">
+            {plan.is_promotion && plan.promotion_price && (
+              <span className="text-sm text-gray-400 line-through mb-1 font-light">
+                {currencySymbol}{originalPrice}
+              </span>
+            )}
+            <div className="flex items-baseline">
+              <span className="text-gray-600 text-lg font-normal mr-1">{currencySymbol}</span>
+              <span className="text-4xl font-semibold text-gray-900 tracking-tight">{displayPrice}</span>
+            </div>
+            {plan.is_promotion && (
+              <span className="text-xs text-sky-600 font-medium mt-2 tracking-wide">
+                Limited Time Offer
+              </span>
+            )}
           </div>
-          {plan.is_promotion && (
-            <span className="text-xs text-gray-400 font-medium mt-2 tracking-wide">
-              Limited Time Offer
-            </span>
-          )}
+
+          {/* Arrow Icon */}
+          <div className="flex justify-center mt-2">
+            <span className="text-xl text-sky-500 group-hover:text-sky-600 group-hover:scale-110 transition-all duration-200">↗</span>
+          </div>
         </div>
-
-        {/* Elegant Refined Button */}
-        <Link
-          href={`/products/${plan.product_slug}`}
-          className="inline-flex items-center justify-center w-full py-3.5 px-6 bg-gradient-to-r from-gray-50 to-white border border-gray-200 text-gray-700 rounded-full font-light text-sm hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 hover:text-gray-900 transition-all duration-300 shadow-sm hover:shadow-md group-hover:scale-[1.02] tracking-wide"
-        >
-          <span>Explore Product</span>
-          <svg className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </Link>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -234,19 +227,19 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
               <section className="mt-20">
                 {/* Elegant Section Header */}
                 <div className="text-center mb-16">
-                  <h2 className="text-3xl font-extralight text-gray-700 mb-4 tracking-tight">
+                  <h2 className="text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 mb-6 tracking-tight leading-none">
                     Available Products
                   </h2>
-                  <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent mx-auto mb-6"></div>
-                  <p className="text-gray-500 font-light text-lg max-w-2xl mx-auto leading-relaxed">
+                  <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent mx-auto mb-8"></div>
+                  <p className="text-lg sm:text-xl text-gray-500 font-light max-w-2xl mx-auto leading-relaxed">
                     Discover {associatedPricingPlans.length} carefully crafted {associatedPricingPlans.length === 1 ? 'product' : 'products'} featuring this capability
                   </p>
                 </div>
 
                 {/* Elegant Pricing Plans Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                  {associatedPricingPlans.map((plan: PricingPlan, index: number) => (
-                    <PricingPlanCard key={plan.id} plan={plan} color={colors[index % colors.length]} />
+                  {associatedPricingPlans.map((plan: PricingPlan) => (
+                    <PricingPlanCard key={plan.id} plan={plan} color="" />
                   ))}
                 </div>
               </section>
@@ -256,7 +249,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             <div className="mt-24 text-center">
               <Link 
                 href="/features"
-                className="inline-flex items-center space-x-3 px-8 py-4 border border-gray-200 text-sm font-light rounded-full text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 shadow-sm hover:shadow-md group"
+                className="inline-flex items-center space-x-3 px-8 py-4 neomorphic text-sm font-light rounded-full text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 group"
               >
                 <ArrowRightIcon className="h-4 w-4 rotate-180 group-hover:-translate-x-1 transition-transform duration-300" />
                 <span className="tracking-wide">Back to All Features</span>

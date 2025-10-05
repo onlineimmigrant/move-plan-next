@@ -35,13 +35,22 @@ export default function FeatureHeader({ feature }: { feature: Feature }) {
   };
 
   return (
-    <header className="flex items-center gap-4 mb-24">
-      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center shadow-md">
+    <header className="flex flex-col sm:flex-row items-center gap-6 mb-16 sm:mb-24">
+      <div className="w-24 h-24 sm:w-28 sm:h-28 neomorphic rounded-full flex items-center justify-center">
         {renderFeatureIcon(feature.feature_image)}
       </div>
-      <h1 className="text-2xl font-semibold text-gray-800">
-        {feature.name}
-      </h1>
+      <div className="text-center sm:text-left">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-thin text-gray-900 tracking-tight leading-tight">
+          {feature.name}
+        </h1>
+        {feature.type && (
+          <div className="mt-4">
+            <span className="inline-block px-4 py-1.5 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
+              {feature.type}
+            </span>
+          </div>
+        )}
+      </div>
     </header>
   );
 }
