@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { MagnifyingGlassIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, RocketLaunchIcon, QuestionMarkCircleIcon, UserGroupIcon, ChevronDownIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import * as Icons from '@heroicons/react/24/outline';
@@ -39,6 +39,7 @@ export default function WelcomeTab({
   const [expandedPricingPlan, setExpandedPricingPlan] = useState<string | null>(null);
   const [currentOfferingSlide, setCurrentOfferingSlide] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(3); // Default to 3 for desktop
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Update items per view based on screen size
   useEffect(() => {
@@ -68,6 +69,30 @@ export default function WelcomeTab({
   const { articles: allArticles, loading: allArticlesLoading } = useArticles(false);
   const { features: allFeatures, loading: allFeaturesLoading } = useFeatures(false);
   const { pricingPlans: allPricingPlans, loading: allPricingLoading } = usePricingPlans(false);
+  
+  // Track scroll position on mobile to update current slide indicator
+  useEffect(() => {
+    if (itemsPerView !== 1 || !scrollContainerRef.current || !helpCenterPricingPlans.length) return;
+    
+    const container = scrollContainerRef.current;
+    let scrollTimeout: NodeJS.Timeout;
+    
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const scrollLeft = container.scrollLeft;
+        const cardWidth = container.scrollWidth / helpCenterPricingPlans.length;
+        const newIndex = Math.round(scrollLeft / cardWidth);
+        setCurrentOfferingSlide(newIndex);
+      }, 100);
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [itemsPerView, helpCenterPricingPlans.length]);
   
   const { t } = useHelpCenterTranslations();
 
@@ -163,7 +188,7 @@ export default function WelcomeTab({
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="min-h-full">
       <div className="p-2 sm:p-6 lg:p-8 space-y-8 sm:space-y-10 mx-auto max-w-7xl">
         {/* Welcome Header - Enhanced Apple Style */}
         <div className="text-center space-y-6 sm:space-y-8">
@@ -925,30 +950,69 @@ export default function WelcomeTab({
 
         {/* Hot Offerings - Product Cards with Slider */}
         {!searchQuery.trim() && helpCenterPricingPlans.length > 0 && (
-          <div className="pt-8 sm:pt-12 border-t border-gray-100 max-w-7xl mx-auto">
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-4xl font-light text-gray-900 mb-3 sm:mb-4 tracking-tight">{t.hotOfferings || 'Hot Offerings'}</h2>
-              <p className="text-base sm:text-lg text-gray-500 font-light">{t.hotOfferingsDescription || 'Special pricing plans just for you'}</p>
-            </div>
-            
-            {/* Slider Container */}
-            <div className="relative overflow-hidden">
-              <div className="relative px-8 sm:px-12 md:px-16 lg:px-20">
-                {/* Cards Container - Flex-based slider */}
+          <div className="pb-48 sm:pb-56 lg:pb-64">
+            <div className="pt-8 sm:pt-12 border-t border-gray-100 max-w-7xl mx-auto">
+              <div className="text-center mb-8 sm:mb-12">
+                <h2 className="text-2xl sm:text-4xl font-light text-gray-900 mb-3 sm:mb-4 tracking-tight">{t.hotOfferings || 'Hot Offerings'}</h2>
+                <p className="text-base sm:text-lg text-gray-500 font-light">{t.hotOfferingsDescription || 'Special pricing plans just for you'}</p>
+              </div>
+              
+              {/* Slider Container with Navigation */}
+              <div className="relative">
+                {/* Navigation Arrows - Hidden on mobile, visible on tablet+ */}
+                {helpCenterPricingPlans.length > itemsPerView && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentOfferingSlide(prev => Math.max(0, prev - 1));
+                      }}
+                      disabled={currentOfferingSlide === 0}
+                      className="hidden sm:flex absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 items-center justify-center group border border-gray-200/50 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label="Previous offerings"
+                    >
+                      <svg className="w-6 h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentOfferingSlide(prev => Math.min(helpCenterPricingPlans.length - itemsPerView, prev + 1));
+                      }}
+                      disabled={currentOfferingSlide >= helpCenterPricingPlans.length - itemsPerView}
+                      className="hidden sm:flex absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 items-center justify-center group border border-gray-200/50 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label="Next offerings"
+                    >
+                      <svg className="w-6 h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+                
+                {/* Scrollable Cards Container */}
                 <div 
-                  className="flex gap-4 sm:gap-6 transition-transform duration-500 ease-in-out"
-                  style={{
-                    transform: `translateX(-${currentOfferingSlide * (100 / itemsPerView)}%)`,
-                  }}
+                  ref={scrollContainerRef}
+                  className="overflow-x-auto overflow-y-visible scrollbar-hide snap-x snap-mandatory sm:overflow-hidden"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
                 >
+                  <div className="sm:px-12 md:px-16 lg:px-20">
+                    {/* Cards Container - Touch scroll on mobile, transform on desktop */}
+                    <div 
+                      className="flex gap-4 sm:gap-6 sm:transition-transform sm:duration-500 sm:ease-in-out"
+                      style={{
+                        transform: itemsPerView === 1 ? 'none' : `translateX(-${currentOfferingSlide * (100 / itemsPerView)}%)`,
+                      }}
+                    >
                   {helpCenterPricingPlans.map((plan: PricingPlan, index: number) => (
                     <div
                       key={plan.id}
                       onClick={() => router.push(`/products/${plan.product_slug || plan.product_id}`)}
-                      className="group cursor-pointer flex-shrink-0"
+                      className="group cursor-pointer flex-shrink-0 snap-center"
                       style={{ 
                         width: itemsPerView === 1 
-                          ? 'calc(100% - 0px)' 
+                          ? 'calc(85vw - 2rem)' // Mobile: 85% viewport width with padding
                           : itemsPerView === 2 
                           ? 'calc(50% - 12px)' 
                           : 'calc(33.333% - 16px)',
@@ -956,10 +1020,10 @@ export default function WelcomeTab({
                       }}
                     >
                       {/* Product Card - Similar to /products page */}
-                      <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full min-h-[420px]">
+                      <div className="bg-white rounded-xl border border-gray-200 hover:border-sky-400 transition-all duration-300 overflow-hidden flex flex-col h-full min-h-[420px]">
                         {/* Product Image */}
                         {plan.links_to_image && plan.links_to_image.trim() !== '' ? (
-                          <div className="w-full h-48 sm:h-52 flex-shrink-0 overflow-hidden">
+                          <div className="w-full h-52 sm:h-56 lg:h-60 flex-shrink-0 overflow-hidden">
                             <img
                               src={plan.links_to_image}
                               alt={plan.product_name || plan.package || 'Product'}
@@ -968,7 +1032,7 @@ export default function WelcomeTab({
                             />
                           </div>
                         ) : (
-                          <div className="w-full h-48 sm:h-52 flex-shrink-0 bg-gradient-to-br from-amber-50 to-yellow-50 flex items-center justify-center">
+                          <div className="w-full h-52 sm:h-56 lg:h-60 flex-shrink-0 bg-gradient-to-br from-amber-50 to-yellow-50 flex items-center justify-center">
                             <span className="text-6xl">💎</span>
                           </div>
                         )}
@@ -980,7 +1044,7 @@ export default function WelcomeTab({
                             {plan.product_name || plan.package}
                           </h3>
                           
-                          {/* Package/Type and Measure Badges */}
+                          {/* Package/Type, Measure, and Promotion Badges in one row */}
                           <div className="flex flex-wrap gap-2 mb-3">
                             {plan.package && (
                               <span className="inline-block px-3 py-1 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
@@ -993,15 +1057,6 @@ export default function WelcomeTab({
                               </span>
                             )}
                           </div>
-                          
-                          {/* Promotion Badge */}
-                          {plan.is_promotion && (
-                            <div className="mb-3">
-                              <span className="inline-block px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full tracking-wide uppercase border border-red-100">
-                                {plan.promotion_percent ? `-${plan.promotion_percent}%` : 'SALE'}
-                              </span>
-                            </div>
-                          )}
                           
                           {/* Description */}
                           {plan.description && (
@@ -1016,7 +1071,7 @@ export default function WelcomeTab({
                               <div className="flex items-baseline gap-2">
                                 {plan.is_promotion && plan.promotion_price ? (
                                   <>
-                                    <span className="text-xl sm:text-2xl font-bold text-red-600">
+                                    <span className="text-xl sm:text-2xl font-bold text-sky-600">
                                       {plan.currency_symbol}{(plan.promotion_price / 100).toFixed(2)}
                                     </span>
                                     <span className="text-sm text-gray-400 line-through">
@@ -1029,12 +1084,29 @@ export default function WelcomeTab({
                                   </span>
                                 )}
                               </div>
-                              {plan.recurring_interval && plan.recurring_interval !== 'one_time' && (
+                              {plan.type !== 'one_time' && plan.recurring_interval && plan.recurring_interval !== 'one_time' && (
                                 <span className="text-sm text-gray-500 font-medium">
                                   / {plan.recurring_interval}
                                 </span>
                               )}
                             </div>
+                            
+                            {/* Promotion Badge */}
+                            {plan.is_promotion && plan.promotion_percent && (
+                              <div className="mb-3">
+                                <div className="relative inline-block">
+                                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-sm animate-pulse"></div>
+                                  <span className="relative block px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-red-500 via-red-600 to-pink-600 rounded-full shadow-xl border-2 border-white/30 backdrop-blur-sm">
+                                    <span className="flex items-center gap-1">
+                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                      -{plan.promotion_percent}% OFF
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                             
                             {/* View Details Arrow */}
                             <div className="flex justify-end">
@@ -1048,49 +1120,28 @@ export default function WelcomeTab({
                     </div>
                   ))}
                 </div>
+                  </div>
+                </div>
                 
-                {/* Navigation Arrows */}
-                {helpCenterPricingPlans.length > itemsPerView && (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentOfferingSlide(prev => Math.max(0, prev - 1));
-                      }}
-                      disabled={currentOfferingSlide === 0}
-                      className="absolute left-0 sm:-left-2 lg:-left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
-                      aria-label="Previous offerings"
-                    >
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentOfferingSlide(prev => Math.min(helpCenterPricingPlans.length - itemsPerView, prev + 1));
-                      }}
-                      disabled={currentOfferingSlide >= helpCenterPricingPlans.length - itemsPerView}
-                      className="absolute right-0 sm:-right-2 lg:-right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
-                      aria-label="Next offerings"
-                    >
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </>
-                )}
-              </div>
-              
               {/* Dot Indicators */}
               {helpCenterPricingPlans.length > itemsPerView && (
                 <div className="flex justify-center gap-2 mt-6">
                   {Array.from({ 
-                    length: Math.max(0, helpCenterPricingPlans.length - itemsPerView + 1)
+                    length: Math.max(0, helpCenterPricingPlans.length - (itemsPerView === 1 ? 1 : itemsPerView) + 1)
                   }).map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => setCurrentOfferingSlide(index)}
+                      onClick={() => {
+                        setCurrentOfferingSlide(index);
+                        // On mobile, scroll to the card
+                        if (itemsPerView === 1 && scrollContainerRef.current) {
+                          const cardWidth = scrollContainerRef.current.scrollWidth / helpCenterPricingPlans.length;
+                          scrollContainerRef.current.scrollTo({
+                            left: cardWidth * index,
+                            behavior: 'smooth'
+                          });
+                        }
+                      }}
                       className={`transition-all duration-300 rounded-full ${
                         index === currentOfferingSlide
                           ? 'w-8 h-2 bg-amber-500'
@@ -1101,12 +1152,56 @@ export default function WelcomeTab({
                   ))}
                 </div>
               )}
+              
+              {/* Mobile Navigation Buttons - Only visible on mobile */}
+              {helpCenterPricingPlans.length > 1 && itemsPerView === 1 && (
+                <div className="flex sm:hidden justify-center gap-4 mt-4">
+                  <button
+                    onClick={() => {
+                      const newIndex = Math.max(0, currentOfferingSlide - 1);
+                      setCurrentOfferingSlide(newIndex);
+                      if (scrollContainerRef.current) {
+                        const cardWidth = scrollContainerRef.current.scrollWidth / helpCenterPricingPlans.length;
+                        scrollContainerRef.current.scrollTo({
+                          left: cardWidth * newIndex,
+                          behavior: 'smooth'
+                        });
+                      }
+                    }}
+                    disabled={currentOfferingSlide === 0}
+                    className="w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Previous offering"
+                  >
+                    <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newIndex = Math.min(helpCenterPricingPlans.length - 1, currentOfferingSlide + 1);
+                      setCurrentOfferingSlide(newIndex);
+                      if (scrollContainerRef.current) {
+                        const cardWidth = scrollContainerRef.current.scrollWidth / helpCenterPricingPlans.length;
+                        scrollContainerRef.current.scrollTo({
+                          left: cardWidth * newIndex,
+                          behavior: 'smooth'
+                        });
+                      }
+                    }}
+                    disabled={currentOfferingSlide >= helpCenterPricingPlans.length - 1}
+                    className="w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Next offering"
+                  >
+                    <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
             </div>
           </div>
         )}
-
-        {/* Bottom padding for scrolling */}
-        <div className="h-8"></div>
       </div>
     </div>
   );

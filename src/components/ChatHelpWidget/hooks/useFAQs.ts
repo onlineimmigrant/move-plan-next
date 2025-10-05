@@ -31,7 +31,7 @@ export function useFAQs(helpCenterOnly: boolean = false) {
         // Fetch FAQs with optional Help Center filter
         const params = new URLSearchParams({
           organizationId: orgId,
-          limit: '20',
+          limit: helpCenterOnly ? '20' : '1000',
         });
         
         if (helpCenterOnly) {

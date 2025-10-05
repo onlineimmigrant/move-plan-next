@@ -50,7 +50,7 @@ export function useArticles(helpCenterOnly: boolean = false) {
         // Fetch articles with optional Help Center filter
         const params = new URLSearchParams({
           organizationId: orgId,
-          limit: '50',
+          limit: helpCenterOnly ? '50' : '1000',
           offset: '0',
         });
         
