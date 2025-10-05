@@ -347,9 +347,9 @@ export default function HelpCenterContainer() {
       </div>
       
       {/* Apple-style Main Content */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-y-auto relative">
         {/* Glass background container */}
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-3xl"
+        <div className="absolute inset-0 bg-white/60 backdrop-blur-3xl pointer-events-none"
           style={{
             backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
             WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -357,7 +357,7 @@ export default function HelpCenterContainer() {
         />
         
         {/* Content */}
-        <div className="relative h-full">
+        <div className="relative min-h-full">
           {renderCurrentView()}
         </div>
       </div>
