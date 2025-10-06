@@ -6,6 +6,7 @@ import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { useProductTranslations } from '@/components/product/useProductTranslations';
+import { useSettings } from '@/context/SettingsContext';
 import Loading from '@/ui/Loading';
 
 interface BlogPost {
@@ -15,6 +16,7 @@ interface BlogPost {
   description: string | null;
   display_this_post?: boolean;
   display_as_blog_post?: boolean;
+  is_displayed_first_page?: boolean;
   main_photo?: string | null;
   subsection?: string | null;
   order?: number | null;
@@ -28,6 +30,7 @@ interface ClientBlogPageProps {
 
 const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => {
   const { t } = useProductTranslations();
+  const { settings } = useSettings();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,21 +77,29 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
         const response = await fetch(`/api/posts?organization_id=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Raw API response:', data);
           // Validate that data is an array and contains section_id
           if (!Array.isArray(data)) {
             console.error('Expected an array, got:', data);
             setError('Invalid data format');
             return;
           }
-          data.forEach((post: BlogPost, index: number) => {
-            console.log(`Post ${index}:`, { slug: post.slug, section_id: post.section_id, organization_id: post.organization_id });
-          });
           setPosts(data);
         } else {
-          const errorData = await response.json();
-          console.error('Failed to fetch posts:', response.status, response.statusText, errorData);
-          setError(errorData.error || 'Failed to fetch posts');
+          // Handle empty response body
+          let errorMessage = 'Failed to fetch posts';
+          try {
+            const text = await response.text();
+            if (text) {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.error || errorMessage;
+              console.error('Failed to fetch posts:', response.status, response.statusText, errorData);
+            } else {
+              console.error('Failed to fetch posts: Empty response body', response.status, response.statusText);
+            }
+          } catch (parseError) {
+            console.error('Failed to parse error response:', parseError);
+          }
+          setError(errorMessage);
         }
       } catch (error) {
         console.error('An error occurred:', error);
@@ -171,20 +182,38 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
           </div>
         ) : (
           <div className="px-4 sm:px-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredPosts.map((post) => (
+            {filteredPosts.map((post) => {
+              // Determine which image to use: main_photo or organization logo
+              const imageUrl = post.main_photo && post.main_photo.trim() !== '' ? post.main_photo : settings?.image;
+              // Check if the image is SVG format
+              const isSvg = imageUrl?.toLowerCase().endsWith('.svg');
+              
+              return (
               <Link key={post.id} href={getPostUrl(post)} className="group">
                 <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
-                  {post.main_photo && post.main_photo.trim() !== '' && (
-                    <div className="w-full h-auto p-2 flex-shrink-0">
+                  {imageUrl ? (
+                    <div className="w-full h-48 flex-shrink-0 bg-gray-100 relative overflow-hidden flex items-center justify-center">
                       <img
-                        src={post.main_photo}
+                        src={imageUrl}
                         alt={post.title ?? 'Blog post image'}
-                        className="w-full h-full object-cover"
+                        className={isSvg ? 'max-w-[60%] max-h-[60%] object-contain' : 'w-full h-full object-cover'}
                         onError={(e) => {
-                          console.error('Image failed to load:', post.main_photo);
+                          // Silently handle image load failure with fallback UI
                           e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.classList.add('bg-gradient-to-br', 'from-sky-50', 'to-blue-100');
+                            const fallbackIcon = document.createElement('div');
+                            fallbackIcon.className = 'absolute inset-0 flex items-center justify-center text-6xl';
+                            fallbackIcon.textContent = '📄';
+                            parent.appendChild(fallbackIcon);
+                          }
                         }}
                       />
+                    </div>
+                  ) : (
+                    <div className="w-full h-48 flex-shrink-0 bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center">
+                      <span className="text-6xl">📄</span>
                     </div>
                   )}
                   <div className="p-6 flex flex-col flex-grow">
@@ -213,7 +242,8 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

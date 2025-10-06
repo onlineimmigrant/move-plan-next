@@ -24,10 +24,81 @@ import { EditorView } from 'prosemirror-view';
 import { Node } from 'prosemirror-model';
 import './PostEditor.css';
 
+// HTML Formatter utility - formats HTML with proper indentation
+const formatHTML = (html: string): string => {
+  const tab = '  ';
+  let result = '';
+  let indent = 0;
+
+  // Inline elements that shouldn't trigger indentation changes
+  const inlineElements = ['a', 'span', 'strong', 'em', 'b', 'i', 'u', 'code', 'small', 'mark', 'del', 'ins', 'sub', 'sup'];
+  
+  // Self-closing elements
+  const selfClosing = ['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'param', 'source', 'track', 'wbr'];
+
+  // Split HTML into tokens
+  const tokens = html.match(/<[^>]+>|[^<]+/g) || [];
+
+  tokens.forEach((token, index) => {
+    if (token.startsWith('<')) {
+      // It's a tag
+      const isClosing = token.startsWith('</');
+      const isSelfClosing = token.endsWith('/>') || selfClosing.some(tag => 
+        new RegExp(`<${tag}[\\s>]`, 'i').test(token)
+      );
+      const tagMatch = token.match(/<\/?([a-zA-Z0-9]+)/);
+      const tagName = tagMatch ? tagMatch[1].toLowerCase() : '';
+      const isInline = inlineElements.includes(tagName);
+
+      if (isClosing) {
+        // Closing tag
+        if (!isInline) {
+          indent = Math.max(0, indent - 1);
+          result += '\n' + tab.repeat(indent) + token;
+        } else {
+          result += token;
+        }
+      } else if (isSelfClosing) {
+        // Self-closing tag
+        result += '\n' + tab.repeat(indent) + token;
+      } else {
+        // Opening tag
+        if (!isInline) {
+          result += '\n' + tab.repeat(indent) + token;
+          indent++;
+        } else {
+          result += token;
+        }
+      }
+    } else {
+      // Text content
+      const trimmed = token.trim();
+      if (trimmed) {
+        // Check if previous token was an opening inline tag
+        const prevToken = tokens[index - 1];
+        const nextToken = tokens[index + 1];
+        const prevIsInlineOpening = prevToken && prevToken.startsWith('<') && !prevToken.startsWith('</') &&
+          inlineElements.some(tag => new RegExp(`<${tag}[\\s>]`, 'i').test(prevToken));
+        const nextIsInlineClosing = nextToken && nextToken.startsWith('</') &&
+          inlineElements.some(tag => new RegExp(`</${tag}>`, 'i').test(nextToken));
+        
+        if (prevIsInlineOpening || nextIsInlineClosing) {
+          result += trimmed;
+        } else {
+          result += trimmed;
+        }
+      }
+    }
+  });
+
+  return result.trim();
+};
+
 // Define props interface explicitly
 interface PostEditorProps {
   onSave: (content: string) => void;
   initialContent?: string;
+  onContentChange?: (content: string) => void;
 }
 
 // Custom Image extension
@@ -401,7 +472,7 @@ function startRowResize(e: MouseEvent | TouchEvent, table: HTMLElement, rowIndex
   document.addEventListener('touchend', onEnd);
 }
 
-const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
+const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent, onContentChange }) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -508,6 +579,11 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
       CustomTableCell,
     ],
     content: initialContent || '<p>Start writing your post here...</p>',
+    onUpdate: ({ editor }) => {
+      if (onContentChange) {
+        onContentChange(editor.getHTML());
+      }
+    },
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-xl m-5 focus:outline-none',
@@ -544,6 +620,54 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
   });
 
   const [showTableSubmenu, setShowTableSubmenu] = useState(false);
+  const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
+  const [isCodeView, setIsCodeView] = useState(false);
+  const [htmlContent, setHtmlContent] = useState('');
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+S to save
+      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        handleSave();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
+
+  // Track text selection for floating toolbar
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const updateFloatingToolbar = () => {
+      const { from, to, empty } = editor.state.selection;
+      setShowFloatingToolbar(!empty && from !== to);
+    };
+
+    editor.on('selectionUpdate', updateFloatingToolbar);
+    return () => {
+      editor.off('selectionUpdate', updateFloatingToolbar);
+    };
+  }, [editor]);
+
+  // Update editor content when initialContent prop changes
+  useEffect(() => {
+    if (editor && initialContent !== undefined) {
+      const currentContent = editor.getHTML();
+      const newContent = initialContent || '<p>Start writing your post here...</p>';
+      if (currentContent !== newContent) {
+        editor.commands.setContent(newContent);
+      }
+    }
+  }, [editor, initialContent]);
 
   // Touch scrolling handler for edit mode
   useEffect(() => {
@@ -733,22 +857,102 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
   const addImage = () => {
     const url = window.prompt('Enter the image URL');
     if (url) {
-      editor.chain().focus().setNode('image', { src: url, align: 'left', width: '200px', height: 'auto' }).run();
+      // Insert image with default settings
+      editor.chain().focus().insertContent({
+        type: 'image',
+        attrs: {
+          src: url,
+          align: 'left',
+          width: '400px',
+          height: 'auto',
+          alt: '',
+        },
+      }).run();
+      
+      console.log('Image inserted:', url);
     }
   };
 
   const setImageAlignment = (align: 'left' | 'center' | 'right') => {
-    const { state } = editor;
+    const { state, view } = editor;
     const { selection } = state;
-    const pos = selection.$anchor.pos;
-    const node = state.doc.nodeAt(pos);
+    
+    // Try to find the image node
+    let imagePos = null;
+    let imageNode = null;
 
-    if (node && node.type.name === 'image') {
-      const transaction = state.tr.setNodeMarkup(pos, undefined, {
-        ...node.attrs,
+    // Check if current node is an image
+    const $pos = selection.$anchor;
+    for (let d = $pos.depth; d >= 0; d--) {
+      const node = $pos.node(d);
+      if (node.type.name === 'image') {
+        imageNode = node;
+        imagePos = $pos.before(d);
+        break;
+      }
+    }
+
+    // If no image found at current position, check selected node
+    if (!imageNode) {
+      state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+        if (node.type.name === 'image') {
+          imageNode = node;
+          imagePos = pos;
+          return false;
+        }
+      });
+    }
+
+    if (imageNode && imagePos !== null) {
+      const transaction = state.tr.setNodeMarkup(imagePos, undefined, {
+        ...imageNode.attrs,
         align,
       });
-      editor.view.dispatch(transaction);
+      view.dispatch(transaction);
+      console.log('Image alignment updated to:', align);
+    } else {
+      console.log('No image selected');
+    }
+  };
+
+  const setImageSize = (width: string) => {
+    const { state, view } = editor;
+    const { selection } = state;
+    
+    // Try to find the image node
+    let imagePos = null;
+    let imageNode = null;
+
+    // Check if current node is an image
+    const $pos = selection.$anchor;
+    for (let d = $pos.depth; d >= 0; d--) {
+      const node = $pos.node(d);
+      if (node.type.name === 'image') {
+        imageNode = node;
+        imagePos = $pos.before(d);
+        break;
+      }
+    }
+
+    // If no image found at current position, check selected node
+    if (!imageNode) {
+      state.doc.nodesBetween(selection.from, selection.to, (node, pos) => {
+        if (node.type.name === 'image') {
+          imageNode = node;
+          imagePos = pos;
+          return false;
+        }
+      });
+    }
+
+    if (imageNode && imagePos !== null) {
+      const transaction = state.tr.setNodeMarkup(imagePos, undefined, {
+        ...imageNode.attrs,
+        width,
+        height: 'auto',
+      });
+      view.dispatch(transaction);
+      console.log('Image size updated to:', width);
     } else {
       console.log('No image selected');
     }
@@ -758,295 +962,393 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent }) => {
     editor.chain().focus().toggleHighlight().run();
   };
 
+  const toggleCodeView = () => {
+    if (isCodeView) {
+      // Switching from code to visual
+      try {
+        editor.commands.setContent(htmlContent);
+        if (onContentChange) {
+          onContentChange(htmlContent);
+        }
+      } catch (error) {
+        console.error('Error parsing HTML:', error);
+        // Could show an error message to user here
+      }
+    } else {
+      // Switching from visual to code
+      setHtmlContent(editor.getHTML());
+    }
+    setIsCodeView(!isCodeView);
+  };
+
   const handleSave = () => {
-    const tables = editor.view.dom.querySelectorAll('.tiptap-table') as NodeListOf<HTMLElement>;
-    tables.forEach((table) => {
-      table.classList.remove('editing');
-      const attrs = table.dataset;
-      const borderStyle = attrs.borderStyle || 'solid';
-      const borderWidth = attrs.borderWidth || '1px';
-      const borderColor = attrs.borderColor || '#e5e7eb';
-      const border = borderStyle === 'none' ? 'none' : `${borderStyle} ${borderWidth} ${borderColor}`;
-      const cells = table.querySelectorAll('.tiptap-table-cell, .tiptap-table-header');
-      cells.forEach((cell) => {
-        (cell as HTMLElement).style.border = border;
+    let contentToSave;
+    
+    if (isCodeView) {
+      contentToSave = htmlContent;
+      // Update the editor with the HTML content before saving
+      try {
+        editor.commands.setContent(htmlContent);
+      } catch (error) {
+        console.error('Error parsing HTML:', error);
+      }
+    } else {
+      const tables = editor.view.dom.querySelectorAll('.tiptap-table') as NodeListOf<HTMLElement>;
+      tables.forEach((table) => {
+        table.classList.remove('editing');
+        const attrs = table.dataset;
+        const borderStyle = attrs.borderStyle || 'solid';
+        const borderWidth = attrs.borderWidth || '1px';
+        const borderColor = attrs.borderColor || '#e5e7eb';
+        const border = borderStyle === 'none' ? 'none' : `${borderStyle} ${borderWidth} ${borderColor}`;
+        const cells = table.querySelectorAll('.tiptap-table-cell, .tiptap-table-header');
+        cells.forEach((cell) => {
+          (cell as HTMLElement).style.border = border;
+        });
+        const headers = table.querySelectorAll('.tiptap-table-header');
+        headers.forEach((header) => {
+          (header as HTMLElement).style.backgroundColor = attrs.backgroundColor || 'transparent';
+        });
       });
-      const headers = table.querySelectorAll('.tiptap-table-header');
-      headers.forEach((header) => {
-        (header as HTMLElement).style.backgroundColor = attrs.backgroundColor || 'transparent';
-      });
-    });
-    const htmlContent = editor.getHTML();
-    console.log('Saved HTML:', htmlContent);
-    onSave(htmlContent);
+      contentToSave = editor.getHTML();
+    }
+    
+    console.log('Before formatting:', contentToSave.substring(0, 200));
+    
+    // Format HTML with proper indentation
+    contentToSave = formatHTML(contentToSave);
+    
+    console.log('After formatting:', contentToSave.substring(0, 200));
+    console.log('Full formatted HTML:', contentToSave);
+    
+    onSave(contentToSave);
   };
 
   return (
     <div className="post-editor-container">
       <div className="post-editor text-gray-600">
-        <div className="toolbar mb-4 flex gap-0.5 flex-wrap">
-          <Button
-            size="sm"
-            onClick={() => applyStyle('h1')}
-            variant={editor.isActive('heading', { level: 1 }) ? 'secondary' : 'outline'}
-          >
-            H1
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('h2')}
-            variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'outline'}
-          >
-            H2
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('h3')}
-            variant={editor.isActive('heading', { level: 3 }) ? 'secondary' : 'outline'}
-          >
-            H3
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('h4')}
-            variant={editor.isActive('heading', { level: 4 }) ? 'secondary' : 'outline'}
-          >
-            H4
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('h5')}
-            variant={editor.isActive('heading', { level: 5 }) ? 'secondary' : 'outline'}
-          >
-            H5
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('p')}
-            variant={editor.isActive('paragraph') ? 'secondary' : 'outline'}
-          >
-            P
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('ul')}
-            variant={editor.isActive('bulletList') ? 'secondary' : 'outline'}
-          >
-            UL
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('ol')}
-            variant={editor.isActive('orderedList') ? 'secondary' : 'outline'}
-          >
-            OL
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('blockquote')}
-            variant={editor.isActive('blockquote') ? 'secondary' : 'outline'}
-          >
-            Quote
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('codeBlock')}
-            variant={editor.isActive('codeBlock') ? 'secondary' : 'outline'}
-          >
-            Code
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('bold')}
-            variant={editor.isActive('bold') ? 'secondary' : 'outline'}
-          >
-            B
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => applyStyle('italic')}
-            variant={editor.isActive('italic') ? 'secondary' : 'outline'}
-          >
-            I
-          </Button>
-          <Button
-            size="sm"
-            onClick={setLink}
-            variant={editor.isActive('link') ? 'secondary' : 'outline'}
-          >
-            Link
-          </Button>
-          <Button size="sm" onClick={addImage} variant="outline">
-            Image
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setImageAlignment('left')}
-            variant={editor.isActive('image', { align: 'left' }) ? 'secondary' : 'outline'}
-          >
-            Left
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setImageAlignment('center')}
-            variant={editor.isActive('image', { align: 'center' }) ? 'secondary' : 'outline'}
-          >
-            Center
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setImageAlignment('right')}
-            variant={editor.isActive('image', { align: 'right' }) ? 'secondary' : 'outline'}
-          >
-            Right
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setShowTableSubmenu(!showTableSubmenu)}
-            variant={showTableSubmenu ? 'secondary' : 'outline'}
-          >
-            Table Menu
-          </Button>
-          <Button
-            size="sm"
-            onClick={toggleHighlight}
-            variant={editor.isActive('highlight') ? 'secondary' : 'outline'}
-          >
-            Highlight
-          </Button>
-          <Button size="sm" onClick={handleSave} variant="primary">
-            Save
-          </Button>
+        {/* Enhanced Toolbar */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 z-40 p-4 shadow-sm">
+          {/* Primary toolbar */}
+          <div className="flex flex-wrap gap-1 mb-3 text-sm sm:text-base">
+            {!isCodeView && (
+              <>
+                {/* Text formatting group */}
+                <div className="flex gap-1 mr-4 items-center">
+                  <span className="text-xs text-gray-500 mr-2">Format:</span>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('bold')}
+                    variant={editor.isActive('bold') ? 'secondary' : 'outline'}
+                    className="font-bold"
+                  >
+                    B
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('italic')}
+                    variant={editor.isActive('italic') ? 'secondary' : 'outline'}
+                    className="italic"
+                  >
+                    I
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={toggleHighlight}
+                    variant={editor.isActive('highlight') ? 'secondary' : 'outline'}
+                  >
+                    ⚡
+                  </Button>
+                </div>
+
+                {/* Headings group */}
+                <div className="flex gap-1 mr-4 items-center">
+                  <span className="text-xs text-gray-500 mr-2">Headings:</span>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('h1')}
+                    variant={editor.isActive('heading', { level: 1 }) ? 'secondary' : 'outline'}
+                  >
+                    H1
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('h2')}
+                    variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'outline'}
+                  >
+                    H2
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('h3')}
+                    variant={editor.isActive('heading', { level: 3 }) ? 'secondary' : 'outline'}
+                  >
+                    H3
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('h4')}
+                    variant={editor.isActive('heading', { level: 4 }) ? 'secondary' : 'outline'}
+                  >
+                    H4
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('h5')}
+                    variant={editor.isActive('heading', { level: 5 }) ? 'secondary' : 'outline'}
+                  >
+                    H5
+                  </Button>
+                </div>
+
+                {/* Lists group */}
+                <div className="flex gap-1 mr-4 items-center">
+                  <span className="text-xs text-gray-500 mr-2">Lists:</span>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('ul')}
+                    variant={editor.isActive('bulletList') ? 'secondary' : 'outline'}
+                    title="Bullet List"
+                  >
+                    •
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('ol')}
+                    variant={editor.isActive('orderedList') ? 'secondary' : 'outline'}
+                    title="Numbered List"
+                  >
+                    1.
+                  </Button>
+                </div>
+
+                {/* Insert group */}
+                <div className="flex gap-1 items-center">
+                  <span className="text-xs text-gray-500 mr-2">Insert:</span>
+                  <Button size="sm" onClick={setLink} variant="outline" title="Add Link">
+                    🔗
+                  </Button>
+                  <Button size="sm" onClick={addImage} variant="outline" title="Add Image">
+                    🖼️
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowTableSubmenu(!showTableSubmenu)}
+                    variant={showTableSubmenu ? 'secondary' : 'outline'}
+                    title="Table"
+                  >
+                    ⊞
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* View Toggle - Always visible */}
+            <div className="flex gap-1 items-center ml-auto">
+              <span className="text-xs text-gray-500 mr-2">View:</span>
+              <Button
+                size="sm"
+                onClick={toggleCodeView}
+                variant={isCodeView ? 'secondary' : 'outline'}
+                title={isCodeView ? 'Switch to Visual Editor' : 'View HTML Source'}
+                className="font-mono"
+              >
+                {isCodeView ? '👁️' : '</>'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Secondary toolbar - Special formatting */}
+          {!isCodeView && (
+            <div className="flex flex-wrap gap-1 items-center text-sm sm:text-base">
+              <div className="flex gap-1 mr-4 items-center">
+                <span className="text-xs text-gray-500 mr-2">Special:</span>
+                <Button
+                  size="sm"
+                  onClick={() => applyStyle('blockquote')}
+                  variant={editor.isActive('blockquote') ? 'secondary' : 'outline'}
+                  title="Quote"
+                >
+                  "
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => applyStyle('codeBlock')}
+                  variant={editor.isActive('codeBlock') ? 'secondary' : 'outline'}
+                  title="Code Block"
+                >
+                  &lt;/&gt;
+                </Button>
+              </div>
+
+
+            </div>
+          )}
         </div>
-        {showTableSubmenu && (
-          <div className="table-submenu">
+
+        {/* Table submenu */}
+        {showTableSubmenu && !isCodeView && (
+          <div className="border-b border-gray-200 bg-gray-50 p-3">
+            <div className="flex flex-wrap gap-1">
+              <Button
+                size="sm"
+                onClick={() => applyStyle('table')}
+                variant="primary"
+              >
+                Insert Table
+              </Button>
+              {editor.isActive('table') && (
+                <>
+                  <div className="w-px bg-gray-300 mx-2"></div>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('addRowAfter')}
+                    variant="outline"
+                  >
+                    + Row
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('addColumnAfter')}
+                    variant="outline"
+                  >
+                    + Column
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('deleteRow')}
+                    variant="outline"
+                  >
+                    - Row
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('deleteColumn')}
+                    variant="outline"
+                  >
+                    - Column
+                  </Button>
+                  <div className="w-px bg-gray-300 mx-2"></div>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('mergeCells')}
+                    variant="outline"
+                  >
+                    Merge
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('splitCell')}
+                    variant="outline"
+                  >
+                    Split
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => applyStyle('deleteTable')}
+                    variant="outline"
+                  >
+                    Delete Table
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Floating Toolbar */}
+        {showFloatingToolbar && !isCodeView && (
+          <div className="fixed z-50 bg-gray-900 text-white rounded-lg shadow-lg px-2 py-1 flex gap-1 transform -translate-x-1/2 pointer-events-auto"
+               style={{
+                 left: '50%',
+                 top: '20%',
+               }}>
             <Button
               size="sm"
-              onClick={() => applyStyle('table')}
-              variant={editor.isActive('table') ? 'secondary' : 'outline'}
+              onClick={() => applyStyle('bold')}
+              variant={editor.isActive('bold') ? 'secondary' : 'outline'}
+              className="text-white border-gray-600 hover:bg-gray-700"
             >
-              Table
+              B
             </Button>
             <Button
               size="sm"
-              onClick={() => applyStyle('addRowAfter')}
-              variant={editor.isActive('table') ? 'outline' : 'outline'}
-              disabled={!editor.isActive('table')}
+              onClick={() => applyStyle('italic')}
+              variant={editor.isActive('italic') ? 'secondary' : 'outline'}
+              className="text-white border-gray-600 hover:bg-gray-700"
             >
-              Add Row
+              I
             </Button>
             <Button
               size="sm"
-              onClick={() => applyStyle('addColumnAfter')}
-              variant={editor.isActive('table') ? 'outline' : 'outline'}
-              disabled={!editor.isActive('table')}
+              onClick={setLink}
+              variant={editor.isActive('link') ? 'secondary' : 'outline'}
+              className="text-white border-gray-600 hover:bg-gray-700"
             >
-              Add Column
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('deleteRow')}
-              variant={editor.isActive('table') ? 'outline' : 'outline'}
-              disabled={!editor.isActive('table')}
-            >
-              Delete Row
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('deleteColumn')}
-              variant={editor.isActive('table') ? 'outline' : 'outline'}
-              disabled={!editor.isActive('table')}
-            >
-              Delete Column
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('mergeCells')}
-              variant={editor.isActive('table') ? 'outline' : 'outline'}
-              disabled={!editor.isActive('table')}
-            >
-              Merge Cells
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('splitCell')}
-              variant={editor.isActive('table') ? 'outline' : 'outline'}
-              disabled={!editor.isActive('table')}
-            >
-              Split Cell
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('deleteTable')}
-              variant={editor.isActive('table') ? 'outline' : 'outline'}
-              disabled={!editor.isActive('table')}
-            >
-              Delete Table
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('borderNone')}
-              variant={editor.isActive('table', { borderStyle: 'none' }) ? 'secondary' : 'outline'}
-              disabled={!editor.isActive('table')}
-            >
-              No Border
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('borderSolid')}
-              variant={
-                editor.isActive('table', { borderStyle: 'solid', borderWidth: '1px' })
-                  ? 'secondary'
-                  : 'outline'
-              }
-              disabled={!editor.isActive('table')}
-            >
-              Solid Border
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('borderDashed')}
-              variant={editor.isActive('table', { borderStyle: 'dashed' }) ? 'secondary' : 'outline'}
-              disabled={!editor.isActive('table')}
-            >
-              Dashed Border
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('borderBold')}
-              variant={
-                editor.isActive('table', { borderStyle: 'special', borderWidth: '3px' })
-                  ? 'secondary'
-                  : 'outline'
-              }
-              disabled={!editor.isActive('table')}
-            >
-              Bold Border
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('borderColor')}
-              variant="outline"
-              disabled={!editor.isActive('table')}
-            >
-              Border Color
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => applyStyle('headerBackground')}
-              variant="outline"
-              disabled={!editor.isActive('table')}
-            >
-              Header Bg
+              🔗
             </Button>
           </div>
         )}
-        <EditorContent
-          editor={editor}
-          className="border border-gray-200 p-4 rounded-md min-h-[300px] bg-white"
-        />
-        <div className="mt-2 text-sm text-gray-500">
-          {editor?.storage.characterCount.characters()} / 50000 characters
+
+        {/* Editor Content */}
+        <div className="relative">
+          {isCodeView ? (
+            <div className="p-6">
+              <textarea
+                value={htmlContent}
+                onChange={(e) => {
+                  setHtmlContent(e.target.value);
+                  if (onContentChange) {
+                    onContentChange(e.target.value);
+                  }
+                }}
+                className="w-full min-h-[500px] font-mono text-sm border border-gray-200 rounded-md p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                style={{
+                  backgroundColor: '#1e1e1e',
+                  color: '#d4d4d4',
+                  fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+                  lineHeight: '1.6',
+                  tabSize: 2
+                }}
+                placeholder="Enter HTML content..."
+              />
+              <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                💡 <strong>Tip:</strong> You can edit the HTML directly here. Switch back to visual mode to see the rendered result.
+              </div>
+            </div>
+          ) : (
+            <EditorContent
+              editor={editor}
+              className="prose prose-lg max-w-none p-6 min-h-[500px] focus:outline-none"
+            />
+          )}
+          
+          {/* Character count and status */}
+          <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-200">
+            <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <span>
+                {isCodeView 
+                  ? `${htmlContent.length.toLocaleString()} / 50,000 characters (HTML)`
+                  : `${editor?.storage.characterCount.characters()?.toLocaleString()} / 50,000 characters`
+                }
+              </span>
+              {!isCodeView && (
+                <span>
+                  {editor?.storage.characterCount.words()} words
+                </span>
+              )}
+              {isCodeView && (
+                <span className="text-blue-600">
+                  HTML Source Mode
+                </span>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <kbd className="px-2 py-1 text-xs bg-gray-200 rounded">Ctrl+S</kbd>
+              <span className="text-xs text-gray-500">to save</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

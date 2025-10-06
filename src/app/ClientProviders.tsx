@@ -8,6 +8,8 @@ import { BasketProvider } from '@/context/BasketContext'; // Verify this export 
 import { SettingsProvider } from '@/context/SettingsContext'; // Verify this export exists
 import { CookieSettingsProvider } from '@/context/CookieSettingsContext'; // Verify this export exists
 import { BannerProvider } from '@/context/BannerContext'; // Verify this export exists
+import { PostEditModalProvider } from '@/context/PostEditModalContext';
+import PostEditModal from '@/components/PostEditModal/PostEditModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/cookie/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -169,19 +171,22 @@ export default function ClientProviders({
         <BannerProvider>
           <BasketProvider>
             <SettingsProvider initialSettings={settings}>
-              <DynamicLanguageUpdater />
-              <DefaultLocaleCookieManager />
-              <CookieSettingsProvider>
-                <BannerAwareContent
-                  children={children}
-                  showNavbarFooter={showNavbarFooter}
-                  menuItems={menuItems}
-                  loading={loading}
-                  headerData={headerData}
-                  activeLanguages={activeLanguages}
-                />
-                <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
-              </CookieSettingsProvider>
+              <PostEditModalProvider>
+                <DynamicLanguageUpdater />
+                <DefaultLocaleCookieManager />
+                <CookieSettingsProvider>
+                  <BannerAwareContent
+                    children={children}
+                    showNavbarFooter={showNavbarFooter}
+                    menuItems={menuItems}
+                    loading={loading}
+                    headerData={headerData}
+                    activeLanguages={activeLanguages}
+                  />
+                  <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+                </CookieSettingsProvider>
+                <PostEditModal />
+              </PostEditModalProvider>
             </SettingsProvider>
           </BasketProvider>
         </BannerProvider>

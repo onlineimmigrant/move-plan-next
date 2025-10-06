@@ -12,6 +12,11 @@ const Hero = dynamic(() => import('@/components/HomePageSections/Hero'), {
   loading: () => <HeroSkeleton />
 });
 
+const BlogPostSlider = dynamic(() => import('@/components/HomePageSections/BlogPostSlider'), {
+  ssr: false,
+  loading: () => <BlogSliderSkeleton />
+});
+
 const Brands = dynamic(() => import('@/components/HomePageSections/Brands'), { 
   ssr: false,
   loading: () => <BrandsSkeleton />
@@ -30,6 +35,25 @@ const HeroSkeleton = () => (
         <div className="h-12 bg-gray-200 rounded-lg w-96 mx-auto"></div>
         <div className="h-6 bg-gray-200 rounded w-64 mx-auto"></div>
         <div className="h-10 bg-blue-200 rounded-lg w-32 mx-auto mt-8"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const BlogSliderSkeleton = () => (
+  <div className="py-16 bg-gradient-to-br from-slate-50 via-white to-blue-50 animate-pulse">
+    <div className="max-w-7xl mx-auto px-4">
+      <div className="text-center mb-12">
+        <div className="h-10 bg-gray-200 rounded w-64 mx-auto mb-4"></div>
+        <div className="h-6 bg-gray-200 rounded w-96 mx-auto"></div>
+      </div>
+      <div className="relative rounded-2xl overflow-hidden bg-white shadow-xl">
+        <div className="h-96 bg-gray-200"></div>
+        <div className="p-12 space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-6 bg-gray-200 rounded w-full"></div>
+          <div className="h-6 bg-gray-200 rounded w-5/6"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -342,6 +366,19 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
           </section>
         </ErrorBoundary>
       )}*/}
+
+      {/* Blog Post Slider - Featured articles - Bottom of page */}
+      <ErrorBoundary 
+        fallback={
+          <div className="py-8 text-center text-gray-500">
+            Failed to load featured articles
+          </div>
+        }
+      >
+        <Suspense fallback={<BlogSliderSkeleton />}>
+          <BlogPostSlider />
+        </Suspense>
+      </ErrorBoundary>
 
       {/* Pricing Modal */}
       <PricingModal 

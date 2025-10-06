@@ -164,9 +164,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
                   <PostHeader
                     post={post}
                     isAdmin={isAdmin}
-                    showMenu={isHeaderHovered}
-                    editHref={`/admin/edit/${slug}`}
-                    createHref="/admin/create-post"
+                    showAdminButtons={isHeaderHovered}
                   />
                   {post.main_photo && (
                     <div className="max-w-xl mx-auto mt-16 lg:mt-16">

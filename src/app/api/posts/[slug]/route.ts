@@ -143,114 +143,6 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
   }
 }
 
-// POST handler
-export async function POST(request: NextRequest) {
-  if (!hasEnvVars) return envErrorResponse();
-
-  console.log('Received POST request for /api/posts/[slug]');
-
-  try {
-    const body: BlogPostBody = await request.json();
-    const {
-      title,
-      slug,
-      content,
-      description = '',
-      display_this_post = true,
-      display_as_blog_post = false,
-      main_photo = null,
-      section_id = null,
-      subsection = null,
-      is_with_author = false,
-      is_company_author = false,
-      faq_section_is_title = false,
-      author_id = null,
-      cta_card_one_id = null,
-      cta_card_two_id = null,
-      cta_card_three_id = null,
-      cta_card_four_id = null,
-      product_1_id = null,
-      product_2_id = null,
-    } = body;
-
-    if (!title || !slug || !content) {
-      return NextResponse.json(
-        { error: 'Missing required fields: title, slug, and content are required' },
-        { status: 400 }
-      );
-    }
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getOrganizationId(baseUrl);
-    if (!organizationId) {
-      console.error('Organization not found for baseUrl:', baseUrl);
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-
-    console.log('Checking if slug exists:', slug, 'organization_id:', organizationId);
-    const { data: existingPost, error: slugCheckError } = await supabase
-      .from('blog_post')
-      .select('slug')
-      .eq('slug', slug)
-      .eq('organization_id', organizationId)
-      .single();
-
-    if (existingPost) {
-      return NextResponse.json({ error: 'Slug already exists for this organization' }, { status: 409 });
-    }
-    if (slugCheckError && slugCheckError.code !== 'PGRST116') {
-      console.error('Slug check error:', slugCheckError);
-      return NextResponse.json({ error: 'Failed to check slug availability' }, { status: 500 });
-    }
-
-    console.log('Inserting new post into Supabase...');
-    const { data: newPost, error: insertError } = await supabase
-      .from('blog_post')
-      .insert({
-        title,
-        slug,
-        content,
-        description,
-        display_this_post,
-        display_as_blog_post,
-        main_photo,
-        created_on: new Date().toISOString(),
-        section_id,
-        subsection,
-        is_with_author,
-        is_company_author,
-        faq_section_is_title,
-        author_id,
-        cta_card_one_id,
-        cta_card_two_id,
-        cta_card_three_id,
-        cta_card_four_id,
-        product_1_id,
-        product_2_id,
-        organization_id: organizationId,
-      })
-      .select('*')
-      .single();
-
-    if (insertError) {
-      console.error('Supabase insert error:', insertError);
-      return NextResponse.json(
-        { error: 'Failed to create post', details: insertError.message },
-        { status: 500 }
-      );
-    }
-
-    console.log('New post created:', newPost);
-    return NextResponse.json(newPost, { status: 201 });
-  } catch (error) {
-    console.error('Error in POST /api/posts/[slug]:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
-}
-
 // PATCH handler
 export async function PATCH(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   if (!hasEnvVars) return envErrorResponse();
@@ -287,15 +179,16 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
     } = body;
 
     // Fallback to getOrganizationId if organization_id is missing
-    const organization_id = providedOrgId;
+    let organization_id: string | undefined = providedOrgId;
     if (!organization_id) {
       console.warn('Missing organization_id in request body, attempting fallback');
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const organization_id = await getOrganizationId(baseUrl);
-      if (!organization_id) {
+      const resolvedOrgId = await getOrganizationId(baseUrl);
+      if (!resolvedOrgId) {
         console.error('Could not resolve organization_id');
         return NextResponse.json({ error: 'Organization ID is required and could not be resolved' }, { status: 400 });
       }
+      organization_id = resolvedOrgId;
       console.log('Using fallback organization_id:', organization_id);
     }
     console.log('Resolved organization_id:', organization_id);

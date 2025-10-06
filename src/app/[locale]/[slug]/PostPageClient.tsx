@@ -109,6 +109,8 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
     const doc = parser.parseFromString(post.content, 'text/html');
     const headings = doc.querySelectorAll('h1, h2, h3, h4, h5');
 
+    console.log('🔍 TOC Generation - Total headings found:', headings.length);
+
     headings.forEach((heading, index) => {
       const tagName = heading.tagName.toLowerCase();
       const tagText = heading.textContent || '';
@@ -118,6 +120,8 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
         heading.id = tagId;
       }
 
+      console.log(`  ${index + 1}. ${tagName.toUpperCase()}: "${tagText}" → ID: "${tagId}"`);
+
       tocItems.push({
         tag_name: tagName,
         tag_text: tagText,
@@ -125,22 +129,85 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
       });
     });
 
-    console.log('Generated TOC:', tocItems);
+    console.log('📋 Generated TOC items:', tocItems.map(t => `${t.tag_id}: ${t.tag_text}`));
     return tocItems;
   }, [post]);
 
+    // Apply IDs to rendered headings to match TOC
+  useEffect(() => {
+    if (!contentRef.current || toc.length === 0) {
+      console.log('⏭️ Skipping ID application:', { hasContentRef: !!contentRef.current, tocLength: toc.length });
+      return;
+    }
+
+    // Use setTimeout to ensure DOM is fully rendered
+    const timeoutId = setTimeout(() => {
+      console.log('🔧 Applying IDs to rendered DOM...');
+      const headings = contentRef.current!.querySelectorAll('h1, h2, h3, h4, h5');
+      console.log('   Total rendered headings:', headings.length);
+      console.log('   TOC expects', toc.length, 'headings');
+      
+      if (headings.length !== toc.length) {
+        console.warn('⚠️ MISMATCH: DOM has', headings.length, 'headings but TOC has', toc.length);
+      }
+      
+      headings.forEach((heading, index) => {
+        const tagName = heading.tagName.toLowerCase();
+        const oldId = heading.id;
+        // Use global counter like TOC generation does
+        const expectedId = heading.id || `${tagName}-${index + 1}`;
+        
+        // Set ID to match TOC
+        heading.id = expectedId;
+        console.log(`   ${index + 1}. ${tagName.toUpperCase()}: ${oldId ? `"${oldId}"` : '(no id)'} → "${expectedId}"`);
+      });
+      
+      console.log('✅ Final IDs in DOM:', Array.from(headings).map(h => h.id));
+      console.log('📋 TOC expects these IDs:', toc.map(t => t.tag_id));
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [toc, post?.content]);
+
   // Memoized scroll handler
   const handleScrollTo = useCallback((id: string) => {
-    const element = document.getElementById(id);
+    console.log('Attempting to scroll to ID:', id);
+    
+    // First try to find by ID
+    let element = document.getElementById(id);
+    
+    // If not found, try to find the heading by matching it with TOC
+    if (!element && contentRef.current) {
+      const headings = contentRef.current.querySelectorAll('h1, h2, h3, h4, h5');
+      const allHeadings = Array.from(headings);
+      
+      console.log('All headings in DOM:', allHeadings.map((h, i) => ({
+        index: i,
+        tag: h.tagName.toLowerCase(),
+        id: h.id || '(none)',
+        text: h.textContent?.substring(0, 50)
+      })));
+      
+      // Find the matching heading from TOC
+      const tocIndex = toc.findIndex(t => t.tag_id === id);
+      if (tocIndex !== -1 && allHeadings[tocIndex]) {
+        element = allHeadings[tocIndex] as HTMLElement;
+        // Apply the ID so it works next time
+        element.id = id;
+        console.log('✅ Found heading by index, applied ID:', id);
+      }
+    }
+    
     if (element) {
-      console.log('Scrolling to:', id);
+      console.log('Scrolling to element');
       const yOffset = -100;
       const yPosition = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: yPosition, behavior: 'smooth' });
     } else {
-      console.error('Element not found for ID:', id);
+      console.error('❌ Element not found for ID:', id);
+      console.error('Available IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id).filter(Boolean));
     }
-  }, []);
+  }, [toc]);
 
   // Memoized content update handler
   const handleContentUpdate = useCallback(async () => {
@@ -225,7 +292,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           {/* TOC Sidebar */}
           <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
             {toc.length > 0 && (
-              <div className="hidden sm:block mt-16 sticky top-32">
+              <div className="hidden lg:block mt-16 sticky top-32">
                 <TOC toc={toc} handleScrollTo={handleScrollTo} />
               </div>
             )}
@@ -241,20 +308,9 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                   className="relative"
                 >
                   <PostHeader
-                    post={{
-                      section: post.section || '',
-                      subsection: post.subsection || 'Subsection',
-                      title: post.title,
-                      created_on: post.created_on,
-                      is_with_author: post.is_with_author,
-                      is_company_author: post.is_company_author,
-                      author: post.author,
-                      description: post.description,
-                    }}
+                    post={post}
                     isAdmin={isAdmin}
-                    showMenu={isHeaderHovered}
-                    editHref={`/admin/edit/${slug}`}
-                    createHref="/admin/create-post"
+                    showAdminButtons={isHeaderHovered}
                   />
                 </div>
                 <article
@@ -263,6 +319,19 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                   onDoubleClick={makeEditable}
                   dangerouslySetInnerHTML={{ __html: post.content }}
                 />
+                
+                {/* Mobile TOC - Below Content */}
+                {toc.length > 0 && (
+                  <div className="lg:hidden mt-12 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                      </svg>
+                      Table of Contents
+                    </h3>
+                    <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex items-center justify-center py-16">

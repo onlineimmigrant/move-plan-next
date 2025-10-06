@@ -4,6 +4,8 @@ import React, { memo, useMemo } from 'react';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
+import { usePostEditModal } from '@/context/PostEditModalContext';
+import AdminButtons from './AdminButtons';
 import Link from 'next/link';
 import IconButton from '@/ui/IconButton';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
@@ -29,22 +31,23 @@ const generateSlug = (subsection: string): string => {
 
 interface PostHeaderProps {
   post: {
-    section: string;
-    subsection: string;
+    id?: string;
+    slug?: string;
+    section?: string;
+    subsection?: string;
     title: string;
     created_on: string;
     is_with_author: boolean;
     is_company_author: boolean;
     author?: { first_name: string; last_name: string };
     description: string;
+    content?: string;
   };
   isAdmin?: boolean;
-  showMenu?: boolean;
-  editHref: string;
-  createHref: string;
+  showAdminButtons?: boolean;
 }
 
-const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showMenu, editHref, createHref }) => {
+const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminButtons }) => {
   const { settings } = useSettings();
 
   // Memoize computed values
@@ -54,7 +57,7 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showMenu, e
 
   // Memoize subsection slug and URL
   const { subsectionSlug, subsectionUrl } = useMemo(() => {
-    const slug = generateSlug(post.subsection);
+    const slug = generateSlug(post.subsection || 'Subsection');
     return {
       subsectionSlug: slug,
       subsectionUrl: `/${slug}/`
@@ -122,24 +125,9 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showMenu, e
       {/* Optional Divider */}
       <hr className="border-gray-200 mb-8" />
       
-      {/* Hover Menu for Admins*/}
-      {isAdmin && showMenu && (
-        <div className="absolute top-0 right-0 flex space-x-2 z-51">
-          <Link href={createHref}>
-            <IconButton
-              onClick={() => {}} // No-op since Link handles navigation
-              icon={PlusIcon}
-              tooltip="Create New Post"
-            />
-          </Link>
-          <Link href={editHref}>
-            <IconButton
-              onClick={() => {}} // No-op since Link handles navigation
-              icon={PencilIcon}
-              tooltip="Edit This Post"
-            />
-          </Link>
-        </div>
+      {/* Neomorphism Admin Buttons - Hover/Touch Activated */}
+      {isAdmin && showAdminButtons && (
+        <AdminButtons post={post} />
       )} 
     </div>
   );
