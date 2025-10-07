@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PostEditor from '@/components/PostPage/PostEditor';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import Button from '@/ui/Button';
 import { ArrowLeftIcon, DocumentCheckIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 

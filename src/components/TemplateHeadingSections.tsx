@@ -4,6 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import TemplateHeadingSection from './TemplateHeadingSection';
+import { TemplateHeadingSectionEditProvider, useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
+import TemplateHeadingSectionEditModal from './TemplateHeadingSectionEdit/TemplateHeadingSectionEditModal';
 
 interface TemplateHeadingSectionData {
   id: number;
@@ -31,11 +33,13 @@ interface TemplateHeadingSectionData {
   organization_id: string | null; // Added
 }
 
-const TemplateHeadingSections: React.FC = () => {
+// Inner component that uses the context
+const TemplateHeadingSectionsInner: React.FC = () => {
   const pathname = usePathname();
   const [headings, setHeadings] = useState<TemplateHeadingSectionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { refreshKey } = useTemplateHeadingSectionEdit();
 
   useEffect(() => {
     const fetchHeadings = async () => {
@@ -90,9 +94,7 @@ const TemplateHeadingSections: React.FC = () => {
     };
 
     fetchHeadings();
-  }, [pathname]);
-
-
+  }, [pathname, refreshKey]); // Added refreshKey dependency
 
   if (error) {
     return (
@@ -108,7 +110,20 @@ const TemplateHeadingSections: React.FC = () => {
     return null;
   }
 
-  return <TemplateHeadingSection templateSectionHeadings={headings} />;
+  return (
+    <>
+      <TemplateHeadingSection templateSectionHeadings={headings} />
+      <TemplateHeadingSectionEditModal />
+    </>
+  );
+};
+
+const TemplateHeadingSections: React.FC = () => {
+  return (
+    <TemplateHeadingSectionEditProvider>
+      <TemplateHeadingSectionsInner />
+    </TemplateHeadingSectionEditProvider>
+  );
 };
 
 export default TemplateHeadingSections;

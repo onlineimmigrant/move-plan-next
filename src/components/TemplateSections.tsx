@@ -4,6 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import TemplateSection from './TemplateSection';
+import { TemplateSectionEditProvider, useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
+import TemplateSectionEditModal from './TemplateSectionEdit/TemplateSectionEditModal';
 
 // Types
 interface Metric {
@@ -42,11 +44,13 @@ interface TemplateSectionData {
   is_real_estate_modal?: boolean;
 }
 
-const TemplateSections: React.FC = () => {
+// Inner component that uses the context
+const TemplateSectionsInner: React.FC = () => {
   const pathname = usePathname();
   const [sections, setSections] = useState<TemplateSectionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { refreshKey } = useTemplateSectionEdit();
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -104,9 +108,7 @@ const TemplateSections: React.FC = () => {
     };
 
     fetchSections();
-  }, [pathname]);
-
-
+  }, [pathname, refreshKey]); // Added refreshKey dependency
 
   if (error) {
     return <div className="text-center text-red-500">Error: {error}</div>;
@@ -122,7 +124,16 @@ const TemplateSections: React.FC = () => {
       {sections.map(section => (
         <TemplateSection key={section.id} section={section} />
       ))}
+      <TemplateSectionEditModal />
     </>
+  );
+};
+
+const TemplateSections: React.FC = () => {
+  return (
+    <TemplateSectionEditProvider>
+      <TemplateSectionsInner />
+    </TemplateSectionEditProvider>
   );
 };
 

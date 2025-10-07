@@ -5,6 +5,7 @@ import React from 'react';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { usePostEditModal } from '@/context/PostEditModalContext';
 import { usePathname } from 'next/navigation';
+import Button from '@/ui/Button';
 
 interface Post {
   id?: string;
@@ -36,26 +37,22 @@ export default function AdminButtons({ post }: AdminButtonsProps) {
 
   return (
     <div className="absolute top-0 right-0 flex items-center space-x-3 z-50">
-      <button 
+      <Button 
         onClick={handleEdit}
-        className="neomorphic-admin-btn group"
+        variant="edit_plus"
         disabled={!post}
       >
-        <PencilIcon className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-300" />
-        <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-blue-700 transition-colors duration-300">
-          Edit
-        </span>
-      </button>
+        <PencilIcon className="w-4 h-4 mr-2 transition-colors duration-300" />
+        Edit
+      </Button>
       
-      <button 
+      <Button 
         onClick={handleCreate}
-        className="neomorphic-admin-btn group"
+        variant="new_plus"
       >
-        <PlusIcon className="w-4 h-4 text-gray-600 group-hover:text-green-600 transition-colors duration-300" />
-        <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-green-700 transition-colors duration-300">
-          New
-        </span>
-      </button>
+        <PlusIcon className="w-4 h-4 mr-2 transition-colors duration-300" />
+        New
+      </Button>
     </div>
   );
 }

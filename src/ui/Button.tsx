@@ -1,20 +1,30 @@
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+import { ButtonHTMLAttributes, forwardRef, ReactNode } from 'react';
 import { cn } from '@/lib/utils'; // Utility for merging Tailwind classes
+import { PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
 
-type Variant = 'primary' | 'secondary' | 'start' | 'close' | 'link' | 'outline' | 'light-outline' | 'badge_primary' | 'badge_primary_circle' | 'manage'; // Added 'outline', 'light-outline' and 'manage'
+type Variant = 'primary' | 'secondary' | 'start' | 'close' | 'link' | 'outline' | 'light-outline' | 'danger' | 'badge_primary' | 'badge_primary_circle' | 'manage' | 'edit_plus' | 'new_plus';
+type Size = 'sm' | 'default' | 'lg' | 'admin';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
+  size?: Size;
   loading?: boolean;
   loadingText?: string;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', loading = false, loadingText = 'Loading...', children, disabled, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'default', loading = false, loadingText = 'Loading...', children, disabled, ...props }, ref) => {
     const baseStyles =
-      `cursor-pointer inline-flex items-center justify-center font-medium rounded-lg px-4 py-2 
-      sm:px-6 sm:py-2 text-sm sm:text-sm transition-all duration-300 group ease-in-out 
+      `cursor-pointer inline-flex items-center justify-center font-medium rounded-lg
+      transition-all duration-300 group ease-in-out 
       focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`;
+
+    const sizeStyles: Record<Size, string> = {
+      sm: 'px-3 py-1.5 text-xs',
+      default: 'px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-sm',
+      lg: 'px-6 py-3 text-base',
+      admin: 'px-3 py-1.5 text-xs',
+    };
 
     const variants: Record<Variant, string> = {
       primary: 'shadow-lg bg-sky-600 text-white hover:bg-sky-700 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 focus:ring-sky-500',
@@ -33,13 +43,19 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         'shadow-sm bg-transparent border border-gray-300 text-gray-700 hover:border-sky-600 hover:text-sky-600 focus:ring-sky-500',
       'light-outline':
         'shadow-sm bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
+      danger:
+        'shadow-lg bg-red-600 text-white hover:bg-red-700 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 focus:ring-red-500',
       manage:
         'relative w-full py-3.5 px-4 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 disabled:from-sky-400 disabled:to-sky-500 text-white font-medium rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-200/50 hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0 disabled:transform-none disabled:shadow-none transition-all duration-300 ease-out',
+      edit_plus:
+        'relative overflow-hidden font-medium text-gray-700 bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.4),-4px_-4px_8px_rgba(255,255,255,0.8),inset_0_0_0_rgba(163,177,198,0.1)] hover:shadow-[2px_2px_4px_rgba(163,177,198,0.3),-2px_-2px_4px_rgba(255,255,255,0.9),inset_1px_1px_2px_rgba(163,177,198,0.15),inset_-1px_-1px_2px_rgba(255,255,255,0.9)] hover:text-blue-700 hover:-translate-y-0.5 active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] active:translate-y-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+      new_plus:
+        'relative overflow-hidden font-medium text-gray-700 bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.4),-4px_-4px_8px_rgba(255,255,255,0.8),inset_0_0_0_rgba(163,177,198,0.1)] hover:shadow-[2px_2px_4px_rgba(163,177,198,0.3),-2px_-2px_4px_rgba(255,255,255,0.9),inset_1px_1px_2px_rgba(163,177,198,0.15),inset_-1px_-1px_2px_rgba(255,255,255,0.9)] hover:text-green-700 hover:-translate-y-0.5 active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] active:translate-y-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
     };
 
     return (
       <button
-        className={cn(baseStyles, variants[variant], className)}
+        className={cn(baseStyles, sizeStyles[size], variants[variant], className)}
         disabled={disabled || loading}
         ref={ref}
         {...props}
@@ -67,6 +83,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             {/* Subtle shine effect on hover for manage variant */}
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
           </>
+        ) : (variant === 'edit_plus' || variant === 'new_plus') ? (
+          <>
+            {children}
+            {/* Glow overlay effect for neomorphic buttons */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out pointer-events-none"></div>
+          </>
         ) : (
           children
         )}
@@ -77,7 +99,69 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
+// HoverEditButtons Component
+interface HoverEditButtonsProps {
+  onEdit: () => void;
+  onNew?: () => void;
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  className?: string;
+  children?: ReactNode;
+}
 
+export const HoverEditButtons = ({
+  onEdit,
+  onNew,
+  position = 'top-right',
+  className,
+  children,
+}: HoverEditButtonsProps) => {
+  const positionClasses = {
+    'top-right': 'top-4 right-4',
+    'top-left': 'top-4 left-4',
+    'bottom-right': 'bottom-4 right-4',
+    'bottom-left': 'bottom-4 left-4',
+  };
+
+  return (
+    <div
+      className={cn(
+        'absolute z-10 flex items-center gap-2',
+        'opacity-0 group-hover:opacity-100',
+        'transition-opacity duration-200',
+        positionClasses[position],
+        className
+      )}
+    >
+      <Button
+        variant="edit_plus"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit();
+        }}
+        className="flex items-center gap-1.5"
+      >
+        <PencilIcon className="w-4 h-4" />
+        <span>Edit</span>
+      </Button>
+
+      {onNew && (
+        <Button
+          variant="new_plus"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNew();
+          }}
+          className="flex items-center gap-1.5"
+        >
+          <PlusIcon className="w-4 h-4" />
+          <span>New</span>
+        </Button>
+      )}
+
+      {children}
+    </div>
+  );
+};
 
 // Disclosure
 

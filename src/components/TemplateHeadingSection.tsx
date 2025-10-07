@@ -1,10 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import { usePathname } from 'next/navigation';
 import  Button from '@/ui/Button';
+import { useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
+import { HoverEditButtons } from '@/ui/Button';
+import { isAdminClient } from '@/lib/auth';
 
 interface TemplateHeadingSectionData {
   id: number;
@@ -89,7 +92,20 @@ const getTranslatedContent = (
 const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templateSectionHeadings }) => {
   if (!templateSectionHeadings?.length) return null;
 
+  // Admin state and edit context
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { openModal } = useTemplateHeadingSectionEdit();
+
   const pathname = usePathname();
+  
+  // Check admin status
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const adminStatus = await isAdminClient();
+      setIsAdmin(adminStatus);
+    };
+    checkAdmin();
+  }, []);
   
   // Extract locale from pathname (similar to Hero component logic)
   const pathSegments = pathname.split('/').filter(Boolean);
@@ -134,10 +150,19 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
           return (
           <section
             key={section.id}
-            className={`relative isolate ${!isClean ? 'px-6 lg:px-8' : ''} ${styleVar.section} font-sans ${
+            className={`relative isolate group ${!isClean ? 'px-6 lg:px-8' : ''} ${styleVar.section} font-sans ${
               isApple ? 'bg-white/95 backdrop-blur-sm' : isClean ? 'bg-transparent' : `bg-${textVar.bg}`
             } overflow-hidden`}
           >
+            {/* Hover Edit Buttons for Admin */}
+            {isAdmin && (
+              <HoverEditButtons
+                onEdit={() => openModal(section)}
+                onNew={() => openModal(undefined, section.url_page || pathname)}
+                position="top-right"
+              />
+            )}
+            
             {/* Background Effects */}
             {!isClean && (
               <>

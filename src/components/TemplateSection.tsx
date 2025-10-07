@@ -8,6 +8,9 @@ import { usePathname } from 'next/navigation';
 import FeedbackAccordion from './FeedbackAccordion';
 import HelpCenterSection from './HelpCenterSection';
 import { RealEstateModal } from './realEstateModal';
+import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
+import { HoverEditButtons } from '@/ui/Button';
+import { isAdminClient } from '@/lib/auth';
 
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
@@ -103,7 +106,6 @@ interface TemplateSectionData {
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
   is_real_estate_modal?: boolean;
-  max_faqs_display?: number;
 }
 
 const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }) => {
@@ -111,6 +113,19 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
   if (!section) {
     return null;
   }
+
+  // Debug: Log section data to see if metrics are present
+  console.log('TemplateSection rendered:', {
+    id: section.id,
+    title: section.section_title,
+    metricsCount: section.website_metric?.length || 0,
+    hasMetrics: !!section.website_metric,
+    metrics: section.website_metric
+  });
+
+  // Admin state and edit context
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { openModal } = useTemplateSectionEdit();
 
   // Carousel state for slider mode
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -120,6 +135,15 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
   const autoPlayInterval = useRef<NodeJS.Timeout | null>(null);
 
   const pathname = usePathname();
+  
+  // Check admin status
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const adminStatus = await isAdminClient();
+      setIsAdmin(adminStatus);
+    };
+    checkAdmin();
+  }, []);
   
   // Extract locale from pathname (similar to TemplateHeadingSection logic)
   const pathSegments = pathname.split('/').filter(Boolean);
@@ -243,8 +267,17 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
 
   return (
     <section
-      className={`${section.is_slider ? 'px-0' : 'px-4'} py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-white'} min-h-[600px]`}
+      className={`${section.is_slider ? 'px-0' : 'px-4'} py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-white'} min-h-[600px] relative group`}
     >
+      {/* Hover Edit Buttons for Admin */}
+      {isAdmin && (
+        <HoverEditButtons
+          onEdit={() => openModal(section)}
+          onNew={() => openModal(null, pathname)}
+          position="top-right"
+        />
+      )}
+      
       <div
         className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto space-y-12 ${section.is_slider ? 'py-4' : 'py-4 sm:p-8 sm:rounded-xl'}`}
       >

@@ -88,3 +88,97 @@ export async function GET(request: Request) {
     );
   }
 }
+
+/**
+ * POST /api/template-heading-sections
+ * Create a new template heading section
+ */
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    console.log('Creating new template heading section:', body);
+
+    // Validate required fields
+    if (!body.name || !body.description_text || !body.url_page) {
+      return NextResponse.json(
+        { error: 'name, description_text, and url_page are required' },
+        { status: 400 }
+      );
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const organizationId = await getOrganizationId(baseUrl);
+    
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get the highest order value for this url_page
+    const { data: existingSections, error: orderError } = await supabase
+      .from('website_templatesectionheading')
+      .select('order')
+      .eq('url_page', body.url_page)
+      .eq('organization_id', organizationId)
+      .order('order', { ascending: false })
+      .limit(1);
+
+    if (orderError) {
+      console.error('Error fetching order:', orderError);
+    }
+
+    const nextOrder = existingSections && existingSections.length > 0 
+      ? (existingSections[0].order || 0) + 1 
+      : 1;
+
+    // Prepare insert data
+    const insertData = {
+      name: body.name,
+      name_part_2: body.name_part_2 || null,
+      name_part_3: body.name_part_3 || null,
+      name_translation: body.name_translation || {},
+      description_text: body.description_text,
+      description_text_translation: body.description_text_translation || {},
+      button_text: body.button_text || null,
+      button_text_translation: body.button_text_translation || {},
+      url: body.url || null,
+      url_page: body.url_page,
+      image: body.image || null,
+      image_first: body.image_first ?? false,
+      is_included_template_sections_active: body.is_included_template_sections_active ?? false,
+      organization_id: organizationId,
+      style_variant: body.style_variant || 'default',
+      text_style_variant: body.text_style_variant || 'default',
+      is_text_link: body.is_text_link ?? false,
+      order: nextOrder,
+    };
+
+    // Insert the new template heading section
+    const { data, error } = await supabase
+      .from('website_templatesectionheading')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating template heading section:', error);
+      return NextResponse.json(
+        { error: 'Failed to create template heading section', details: error.message },
+        { status: 500 }
+      );
+    }
+
+    console.log('Successfully created template heading section:', data);
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    console.error('Error in POST /api/template-heading-sections:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}

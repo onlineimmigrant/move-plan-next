@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import Button from '@/ui/Button';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 interface LinkModalProps {

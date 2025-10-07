@@ -18,7 +18,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import { mergeAttributes } from '@tiptap/core';
-import { Button } from '@/components/ui/button';
+import Button from '@/ui/Button';
 import ImageGalleryModal from '@/components/ImageGalleryModal/ImageGalleryModal';
 import LinkModal from '@/components/PostPage/LinkModal';
 import { Plugin, PluginKey } from 'prosemirror-state';

@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePostEditModal } from '@/context/PostEditModalContext';
 import { ArrowsPointingOutIcon, ArrowsPointingInIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import PostEditor from '@/components/PostPage/PostEditor';
-import { Button } from '@/components/ui/button';
+import Button from '@/ui/Button';
 import { useRouter } from 'next/navigation';
 // Utility function to generate slug from title
 const generateSlug = (title: string): string => {

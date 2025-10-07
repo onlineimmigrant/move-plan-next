@@ -9,6 +9,9 @@ import { SettingsProvider } from '@/context/SettingsContext'; // Verify this exp
 import { CookieSettingsProvider } from '@/context/CookieSettingsContext'; // Verify this export exists
 import { BannerProvider } from '@/context/BannerContext'; // Verify this export exists
 import { PostEditModalProvider } from '@/context/PostEditModalContext';
+import { TemplateSectionEditProvider } from '@/context/TemplateSectionEditContext';
+import { TemplateHeadingSectionEditProvider } from '@/context/TemplateHeadingSectionEditContext';
+import { ToastProvider } from '@/components/Shared/ToastContainer';
 import PostEditModal from '@/components/PostEditModal/PostEditModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/cookie/CookieBanner';
@@ -171,22 +174,28 @@ export default function ClientProviders({
         <BannerProvider>
           <BasketProvider>
             <SettingsProvider initialSettings={settings}>
-              <PostEditModalProvider>
-                <DynamicLanguageUpdater />
-                <DefaultLocaleCookieManager />
-                <CookieSettingsProvider>
-                  <BannerAwareContent
-                    children={children}
-                    showNavbarFooter={showNavbarFooter}
-                    menuItems={menuItems}
-                    loading={loading}
-                    headerData={headerData}
-                    activeLanguages={activeLanguages}
-                  />
-                  <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
-                </CookieSettingsProvider>
-                <PostEditModal />
-              </PostEditModalProvider>
+              <ToastProvider>
+                <PostEditModalProvider>
+                  <TemplateSectionEditProvider>
+                    <TemplateHeadingSectionEditProvider>
+                      <DynamicLanguageUpdater />
+                      <DefaultLocaleCookieManager />
+                      <CookieSettingsProvider>
+                        <BannerAwareContent
+                          children={children}
+                          showNavbarFooter={showNavbarFooter}
+                          menuItems={menuItems}
+                          loading={loading}
+                          headerData={headerData}
+                          activeLanguages={activeLanguages}
+                        />
+                        <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+                      </CookieSettingsProvider>
+                      <PostEditModal />
+                    </TemplateHeadingSectionEditProvider>
+                  </TemplateSectionEditProvider>
+                </PostEditModalProvider>
+              </ToastProvider>
             </SettingsProvider>
           </BasketProvider>
         </BannerProvider>
