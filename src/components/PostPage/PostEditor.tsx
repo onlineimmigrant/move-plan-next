@@ -739,10 +739,10 @@ const PostEditor: React.FC<PostEditorProps> = ({ onSave, initialContent, onConte
         editor.chain().focus().toggleOrderedList().run();
         break;
       case 'blockquote':
-        editor.chain().focus().setParagraph().toggleBlockquote().run();
+        editor.chain().focus().toggleBlockquote().run();
         break;
       case 'codeBlock':
-        editor.chain().focus().setParagraph().toggleCodeBlock().run();
+        editor.chain().focus().toggleCodeBlock().run();
         break;
       case 'bold':
         editor.chain().focus().toggleBold().run();
