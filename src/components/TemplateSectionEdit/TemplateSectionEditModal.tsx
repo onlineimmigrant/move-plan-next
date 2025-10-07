@@ -1,7 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
+import { 
+  XMarkIcon, 
+  ArrowsPointingOutIcon, 
+  ArrowsPointingInIcon,
+  Bars3BottomLeftIcon,
+  Bars3Icon,
+  Bars3BottomRightIcon,
+  SwatchIcon,
+  SparklesIcon,
+  Square2StackIcon,
+  ArrowsUpDownIcon,
+  ViewColumnsIcon,
+  ArrowsRightLeftIcon,
+  ChatBubbleBottomCenterTextIcon,
+  QuestionMarkCircleIcon,
+  HomeModernIcon,
+  RectangleStackIcon,
+  PhotoIcon,
+  PlusIcon,
+} from '@heroicons/react/24/outline';
 import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
 import EditableTextField from '@/components/Shared/EditableFields/EditableTextField';
 import EditableTextArea from '@/components/Shared/EditableFields/EditableTextArea';
@@ -14,7 +33,61 @@ import MetricManager from './MetricManager';
 import Button from '@/ui/Button';
 import { cn } from '@/lib/utils';
 
-type Tab = 'content' | 'style' | 'layout' | 'advanced';
+// Text style variants matching TemplateSection.tsx
+const TEXT_VARIANTS = {
+  default: {
+    sectionTitle: 'text-3xl sm:text-4xl lg:text-5xl font-normal text-gray-800',
+    sectionDescription: 'text-lg font-light text-gray-700',
+  },
+  apple: {
+    sectionTitle: 'text-4xl font-light text-gray-900',
+    sectionDescription: 'text-lg font-light text-gray-600',
+  },
+  codedharmony: {
+    sectionTitle: 'text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 tracking-tight leading-none',
+    sectionDescription: 'text-lg sm:text-xl text-gray-500 font-light leading-relaxed',
+  }
+};
+
+// Tailwind color palette
+const COLOR_PALETTE = [
+  { name: 'White', value: '#FFFFFF' },
+  { name: 'Gray 50', value: '#F9FAFB' },
+  { name: 'Gray 100', value: '#F3F4F6' },
+  { name: 'Gray 200', value: '#E5E7EB' },
+  { name: 'Blue 50', value: '#EFF6FF' },
+  { name: 'Blue 100', value: '#DBEAFE' },
+  { name: 'Sky 50', value: '#F0F9FF' },
+  { name: 'Indigo 50', value: '#EEF2FF' },
+  { name: 'Purple 50', value: '#FAF5FF' },
+  { name: 'Pink 50', value: '#FDF2F8' },
+  { name: 'Rose 50', value: '#FFF1F2' },
+  { name: 'Orange 50', value: '#FFF7ED' },
+  { name: 'Amber 50', value: '#FFFBEB' },
+  { name: 'Yellow 50', value: '#FEFCE8' },
+  { name: 'Lime 50', value: '#F7FEE7' },
+  { name: 'Green 50', value: '#F0FDF4' },
+  { name: 'Emerald 50', value: '#ECFDF5' },
+  { name: 'Teal 50', value: '#F0FDFA' },
+  { name: 'Cyan 50', value: '#ECFEFF' },
+];
+
+// Height options
+const HEIGHT_OPTIONS = [
+  { value: 'h-8', label: '2rem' },
+  { value: 'h-12', label: '3rem' },
+  { value: 'h-16', label: '4rem' },
+  { value: 'h-20', label: '5rem' },
+  { value: 'h-24', label: '6rem' },
+  { value: 'h-32', label: '8rem' },
+  { value: 'h-40', label: '10rem' },
+  { value: 'h-48', label: '12rem' },
+  { value: 'h-56', label: '14rem' },
+  { value: 'h-64', label: '16rem' },
+  { value: 'h-72', label: '18rem' },
+  { value: 'h-80', label: '20rem' },
+  { value: 'h-96', label: '24rem' },
+];
 
 interface Metric {
   id: number;
@@ -53,10 +126,17 @@ interface TemplateSectionFormData {
 
 export default function TemplateSectionEditModal() {
   const { isOpen, editingSection, mode, closeModal, updateSection, deleteSection, refreshSections, refetchEditingSection } = useTemplateSectionEdit();
-  const [activeTab, setActiveTab] = useState<Tab>('content');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showStylePicker, setShowStylePicker] = useState(false);
+  const [showHeightPicker, setShowHeightPicker] = useState(false);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const [showCreateMetricForm, setShowCreateMetricForm] = useState(false);
+  const [showAddMetricModal, setShowAddMetricModal] = useState(false);
+  const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
+  const descriptionTextareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [formData, setFormData] = useState<TemplateSectionFormData>({
     section_title: '',
     section_description: '',
@@ -100,6 +180,25 @@ export default function TemplateSectionEditModal() {
     }
   }, [editingSection]);
 
+  // Auto-expand textarea
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData({ ...formData, section_description: e.target.value });
+    
+    // Auto-expand textarea
+    if (descriptionTextareaRef.current) {
+      descriptionTextareaRef.current.style.height = 'auto';
+      descriptionTextareaRef.current.style.height = descriptionTextareaRef.current.scrollHeight + 'px';
+    }
+  };
+
+  // Reset textarea height when content changes from outside
+  useEffect(() => {
+    if (descriptionTextareaRef.current) {
+      descriptionTextareaRef.current.style.height = 'auto';
+      descriptionTextareaRef.current.style.height = descriptionTextareaRef.current.scrollHeight + 'px';
+    }
+  }, [formData.section_description]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -121,12 +220,24 @@ export default function TemplateSectionEditModal() {
     // Success toast and modal close handled by context
   };
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: 'content', label: 'Content' },
-    { id: 'style', label: 'Style' },
-    { id: 'layout', label: 'Layout' },
-    { id: 'advanced', label: 'Advanced' },
-  ];
+  // Close all dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Don't close if clicking inside a dropdown or its button
+      if (!target.closest('.dropdown-container')) {
+        setShowColorPicker(false);
+        setShowStylePicker(false);
+        setShowHeightPicker(false);
+        setShowColumnPicker(false);
+      }
+    };
+
+    if (showColorPicker || showStylePicker || showHeightPicker || showColumnPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showColorPicker, showStylePicker, showHeightPicker, showColumnPicker]);
 
   if (!isOpen) return null;
 
@@ -143,7 +254,7 @@ export default function TemplateSectionEditModal() {
       
       {/* Modal */}
       <div className={cn(
-        'relative bg-white shadow-2xl overflow-hidden flex flex-col',
+        'relative bg-white shadow-2xl flex flex-col',
         isFullscreen
           ? 'w-full h-full'
           : 'rounded-xl w-full max-w-5xl max-h-[90vh] mx-4'
@@ -151,7 +262,7 @@ export default function TemplateSectionEditModal() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
           <h2 className="text-2xl font-semibold text-gray-900">
-            {mode === 'create' ? 'Create New Template Section' : 'Edit Template Section'}
+            {mode === 'create' ? 'Create New Section' : 'Edit Section'}
           </h2>
           
           <div className="flex items-center gap-2">
@@ -175,223 +286,455 @@ export default function TemplateSectionEditModal() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 px-6 shrink-0">
-          {tabs.map((tab) => (
+        {/* Fixed Toolbar - Horizontally Scrollable */}
+        <div className="border-b border-gray-200 shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1 px-6 py-3 min-w-max">
+            {/* Reviews Section */}
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => setFormData({ ...formData, is_reviews_section: !formData.is_reviews_section })}
               className={cn(
-                'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
-                activeTab === tab.id
-                  ? 'border-sky-500 text-sky-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                'p-2 rounded-lg transition-colors',
+                formData.is_reviews_section
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
               )}
+              title="Reviews section"
             >
-              {tab.label}
+              <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
             </button>
-          ))}
+
+            {/* Help Center Section */}
+            <button
+              onClick={() => setFormData({ ...formData, is_help_center_section: !formData.is_help_center_section })}
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                formData.is_help_center_section
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              )}
+              title="Help center section"
+            >
+              <QuestionMarkCircleIcon className="w-5 h-5" />
+            </button>
+
+            {/* Real Estate Modal */}
+            <button
+              onClick={() => setFormData({ ...formData, is_real_estate_modal: !formData.is_real_estate_modal })}
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                formData.is_real_estate_modal
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              )}
+              title="Real estate modal"
+            >
+              <HomeModernIcon className="w-5 h-5" />
+            </button>
+
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+
+            {/* Alignment buttons */}
+            <button
+              onClick={() => setFormData({
+                ...formData,
+                is_section_title_aligned_center: false,
+                is_section_title_aligned_right: false,
+              })}
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              )}
+              title="Align left"
+            >
+              <Bars3BottomLeftIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setFormData({
+                ...formData,
+                is_section_title_aligned_center: true,
+                is_section_title_aligned_right: false,
+              })}
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                formData.is_section_title_aligned_center
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              )}
+              title="Align center"
+            >
+              <Bars3Icon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setFormData({
+                ...formData,
+                is_section_title_aligned_center: false,
+                is_section_title_aligned_right: true,
+              })}
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                formData.is_section_title_aligned_right
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              )}
+              title="Align right"
+            >
+              <Bars3BottomRightIcon className="w-5 h-5" />
+            </button>
+
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+
+            {/* Full Width */}
+            <button
+              onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                formData.is_full_width
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              )}
+              title="Full width section"
+            >
+              <ArrowsRightLeftIcon className="w-5 h-5" />
+            </button>
+
+            {/* Enable Slider */}
+            <button
+              onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
+              className={cn(
+                'p-2 rounded-lg transition-colors',
+                formData.is_slider
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              )}
+              title="Enable slider"
+            >
+              <RectangleStackIcon className="w-5 h-5" />
+            </button>
+
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+
+            {/* Background Color */}
+            <div className="relative dropdown-container">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowColorPicker(!showColorPicker);
+                  setShowStylePicker(false);
+                  setShowHeightPicker(false);
+                  setShowColumnPicker(false);
+                }}
+                className={cn(
+                  'p-2 rounded-lg transition-colors flex items-center gap-1',
+                  showColorPicker
+                    ? 'bg-sky-100 text-sky-700'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                )}
+                title="Background color"
+              >
+                <SwatchIcon className="w-5 h-5" />
+                <div 
+                  className="w-4 h-4 rounded border border-gray-300" 
+                  style={{ backgroundColor: formData.background_color }}
+                />
+              </button>
+              {showColorPicker && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 w-64">
+                  <div className="grid grid-cols-5 gap-2">
+                    {COLOR_PALETTE.map((color) => (
+                      <button
+                        key={color.value}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, background_color: color.value });
+                          setShowColorPicker(false);
+                        }}
+                        className={cn(
+                          'w-10 h-10 rounded-lg border-2 transition-all hover:scale-110',
+                          formData.background_color === color.value
+                            ? 'border-sky-500 ring-2 ring-sky-200'
+                            : 'border-gray-200 hover:border-gray-300'
+                        )}
+                        style={{ backgroundColor: color.value }}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Text Style */}
+            <div className="relative dropdown-container">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowStylePicker(!showStylePicker);
+                  setShowColorPicker(false);
+                  setShowHeightPicker(false);
+                  setShowColumnPicker(false);
+                }}
+                className={cn(
+                  'p-2 rounded-lg transition-colors',
+                  showStylePicker
+                    ? 'bg-sky-100 text-sky-700'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                )}
+                title="Text style"
+              >
+                <SparklesIcon className="w-5 h-5" />
+              </button>
+              {showStylePicker && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 w-48">
+                  {(['default', 'apple', 'codedharmony'] as const).map((style) => (
+                    <button
+                      key={style}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData({ ...formData, text_style_variant: style });
+                        setShowStylePicker(false);
+                      }}
+                      className={cn(
+                        'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
+                        formData.text_style_variant === style && 'bg-sky-50 text-sky-700 font-medium'
+                      )}
+                    >
+                      {style === 'default' && 'Default'}
+                      {style === 'apple' && 'Apple Style'}
+                      {style === 'codedharmony' && 'Coded Harmony'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Grid Columns */}
+            <div className="relative dropdown-container">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowColumnPicker(!showColumnPicker);
+                  setShowColorPicker(false);
+                  setShowStylePicker(false);
+                  setShowHeightPicker(false);
+                }}
+                className={cn(
+                  'p-2 rounded-lg transition-colors flex items-center gap-1',
+                  showColumnPicker
+                    ? 'bg-sky-100 text-sky-700'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                )}
+                title="Grid columns"
+              >
+                <ViewColumnsIcon className="w-5 h-5" />
+                <span className="text-xs font-medium">{formData.grid_columns}</span>
+              </button>
+              {showColumnPicker && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 w-24">
+                  {[1, 2, 3, 4, 5, 6].map((cols) => (
+                    <button
+                      key={cols}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData({ ...formData, grid_columns: cols });
+                        setShowColumnPicker(false);
+                      }}
+                      className={cn(
+                        'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
+                        formData.grid_columns === cols && 'bg-sky-50 text-sky-700 font-medium'
+                      )}
+                    >
+                      {cols} {cols === 1 ? 'col' : 'cols'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+
+            {/* Metric & Image Controls Group */}
+            <div className="flex items-center gap-1">
+              {/* Metric Controls */}
+              <div className="flex items-center gap-1">
+              {/* Create New Metric */}
+              <button
+                onClick={() => setShowCreateMetricForm(true)}
+                className="p-2 rounded-lg border-2 border-dashed border-gray-300 hover:border-sky-500 hover:bg-sky-50 transition-colors"
+                title="Create new metric"
+              >
+                <PlusIcon className="w-5 h-5 text-gray-400 hover:text-sky-600" />
+              </button>
+
+              {/* Add Existing Metric */}
+              <button
+                onClick={() => setShowAddMetricModal(true)}
+                className="p-2 rounded-lg border-2 border-dashed border-gray-300 hover:border-sky-500 hover:bg-sky-50 transition-colors"
+                title="Add existing metric"
+              >
+                <PlusIcon className="w-5 h-5 text-gray-400 hover:text-sky-600" />
+              </button>
+
+              {/* Divider */}
+              {(formData.website_metric?.length || 0) > 0 && (
+                <div className="w-px h-6 bg-gray-300 mx-1 shrink-0" />
+              )}
+
+              {/* Existing Metrics as Icons */}
+              {(formData.website_metric || []).map((metric, index) => (
+                <button
+                  key={metric.id}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors border-2',
+                    editingMetricId === metric.id
+                      ? 'border-sky-500 bg-sky-50'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  )}
+                  onClick={() => setEditingMetricId(editingMetricId === metric.id ? null : metric.id)}
+                  title={metric.title}
+                >
+                  {metric.image ? (
+                    <img src={metric.image} alt={metric.title} className="w-5 h-5 object-cover rounded" />
+                  ) : (
+                    <div className="w-5 h-5 bg-gray-200 rounded flex items-center justify-center text-[10px] font-medium text-gray-600">
+                      {index + 1}
+                    </div>
+                  )}
+                </button>
+              ))}
+              </div>
+
+              <div className="w-px h-6 bg-gray-300 mx-1" />
+
+              {/* Image Controls */}
+              <div className="flex items-center gap-1">
+                {/* Image at Bottom */}
+                <button
+                  onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors flex items-center gap-1',
+                    formData.is_image_bottom
+                  ? 'bg-sky-100 text-sky-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              )}
+              title="Image at bottom"
+            >
+              <PhotoIcon className="w-5 h-5" />
+            </button>
+
+            {/* Image Height */}
+            <div className="relative dropdown-container">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowHeightPicker(!showHeightPicker);
+                  setShowColorPicker(false);
+                  setShowStylePicker(false);
+                  setShowColumnPicker(false);
+                }}
+                className={cn(
+                  'p-2 rounded-lg transition-colors flex items-center gap-1',
+                  showHeightPicker
+                    ? 'bg-sky-100 text-sky-700'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                )}
+                title="Image height"
+              >
+                <ArrowsUpDownIcon className="w-5 h-5" />
+                <span className="text-xs font-medium">{formData.image_metrics_height}</span>
+              </button>
+              {showHeightPicker && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 w-32">
+                  {HEIGHT_OPTIONS.map((height) => (
+                    <button
+                      key={height.value}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData({ ...formData, image_metrics_height: height.value });
+                        setShowHeightPicker(false);
+                      }}
+                      className={cn(
+                        'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
+                        formData.image_metrics_height === height.value && 'bg-sky-50 text-sky-700 font-medium'
+                      )}
+                    >
+                      {height.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'content' && (
-            <div className="space-y-6 max-w-3xl">
-              <EditableTextField
-                label="Section Title"
+          <div className="space-y-2 max-w-4xl mx-auto">
+            {/* Section Title - Styled like actual section */}
+            <div>
+              <input
+                type="text"
                 value={formData.section_title}
-                onChange={(value) => setFormData({ ...formData, section_title: value })}
-                placeholder="Enter section title"
-                required
-                maxLength={100}
-                helperText="Main heading for this section"
-              />
-
-              <EditableTextArea
-                label="Section Description"
-                value={formData.section_description}
-                onChange={(value) => setFormData({ ...formData, section_description: value })}
-                placeholder="Enter section description (optional)"
-                maxLength={500}
-                rows={3}
-                helperText="Optional description text shown below the title"
-              />
-
-              <div className="border-t border-gray-200 pt-6">
-                {editingSection && (
-                  <MetricManager
-                    sectionId={editingSection.id}
-                    metrics={formData.website_metric || []}
-                    onMetricsChange={async () => {
-                      console.log('Modal: onMetricsChange called, refetching section...');
-                      // Refresh the current section data to get updated metrics
-                      await refetchEditingSection();
-                      console.log('Modal: refetchEditingSection completed');
-                      // Also refresh the sections list in the background
-                      refreshSections();
-                      console.log('Modal: refreshSections called');
-                    }}
-                  />
+                onChange={(e) => setFormData({ ...formData, section_title: e.target.value })}
+                placeholder="Enter section title..."
+                className={cn(
+                  'w-full px-0 py-2 border-0 focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent',
+                  TEXT_VARIANTS[formData.text_style_variant].sectionTitle,
+                  formData.is_section_title_aligned_center && 'text-center',
+                  formData.is_section_title_aligned_right && 'text-right'
                 )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'style' && (
-            <div className="space-y-6 max-w-3xl">
-              <EditableColorPicker
-                label="Background Color"
-                value={formData.background_color}
-                onChange={(value) => setFormData({ ...formData, background_color: value })}
-                helperText="Background color for this section"
-              />
-
-              <EditableSelect
-                label="Text Style Variant"
-                value={formData.text_style_variant}
-                onChange={(value) => setFormData({ ...formData, text_style_variant: value as 'default' | 'apple' | 'codedharmony' })}
-                options={[
-                  { value: 'default', label: 'Default' },
-                  { value: 'apple', label: 'Apple Style' },
-                  { value: 'codedharmony', label: 'Coded Harmony' },
-                ]}
-                helperText="Choose the visual style for text in this section"
-              />
-
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-900">Title Alignment</h3>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="alignment"
-                      checked={!formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right}
-                      onChange={() => setFormData({
-                        ...formData,
-                        is_section_title_aligned_center: false,
-                        is_section_title_aligned_right: false,
-                      })}
-                      className="w-4 h-4 text-sky-600 focus:ring-sky-500"
-                    />
-                    <span className="text-sm text-gray-700">Left</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="alignment"
-                      checked={formData.is_section_title_aligned_center}
-                      onChange={() => setFormData({
-                        ...formData,
-                        is_section_title_aligned_center: true,
-                        is_section_title_aligned_right: false,
-                      })}
-                      className="w-4 h-4 text-sky-600 focus:ring-sky-500"
-                    />
-                    <span className="text-sm text-gray-700">Center</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="alignment"
-                      checked={formData.is_section_title_aligned_right}
-                      onChange={() => setFormData({
-                        ...formData,
-                        is_section_title_aligned_center: false,
-                        is_section_title_aligned_right: true,
-                      })}
-                      className="w-4 h-4 text-sky-600 focus:ring-sky-500"
-                    />
-                    <span className="text-sm text-gray-700">Right</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'layout' && (
-            <div className="space-y-6 max-w-3xl">
-              <EditableToggle
-                label="Full Width Section"
-                value={formData.is_full_width}
-                onChange={(value) => setFormData({ ...formData, is_full_width: value })}
-                description="Make this section span the full width of the page"
-              />
-
-              <EditableNumberInput
-                label="Grid Columns"
-                value={formData.grid_columns}
-                onChange={(value) => setFormData({ ...formData, grid_columns: value })}
-                min={1}
-                max={6}
-                helperText="Number of columns in the grid layout (1-6)"
-              />
-
-              <EditableTextField
-                label="Image/Metric Height"
-                value={formData.image_metrics_height}
-                onChange={(value) => setFormData({ ...formData, image_metrics_height: value })}
-                placeholder="300px"
-                helperText="CSS height value (e.g., 300px, 20rem)"
-              />
-
-              <EditableToggle
-                label="Image at Bottom"
-                value={formData.is_image_bottom}
-                onChange={(value) => setFormData({ ...formData, is_image_bottom: value })}
-                description="Display images below the content instead of above"
-              />
-
-              <EditableToggle
-                label="Enable Slider"
-                value={formData.is_slider}
-                onChange={(value) => setFormData({ ...formData, is_slider: value })}
-                description="Convert grid to a slider/carousel"
               />
             </div>
-          )}
 
-          {activeTab === 'advanced' && (
-            <div className="space-y-6 max-w-3xl">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-yellow-800">
-                  ⚠️ Advanced settings - only modify if you know what you're doing
-                </p>
-              </div>
-
-              <EditableToggle
-                label="Reviews Section"
-                value={formData.is_reviews_section}
-                onChange={(value) => setFormData({ ...formData, is_reviews_section: value })}
-                description="Enable special reviews/testimonials section behavior"
-              />
-
-              <EditableToggle
-                label="Help Center Section"
-                value={formData.is_help_center_section}
-                onChange={(value) => setFormData({ ...formData, is_help_center_section: value })}
-                description="Enable help center/FAQ section behavior"
-              />
-
-              <EditableToggle
-                label="Real Estate Modal"
-                value={formData.is_real_estate_modal}
-                onChange={(value) => setFormData({ ...formData, is_real_estate_modal: value })}
-                description="Enable real estate property modal"
+            {/* Section Description - Styled like actual section */}
+            <div>
+              <textarea
+                ref={descriptionTextareaRef}
+                value={formData.section_description}
+                onChange={handleDescriptionChange}
+                placeholder="Enter section description (optional)..."
+                rows={1}
+                className={cn(
+                  'w-full px-0 py-1 border-0 focus:outline-none focus:ring-0 placeholder:text-gray-300 resize-none bg-transparent overflow-hidden',
+                  TEXT_VARIANTS[formData.text_style_variant].sectionDescription,
+                  formData.is_section_title_aligned_center && 'text-center',
+                  formData.is_section_title_aligned_right && 'text-right'
+                )}
               />
             </div>
-          )}
+
+            {/* Metrics Section */}
+            <div className="pt-6 mt-4">
+              {editingSection && (
+                <MetricManager
+                  sectionId={editingSection.id}
+                  metrics={formData.website_metric || []}
+                  onMetricsChange={async () => {
+                    console.log('Modal: onMetricsChange called, refetching section...');
+                    // Refresh the current section data to get updated metrics
+                    await refetchEditingSection();
+                    console.log('Modal: refetchEditingSection completed');
+                    // Also refresh the sections list in the background
+                    refreshSections();
+                    console.log('Modal: refreshSections called');
+                  }}
+                  showCreateForm={showCreateMetricForm}
+                  setShowCreateForm={setShowCreateMetricForm}
+                  showAddModal={showAddMetricModal}
+                  setShowAddModal={setShowAddMetricModal}
+                  editingMetricId={editingMetricId}
+                  setEditingMetricId={setEditingMetricId}
+                />
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 shrink-0 bg-gray-50">
-          <Button
-            variant="outline"
-            onClick={closeModal}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-
+        <div className="flex items-center justify-end px-6 py-4 border-t border-gray-200 shrink-0 bg-gray-50">
           <div className="flex items-center gap-3">
             {mode === 'edit' && (
               <Button

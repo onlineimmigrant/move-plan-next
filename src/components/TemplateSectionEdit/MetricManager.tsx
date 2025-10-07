@@ -9,6 +9,9 @@ import {
   TrashIcon,
   Bars3Icon,
   CheckIcon,
+  PhotoIcon,
+  SwatchIcon,
+  RectangleGroupIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import EditableTextField from '@/components/Shared/EditableFields/EditableTextField';
@@ -37,6 +40,12 @@ interface MetricManagerProps {
   sectionId: number;
   metrics: Metric[];
   onMetricsChange: () => void;
+  showCreateForm?: boolean;
+  setShowCreateForm?: (show: boolean) => void;
+  showAddModal?: boolean;
+  setShowAddModal?: (show: boolean) => void;
+  editingMetricId?: number | null;
+  setEditingMetricId?: (id: number | null) => void;
 }
 
 interface EditingMetric {
@@ -50,12 +59,22 @@ interface EditingMetric {
   background_color: string;
 }
 
-export default function MetricManager({ sectionId, metrics, onMetricsChange }: MetricManagerProps) {
+export default function MetricManager({ 
+  sectionId, 
+  metrics, 
+  onMetricsChange,
+  showCreateForm: externalShowCreateForm,
+  setShowCreateForm: externalSetShowCreateForm,
+  showAddModal: externalShowAddModal,
+  setShowAddModal: externalSetShowAddModal,
+  editingMetricId: externalEditingMetricId,
+  setEditingMetricId: externalSetEditingMetricId,
+}: MetricManagerProps) {
   const toast = useToast();
   const [availableMetrics, setAvailableMetrics] = useState<Metric[]>([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
+  const [internalShowAddModal, setInternalShowAddModal] = useState(false);
+  const [internalShowCreateForm, setInternalShowCreateForm] = useState(false);
+  const [internalEditingMetricId, setInternalEditingMetricId] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteModalState, setDeleteModalState] = useState<{
@@ -63,6 +82,14 @@ export default function MetricManager({ sectionId, metrics, onMetricsChange }: M
     metricId: number | null;
     metricTitle: string;
   }>({ isOpen: false, metricId: null, metricTitle: '' });
+
+  // Use external state if provided, otherwise use internal state
+  const showAddModal = externalShowAddModal !== undefined ? externalShowAddModal : internalShowAddModal;
+  const setShowAddModal = externalSetShowAddModal || setInternalShowAddModal;
+  const showCreateForm = externalShowCreateForm !== undefined ? externalShowCreateForm : internalShowCreateForm;
+  const setShowCreateForm = externalSetShowCreateForm || setInternalShowCreateForm;
+  const editingMetricId = externalEditingMetricId !== undefined ? externalEditingMetricId : internalEditingMetricId;
+  const setEditingMetricId = externalSetEditingMetricId || setInternalEditingMetricId;
 
   const [editingMetric, setEditingMetric] = useState<EditingMetric>({
     title: '',
@@ -189,38 +216,6 @@ export default function MetricManager({ sectionId, metrics, onMetricsChange }: M
     }
   };
 
-  // Update metric
-  const handleUpdateMetric = async () => {
-    if (!editingMetricId || !editingMetric.title || !editingMetric.description) {
-      toast.error('Title and description are required');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/metrics/${editingMetricId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingMetric),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update metric');
-      }
-
-      toast.success('Metric updated successfully');
-      setEditingMetricId(null);
-      onMetricsChange();
-      fetchAvailableMetrics();
-    } catch (error) {
-      console.error('Error updating metric:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update metric');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Remove metric from section
   const handleRemoveMetric = async (metricId: number) => {
     setIsLoading(true);
@@ -324,33 +319,6 @@ export default function MetricManager({ sectionId, metrics, onMetricsChange }: M
     setDraggedIndex(null);
   };
 
-  const startEditing = (metric: Metric) => {
-    setEditingMetricId(metric.id);
-    setEditingMetric({
-      id: metric.id,
-      title: metric.title,
-      description: metric.description,
-      image: metric.image || '',
-      is_image_rounded_full: metric.is_image_rounded_full,
-      is_title_displayed: metric.is_title_displayed,
-      is_card_type: metric.is_card_type,
-      background_color: metric.background_color || '#FFFFFF',
-    });
-  };
-
-  const cancelEditing = () => {
-    setEditingMetricId(null);
-    setEditingMetric({
-      title: '',
-      description: '',
-      image: '',
-      is_image_rounded_full: false,
-      is_title_displayed: true,
-      is_card_type: false,
-      background_color: '#FFFFFF',
-    });
-  };
-
   // Get metrics not in this section
   const metricsNotInSection = availableMetrics.filter(
     am => !metrics.some(m => m.id === am.id)
@@ -358,40 +326,60 @@ export default function MetricManager({ sectionId, metrics, onMetricsChange }: M
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">Metrics/Cards</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            {metrics.length} metric{metrics.length !== 1 ? 's' : ''} in this section
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
+      {/* Horizontal Toolbar with Metric Icons - Only show if not controlled externally */}
+      {externalShowCreateForm === undefined && (
+        <div className="flex items-center gap-1 overflow-x-auto pb-2">
+          {/* Add New Metric Button */}
+          <button
             onClick={() => setShowCreateForm(true)}
-            variant="secondary"
-            size="sm"
+            className="p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-100 shrink-0"
+            title="Create new metric"
           >
-            <PlusIcon className="w-4 h-4 mr-1" />
-            Create New
-          </Button>
-          <Button
-            onClick={() => setShowAddModal(true)}
-            variant="primary"
-            size="sm"
-          >
-            <PlusIcon className="w-4 h-4 mr-1" />
-            Add Existing
-          </Button>
-        </div>
-      </div>
+            <PlusIcon className="w-5 h-5" />
+          </button>
 
-            {/* Info about ordering */}
-      {metrics.length > 1 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-xs text-blue-800">
-            <strong>💡 Tip:</strong> Drag metrics to reorder them. Changes are saved automatically!
-          </p>
+          {/* Add Existing Metric Button */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-100 shrink-0"
+            title="Add existing metric"
+          >
+            <PlusIcon className="w-5 h-5" />
+          </button>
+
+          <div className="w-px h-6 bg-gray-300 mx-1 shrink-0" />
+
+          {/* Existing Metrics as Icons */}
+          {metrics.map((metric, index) => (
+            <div
+              key={metric.id}
+              className="relative shrink-0"
+            >
+              <button
+                className="p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                title={metric.title || 'Untitled metric'}
+              >
+                {metric.image ? (
+                  <img 
+                    src={metric.image} 
+                    alt={metric.title} 
+                    className={cn(
+                      'w-5 h-5 object-cover',
+                      metric.is_image_rounded_full && 'rounded-full'
+                    )}
+                  />
+                ) : (
+                  <div className="w-5 h-5 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                    {index + 1}
+                  </div>
+                )}
+              </button>
+            </div>
+          ))}
+
+          {metrics.length === 0 && (
+            <p className="text-sm text-gray-400 italic">No metrics yet. Click + to add one.</p>
+          )}
         </div>
       )}
 
@@ -495,79 +483,11 @@ export default function MetricManager({ sectionId, metrics, onMetricsChange }: M
               className={cn(
                 'border rounded-lg transition-all',
                 draggedIndex === index ? 'opacity-50' : 'opacity-100',
-                editingMetricId === metric.id
-                  ? 'border-blue-300 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                'border-gray-200 bg-white hover:border-gray-300'
               )}
             >
-              {editingMetricId === metric.id ? (
-                // Editing mode
-                <div className="p-4 space-y-4">
-                  <EditableTextField
-                    label="Title"
-                    value={editingMetric.title}
-                    onChange={(value) => setEditingMetric({ ...editingMetric, title: value })}
-                    required
-                  />
-
-                  <EditableTextArea
-                    label="Description"
-                    value={editingMetric.description}
-                    onChange={(value) => setEditingMetric({ ...editingMetric, description: value })}
-                    required
-                    rows={2}
-                  />
-
-                  <EditableTextField
-                    label="Image URL"
-                    value={editingMetric.image}
-                    onChange={(value) => setEditingMetric({ ...editingMetric, image: value })}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <EditableToggle
-                      label="Show Title"
-                      value={editingMetric.is_title_displayed}
-                      onChange={(value) => setEditingMetric({ ...editingMetric, is_title_displayed: value })}
-                    />
-
-                    <EditableToggle
-                      label="Card Type"
-                      value={editingMetric.is_card_type}
-                      onChange={(value) => setEditingMetric({ ...editingMetric, is_card_type: value })}
-                    />
-
-                    <EditableToggle
-                      label="Rounded Image"
-                      value={editingMetric.is_image_rounded_full}
-                      onChange={(value) => setEditingMetric({ ...editingMetric, is_image_rounded_full: value })}
-                    />
-
-                    <EditableColorPicker
-                      label="Background Color"
-                      value={editingMetric.background_color}
-                      onChange={(value) => setEditingMetric({ ...editingMetric, background_color: value })}
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button onClick={cancelEditing} variant="secondary" size="sm">
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleUpdateMetric}
-                      variant="primary"
-                      size="sm"
-                      disabled={isLoading}
-                    >
-                      <CheckIcon className="w-4 h-4 mr-1" />
-                      {isLoading ? 'Saving...' : 'Save'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                // Display mode
-                <div className="p-4">
+              {/* Display mode - All controls inline */}
+              <div className="p-4">
                   <div className="flex items-start gap-3">
                     {/* Drag handle */}
                     <button 
@@ -596,55 +516,208 @@ export default function MetricManager({ sectionId, metrics, onMetricsChange }: M
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {metric.is_title_displayed && (
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {metric.title}
-                        </h4>
+                        <input
+                          type="text"
+                          value={metric.title}
+                          onChange={async (e) => {
+                            const newTitle = e.target.value;
+                            try {
+                              const response = await fetch(`/api/metrics/${metric.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ title: newTitle }),
+                              });
+                              if (!response.ok) throw new Error('Failed to update title');
+                              onMetricsChange();
+                            } catch (error) {
+                              console.error('Error updating title:', error);
+                              toast.error('Failed to update title');
+                            }
+                          }}
+                          className="text-sm font-medium text-gray-900 w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent"
+                          placeholder="Metric title..."
+                        />
                       )}
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                        {metric.description}
-                      </p>
+                      <textarea
+                        value={metric.description}
+                        onChange={async (e) => {
+                          const newDescription = e.target.value;
+                          try {
+                            const response = await fetch(`/api/metrics/${metric.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ description: newDescription }),
+                            });
+                            if (!response.ok) throw new Error('Failed to update description');
+                            onMetricsChange();
+                          } catch (error) {
+                            console.error('Error updating description:', error);
+                            toast.error('Failed to update description');
+                          }
+                        }}
+                        rows={2}
+                        className="text-xs text-gray-500 mt-1 w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent resize-none"
+                        placeholder="Metric description..."
+                      />
 
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-gray-400">#{index + 1}</span>
-                        {metric.is_card_type && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            Card
-                          </span>
-                        )}
-                        {metric.background_color && (
-                          <div
-                            className="w-4 h-4 rounded border border-gray-300"
-                            style={{ backgroundColor: metric.background_color }}
-                            title={metric.background_color}
-                          />
-                        )}
+                      {/* Image URL Field */}
+                      <input
+                        type="text"
+                        value={metric.image || ''}
+                        onChange={async (e) => {
+                          const newImage = e.target.value;
+                          try {
+                            const response = await fetch(`/api/metrics/${metric.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ image: newImage }),
+                            });
+                            if (!response.ok) throw new Error('Failed to update image');
+                            onMetricsChange();
+                          } catch (error) {
+                            console.error('Error updating image:', error);
+                            toast.error('Failed to update image');
+                          }
+                        }}
+                        className="text-xs text-gray-500 mt-2 w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent"
+                        placeholder="Image URL (optional)..."
+                      />
+
+                      {/* Inline Controls Below Description */}
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        {/* Left: Icon Toolbar */}
+                        <div className="flex items-center gap-1">
+                          {/* Show Title Toggle */}
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/metrics/${metric.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ is_title_displayed: !metric.is_title_displayed }),
+                                });
+                                if (!response.ok) throw new Error('Failed to update');
+                                onMetricsChange();
+                              } catch (error) {
+                                toast.error('Failed to update');
+                              }
+                            }}
+                            className={cn(
+                              'p-2 rounded-lg transition-colors',
+                              metric.is_title_displayed
+                                ? 'bg-sky-100 text-sky-700'
+                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            )}
+                            title={metric.is_title_displayed ? 'Hide title' : 'Show title'}
+                          >
+                            <Bars3Icon className="w-5 h-5" />
+                          </button>
+
+                          {/* Rounded Image Toggle */}
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/metrics/${metric.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ is_image_rounded_full: !metric.is_image_rounded_full }),
+                                });
+                                if (!response.ok) throw new Error('Failed to update');
+                                onMetricsChange();
+                              } catch (error) {
+                                toast.error('Failed to update');
+                              }
+                            }}
+                            className={cn(
+                              'p-2 rounded-lg transition-colors',
+                              metric.is_image_rounded_full
+                                ? 'bg-sky-100 text-sky-700'
+                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            )}
+                            title={metric.is_image_rounded_full ? 'Square image' : 'Round image'}
+                          >
+                            <PhotoIcon className="w-5 h-5" />
+                          </button>
+
+                          {/* Card Type Toggle */}
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/metrics/${metric.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ is_card_type: !metric.is_card_type }),
+                                });
+                                if (!response.ok) throw new Error('Failed to update');
+                                onMetricsChange();
+                              } catch (error) {
+                                toast.error('Failed to update');
+                              }
+                            }}
+                            className={cn(
+                              'p-2 rounded-lg transition-colors',
+                              metric.is_card_type
+                                ? 'bg-sky-100 text-sky-700'
+                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            )}
+                            title={metric.is_card_type ? 'Disable card type' : 'Enable card type'}
+                          >
+                            <RectangleGroupIcon className="w-5 h-5" />
+                          </button>
+
+                          {/* Background Color Picker */}
+                          <div className="relative flex items-center">
+                            <input
+                              type="color"
+                              value={metric.background_color || '#FFFFFF'}
+                              onChange={async (e) => {
+                                try {
+                                  const response = await fetch(`/api/metrics/${metric.id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ background_color: e.target.value }),
+                                  });
+                                  if (!response.ok) throw new Error('Failed to update');
+                                  onMetricsChange();
+                                } catch (error) {
+                                  toast.error('Failed to update');
+                                }
+                              }}
+                              className="absolute opacity-0 w-full h-full cursor-pointer"
+                            />
+                            <button
+                              className="p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex items-center gap-1"
+                              title="Background color"
+                            >
+                              <SwatchIcon className="w-5 h-5" />
+                              <div 
+                                className="w-4 h-4 rounded border border-gray-300" 
+                                style={{ backgroundColor: metric.background_color || '#FFFFFF' }}
+                              />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Right: Metadata & Delete */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-400">#{index + 1}</span>
+                          
+                          <button
+                            onClick={() => setDeleteModalState({
+                              isOpen: true,
+                              metricId: metric.id,
+                              metricTitle: metric.title,
+                            })}
+                            className="p-2 rounded-lg transition-colors text-gray-400 hover:text-red-600 hover:bg-red-50"
+                            title="Remove or delete metric"
+                          >
+                            <TrashIcon className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => startEditing(metric)}
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        title="Edit metric"
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteModalState({
-                          isOpen: true,
-                          metricId: metric.id,
-                          metricTitle: metric.title,
-                        })}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Remove or delete metric"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
                 </div>
-              )}
             </div>
           ))}
         </div>

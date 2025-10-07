@@ -96,6 +96,81 @@ export async function PUT(
 }
 
 /**
+ * PATCH /api/metrics/[id]
+ * Partially update an existing metric (allows updating individual fields)
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    const body = await request.json();
+
+    console.log('Partially updating metric:', id, body);
+
+    // Prepare update data - only include fields that are provided
+    const updateData: any = {};
+    
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.image !== undefined) updateData.image = body.image || null;
+    if (body.is_image_rounded_full !== undefined) updateData.is_image_rounded_full = body.is_image_rounded_full;
+    if (body.is_title_displayed !== undefined) updateData.is_title_displayed = body.is_title_displayed;
+    if (body.background_color !== undefined) updateData.background_color = body.background_color || null;
+    if (body.is_card_type !== undefined) updateData.is_card_type = body.is_card_type;
+    if (body.title_translation !== undefined) updateData.title_translation = body.title_translation;
+    if (body.description_translation !== undefined) updateData.description_translation = body.description_translation;
+
+    // Validate that at least one field is being updated
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: 'No fields to update' },
+        { status: 400 }
+      );
+    }
+
+    console.log('Prepared partial update data:', {
+      id,
+      updateData,
+      updateDataKeys: Object.keys(updateData)
+    });
+
+    // Update the metric
+    const { data, error } = await supabaseAdmin
+      .from('website_metric')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error updating metric:', {
+        id,
+        error,
+        errorMessage: error.message,
+        errorDetails: error.details,
+        errorHint: error.hint
+      });
+      return NextResponse.json(
+        { error: 'Failed to update metric', details: error.message },
+        { status: 500 }
+      );
+    }
+
+    console.log('Successfully partially updated metric:', data);
+
+    return NextResponse.json(data, { status: 200 });
+  } catch (error) {
+    console.error('Error in PATCH /api/metrics/[id]:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/metrics/[id]
  * Delete a metric
  * Query param: force=true will remove from all sections first
