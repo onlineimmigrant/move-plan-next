@@ -58,14 +58,20 @@ export default function PostEditModal() {
   const autoSaveRef = useRef<NodeJS.Timeout>();
   const lastSaveRef = useRef<number>(0);
 
+  // Computed value for isLandingPage
+  const isLandingPage = section === 'Landing';
+
   // Dragging and resizing state
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ 
-    width: 800, 
-    height: typeof window !== 'undefined' ? Math.floor(window.innerHeight * 0.80) : 600 
+  const [size, setSize] = useState(() => {
+    if (typeof window === 'undefined') return { width: 920, height: 800 };
+    return {
+      width: Math.min(window.innerWidth - 80, 1400),
+      height: Math.floor(window.innerHeight * 0.95)
+    };
   });
   const modalRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef({ x: 0, y: 0 });
@@ -527,6 +533,14 @@ export default function PostEditModal() {
             <h2 className="text-lg font-semibold text-gray-900">
               {mode === 'create' ? 'New Post' : 'Edit Post'}
             </h2>
+            {isLandingPage && (
+              <span className="inline-flex items-center text-xs font-medium text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+                <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Landing Page
+              </span>
+            )}
             {isDirty && (
               <span className="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
                 <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5 animate-pulse"></span>
@@ -610,39 +624,59 @@ export default function PostEditModal() {
 
         {/* Content */}
         <div className="flex-1 flex flex-col h-full overflow-hidden">
-          {/* Form Fields */}
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white space-y-4">
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => handleFieldChange('title', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                placeholder="Enter post title..."
-              />
+          {/* Scrollable Content Area - includes title, description, and editor */}
+          <div className="flex-1 overflow-y-auto bg-white">
+            {/* Title and Description Section */}
+            <div className="p-6 pb-4 bg-white space-y-4 border-b border-gray-100">
+              {/* Subsection - Styled as real post badge above title */}
+              {!isLandingPage && (
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    value={subsection}
+                    onChange={(e) => handleFieldChange('subsection', e.target.value)}
+                    className="px-0 py-1 border-0 focus:outline-none focus:ring-0 font-medium text-xs text-sky-500 tracking-widest placeholder:text-sky-300 bg-transparent uppercase"
+                    placeholder="SUBSECTION"
+                  />
+                </div>
+              )}
+              
+              {/* Title - Styled as real post heading */}
+              <div>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => handleFieldChange('title', e.target.value)}
+                  className="w-full px-0 py-2 border-0 focus:outline-none focus:ring-0 text-4xl font-bold text-gray-900 placeholder:text-gray-300 bg-transparent"
+                  placeholder="Enter post title..."
+                />
+              </div>
+              
+              {/* Description - Styled as real post subtitle, 3 lines */}
+              <div>
+                <textarea
+                  value={description}
+                  onChange={(e) => handleFieldChange('description', e.target.value)}
+                  rows={3}
+                  className="w-full px-0 py-2 border-0 focus:outline-none focus:ring-0 text-lg text-gray-600 placeholder:text-gray-300 resize-none bg-transparent leading-relaxed"
+                  placeholder="Brief description or subtitle..."
+                />
+              </div>
             </div>
-            
-            {/* Description - Full width, expandable textarea starting with 1 row */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => handleFieldChange('description', e.target.value)}
-                rows={1}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[42px] transition-all duration-200 hover:border-gray-400"
-                placeholder="Brief description..."
+
+            {/* Editor Content - Hidden when advanced fields are shown */}
+            {!showAdvancedFields && (
+              <PostEditor
+                key={`${mode}-${editingPost?.id || 'new'}-${isOpen}`}
+                initialContent={content}
+                onContentChange={handleContentChange}
+                onSave={handleSave}
               />
-            </div>
-            
-            {/* Section and Subsection in 2 columns - collapsible */}
+            )}
+
+            {/* Advanced Fields - Overlays editor when opened */}
             {showAdvancedFields && (
-              <div className="space-y-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+              <div className="px-6 py-4 bg-white space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {/* SEO & Identity Section */}
                 <div className="space-y-4">
                   <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-full">
@@ -704,30 +738,47 @@ export default function PostEditModal() {
                     </svg>
                     <span className="text-sm font-bold text-purple-900 uppercase tracking-wide">Organization</span>
                   </div>
+                  
+                  {/* Landing Page Toggle */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <div>
+                          <span className="text-sm font-semibold text-gray-700">Landing Page</span>
+                          <p className="text-xs text-gray-500">Display as a landing page (no TOC, different layout)</p>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={isLandingPage}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSection('Landing');
+                          } else {
+                            setSection('');
+                          }
+                        }}
+                        className="w-5 h-5 text-purple-600 bg-white border-gray-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer"
+                      />
+                    </label>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Section field - always visible but pre-filled when Landing */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Section
+                        Section {isLandingPage && <span className="text-xs text-purple-600">(Auto-set to &quot;Landing&quot;)</span>}
                       </label>
                       <input
                         type="text"
                         value={section}
                         onChange={(e) => handleFieldChange('section', e.target.value)}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                        disabled={isLandingPage}
+                        className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 ${isLandingPage ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                         placeholder="Post section..."
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Subsection
-                      </label>
-                      <input
-                        type="text"
-                        value={subsection}
-                        onChange={(e) => handleFieldChange('subsection', e.target.value)}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                        placeholder="Post subsection..."
                       />
                     </div>
                     
@@ -897,16 +948,6 @@ export default function PostEditModal() {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Editor - Scrollable Content Area */}
-          <div className="flex-1 overflow-y-auto bg-white">
-            <PostEditor
-              key={`${mode}-${editingPost?.id || 'new'}-${isOpen}`}
-              initialContent={content}
-              onContentChange={handleContentChange}
-              onSave={handleSave}
-            />
           </div>
 
           {/* Footer */}

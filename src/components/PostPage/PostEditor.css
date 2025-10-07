@@ -163,7 +163,8 @@
 }
 
 .ProseMirror pre {
-  background: #f3f4f6;
+  background: #1e293b;
+  color: #e2e8f0;
   border-radius: 0.5rem;
   padding: 1rem;
   overflow-x: auto;
@@ -171,9 +172,16 @@
 
 .ProseMirror code {
   background: #f3f4f6;
+  color: #e11d48;
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.875em;
+}
+
+.ProseMirror pre code {
+  background: transparent;
+  color: #e2e8f0;
+  padding: 0;
 }
 
 .ProseMirror ul, .ProseMirror ol {

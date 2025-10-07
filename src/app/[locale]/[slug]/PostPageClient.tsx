@@ -5,6 +5,7 @@ import Link from 'next/link';
 import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
+import CodeBlockCopy from '@/components/CodeBlockCopy';
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
@@ -319,6 +320,9 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                   onDoubleClick={makeEditable}
                   dangerouslySetInnerHTML={{ __html: post.content }}
                 />
+                
+                {/* Code block copy functionality */}
+                <CodeBlockCopy />
                 
                 {/* Mobile TOC - Below Content */}
                 {toc.length > 0 && (
