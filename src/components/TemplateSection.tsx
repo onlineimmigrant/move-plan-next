@@ -11,6 +11,9 @@ import { RealEstateModal } from './realEstateModal';
 import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
 import { HoverEditButtons } from '@/ui/Button';
 import { isAdminClient } from '@/lib/auth';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+import { cn } from '@/lib/utils';
+import { SliderNavigation } from '@/ui/SliderNavigation';
 
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
@@ -32,6 +35,48 @@ const TEXT_VARIANTS = {
     metricTitle: 'text-base sm:text-lg font-semibold text-gray-900 leading-relaxed tracking-[-0.02em]',
     metricDescription: 'text-sm sm:text-base text-gray-600 font-normal leading-relaxed'
   }
+};
+
+// Helper function to check if URL is a video
+const isVideoUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  const urlLower = url.toLowerCase();
+  
+  // Check for video file extensions
+  const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.wmv', '.flv', '.mkv'];
+  const hasVideoExtension = videoExtensions.some(ext => urlLower.includes(ext));
+  
+  // Check for YouTube URLs
+  const isYouTube = urlLower.includes('youtube.com') || urlLower.includes('youtu.be');
+  
+  // Check for Vimeo URLs
+  const isVimeo = urlLower.includes('vimeo.com');
+  
+  return hasVideoExtension || isYouTube || isVimeo;
+};
+
+// Helper function to convert YouTube/Vimeo URLs to embed format
+const getEmbedUrl = (url: string): string => {
+  const urlLower = url.toLowerCase();
+  
+  // YouTube conversion
+  if (urlLower.includes('youtube.com/watch')) {
+    const urlObj = new URL(url);
+    const videoId = urlObj.searchParams.get('v');
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }
+  if (urlLower.includes('youtu.be/')) {
+    const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }
+  
+  // Vimeo conversion
+  if (urlLower.includes('vimeo.com/')) {
+    const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+    return videoId ? `https://player.vimeo.com/video/${videoId}` : url;
+  }
+  
+  return url;
 };
 
 /**
@@ -190,7 +235,20 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
   }, []);
 
   // Slider/Carousel functions
-  const itemsPerSlide = Math.max(1, (section.grid_columns || 1) - 1); // Show grid_columns - 1 to give room for navigation
+  // On mobile, show 1 item; on desktop, show grid_columns - 1 to give room for navigation
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  const itemsPerSlide = isMobile ? 1 : Math.max(1, (section.grid_columns || 1) - 1);
   const totalItems = section.website_metric?.length || 0;
   
   // Instead of pages, we scroll one item at a time
@@ -267,7 +325,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
 
   return (
     <section
-      className={`${section.is_slider ? 'px-0' : 'px-4'} py-32 text-xl ${section.background_color ? `bg-${section.background_color}` : 'bg-white'} min-h-[600px] relative group`}
+      className={`${section.is_slider ? 'px-0' : 'px-4'} py-32 text-xl min-h-[600px] relative group`}
+      style={{ backgroundColor: getColorValue(section.background_color || 'white') }}
     >
       {/* Hover Edit Buttons for Admin */}
       {isAdmin && (
@@ -318,7 +377,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
             {section.is_slider ? (
               /* Slider/Carousel Mode */
               <div 
-                className="relative mx-auto px-0 sm:px-12 md:px-20 lg:px-24 xl:px-28 2xl:px-32 max-w-7xl w-full overflow-hidden"
+                className="relative mx-auto px-4 sm:px-12 md:px-20 lg:px-24 xl:px-28 2xl:px-32 max-w-7xl w-full overflow-hidden"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
@@ -326,10 +385,13 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                 onTouchEnd={handleTouchEnd}
               >
                 {/* Carousel Container with padding for shadows */}
-                <div className="relative min-h-[450px] sm:min-h-[500px] md:min-h-[550px] flex items-center py-8 px-12 sm:px-4 md:px-6 lg:px-8">
+                <div className="relative min-h-[450px] sm:min-h-[500px] md:min-h-[550px] flex items-center py-8 px-0 sm:px-4 md:px-6 lg:px-8">
                   {/* Flex layout showing current slide items - always inline/horizontal */}
-                  <div className="flex gap-x-4 sm:gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 transition-opacity duration-700 w-full justify-center">
-                    {getCurrentSlideItems().map((metric) => {
+                  <div className={cn(
+                    "flex gap-x-4 sm:gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-12 transition-opacity duration-700 w-full",
+                    isMobile ? "justify-center" : "justify-center"
+                  )}>
+                    {getCurrentSlideItems().map((metric, slideIndex) => {
                       // Get translated content for each metric
                       const translatedMetricTitle = metric.title
                         ? (currentLocale 
@@ -348,27 +410,83 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                       const isCodedHarmony = section.text_style_variant === 'codedharmony';
                       const cardStyles = metric.is_card_type
                         ? isCodedHarmony
-                          ? `bg-${metric.background_color || 'gray-50'} p-8 sm:p-16 rounded-3xl text-center gap-y-8 neomorphic`
-                          : `bg-${metric.background_color || 'white'} p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8`
+                          ? `p-8 sm:p-16 rounded-3xl text-center gap-y-8 neomorphic`
+                          : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8`
                         : '';
+
+                      const bgColor = metric.is_card_type 
+                        ? getColorValue(metric.background_color || (isCodedHarmony ? 'gray-50' : 'white'))
+                        : undefined;
+                      
+                      console.log(`Metric ${metric.id} rendering:`, {
+                        background_color: metric.background_color,
+                        bgColor,
+                        is_card_type: metric.is_card_type,
+                        isCodedHarmony
+                      });
 
                       return (
                         <div
-                          key={metric.id}
-                          className={`space-y-4 flex flex-col flex-1 min-w-[250px] max-w-[400px] min-h-[350px] ${cardStyles}`}
+                          key={`${currentSlide}-${slideIndex}-${metric.id}`}
+                          className={cn(
+                            "space-y-4 flex flex-col min-h-[350px]",
+                            isMobile ? "w-full max-w-[400px]" : "flex-1 min-w-[250px] max-w-[400px]",
+                            cardStyles
+                          )}
+                          style={metric.is_card_type && bgColor ? (
+                            isCodedHarmony ? {
+                              '--neomorphic-bg': bgColor,
+                              '--neomorphic-bg-hover': bgColor,
+                            } as React.CSSProperties : {
+                              backgroundColor: bgColor
+                            }
+                          ) : undefined}
                         >
                             {metric.image && (
-                              <div className={`${section.is_image_bottom ? 'order-3' : ''} mt-8`}>
-                                <Image
-                                  src={metric.image}
-                                  alt={metric.title || 'Metric image'}
-                                  className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto w-auto ${
-                                    section.image_metrics_height || 'h-48'
-                                  } object-cover`}
-                                  width={300}
-                                  height={300}
-                                  priority={false}
-                                />
+                              <div className={cn(
+                                section.is_image_bottom ? 'order-3' : '',
+                                // Videos: full width with negative margins, no top margin
+                                isVideoUrl(metric.image) 
+                                  ? metric.is_card_type 
+                                    ? '-mx-8 sm:-mx-16 mt-0' 
+                                    : 'mt-0'
+                                  : 'mt-8' // Images: normal margin
+                              )}>
+                                {isVideoUrl(metric.image) ? (
+                                  metric.image.toLowerCase().includes('youtube.com') || 
+                                  metric.image.toLowerCase().includes('youtu.be') || 
+                                  metric.image.toLowerCase().includes('vimeo.com') ? (
+                                    <iframe
+                                      src={getEmbedUrl(metric.image)}
+                                      className={`w-full rounded-none ${
+                                        section.image_metrics_height || 'h-48'
+                                      }`}
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allowFullScreen
+                                    />
+                                  ) : (
+                                    <video
+                                      src={metric.image}
+                                      controls
+                                      className={`w-full object-cover rounded-none ${
+                                        section.image_metrics_height || 'h-48'
+                                      }`}
+                                    >
+                                      Your browser does not support the video tag.
+                                    </video>
+                                  )
+                                ) : (
+                                  <Image
+                                    src={metric.image}
+                                    alt={metric.title || 'Metric image'}
+                                    className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto w-auto ${
+                                      section.image_metrics_height || 'h-48'
+                                    } object-cover`}
+                                    width={300}
+                                    height={300}
+                                    priority={false}
+                                  />
+                                )}
                               </div>
                             )}
                             {metric.is_title_displayed && (
@@ -385,47 +503,18 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                   </div>
                 </div>
 
-                {/* Navigation Arrows */}
-                {totalDots > 1 && (
-                  <>
-                    <button
-                      onClick={prevSlide}
-                      className="absolute left-2 sm:left-4 md:left-6 lg:left-8 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10"
-                      aria-label="Previous slide"
-                    >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={nextSlide}
-                      className="absolute right-2 sm:right-4 md:right-6 lg:right-8 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10"
-                      aria-label="Next slide"
-                    >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </>
-                )}
-
-                {/* Dot Indicators */}
-                {totalDots > 1 && (
-                  <div className="flex justify-center gap-2 mt-8">
-                    {Array.from({ length: totalDots }).map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => goToSlide(index)}
-                        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                          index === currentSlide 
-                            ? 'bg-gray-900 w-8' 
-                            : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
-                        aria-label={`Go to page ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
+                {/* Navigation */}
+                <SliderNavigation
+                  onPrevious={prevSlide}
+                  onNext={nextSlide}
+                  currentIndex={currentSlide}
+                  totalItems={totalDots}
+                  onDotClick={goToSlide}
+                  showDots={true}
+                  buttonPosition="bottom-right"
+                  buttonVariant="minimal"
+                  dotVariant="default"
+                />
               </div>
             ) : (
               /* Grid Mode */
@@ -451,27 +540,79 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                 const isCodedHarmony = section.text_style_variant === 'codedharmony';
                 const cardStyles = metric.is_card_type
                   ? isCodedHarmony
-                    ? `bg-${metric.background_color || 'gray-50'} p-8 sm:p-16 rounded-3xl text-center gap-y-8 max-w-xl card-hover neomorphic`
-                    : `bg-${metric.background_color || 'white'} p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl card-hover`
+                    ? `p-8 sm:p-16 rounded-3xl text-center gap-y-8 max-w-xl card-hover neomorphic`
+                    : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl card-hover`
                   : '';
+
+                const bgColor = metric.is_card_type 
+                  ? getColorValue(metric.background_color || (isCodedHarmony ? 'gray-50' : 'white'))
+                  : undefined;
+                
+                console.log(`Metric ${metric.id} rendering (grid):`, {
+                  background_color: metric.background_color,
+                  bgColor,
+                  is_card_type: metric.is_card_type,
+                  isCodedHarmony
+                });
 
                 return (
                   <div
                     key={metric.id}
                     className={`space-y-4 flex flex-col mx-auto min-h-[350px] ${cardStyles}`}
+                    style={metric.is_card_type && bgColor ? (
+                      isCodedHarmony ? {
+                        '--neomorphic-bg': bgColor,
+                        '--neomorphic-bg-hover': bgColor,
+                      } as React.CSSProperties : {
+                        backgroundColor: bgColor
+                      }
+                    ) : undefined}
                   >
                     {metric.image && (
-                      <div className={`${section.is_image_bottom ? 'order-3' : ''} mt-8`}>
-                        <Image
-                          src={metric.image}
-                          alt={metric.title || 'Metric image'}
-                          className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto w-auto ${
-                            section.image_metrics_height || 'h-48'
-                          } object-cover`}
-                          width={300}
-                          height={300}
-                          priority={false}
-                        />
+                      <div className={cn(
+                        section.is_image_bottom ? 'order-3' : '',
+                        // Videos: full width with negative margins, no top margin
+                        isVideoUrl(metric.image) 
+                          ? metric.is_card_type 
+                            ? '-mx-8 sm:-mx-16 mt-0' 
+                            : 'mt-0'
+                          : 'mt-8' // Images: normal margin
+                      )}>
+                        {isVideoUrl(metric.image) ? (
+                          metric.image.toLowerCase().includes('youtube.com') || 
+                          metric.image.toLowerCase().includes('youtu.be') || 
+                          metric.image.toLowerCase().includes('vimeo.com') ? (
+                            <iframe
+                              src={getEmbedUrl(metric.image)}
+                              className={`w-full rounded-none ${
+                                section.image_metrics_height || 'h-48'
+                              }`}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          ) : (
+                            <video
+                              src={metric.image}
+                              controls
+                              className={`w-full object-cover rounded-none ${
+                                section.image_metrics_height || 'h-48'
+                              }`}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          )
+                        ) : (
+                          <Image
+                            src={metric.image}
+                            alt={metric.title || 'Metric image'}
+                            className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto w-auto ${
+                              section.image_metrics_height || 'h-48'
+                            } object-cover`}
+                            width={300}
+                            height={300}
+                            priority={false}
+                          />
+                        )}
                       </div>
                     )}
                     {metric.is_title_displayed && (
@@ -504,7 +645,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
           transform: scale(1.03);
         }
         .neomorphic {
-          background: linear-gradient(145deg, #f0f0f0, #ffffff);
+          background: var(--neomorphic-bg, linear-gradient(145deg, #f0f0f0, #ffffff));
           box-shadow: 
             12px 12px 24px rgba(163, 177, 198, 0.6),
             -12px -12px 24px rgba(255, 255, 255, 0.5),
@@ -512,7 +653,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
           border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .neomorphic:hover {
-          background: linear-gradient(145deg, #ffffff, #f5f5f5);
+          background: var(--neomorphic-bg-hover, linear-gradient(145deg, #ffffff, #f5f5f5));
           box-shadow: 
             8px 8px 16px rgba(163, 177, 198, 0.5),
             -8px -8px 16px rgba(255, 255, 255, 0.6),

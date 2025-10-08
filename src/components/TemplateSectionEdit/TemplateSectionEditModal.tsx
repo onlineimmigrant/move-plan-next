@@ -8,7 +8,6 @@ import {
   Bars3BottomLeftIcon,
   Bars3Icon,
   Bars3BottomRightIcon,
-  SwatchIcon,
   SparklesIcon,
   Square2StackIcon,
   ArrowsUpDownIcon,
@@ -27,7 +26,7 @@ import EditableTextArea from '@/components/Shared/EditableFields/EditableTextAre
 import EditableToggle from '@/components/Shared/EditableFields/EditableToggle';
 import EditableSelect from '@/components/Shared/EditableFields/EditableSelect';
 import EditableNumberInput from '@/components/Shared/EditableFields/EditableNumberInput';
-import EditableColorPicker from '@/components/Shared/EditableFields/EditableColorPicker';
+import ColorPaletteDropdown, { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import DeleteSectionModal from './DeleteSectionModal';
 import MetricManager from './MetricManager';
 import Button from '@/ui/Button';
@@ -48,29 +47,6 @@ const TEXT_VARIANTS = {
     sectionDescription: 'text-lg sm:text-xl text-gray-500 font-light leading-relaxed',
   }
 };
-
-// Tailwind color palette
-const COLOR_PALETTE = [
-  { name: 'White', value: '#FFFFFF' },
-  { name: 'Gray 50', value: '#F9FAFB' },
-  { name: 'Gray 100', value: '#F3F4F6' },
-  { name: 'Gray 200', value: '#E5E7EB' },
-  { name: 'Blue 50', value: '#EFF6FF' },
-  { name: 'Blue 100', value: '#DBEAFE' },
-  { name: 'Sky 50', value: '#F0F9FF' },
-  { name: 'Indigo 50', value: '#EEF2FF' },
-  { name: 'Purple 50', value: '#FAF5FF' },
-  { name: 'Pink 50', value: '#FDF2F8' },
-  { name: 'Rose 50', value: '#FFF1F2' },
-  { name: 'Orange 50', value: '#FFF7ED' },
-  { name: 'Amber 50', value: '#FFFBEB' },
-  { name: 'Yellow 50', value: '#FEFCE8' },
-  { name: 'Lime 50', value: '#F7FEE7' },
-  { name: 'Green 50', value: '#F0FDF4' },
-  { name: 'Emerald 50', value: '#ECFDF5' },
-  { name: 'Teal 50', value: '#F0FDFA' },
-  { name: 'Cyan 50', value: '#ECFEFF' },
-];
 
 // Height options
 const HEIGHT_OPTIONS = [
@@ -137,10 +113,14 @@ export default function TemplateSectionEditModal() {
   const [showAddMetricModal, setShowAddMetricModal] = useState(false);
   const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
   const descriptionTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const colorButtonRef = React.useRef<HTMLButtonElement>(null);
+  const styleButtonRef = React.useRef<HTMLButtonElement>(null);
+  const columnButtonRef = React.useRef<HTMLButtonElement>(null);
+  const heightButtonRef = React.useRef<HTMLButtonElement>(null);
   const [formData, setFormData] = useState<TemplateSectionFormData>({
     section_title: '',
     section_description: '',
-    background_color: '#FFFFFF',
+    background_color: 'white',
     text_style_variant: 'default',
     grid_columns: 3,
     image_metrics_height: '300px',
@@ -162,7 +142,7 @@ export default function TemplateSectionEditModal() {
       setFormData({
         section_title: editingSection.section_title || '',
         section_description: editingSection.section_description || '',
-        background_color: editingSection.background_color || '#FFFFFF',
+        background_color: editingSection.background_color || 'white',
         text_style_variant: editingSection.text_style_variant || 'default',
         grid_columns: editingSection.grid_columns || 3,
         image_metrics_height: editingSection.image_metrics_height || '300px',
@@ -225,7 +205,8 @@ export default function TemplateSectionEditModal() {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       // Don't close if clicking inside a dropdown or its button
-      if (!target.closest('.dropdown-container')) {
+      // Also check for portaled dropdowns (fixed positioned, rendered at body level)
+      if (!target.closest('.dropdown-container') && !target.closest('.fixed.bg-white.rounded-lg.shadow-lg')) {
         setShowColorPicker(false);
         setShowStylePicker(false);
         setShowHeightPicker(false);
@@ -257,7 +238,7 @@ export default function TemplateSectionEditModal() {
         'relative bg-white shadow-2xl flex flex-col',
         isFullscreen
           ? 'w-full h-full'
-          : 'rounded-xl w-full max-w-5xl max-h-[90vh] mx-4'
+          : 'w-full h-full md:rounded-xl md:max-w-5xl md:max-h-[90vh] md:mx-4'
       )}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
@@ -287,10 +268,11 @@ export default function TemplateSectionEditModal() {
         </div>
 
         {/* Fixed Toolbar - Horizontally Scrollable */}
-        <div className="border-b border-gray-200 shrink-0 overflow-x-auto">
-          <div className="flex items-center gap-1 px-6 py-3 min-w-max">
-            {/* Reviews Section */}
-            <button
+        <div className="border-b border-gray-200 shrink-0 relative">
+          <div className="overflow-x-auto">
+            <div className="flex items-center gap-1 px-6 py-3 min-w-max">
+              {/* Reviews Section */}
+              <button
               onClick={() => setFormData({ ...formData, is_reviews_section: !formData.is_reviews_section })}
               className={cn(
                 'p-2 rounded-lg transition-colors',
@@ -416,58 +398,35 @@ export default function TemplateSectionEditModal() {
             <div className="w-px h-6 bg-gray-300 mx-1" />
 
             {/* Background Color */}
-            <div className="relative dropdown-container">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowColorPicker(!showColorPicker);
-                  setShowStylePicker(false);
-                  setShowHeightPicker(false);
-                  setShowColumnPicker(false);
-                }}
-                className={cn(
-                  'p-2 rounded-lg transition-colors flex items-center gap-1',
-                  showColorPicker
-                    ? 'bg-sky-100 text-sky-700'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                )}
-                title="Background color"
-              >
-                <SwatchIcon className="w-5 h-5" />
-                <div 
-                  className="w-4 h-4 rounded border border-gray-300" 
-                  style={{ backgroundColor: formData.background_color }}
-                />
-              </button>
-              {showColorPicker && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 w-64">
-                  <div className="grid grid-cols-5 gap-2">
-                    {COLOR_PALETTE.map((color) => (
-                      <button
-                        key={color.value}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setFormData({ ...formData, background_color: color.value });
-                          setShowColorPicker(false);
-                        }}
-                        className={cn(
-                          'w-10 h-10 rounded-lg border-2 transition-all hover:scale-110',
-                          formData.background_color === color.value
-                            ? 'border-sky-500 ring-2 ring-sky-200'
-                            : 'border-gray-200 hover:border-gray-300'
-                        )}
-                        style={{ backgroundColor: color.value }}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <ColorPaletteDropdown
+              value={formData.background_color}
+              onChange={async (colorClass) => {
+                const updatedData = { ...formData, background_color: colorClass };
+                setFormData(updatedData);
+                try {
+                  await updateSection(updatedData);
+                  await refetchEditingSection();
+                  setShowColorPicker(false);
+                } catch (error) {
+                  console.error('Failed to update background color:', error);
+                }
+              }}
+              isOpen={showColorPicker}
+              onToggle={() => {
+                setShowColorPicker(!showColorPicker);
+                setShowStylePicker(false);
+                setShowHeightPicker(false);
+                setShowColumnPicker(false);
+              }}
+              onClose={() => setShowColorPicker(false)}
+              buttonRef={colorButtonRef}
+              useFixedPosition={true}
+            />
 
             {/* Text Style */}
-            <div className="relative dropdown-container">
+            <div className="dropdown-container">
               <button
+                ref={styleButtonRef}
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowStylePicker(!showStylePicker);
@@ -485,33 +444,43 @@ export default function TemplateSectionEditModal() {
               >
                 <SparklesIcon className="w-5 h-5" />
               </button>
-              {showStylePicker && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 w-48">
-                  {(['default', 'apple', 'codedharmony'] as const).map((style) => (
-                    <button
-                      key={style}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFormData({ ...formData, text_style_variant: style });
-                        setShowStylePicker(false);
-                      }}
-                      className={cn(
-                        'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                        formData.text_style_variant === style && 'bg-sky-50 text-sky-700 font-medium'
-                      )}
-                    >
-                      {style === 'default' && 'Default'}
-                      {style === 'apple' && 'Apple Style'}
-                      {style === 'codedharmony' && 'Coded Harmony'}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {showStylePicker && styleButtonRef.current && (() => {
+                const rect = styleButtonRef.current.getBoundingClientRect();
+                return (
+                  <div 
+                    className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100] w-48"
+                    style={{
+                      top: `${rect.bottom + 8}px`,
+                      left: `${rect.left}px`,
+                    }}
+                  >
+                    {(['default', 'apple', 'codedharmony'] as const).map((style) => (
+                      <button
+                        key={style}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, text_style_variant: style });
+                          setShowStylePicker(false);
+                        }}
+                        className={cn(
+                          'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
+                          formData.text_style_variant === style && 'bg-sky-50 text-sky-700 font-medium'
+                        )}
+                      >
+                        {style === 'default' && 'Default'}
+                        {style === 'apple' && 'Apple Style'}
+                        {style === 'codedharmony' && 'Coded Harmony'}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Grid Columns */}
-            <div className="relative dropdown-container">
+            <div className="dropdown-container">
               <button
+                ref={columnButtonRef}
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowColumnPicker(!showColumnPicker);
@@ -530,26 +499,35 @@ export default function TemplateSectionEditModal() {
                 <ViewColumnsIcon className="w-5 h-5" />
                 <span className="text-xs font-medium">{formData.grid_columns}</span>
               </button>
-              {showColumnPicker && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 w-24">
-                  {[1, 2, 3, 4, 5, 6].map((cols) => (
-                    <button
-                      key={cols}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFormData({ ...formData, grid_columns: cols });
-                        setShowColumnPicker(false);
-                      }}
-                      className={cn(
-                        'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                        formData.grid_columns === cols && 'bg-sky-50 text-sky-700 font-medium'
-                      )}
-                    >
-                      {cols} {cols === 1 ? 'col' : 'cols'}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {showColumnPicker && columnButtonRef.current && (() => {
+                const rect = columnButtonRef.current.getBoundingClientRect();
+                return (
+                  <div 
+                    className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100] w-24"
+                    style={{
+                      top: `${rect.bottom + 8}px`,
+                      left: `${rect.left}px`,
+                    }}
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((cols) => (
+                      <button
+                        key={cols}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, grid_columns: cols });
+                          setShowColumnPicker(false);
+                        }}
+                        className={cn(
+                          'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
+                          formData.grid_columns === cols && 'bg-sky-50 text-sky-700 font-medium'
+                        )}
+                      >
+                        {cols} {cols === 1 ? 'col' : 'cols'}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="w-px h-6 bg-gray-300 mx-1" />
@@ -624,8 +602,9 @@ export default function TemplateSectionEditModal() {
             </button>
 
             {/* Image Height */}
-            <div className="relative dropdown-container">
+            <div className="dropdown-container">
               <button
+                ref={heightButtonRef}
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowHeightPicker(!showHeightPicker);
@@ -644,34 +623,49 @@ export default function TemplateSectionEditModal() {
                 <ArrowsUpDownIcon className="w-5 h-5" />
                 <span className="text-xs font-medium">{formData.image_metrics_height}</span>
               </button>
-              {showHeightPicker && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 w-32">
-                  {HEIGHT_OPTIONS.map((height) => (
-                    <button
-                      key={height.value}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFormData({ ...formData, image_metrics_height: height.value });
-                        setShowHeightPicker(false);
-                      }}
-                      className={cn(
-                        'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                        formData.image_metrics_height === height.value && 'bg-sky-50 text-sky-700 font-medium'
-                      )}
-                    >
-                      {height.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {showHeightPicker && heightButtonRef.current && (() => {
+                const rect = heightButtonRef.current.getBoundingClientRect();
+                return (
+                  <div 
+                    className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100] w-32"
+                    style={{
+                      top: `${rect.bottom + 8}px`,
+                      left: `${rect.left}px`,
+                    }}
+                  >
+                    {HEIGHT_OPTIONS.map((height) => (
+                      <button
+                        key={height.value}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, image_metrics_height: height.value });
+                          setShowHeightPicker(false);
+                        }}
+                        className={cn(
+                          'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
+                          formData.image_metrics_height === height.value && 'bg-sky-50 text-sky-700 font-medium'
+                        )}
+                      >
+                        {height.label}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
               </div>
             </div>
           </div>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div 
+          className="flex-1 overflow-y-auto p-6 transition-colors"
+          style={{
+            backgroundColor: getColorValue(formData.background_color || 'white')
+          }}
+        >
           <div className="space-y-2 max-w-4xl mx-auto">
             {/* Section Title - Styled like actual section */}
             <div>
@@ -727,6 +721,9 @@ export default function TemplateSectionEditModal() {
                   setShowAddModal={setShowAddMetricModal}
                   editingMetricId={editingMetricId}
                   setEditingMetricId={setEditingMetricId}
+                  isImageBottom={formData.is_image_bottom}
+                  imageMetricsHeight={formData.image_metrics_height}
+                  textStyleVariant={formData.text_style_variant}
                 />
               )}
             </div>

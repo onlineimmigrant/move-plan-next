@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { getOrganizationId } from '@/lib/supabase';
 import { getPostUrl } from '@/lib/postUtils';
 import { useSettings } from '@/context/SettingsContext';
+import { SliderNavigation } from '@/ui/SliderNavigation';
 
 interface BlogPost {
   id: number;
@@ -191,43 +191,18 @@ const BlogPostSlider: React.FC = () => {
 
 
 
-          {/* Desktop Navigation Buttons - Bottom Right */}
-          {posts.length > 1 && (
-            <div className="hidden md:flex absolute bottom-6 right-6 gap-3">
-              <button
-                onClick={handlePrevious}
-                className="text-gray-400/60 hover:text-gray-600/80 transition-all duration-300 ease-in-out hover:scale-125 hover:-translate-x-1 focus:outline-none"
-                aria-label="Previous post"
-              >
-                <ChevronLeftIcon className="w-7 h-7 stroke-2" />
-              </button>
-              <button
-                onClick={handleNext}
-                className="text-gray-400/60 hover:text-gray-600/80 transition-all duration-300 ease-in-out hover:scale-125 hover:translate-x-1 focus:outline-none"
-                aria-label="Next post"
-              >
-                <ChevronRightIcon className="w-7 h-7 stroke-2" />
-              </button>
-            </div>
-          )}
-
-          {/* Dots Navigation */}
-          {posts.length > 1 && (
-            <div className="flex justify-center mt-6 gap-2">
-              {posts.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleDotClick(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentIndex
-                      ? 'bg-gray-700 w-8'
-                      : 'bg-gray-300 hover:bg-gray-500'
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
+          {/* Navigation */}
+          <SliderNavigation
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            currentIndex={currentIndex}
+            totalItems={posts.length}
+            onDotClick={handleDotClick}
+            showDots={true}
+            buttonPosition="bottom-right"
+            buttonVariant="minimal"
+            dotVariant="default"
+          />
         </div>
 
 

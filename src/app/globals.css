@@ -236,7 +236,7 @@ article ul li,
 
 /* Neumorphic design style */
 .neomorphic {
-  background: linear-gradient(145deg, #f0f0f0, #ffffff);
+  background: var(--neomorphic-bg, linear-gradient(145deg, #f0f0f0, #ffffff));
   box-shadow: 12px 12px 24px rgba(163, 177, 198, 0.6),
               -12px -12px 24px rgba(255, 255, 255, 0.9);
   position: relative;
@@ -256,6 +256,7 @@ article ul li,
 }
 
 .neomorphic:hover {
+  background: var(--neomorphic-bg-hover, linear-gradient(145deg, #ffffff, #f5f5f5));
   box-shadow: 8px 8px 16px rgba(163, 177, 198, 0.4),
               -8px -8px 16px rgba(255, 255, 255, 0.7);
 }

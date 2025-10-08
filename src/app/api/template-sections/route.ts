@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import { TemplateSection } from '@/types/template_section';
 
+// Force dynamic rendering and disable caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   console.log('Received GET request for /api/template-sections:', request.url);
 

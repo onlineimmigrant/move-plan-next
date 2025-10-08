@@ -3,42 +3,47 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { getColorValue, getColorClass } from '@/components/Shared/ColorPaletteDropdown';
+
+// Tailwind color palette
+const COLOR_PALETTE = [
+  { name: 'White', value: '#FFFFFF', class: 'white' },
+  { name: 'Gray 50', value: '#F9FAFB', class: 'gray-50' },
+  { name: 'Gray 100', value: '#F3F4F6', class: 'gray-100' },
+  { name: 'Gray 200', value: '#E5E7EB', class: 'gray-200' },
+  { name: 'Blue 50', value: '#EFF6FF', class: 'blue-50' },
+  { name: 'Blue 100', value: '#DBEAFE', class: 'blue-100' },
+  { name: 'Sky 50', value: '#F0F9FF', class: 'sky-50' },
+  { name: 'Indigo 50', value: '#EEF2FF', class: 'indigo-50' },
+  { name: 'Purple 50', value: '#FAF5FF', class: 'purple-50' },
+  { name: 'Pink 50', value: '#FDF2F8', class: 'pink-50' },
+  { name: 'Rose 50', value: '#FFF1F2', class: 'rose-50' },
+  { name: 'Orange 50', value: '#FFF7ED', class: 'orange-50' },
+  { name: 'Amber 50', value: '#FFFBEB', class: 'amber-50' },
+  { name: 'Yellow 50', value: '#FEFCE8', class: 'yellow-50' },
+  { name: 'Lime 50', value: '#F7FEE7', class: 'lime-50' },
+  { name: 'Green 50', value: '#F0FDF4', class: 'green-50' },
+  { name: 'Emerald 50', value: '#ECFDF5', class: 'emerald-50' },
+  { name: 'Teal 50', value: '#F0FDFA', class: 'teal-50' },
+  { name: 'Cyan 50', value: '#ECFEFF', class: 'cyan-50' },
+];
 
 interface EditableColorPickerProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  presetColors?: string[];
+  presetColors?: { name: string; value: string; class: string; }[];
   error?: string;
   disabled?: boolean;
   helperText?: string;
   className?: string;
 }
 
-const DEFAULT_PRESET_COLORS = [
-  '#FFFFFF', // White
-  '#F3F4F6', // Gray 100
-  '#E5E7EB', // Gray 200
-  '#D1D5DB', // Gray 300
-  '#0EA5E9', // Sky 500
-  '#0284C7', // Sky 600
-  '#3B82F6', // Blue 500
-  '#2563EB', // Blue 600
-  '#10B981', // Green 500
-  '#059669', // Green 600
-  '#F59E0B', // Amber 500
-  '#D97706', // Amber 600
-  '#EF4444', // Red 500
-  '#DC2626', // Red 600
-  '#8B5CF6', // Violet 500
-  '#7C3AED', // Violet 600
-];
-
 export default function EditableColorPicker({
   label,
   value,
   onChange,
-  presetColors = DEFAULT_PRESET_COLORS,
+  presetColors = COLOR_PALETTE,
   error,
   disabled = false,
   helperText,
@@ -59,7 +64,7 @@ export default function EditableColorPicker({
               error ? 'border-red-300' : 'border-gray-300',
               !disabled && 'hover:scale-110'
             )}
-            style={{ backgroundColor: value || '#FFFFFF' }}
+            style={{ backgroundColor: getColorValue(value) }}
             onClick={() => !disabled && setShowPicker(!showPicker)}
             title="Click to toggle color picker"
           />
@@ -68,9 +73,8 @@ export default function EditableColorPicker({
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="#FFFFFF"
+            placeholder="white"
             disabled={disabled}
-            maxLength={7}
             className={cn(
               'flex-1 px-3 py-2 rounded-lg border text-sm font-mono transition-colors',
               'focus:outline-none focus:ring-2 focus:ring-offset-1',
@@ -81,38 +85,27 @@ export default function EditableColorPicker({
             )}
           />
         </div>
-
-        {/* Native Color Picker */}
-        {!disabled && (
-          <input
-            type="color"
-            value={value || '#FFFFFF'}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-10 h-10 rounded-lg cursor-pointer border border-gray-300"
-            title="Pick color"
-          />
-        )}
       </div>
 
       {/* Preset Colors */}
       {showPicker && !disabled && (
-        <div className="grid grid-cols-8 gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="grid grid-cols-5 gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
           {presetColors.map((color) => (
             <button
-              key={color}
+              key={color.class}
               type="button"
               onClick={() => {
-                onChange(color);
+                onChange(color.class);
                 setShowPicker(false);
               }}
               className={cn(
-                'w-8 h-8 rounded-md border-2 transition-all hover:scale-110',
-                value === color
+                'w-10 h-10 rounded-lg border-2 transition-all hover:scale-110',
+                getColorClass(value) === color.class
                   ? 'border-sky-500 ring-2 ring-sky-500 ring-offset-1'
                   : 'border-gray-300'
               )}
-              style={{ backgroundColor: color }}
-              title={color}
+              style={{ backgroundColor: color.value }}
+              title={color.name}
             />
           ))}
         </div>
