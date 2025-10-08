@@ -1,7 +1,26 @@
 // /app/api/template-heading-sections/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { getOrganizationId } from '@/lib/supabase';
 import { TemplateHeadingSection } from '@/types/template_heading_section';
+
+// Create Supabase client with service role for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+// Keep regular client for read operations
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function GET(request: Request) {
   console.log('Received GET request for /api/template-heading-sections:', request.url);
@@ -48,7 +67,8 @@ export async function GET(request: Request) {
         organization_id,
         style_variant,
         text_style_variant,
-        is_text_link
+        is_text_link,
+        background_color
       `)
       .eq('url_page', decodedUrlPage)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)
@@ -100,9 +120,23 @@ export async function POST(request: Request) {
     console.log('Creating new template heading section:', body);
 
     // Validate required fields
-    if (!body.name || !body.description_text || !body.url_page) {
+    if (!body.name) {
       return NextResponse.json(
-        { error: 'name, description_text, and url_page are required' },
+        { error: 'name is required', message: 'Heading name is required' },
+        { status: 400 }
+      );
+    }
+    
+    if (!body.description_text) {
+      return NextResponse.json(
+        { error: 'description_text is required', message: 'Description text is required' },
+        { status: 400 }
+      );
+    }
+    
+    if (!body.url_page) {
+      return NextResponse.json(
+        { error: 'url_page is required', message: 'Page URL is required' },
         { status: 400 }
       );
     }
@@ -112,13 +146,13 @@ export async function POST(request: Request) {
     
     if (!organizationId) {
       return NextResponse.json(
-        { error: 'Organization not found' },
+        { error: 'Organization not found', message: 'Organization not found' },
         { status: 404 }
       );
     }
 
     // Get the highest order value for this url_page
-    const { data: existingSections, error: orderError } = await supabase
+    const { data: existingSections, error: orderError } = await supabaseAdmin
       .from('website_templatesectionheading')
       .select('order')
       .eq('url_page', body.url_page)
@@ -153,11 +187,12 @@ export async function POST(request: Request) {
       style_variant: body.style_variant || 'default',
       text_style_variant: body.text_style_variant || 'default',
       is_text_link: body.is_text_link ?? false,
+      background_color: body.background_color || 'white',
       order: nextOrder,
     };
 
-    // Insert the new template heading section
-    const { data, error } = await supabase
+    // Insert the new template heading section using service role
+    const { data, error } = await supabaseAdmin
       .from('website_templatesectionheading')
       .insert(insertData)
       .select()

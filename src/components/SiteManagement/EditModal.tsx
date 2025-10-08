@@ -3,13 +3,14 @@ import { Organization, Settings } from './types';
 import SettingsFormFields from './SettingsFormFields';
 import LivePreview from './LivePreview';
 import SiteDeployment from './SiteDeployment';
+import SiteMap from './SiteMap';
 import EditModalHeader from './components/EditModalHeader';
 import ResizablePanels from './components/ResizablePanels';
 import MobileSettingsOverlay from './components/MobileSettingsOverlay';
 import { useResizablePanels } from './hooks/useResizablePanels';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { Cog6ToothIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, RocketLaunchIcon, MapIcon } from '@heroicons/react/24/outline';
 import './styles/modal-design-system.css';
 
 interface EditModalProps {
@@ -39,7 +40,7 @@ export default function EditModal({
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [activeTab, setActiveTab] = useState<'settings' | 'deployment'>('settings');
+  const [activeTab, setActiveTab] = useState<'settings' | 'sitemap' | 'deployment'>('settings');
 
   // Force settings tab when in read-only mode
   useEffect(() => {
@@ -65,6 +66,7 @@ export default function EditModal({
   const [isLoadingDetailedData, setIsLoadingDetailedData] = useState(false);
   const [detailedOrganizationData, setDetailedOrganizationData] = useState<any>(null);
   const [sectionsResetKey, setSectionsResetKey] = useState<number>(0);
+  const [customPreviewUrl, setCustomPreviewUrl] = useState<string>(''); // For Site Map navigation
 
   // Use custom hooks for complex functionality
   const resizablePanels = useResizablePanels({ 
@@ -341,6 +343,14 @@ export default function EditModal({
           readOnly={readOnly}
         />
       );
+    } else if (activeTab === 'sitemap') {
+      return (
+        <SiteMap
+          organization={organization!}
+          session={session}
+          onPageSelect={(url) => setCustomPreviewUrl(url)}
+        />
+      );
     } else {
       return (
         <SiteDeployment
@@ -424,6 +434,13 @@ export default function EditModal({
               Settings
             </button>
             <button
+              onClick={() => setActiveTab('sitemap')}
+              className={`modal-tab ${activeTab === 'sitemap' ? 'active' : ''}`}
+            >
+              <MapIcon className="w-4 h-4 mr-2" />
+              Site Map
+            </button>
+            <button
               onClick={() => !readOnly && setActiveTab('deployment')}
               className={`modal-tab ${activeTab === 'deployment' ? 'active' : ''} ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={readOnly}
@@ -454,6 +471,7 @@ export default function EditModal({
               previewMode={previewMode}
               onPreviewModeChange={handlePreviewModeChange}
               refreshKey={previewRefreshKey}
+              customUrl={customPreviewUrl || undefined}
             />
           }
         >
@@ -465,6 +483,13 @@ export default function EditModal({
             >
               <Cog6ToothIcon className="w-4 h-4 mr-2" />
               Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('sitemap')}
+              className={`modal-tab ${activeTab === 'sitemap' ? 'active' : ''}`}
+            >
+              <MapIcon className="w-4 h-4 mr-2" />
+              Site Map
             </button>
             <button
               onClick={() => !readOnly && setActiveTab('deployment')}

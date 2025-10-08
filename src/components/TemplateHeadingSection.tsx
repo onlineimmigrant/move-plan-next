@@ -8,6 +8,7 @@ import  Button from '@/ui/Button';
 import { useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
 import { HoverEditButtons } from '@/ui/Button';
 import { isAdminClient } from '@/lib/auth';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 
 interface TemplateHeadingSectionData {
   id: number;
@@ -25,8 +26,9 @@ interface TemplateHeadingSectionData {
   image_first?: boolean;
   is_included_templatesection?: boolean;
   style_variant?: 'default' | 'clean';
-  text_style_variant?: 'default' | 'apple';
+  text_style_variant?: 'default' | 'apple' | 'codedharmony';
   is_text_link?: boolean;
+  background_color?: string;
 }
 
 interface TemplateHeadingSectionProps {
@@ -41,13 +43,18 @@ const STYLE_VARIANTS = {
 const TEXT_VARIANTS = {
   default: {
     bg: 'gradient-to-br from-white via-gray-50/30 to-white',
-    text: 'gray-700', btn: 'gradient-to-r from-emerald-400 to-teal-500', h1: 'text-3xl sm:text-5xl lg:text-7xl font-normal', color: 'gray-800',
-    is_text_link: false
+    text: 'gray-700', btn: 'bg-gradient-to-r from-emerald-400 to-teal-500', h1: 'text-3xl sm:text-5xl lg:text-7xl font-normal', color: 'gray-800',
+    linkColor: 'text-emerald-600 hover:text-emerald-500'
   },
   apple: {
     bg: 'white/95',
-    text: 'gray-600', btn: 'gradient-to-r from-sky-500 to-blue-500', h1: 'text-4xl sm:text-6xl lg:text-7xl font-light', color: 'gray-900',
-    is_text_link: false
+    text: 'gray-600', btn: 'bg-gradient-to-r from-sky-500 to-blue-500', h1: 'text-4xl sm:text-6xl lg:text-7xl font-light', color: 'gray-900',
+    linkColor: 'text-sky-600 hover:text-sky-500'
+  },
+  codedharmony: {
+    bg: 'white',
+    text: 'gray-500', btn: 'bg-gradient-to-r from-indigo-500 to-purple-500', h1: 'text-3xl sm:text-5xl lg:text-6xl font-thin tracking-tight leading-none', color: 'gray-900',
+    linkColor: 'text-indigo-600 hover:text-indigo-500'
   }
 };
 
@@ -127,6 +134,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
           const textVar = TEXT_VARIANTS[section.text_style_variant || 'default'];
           const hasImage = !!section.image;
           const isApple = section.text_style_variant === 'apple';
+          const isCodedHarmony = section.text_style_variant === 'codedharmony';
           
           // Get translated content
           const translatedName = currentLocale 
@@ -150,9 +158,16 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
           return (
           <section
             key={section.id}
-            className={`relative isolate group ${!isClean ? 'px-6 lg:px-8' : ''} ${styleVar.section} font-sans ${
-              isApple ? 'bg-white/95 backdrop-blur-sm' : isClean ? 'bg-transparent' : `bg-${textVar.bg}`
-            } overflow-hidden`}
+            className={`relative isolate group ${!isClean ? 'px-6 lg:px-8' : ''} ${styleVar.section} font-sans overflow-hidden`}
+            style={{
+              backgroundColor: section.background_color 
+                ? getColorValue(section.background_color)
+                : (
+                  isApple ? 'rgb(255 255 255 / 0.95)' : 
+                  isCodedHarmony ? 'rgb(255 255 255)' :
+                  isClean ? 'transparent' : 'white'
+                )
+            }}
           >
             {/* Hover Edit Buttons for Admin */}
             {isAdmin && (
@@ -210,11 +225,10 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
 
                     {translatedButtonText && section.url && (
                       <div className="mt-10">
-                        {/* Use text link when is_text_link is explicitly true, or when it's undefined (fallback) */}
-                        {(section.is_text_link === true || section.is_text_link === undefined) ? (
+                        {section.is_text_link ? (
                           <a
                             href={section.url}
-                            className="inline-flex items-center gap-x-2 text-sky-600 hover:text-sky-500 text-lg font-light transition-colors duration-200 group"
+                            className={`inline-flex items-center gap-x-2 text-lg font-light transition-colors duration-200 group ${textVar.linkColor}`}
                           >
                             {parse(sanitizeHTML(translatedButtonText))}
                             <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,13 +236,12 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                             </svg>
                           </a>
                         ) : (
-                          <Button 
-                            variant='primary' 
-
-                            onClick={() => window.location.href = section.url || ''}
+                          <a
+                            href={section.url}
+                            className={`inline-flex items-center justify-center px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-sm text-white rounded-lg shadow-lg font-medium transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 ${textVar.btn}`}
                           >
                             {parse(sanitizeHTML(translatedButtonText))}
-                          </Button>
+                          </a>
                         )}
                       </div>
                     )}

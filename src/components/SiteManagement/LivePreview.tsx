@@ -8,6 +8,7 @@ interface LivePreviewProps {
   previewMode?: 'desktop' | 'mobile';
   onPreviewModeChange?: (mode: 'desktop' | 'mobile') => void;
   refreshKey?: string | number; // Add refresh key to force reload
+  customUrl?: string; // Custom URL for Site Map navigation
 }
 
 // Helper function to validate if a string is a valid URL
@@ -27,7 +28,8 @@ export default function LivePreview({
   organizationUrl, 
   previewMode = 'desktop', 
   onPreviewModeChange,
-  refreshKey 
+  refreshKey,
+  customUrl
 }: LivePreviewProps) {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -50,48 +52,55 @@ export default function LivePreview({
   }, [organizationUrl]);
 
   useEffect(() => {
-    if (debouncedOrganizationUrl && isValidUrl(debouncedOrganizationUrl)) {
+    // Priority: customUrl (from Site Map) > debouncedOrganizationUrl
+    const baseUrl = customUrl || debouncedOrganizationUrl;
+    
+    if (baseUrl && isValidUrl(baseUrl)) {
       try {
         // Validate URL before processing
-        const url = new URL(debouncedOrganizationUrl);
-        url.searchParams.set('preview', 'true');
+        const url = new URL(baseUrl);
         
-        // Add settings as preview parameters
-        if (settings.primary_color) {
-          url.searchParams.set('preview_primary_color', settings.primary_color);
-        }
-        if (settings.secondary_color) {
-          url.searchParams.set('preview_secondary_color', settings.secondary_color);
-        }
-        if (settings.header_style) {
-          url.searchParams.set('preview_header_style', settings.header_style);
-        }
-        if (settings.footer_color) {
-          url.searchParams.set('preview_footer_color', settings.footer_color);
-        }
-        if (settings.site) {
-          url.searchParams.set('preview_site_title', settings.site);
-        }
-        if (settings.image) {
-          url.searchParams.set('preview_logo_url', settings.image);
-        }
-        if (settings.menu_width) {
-          url.searchParams.set('preview_menu_width', settings.menu_width);
-        }
-        if (settings.font_family) {
-          url.searchParams.set('preview_font_family', settings.font_family);
+        // Only add preview parameters if not using customUrl (Site Map navigation)
+        if (!customUrl) {
+          url.searchParams.set('preview', 'true');
+          
+          // Add settings as preview parameters
+          if (settings.primary_color) {
+            url.searchParams.set('preview_primary_color', settings.primary_color);
+          }
+          if (settings.secondary_color) {
+            url.searchParams.set('preview_secondary_color', settings.secondary_color);
+          }
+          if (settings.header_style) {
+            url.searchParams.set('preview_header_style', settings.header_style);
+          }
+          if (settings.footer_color) {
+            url.searchParams.set('preview_footer_color', settings.footer_color);
+          }
+          if (settings.site) {
+            url.searchParams.set('preview_site_title', settings.site);
+          }
+          if (settings.image) {
+            url.searchParams.set('preview_logo_url', settings.image);
+          }
+          if (settings.menu_width) {
+            url.searchParams.set('preview_menu_width', settings.menu_width);
+          }
+          if (settings.font_family) {
+            url.searchParams.set('preview_font_family', settings.font_family);
+          }
         }
         
         setPreviewUrl(url.toString());
       } catch (error) {
         // If URL is invalid (e.g., user is still typing), don't update preview
-        console.log('Invalid URL format:', debouncedOrganizationUrl);
+        console.log('Invalid URL format:', baseUrl);
         setPreviewUrl('');
       }
     } else {
       setPreviewUrl('');
     }
-  }, [settings, debouncedOrganizationUrl]);
+  }, [settings, debouncedOrganizationUrl, customUrl]);
 
   const handleIframeLoad = () => {
     setIsLoading(false);

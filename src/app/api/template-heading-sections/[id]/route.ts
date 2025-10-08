@@ -43,6 +43,7 @@ export async function PUT(
       name_part_3: body.name_part_3 || null,
       description_text: body.description_text,
       button_text: body.button_text || null,
+      url_page: body.url_page,
       url: body.url || null,
       image: body.image || null,
       image_first: body.image_first ?? false,
@@ -50,6 +51,7 @@ export async function PUT(
       style_variant: body.style_variant || 'default',
       text_style_variant: body.text_style_variant || 'default',
       is_text_link: body.is_text_link ?? false,
+      background_color: body.background_color || 'white',
     };
 
     // Handle translation fields

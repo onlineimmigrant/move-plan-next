@@ -186,9 +186,9 @@ export async function GET(request: NextRequest): Promise<Response> {
       { url: `${baseUrl}/`, lastmod: currentTime, priority: 1.0 },
       { url: `${baseUrl}/about-us`, lastmod: currentTime, priority: 1.0 },
       { url: `${baseUrl}/products`, lastmod: currentTime, priority: 1.0 },
+      { url: `${baseUrl}/features`, lastmod: currentTime, priority: 1.0 },
       { url: `${baseUrl}/blog`, lastmod: currentTime, priority: 1.0 },
       { url: `${baseUrl}/faq`, lastmod: currentTime, priority: 1.0 },
-      { url: `${baseUrl}/features`, lastmod: currentTime, priority: 1.0 },
       { url: `${baseUrl}/support`, lastmod: currentTime, priority: 1.0 },
       { url: `${baseUrl}/terms`, lastmod: currentTime, priority: 1.0 },
     ];
@@ -214,20 +214,24 @@ export async function GET(request: NextRequest): Promise<Response> {
       supabase
         .from('sitemap_static_pages')
         .select('url_path, priority, last_modified')
-        .eq('organization_id', effectiveOrgId),
+        .eq('organization_id', effectiveOrgId)
+        .limit(1000), // Allow up to 1000 static pages
       supabase
         .from('blog_post')
         .select('slug, last_modified, display_this_post, section_id')
         .eq('organization_id', effectiveOrgId)
-        .eq('display_this_post', true),
+        .eq('display_this_post', true)
+        .limit(1000), // Allow up to 1000 blog posts
       supabase
         .from('feature')
         .select('slug, created_at')
-        .eq('organization_id', effectiveOrgId),
+        .eq('organization_id', effectiveOrgId)
+        .limit(1000), // Allow up to 1000 features
       supabase
         .from('product')
         .select('slug, updated_at')
         .eq('organization_id', effectiveOrgId)
+        .limit(1000) // Allow up to 1000 products
     ]);
 
     // Log errors if any (only in development)
@@ -253,18 +257,22 @@ export async function GET(request: NextRequest): Promise<Response> {
     }));
 
     // Process features
-    const dynamicFeaturePages: SitemapPage[] = (features || []).map((feature: FeatureData) => ({
-      url: `${baseUrl}/features/${feature.slug}`,
-      lastmod: formatDateToISO(feature.created_at),
-      priority: 0.8,
-    }));
+    const dynamicFeaturePages: SitemapPage[] = (features || [])
+      .filter((feature: FeatureData) => feature.slug && feature.slug.trim().length > 0)
+      .map((feature: FeatureData) => ({
+        url: `${baseUrl}/features/${feature.slug}`,
+        lastmod: formatDateToISO(feature.created_at),
+        priority: 0.8,
+      }));
 
     // Process products
-    const dynamicProductsPages: SitemapPage[] = (products || []).map((product: ProductData) => ({
-      url: `${baseUrl}/products/${product.slug}`,
-      lastmod: formatDateToISO(product.updated_at),
-      priority: 0.8,
-    }));
+    const dynamicProductsPages: SitemapPage[] = (products || [])
+      .filter((product: ProductData) => product.slug && product.slug.trim().length > 0)
+      .map((product: ProductData) => ({
+        url: `${baseUrl}/products/${product.slug}`,
+        lastmod: formatDateToISO(product.updated_at),
+        priority: 0.8,
+      }));
 
     // Combine all pages and remove duplicates
     const allPages = [
@@ -275,10 +283,21 @@ export async function GET(request: NextRequest): Promise<Response> {
       ...dynamicProductsPages,
     ];
 
-    // Remove duplicate URLs (keeping the first occurrence)
-    const uniquePages = allPages.filter((page, index, arr) => 
-      arr.findIndex(p => p.url === page.url) === index
-    );
+    // Normalize URLs (remove trailing slashes) and remove duplicates
+    const normalizeUrl = (url: string): string => {
+      // Remove trailing slash except for root URL
+      if (url.endsWith('/') && url !== `${baseUrl}/`) {
+        return url.slice(0, -1);
+      }
+      return url;
+    };
+
+    // Remove duplicate URLs (keeping the first occurrence, after normalization)
+    const uniquePages = allPages
+      .map(page => ({ ...page, url: normalizeUrl(page.url) }))
+      .filter((page, index, arr) => 
+        arr.findIndex(p => p.url === page.url) === index
+      );
 
     // Log final pages count (only in development)
     if (process.env.NODE_ENV === 'development') {
@@ -352,10 +371,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       productsResult
     ] = await Promise.allSettled([
       supabase.from('organizations').select('base_url, type').eq('id', effectiveOrgId).single(),
-      supabase.from('sitemap_static_pages').select('url_path, priority, last_modified').eq('organization_id', effectiveOrgId),
-      supabase.from('blog_post').select('slug, last_modified, display_this_post, section_id').eq('organization_id', effectiveOrgId).eq('display_this_post', true),
-      supabase.from('feature').select('slug, created_at').eq('organization_id', effectiveOrgId),
-      supabase.from('product').select('slug, updated_at').eq('organization_id', effectiveOrgId)
+      supabase.from('sitemap_static_pages').select('url_path, priority, last_modified').eq('organization_id', effectiveOrgId).limit(1000),
+      supabase.from('blog_post').select('slug, last_modified, display_this_post, section_id').eq('organization_id', effectiveOrgId).eq('display_this_post', true).limit(1000),
+      supabase.from('feature').select('slug, created_at').eq('organization_id', effectiveOrgId).limit(1000),
+      supabase.from('product').select('slug, updated_at').eq('organization_id', effectiveOrgId).limit(1000)
     ]);
 
     // Process results

@@ -20,8 +20,9 @@ interface TemplateHeadingSectionData {
   image_first?: boolean;
   is_included_templatesection?: boolean;
   style_variant?: 'default' | 'clean';
-  text_style_variant?: 'default' | 'apple';
+  text_style_variant?: 'default' | 'apple' | 'codedharmony';
   is_text_link?: boolean;
+  background_color?: string;
   organization_id?: string | null;
 }
 
