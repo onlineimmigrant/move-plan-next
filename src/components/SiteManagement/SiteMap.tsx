@@ -546,43 +546,48 @@ export default function SiteMap({ organization, session, onPageSelect }: SiteMap
     const hasChildren = node.children && node.children.length > 0;
 
     // Calculate left padding based on nesting level (not page.level)
-    // Each level adds 24px (1.5rem)
-    const paddingLeft = nestingLevel * 24;
+    // Each level adds 16px on mobile, 24px on desktop
+    const paddingLeft = nestingLevel * 16; // Reduced for mobile
+    const paddingLeftDesktop = nestingLevel * 24;
     
     // Calculate font weight based on nesting depth
-    const fontClass = nestingLevel === 0 ? 'font-bold text-lg' : nestingLevel === 1 ? 'font-semibold' : 'font-normal';
+    const fontClass = nestingLevel === 0 ? 'font-bold text-base sm:text-lg' : nestingLevel === 1 ? 'font-semibold text-sm sm:text-base' : 'font-normal text-sm';
 
     return (
       <div key={node.path} className="space-y-1">
         <div 
-          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
-          style={{ paddingLeft: `${paddingLeft}px` }}
+          className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+          style={{ 
+            paddingLeft: `${paddingLeft}px`,
+          }}
         >
           {/* Expand/Collapse button for pages with children */}
           {hasChildren ? (
             <button
               onClick={() => toggleNode(node.path)}
-              className="flex-shrink-0 w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded transition-colors"
+              className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center hover:bg-gray-200 rounded transition-colors"
               title={isExpanded ? 'Collapse' : 'Expand'}
             >
               {isExpanded ? (
-                <span className="text-gray-600 font-bold text-sm">−</span>
+                <span className="text-gray-600 font-bold text-xs sm:text-sm">−</span>
               ) : (
-                <span className="text-gray-600 font-bold text-sm">+</span>
+                <span className="text-gray-600 font-bold text-xs sm:text-sm">+</span>
               )}
             </button>
           ) : (
-            <div className="w-6" />
+            <div className="w-5 sm:w-6" />
           )}
 
           {/* Icon */}
           <div className="flex-shrink-0 text-gray-500">
-            {getIconForType(node.type)}
+            <div className="w-4 h-4 sm:w-5 sm:h-5">
+              {getIconForType(node.type)}
+            </div>
           </div>
 
           {/* Name and URL */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <button
                 onClick={() => handlePageClick(node.url, node.name)}
                 className={`text-gray-900 truncate hover:text-blue-600 cursor-pointer transition-colors text-left ${fontClass}`}
@@ -591,24 +596,24 @@ export default function SiteMap({ organization, session, onPageSelect }: SiteMap
                 {node.name}
               </button>
               {hasChildren && (
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] sm:text-xs text-gray-500 bg-gray-100 px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap">
                   {node.children!.length}
                 </span>
               )}
             </div>
-            <div className="text-xs text-gray-500 truncate" title={node.path}>
+            <div className="text-[10px] sm:text-xs text-gray-500 truncate" title={node.path}>
               {node.path}
             </div>
           </div>
 
-          {/* Priority badge */}
-          <span className={`flex-shrink-0 px-2 py-1 text-xs font-medium rounded border ${getPriorityColor(node.priority)}`}>
+          {/* Priority badge - Hide on very small screens */}
+          <span className={`hidden sm:flex flex-shrink-0 px-2 py-1 text-xs font-medium rounded border ${getPriorityColor(node.priority)}`}>
             <SignalIcon className="w-3 h-3 inline mr-1" />
             {node.priority.toFixed(1)}
           </span>
 
-          {/* Last modified */}
-          <span className="flex-shrink-0 text-xs text-gray-500 flex items-center gap-1 min-w-[100px]">
+          {/* Last modified - Hide on mobile */}
+          <span className="hidden md:flex flex-shrink-0 text-xs text-gray-500 items-center gap-1 min-w-[100px]">
             <ClockIcon className="w-3 h-3" />
             {formatDate(node.lastmod)}
           </span>
@@ -626,12 +631,12 @@ export default function SiteMap({ organization, session, onPageSelect }: SiteMap
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-center py-12">
+      <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center justify-center py-8 sm:py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading sitemap...</p>
+              <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto mb-3 sm:mb-4"></div>
+              <p className="text-sm sm:text-base text-gray-600">Loading sitemap...</p>
             </div>
           </div>
         </div>
@@ -641,15 +646,15 @@ export default function SiteMap({ organization, session, onPageSelect }: SiteMap
 
   if (error) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="bg-white rounded-lg border border-red-200 p-6">
-          <div className="text-center py-12">
-            <div className="text-red-600 text-5xl mb-4">⚠️</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Sitemap</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
+      <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="bg-white rounded-lg border border-red-200 p-4 sm:p-6">
+          <div className="text-center py-8 sm:py-12">
+            <div className="text-red-600 text-4xl sm:text-5xl mb-3 sm:mb-4">⚠️</div>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Failed to Load Sitemap</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 px-4">{error}</p>
             <button
               onClick={fetchSitemapData}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Retry
             </button>
@@ -660,32 +665,32 @@ export default function SiteMap({ organization, session, onPageSelect }: SiteMap
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Site Map Tree */}
       <div className="bg-white rounded-lg border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-semibold text-gray-900">Site Structure</h2>
-                <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Site Structure</h2>
+                <span className="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium bg-blue-100 text-blue-700 rounded-full whitespace-nowrap">
                   {stats.total} pages
                 </span>
               </div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
                 Visual representation of your site's page hierarchy from sitemap.xml
               </p>
             </div>
             <button
               onClick={fetchSitemapData}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap self-start sm:self-auto"
             >
               Refresh
             </button>
           </div>
         </div>
 
-        <div className="p-6 max-h-[600px] overflow-y-auto">
+        <div className="p-3 sm:p-6 max-h-[500px] sm:max-h-[600px] overflow-y-auto">
           {sitemapData.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               No pages found in sitemap

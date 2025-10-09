@@ -224,7 +224,7 @@ export default function TemplateSectionEditModal() {
 
   return (
     <div className={cn(
-      'fixed z-50 flex items-center justify-center',
+      'fixed z-[60] flex items-center justify-center',
       isFullscreen ? 'inset-0' : 'inset-0'
     )}>
       {/* Backdrop */}

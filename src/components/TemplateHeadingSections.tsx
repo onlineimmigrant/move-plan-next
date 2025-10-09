@@ -4,8 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import TemplateHeadingSection from './TemplateHeadingSection';
-import { TemplateHeadingSectionEditProvider, useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
-import TemplateHeadingSectionEditModal from './TemplateHeadingSectionEdit/TemplateHeadingSectionEditModal';
+import { useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
 
 interface TemplateHeadingSectionData {
   id: number;
@@ -34,7 +33,7 @@ interface TemplateHeadingSectionData {
 }
 
 // Inner component that uses the context
-const TemplateHeadingSectionsInner: React.FC = () => {
+const TemplateHeadingSections: React.FC = () => {
   const pathname = usePathname();
   const [headings, setHeadings] = useState<TemplateHeadingSectionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -113,16 +112,7 @@ const TemplateHeadingSectionsInner: React.FC = () => {
   return (
     <>
       <TemplateHeadingSection templateSectionHeadings={headings} />
-      <TemplateHeadingSectionEditModal />
     </>
-  );
-};
-
-const TemplateHeadingSections: React.FC = () => {
-  return (
-    <TemplateHeadingSectionEditProvider>
-      <TemplateHeadingSectionsInner />
-    </TemplateHeadingSectionEditProvider>
   );
 };
 

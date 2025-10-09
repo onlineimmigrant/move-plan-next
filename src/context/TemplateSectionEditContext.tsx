@@ -78,12 +78,14 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
   const toast = useToast();
 
   const openModal = useCallback((section: TemplateSectionData | null = null, urlPage?: string) => {
+    console.log('[TemplateSectionEditContext] openModal called:', { section, urlPage });
+    
     if (section) {
       setEditingSection(section);
       setMode('edit');
     } else {
       // Create new section with default values
-      setEditingSection({
+      const newSection = {
         id: 0,
         section_title: '',
         section_description: '',
@@ -91,7 +93,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_full_width: false,
         is_section_title_aligned_center: true,
         is_section_title_aligned_right: false,
-        text_style_variant: 'default',
+        text_style_variant: 'default' as const,
         grid_columns: 3,
         is_image_bottom: false,
         is_slider: false,
@@ -101,7 +103,9 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         website_metric: [],
         organization_id: null,
         url_page: urlPage || '',
-      });
+      };
+      console.log('[TemplateSectionEditContext] Creating new section with data:', newSection);
+      setEditingSection(newSection);
       setMode('create');
     }
     setIsOpen(true);
@@ -114,6 +118,8 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
 
   const updateSection = useCallback(async (data: Partial<TemplateSectionData>) => {
     try {
+      console.log('[TemplateSectionEditContext] updateSection called:', { mode, data });
+      
       const url = mode === 'create' 
         ? '/api/template-sections'
         : `/api/template-sections/${editingSection?.id}`;
@@ -140,7 +146,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_real_estate_modal: data.is_real_estate_modal,
       };
 
-      console.log('Saving template section:', { url, method, payload });
+      console.log('Saving template section:', { url, method, payload, hasUrlPage: 'url_page' in payload, urlPageValue: (payload as any).url_page });
 
       const response = await fetch(url, {
         method,

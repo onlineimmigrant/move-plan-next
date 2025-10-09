@@ -13,6 +13,8 @@ import { TemplateSectionEditProvider } from '@/context/TemplateSectionEditContex
 import { TemplateHeadingSectionEditProvider } from '@/context/TemplateHeadingSectionEditContext';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import PostEditModal from '@/components/PostEditModal/PostEditModal';
+import TemplateSectionEditModal from '@/components/TemplateSectionEdit/TemplateSectionEditModal';
+import TemplateHeadingSectionEditModal from '@/components/TemplateHeadingSectionEdit/TemplateHeadingSectionEditModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/cookie/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -23,6 +25,7 @@ import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager'
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import ChatHelpWidget from '@/components/ChatHelpWidget';
+import UniversalNewButton from '@/components/AdminQuickActions/UniversalNewButton';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -192,6 +195,8 @@ export default function ClientProviders({
                         <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
                       </CookieSettingsProvider>
                       <PostEditModal />
+                      <TemplateSectionEditModal />
+                      <TemplateHeadingSectionEditModal />
                     </TemplateHeadingSectionEditProvider>
                   </TemplateSectionEditProvider>
                 </PostEditModalProvider>
@@ -258,6 +263,7 @@ function BannerAwareContent({
           </main>
         )}
         <ChatHelpWidget />
+        <UniversalNewButton />
       </div>
     </>
   );

@@ -4,8 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import TemplateSection from './TemplateSection';
-import { TemplateSectionEditProvider, useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
-import TemplateSectionEditModal from './TemplateSectionEdit/TemplateSectionEditModal';
+import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
 
 // Types
 interface Metric {
@@ -45,7 +44,7 @@ interface TemplateSectionData {
 }
 
 // Inner component that uses the context
-const TemplateSectionsInner: React.FC = () => {
+const TemplateSections: React.FC = () => {
   const pathname = usePathname();
   const [sections, setSections] = useState<TemplateSectionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,16 +123,7 @@ const TemplateSectionsInner: React.FC = () => {
       {sections.map(section => (
         <TemplateSection key={section.id} section={section} />
       ))}
-      <TemplateSectionEditModal />
     </>
-  );
-};
-
-const TemplateSections: React.FC = () => {
-  return (
-    <TemplateSectionEditProvider>
-      <TemplateSectionsInner />
-    </TemplateSectionEditProvider>
   );
 };
 

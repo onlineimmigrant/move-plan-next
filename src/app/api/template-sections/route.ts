@@ -1,11 +1,30 @@
 // /app/api/template-sections/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { getOrganizationId } from '@/lib/supabase';
 import { TemplateSection } from '@/types/template_section';
 
 // Force dynamic rendering and disable caching
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+// Create Supabase client with service role for admin operations (bypasses RLS)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+// Regular client for read operations (respects RLS)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function GET(request: Request) {
   console.log('Received GET request for /api/template-sections:', request.url);
@@ -206,8 +225,10 @@ export async function POST(request: Request) {
       is_real_estate_modal: body.is_real_estate_modal ?? false,
     };
 
-    // Insert the new template section
-    const { data, error } = await supabase
+    console.log('Inserting template section with data:', insertData);
+
+    // Insert the new template section using supabaseAdmin (bypasses RLS)
+    const { data, error } = await supabaseAdmin
       .from('website_templatesection')
       .insert(insertData)
       .select()
@@ -216,7 +237,7 @@ export async function POST(request: Request) {
     if (error) {
       console.error('Error creating template section:', error);
       return NextResponse.json(
-        { error: 'Failed to create template section', details: error.message },
+        { error: 'Failed to create template section', details: error.message, code: error.code },
         { status: 500 }
       );
     }
