@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings } from './types';
 import { DisclosureSection } from './DisclosureSection';
 import { SubsectionDisclosure } from './SubsectionDisclosure';
@@ -20,6 +20,7 @@ interface SettingsFormFieldsProps {
   organizationId?: string;
   resetKey?: number; // Add reset key to force re-initialization
   readOnly?: boolean; // Add read-only mode
+  initialSection?: string; // Section key to open initially (e.g., 'hero', 'branding')
 }
 
 const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({ 
@@ -32,12 +33,14 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   readOnly = false,
   session,
   organizationId,
-  resetKey = 0
+  resetKey = 0,
+  initialSection
 }) => {
   const [sectionChanges, setSectionChanges] = useState<Record<string, Partial<Settings>>>({});
   const [originalSectionValues, setOriginalSectionValues] = useState<Record<string, Partial<Settings>>>({});
   const [sectionStates, setSectionStates] = useState<Record<string, boolean>>({});
   const [lastActiveSections, setLastActiveSections] = useState<Set<string>>(new Set());
+  const initialSectionProcessed = useRef(false);
 
   // Debug: Track changes to cookie_services
   useEffect(() => {
@@ -80,6 +83,18 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
       console.log('[SettingsFormFields] Set all sections to closed, resetKey:', resetKey);
     }
   }, [resetKey]);
+
+  // Open initial section if specified
+  useEffect(() => {
+    if (initialSection && !initialSectionProcessed.current && Object.keys(sectionStates).length > 0) {
+      console.log('[SettingsFormFields] Opening initial section:', initialSection);
+      setSectionStates(prev => ({
+        ...prev,
+        [initialSection]: true
+      }));
+      initialSectionProcessed.current = true;
+    }
+  }, [initialSection]); // Only depend on initialSection, not sectionStates
 
   // Save section states to sessionStorage whenever they change
   useEffect(() => {

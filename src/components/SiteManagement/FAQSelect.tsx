@@ -29,9 +29,11 @@ interface FAQ {
   answer?: string;
   section?: string;
   order?: number;
-  display_order?: number;
+  display_order?: boolean; // Boolean field!
   display_home_page?: boolean;
-  product_sub_type_id?: number;
+  is_help_center?: boolean;
+  help_center_order?: number | null;
+  product_sub_type_id?: number | null;
   organization_id?: string | null;
   created_at?: string;
 }
@@ -456,7 +458,11 @@ export const FAQSelect: React.FC<FAQSelectProps> = ({
         answer: editForm.answer || '',
         section: editForm.section || '',
         order: editForm.order || 1,
-        display_home_page: editForm.display_home_page || true,
+        display_order: false, // Default to false for new FAQs
+        display_home_page: editForm.display_home_page !== undefined ? editForm.display_home_page : true,
+        is_help_center: false, // Default to false for new FAQs
+        help_center_order: null,
+        product_sub_type_id: null,
         organization_id: editForm.organization_id || null
       };
       newValue = [...value, newFAQ];

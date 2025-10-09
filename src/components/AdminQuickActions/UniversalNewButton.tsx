@@ -6,6 +6,10 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { isAdminClient } from '@/lib/auth';
 import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
 import { useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
+import { usePageCreation } from '@/context/PageCreationContext';
+import { usePostEditModal } from '@/context/PostEditModalContext';
+import { useSiteMapModal } from '@/context/SiteMapModalContext';
+import { useGlobalSettingsModal } from '@/context/GlobalSettingsModalContext';
 
 interface MenuItem {
   label: string;
@@ -27,6 +31,10 @@ const UniversalNewButton: React.FC = () => {
   
   const { openModal: openSectionModal } = useTemplateSectionEdit();
   const { openModal: openHeadingSectionModal } = useTemplateHeadingSectionEdit();
+  const { openModal: openPageModal } = usePageCreation();
+  const { openCreateModal } = usePostEditModal();
+  const { openModal: openSiteMapModal } = useSiteMapModal();
+  const { openModal: openGlobalSettingsModal } = useGlobalSettingsModal();
 
   // Check admin status
   useEffect(() => {
@@ -76,7 +84,7 @@ const UniversalNewButton: React.FC = () => {
         {
           label: 'Hero Section',
           action: 'hero',
-          description: 'Coming soon',
+          description: 'Edit hero section settings',
         },
       ],
     },
@@ -86,12 +94,12 @@ const UniversalNewButton: React.FC = () => {
         {
           label: 'Menu Item',
           action: 'menu',
-          description: 'Coming soon',
+          description: 'Add menu items',
         },
         {
           label: 'Submenu',
           action: 'submenu',
-          description: 'Coming soon',
+          description: 'Manage submenus',
         },
       ],
     },
@@ -101,12 +109,12 @@ const UniversalNewButton: React.FC = () => {
         {
           label: 'Empty Page',
           action: 'page',
-          description: 'Coming soon',
+          description: 'Create template-based page',
         },
                 {
           label: 'Blog Post',
           action: 'post',
-          description: 'Coming soon',
+          description: 'Write a new blog post',
         },
       ],
     },
@@ -116,7 +124,7 @@ const UniversalNewButton: React.FC = () => {
         {
           label: 'Product Page',
           action: 'product_page',
-          description: 'Coming soon',
+          description: 'Manage products',
         },
                 {
           label: 'Pricing Plan',
@@ -131,12 +139,17 @@ const UniversalNewButton: React.FC = () => {
         {
           label: 'FAQ',
           action: 'faq',
-          description: 'Coming soon',
+          description: 'Manage FAQ items',
         },
         {
           label: 'Feature',
           action: 'feature',
-          description: 'Coming soon',
+          description: 'Edit features section',
+        },
+                {
+          label: 'Banner',
+          action: 'banner',
+          description: 'Manage banners',
         },
 
       ],
@@ -147,12 +160,12 @@ const UniversalNewButton: React.FC = () => {
         {
           label: 'Global Settings',
           action: 'global_settings',
-          description: 'Coming soon',
+          description: 'Configure site settings',
         },
         {
           label: 'Site Map',
           action: 'site_map',
-          description: 'Coming soon',
+          description: 'View site structure',
         },
 
       ],
@@ -171,17 +184,50 @@ const UniversalNewButton: React.FC = () => {
       case 'heading':
         openHeadingSectionModal(undefined, pathname);
         break;
-      case 'hero':
-      case 'menu':
-      case 'submenu':
       case 'page':
+        openPageModal();
+        break;
       case 'post':
-        case 'product_page':
-        case 'pricing_plan':
-      case 'faq':
-      case 'feature':
-      case 'general_settings':
+        // Open blog post creation modal
+        openCreateModal(pathname);
+        break;
       case 'site_map':
+        // Open site map modal
+        openSiteMapModal();
+        break;
+      case 'global_settings':
+        // Open global settings modal
+        openGlobalSettingsModal();
+        break;
+      case 'hero':
+        // Open global settings modal with hero section expanded
+        openGlobalSettingsModal('hero');
+        break;
+      case 'faq':
+        // Open global settings modal with FAQs section expanded
+        openGlobalSettingsModal('faqs');
+        break;
+      case 'feature':
+        // Open global settings modal with features section expanded
+        openGlobalSettingsModal('features');
+        break;
+      case 'banner':
+        // Open global settings modal with banners section expanded
+        openGlobalSettingsModal('banners');
+        break;
+      case 'menu':
+        // Open global settings modal with menu items section expanded
+        openGlobalSettingsModal('menu-items');
+        break;
+      case 'submenu':
+        // Open global settings modal with menu items section expanded (submenu is part of menu-items)
+        openGlobalSettingsModal('menu-items');
+        break;
+      case 'product_page':
+        // Open global settings modal with products section expanded
+        openGlobalSettingsModal('products');
+        break;
+      case 'pricing_plan':
         // Placeholder for future implementations
         alert(`Creating ${action} - Coming soon!`);
         break;

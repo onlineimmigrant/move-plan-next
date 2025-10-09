@@ -22,27 +22,47 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Cache organization ID to avoid repeated lookups
+let cachedOrgId: string | null = null;
+let cacheTime: number = 0;
+const CACHE_TTL = 60000; // 60 seconds
+
+async function getCachedOrganizationId(baseUrl: string): Promise<string | null> {
+  const now = Date.now();
+  if (cachedOrgId && (now - cacheTime) < CACHE_TTL) {
+    console.log('[Cache] Using cached organization ID:', cachedOrgId);
+    return cachedOrgId;
+  }
+  
+  console.log('[Cache] Fetching fresh organization ID');
+  const orgId = await getOrganizationId(baseUrl);
+  if (orgId) {
+    cachedOrgId = orgId;
+    cacheTime = now;
+  }
+  return orgId;
+}
+
 export async function GET(request: Request) {
-  console.log('Received GET request for /api/template-heading-sections:', request.url);
+  const startTime = Date.now();
+  console.log('[Template Headings] Received GET request:', request.url);
 
   const { searchParams } = new URL(request.url);
   const url_page = searchParams.get('url_page');
 
-  console.log('url_page:', url_page);
-
   if (!url_page) {
-    console.log('Missing url_page parameter');
+    console.log('[Template Headings] Missing url_page parameter');
     return NextResponse.json({ error: 'url_page is required' }, { status: 400 });
   }
 
   const decodedUrlPage = decodeURIComponent(url_page);
-  console.log('Decoded url_page:', decodedUrlPage);
+  console.log('[Template Headings] Decoded url_page:', decodedUrlPage);
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getOrganizationId(baseUrl);
+    const organizationId = await getCachedOrganizationId(baseUrl);
     if (!organizationId) {
-      console.error('Organization not found');
+      console.error('[Template Headings] Organization not found');
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
@@ -90,10 +110,14 @@ export async function GET(request: Request) {
     }));
 
     if (!headingsData || headingsData.length === 0) {
-      console.log('No heading sections found for url_page:', decodedUrlPage, 'and organization_id:', organizationId);
+      const elapsed = Date.now() - startTime;
+      console.log(`[Template Headings] ✅ No headings found (${elapsed}ms)`);
       return NextResponse.json([], { status: 200 });
     }
 
+    const elapsed = Date.now() - startTime;
+    console.log(`[Template Headings] ✅ Success - ${headings.length} headings in ${elapsed}ms`);
+    
     return NextResponse.json(headings, {
       status: 200,
       headers: {
@@ -101,7 +125,8 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error in template-heading-sections API:', error);
+    const elapsed = Date.now() - startTime;
+    console.error(`[Template Headings] ❌ Error after ${elapsed}ms:`, error);
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

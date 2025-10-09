@@ -103,32 +103,42 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('Fetched banners in context:', JSON.stringify(fetchedBanners, null, 2));
         const dismissedBannerIds = getDismissedBannerIds();
         console.log('Dismissed Banner IDs in context:', dismissedBannerIds);
-        const mappedBanners: Banner[] = fetchedBanners.map((banner) => {
-          const isFixed = Boolean(banner.is_fixed_above_navbar ?? false);
-          const content: BannerContent = banner.content ?? { text: '' };
-          const mappedBanner: Banner = {
-            id: banner.id,
-            position: banner.position ?? 'top',
-            type: banner.type ?? 'permanent',
-            is_enabled: banner.is_enabled ?? true,
-            content,
-            landing_content: (banner as any).landing_content ?? null, // Kept as requested
-            openState: banner.openState ?? 'full',
-            dismissal_duration: banner.dismissal_duration,
-            page_paths: banner.page_paths ?? null,
-            isOpen: banner.isOpen ?? false,
-            isDismissed: dismissedBannerIds.includes(banner.id) || banner.isDismissed || false,
-            isFixedAboveNavbar: isFixed,
-            is_fixed_above_navbar: isFixed,
-            end_date_promotion: banner.end_date_promotion,
-            end_date_promotion_is_displayed: banner.end_date_promotion_is_displayed ?? false,
-          };
-          console.log(
-            `Mapped banner ${banner.id}: isFixedAboveNavbar=${isFixed}, isDismissed=${mappedBanner.isDismissed}`,
-            JSON.stringify(mappedBanner, null, 2)
-          );
-          return mappedBanner;
-        });
+        
+        // Filter out banners without IDs and map the rest
+        const mappedBanners: Banner[] = fetchedBanners
+          .filter(banner => {
+            if (!banner.id) {
+              console.warn('Banner without ID found, skipping:', banner);
+              return false;
+            }
+            return true;
+          })
+          .map((banner) => {
+            const isFixed = Boolean(banner.is_fixed_above_navbar ?? false);
+            const content: BannerContent = banner.content ?? { text: '' };
+            const mappedBanner: Banner = {
+              id: banner.id!, // We know this is defined due to filter above
+              position: banner.position ?? 'top',
+              type: banner.type ?? 'permanent',
+              is_enabled: banner.is_enabled ?? true,
+              content,
+              landing_content: (banner as any).landing_content ?? null, // Kept as requested
+              openState: banner.openState ?? 'full',
+              dismissal_duration: banner.dismissal_duration,
+              page_paths: banner.page_paths ?? null,
+              isOpen: banner.isOpen ?? false,
+              isDismissed: dismissedBannerIds.includes(banner.id!) || banner.isDismissed || false,
+              isFixedAboveNavbar: isFixed,
+              is_fixed_above_navbar: isFixed,
+              end_date_promotion: banner.end_date_promotion,
+              end_date_promotion_is_displayed: banner.end_date_promotion_is_displayed ?? false,
+            };
+            console.log(
+              `Mapped banner ${banner.id}: isFixedAboveNavbar=${isFixed}, isDismissed=${mappedBanner.isDismissed}`,
+              JSON.stringify(mappedBanner, null, 2)
+            );
+            return mappedBanner;
+          });
         console.log('Final banners set in state:', JSON.stringify(mappedBanners, null, 2));
         cache.set(cacheKey, mappedBanners);
         setBanners((prev) => {

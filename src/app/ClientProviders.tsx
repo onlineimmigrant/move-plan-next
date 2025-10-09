@@ -11,10 +11,16 @@ import { BannerProvider } from '@/context/BannerContext'; // Verify this export 
 import { PostEditModalProvider } from '@/context/PostEditModalContext';
 import { TemplateSectionEditProvider } from '@/context/TemplateSectionEditContext';
 import { TemplateHeadingSectionEditProvider } from '@/context/TemplateHeadingSectionEditContext';
+import { PageCreationProvider } from '@/context/PageCreationContext';
+import { SiteMapModalProvider } from '@/context/SiteMapModalContext';
+import { GlobalSettingsModalProvider } from '@/context/GlobalSettingsModalContext';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import PostEditModal from '@/components/PostEditModal/PostEditModal';
 import TemplateSectionEditModal from '@/components/TemplateSectionEdit/TemplateSectionEditModal';
 import TemplateHeadingSectionEditModal from '@/components/TemplateHeadingSectionEdit/TemplateHeadingSectionEditModal';
+import PageCreationModal from '@/components/AdminQuickActions/PageCreationModal';
+import SiteMapModal from '@/components/SiteManagement/SiteMapModal';
+import GlobalSettingsModal from '@/components/SiteManagement/GlobalSettingsModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/cookie/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -26,6 +32,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import ChatHelpWidget from '@/components/ChatHelpWidget';
 import UniversalNewButton from '@/components/AdminQuickActions/UniversalNewButton';
+import CommandPalette from '@/components/AdminQuickActions/CommandPalette';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -62,7 +69,7 @@ export default function ClientProviders({
   const pathname = usePathname() || '/'; // Fallback to '/' if usePathname returns null
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [headings, setHeadings] = useState<TemplateHeadingSection[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false to avoid blocking initial render
   const cache = useMemo(() => new Map<string, { sections: TemplateSection[]; headings: TemplateHeadingSection[] }>(), []);
 
   // Create QueryClient instance
@@ -77,13 +84,12 @@ export default function ClientProviders({
 
   useEffect(() => {
     const fetchTemplateData = async () => {
-      const maxRetries = 3;
-      const timeout = 10000; // 10 seconds
+      const maxRetries = 1; // Only try once - fail fast
+      const timeout = 10000; // 10 seconds - reasonable timeout
       let attempt = 0;
 
       while (attempt < maxRetries) {
         try {
-          setLoading(true);
           const urlPage = pathname === '/' ? '/home' : pathname;
           const cacheKey = urlPage;
 
@@ -91,15 +97,21 @@ export default function ClientProviders({
             const cachedData = cache.get(cacheKey)!;
             setSections(cachedData.sections);
             setHeadings(cachedData.headings);
-            console.log('Using cached template data for:', cacheKey);
+            console.log('[ClientProviders] Using cached template data for:', cacheKey);
             setLoading(false);
             return;
           }
+
+          // Only set loading if we're actually fetching (not using cache)
+          setLoading(true);
 
           const clientBaseUrl = getBaseUrl(false);
           const timeoutPromise: Promise<never> = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Fetch timeout')), timeout)
           );
+
+          console.log(`[ClientProviders] Fetching template data for: ${urlPage}`);
+          const startTime = Date.now();
 
           const [sectionsResult, headingsResult] = await Promise.all([
             Promise.race([
@@ -116,19 +128,22 @@ export default function ClientProviders({
             ]),
           ]);
 
+          const fetchTime = Date.now() - startTime;
+          console.log(`[ClientProviders] Template data fetched in ${fetchTime}ms`);
+
           const sectionsResponse = sectionsResult as Response;
           const headingsResponse = headingsResult as Response;
 
           if (!sectionsResponse.ok) {
-            const errorData = await sectionsResponse.json();
-            console.error('Sections fetch error:', errorData);
+            const errorData = await sectionsResponse.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('[ClientProviders] Sections fetch error:', errorData);
             throw new Error(errorData.error || 'Failed to fetch template sections');
           }
           const sectionsData = await sectionsResponse.json();
 
           if (!headingsResponse.ok) {
-            const errorData = await headingsResponse.json();
-            console.error('Headings fetch error:', errorData);
+            const errorData = await headingsResponse.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('[ClientProviders] Headings fetch error:', errorData);
             throw new Error(errorData.error || 'Failed to fetch template headings');
           }
           const headingsData = await headingsResponse.json();
@@ -137,24 +152,30 @@ export default function ClientProviders({
           setSections(sectionsData || []);
           setHeadings(headingsData || []);
           setLoading(false);
+          console.log(`[ClientProviders] ✅ Template data loaded successfully`);
           return; // Success, exit retry loop
         } catch (error: any) {
           attempt++;
-          console.error(`Attempt ${attempt} failed: Error fetching template data:`, error.message);
-          if (attempt === maxRetries) {
-            console.error('Max retries reached. Setting empty data.');
-            setSections([]);
-            setHeadings([]);
-            setLoading(false);
-          } else {
-            console.log(`Retrying... (${attempt + 1}/${maxRetries})`);
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s before retry
-          }
+          console.warn(`[ClientProviders] Attempt ${attempt} failed: ${error.message}`);
+          
+          // Don't retry - just set empty data and continue
+          // This allows the page to render even if template data fails
+          console.warn('[ClientProviders] ⚠️ Continuing with empty template data - page will render without custom sections');
+          setSections([]);
+          setHeadings([]);
+          setLoading(false);
+          break; // Exit loop immediately
         }
       }
     };
 
-    fetchTemplateData();
+    // Don't block - fetch in background
+    fetchTemplateData().catch(err => {
+      console.error('[ClientProviders] Unhandled error in fetchTemplateData:', err);
+      setSections([]);
+      setHeadings([]);
+      setLoading(false);
+    });
   }, [pathname, cache]);
 
   const showNavbarFooter = useMemo(() => {
@@ -181,22 +202,31 @@ export default function ClientProviders({
                 <PostEditModalProvider>
                   <TemplateSectionEditProvider>
                     <TemplateHeadingSectionEditProvider>
-                      <DynamicLanguageUpdater />
-                      <DefaultLocaleCookieManager />
-                      <CookieSettingsProvider>
-                        <BannerAwareContent
-                          children={children}
-                          showNavbarFooter={showNavbarFooter}
-                          menuItems={menuItems}
-                          loading={loading}
-                          headerData={headerData}
-                          activeLanguages={activeLanguages}
-                        />
-                        <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
-                      </CookieSettingsProvider>
-                      <PostEditModal />
-                      <TemplateSectionEditModal />
-                      <TemplateHeadingSectionEditModal />
+                      <PageCreationProvider>
+                        <SiteMapModalProvider>
+                          <GlobalSettingsModalProvider>
+                            <DynamicLanguageUpdater />
+                            <DefaultLocaleCookieManager />
+                            <CookieSettingsProvider>
+                              <BannerAwareContent
+                                children={children}
+                                showNavbarFooter={showNavbarFooter}
+                                menuItems={menuItems}
+                                loading={loading}
+                                headerData={headerData}
+                                activeLanguages={activeLanguages}
+                              />
+                              <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+                            </CookieSettingsProvider>
+                            <PostEditModal />
+                            <TemplateSectionEditModal />
+                            <TemplateHeadingSectionEditModal />
+                            <PageCreationModal />
+                            <SiteMapModal />
+                            <GlobalSettingsModal />
+                          </GlobalSettingsModalProvider>
+                        </SiteMapModalProvider>
+                      </PageCreationProvider>
                     </TemplateHeadingSectionEditProvider>
                   </TemplateSectionEditProvider>
                 </PostEditModalProvider>
@@ -235,9 +265,11 @@ function BannerAwareContent({
   );
   const fixedBannersHeight = useMemo(() => getFixedBannersHeight?.() || 0, [getFixedBannersHeight]);
 
-  if (loading) {
-    return <SkeletonLoader />;
-  }
+  // Don't block the entire page render on template data loading
+  // The page will render with empty sections/headings and they'll populate when ready
+  // if (loading) {
+  //   return <SkeletonLoader />;
+  // }
 
   return (
     <>
@@ -264,6 +296,7 @@ function BannerAwareContent({
         )}
         <ChatHelpWidget />
         <UniversalNewButton />
+        <CommandPalette />
       </div>
     </>
   );

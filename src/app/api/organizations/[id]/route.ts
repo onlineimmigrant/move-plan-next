@@ -371,6 +371,8 @@ export async function GET(
         order,
         display_order,
         display_home_page,
+        is_help_center,
+        help_center_order,
         product_sub_type_id,
         organization_id,
         created_at
@@ -642,8 +644,36 @@ export async function PUT(
 
     console.log('PUT - Updating organization:', orgId, 'with data keys:', Object.keys(body));
     console.log('PUT - User ID:', userId);
+    
+    console.log('🔍 BODY KEYS:', Object.keys(body));
+    console.log('🔍 HAS FAQS:', !!body.faqs);
+    console.log('🔍 HAS FEATURES:', !!body.features);
+    console.log('🔍 HAS BANNERS:', !!body.banners);
 
     const { organization: orgData, settings: settingsData, website_hero: heroData, menu_items: menuItems, submenu_items: submenuItems, blog_posts: blogPosts, products, features, faqs, banners, cookie_categories, cookie_services, cookie_consent_records } = body;
+
+    // Debug: Log incoming FAQ data
+    if (faqs) {
+      console.log('📥 INCOMING FAQ DATA:', {
+        count: Array.isArray(faqs) ? faqs.length : 'not array',
+        faqs: JSON.stringify(faqs, null, 2)
+      });
+      
+      // Check each FAQ for the "2" value in any field
+      if (Array.isArray(faqs)) {
+        faqs.forEach((faq, index) => {
+          console.log(`📋 FAQ ${index}:`, JSON.stringify(faq, null, 2));
+          Object.keys(faq).forEach(key => {
+            if (faq[key] === 2 || faq[key] === '2') {
+              console.log(`⚠️ FOUND "2" VALUE in FAQ ${index}, field "${key}":`, {
+                value: faq[key],
+                type: typeof faq[key]
+              });
+            }
+          });
+        });
+      }
+    }
 
     // Get user's profile to check permissions
     const { data: profile, error: profileError } = await supabase
@@ -759,7 +789,7 @@ export async function PUT(
     let updatedBlogPosts = null;
     let updatedProducts = null;
     let updatedFeatures = null;
-    let updatedFaqs = null;
+    let updatedFaqs: any[] = [];
     let updatedBanners = null;
     let updatedCookieServices = null;
     let updatedCookieConsentRecords = null;
@@ -794,6 +824,15 @@ export async function PUT(
 
     // Update or create settings if data provided
     if (settingsData) {
+      console.log('[API] settingsData received:', {
+        hasFeatures: !!settingsData.features,
+        featuresCount: Array.isArray(settingsData.features) ? settingsData.features.length : 0,
+        hasFaqs: !!settingsData.faqs,
+        faqsCount: Array.isArray(settingsData.faqs) ? settingsData.faqs.length : 0,
+        hasBanners: !!settingsData.banners,
+        bannersCount: Array.isArray(settingsData.banners) ? settingsData.banners.length : 0,
+      });
+      
       // Filter out fields that don't belong in the settings table
       const { 
         products, 
@@ -842,6 +881,12 @@ export async function PUT(
         columns,
         ...cleanSettingsData 
       } = settingsData;
+
+      console.log('[API] Extracted arrays:', {
+        features: features ? `${features.length} items` : 'undefined',
+        faqs: faqs ? `${faqs.length} items` : 'undefined', 
+        banners: banners ? `${banners.length} items` : 'undefined',
+      });
 
       // Check if settings record exists
       const { data: existingSettings, error: existingError } = await supabase
@@ -1382,10 +1427,16 @@ export async function PUT(
       }
     }
 
-    // 🚨 TEMPORARILY DISABLED FAQ UPDATE FOR DEBUGGING
     // Update FAQs if data provided
-    /*
     if (faqs && Array.isArray(faqs)) {
+      console.log('🚀🚀🚀 ============================================');
+      console.log('🚀🚀🚀 STARTING FAQ PROCESSING');
+      console.log('🚀🚀🚀 FAQ Count:', faqs.length);
+      console.log('🚀🚀🚀 RAW FAQ DATA:', JSON.stringify(faqs, null, 2));
+      console.log('🚀🚀🚀 ============================================');
+      
+      try {
+      
       // Get existing FAQs for this organization
       const { data: existingFaqs, error: existingFaqsError } = await supabase
         .from('faq')
@@ -1439,21 +1490,24 @@ export async function PUT(
           console.log('Processing FAQ:', JSON.stringify(faq, null, 2));
           console.log('Processing FAQ with display_home_page:', faq.display_home_page, typeof faq.display_home_page);
           
+          // Only include known FAQ fields to avoid passing through unexpected data
           const baseFaq = {
             question: faq.question.trim(),
             answer: faq.answer.trim(),
             section: faq.section || '',
             order: parseInt(String(faq.order)) || 1,
-            display_order: parseInt(String(faq.display_order || faq.order)) || 1,
+            display_order: convertToBoolean(faq.display_order), // Boolean, not integer!
             display_home_page: convertToBoolean(faq.display_home_page),
-            product_sub_type_id: faq.product_sub_type_id || null,
+            is_help_center: convertToBoolean(faq.is_help_center),
+            help_center_order: faq.help_center_order ? parseInt(String(faq.help_center_order)) : null,
+            product_sub_type_id: faq.product_sub_type_id ? parseInt(String(faq.product_sub_type_id)) : null,
             organization_id: orgId
           };
           
           console.log('Converted FAQ object:', JSON.stringify(baseFaq, null, 2));
 
           if (faq.id) {
-            // Existing FAQ - add to update list
+            // Existing FAQ - add to update list with ONLY the fields we want
             faqsToUpdate.push({
               id: faq.id,
               ...baseFaq
@@ -1468,6 +1522,7 @@ export async function PUT(
 
         // Handle updates
         if (faqsToUpdate.length > 0) {
+          console.log('Updating FAQs:', JSON.stringify(faqsToUpdate, null, 2));
           const { data: upsertedFaqs, error: updateError } = await supabase
             .from('faq')
             .upsert(faqsToUpdate, { 
@@ -1478,6 +1533,7 @@ export async function PUT(
 
           if (updateError) {
             console.error('Error updating FAQs:', updateError);
+            console.error('FAQs that failed to update:', JSON.stringify(faqsToUpdate, null, 2));
             return NextResponse.json({ error: 'Failed to update FAQs' }, { status: 500 });
           }
 
@@ -1486,6 +1542,7 @@ export async function PUT(
 
         // Handle inserts
         if (faqsToInsert.length > 0) {
+          console.log('Inserting FAQs:', JSON.stringify(faqsToInsert, null, 2));
           const { data: insertedFaqs, error: insertError } = await supabase
             .from('faq')
             .insert(faqsToInsert)
@@ -1493,6 +1550,7 @@ export async function PUT(
 
           if (insertError) {
             console.error('Error inserting FAQs:', insertError);
+            console.error('FAQs that failed to insert:', JSON.stringify(faqsToInsert, null, 2));
             return NextResponse.json({ error: 'Failed to insert FAQs' }, { status: 500 });
           }
 
@@ -1507,15 +1565,34 @@ export async function PUT(
       } else {
         updatedFaqs = [];
       }
+      
+      } catch (faqError: any) {
+        console.error('🚨🚨🚨 ============================================');
+        console.error('🚨🚨🚨 FAQ PROCESSING ERROR');
+        console.error('🚨🚨🚨 Error:', faqError);
+        console.error('🚨🚨🚨 Error Message:', faqError?.message);
+        console.error('🚨🚨🚨 Error Details:', faqError?.details);
+        console.error('🚨🚨🚨 Error Code:', faqError?.code);
+        console.error('🚨🚨🚨 ============================================');
+        return NextResponse.json({ 
+          error: 'Failed to update FAQs', 
+          details: faqError?.message || String(faqError),
+          code: faqError?.code 
+        }, { status: 500 });
+      }
+    } else {
+      updatedFaqs = [];
     }
-    */
-    
-    console.log('🚨 FAQ UPDATE TEMPORARILY DISABLED - Skipping FAQ processing');
-    updatedFaqs = faqs || [];
 
     // Update banners if data provided
     if (banners && Array.isArray(banners)) {
-      console.log('Processing banners update:', banners.length, 'banners');
+      console.log('🎨🎨🎨 ============================================');
+      console.log('🎨🎨🎨 STARTING BANNER PROCESSING');
+      console.log('🎨🎨🎨 Banner Count:', banners.length);
+      console.log('🎨🎨🎨 RAW BANNER DATA:', JSON.stringify(banners, null, 2));
+      console.log('🎨🎨🎨 ============================================');
+      
+      try {
       
       // Get existing banners for this organization
       const { data: existingBanners, error: existingBannersError } = await supabase
@@ -1558,6 +1635,15 @@ export async function PUT(
         banners.forEach((banner: any) => {
           console.log('Processing banner:', JSON.stringify(banner, null, 2));
           
+          // Validate UUID format (if ID exists)
+          const isValidUUID = (id: string) => {
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            return uuidRegex.test(id);
+          };
+          
+          // If banner has an ID but it's not a valid UUID, treat it as a new banner
+          const hasValidId = banner.id && isValidUUID(banner.id);
+          
           const baseBanner = {
             position: banner.position || 'top',
             type: banner.type || 'permanent',
@@ -1565,7 +1651,7 @@ export async function PUT(
             content: banner.content || { text: '', banner_background: '#3b82f6', banner_content_style: 'text-white' },
             landing_content: banner.landing_content || null,
             open_state: banner.openState || banner.open_state || 'absent',
-            dismissal_duration: banner.dismissal_duration || null,
+            dismissal_duration: banner.dismissal_duration ? parseInt(String(banner.dismissal_duration)) : null,
             page_paths: banner.page_paths || null,
             is_fixed_above_navbar: convertToBoolean(banner.isFixedAboveNavbar || banner.is_fixed_above_navbar),
             organization_id: orgId,
@@ -1573,20 +1659,21 @@ export async function PUT(
             end_date_promotion_is_displayed: convertToBoolean(banner.end_date_promotion_is_displayed),
             start_at: banner.start_at || new Date().toISOString(),
             end_at: banner.end_at || null,
-            priority: banner.priority || 1,
+            priority: banner.priority ? parseInt(String(banner.priority)) : 1,
             target_audience: banner.target_audience || ['anonymous', 'member', 'returning']
           };
           
           console.log('Converted banner object:', JSON.stringify(baseBanner, null, 2));
+          console.log('Banner has valid ID:', hasValidId, 'ID value:', banner.id);
 
-          if (banner.id) {
-            // Existing banner - add to update list
+          if (hasValidId) {
+            // Existing banner with valid UUID - add to update list
             bannersToUpdate.push({
               id: banner.id,
               ...baseBanner
             });
           } else {
-            // New banner - add to insert list (no id field)
+            // New banner or invalid ID - add to insert list (no id field)
             bannersToInsert.push(baseBanner);
           }
         });
@@ -1632,6 +1719,21 @@ export async function PUT(
         console.log('Successfully processed banners:', processedBanners);
       } else {
         updatedBanners = [];
+      }
+      
+      } catch (bannerError: any) {
+        console.error('🚨🚨🚨 ============================================');
+        console.error('🚨🚨🚨 BANNER PROCESSING ERROR');
+        console.error('🚨🚨🚨 Error:', bannerError);
+        console.error('🚨🚨🚨 Error Message:', bannerError?.message);
+        console.error('🚨🚨🚨 Error Details:', bannerError?.details);
+        console.error('🚨🚨🚨 Error Code:', bannerError?.code);
+        console.error('🚨🚨🚨 ============================================');
+        return NextResponse.json({ 
+          error: 'Failed to update banners', 
+          details: bannerError?.message || String(bannerError),
+          code: bannerError?.code 
+        }, { status: 500 });
       }
     } else {
       updatedBanners = banners || [];

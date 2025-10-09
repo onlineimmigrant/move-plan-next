@@ -42,7 +42,6 @@ const Header: React.FC<HeaderProps> = ({
   fixedBannersHeight = 0,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -76,7 +75,6 @@ const Header: React.FC<HeaderProps> = ({
   }, []);
 
   useEffect(() => {
-    setIsMounted(true);
     if (process.env.NODE_ENV === 'development') {
       console.log('Menu items in Header:', JSON.stringify(menuItems, null, 2));
       console.log('Fixed banners height in Header:', fixedBannersHeight);
@@ -553,34 +551,6 @@ const Header: React.FC<HeaderProps> = ({
     </div>
   ), [filteredMenuItems, currentLocale, t, setIsOpen]);
 
-  if (!isMounted) {
-    // Optimized skeleton header to prevent layout shift during hydration
-    return (
-      <nav
-        className="fixed left-0 right-0 z-40 bg-white/80 backdrop-blur-2xl"
-        style={{ 
-          top: `${fixedBannersHeight}px`,
-          backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-        }}
-      >
-        <div className={`mx-auto max-w-7xl p-4 pl-8 sm:px-6 flex justify-between items-center min-h-[64px]`}>
-          <div className="flex items-center">
-            <div className="h-8 w-32 bg-gray-200/60 animate-pulse rounded-lg"></div>
-          </div>
-          <div className="hidden md:flex items-center space-x-6">
-            <div className="h-6 w-16 bg-gray-200/60 animate-pulse rounded-lg"></div>
-            <div className="h-6 w-16 bg-gray-200/60 animate-pulse rounded-lg"></div>
-            <div className="h-6 w-16 bg-gray-200/60 animate-pulse rounded-lg"></div>
-          </div>
-          <div className="md:hidden">
-            <div className="h-6 w-6 bg-gray-200/60 animate-pulse rounded-lg"></div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
   return (
     <>      
       <nav
@@ -649,7 +619,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
             
             {/* Action Items */}
-            {isMounted && totalItems > 0 && (
+            {totalItems > 0 && (
               <LocalizedLink
                 href="/basket"
                 className="cursor-pointer relative"
@@ -765,7 +735,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center md:hidden">
-          {isMounted && totalItems > 0 && (
+          {totalItems > 0 && (
             <LocalizedLink
               href="/basket"
               className="cursor-pointer relative mr-4"

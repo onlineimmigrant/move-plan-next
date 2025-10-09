@@ -9,6 +9,7 @@ import CodeBlockCopy from '@/components/CodeBlockCopy';
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
+import { getBaseUrl } from '@/lib/utils';
 import Loading from '@/ui/Loading';
 
 interface TOCItem {
@@ -52,6 +53,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   
   const [isAdmin, setIsAdmin] = useState(false);
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  const [hasTemplateSections, setHasTemplateSections] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const baseUrl = useMemo(() =>
@@ -68,6 +70,38 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
     };
     checkAdminStatus();
   }, []);
+
+  // Check if there are any template sections or headings for this page
+  useEffect(() => {
+    const checkTemplateSections = async () => {
+      try {
+        const clientBaseUrl = getBaseUrl(false);
+        const urlPage = `/${slug}`;
+        
+        const [sectionsResponse, headingsResponse] = await Promise.all([
+          fetch(`${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`),
+          fetch(`${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`),
+        ]);
+
+        if (sectionsResponse.ok && headingsResponse.ok) {
+          const sectionsData = await sectionsResponse.json();
+          const headingsData = await headingsResponse.json();
+          
+          const hasSections = sectionsData.length > 0 || headingsData.length > 0;
+          console.log('Template sections check:', { 
+            sections: sectionsData.length, 
+            headings: headingsData.length,
+            hasSections 
+          });
+          setHasTemplateSections(hasSections);
+        }
+      } catch (error) {
+        console.error('Error checking template sections:', error);
+      }
+    };
+
+    checkTemplateSections();
+  }, [slug]);
 
   // Touch handler for table scrolling
   useEffect(() => {
@@ -273,6 +307,14 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
     [post]
   );
 
+  const shouldShowNoContentMessage = useMemo(() =>
+    post && 
+    (!post.section || post.section !== 'Landing') && 
+    (!post.content || post.content.length === 0) &&
+    !hasTemplateSections,
+    [post, hasTemplateSections]
+  );
+
   const isLandingPost = useMemo(() => 
     post?.section === 'Landing',
     [post?.section]
@@ -289,37 +331,39 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   return (
     <main className="px-4 sm:pt-4 sm:pb-16">
       {!isLandingPost ? (
-        <div className="grid lg:grid-cols-8 gap-x-4">
-          {/* TOC Sidebar */}
-          <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
-            {toc.length > 0 && (
-              <div className="hidden lg:block mt-16 sticky top-32">
-                <TOC toc={toc} handleScrollTo={handleScrollTo} />
-              </div>
-            )}
-          </aside>
-
-          {/* Main Content */}
-          <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900">
-            {shouldShowMainContent ? (
-              <>
-                <div
-                  onMouseEnter={() => setIsHeaderHovered(true)}
-                  onMouseLeave={() => setIsHeaderHovered(false)}
-                  className="relative"
-                >
-                  <PostHeader
-                    post={post}
-                    isAdmin={isAdmin}
-                    showAdminButtons={isHeaderHovered}
-                  />
+        // Only render the grid if we have content or need to show the empty message
+        (shouldShowMainContent || shouldShowNoContentMessage) ? (
+          <div className="grid lg:grid-cols-8 gap-x-4">
+            {/* TOC Sidebar */}
+            <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
+              {toc.length > 0 && (
+                <div className="hidden lg:block mt-16 sticky top-32">
+                  <TOC toc={toc} handleScrollTo={handleScrollTo} />
                 </div>
-                <article
-                  ref={contentRef}
-                  className="prose prose-sm sm:prose lg:prose-xl font-light text-gray-600 table-scroll-container"
-                  onDoubleClick={makeEditable}
-                  dangerouslySetInnerHTML={{ __html: post.content }}
-                />
+              )}
+            </aside>
+
+            {/* Main Content */}
+            <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900">
+              {shouldShowMainContent ? (
+                <>
+                  <div
+                    onMouseEnter={() => setIsHeaderHovered(true)}
+                    onMouseLeave={() => setIsHeaderHovered(false)}
+                    className="relative"
+                  >
+                    <PostHeader
+                      post={post}
+                      isAdmin={isAdmin}
+                      showAdminButtons={isHeaderHovered}
+                    />
+                  </div>
+                  <article
+                    ref={contentRef}
+                    className="prose prose-sm sm:prose lg:prose-xl font-light text-gray-600 table-scroll-container"
+                    onDoubleClick={makeEditable}
+                    dangerouslySetInnerHTML={{ __html: post.content }}
+                  />
                 
                 {/* Code block copy functionality */}
                 <CodeBlockCopy />
@@ -337,7 +381,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                   </div>
                 )}
               </>
-            ) : (
+            ) : shouldShowNoContentMessage ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -349,17 +393,16 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                   <p className="text-gray-500">This post doesn't have any content yet.</p>
                 </div>
               </div>
-            )}
+            ) : null}
           </section>
 
           {/* Right Sidebar */}
           <aside className="lg:col-span-2"></aside>
         </div>
+        ) : null
       ) : post.content ? (
         <LandingPostContent post={post} />
-      ) : (
-        <div></div>
-      )}
+      ) : null}
     </main>
   );
 });

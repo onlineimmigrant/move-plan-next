@@ -16,6 +16,15 @@ interface BannerProps {
 export const Banner = ({ banner, index = 0 }: BannerProps) => {
   const { openBanner, closeBanner, dismissBanner } = useBanner();
 
+  // Don't render banners without an ID (should never happen for saved banners)
+  if (!banner.id) {
+    console.warn('Banner component received banner without ID, skipping render');
+    return null;
+  }
+
+  // Type assertion: after the check above, we know banner.id is defined
+  const bannerId: string = banner.id;
+
   // Check if the banner is expired based on end_date_promotion
   const isBannerExpired = () => {
     if (!banner.end_date_promotion) return false;
@@ -29,20 +38,21 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
   if (banner.isDismissed || isBannerExpired()) return null;
 
   useEffect(() => {
-    const el = document.getElementById(`banner-${banner.id}`);
+    const el = document.getElementById(`banner-${bannerId}`);
     if (el) {
       const styles = window.getComputedStyle(el);
       console.log(
-        `Banner ${banner.id} computed styles: top=${styles.top}, z-index=${styles.zIndex}, height=${el.offsetHeight}px, position=${styles.position}`
+        `Banner ${bannerId} computed styles: top=${styles.top}, z-index=${styles.zIndex}, height=${el.offsetHeight}px, position=${styles.position}`
       );
     }
-  }, [banner.id]);
+  }, [bannerId]);
 
-  console.log(`Rendering banner ${banner.id}: isFixedAboveNavbar=${banner.isFixedAboveNavbar}, position=${banner.position}, index=${index}`);
+  console.log(`Rendering banner ${bannerId}: isFixedAboveNavbar=${banner.isFixedAboveNavbar}, position=${banner.position}, index=${index}`);
 
   const handleOpen = () => {
+    // Only open banner if it has a valid openState
     if (banner.openState && banner.openState !== 'absent') {
-      openBanner(banner.id, banner.openState);
+      openBanner(bannerId, banner.openState);
     }
   };
 
@@ -121,8 +131,8 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
         banner.end_date_promotion_is_displayed && banner.end_date_promotion ? 'min-h-[72px] sm:min-h-[48px]' : 'min-h-[48px]'
       } ${banner.content?.banner_background || 'bg-gray-50'}`}
       role="banner"
-      aria-labelledby={`banner-${banner.id}`}
-      id={`banner-${banner.id}`}
+      aria-labelledby={`banner-${bannerId}`}
+      id={`banner-${bannerId}`}
     >
       {shouldRenderOpenButton && banner.position === 'bottom' && (
         <button
@@ -161,7 +171,7 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
             )}
 
             <div className="flex flex-col">
-              <p id={`banner-${banner.id}-text`} className="break-words">
+              <p id={`banner-${bannerId}-text`} className="break-words">
                 {banner.content.text}
               </p>
             </div>
@@ -236,20 +246,20 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
         </div>
       )}
 
-      {banner.type === 'closed' && (
+      {banner.type === 'closed' && banner.id && (
         <Button
           variant="close"
-          onClick={() => dismissBanner(banner.id)}
+          onClick={() => dismissBanner(bannerId)}
           aria-label="Close banner"
         >
           <CloseButton />
         </Button>
       )}
 
-      {banner.isOpen && (
+      {banner.isOpen && banner.id && (
         <Button
           variant="close"
-          onClick={() => closeBanner(banner.id)}
+          onClick={() => closeBanner(bannerId)}
           aria-label="Close expanded banner"
         >
           <CloseButton />

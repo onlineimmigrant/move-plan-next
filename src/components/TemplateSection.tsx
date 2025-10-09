@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import Image from 'next/image';
@@ -252,17 +252,17 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
   const totalItems = section.website_metric?.length || 0;
   
   // Instead of pages, we scroll one item at a time
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % totalItems);
-  };
+  }, [totalItems]);
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev - 1 + totalItems) % totalItems);
-  };
+  }, [totalItems]);
 
-  const goToSlide = (index: number) => {
+  const goToSlide = useCallback((index: number) => {
     setCurrentSlide(index);
-  };
+  }, []);
 
   // Get items for current slide - showing itemsPerSlide items starting from currentSlide
   const getCurrentSlideItems = () => {
@@ -308,7 +308,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
         }
       };
     }
-  }, [section.is_slider, isAutoPlaying, currentSlide, totalDots]);
+  }, [section.is_slider, isAutoPlaying, totalDots, nextSlide]); // Added nextSlide (now stable with useCallback)
 
   // Pause auto-play on hover
   const handleMouseEnter = () => {
