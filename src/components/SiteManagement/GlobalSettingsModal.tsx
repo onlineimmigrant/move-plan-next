@@ -96,6 +96,7 @@ export default function GlobalSettingsModal() {
         submenu_items: data.submenu_items || [],
         blog_posts: data.blog_posts || [],
         products: data.products || [],
+        pricing_plans: data.pricing_plans || [],
         features: data.features || [],
         faqs: data.faqs || [],
         banners: data.banners || [],
@@ -156,11 +157,12 @@ export default function GlobalSettingsModal() {
         button_explore: data.website_hero?.button_explore || 'Explore',
         animation_element: data.website_hero?.animation_element || '',
         
-        // Features, FAQs, Banners, Products, Menu Items arrays (from their respective tables)
+        // Features, FAQs, Banners, Products, Menu Items, Pricing Plans arrays (from their respective tables)
         features: data.features || [],
         faqs: data.faqs || [],
         banners: data.banners || [],
         products: data.products || [],
+        pricing_plans: data.pricing_plans || [],
         menu_items: data.menu_items || [],
         submenu_items: data.submenu_items || [],
       };
@@ -170,6 +172,7 @@ export default function GlobalSettingsModal() {
       console.log('[GlobalSettingsModal] FAQs array:', data.faqs);
       console.log('[GlobalSettingsModal] Banners array:', data.banners);
       console.log('[GlobalSettingsModal] Products array:', data.products);
+      console.log('[GlobalSettingsModal] Pricing Plans array:', data.pricing_plans);
       console.log('[GlobalSettingsModal] Menu Items array:', data.menu_items);
       console.log('[GlobalSettingsModal] Submenu Items array:', data.submenu_items);
 
@@ -249,11 +252,11 @@ export default function GlobalSettingsModal() {
         columns: settingsAny.columns,
       };
 
-      // Create clean settings object without hero, features, faqs, banners, products, menu_items, submenu_items fields
+      // Create clean settings object without hero, features, faqs, banners, products, pricing_plans, menu_items, submenu_items fields
       const cleanSettings = { ...settings };
       const fieldsToRemove = [
         ...Object.keys(heroFields),
-        'features', 'faqs', 'banners', 'products', 'menu_items', 'submenu_items'
+        'features', 'faqs', 'banners', 'products', 'pricing_plans', 'menu_items', 'submenu_items'
       ];
       
       fieldsToRemove.forEach(key => {
@@ -266,9 +269,12 @@ export default function GlobalSettingsModal() {
         faqs: settingsAny.faqs?.length || 0,
         banners: settingsAny.banners?.length || 0,
         products: settingsAny.products?.length || 0,
+        pricing_plans: settingsAny.pricing_plans?.length || 0,
         menu_items: settingsAny.menu_items?.length || 0,
         submenu_items: settingsAny.submenu_items?.length || 0,
       });
+      
+      console.log('[GlobalSettingsModal] Pricing plans data:', JSON.stringify(settingsAny.pricing_plans, null, 2));
       
       const response = await fetch(`/api/organizations/${organization.id}`, {
         method: 'PUT',
@@ -284,6 +290,7 @@ export default function GlobalSettingsModal() {
           faqs: settingsAny.faqs,
           banners: settingsAny.banners,
           products: settingsAny.products,
+          pricing_plans: settingsAny.pricing_plans,
           menu_items: settingsAny.menu_items,
           submenu_items: settingsAny.submenu_items,
         }),
@@ -292,6 +299,25 @@ export default function GlobalSettingsModal() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to save settings');
+      }
+
+      // Get the updated data from the response
+      const responseData = await response.json();
+      console.log('📥 Server response:', responseData);
+
+      // Update settings with the server response (includes new IDs for created items)
+      if (responseData.pricing_plans) {
+        console.log('✅ Updating pricing_plans in state:', responseData.pricing_plans.length);
+        setSettings({
+          ...settings,
+          pricing_plans: responseData.pricing_plans,
+          products: responseData.products || settingsAny.products,
+          features: responseData.features || settingsAny.features,
+          faqs: responseData.faqs || settingsAny.faqs,
+          banners: responseData.banners || settingsAny.banners,
+          menu_items: responseData.menu_items || settingsAny.menu_items,
+          submenu_items: responseData.submenu_items || settingsAny.submenu_items,
+        });
       }
 
       setOriginalSettings({ ...settings });

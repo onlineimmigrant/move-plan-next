@@ -336,6 +336,40 @@ export async function GET(
       return NextResponse.json({ error: 'Error fetching products' }, { status: 500 });
     }
 
+    // Fetch the organization's pricing plans
+    const { data: pricing_plans, error: pricingPlansError } = await supabase
+      .from('pricingplan')
+      .select(`
+        id,
+        package,
+        measure,
+        description,
+        price,
+        currency,
+        currency_symbol,
+        recurring_interval,
+        recurring_interval_count,
+        monthly_price_calculated,
+        is_active,
+        is_promotion,
+        promotion_percent,
+        promotion_price,
+        product_id,
+        stripe_price_id,
+        organization_id,
+        order,
+        type,
+        created_at,
+        updated_at
+      `)
+      .eq('organization_id', orgId)
+      .order('order', { ascending: true });
+
+    if (pricingPlansError) {
+      console.error('Error fetching pricing plans:', pricingPlansError);
+      return NextResponse.json({ error: 'Error fetching pricing plans' }, { status: 500 });
+    }
+
     // Fetch the organization's features
     const { data: features, error: featuresError } = await supabase
       .from('feature')
@@ -496,6 +530,8 @@ export async function GET(
     let structuredMenuItems = menu_items;
     let mappedSubmenuItems = submenu_items;
     let mappedBanners = banners;
+    let structuredProducts = products;
+    let mappedPricingPlans = pricing_plans;
     
     if (menu_items && submenu_items && Array.isArray(menu_items) && Array.isArray(submenu_items)) {
       // Map submenu field names for admin interface compatibility
@@ -514,6 +550,21 @@ export async function GET(
       }));
     }
 
+    // Structure products with nested pricing plans (similar to menu items with submenus)
+    if (products && pricing_plans && Array.isArray(products) && Array.isArray(pricing_plans)) {
+      // Map pricing plan field names if needed for admin interface compatibility
+      mappedPricingPlans = pricing_plans.map((plan: any) => ({
+        ...plan,
+        // Add any field mappings here if needed
+      }));
+      
+      // Structure products with nested pricing plans
+      structuredProducts = products.map((product: any) => ({
+        ...product,
+        pricing_plans: mappedPricingPlans.filter((plan: any) => plan.product_id === product.id)
+      }));
+    }
+
     // Map banner field names for admin interface compatibility
     if (banners && Array.isArray(banners)) {
       mappedBanners = banners.map((banner: any) => ({
@@ -529,6 +580,7 @@ export async function GET(
     console.log('🍪 Returning cookie_categories in response:', cookie_categories || []);
     console.log('🍪 Returning cookie_services in response:', cookie_services || []);
     console.log('🍪 Returning cookie_consent_records in response:', cookie_consent_records || []);
+    console.log('💰 Returning products with nested pricing_plans:', structuredProducts?.length || 0);
 
     return NextResponse.json({
       organization,
@@ -537,7 +589,8 @@ export async function GET(
       menu_items: structuredMenuItems || [],
       submenu_items: mappedSubmenuItems || [],
       blog_posts: blog_posts || [],
-      products: products || [],
+      products: structuredProducts || [], // Structured products with nested pricing plans
+      pricing_plans: mappedPricingPlans || [], // All pricing plans (for backward compatibility)
       features: features || [],
       faqs: faqs || [],
       banners: mappedBanners || [],
@@ -649,8 +702,9 @@ export async function PUT(
     console.log('🔍 HAS FAQS:', !!body.faqs);
     console.log('🔍 HAS FEATURES:', !!body.features);
     console.log('🔍 HAS BANNERS:', !!body.banners);
+    console.log('🔍 HAS PRICING_PLANS:', !!body.pricing_plans);
 
-    const { organization: orgData, settings: settingsData, website_hero: heroData, menu_items: menuItems, submenu_items: submenuItems, blog_posts: blogPosts, products, features, faqs, banners, cookie_categories, cookie_services, cookie_consent_records } = body;
+    const { organization: orgData, settings: settingsData, website_hero: heroData, menu_items: menuItems, submenu_items: submenuItems, blog_posts: blogPosts, products, pricing_plans, features, faqs, banners, cookie_categories, cookie_services, cookie_consent_records } = body;
 
     // Debug: Log incoming FAQ data
     if (faqs) {
@@ -788,6 +842,7 @@ export async function PUT(
     let updatedSubmenuItems = null;
     let updatedBlogPosts = null;
     let updatedProducts = null;
+    let updatedPricingPlans = null;
     let updatedFeatures = null;
     let updatedFaqs: any[] = [];
     let updatedBanners = null;
@@ -1304,6 +1359,142 @@ export async function PUT(
         }
       } else {
         updatedProducts = [];
+      }
+    }
+
+    // Update pricing plans if data provided
+    if (pricing_plans && Array.isArray(pricing_plans)) {
+      console.log('🔧 PROCESSING PRICING PLANS:', pricing_plans.length);
+      console.log('📦 PRICING PLANS DATA:', JSON.stringify(pricing_plans, null, 2));
+      
+      // Get existing pricing plans for this organization
+      const { data: existingPricingPlans, error: existingPricingPlansError } = await supabase
+        .from('pricingplan')
+        .select('id, product_id')
+        .eq('organization_id', orgId);
+
+      if (existingPricingPlansError) {
+        console.error('Error fetching existing pricing plans:', existingPricingPlansError);
+        return NextResponse.json({ error: 'Failed to fetch existing pricing plans' }, { status: 500 });
+      }
+
+      console.log('📊 EXISTING PRICING PLANS:', existingPricingPlans?.length || 0);
+
+      const existingIds = new Set(existingPricingPlans?.map(plan => plan.id) || []);
+      const incomingIds = new Set(pricing_plans.filter(plan => plan.id).map(plan => plan.id));
+
+      console.log('🔍 EXISTING IDS:', Array.from(existingIds));
+      console.log('🔍 INCOMING IDS:', Array.from(incomingIds));
+
+      // Delete pricing plans that are no longer in the new list
+      const idsToDelete = Array.from(existingIds).filter(id => !incomingIds.has(id));
+      
+      if (idsToDelete.length > 0) {
+        console.log('🗑️ DELETING PRICING PLANS:', idsToDelete);
+        for (const planId of idsToDelete) {
+          const { error: deleteError } = await supabase
+            .from('pricingplan')
+            .delete()
+            .eq('id', planId);
+
+          if (deleteError && deleteError.code !== '23503') {
+            console.error('Error deleting pricing plan:', deleteError);
+            return NextResponse.json({ error: 'Failed to delete pricing plan' }, { status: 500 });
+          } else if (deleteError && deleteError.code === '23503') {
+            console.log('Skipping deletion of pricing plan', planId, 'due to foreign key constraints');
+          }
+        }
+      }
+
+      // Handle pricing plans (separate new inserts from updates)
+      if (pricing_plans.length > 0) {
+        const validPricingPlans = pricing_plans.filter(plan => 
+          plan.product_id && plan.package && plan.package.trim() !== ''
+        );
+        
+        console.log('✅ VALID PRICING PLANS:', validPricingPlans.length);
+        console.log('📦 VALID PLANS DATA:', JSON.stringify(validPricingPlans, null, 2));
+        
+        if (validPricingPlans.length > 0) {
+          const plansToUpdate: any[] = [];
+          const plansToInsert: any[] = [];
+
+          validPricingPlans.forEach((plan, index) => {
+            const basePlan = {
+              product_id: plan.product_id,
+              organization_id: orgId, // Required field
+              package: plan.package.trim(),
+              description: plan.description || '',
+              price: plan.price || 0,
+              currency: plan.currency || 'USD',
+              currency_symbol: plan.currency_symbol || '$',
+              measure: plan.measure || '',
+              recurring_interval: plan.recurring_interval || null,
+              order: parseInt(String(plan.order)) || index + 1,
+              is_active: plan.is_active !== false,
+              stripe_price_id: plan.stripe_price_id || null
+              // Note: features is handled via pricingplan_features join table, not directly on pricingplan
+            };
+
+            console.log(`🔍 PLAN ${index + 1}:`, plan.id ? `UPDATE (ID: ${plan.id})` : 'INSERT', basePlan);
+
+            if (plan.id) {
+              // Existing plan - add to update list
+              plansToUpdate.push({
+                id: plan.id,
+                ...basePlan
+              });
+            } else {
+              // New plan - add to insert list (no id field)
+              plansToInsert.push(basePlan);
+            }
+          });
+
+          updatedPricingPlans = [];
+
+          // Handle updates
+          if (plansToUpdate.length > 0) {
+            console.log('🔄 UPDATING PRICING PLANS:', plansToUpdate.length);
+            const { data: upsertedPlans, error: updateError } = await supabase
+              .from('pricingplan')
+              .upsert(plansToUpdate, { 
+                onConflict: 'id',
+                ignoreDuplicates: false 
+              })
+              .select();
+
+            if (updateError) {
+              console.error('Error updating pricing plans:', updateError);
+              return NextResponse.json({ error: 'Failed to update pricing plans' }, { status: 500 });
+            }
+
+            updatedPricingPlans.push(...(upsertedPlans || []));
+            console.log('✅ UPDATED PRICING PLANS:', upsertedPlans?.length);
+          }
+
+          // Handle inserts
+          if (plansToInsert.length > 0) {
+            console.log('➕ INSERTING PRICING PLANS:', plansToInsert.length);
+            const { data: insertedPlans, error: insertError } = await supabase
+              .from('pricingplan')
+              .insert(plansToInsert)
+              .select();
+
+            if (insertError) {
+              console.error('Error inserting pricing plans:', insertError);
+              return NextResponse.json({ error: 'Failed to insert pricing plans' }, { status: 500 });
+            }
+
+            updatedPricingPlans.push(...(insertedPlans || []));
+            console.log('✅ INSERTED PRICING PLANS:', insertedPlans?.length);
+          }
+
+          console.log('🎉 SUCCESSFULLY PROCESSED PRICING PLANS:', updatedPricingPlans.length);
+        } else {
+          updatedPricingPlans = [];
+        }
+      } else {
+        updatedPricingPlans = [];
       }
     }
 
@@ -1996,6 +2187,7 @@ export async function PUT(
       })) || [],
       blog_posts: updatedBlogPosts || [],
       products: updatedProducts || [],
+      pricing_plans: updatedPricingPlans || [],
       features: updatedFeatures || [],
       faqs: updatedFaqs || [],
       banners: mappedUpdatedBanners || [],

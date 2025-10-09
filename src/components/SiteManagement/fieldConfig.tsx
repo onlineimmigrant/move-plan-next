@@ -797,6 +797,8 @@ export const renderField = ({
             name={field.name}
             value={Array.isArray(value) ? value : []}
             onChange={handleChange}
+            pricingPlans={Array.isArray(allSettings?.pricing_plans) ? allSettings.pricing_plans : []}
+            onPricingPlansChange={(plans) => handleChange('pricing_plans', plans)}
           />
         </div>
       );

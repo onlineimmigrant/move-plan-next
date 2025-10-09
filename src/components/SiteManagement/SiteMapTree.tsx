@@ -44,11 +44,14 @@ export default function SiteMapTree({ organization, session, onPageSelect, compa
   const [error, setError] = useState<string | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['/']));
   const [stats, setStats] = useState<Record<string, number>>({ total: 0 });
+  const [orgData, setOrgData] = useState<any>(null);
+  const [isLoadingOrgData, setIsLoadingOrgData] = useState(false);
 
   const SECOND_LEVEL_PAGES = ['/about-us', '/products', '/features', '/blog', '/faq', '/terms', '/support'];
 
   useEffect(() => {
     fetchSitemapData();
+    fetchOrganizationData();
   }, [organization]);
 
   const fetchSitemapData = async () => {
@@ -99,6 +102,45 @@ export default function SiteMapTree({ organization, session, onPageSelect, compa
       setError(err instanceof Error ? err.message : 'Failed to load sitemap');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchOrganizationData = async () => {
+    try {
+      setIsLoadingOrgData(true);
+      
+      const token = session?.access_token;
+      if (!token) {
+        console.warn('[SiteMapTree] No session token available');
+        return;
+      }
+
+      console.log('[SiteMapTree] Fetching organization data with menu items and products');
+      
+      const response = await fetch(`/api/organizations/${organization.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch organization data: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('[SiteMapTree] Fetched organization data:', {
+        menuItems: data.menu_items?.length || 0,
+        products: data.products?.length || 0,
+        pricingPlans: data.pricing_plans?.length || 0
+      });
+      
+      setOrgData(data);
+
+    } catch (err) {
+      console.error('Error fetching organization data:', err);
+      // Don't set error state, just log - sitemap can still work without this data
+    } finally {
+      setIsLoadingOrgData(false);
     }
   };
 
@@ -508,6 +550,120 @@ export default function SiteMapTree({ organization, session, onPageSelect, compa
           </div>
         )}
       </div>
+
+      {/* Structured Data Section - Menu Items & Products */}
+      {!compact && orgData && (
+        <div className="mt-8 pt-8 border-t-2 border-gray-300">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Content Structure</h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Navigation menus and products with their nested items
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Menu Items with Submenus */}
+            {orgData.menu_items && orgData.menu_items.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+                  <h4 className="text-base font-semibold text-gray-900">
+                    Menu Items
+                  </h4>
+                  <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                    {orgData.menu_items.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {orgData.menu_items.map((menuItem: any) => (
+                    <div key={menuItem.id} className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium text-gray-900">{menuItem.item_name}</span>
+                        {menuItem.submenu_items && menuItem.submenu_items.length > 0 && (
+                          <span className="ml-auto px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                            {menuItem.submenu_items.length} submenu{menuItem.submenu_items.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Submenus */}
+                      {menuItem.submenu_items && menuItem.submenu_items.length > 0 && (
+                        <div className="mt-2 ml-6 space-y-1">
+                          {menuItem.submenu_items.map((submenu: any) => (
+                            <div key={submenu.id} className="flex items-center gap-2 text-sm text-gray-600">
+                              <ChevronRightIcon className="w-3 h-3 text-gray-300" />
+                              <span>{submenu.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Products with Pricing Plans */}
+            {orgData.products && orgData.products.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <ShoppingBagIcon className="w-5 h-5 text-purple-600" />
+                  <h4 className="text-base font-semibold text-gray-900">
+                    Products
+                  </h4>
+                  <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
+                    {orgData.products.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {orgData.products.map((product: any) => (
+                    <div key={product.id} className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium text-gray-900">{product.product_name}</span>
+                        {product.pricing_plans && product.pricing_plans.length > 0 && (
+                          <span className="ml-auto px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
+                            {product.pricing_plans.length} plan{product.pricing_plans.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Pricing Plans */}
+                      {product.pricing_plans && product.pricing_plans.length > 0 && (
+                        <div className="mt-2 ml-6 space-y-1">
+                          {product.pricing_plans.map((plan: any) => (
+                            <div key={plan.id} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <ChevronRightIcon className="w-3 h-3 text-gray-300" />
+                                <span>
+                                  {plan.package}
+                                  {plan.measure && ` (${plan.measure})`}
+                                </span>
+                              </div>
+                              <span className="text-xs text-purple-600 font-medium">
+                                {plan.currency_symbol || plan.currency}{((plan.price || 0) / 100).toFixed(2)}
+                                {plan.recurring_interval && `/${plan.recurring_interval}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Empty State */}
+          {(!orgData.menu_items || orgData.menu_items.length === 0) && 
+           (!orgData.products || orgData.products.length === 0) && (
+            <div className="text-center py-8 text-gray-500">
+              <p>No menu items or products found</p>
+              <p className="text-sm mt-1">Create menu items and products to see them here</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Legend (only if not compact) */}
       {!compact && (

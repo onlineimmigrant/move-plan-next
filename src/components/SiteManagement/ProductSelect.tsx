@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, Bars3Icon, EyeIcon, EyeSlashIcon, ChevronUpDownIcon, CheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, Bars3Icon, EyeIcon, EyeSlashIcon, ChevronUpDownIcon, CheckIcon, ExclamationTriangleIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { createPortal } from 'react-dom';
 import Tooltip from '../Tooltip';
 import {
@@ -165,6 +165,260 @@ const CurrencyDropdown: React.FC<CurrencyDropdownProps> = ({
   );
 };
 
+// Sortable Pricing Plan Item Component
+interface SortablePricingPlanItemProps {
+  plan: any;
+  planIndex: number;
+  productId: number;
+  onEditPlan: (planIndex: number, plan: any) => void;
+  onDeletePlan: (plan: any) => void;
+  isEditingPlan: boolean;
+  editingPlanForProduct: number | null;
+  editingPlanIndex: number | null;
+  planEditForm: Partial<any>;
+  setPlanEditForm: (form: Partial<any>) => void;
+  handleSavePlan: () => void;
+  handleCancelPlan: () => void;
+  isDragDisabled?: boolean;
+}
+
+function SortablePricingPlanItem({
+  plan,
+  planIndex,
+  productId,
+  onEditPlan,
+  onDeletePlan,
+  isEditingPlan,
+  editingPlanForProduct,
+  editingPlanIndex,
+  planEditForm,
+  setPlanEditForm,
+  handleSavePlan,
+  handleCancelPlan,
+  isDragDisabled = false,
+}: SortablePricingPlanItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: `plan-${productId}-${planIndex}`,
+    disabled: isDragDisabled,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Enhanced listeners that prevent parent product drag interference
+  const enhancedListeners = {
+    ...listeners,
+    onMouseDown: (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (listeners?.onMouseDown) {
+        listeners.onMouseDown(e as any);
+      }
+    },
+    onTouchStart: (e: React.TouchEvent) => {
+      e.stopPropagation();
+      if (listeners?.onTouchStart) {
+        listeners.onTouchStart(e as any);
+      }
+    },
+  };
+
+  return (
+    <div key={planIndex}>
+      <div 
+        ref={setNodeRef} 
+        style={style}
+        className={`flex items-center justify-between p-3 bg-white/80 backdrop-blur-sm border-2 border-purple-100/60 rounded-lg hover:bg-white/90 hover:shadow-sm transition-all duration-200 ${
+          isDragging ? 'shadow-lg ring-2 ring-purple-500/20' : ''
+        }`}
+      >
+        <div className="flex items-center gap-2 flex-1">
+          {/* Drag Handle for Pricing Plan */}
+          <button
+            {...attributes}
+            {...enhancedListeners}
+            className="p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-all duration-200 cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Drag to reorder pricing plan"
+            disabled={isDragDisabled}
+            style={{ 
+              backgroundColor: isDragging ? '#a855f7' : 'transparent',
+              color: isDragging ? 'white' : undefined 
+            }}
+          >
+            <Bars3Icon className="h-3 w-3" />
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-normal text-gray-800 truncate">
+                {plan.package || 'Unnamed Plan'}
+                {plan.measure && ` (${plan.measure})`}
+              </span>
+              <span className="text-xs text-purple-600 font-medium">
+                {plan.currency_symbol || '$'}{((plan.price || 0) / 100).toFixed(2)}
+                {plan.recurring_interval && `/${plan.recurring_interval}`}
+              </span>
+
+              {!plan.is_active && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                  Inactive
+                </span>
+              )}
+            </div>
+            {plan.description && (
+              <div className="text-xs text-gray-500 mt-1.5 truncate font-light">
+                {plan.description}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onEditPlan(planIndex, plan)}
+            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+            title="Edit pricing plan"
+          >
+            <PencilIcon className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDeletePlan(plan)}
+            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+            title="Delete pricing plan"
+          >
+            <TrashIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Edit Form for Pricing Plan */}
+      {isEditingPlan && editingPlanForProduct === productId && editingPlanIndex === planIndex && (
+        <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+          <h5 className="text-sm font-medium text-purple-900 mb-2">
+            Edit Pricing Plan
+          </h5>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Package Name *</label>
+              <input
+                type="text"
+                value={planEditForm.package || ''}
+                onChange={(e) => setPlanEditForm({ ...planEditForm, package: e.target.value })}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                placeholder="e.g., Basic, Pro, Enterprise"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Measure</label>
+              <input
+                type="text"
+                value={planEditForm.measure || ''}
+                onChange={(e) => setPlanEditForm({ ...planEditForm, measure: e.target.value })}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                placeholder="e.g., per user, per seat"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Price *</label>
+              <div className="flex gap-1">
+                <CurrencyDropdown
+                  value={planEditForm.currency_symbol || '$'}
+                  onChange={(symbol) => {
+                    const currency = currencyOptions.find(c => c.symbol === symbol);
+                    setPlanEditForm({ 
+                      ...planEditForm, 
+                      currency_symbol: symbol,
+                      currency: currency?.value || 'USD'
+                    });
+                  }}
+                  className="w-16"
+                />
+                <input
+                  type="number"
+                  value={planEditForm.price ? (planEditForm.price / 100).toFixed(2) : ''}
+                  onChange={(e) => {
+                    const dollars = parseFloat(e.target.value) || 0;
+                    const cents = Math.round(dollars * 100);
+                    setPlanEditForm({ ...planEditForm, price: cents });
+                  }}
+                  className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  placeholder="0.00"
+                  step="0.01"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Billing Interval</label>
+              <select
+                value={planEditForm.recurring_interval || 'month'}
+                onChange={(e) => setPlanEditForm({ ...planEditForm, recurring_interval: e.target.value })}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+              >
+                <option value="day">Daily</option>
+                <option value="week">Weekly</option>
+                <option value="month">Monthly</option>
+                <option value="year">Yearly</option>
+                <option value="one_time">One Time</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <input
+                type="text"
+                value={planEditForm.description || ''}
+                onChange={(e) => setPlanEditForm({ ...planEditForm, description: e.target.value })}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                placeholder="Plan description"
+              />
+            </div>
+            <div className="md:col-span-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={planEditForm.is_active !== false}
+                  onChange={(e) => setPlanEditForm({ ...planEditForm, is_active: e.target.checked })}
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                />
+                <span className="text-xs font-medium text-gray-700">Active</span>
+              </label>
+            </div>
+            <div className="md:col-span-3">
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleCancelPlan}
+                  className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSavePlan}
+                  disabled={!planEditForm.package}
+                  className="px-2 py-1 text-xs font-medium text-white bg-purple-600 border border-transparent rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Update Plan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Product {
   id?: number;
   product_name: string;
@@ -188,8 +442,23 @@ interface Product {
 interface SortableProductItemProps {
   product: Product;
   index: number;
+  productPricingPlans: any[]; // Pricing plans for this product
+  isExpanded: boolean;
+  onToggleExpansion: (productId: number) => void;
   onEdit: (index: number) => void;
   onToggleVisibility: (index: number) => void;
+  onAddPlan: (productId: number) => void;
+  onEditPlan: (planIndex: number, plan: any) => void;
+  onDeletePlan: (plan: any) => void;
+  onPlanReorder: (productId: number, plans: any[]) => void;
+  isEditingPlan: boolean;
+  editingPlanForProduct: number | null;
+  editingPlanIndex: number | null;
+  planEditForm: Partial<any>;
+  setPlanEditForm: (form: Partial<any>) => void;
+  handleSavePlan: () => void;
+  handleCancelPlan: () => void;
+  planRenderKey: number;
   // Edit form props
   isEditing: boolean;
   editingIndex: number | null;
@@ -199,13 +468,31 @@ interface SortableProductItemProps {
   handleCancel: () => void;
   handleDeleteClick: () => void;
   isDragDisabled?: boolean;
+  // Pricing plans props (for inline editing - now deprecated)
+  pricingPlans?: any[];
+  onPricingPlansChange?: (plans: any[]) => void;
 }
 
 function SortableProductItem({
   product,
   index,
+  productPricingPlans,
+  isExpanded,
+  onToggleExpansion,
   onEdit,
   onToggleVisibility,
+  onAddPlan,
+  onEditPlan,
+  onDeletePlan,
+  onPlanReorder,
+  isEditingPlan,
+  editingPlanForProduct,
+  editingPlanIndex,
+  planEditForm,
+  setPlanEditForm,
+  handleSavePlan,
+  handleCancelPlan,
+  planRenderKey,
   // Edit form props
   isEditing,
   editingIndex,
@@ -215,6 +502,8 @@ function SortableProductItem({
   handleCancel,
   handleDeleteClick,
   isDragDisabled = false,
+  pricingPlans = [],
+  onPricingPlansChange,
 }: SortableProductItemProps) {
   const {
     attributes,
@@ -232,6 +521,61 @@ function SortableProductItem({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Drag and drop sensors for pricing plan items - isolated from parent product drag
+  const planSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle pricing plan drag and drop reordering
+  const handlePlanDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (event.activatorEvent?.stopPropagation) {
+      event.activatorEvent.stopPropagation();
+    }
+
+    if (over && active.id !== over.id && product.id) {
+      const activeId = active.id.toString();
+      const overId = over.id.toString();
+      
+      const activeIdParts = activeId.split('-');
+      const overIdParts = overId.split('-');
+      
+      if (activeIdParts.length === 3 && overIdParts.length === 3 && 
+          activeIdParts[0] === 'plan' && overIdParts[0] === 'plan') {
+        
+        const activeIndex = parseInt(activeIdParts[2]);
+        const overIndex = parseInt(overIdParts[2]);
+        const activeProductId = parseInt(activeIdParts[1]);
+        const overProductId = parseInt(overIdParts[1]);
+
+        if (activeProductId === overProductId && activeProductId === product.id &&
+            !isNaN(activeIndex) && !isNaN(overIndex) && 
+            activeIndex >= 0 && overIndex >= 0 && 
+            activeIndex < productPricingPlans.length && 
+            overIndex < productPricingPlans.length) {
+          
+          const currentPlans = [...productPricingPlans];
+          const reorderedPlans = arrayMove(currentPlans, activeIndex, overIndex);
+          
+          const updatedPlans = reorderedPlans.map((plan, idx) => ({
+            ...plan,
+            order: idx + 1,
+          }));
+
+          onPlanReorder(product.id!, updatedPlans);
+        }
+      }
+    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -312,11 +656,20 @@ function SortableProductItem({
                     S
                   </span>
                 )}
-                {product.price_manual && (
-                  <span className="text-xs text-green-600 font-medium">
-                    {product.currency_manual_symbol}{product.price_manual}
-                  </span>
-                )}
+                {productPricingPlans.length > 0 && (() => {
+                  const activePlans = productPricingPlans.filter(p => p.is_active !== false);
+                  if (activePlans.length > 0) {
+                    const minPlan = activePlans.reduce((min, plan) => 
+                      (plan.price || 0) < (min.price || 0) ? plan : min
+                    );
+                    return (
+                      <span className="text-xs text-green-600 font-medium">
+                        from {minPlan.currency_symbol || '$'}{((minPlan.price || 0) / 100).toFixed(2)}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </Tooltip>
           </div>
@@ -347,6 +700,22 @@ function SortableProductItem({
           >
             <PencilIcon className="h-4 w-4" />
           </button>
+          {/* Disclosure Button for Pricing Plans */}
+          {product.id && (
+            <button
+              type="button"
+              onClick={() => onToggleExpansion(product.id!)}
+              className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200"
+              aria-label={isExpanded ? 'Collapse pricing plans' : 'Expand pricing plans'}
+              title={isExpanded ? 'Collapse pricing plans' : 'Expand pricing plans'}
+            >
+              {isExpanded ? (
+                <ChevronDownIcon className="h-4 w-4" />
+              ) : (
+                <ChevronRightIcon className="h-4 w-4" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -520,6 +889,187 @@ function SortableProductItem({
           </div>
         </div>
       )}
+
+      {/* Pricing Plans Section - Collapsible */}
+      {product.id && isExpanded && !(isEditing && editingIndex === index) && (
+        <div className="border-t border-gray-200/60 bg-gradient-to-br from-purple-25/50 to-purple-50/30">
+          <div className="pl-8 pr-4 py-4">
+            
+            {/* Pricing Plans List - Isolated drag context */}
+            <div 
+              className="space-y-2" 
+              data-plan-container={product.id}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <DndContext
+                sensors={planSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handlePlanDragEnd}
+                id={`plan-context-${product.id}`}
+              >
+                <SortableContext
+                  items={productPricingPlans.map((_, idx) => `plan-${product.id}-${idx}`)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="sortable-context-container">
+                  {productPricingPlans.map((plan, planIndex) => (
+                    <SortablePricingPlanItem
+                      key={`plan-${product.id}-${planIndex}-${plan.package}-${plan.order}-${planRenderKey}`}
+                      plan={plan}
+                      planIndex={planIndex}
+                      productId={product.id!}
+                      isEditingPlan={isEditingPlan}
+                      editingPlanForProduct={editingPlanForProduct}
+                      editingPlanIndex={editingPlanIndex}
+                      planEditForm={planEditForm}
+                      setPlanEditForm={setPlanEditForm}
+                      handleSavePlan={handleSavePlan}
+                      handleCancelPlan={handleCancelPlan}
+                      onEditPlan={onEditPlan}
+                      onDeletePlan={onDeletePlan}
+                    />
+                  ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+              {/* Add Plan Form - Positioned under pricing plans */}
+              {isEditingPlan && editingPlanForProduct === product.id && editingPlanIndex === null && (
+                <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <h5 className="text-sm font-medium text-purple-900 mb-2">
+                    Add Pricing Plan
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Package Name *</label>
+                      <input
+                        type="text"
+                        value={planEditForm.package || ''}
+                        onChange={(e) => setPlanEditForm({ ...planEditForm, package: e.target.value })}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Measure</label>
+                      <input
+                        type="text"
+                        value={planEditForm.measure || ''}
+                        onChange={(e) => setPlanEditForm({ ...planEditForm, measure: e.target.value })}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Price *</label>
+                      <div className="flex gap-1">
+                        <CurrencyDropdown
+                          value={planEditForm.currency_symbol || '$'}
+                          onChange={(symbol) => {
+                            const currency = currencyOptions.find(c => c.symbol === symbol);
+                            setPlanEditForm({ 
+                              ...planEditForm, 
+                              currency_symbol: symbol,
+                              currency: currency?.value || 'USD'
+                            });
+                          }}
+                          className="w-16"
+                        />
+                        <input
+                          type="number"
+                          value={planEditForm.price ? (planEditForm.price / 100).toFixed(2) : ''}
+                          onChange={(e) => {
+                            const dollars = parseFloat(e.target.value) || 0;
+                            const cents = Math.round(dollars * 100);
+                            setPlanEditForm({ ...planEditForm, price: cents });
+                          }}
+                          className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                          placeholder="0.00"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Billing Interval</label>
+                      <select
+                        value={planEditForm.recurring_interval || 'month'}
+                        onChange={(e) => setPlanEditForm({ ...planEditForm, recurring_interval: e.target.value })}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      >
+                        <option value="day">Daily</option>
+                        <option value="week">Weekly</option>
+                        <option value="month">Monthly</option>
+                        <option value="year">Yearly</option>
+                        <option value="one_time">One Time</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={planEditForm.description || ''}
+                        onChange={(e) => setPlanEditForm({ ...planEditForm, description: e.target.value })}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        placeholder="Optional description"
+                      />
+                    </div>
+                    <div className="md:col-span-3">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={planEditForm.is_active !== false}
+                          onChange={(e) => setPlanEditForm({ ...planEditForm, is_active: e.target.checked })}
+                          className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                        />
+                        <span className="text-xs font-medium text-gray-700">Active</span>
+                      </label>
+                    </div>
+                    <div className="md:col-span-3">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCancelPlan}
+                          className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSavePlan}
+                          disabled={!planEditForm.package}
+                          className="px-2 py-1 text-xs font-medium text-white bg-purple-600 border border-transparent rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Add Plan
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {productPricingPlans.length === 0 && (
+                <div className="text-center py-4 text-gray-400 text-sm">
+                  No pricing plans yet. Click "Add Pricing Plan" to get started.
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mt-4">
+              {productPricingPlans.length > 0 && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                  {productPricingPlans.length} plan{productPricingPlans.length !== 1 ? 's' : ''}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => onAddPlan(product.id!)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600 bg-purple-50/80 border border-purple-200 rounded-lg hover:bg-purple-100/80 hover:border-purple-300 transition-all duration-200 shadow-sm ml-auto"
+              >
+                <PlusIcon className="h-3.5 w-3.5" />
+                Add Pricing Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -529,13 +1079,17 @@ interface ProductSelectProps {
   name: string;
   value: Product[];
   onChange: (name: string, value: Product[]) => void;
+  pricingPlans?: any[];
+  onPricingPlansChange?: (plans: any[]) => void;
 }
 
 export const ProductSelect: React.FC<ProductSelectProps> = ({
   label,
   name,
   value = [],
-  onChange
+  onChange,
+  pricingPlans = [],
+  onPricingPlansChange
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -544,6 +1098,16 @@ export const ProductSelect: React.FC<ProductSelectProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Expansion state for pricing plans
+  const [expandedProductIds, setExpandedProductIds] = useState<Set<number>>(new Set());
+
+  // Pricing plan editing state
+  const [isEditingPlan, setIsEditingPlan] = useState(false);
+  const [editingPlanForProduct, setEditingPlanForProduct] = useState<number | null>(null);
+  const [editingPlanIndex, setEditingPlanIndex] = useState<number | null>(null);
+  const [planEditForm, setPlanEditForm] = useState<Partial<any>>({});
+  const [planRenderKey, setPlanRenderKey] = useState(0);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -556,6 +1120,113 @@ export const ProductSelect: React.FC<ProductSelectProps> = ({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Toggle expansion for pricing plans
+  const handleToggleExpansion = (productId: number) => {
+    setExpandedProductIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  // Pricing plan handlers
+  const handleAddPlan = (productId: number) => {
+    const productPlans = pricingPlans.filter(p => p.product_id === productId);
+    const nextOrder = Math.max(0, ...productPlans.map(p => p.order || 0)) + 1;
+    const product = value.find(p => p.id === productId);
+    
+    setPlanEditForm({
+      package: '',
+      measure: '',
+      price: 0,
+      currency: 'USD',
+      currency_symbol: '$',
+      recurring_interval: 'month',
+      recurring_interval_count: 1,
+      is_active: true,
+      order: nextOrder,
+      product_id: productId,
+      organization_id: product?.organization_id
+    });
+    setEditingPlanForProduct(productId);
+    setEditingPlanIndex(null);
+    setIsEditingPlan(true);
+  };
+
+  const handleEditPlan = (planIndex: number, plan: any) => {
+    setPlanEditForm({ ...plan });
+    setEditingPlanForProduct(plan.product_id);
+    setEditingPlanIndex(planIndex);
+    setIsEditingPlan(true);
+  };
+
+  const handleSavePlan = () => {
+    if (!planEditForm.package || !onPricingPlansChange) return;
+
+    console.log('[ProductSelect] handleSavePlan - planEditForm:', planEditForm);
+    console.log('[ProductSelect] handleSavePlan - editingPlanIndex:', editingPlanIndex);
+    console.log('[ProductSelect] handleSavePlan - editingPlanForProduct:', editingPlanForProduct);
+
+    if (editingPlanIndex !== null && editingPlanForProduct !== null) {
+      // Update existing plan - find the plan by matching product_id and index within that product's plans
+      const productPlans = pricingPlans.filter(p => p.product_id === editingPlanForProduct);
+      const planToUpdate = productPlans[editingPlanIndex];
+      
+      console.log('[ProductSelect] Updating plan:', planToUpdate?.id);
+      
+      if (planToUpdate) {
+        const updatedPlans = pricingPlans.map(p => 
+          p.id === planToUpdate.id ? { ...p, ...planEditForm } : p
+        );
+        console.log('[ProductSelect] Updated plans array:', updatedPlans.filter(p => p.product_id === editingPlanForProduct));
+        onPricingPlansChange(updatedPlans);
+      }
+    } else {
+      // Add new plan - DON'T include an id field for new plans
+      const newPlan = {
+        ...planEditForm,
+        // No id field - let the database generate it
+      };
+      console.log('[ProductSelect] Adding new plan:', newPlan);
+      onPricingPlansChange([...pricingPlans, newPlan]);
+    }
+
+    setPlanRenderKey(prev => prev + 1);
+    setIsEditingPlan(false);
+    setEditingPlanForProduct(null);
+    setEditingPlanIndex(null);
+    setPlanEditForm({});
+  };
+
+  const handleCancelPlan = () => {
+    setIsEditingPlan(false);
+    setEditingPlanForProduct(null);
+    setEditingPlanIndex(null);
+    setPlanEditForm({});
+  };
+
+  const handleDeletePlan = (plan: any) => {
+    if (!onPricingPlansChange) return;
+    const updatedPlans = pricingPlans.filter(p => p.id !== plan.id);
+    onPricingPlansChange(updatedPlans);
+    setPlanRenderKey(prev => prev + 1);
+  };
+
+  const handlePlanReorder = (productId: number, reorderedPlans: any[]) => {
+    if (!onPricingPlansChange) return;
+    
+    // Update only the plans for this product
+    const otherPlans = pricingPlans.filter(p => p.product_id !== productId);
+    const updatedPlans = [...otherPlans, ...reorderedPlans];
+    
+    onPricingPlansChange(updatedPlans);
+    setPlanRenderKey(prev => prev + 1);
+  };
 
   // Delete functionality
   const handleDelete = (index: number) => {
@@ -940,13 +1611,30 @@ export const ProductSelect: React.FC<ProductSelectProps> = ({
               items={displayedProducts.map(product => product.id?.toString() || `temp-${sortedProducts.indexOf(product)}`)}
               strategy={verticalListSortingStrategy}
             >
-              {displayedProducts.map((product, index) => (
+              {displayedProducts.map((product, index) => {
+                const productPricingPlans = pricingPlans.filter(p => p.product_id === product.id);
+                return (
                   <SortableProductItem
                     key={`${product.id?.toString() || `temp-${index}`}-${product.product_name}-${product.order}`}
                     product={product}
                     index={sortedProducts.indexOf(product)} // Use original index for operations
+                    productPricingPlans={productPricingPlans}
+                    isExpanded={expandedProductIds.has(product.id || 0)}
+                    onToggleExpansion={handleToggleExpansion}
                     onEdit={handleEdit}
                     onToggleVisibility={handleToggleVisibility}
+                    onAddPlan={handleAddPlan}
+                    onEditPlan={handleEditPlan}
+                    onDeletePlan={handleDeletePlan}
+                    onPlanReorder={handlePlanReorder}
+                    isEditingPlan={isEditingPlan}
+                    editingPlanForProduct={editingPlanForProduct}
+                    editingPlanIndex={editingPlanIndex}
+                    planEditForm={planEditForm}
+                    setPlanEditForm={setPlanEditForm}
+                    handleSavePlan={handleSavePlan}
+                    handleCancelPlan={handleCancelPlan}
+                    planRenderKey={planRenderKey}
                     isEditing={isEditing}
                     editingIndex={editingIndex}
                     editForm={editForm}
@@ -955,9 +1643,11 @@ export const ProductSelect: React.FC<ProductSelectProps> = ({
                     handleCancel={handleCancel}
                     handleDeleteClick={handleDeleteClick}
                     isDragDisabled={isEditing}
+                    pricingPlans={pricingPlans}
+                    onPricingPlansChange={onPricingPlansChange}
                   />
-                ))
-              }
+                );
+              })}
             </SortableContext>
           </DndContext>
         ) : (
