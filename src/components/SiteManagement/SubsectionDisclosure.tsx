@@ -119,14 +119,14 @@ export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({
 
   return (
     <div ref={subsectionRef} className="w-full">
-      <div className="">
+      <div>
         <button
           type="button"
           onClick={handleToggle}
-          className={`flex items-center justify-between w-full text-left p-3 rounded-xl transition-all duration-300 mb-4 group focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:ring-offset-1 ${
+          className={`flex items-center justify-between w-full text-left p-3 transition-all duration-300 mb-4 group focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:ring-offset-1 ${
             isOpen 
-              ? 'bg-sky-50 backdrop-blur-sm border border-sky-200/60 shadow-md shadow-sky-100/20 ring-1 ring-sky-100/30' 
-              : 'bg-white/60 backdrop-blur-sm border border-gray-200/50 hover:bg-white/80 hover:border-gray-300/60 hover:shadow-md'
+              ? 'bg-transparent border-none shadow-none' 
+              : 'bg-white/60 backdrop-blur-sm border border-gray-200/50 hover:bg-white/80 hover:border-gray-300/60 hover:shadow-md rounded-xl'
           }`}
         >
           <div className="flex items-center justify-between w-full">
@@ -228,14 +228,14 @@ export const SubsectionDisclosure: React.FC<SubsectionDisclosureProps> = ({
           </div>
         </button>
         {isOpen && (
-            <div className="transition-all duration-300 bg-gray-50 rounded-lg">
+            <div className="transition-all duration-300 bg-gray-50">
                 {/* Action content (e.g., Add forms) */}
                 {actionContent && (
-                  <div className="mb-6">
+                  <div className="mb-6 px-4 sm:px-6">
                     {actionContent}
                   </div>
                 )}
-                <div className="p-2 rounded-lg">
+                <div className="px-4 sm:px-6 py-2">
                     <div className="overflow-hidden">
                         <div className="animate-fadeIn transition-all duration-300 ease-out transform translate-y-0">
                         <div className="pb-4">

@@ -260,7 +260,7 @@ export async function GET(
     }
 
     // Fetch the organization's submenu items
-    const { data: submenu_items, error: submenuError } = await supabase
+    const { data: submenu_items_raw, error: submenuError } = await supabase
       .from('website_submenuitem')
       .select(`
         id,
@@ -282,6 +282,12 @@ export async function GET(
       console.error('Error fetching submenu items:', submenuError);
       return NextResponse.json({ error: 'Error fetching submenu items' }, { status: 500 });
     }
+
+    // Map menu_item_id to website_menuitem_id for frontend compatibility
+    const submenu_items = submenu_items_raw?.map(item => ({
+      ...item,
+      website_menuitem_id: item.menu_item_id
+    })) || [];
 
     // Fetch the organization's blog posts
     const { data: blog_posts, error: blogPostsError } = await supabase
@@ -1085,6 +1091,10 @@ export async function PUT(
 
     // Update submenu items if data provided
     if (submenuItems && Array.isArray(submenuItems)) {
+      console.log('[API] Received submenu items:', submenuItems);
+      console.log('[API] Updated menu items:', updatedMenuItems);
+      console.log('[API] Original menu items:', menuItems);
+      
       // First, delete all existing submenu items for this organization
       const { error: deleteSubmenuError } = await supabase
         .from('website_submenuitem')
@@ -1098,48 +1108,117 @@ export async function PUT(
 
       // Insert new submenu items if any provided
       if (submenuItems.length > 0) {
-        // Create a mapping from old menu item IDs to new ones based on order/position
-        const menuItemIdMapping: { [key: string]: number } = {};
+        // Create a mapping from old menu item IDs to new ones
+        // The submenu items have old menu item IDs (from before deletion)
+        // The updatedMenuItems have new menu item IDs (from after insertion)
+        // We need to match them by order or display_name
+        const menuItemIdMapping: { [key: number]: number } = {};
         
-        if (updatedMenuItems && Array.isArray(updatedMenuItems)) {
-          // Map old menu items to new ones by order position
-          const originalMenuItems = menuItems || [];
-          updatedMenuItems.forEach((newMenuItem: any) => {
-            const originalMenuItem = originalMenuItems.find((orig: any) => 
-              orig.order === newMenuItem.order || orig.display_name === newMenuItem.display_name
-            );
-            if (originalMenuItem) {
-              menuItemIdMapping[originalMenuItem.id] = newMenuItem.id;
+        if (updatedMenuItems && Array.isArray(updatedMenuItems) && menuItems && Array.isArray(menuItems)) {
+          console.log('[API] Building menu item ID mapping...');
+          console.log('[API] Original menu items (from request):', menuItems.map((m: any) => ({ 
+            id: m.id, 
+            display_name: m.display_name, 
+            order: m.order 
+          })));
+          console.log('[API] New menu items (from database):', updatedMenuItems.map((m: any) => ({ 
+            id: m.id, 
+            display_name: m.display_name, 
+            order: m.order 
+          })));
+          
+          // Map old menu items to new ones by order position and display name
+          menuItems.forEach((oldMenuItem: any, index: number) => {
+            // Find the corresponding new menu item by order or display_name
+            const newMenuItem = updatedMenuItems.find((newItem: any) => 
+              newItem.order === oldMenuItem.order || 
+              newItem.display_name === oldMenuItem.display_name
+            ) || updatedMenuItems[index]; // Fallback to index matching
+            
+            if (oldMenuItem.id && newMenuItem?.id) {
+              menuItemIdMapping[oldMenuItem.id] = newMenuItem.id;
+              console.log(`[API] Mapping: old menu item ${oldMenuItem.id} (${oldMenuItem.display_name}) → new ${newMenuItem.id}`);
             }
           });
+          
+          console.log('[API] Final menu item ID mapping:', menuItemIdMapping);
         }
 
         const submenuItemsWithOrgId = submenuItems.map((item, index) => {
-          // Use the new menu item ID from the mapping, or try to find it by other means
-          const newMenuItemId = menuItemIdMapping[item.menu_item_id || item.website_menuitem_id] 
-            || item.menu_item_id 
-            || item.website_menuitem_id;
+          // Handle both menu_item_id and website_menuitem_id field names
+          // Frontend uses website_menuitem_id, database uses menu_item_id
+          const oldMenuItemId = item.menu_item_id || item.website_menuitem_id;
+          
+          // Use the mapping to get the new menu item ID
+          const newMenuItemId = oldMenuItemId ? menuItemIdMapping[oldMenuItemId] : undefined;
+          
+          console.log('[API] Processing submenu item:', {
+            name: item.name,
+            oldMenuItemId,
+            newMenuItemId,
+            hasMappingFor: oldMenuItemId in menuItemIdMapping,
+            mappingValue: menuItemIdMapping[oldMenuItemId]
+          });
+          
+          // Validate required fields
+          if (!newMenuItemId) {
+            console.error('[API] ❌ Missing or unmapped menu_item_id for submenu item:', {
+              submenuName: item.name,
+              oldMenuItemId,
+              availableMappings: Object.keys(menuItemIdMapping),
+              mapping: menuItemIdMapping
+            });
+          }
+          if (!item.name) {
+            console.error('[API] ❌ Missing name for submenu item:', item);
+          }
             
           return {
             name: item.name,
+            name_translation: item.name_translation,
             url_name: item.url_name || item.url,
+            description: item.description,
+            description_translation: item.description_translation,
+            is_displayed: convertToBoolean(item.is_displayed),
+            image: item.image,
             order: item.order || index + 1,
             menu_item_id: newMenuItemId,
             organization_id: orgId
           };
         });
 
-        const { data: insertedSubmenuItems, error: submenuItemsError } = await supabase
-          .from('website_submenuitem')
-          .insert(submenuItemsWithOrgId)
-          .select();
+        // Filter out items with missing required fields
+        const validSubmenuItems = submenuItemsWithOrgId.filter(item => {
+          const isValid = item.name && item.menu_item_id;
+          if (!isValid) {
+            console.warn('[API] ⚠️ Skipping invalid submenu item:', item);
+          }
+          return isValid;
+        });
 
-        if (submenuItemsError) {
-          console.error('Error creating submenu items:', submenuItemsError);
-          return NextResponse.json({ error: 'Failed to create submenu items' }, { status: 500 });
+        console.log('[API] Valid submenu items to insert:', validSubmenuItems);
+
+        if (validSubmenuItems.length === 0) {
+          console.warn('[API] No valid submenu items to insert');
+          updatedSubmenuItems = [];
+        } else {
+          const { data: insertedSubmenuItems, error: submenuItemsError } = await supabase
+            .from('website_submenuitem')
+            .insert(validSubmenuItems)
+            .select();
+
+          if (submenuItemsError) {
+            console.error('Error creating submenu items:', submenuItemsError);
+            console.error('Failed submenu items data:', validSubmenuItems);
+            return NextResponse.json({ 
+              error: 'Failed to create submenu items',
+              details: submenuItemsError.message,
+              data: validSubmenuItems
+            }, { status: 500 });
+          }
+
+          updatedSubmenuItems = insertedSubmenuItems;
         }
-
-        updatedSubmenuItems = insertedSubmenuItems;
       } else {
         updatedSubmenuItems = [];
       }

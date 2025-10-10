@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 import FeedbackAccordion from './FeedbackAccordion';
 import HelpCenterSection from './HelpCenterSection';
 import { RealEstateModal } from './realEstateModal';
-import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
+import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { HoverEditButtons } from '@/ui/Button';
 import { isAdminClient } from '@/lib/auth';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';

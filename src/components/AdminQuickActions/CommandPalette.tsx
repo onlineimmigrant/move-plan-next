@@ -10,9 +10,9 @@ import {
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { isAdminClient } from '@/lib/auth';
-import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
-import { useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
-import { usePageCreation } from '@/context/PageCreationContext';
+import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
+import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
+import { usePageCreation } from '@/components/modals/PageCreationModal/context';
 
 interface Command {
   id: string;

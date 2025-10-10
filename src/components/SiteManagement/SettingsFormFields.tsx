@@ -36,8 +36,6 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   resetKey = 0,
   initialSection
 }) => {
-  const [sectionChanges, setSectionChanges] = useState<Record<string, Partial<Settings>>>({});
-  const [originalSectionValues, setOriginalSectionValues] = useState<Record<string, Partial<Settings>>>({});
   const [sectionStates, setSectionStates] = useState<Record<string, boolean>>({});
   const [lastActiveSections, setLastActiveSections] = useState<Set<string>>(new Set());
   const lastInitialSection = useRef<string | undefined>(undefined); // Track last initial section
@@ -263,91 +261,6 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
 
     // Track this as an active section
     setLastActiveSections(prev => new Set([...prev, sectionKey]));
-    
-    setSectionChanges(prev => ({
-      ...prev,
-      [sectionKey]: {
-        ...prev[sectionKey],
-        [field]: value
-      }
-    }));
-
-    if (!originalSectionValues[sectionKey]) {
-      setOriginalSectionValues(prev => ({
-        ...prev,
-        [sectionKey]: {
-          [field]: settings[field]
-        }
-      }));
-    } else if (!(field in originalSectionValues[sectionKey])) {
-      setOriginalSectionValues(prev => ({
-        ...prev,
-        [sectionKey]: {
-          ...prev[sectionKey],
-          [field]: settings[field]
-        }
-      }));
-    }
-  };
-
-  const handleSectionSave = (sectionKey: string) => {
-    // Keep the section that was saved open
-    setSectionStates(prev => ({
-      ...prev,
-      [sectionKey]: true
-    }));
-
-    // Track this as the last active section
-    setLastActiveSections(prev => new Set([...prev, sectionKey]));
-    
-    setSectionChanges(prev => {
-      const newChanges = { ...prev };
-      delete newChanges[sectionKey];
-      return newChanges;
-    });
-    
-    setOriginalSectionValues(prev => {
-      const newOriginals = { ...prev };
-      delete newOriginals[sectionKey];
-      return newOriginals;
-    });
-
-    // Scroll to the saved section after a brief delay to ensure DOM is updated
-    setTimeout(() => {
-      const sectionElement = document.querySelector(`[data-section-key="${sectionKey}"]`);
-      if (sectionElement) {
-        sectionElement.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start',
-          inline: 'nearest' 
-        });
-      }
-    }, 100);
-  };
-
-  const handleSectionCancel = (sectionKey: string) => {
-    const originalValues = originalSectionValues[sectionKey];
-    if (originalValues) {
-      Object.entries(originalValues).forEach(([field, value]) => {
-        onChange(field as keyof Settings, value);
-      });
-    }
-    
-    setSectionChanges(prev => {
-      const newChanges = { ...prev };
-      delete newChanges[sectionKey];
-      return newChanges;
-    });
-    
-    setOriginalSectionValues(prev => {
-      const newOriginals = { ...prev };
-      delete newOriginals[sectionKey];
-      return newOriginals;
-    });
-  };
-
-  const hasSectionChanges = (sectionKey: string) => {
-    return sectionChanges[sectionKey] && Object.keys(sectionChanges[sectionKey]).length > 0;
   };
 
   const renderSectionFields = (fields: any[], sectionKey: string, columns?: number) => {
@@ -499,15 +412,281 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
           
           return section;
         })
-        .map(section => (
+        .map(section => {
+          // Define which sections should render directly without parent wrapper
+          const directSubsections = ['products', 'features', 'faqs', 'banners', 'blog', 'menu', 'cookies'];
+          const shouldRenderDirect = initialSection && directSubsections.includes(initialSection);
+
+          // If direct subsection render, skip DisclosureSection wrapper
+          if (shouldRenderDirect && section.subsections) {
+            return (
+              <div key={section.key} data-section-key={section.key} className="space-y-6">
+                {section.subsections.map(subsection => {
+                  console.log('🔍 Rendering direct subsection:', subsection.title, 'key:', subsection.key);
+                  // Get item counts for badges
+                  const getItemCount = (key: string) => {
+                    console.log('🔍 [getItemCount] called with key:', key, 'settings.cookie_services:', settings.cookie_services);
+                    if (key === 'blog-posts' && settings.blog_posts) {
+                      return Array.isArray(settings.blog_posts) ? settings.blog_posts.length : 0;
+                    }
+                    if (key === 'products' && settings.products) {
+                      return Array.isArray(settings.products) ? settings.products.length : 0;
+                    }
+                    if (key === 'features' && settings.features) {
+                      return Array.isArray(settings.features) ? settings.features.length : 0;
+                    }
+                    if (key === 'faqs' && settings.faqs) {
+                      return Array.isArray(settings.faqs) ? settings.faqs.length : 0;
+                    }
+                    if (key === 'banners' && settings.banners) {
+                      return Array.isArray(settings.banners) ? settings.banners.length : 0;
+                    }
+                    if (key === 'menu-items' && settings.menu_items) {
+                      return Array.isArray(settings.menu_items) ? settings.menu_items.length : 0;
+                    }
+                    if (key === 'cookie-categories' && settings.cookie_categories) {
+                      return Array.isArray(settings.cookie_categories) ? settings.cookie_categories.length : 0;
+                    }
+                    if (key === 'cookie-services' && settings.cookie_services) {
+                      const count = Array.isArray(settings.cookie_services) ? settings.cookie_services.length : 0;
+                      console.log('🍪 Cookie services count calculation:', count, 'from array:', settings.cookie_services);
+                      return count;
+                    }
+                    if (key === 'cookie-consent' && settings.cookie_consent_records) {
+                      return Array.isArray(settings.cookie_consent_records) ? settings.cookie_consent_records.length : 0;
+                    }
+                    return undefined;
+                  };
+
+                  // Get action content for specific subsections
+                  const getActionContent = () => {
+                    // For now, return null - we'll implement this differently
+                    return null;
+                  };
+
+                  return (
+                    <SubsectionDisclosure 
+                      key={subsection.key} 
+                      title={subsection.title}
+                      defaultOpen={false}
+                      storageKey={`${section.key}_${subsection.key}`}
+                      itemCount={getItemCount(subsection.key)}
+                      actionContent={getActionContent()}
+                      resetKey={resetKey}
+                      hasData={checkSubsectionData(subsection).hasData}
+                      isEmpty={checkSubsectionData(subsection).isEmpty}
+                      fieldStatuses={checkSubsectionData(subsection).fieldStatuses}
+                      allFieldsFilled={checkSubsectionData(subsection).allFieldsFilled}
+                      action={subsection.key === 'menu-items' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const event = new CustomEvent('addMenuItem');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addMenuItem');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50/80 backdrop-blur-sm border border-sky-200 rounded-lg hover:bg-sky-100/80 hover:border-sky-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Menu Item
+                        </div>
+                        : subsection.key === 'blog-posts' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const event = new CustomEvent('addBlogPost');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addBlogPost');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50/80 backdrop-blur-sm border border-purple-200 rounded-lg hover:bg-purple-100/80 hover:border-purple-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Post
+                        </div>
+                        : subsection.key === 'products' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const event = new CustomEvent('addProduct');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addProduct');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50/80 backdrop-blur-sm border border-emerald-200 rounded-lg hover:bg-emerald-100/80 hover:border-emerald-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Product
+                        </div>
+                        : subsection.key === 'features' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const event = new CustomEvent('addFeature');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addFeature');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-50/80 backdrop-blur-sm border border-orange-200 rounded-lg hover:bg-orange-100/80 hover:border-orange-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Feature
+                        </div>
+                        : subsection.key === 'faqs' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const event = new CustomEvent('addFAQ');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addFAQ');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50/80 backdrop-blur-sm border border-purple-200 rounded-lg hover:bg-purple-100/80 hover:border-purple-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add FAQ
+                        </div>
+                        : subsection.key === 'banners' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const event = new CustomEvent('addBanner');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addBanner');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-cyan-600 bg-cyan-50/80 backdrop-blur-sm border border-cyan-200 rounded-lg hover:bg-cyan-100/80 hover:border-cyan-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Banner
+                        </div>
+                        : subsection.key === 'cookie-services' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const event = new CustomEvent('addCookieService');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addCookieService');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50/80 backdrop-blur-sm border border-blue-200 rounded-lg hover:bg-blue-100/80 hover:border-blue-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Service
+                        </div>
+                        : subsection.key === 'ai-agents' ? 
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const event = new CustomEvent('addAIAgent');
+                            window.dispatchEvent(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new CustomEvent('addAIAgent');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50/80 backdrop-blur-sm border border-sky-200 rounded-lg hover:bg-sky-100/80 hover:border-sky-300 transition-all duration-200 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add AI Agent
+                        </div>
+                        : undefined
+                      }
+                    >
+                      {renderSectionFields(subsection.fields, section.key, subsection.columns)}
+                    </SubsectionDisclosure>
+                  );
+                })}
+              </div>
+            );
+          }
+
+          // Normal rendering with DisclosureSection wrapper
+          return (
         <div key={section.key} data-section-key={section.key}>
           <DisclosureSection 
             title={section.title} 
             defaultOpen={false}
             sectionKey={section.key}
-            hasChanges={hasSectionChanges(section.key)}
-            onSave={() => handleSectionSave(section.key)}
-            onCancel={() => handleSectionCancel(section.key)}
             isOpen={sectionStates[section.key] || false}
             onToggle={handleSectionToggle}
             hasData={checkSectionData(section).hasData}
@@ -786,7 +965,8 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             ) : null}
           </DisclosureSection>
         </div>
-      ))}
+          );
+        })}
     </div>
   );
 };

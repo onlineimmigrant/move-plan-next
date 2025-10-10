@@ -4,7 +4,7 @@ import React, { memo, useMemo } from 'react';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
-import { usePostEditModal } from '@/context/PostEditModalContext';
+import { usePostEditModal } from '@/components/modals/PostEditModal/context';
 import AdminButtons from './AdminButtons';
 import Link from 'next/link';
 import IconButton from '@/ui/IconButton';

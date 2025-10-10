@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRightIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import Button from '@/ui/Button';
 
 interface DisclosureSectionProps {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
   sectionKey: string;
-  hasChanges: boolean;
-  onSave: () => void;
-  onCancel: () => void;
   isOpen?: boolean;
   onToggle?: (sectionKey: string, isOpen: boolean) => void;
   hasData?: boolean; // Indicates if section contains filled data
@@ -23,9 +19,6 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
   children, 
   defaultOpen = false,
   sectionKey,
-  hasChanges,
-  onSave,
-  onCancel,
   isOpen: externalIsOpen,
   onToggle,
   hasData = false,
@@ -141,12 +134,6 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
               )}
             </>
           )}
-          
-          {hasChanges && (
-            <span className="inline-flex items-center rounded-full bg-sky-100/60 px-2.5 py-0.5 text-xs font-light text-sky-700 backdrop-blur-sm border border-sky-200/40">
-              Unsaved changes
-            </span>
-          )}
         </div>
         <div className={`flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 ${
           isOpen 
@@ -165,24 +152,6 @@ export const DisclosureSection: React.FC<DisclosureSectionProps> = ({
           <div className="max-h-[75vh] overflow-y-auto px-4 py-5 space-y-5">
             <div>{children}</div>
           </div>
-          {hasChanges && (
-            <div className="flex justify-end gap-3 px-4 py-4 border-t border-gray-200/60 bg-gray-50/30">
-              <Button
-                variant='outline'
-                type="button"
-                onClick={onCancel}
-                             >
-                Cancel
-              </Button>
-              <Button
-                variant='primary'
-                type="button"
-                onClick={onSave}
-                    >
-                Save Section
-              </Button>
-            </div>
-          )}
         </div>
       )}
     </div>

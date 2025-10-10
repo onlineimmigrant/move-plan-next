@@ -5,7 +5,7 @@ import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import { usePathname } from 'next/navigation';
 import  Button from '@/ui/Button';
-import { useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
+import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
 import { HoverEditButtons } from '@/ui/Button';
 import { isAdminClient } from '@/lib/auth';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';

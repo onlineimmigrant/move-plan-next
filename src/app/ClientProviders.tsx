@@ -8,19 +8,19 @@ import { BasketProvider } from '@/context/BasketContext'; // Verify this export 
 import { SettingsProvider } from '@/context/SettingsContext'; // Verify this export exists
 import { CookieSettingsProvider } from '@/context/CookieSettingsContext'; // Verify this export exists
 import { BannerProvider } from '@/context/BannerContext'; // Verify this export exists
-import { PostEditModalProvider } from '@/context/PostEditModalContext';
-import { TemplateSectionEditProvider } from '@/context/TemplateSectionEditContext';
-import { TemplateHeadingSectionEditProvider } from '@/context/TemplateHeadingSectionEditContext';
-import { PageCreationProvider } from '@/context/PageCreationContext';
-import { SiteMapModalProvider } from '@/context/SiteMapModalContext';
-import { GlobalSettingsModalProvider } from '@/context/GlobalSettingsModalContext';
+import { PostEditModalProvider } from '@/components/modals/PostEditModal/context';
+import { TemplateSectionEditProvider } from '@/components/modals/TemplateSectionModal/context';
+import { TemplateHeadingSectionEditProvider } from '@/components/modals/TemplateHeadingSectionModal/context';
+import { PageCreationProvider } from '@/components/modals/PageCreationModal/context';
+import { SiteMapModalProvider } from '@/components/modals/SiteMapModal/context';
+import { GlobalSettingsModalProvider } from '@/components/modals/GlobalSettingsModal/context';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
-import PostEditModal from '@/components/PostEditModal/PostEditModal';
-import TemplateSectionEditModal from '@/components/TemplateSectionEdit/TemplateSectionEditModal';
-import TemplateHeadingSectionEditModal from '@/components/TemplateHeadingSectionEdit/TemplateHeadingSectionEditModal';
-import PageCreationModal from '@/components/AdminQuickActions/PageCreationModal';
-import SiteMapModal from '@/components/SiteManagement/SiteMapModal';
-import GlobalSettingsModal from '@/components/SiteManagement/GlobalSettingsModal';
+import PostEditModal from '@/components/modals/PostEditModal/PostEditModal';
+import TemplateSectionEditModal from '@/components/modals/TemplateSectionModal/TemplateSectionEditModal';
+import TemplateHeadingSectionEditModal from '@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal';
+import PageCreationModal from '@/components/modals/PageCreationModal/PageCreationModal';
+import SiteMapModal from '@/components/modals/SiteMapModal/SiteMapModal';
+import GlobalSettingsModal from '@/components/modals/GlobalSettingsModal/GlobalSettingsModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/cookie/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';

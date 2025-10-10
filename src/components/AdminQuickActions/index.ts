@@ -2,7 +2,7 @@
 
 export { default as UniversalNewButton } from './UniversalNewButton';
 export { default as CommandPalette } from './CommandPalette';
-export { default as PageCreationModal } from './PageCreationModal';
+export { PageCreationModal } from '@/components/modals/PageCreationModal';
 
 // Future components:
 // export { default as QuickEditButton } from './QuickEditButton';

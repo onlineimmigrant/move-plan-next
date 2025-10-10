@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import TemplateSection from './TemplateSection';
-import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
+import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 
 // Types
 interface Metric {

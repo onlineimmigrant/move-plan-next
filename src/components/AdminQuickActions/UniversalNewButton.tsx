@@ -4,12 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { isAdminClient } from '@/lib/auth';
-import { useTemplateSectionEdit } from '@/context/TemplateSectionEditContext';
-import { useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
-import { usePageCreation } from '@/context/PageCreationContext';
-import { usePostEditModal } from '@/context/PostEditModalContext';
-import { useSiteMapModal } from '@/context/SiteMapModalContext';
-import { useGlobalSettingsModal } from '@/context/GlobalSettingsModalContext';
+import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
+import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
+import { usePageCreation } from '@/components/modals/PageCreationModal/context';
+import { usePostEditModal } from '@/components/modals/PostEditModal/context';
+import { useSiteMapModal } from '@/components/modals/SiteMapModal/context';
+import { useGlobalSettingsModal } from '@/components/modals/GlobalSettingsModal/context';
 
 interface MenuItem {
   label: string;
@@ -246,66 +246,66 @@ const UniversalNewButton: React.FC = () => {
       {/* Main Button - Neomorphic style matching "+ New" buttons */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative overflow-hidden font-medium text-gray-700 bg-gradient-to-br from-gray-50 via-white to-gray-50 
-                   rounded-full p-4 shadow-[4px_4px_8px_rgba(163,177,198,0.4),-4px_-4px_8px_rgba(255,255,255,0.8)] 
-                   hover:shadow-[2px_2px_4px_rgba(163,177,198,0.3),-2px_-2px_4px_rgba(255,255,255,0.9),inset_1px_1px_2px_rgba(163,177,198,0.15),inset_-1px_-1px_2px_rgba(255,255,255,0.9)] 
-                   hover:text-green-700 hover:-translate-y-0.5 
-                   active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] 
+        className="relative overflow-hidden font-medium text-gray-700 bg-gradient-to-br from-sky-50 via-white to-sky-50 
+                   rounded-full p-4 shadow-[4px_4px_8px_rgba(125,211,252,0.3),-4px_-4px_8px_rgba(255,255,255,0.9)] 
+                   hover:shadow-[2px_2px_4px_rgba(125,211,252,0.25),-2px_-2px_4px_rgba(255,255,255,0.95),inset_1px_1px_2px_rgba(125,211,252,0.12),inset_-1px_-1px_2px_rgba(255,255,255,0.9)] 
+                   hover:text-sky-700 hover:-translate-y-0.5 
+                   active:shadow-[inset_2px_2px_4px_rgba(125,211,252,0.3),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] 
                    active:translate-y-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-                   focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 group"
+                   focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 group"
         aria-label="Create new content"
       >
         <PlusIcon className={`w-6 h-6 transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`} />
         
         {/* Glow overlay effect */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 via-transparent to-transparent 
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-200/20 via-transparent to-transparent 
                        opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out pointer-events-none" />
         
         {/* Tooltip - show on hover if dropdown not open */}
         {isHovered && !isOpen && (
           <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                         bg-gray-900 text-white text-sm px-3 py-2 rounded-lg 
-                         whitespace-nowrap pointer-events-none">
+                         bg-sky-600 text-white text-sm px-3 py-2 rounded-lg 
+                         whitespace-nowrap pointer-events-none shadow-lg">
             Create New
             <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 
-                           w-2 h-2 bg-gray-900 rotate-45" />
+                           w-2 h-2 bg-sky-600 rotate-45" />
           </div>
         )}
       </button>
 
-      {/* Dropdown Menu - Neomorphic style, full page on mobile */}
+      {/* Dropdown Menu - Sky theme, full page on mobile */}
       {isOpen && (
         <div className="fixed md:absolute inset-0 md:inset-auto md:bottom-full md:right-0 md:mb-3 
                        md:w-80 md:max-h-[calc(100vh-200px)] 
-                       bg-gradient-to-br from-gray-50 via-white to-gray-50
-                       border border-gray-200/60
-                       md:rounded-2xl md:shadow-[8px_8px_16px_rgba(163,177,198,0.4),-8px_-8px_16px_rgba(255,255,255,0.8)] 
+                       bg-gradient-to-br from-sky-50 via-white to-sky-50
+                       border border-sky-200/60
+                       md:rounded-2xl md:shadow-[8px_8px_16px_rgba(125,211,252,0.3),-8px_-8px_16px_rgba(255,255,255,0.9)] 
                        overflow-y-auto z-[56]
                        animate-in md:slide-in-from-bottom-4 fade-in duration-200">
-          {/* Header - Enhanced with sophisticated highlighting */}
-          <div className="sticky top-0 bg-gradient-to-br from-gray-50 via-white to-gray-50 
-                         px-4 md:px-6 py-5 md:py-4 z-10 border-b border-gray-200/50
-                         shadow-[inset_0_-1px_0_rgba(163,177,198,0.2),0_2px_8px_rgba(163,177,198,0.1)]">
+          {/* Header - Enhanced with sky theme */}
+          <div className="sticky top-0 bg-gradient-to-br from-sky-50 via-white to-sky-50 
+                         px-4 md:px-6 py-5 md:py-4 z-10 border-b border-sky-200/50
+                         shadow-[inset_0_-1px_0_rgba(125,211,252,0.15),0_2px_8px_rgba(125,211,252,0.08)]">
             <div className="flex items-center justify-between">
               <div className="relative">
-                {/* Decorative accent line */}
-                <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-pink-500 
-                               rounded-full opacity-80 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                {/* Decorative accent line - sky gradient */}
+                <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 
+                               rounded-full opacity-90 shadow-[0_0_8px_rgba(56,189,248,0.4)]" />
                 
                 <div className="pl-2">
-                  {/* Main title with gradient text and highlight effect */}
-                  <h3 className="font-bold text-xl md:text-lg bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 
+                  {/* Main title with sky gradient text */}
+                  <h3 className="font-bold text-xl md:text-lg bg-gradient-to-r from-sky-700 via-sky-600 to-sky-700 
                                 bg-clip-text text-transparent mb-1 tracking-tight
                                 relative inline-block">
                     Create New
-                    {/* Subtle underline glow */}
-                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-400/40 to-transparent 
+                    {/* Subtle underline glow - sky color */}
+                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-sky-400/40 to-transparent 
                                    rounded-full blur-sm" />
                   </h3>
                   
-                  {/* Subtitle with icon and enhanced styling */}
+                  {/* Subtitle with icon */}
                   <div className="flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                             d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
@@ -316,17 +316,17 @@ const UniversalNewButton: React.FC = () => {
                 </div>
               </div>
               
-              {/* Close button on mobile with enhanced style */}
+              {/* Close button on mobile with sky theme */}
               <button
                 onClick={() => setIsOpen(false)}
-                className="md:hidden p-2 rounded-full bg-gradient-to-br from-gray-100 to-gray-50
-                         hover:from-gray-200 hover:to-gray-100 transition-all duration-200
-                         shadow-[2px_2px_4px_rgba(163,177,198,0.3),-2px_-2px_4px_rgba(255,255,255,0.8)]
-                         hover:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.3)]
+                className="md:hidden p-2 rounded-full bg-gradient-to-br from-sky-100 to-sky-50
+                         hover:from-sky-200 hover:to-sky-100 transition-all duration-200
+                         shadow-[2px_2px_4px_rgba(125,211,252,0.25),-2px_-2px_4px_rgba(255,255,255,0.9)]
+                         hover:shadow-[inset_2px_2px_4px_rgba(125,211,252,0.25)]
                          active:scale-95"
                 aria-label="Close menu"
               >
-                <PlusIcon className="w-6 h-6 rotate-45 text-gray-600" />
+                <PlusIcon className="w-6 h-6 rotate-45 text-sky-600" />
               </button>
             </div>
           </div>
@@ -352,7 +352,7 @@ const UniversalNewButton: React.FC = () => {
                       className={`w-full text-left px-4 py-4 md:py-3 transition-all duration-200
                                 ${isComingSoon 
                                   ? 'opacity-40 cursor-not-allowed' 
-                                  : 'hover:bg-gradient-to-r hover:from-gray-100/50 hover:to-transparent cursor-pointer active:bg-gray-100'
+                                  : 'hover:bg-gradient-to-r hover:from-sky-100/50 hover:to-transparent cursor-pointer active:bg-sky-100/60'
                                 }`}
                     >
                       <div className="flex items-center justify-between">
@@ -386,16 +386,16 @@ const UniversalNewButton: React.FC = () => {
 
                 {/* Divider between categories (except last) */}
                 {categoryIndex < menuCategories.length - 1 && (
-                  <div className="my-2 mx-4 border-t border-gray-200/50 
-                                 shadow-[0_1px_0_rgba(255,255,255,0.8)]" />
+                  <div className="my-2 mx-4 border-t border-sky-200/50 
+                                 shadow-[0_1px_0_rgba(255,255,255,0.9)]" />
                 )}
               </div>
             ))}
           </div>
 
-          {/* Footer Hint - Desktop only */}
-          <div className="hidden md:block sticky bottom-0 bg-gradient-to-br from-gray-50 via-white to-gray-50 
-                         px-4 py-2 border-t border-gray-200/50 shadow-[inset_0_1px_0_rgba(163,177,198,0.2)]">
+          {/* Footer Hint - Desktop only with sky theme */}
+          <div className="hidden md:block sticky bottom-0 bg-gradient-to-br from-sky-50 via-white to-sky-50 
+                         px-4 py-2 border-t border-sky-200/50 shadow-[inset_0_1px_0_rgba(125,211,252,0.15)]">
             <p className="text-xs text-gray-500 text-center">
               Click outside to close
             </p>

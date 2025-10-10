@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import TemplateHeadingSection from './TemplateHeadingSection';
-import { useTemplateHeadingSectionEdit } from '@/context/TemplateHeadingSectionEditContext';
+import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
 
 interface TemplateHeadingSectionData {
   id: number;

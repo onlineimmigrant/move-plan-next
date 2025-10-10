@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { usePostEditModal } from '@/context/PostEditModalContext';
+import { usePostEditModal } from '@/components/modals/PostEditModal/context';
 import { usePathname } from 'next/navigation';
 import Button from '@/ui/Button';
 

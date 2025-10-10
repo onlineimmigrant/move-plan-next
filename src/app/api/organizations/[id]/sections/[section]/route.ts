@@ -195,9 +195,15 @@ export async function GET(
           .eq('organization_id', orgId)
           .order('order', { ascending: true });
 
+        // Map menu_item_id to website_menuitem_id for frontend compatibility
+        const mappedSubmenuItems = submenuItems?.map(item => ({
+          ...item,
+          website_menuitem_id: item.menu_item_id
+        })) || [];
+
         data = {
           menu_items: menuItems || [],
-          submenu_items: submenuItems || []
+          submenu_items: mappedSubmenuItems
         };
         break;
 

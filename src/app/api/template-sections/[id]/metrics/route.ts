@@ -20,10 +20,10 @@ const supabaseAdmin = createClient(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: sectionId } = params;
+    const { id: sectionId } = await params;
     const body = await request.json();
 
     console.log('Adding metric to section:', { sectionId, metricId: body.metric_id });
@@ -84,10 +84,10 @@ export async function POST(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: sectionId } = params;
+    const { id: sectionId } = await params;
     const body = await request.json();
 
     console.log('Reordering metrics for section:', sectionId, body);
@@ -140,10 +140,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: sectionId } = params;
+    const { id: sectionId } = await params;
     const { searchParams } = new URL(request.url);
     const metricId = searchParams.get('metric_id');
 
