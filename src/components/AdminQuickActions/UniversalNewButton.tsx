@@ -217,11 +217,11 @@ const UniversalNewButton: React.FC = () => {
         break;
       case 'menu':
         // Open global settings modal with menu items section expanded
-        openGlobalSettingsModal('menu-items');
+        openGlobalSettingsModal('menu');
         break;
       case 'submenu':
-        // Open global settings modal with menu items section expanded (submenu is part of menu-items)
-        openGlobalSettingsModal('menu-items');
+        // Open global settings modal with menu items section expanded (submenu is part of menu)
+        openGlobalSettingsModal('menu');
         break;
       case 'product_page':
         // Open global settings modal with products section expanded

@@ -1927,6 +1927,7 @@ export async function PUT(
         }, { status: 500 });
       }
     } else {
+      console.log('🎨🎨🎨 ⚠️ BANNERS NOT PROCESSED - banners value:', banners, 'isArray:', Array.isArray(banners));
       updatedBanners = banners || [];
     }
 

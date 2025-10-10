@@ -40,7 +40,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   const [originalSectionValues, setOriginalSectionValues] = useState<Record<string, Partial<Settings>>>({});
   const [sectionStates, setSectionStates] = useState<Record<string, boolean>>({});
   const [lastActiveSections, setLastActiveSections] = useState<Set<string>>(new Set());
-  const initialSectionProcessed = useRef(false);
+  const lastInitialSection = useRef<string | undefined>(undefined); // Track last initial section
 
   // Debug: Track changes to cookie_services
   useEffect(() => {
@@ -86,15 +86,31 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
 
   // Open initial section if specified
   useEffect(() => {
-    if (initialSection && !initialSectionProcessed.current && Object.keys(sectionStates).length > 0) {
+    if (initialSection && initialSection !== lastInitialSection.current) {
       console.log('[SettingsFormFields] Opening initial section:', initialSection);
+      
+      // Mapping from modal tabs to section keys for opening
+      const sectionKeyMapping: Record<string, string> = {
+        'general': 'general',
+        'hero': 'hero',
+        'products': 'content',
+        'features': 'content',
+        'faqs': 'content',
+        'banners': 'content',
+        'menu': 'layout',
+        'blog': 'content',
+        'cookies': 'consent',
+      };
+      
+      const sectionKeyToOpen = sectionKeyMapping[initialSection] || initialSection;
+      
       setSectionStates(prev => ({
         ...prev,
-        [initialSection]: true
+        [sectionKeyToOpen]: true
       }));
-      initialSectionProcessed.current = true;
+      lastInitialSection.current = initialSection;
     }
-  }, [initialSection]); // Only depend on initialSection, not sectionStates
+  }, [initialSection, sectionStates]); // Depend on both to ensure state is ready
 
   // Save section states to sessionStorage whenever they change
   useEffect(() => {
@@ -419,7 +435,71 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
 
   return (
     <div className="space-y-4 pb-64" data-settings-container>
-      {sectionsConfig.map(section => (
+      {sectionsConfig
+        .filter(section => {
+          // Mapping from modal tabs to section/subsection keys
+          const sectionMapping: Record<string, { section: string; subsection?: string }> = {
+            'general': { section: 'all' }, // Show all sections
+            'hero': { section: 'hero' },
+            'products': { section: 'content', subsection: 'products' },
+            'features': { section: 'content', subsection: 'features' },
+            'faqs': { section: 'content', subsection: 'faqs' },
+            'banners': { section: 'content', subsection: 'banners' },
+            'menu': { section: 'layout', subsection: 'menu-items' },
+            'blog': { section: 'content', subsection: 'blog-posts' },
+            'cookies': { section: 'consent' }, // Show entire consent section
+          };
+
+          // If initialSection is provided, filter based on mapping
+          if (initialSection && sectionMapping[initialSection]) {
+            const mapping = sectionMapping[initialSection];
+            
+            // If 'all', show everything
+            if (mapping.section === 'all') {
+              return true;
+            }
+            
+            // If subsection specified, only show that parent section
+            // (we'll filter subsections later)
+            if (mapping.subsection) {
+              return section.key === mapping.section;
+            }
+            
+            // Otherwise, show matching section
+            return section.key === mapping.section;
+          }
+          
+          // Default: show all sections
+          return true;
+        })
+        .map(section => {
+          // Filter subsections if needed
+          const sectionMapping: Record<string, { section: string; subsection?: string }> = {
+            'general': { section: 'all' },
+            'hero': { section: 'hero' },
+            'products': { section: 'content', subsection: 'products' },
+            'features': { section: 'content', subsection: 'features' },
+            'faqs': { section: 'content', subsection: 'faqs' },
+            'banners': { section: 'content', subsection: 'banners' },
+            'menu': { section: 'layout', subsection: 'menu-items' },
+            'blog': { section: 'content', subsection: 'blog-posts' },
+            'cookies': { section: 'consent' },
+          };
+
+          const mapping = initialSection ? sectionMapping[initialSection] : null;
+          
+          // If we need to filter subsections
+          if (mapping?.subsection && section.subsections) {
+            const filteredSection = {
+              ...section,
+              subsections: section.subsections.filter(sub => sub.key === mapping.subsection)
+            };
+            return filteredSection;
+          }
+          
+          return section;
+        })
+        .map(section => (
         <div key={section.key} data-section-key={section.key}>
           <DisclosureSection 
             title={section.title} 
