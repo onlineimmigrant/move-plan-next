@@ -14,6 +14,7 @@ import { TemplateHeadingSectionEditProvider } from '@/components/modals/Template
 import { PageCreationProvider } from '@/components/modals/PageCreationModal/context';
 import { SiteMapModalProvider } from '@/components/modals/SiteMapModal/context';
 import { GlobalSettingsModalProvider } from '@/components/modals/GlobalSettingsModal/context';
+import { HeroSectionEditProvider } from '@/components/modals/HeroSectionModal/context';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import PostEditModal from '@/components/modals/PostEditModal/PostEditModal';
 import TemplateSectionEditModal from '@/components/modals/TemplateSectionModal/TemplateSectionEditModal';
@@ -21,6 +22,7 @@ import TemplateHeadingSectionEditModal from '@/components/modals/TemplateHeading
 import PageCreationModal from '@/components/modals/PageCreationModal/PageCreationModal';
 import SiteMapModal from '@/components/modals/SiteMapModal/SiteMapModal';
 import GlobalSettingsModal from '@/components/modals/GlobalSettingsModal/GlobalSettingsModal';
+import HeroSectionEditModal from '@/components/modals/HeroSectionModal/HeroSectionEditModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import CookieBanner from '@/components/cookie/CookieBanner';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -202,9 +204,10 @@ export default function ClientProviders({
                 <PostEditModalProvider>
                   <TemplateSectionEditProvider>
                     <TemplateHeadingSectionEditProvider>
-                      <PageCreationProvider>
-                        <SiteMapModalProvider>
-                          <GlobalSettingsModalProvider>
+                      <HeroSectionEditProvider>
+                        <PageCreationProvider>
+                          <SiteMapModalProvider>
+                            <GlobalSettingsModalProvider>
                             <DynamicLanguageUpdater />
                             <DefaultLocaleCookieManager />
                             <CookieSettingsProvider>
@@ -221,13 +224,15 @@ export default function ClientProviders({
                             <PostEditModal />
                             <TemplateSectionEditModal />
                             <TemplateHeadingSectionEditModal />
+                            <HeroSectionEditModal />
                             <PageCreationModal />
                             <SiteMapModal />
                             <GlobalSettingsModal />
                           </GlobalSettingsModalProvider>
                         </SiteMapModalProvider>
                       </PageCreationProvider>
-                    </TemplateHeadingSectionEditProvider>
+                    </HeroSectionEditProvider>
+                  </TemplateHeadingSectionEditProvider>
                   </TemplateSectionEditProvider>
                 </PostEditModalProvider>
               </ToastProvider>

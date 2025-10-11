@@ -103,7 +103,7 @@ Button.displayName = 'Button';
 interface HoverEditButtonsProps {
   onEdit: () => void;
   onNew?: () => void;
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-right-below-menu';
   className?: string;
   children?: ReactNode;
 }
@@ -120,6 +120,7 @@ export const HoverEditButtons = ({
     'top-left': 'top-4 left-4',
     'bottom-right': 'bottom-4 right-4',
     'bottom-left': 'bottom-4 left-4',
+    'top-right-below-menu': 'top-24 right-4', // Below the header menu
   };
 
   return (

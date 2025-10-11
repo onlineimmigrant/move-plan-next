@@ -9,24 +9,31 @@ import SimpleLayoutSEO from '../../components/SimpleLayoutSEO';
 async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   const defaultData: HomePageData = {
     hero: {
-      h1_title: 'Welcome to Our Platform',
-      h1_text_color: 'gray-900',
-      p_description: 'Discover our services.',
-      p_description_color: '#000000',
-      background_color: '#ffffff',
-      h1_text_size: 'text-xl',
-      h1_text_size_mobile: 'text-lg',
-      p_description_size: 'text-base',
-      p_description_size_mobile: 'text-sm',
-      title_alighnement: 'center',
-      title_block_width: 'full',
-      title_block_columns: 1,
-      p_description_weight: 'normal',
-      is_h1_gradient_text: false,
-      is_bg_gradient: false,
-      is_image_full_page: false,
-      is_seo_title: false,
-      image_first: false,
+      title: 'Welcome to Our Platform',
+      description: 'Discover our services.',
+      title_style: {
+        color: 'gray-900',
+        size: { desktop: 'text-xl', mobile: 'text-lg' },
+        alignment: 'center',
+        blockWidth: 'full',
+        blockColumns: 1
+      },
+      description_style: {
+        color: '#000000',
+        size: { desktop: 'text-base', mobile: 'text-sm' },
+        weight: 'normal'
+      },
+      background_style: {
+        color: '#ffffff'
+      },
+      image_style: {
+        fullPage: false,
+        position: 'right'
+      },
+      button_style: {
+        aboveDescription: false,
+        isVideo: false
+      },
       organization_id: '',
     },
     brands: [],
@@ -127,7 +134,6 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
             h1_text_color_gradient_to: heroData.h1_text_color_gradient_to || 'gray-500',
             p_description: heroData.p_description || 'Discover our services.',
             p_description_color: heroData.p_description_color || '#000000',
-            h1_title_color_id: heroData.h1_title_color_id || '',
             organization_id: heroData.organization_id || null,
           }
         : defaultData.hero,
