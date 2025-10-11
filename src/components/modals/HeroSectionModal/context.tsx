@@ -252,6 +252,11 @@ export function HeroSectionEditProvider({ children }: { children: ReactNode }) {
         
         // Update local state
         setEditingSection({ ...editingSection, ...data });
+        
+        // Dispatch custom event to notify Hero component of updates
+        window.dispatchEvent(new CustomEvent('hero-section-updated', { 
+          detail: { ...editingSection, ...data } 
+        }));
       }
     } catch (error: any) {
       console.error('[HeroSectionEditContext] Error updating section:', error);

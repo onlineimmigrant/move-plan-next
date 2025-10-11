@@ -4,6 +4,16 @@ module.exports = {
     './app/**/*.{js,ts,jsx,tsx}', // Include all files in the app directory
     './src/**/*.{js,ts,jsx,tsx}', // Include all files in the src directory
   ],
+  safelist: [
+    // Safelist all text size classes used in Hero section editing
+    'text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 
+    'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl', 'text-6xl', 'text-7xl', 'text-8xl',
+    // Safelist responsive variants
+    'sm:text-xs', 'sm:text-sm', 'sm:text-base', 'sm:text-lg', 'sm:text-xl',
+    'sm:text-2xl', 'sm:text-3xl', 'sm:text-4xl', 'sm:text-5xl', 'sm:text-6xl', 'sm:text-7xl', 'sm:text-8xl',
+    'md:text-xs', 'md:text-sm', 'md:text-base', 'md:text-lg', 'md:text-xl',
+    'md:text-2xl', 'md:text-3xl', 'md:text-4xl', 'md:text-5xl', 'md:text-6xl', 'md:text-7xl', 'md:text-8xl',
+  ],
   theme: {
     extend: {
       fontFamily: {

@@ -1,4 +1,3 @@
-// /app/types/hero_data.ts
 export interface HeroData {
   id?: string;
   organization_id: string;
@@ -30,6 +29,8 @@ export interface HeroData {
   background_style: {
     color?: string;
     gradient?: { from: string; via?: string; to: string };
+    seo_title?: string;
+    column?: number;
   };
   button_style: {
     aboveDescription?: boolean;

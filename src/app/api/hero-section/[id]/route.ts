@@ -32,64 +32,17 @@ export async function PUT(
     // Prepare update data - map new JSONB structure to database columns
     const updateData: any = {};
     
-    // Basic fields
-    if (body.seo_title !== undefined) updateData.seo_title = body.seo_title || null;
-    if (body.title !== undefined) updateData.h1_title = body.title || null;
-    if (body.description !== undefined) updateData.p_description = body.description || null;
-    
-    // Button configuration - map from button_style JSONB
-    if (body.button !== undefined) updateData.button_main_get_started = body.button || null;
-    if (body.button_explore !== undefined) updateData.button_explore = body.button_explore || null;
-    if (body.button_style?.url !== undefined) updateData.button_url = body.button_style.url || null;
-    if (body.button_style?.aboveDescription !== undefined) updateData.button_main_above_description = body.button_style.aboveDescription ?? false;
-    if (body.button_style?.isVideo !== undefined) updateData.button_main_is_for_video = body.button_style.isVideo ?? false;
-    
-    // Image configuration - map from image_style JSONB
-    if (body.image !== undefined) updateData.image = body.image || null;
-    if (body.image_style?.position !== undefined) updateData.image_position = body.image_style.position || 'right';
-    
-    // Legacy fields for backward compatibility (deprecated in favor of image_position)
-    if (body.image_first !== undefined) updateData.image_first = body.image_first ?? false;
-    if (body.is_image_full_page !== undefined) updateData.is_image_full_page = body.is_image_full_page ?? false;
-    
-    // Colors - map from style JSONB objects
-    if (body.title_style?.color !== undefined) updateData.h1_text_color = body.title_style.color || 'sky-600';
-    if (body.description_style?.color !== undefined) updateData.p_description_color = body.description_style.color || 'gray-600';
-    if (body.background_style?.color !== undefined) updateData.background_color = body.background_style.color || 'white';
-    
-    // Layout - map from title_style JSONB
-    if (body.title_style?.alignment !== undefined) updateData.title_alighnement = body.title_style.alignment || 'center';
-    if (body.title_style?.blockWidth !== undefined) updateData.title_block_width = body.title_style.blockWidth || '2xl';
-    if (body.title_style?.blockColumns !== undefined) updateData.title_block_columns = body.title_style.blockColumns || 1;
-    
-    // Display options
-    if (body.is_seo_title !== undefined) updateData.is_seo_title = body.is_seo_title ?? false;
-    if (body.is_h1_title !== undefined) updateData.is_h1_title = body.is_h1_title ?? true;
-    if (body.is_p_description !== undefined) updateData.is_p_description = body.is_p_description ?? true;
-    if (body.is_button_explore !== undefined) updateData.is_button_explore = body.is_button_explore ?? false;
-    
-    // Organization
-    if (body.organization_id !== undefined) updateData.organization_id = body.organization_id || null;
+    // Handle basic content fields
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.button !== undefined) updateData.button = body.button;
+    if (body.image !== undefined) updateData.image = body.image;
+    if (body.animation_element !== undefined) updateData.animation_element = body.animation_element;
 
-    // Handle translation fields if provided
-    if (body.h1_title_translation !== undefined) {
-      updateData.h1_title_translation = body.h1_title_translation;
-    }
-    if (body.h1_title_part_2_translation !== undefined) {
-      updateData.h1_title_part_2_translation = body.h1_title_part_2_translation;
-    }
-    if (body.h1_title_part_3_translation !== undefined) {
-      updateData.h1_title_part_3_translation = body.h1_title_part_3_translation;
-    }
-    if (body.p_description_translation !== undefined) {
-      updateData.p_description_translation = body.p_description_translation;
-    }
-    if (body.button_explore_translation !== undefined) {
-      updateData.button_explore_translation = body.button_explore_translation;
-    }
-    if (body.seo_title_translation !== undefined) {
-      updateData.seo_title_translation = body.seo_title_translation;
-    }
+    // Handle translation fields
+    if (body.title_translation !== undefined) updateData.title_translation = body.title_translation;
+    if (body.description_translation !== undefined) updateData.description_translation = body.description_translation;
+    if (body.button_translation !== undefined) updateData.button_translation = body.button_translation;
 
     // Handle JSONB style fields - store them as JSONB in database
     if (body.title_style !== undefined) updateData.title_style = body.title_style;
@@ -116,7 +69,7 @@ export async function PUT(
         return NextResponse.json(
           { 
             error: 'Database schema not updated', 
-            details: 'Hero table JSONB columns are missing. Please run the hero_jsonb_migration.sql file in your Supabase SQL Editor.',
+            details: 'Hero table columns are missing. Please run both hero_jsonb_migration.sql and hero_content_columns_migration.sql files in your Supabase SQL Editor.',
             migration_required: true
           },
           { status: 500 }

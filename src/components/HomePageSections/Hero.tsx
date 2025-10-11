@@ -1,6 +1,6 @@
 'use client'; // Ensure client-side rendering for hooks
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import parse from 'html-react-parser';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -14,9 +14,12 @@ import { HoverEditButtons } from '@/ui/Button';
 import { useHeroSectionEdit } from '@/components/modals/HeroSectionModal/context';
 import { isAdminClient } from '@/lib/auth';
 import { getOrganizationId } from '@/lib/supabase';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+import { cn } from '@/lib/utils';
 
 interface HeroProps {
   hero: {
+    id?: string;
     title: string;
     title_translation?: Record<string, string>;
     description: string;
@@ -28,6 +31,7 @@ interface HeroProps {
     title_style: {
       font?: string;
       color?: string;
+      is_gradient?: boolean;
       gradient?: { from: string; via?: string; to: string };
       size?: { desktop: string; mobile: string };
       alignment?: string;
@@ -43,6 +47,8 @@ interface HeroProps {
     image_style: {
       position?: string;
       fullPage?: boolean;
+      height?: number;
+      width?: number;
     };
     button_style: {
       aboveDescription?: boolean;
@@ -53,10 +59,12 @@ interface HeroProps {
     };
     background_style: {
       color?: string;
+      is_gradient?: boolean;
       gradient?: { from: string; via?: string; to: string };
+      seo_title?: string;
+      column?: number;
     };
-    is_seo_title?: boolean;
-    seo_title?: string;
+    column?: number;
     organization_id?: string | null;
   };
 }
@@ -100,13 +108,51 @@ const getTranslatedContent = (
   return defaultContent;
 };
 
-const Hero: React.FC<HeroProps> = ({ hero }) => {
+const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [hero, setHero] = useState(initialHero); // Local state for hero data
   const heroRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { openModal } = useHeroSectionEdit();
+  
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    setHero(initialHero);
+  }, [initialHero]);
+
+  // Listen for hero section updates from modal
+  useEffect(() => {
+    const handleHeroUpdate = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('[Hero] Received hero-section-updated event:', customEvent.detail);
+      
+      // Fetch fresh data from API to ensure we have the latest
+      if (hero.id) {
+        try {
+          const response = await fetch(`/api/hero-section/${hero.id}`);
+          if (response.ok) {
+            const updatedHero = await response.json();
+            console.log('[Hero] Fetched updated hero data:', updatedHero);
+            setHero(updatedHero);
+          }
+        } catch (error) {
+          console.error('[Hero] Failed to fetch updated hero data:', error);
+          // Fallback to event detail if fetch fails
+          setHero(customEvent.detail);
+        }
+      }
+    };
+
+    window.addEventListener('hero-section-updated', handleHeroUpdate);
+    return () => {
+      window.removeEventListener('hero-section-updated', handleHeroUpdate);
+    };
+  }, [hero.id]);
 
   if (!hero) return null;
 
@@ -117,6 +163,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
 
   const isImageFullPage = hero.image_style?.fullPage || false;
   const shouldShowInlineImage = hero.image && !isImageFullPage;
+  // Note: Inline text editing removed - use modal editor instead
 
   // Check admin status
   useEffect(() => {
@@ -201,28 +248,58 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
     };
   }, []);
 
-  const textColorClass = useMemo(() => {
+  const titleColorStyle = useMemo(() => {
     const titleStyle = hero.title_style || {};
-    if (titleStyle.gradient) {
-      return `bg-gradient-to-r from-${titleStyle.gradient.from || 'gray-700'} via-${titleStyle.gradient.via || 'gray-700'} to-${titleStyle.gradient.to || 'indigo-200'} bg-clip-text text-transparent`;
+    if (titleStyle.is_gradient && titleStyle.gradient) {
+      // Use gradient with inline styles
+      const fromColor = getColorValue(titleStyle.gradient.from?.replace('from-', '') || 'gray-700');
+      const viaColor = getColorValue(titleStyle.gradient.via?.replace('via-', '') || 'gray-700');
+      const toColor = getColorValue(titleStyle.gradient.to?.replace('to-', '') || 'indigo-500');
+      return {
+        backgroundImage: `linear-gradient(90deg, ${fromColor}, ${viaColor}, ${toColor})`,
+        WebkitBackgroundClip: 'text',
+        backgroundClip: 'text',
+        WebkitTextFillColor: 'transparent'
+      };
     }
-    return `text-${titleStyle.color || 'gray-700'}`;
+    // Use single color with inline style
+    const colorValue = getColorValue(titleStyle.color || 'gray-700');
+    return { color: colorValue };
   }, [hero.title_style]);
 
   const backgroundClass = useMemo(() => {
-    const backgroundStyle = hero.background_style || {};
-    if (backgroundStyle.gradient) {
-      return `bg-gradient-to-tr from-${backgroundStyle.gradient.from || 'sky-50'} via-${backgroundStyle.gradient.via || 'transparent'} to-${backgroundStyle.gradient.to || ''} hover:bg-sky-50`;
+    // Always return base class, color will be handled by inline style
+    return 'hover:bg-sky-50';
+  }, []);
+
+  const backgroundStyle = useMemo(() => {
+    const bgStyle = hero.background_style || {};
+    if (bgStyle.is_gradient && bgStyle.gradient) {
+      const fromColor = getColorValue(bgStyle.gradient.from?.replace('from-', '') || 'sky-500');
+      const viaColor = getColorValue(bgStyle.gradient.via?.replace('via-', '') || 'white');
+      const toColor = getColorValue(bgStyle.gradient.to?.replace('to-', '') || 'purple-600');
+      return {
+        backgroundImage: `linear-gradient(135deg, ${fromColor}, ${viaColor}, ${toColor})`
+      };
     }
-    return `bg-${backgroundStyle.color || 'transparent'} hover:bg-sky-50`;
+    // Use single color with inline style
+    const colorValue = getColorValue(bgStyle.color || 'transparent');
+    return colorValue === 'transparent' ? {} : { backgroundColor: colorValue };
   }, [hero.background_style]);
 
-  const GetstartedBackgroundColorClass = useMemo(() => {
-    const buttonStyle = hero.button_style || {};
-    if (buttonStyle.gradient) {
-      return `bg-gradient-to-r from-${buttonStyle.gradient.from || 'gray-700'} via-${buttonStyle.gradient.via || 'gray-700'} to-${buttonStyle.gradient.to || 'gray-900'}`;
+  const buttonStyle = useMemo(() => {
+    const btnStyle = hero.button_style || {};
+    if (btnStyle.gradient) {
+      const fromColor = getColorValue(btnStyle.gradient.from?.replace('from-', '') || 'gray-700');
+      const viaColor = getColorValue(btnStyle.gradient.via?.replace('via-', '') || 'gray-700');
+      const toColor = getColorValue(btnStyle.gradient.to?.replace('to-', '') || 'gray-900');
+      return {
+        backgroundImage: `linear-gradient(90deg, ${fromColor}, ${viaColor}, ${toColor})`
+      };
     }
-    return `bg-${buttonStyle.color || 'gray-700'}`;
+    // Use single color with inline style
+    const colorValue = getColorValue(btnStyle.color || 'gray-700');
+    return { backgroundColor: colorValue };
   }, [hero.button_style]);
 
   const h1TextSize = useMemo(() => {
@@ -235,6 +312,7 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
     <div
       ref={heroRef}
       className={`pt-16 min-h-screen relative isolate group px-6 lg:px-8 ${backgroundClass} flex items-center justify-center`}
+      style={backgroundStyle}
     >
       {/* Hover Edit Buttons for Admin */}
       {isAdmin && organizationId && (
@@ -297,13 +375,16 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
         }
       })()}
 
-      {hero.background_style?.gradient && (
+      {hero.background_style?.is_gradient && hero.background_style?.gradient && (
         <div
           className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80 text-sky-500"
           aria-hidden="true"
         >
           <div
             className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
+            style={{
+              backgroundImage: `linear-gradient(135deg, ${hero.background_style.gradient.from?.replace('from-', '') || 'rgb(14 165 233)'}, ${hero.background_style.gradient.via?.replace('via-', '') || 'rgb(255 255 255)'}, ${hero.background_style.gradient.to?.replace('to-', '') || 'rgb(147 51 234)'})`
+            }}
           />
         </div>
       )}
@@ -323,16 +404,16 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
       <div
         className={`mx-auto max-w-${hero.title_style?.blockWidth || '2xl'} text-${
           hero.title_style?.alignment || 'center'
-        } items-center grid grid-cols-1 gap-x-12 gap-y-24 sm:grid-cols-${hero.title_style?.blockColumns || 1} relative`}
+        } items-center grid grid-cols-1 gap-x-12 gap-y-24 ${hero.background_style?.column ? `lg:grid-cols-${hero.background_style.column}` : ''} relative`}
       >
         <div className={imagePosition === 'left' && shouldShowInlineImage ? 'order-2' : ''}>
-          {hero.is_seo_title && (
+          {hero.background_style?.seo_title && (
             <div className="hidden sm:mb-8 sm:flex sm:justify-center">
               <div className="flex items-center relative rounded-full px-3 py-1 text-sm leading-6 text-gray-600 hover:text-gray-500 ring-2 ring-gray-900/10 hover:ring-sky-700/20">
-                {hero.seo_title}
+                {hero.background_style.seo_title}
                 <Link
                   href="/blog"
-                  aria-label={`Explore ${hero.seo_title}`}
+                  aria-label={`Explore ${hero.background_style.seo_title}`}
                   className="ml-2 flex items-center transition-all duration-300 group font-semibold text-gray-700 hover:text-gray-300"
                 >
                   Explore
@@ -343,8 +424,11 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
           )}
 
           <div className={`text-${hero.title_style?.alignment || 'center'}`}>
+            {/* Title */}
             <h1
-              className={`${h1TextSize} font-bold tracking-tight inline hover:text-gray-700 ${textColorClass} animate-hero-title ${isVisible ? 'animate' : ''}`}
+              ref={titleRef}
+              className={`${h1TextSize} font-bold tracking-tight inline hover:text-gray-700 animate-hero-title ${isVisible ? 'animate' : ''}`}
+              style={titleColorStyle}
             >
               {parse(translatedH1Title)}
             </h1>
@@ -364,7 +448,8 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
                 ) : (
                   <Link
                     href={hero.button_style?.url || '/products'}
-                    className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
+                    className={`rounded-full py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
+                    style={buttonStyle}
                   >
                     {translatedButton}
                   </Link>
@@ -372,11 +457,14 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
               </div>
             )}
 
+            {/* Description */}
             <p
-              className={`mt-6 tracking-wide ${hero.description_style?.size?.mobile || 'text-lg'} sm:${hero.description_style?.size?.desktop || 'text-2xl'} text-${
-                hero.description_style?.color || 'gray-600'
-              } hover:text-gray-900 animate-hero-description ${isVisible ? 'animate' : ''}`}
-              style={{ fontWeight: hero.description_style?.weight || 'normal' }}
+              ref={descriptionRef}
+              className={`mt-6 tracking-wide ${hero.description_style?.size?.mobile || 'text-lg'} sm:${hero.description_style?.size?.desktop || 'text-2xl'} hover:text-gray-900 animate-hero-description ${isVisible ? 'animate' : ''}`}
+              style={{ 
+                fontWeight: hero.description_style?.weight || 'normal',
+                color: getColorValue(hero.description_style?.color || 'gray-600')
+              }}
             >
               {parse(translatedPDescription)}
             </p>
@@ -396,7 +484,8 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
                 ) : (
                   <Link
                     href={hero.button_style?.url || '/products'}
-                    className={`rounded-full ${GetstartedBackgroundColorClass} hover:bg-sky-500 py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
+                    className={`rounded-full py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
+                    style={buttonStyle}
                   >
                     {translatedButton}
                   </Link>
@@ -411,9 +500,15 @@ const Hero: React.FC<HeroProps> = ({ hero }) => {
               <Image
                 src={hero.image}
                 alt={`Image of ${translatedH1Title}`}
-                className="h-full w-full object-cover sm:h-auto sm:w-full sm:max-w-[80%] sm:mx-auto sm:object-contain"
-                width={1024}
-                height={576}
+                className="object-contain"
+                width={hero.image_style?.width || 400}
+                height={hero.image_style?.height || 300}
+                style={{
+                  width: hero.image_style?.width || 400,
+                  height: hero.image_style?.height || 300,
+                  maxWidth: '100%',
+                  maxHeight: '400px'
+                }}
                 priority={false}
               />
             </div>
