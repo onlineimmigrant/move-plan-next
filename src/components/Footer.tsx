@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { MenuItem, SubMenuItem } from '@/types/menu';
-import LanguageSwitcher from './LanguageSwitcher';
+import ModernLanguageSwitcher from './ModernLanguageSwitcher';
 import LocalizedLink from './LocalizedLink';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 
@@ -340,10 +340,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
               © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
             </small>
             {settings?.with_language_switch && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-neutral-500">{translations.language}</span>
-                <LanguageSwitcher />
-              </div>
+              <ModernLanguageSwitcher openUpward={true} variant="dark" />
             )}
           </div>
         </div>

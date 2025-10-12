@@ -221,6 +221,11 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
   }, [pathname, memoizedOverrides, memoizedExtraCrumbs, organizationType]);
 
  
+  // Don't show breadcrumbs on home page
+  if (pathname === '/' || pathname === '') {
+    return null;
+  }
+
   if (!breadcrumbs || breadcrumbs.length === 0) {
     return null;
   }

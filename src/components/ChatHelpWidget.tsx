@@ -38,7 +38,27 @@ export default function ChatHelpWidget() {
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [sizeBeforeChatSwitch, setSizeBeforeChatSwitch] = useState<WidgetSize>('initial');
   const [chatWidgetSize, setChatWidgetSize] = useState<WidgetSize>('initial');
+  const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
+
+  // Detect scroll on mobile to show/hide widget
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY;
+          const scrollThreshold = 100; // Show after scrolling 100px
+          setIsScrolled(scrollPosition > scrollThreshold);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Check stored widget mode on component mount
   useEffect(() => {
@@ -307,7 +327,9 @@ export default function ChatHelpWidget() {
   };
 
   return (
-    <div className="z-62">
+    <div className={`z-62 transition-opacity duration-300 ${
+      isMobile && !isScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
+    }`}>
       {showChatWidget ? (
         // Show ChatWidget when in AI Agent mode - it manages its own state
         // Use key to force re-initialization when switching

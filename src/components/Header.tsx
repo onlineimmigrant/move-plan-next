@@ -188,6 +188,10 @@ const Header: React.FC<HeaderProps> = ({
             ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
             : item.display_name;
 
+            // Check if current menu item is active
+            const isActive = pathname.startsWith(`/${item.url_name}`) || 
+                            displayedSubItems.some(subItem => pathname.startsWith(`/${subItem.url_name}`));
+
             return (
               <div 
                 key={item.id} 
@@ -199,13 +203,15 @@ const Header: React.FC<HeaderProps> = ({
                   <>
                     <button
                       type="button"
-                      className="group cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-xl focus:outline-none transition-all duration-150 ease-out antialiased"
+                      className="group cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 rounded-xl focus:outline-none transition-colors duration-200"
                       title={translatedDisplayName}
                       aria-label={t.openMenuFor(translatedDisplayName)}
                       onClick={() => setOpenSubmenu(openSubmenu === item.id ? null : item.id)}
                     >
                       {settings?.menu_items_are_text ? (
-                        <span className="text-[15px] font-medium text-gray-700 group-hover:text-gray-900 tracking-[-0.01em] transition-colors duration-300">{translatedDisplayName}</span>
+                        <span className={`text-[15px] font-medium transition-colors duration-200 ${
+                          isActive ? 'text-gray-900 font-semibold' : 'text-gray-700 group-hover:text-gray-900'
+                        }`}>{translatedDisplayName}</span>
                       ) : item.image ? (
                         <Image
                           src={item.image}
@@ -232,141 +238,156 @@ const Header: React.FC<HeaderProps> = ({
                       </svg>
                     </button>
                     
-                    {/* Full-width Apple-style mega menu */}
-                    <div className={`fixed left-0 right-0 top-[calc(100%+0.5rem)] bg-white/90 backdrop-blur-3xl border border-gray-200/40 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] z-50 transition-all duration-200 ease-out animate-in fade-in-0 zoom-in-95 mx-4 sm:mx-8 ${
-                      openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
-                    }`}
-                      style={{
-                        backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-                        WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-                      }}
-                    >
-                      {/* Subtle top highlight */}
-                      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
-                      
-                      {/* Inner glow for depth */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none"></div>
-                      
-                      <div className="relative px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
-                        <div className="mb-6">
-                          <h3 className="text-[18px] font-semibold text-gray-900 mb-2 tracking-[-0.02em] antialiased">{translatedDisplayName}</h3>
-                          <p className="text-[13px] text-gray-600 antialiased opacity-90">Explore our {translatedDisplayName.toLowerCase()} options and services</p>
+                    {/* Mega menu or simple dropdown based on items count */}
+                    {displayedSubItems.length >= 2 ? (
+                      // Full-width mega menu for 2+ items
+                      <div className={`fixed left-0 right-0 top-[calc(100%+0.5rem)] bg-white border border-gray-200 rounded-lg shadow-lg z-50 transition-all duration-200 mx-4 sm:mx-8 ${
+                        openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
+                      }`}>
+                        <div className="px-6 py-6 max-w-7xl mx-auto">
+                          <h3 className="text-base font-semibold text-gray-900 mb-4">{translatedDisplayName}</h3>
+                          
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                            {displayedSubItems.map((subItem) => {
+                              const translatedSubItemName = currentLocale 
+                                ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
+                                : subItem.name;
+
+                              const translatedDescription = subItem.description
+                                ? (currentLocale 
+                                    ? getTranslatedMenuContent(subItem.description, subItem.description_translation, currentLocale)
+                                    : subItem.description)
+                                : null;
+
+                              return (
+                                <LocalizedLink
+                                  key={subItem.id}
+                                  href={subItem.url_name}
+                                  onClick={() => setOpenSubmenu(null)}
+                                  className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                                >
+                                  {/* Image on top - full width */}
+                                  <div className="relative w-full h-32">
+                                    {subItem.image ? (
+                                      <Image
+                                        src={subItem.image}
+                                        alt={translatedSubItemName}
+                                        fill
+                                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                                        className="object-cover rounded-t-lg"
+                                        loading="lazy"
+                                        placeholder="blur"
+                                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
+                                        onError={() =>
+                                          console.error(
+                                            `Failed to load image for submenu item ${translatedSubItemName}: ${subItem.image}`
+                                          )
+                                        }
+                                      />
+                                    ) : settings?.image ? (
+                                      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg p-4">
+                                        <div className="relative w-full h-full">
+                                          <Image
+                                            src={settings.image}
+                                            alt="Logo"
+                                            fill
+                                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                                            className="object-contain"
+                                            loading="lazy"
+                                          />
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-t-lg">
+                                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Content below image */}
+                                  <div className="p-3">
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                                      {translatedSubItemName}
+                                    </h4>
+                                    {translatedDescription && (
+                                      <p className="text-xs text-gray-500 line-clamp-2">
+                                        {translatedDescription}
+                                      </p>
+                                    )}
+                                  </div>
+                                </LocalizedLink>
+                              );
+                            })}
+                          </div>
                         </div>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                          {displayedSubItems.map((subItem, index) => {
+                      </div>
+                    ) : (
+                      // Simple dropdown for < 2 items
+                      <div className={`absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 transition-all duration-200 ${
+                        openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
+                      }`}>
+                        <div className="p-2">
+                          {displayedSubItems.map((subItem) => {
                             const translatedSubItemName = currentLocale 
                               ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
                               : subItem.name;
-
-                            // Properly handle description with translation logic
-                            const translatedDescription = subItem.description
-                              ? (currentLocale 
-                                  ? getTranslatedMenuContent(subItem.description, subItem.description_translation, currentLocale)
-                                  : subItem.description)
-                              : null;
-
-                            const displayDescription = translatedDescription || `Learn more about ${translatedSubItemName.toLowerCase()} and discover how it can help you.`;
-
-                            // Debug: Track description logic
-                            if (process.env.NODE_ENV === 'development') {
-                              console.log(`Submenu "${subItem.name}" description logic:`, {
-                                originalDescription: subItem.description,
-                                hasTranslation: !!subItem.description_translation,
-                                currentLocale,
-                                translatedDescription,
-                                displayDescription,
-                                usingFallback: !translatedDescription
-                              });
-                            }
 
                             return (
                               <LocalizedLink
                                 key={subItem.id}
                                 href={subItem.url_name}
                                 onClick={() => setOpenSubmenu(null)}
-                                className="group/item relative overflow-hidden flex bg-white/40 hover:bg-white/70 backdrop-blur-sm rounded-2xl transition-all duration-150 ease-out hover:scale-[1.01] hover:shadow-lg"
+                                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                               >
-                                {/* Hover shine effect */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-400 ease-out"></div>
-                                
-                                {/* Image section - 1/3 width, full height */}
-                                <div className="relative w-1/3 flex-shrink-0 min-h-[120px]">
+                                <div className="relative w-10 h-10 flex-shrink-0">
                                   {subItem.image ? (
                                     <Image
                                       src={subItem.image}
                                       alt={translatedSubItemName}
                                       fill
-                                      sizes="(max-width: 768px) 100px, (max-width: 1200px) 120px, 140px"
-                                      className="object-cover rounded-l-2xl"
+                                      sizes="40px"
+                                      className="object-cover rounded"
                                       loading="lazy"
-                                      placeholder="blur"
-                                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
-                                      onError={() =>
-                                        console.error(
-                                          `Failed to load image for submenu item ${translatedSubItemName}: ${subItem.image}`
-                                        )
-                                      }
                                     />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-50/70 rounded-l-2xl min-h-[120px]">
-                                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                      </svg>
+                                  ) : settings?.image ? (
+                                    <div className="relative w-full h-full flex items-center justify-center bg-gray-50 rounded p-1.5">
+                                      <Image
+                                        src={settings.image}
+                                        alt="Logo"
+                                        width={28}
+                                        height={28}
+                                        className="object-contain"
+                                        loading="lazy"
+                                      />
                                     </div>
-                                  )}
+                                  ) : null}
                                 </div>
-                                
-                                {/* Content section - 2/3 width */}
-                                <div className="relative z-10 flex-1 flex items-center justify-between p-6">
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="text-[15px] font-semibold text-gray-900 mb-2 tracking-[-0.01em] antialiased group-hover/item:text-gray-700 transition-colors duration-300">
-                                      {translatedSubItemName}
-                                    </h4>
-                                    <p className="text-[12px] text-gray-500 leading-relaxed antialiased opacity-90 group-hover/item:opacity-100 transition-opacity duration-300">
-                                      {displayDescription}
-                                    </p>
-                                  </div>
-                                  <svg className="w-4 h-4 text-gray-300 group-hover/item:text-gray-500 group-hover/item:translate-x-1 transition-all duration-150 ease-out ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                                  </svg>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm font-medium text-gray-900 block">
+                                    {translatedSubItemName}
+                                  </span>
                                 </div>
                               </LocalizedLink>
                             );
                           })}
                         </div>
-                        
-                        {/* Featured section at bottom */}
-                        <div className="mt-8 pt-6 border-t border-gray-200/50">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="text-[14px] font-medium text-gray-700 antialiased">Need help deciding?</h4>
-                              <p className="text-[12px] text-gray-500 antialiased">Contact our team for personalized recommendations</p>
-                            </div>
-                            <button
-                              onClick={() => setIsContactOpen(true)}
-                              className="px-5 py-2.5 bg-gray-600/90 hover:bg-gray-700/90 text-white text-[13px] font-medium rounded-xl transition-all duration-150 ease-out hover:scale-[1.01] shadow-sm hover:shadow-lg backdrop-blur-sm antialiased"
-                            >
-                              Contact Us
-                            </button>
-                          </div>
-                        </div>
                       </div>
-    
-                      {/* Bottom accent */}
-                      <div className="absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-black/6 to-transparent"></div>
-                    </div>
+                    )}
                   </>
                 ) : (
                   <LocalizedLink
                     href={item.url_name}
                     onClick={() => setOpenSubmenu(null)}
-                    className="cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50  rounded-xl focus:outline-none transition-all duration-150 ease-out group antialiased"
+                    className="cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 rounded-xl focus:outline-none transition-colors duration-200 group"
                     title={translatedDisplayName}
                     aria-label={t.goTo(translatedDisplayName)}
                   >
                     {settings?.menu_items_are_text ? (
-                      <span className="text-[15px] font-medium text-gray-700 group-hover:text-gray-900 tracking-[-0.01em] transition-colors duration-300">{translatedDisplayName}</span>
+                      <span className={`text-[15px] font-medium transition-colors duration-200 ${
+                        isActive ? 'text-gray-900 font-semibold' : 'text-gray-700 group-hover:text-gray-900'
+                      }`}>{translatedDisplayName}</span>
                     ) : item.image ? (
                       <Image
                         src={item.image}
@@ -421,20 +442,20 @@ const Header: React.FC<HeaderProps> = ({
                 {displayedSubItems.length > 0 ? (
                   <Disclosure>
                     {({ open }) => (
-                      <div className="relative overflow-hidden bg-white/50 backdrop-blur-sm rounded-2xl border border-gray-200/40">
+                      <div className="border-t border-gray-200/50">
                         <Disclosure.Button
-                          className="group cursor-pointer flex items-center justify-between w-full p-4 hover:bg-gray-50/70 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                          className="flex items-center justify-between w-full p-4 text-gray-800 hover:text-gray-900 focus:outline-none transition-colors duration-200"
                           aria-label={t.toggleMenu(translatedDisplayName)}
                         >
                           <div className="flex items-center space-x-3">
                             <div className="text-left">
-                              <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{translatedDisplayName}</span>
-                              <p className="text-[12px] text-gray-600 antialiased opacity-80">
+                              <span className="text-sm font-semibold text-gray-900">{translatedDisplayName}</span>
+                              <p className="text-xs text-gray-500">
                                 {displayedSubItems.length} {displayedSubItems.length === 1 ? 'option' : 'options'}
                               </p>
                             </div>
                           </div>
-                          <div className="transition-all duration-300 group-hover:scale-105">
+                          <div className="transition-colors duration-200">
                             {open ? (
                               <MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                             ) : (
@@ -442,9 +463,7 @@ const Header: React.FC<HeaderProps> = ({
                             )}
                           </div>
                         </Disclosure.Button>
-                        <Disclosure.Panel className="p-4 pt-0 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-300 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide">
-                          {/* Gradient fade at top for visual hierarchy */}
-                          <div className="sticky top-0 h-4 bg-gradient-to-b from-white/90 to-transparent pointer-events-none z-10 -mt-2"></div>
+                        <Disclosure.Panel className="mt-3 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide">
                           {displayedSubItems.map((subItem) => {
                             // Get translated content for submenu item
                             const translatedSubItemName = currentLocale 
@@ -477,10 +496,8 @@ const Header: React.FC<HeaderProps> = ({
                                 key={subItem.id}
                                 href={subItem.url_name}
                                 onClick={() => setIsOpen(false)}
-                                className="group/sub relative overflow-hidden flex bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-xl border border-gray-200/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                                className="flex text-gray-800 hover:text-gray-900 transition-colors duration-200"
                               >
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/sub:translate-x-full transition-transform duration-700 ease-out"></div>
-                                
                                 {/* Image section - 1/3 width, full height */}
                                 <div className="relative w-1/3 flex-shrink-0 min-h-[60px]">
                                   {subItem.image ? (
@@ -499,6 +516,19 @@ const Header: React.FC<HeaderProps> = ({
                                         )
                                       }
                                     />
+                                  ) : settings?.image ? (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-l-xl p-3">
+                                      <div className="relative w-full h-full">
+                                        <Image
+                                          src={settings.image}
+                                          alt="Logo"
+                                          fill
+                                          sizes="(max-width: 768px) 80px, 100px"
+                                          className="object-contain"
+                                          loading="lazy"
+                                        />
+                                      </div>
+                                    </div>
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-l-xl min-h-[60px]">
                                       <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -509,20 +539,15 @@ const Header: React.FC<HeaderProps> = ({
                                 </div>
                                 
                                 {/* Content section - 2/3 width */}
-                                <div className="relative z-10 flex-1 flex items-center justify-between p-3">
+                                <div className="flex-1 flex items-center justify-between p-3">
                                   <div className="flex-1 min-w-0">
-                                    <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em] mb-1 block">{translatedSubItemName}</span>
-                                    <p className="text-[11px] text-gray-600 antialiased opacity-70 line-clamp-2">{displayDescription}</p>
+                                    <span className="text-sm font-medium block mb-1">{translatedSubItemName}</span>
+                                    <p className="text-xs text-gray-500 line-clamp-2">{displayDescription}</p>
                                   </div>
-                                  <svg className="w-4 h-4 text-gray-400 group-hover/sub:text-gray-600 group-hover/sub:translate-x-1 transition-all duration-300 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                  </svg>
                                 </div>
                               </LocalizedLink>
                             );
                           })}
-                          {/* Gradient fade at bottom for visual hierarchy */}
-                          <div className="sticky bottom-0 h-4 bg-gradient-to-t from-white/90 to-transparent pointer-events-none z-10 -mb-2"></div>
                         </Disclosure.Panel>
                       </div>
                     )}
@@ -531,16 +556,13 @@ const Header: React.FC<HeaderProps> = ({
                   <LocalizedLink
                     href={item.url_name}
                     onClick={() => setIsOpen(false)}
-                    className="group cursor-pointer flex items-center space-x-3 w-full p-4 bg-white/50 hover:bg-gray-50/70 backdrop-blur-sm rounded-2xl border border-gray-200/40 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                    className="flex items-center justify-between w-full p-4 text-gray-800 hover:text-gray-900 focus:outline-none transition-colors duration-200 border-t border-gray-200/50"
                     aria-label={t.goTo(translatedDisplayName)}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="flex-1 text-left">
-                        <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{translatedDisplayName}</span>
+                        <span className="text-sm font-semibold text-gray-900">{translatedDisplayName}</span>
                       </div>
-                      <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
                     </div>
                   </LocalizedLink>
                 )}
@@ -557,12 +579,12 @@ const Header: React.FC<HeaderProps> = ({
         className={`fixed left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isScrolled 
             ? 'bg-white/95 backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
-            : 'bg-white/80 backdrop-blur-2xl'
+            : 'md:bg-white/80 md:backdrop-blur-2xl'
         }`}
         style={{ 
           top: `${fixedBannersHeight}px`,
-          backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+          backdropFilter: isScrolled || window.innerWidth >= 768 ? 'blur(24px) saturate(200%) brightness(105%)' : 'none',
+          WebkitBackdropFilter: isScrolled || window.innerWidth >= 768 ? 'blur(24px) saturate(200%) brightness(105%)' : 'none',
         }}
       >
       <div
@@ -639,28 +661,21 @@ const Header: React.FC<HeaderProps> = ({
                 title={t.profile}
                 aria-label={t.openProfileMenu}
               >
-                <UserIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-all duration-300 group-hover:scale-105" />
+                <UserIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
               </button>
               
-              {/* Apple-style profile dropdown */}
-              <div className="absolute right-0 mt-2 w-72 bg-white/95 backdrop-blur-3xl border border-black/8 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-                style={{
-                  backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-                  WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-                }}
+              {/* Clean profile dropdown */}
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
               >
-                {/* Top highlight */}
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
-                
-                <div className="p-6">
+                <div className="p-4">
                   {/* Profile header */}
-                  <div className="flex items-center space-x-4 mb-6 pb-4 border-b border-gray-200/50">
-                    <div className="w-12 h-12 bg-gray-100/80 backdrop-blur-sm rounded-full flex items-center justify-center">
-                      <UserIcon className="h-6 w-6 text-gray-600" />
+                  <div className="flex items-center space-x-3 mb-4 pb-3 border-b border-gray-200">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                      <UserIcon className="h-5 w-5 text-gray-600" />
                     </div>
                     <div>
-                      <h3 className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{t.profile}</h3>
-                      <p className="text-[12px] text-gray-600 antialiased opacity-80">{t.manageAccount}</p>
+                      <h3 className="text-sm font-semibold text-gray-900">{t.profile}</h3>
+                      <p className="text-xs text-gray-500">{t.manageAccount}</p>
                     </div>
                   </div>
                   
@@ -668,67 +683,59 @@ const Header: React.FC<HeaderProps> = ({
                   <div className="space-y-1">
                     <LocalizedLink
                       href="/account"
-                      className="group/item relative overflow-hidden flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50/70 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01]"
+                      className="flex items-center space-x-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors duration-150"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-500 ease-out"></div>
-                      <div className="relative z-10 w-8 h-8 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
                         <UserIcon className="h-4 w-4 text-gray-600" />
                       </div>
-                      <div className="relative z-10 flex-1">
-                        <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.account}</span>
-                        <p className="text-[11px] text-gray-600 antialiased opacity-70">{t.accountSettings}</p>
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-gray-800">{t.account}</span>
+                        <p className="text-xs text-gray-500">{t.accountSettings}</p>
                       </div>
-                      <svg className="relative z-10 w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
                     </LocalizedLink>
 
                     <button
                       type="button"
                       onClick={handleContactModal}
-                      className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-3 rounded-xl hover:bg-gray-50/70 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01]"
+                      className="flex items-center space-x-3 w-full p-2.5 rounded-lg hover:bg-gray-50 transition-colors duration-150"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-500 ease-out"></div>
-                      <div className="relative z-10 w-8 h-8 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
                         <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                       </div>
-                      <div className="relative z-10 flex-1 text-left">
-                        <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.contact}</span>
-                        <p className="text-[11px] text-gray-600 antialiased opacity-70">{t.getHelpSupport}</p>
+                      <div className="flex-1 text-left">
+                        <span className="text-sm font-medium text-gray-800">{t.contact}</span>
+                        <p className="text-xs text-gray-500">{t.getHelpSupport}</p>
                       </div>
                     </button>
 
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-3 rounded-xl hover:bg-red-50/70 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] text-red-600 hover:text-red-700 mt-2 border-t border-gray-200/50 pt-4"
+                      className="flex items-center space-x-3 w-full p-2.5 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors duration-150 mt-2 border-t border-gray-200 pt-3"
                     >
-                      <div className="relative z-10 w-8 h-8 bg-red-100/80 rounded-lg flex items-center justify-center">
+                      <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
                         <ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
                       </div>
-                      <div className="relative z-10 flex-1 text-left">
-                        <span className="text-[14px] font-medium antialiased tracking-[-0.01em]">{t.logout}</span>
-                        <p className="text-[11px] text-red-500 antialiased opacity-70">{t.signOutAccount}</p>
+                      <div className="flex-1 text-left">
+                        <span className="text-sm font-medium">{t.logout}</span>
+                        <p className="text-xs text-red-500">{t.signOutAccount}</p>
                       </div>
                     </button>
                   </div>
                 </div>
-                
-                {/* Bottom accent */}
-                <div className="absolute inset-x-4 bottom-0 h-px bg-gradient-to-r from-transparent via-black/6 to-transparent"></div>
               </div>
             </div>
           ) : (
             <button
               type="button"
               onClick={handleLoginModal}
-              className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
+              className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 focus:outline-none transition-colors duration-200"
               title={t.login}
               aria-label={t.openLoginModal}
             >
-              <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-all duration-300 group-hover:scale-105" />
+              <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
             </button>
           )}
           </div>
@@ -750,12 +757,10 @@ const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={handleMenuToggle}
-            className="group cursor-pointer p-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-50/50 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
+            className="p-2.5 text-gray-600 hover:text-gray-800 transition-colors duration-200"
             aria-label={isOpen ? t.closeMenu : t.openMenu}
           >
-            <div className="transition-all duration-300 group-hover:scale-105">
-              {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
-            </div>
+            {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
         </div>
       </div>
@@ -777,18 +782,18 @@ const Header: React.FC<HeaderProps> = ({
             {isLoggedIn ? (
               <Disclosure>
                 {({ open }) => (
-                  <div className="relative overflow-hidden border-t border-gray-200/50 mt-6 pt-6">
+                  <div className="border-t border-gray-200/50 mt-6 pt-6">
                     <Disclosure.Button
-                      className="group cursor-pointer flex items-center justify-between w-full p-4 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                      className="flex items-center justify-between w-full p-4 text-gray-800 hover:text-gray-900 focus:outline-none transition-colors duration-200"
                       aria-label="Toggle profile menu"
                     >
                       <div className="flex items-center space-x-3">
                         <div className="text-left">
-                          <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{t.profile}</span>
-                          <p className="text-[12px] text-gray-600 antialiased opacity-80">{t.accountSettings}</p>
+                          <span className="text-sm font-semibold text-gray-900">{t.profile}</span>
+                          <p className="text-xs text-gray-500">{t.accountSettings}</p>
                         </div>
                       </div>
-                      <div className="transition-all duration-300 group-hover:scale-105">
+                      <div className="transition-colors duration-200">
                         {open ? (
                           <MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                         ) : (
@@ -796,51 +801,46 @@ const Header: React.FC<HeaderProps> = ({
                         )}
                       </div>
                     </Disclosure.Button>
-                    <Disclosure.Panel className="mt-3 space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-300 max-h-[calc(100vh-400px)] overflow-y-auto scrollbar-hide">
+                    <Disclosure.Panel className="mt-3 space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto scrollbar-hide">
                       <LocalizedLink
                         href="/account"
                         onClick={() => setIsOpen(false)}
-                        className="group/item relative overflow-hidden flex items-center space-x-3 p-4 bg-white/50 hover:bg-gray-50/70 backdrop-blur-sm rounded-xl border border-gray-200/40 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                        className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
-                        <div className="relative z-10 w-8 h-8 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                           <UserIcon className="h-4 w-4 text-gray-600" />
                         </div>
-                        <div className="relative z-10 flex-1">
-                          <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.account}</span>
-                          <p className="text-[11px] text-gray-600 antialiased opacity-70">{t.accountSettings}</p>
+                        <div className="flex-1 text-left">
+                          <span className="text-sm font-medium block">{t.account}</span>
+                          <p className="text-xs text-gray-500">{t.accountSettings}</p>
                         </div>
-                        <svg className="relative z-10 w-4 h-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
                       </LocalizedLink>
                       <button
                         type="button"
                         onClick={handleContactModal}
-                        className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-4 bg-white/50 hover:bg-gray-50/70 backdrop-blur-sm rounded-xl border border-gray-200/40 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                        className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 ease-out"></div>
-                        <div className="relative z-10 w-8 h-8 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                           <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                           </svg>
                         </div>
-                        <div className="relative z-10 flex-1 text-left">
-                          <span className="text-[14px] font-medium text-gray-800 antialiased tracking-[-0.01em]">{t.contact}</span>
-                          <p className="text-[11px] text-gray-600 antialiased opacity-70">{t.getHelpSupport}</p>
+                        <div className="flex-1 text-left">
+                          <span className="text-sm font-medium block">{t.contact}</span>
+                          <p className="text-xs text-gray-500">{t.getHelpSupport}</p>
                         </div>
                       </button>
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="group/item relative overflow-hidden flex items-center space-x-3 w-full p-4 bg-red-50/60 hover:bg-red-50/80 backdrop-blur-sm rounded-xl border border-red-200/40 text-red-600 hover:text-red-700 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                        className="flex items-center space-x-3 w-full p-4 text-red-600 hover:text-red-700 transition-colors duration-200"
                       >
-                        <div className="relative z-10 w-8 h-8 bg-red-100/80 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
                           <ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
                         </div>
-                        <div className="relative z-10 flex-1 text-left">
-                          <span className="text-[14px] font-medium antialiased tracking-[-0.01em]">{t.logout}</span>
-                          <p className="text-[11px] text-red-500 antialiased opacity-70">{t.signOutAccount}</p>
+                        <div className="flex-1 text-left">
+                          <span className="text-sm font-medium block">{t.logout}</span>
+                          <p className="text-xs text-red-500">{t.signOutAccount}</p>
                         </div>
                       </button>
                     </Disclosure.Panel>
@@ -852,34 +852,21 @@ const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={handleLoginModal}
-                  className="group cursor-pointer flex items-center justify-between w-full p-4 bg-gray-50/50 hover:bg-gray-100/60 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
+                  className="flex items-center justify-between w-full p-4 text-gray-800 hover:text-gray-900 focus:outline-none transition-colors duration-200"
                   aria-label={t.openLoginModal}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="text-left">
-                      <span className="text-[15px] font-semibold text-gray-900 antialiased tracking-[-0.01em]">{t.login}</span>
-                      <p className="text-[12px] text-gray-600 antialiased opacity-80">{t.signIn}</p>
+                      <span className="text-sm font-semibold text-gray-900">{t.login}</span>
+                      <p className="text-xs text-gray-500">{t.signIn}</p>
                     </div>
                   </div>
-                  <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-gray-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
               </div>
             )}
-            
-            {/* Close button at bottom for better UX */}
-            <div className="mt-8 pt-6 border-t border-gray-200/50">
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="w-full group cursor-pointer flex items-center justify-center p-4 bg-gray-100/60 hover:bg-gray-200/60 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.01] antialiased"
-                aria-label="Close menu"
-              >
-                <XMarkIcon className="h-5 w-5 text-gray-600 mr-2" />
-                <span className="text-[14px] font-medium text-gray-700 antialiased tracking-[-0.01em]">Close Menu</span>
-              </button>
-            </div>
           </div>
         </div>
       )}

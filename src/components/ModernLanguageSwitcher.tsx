@@ -11,12 +11,16 @@ interface ModernLanguageSwitcherProps {
   zIndex?: number;
   onLanguageChange?: (locale: Locale) => void;
   preventNavigation?: boolean;
+  openUpward?: boolean;
+  variant?: 'light' | 'dark';
 }
 
 export default function ModernLanguageSwitcher({ 
   zIndex = 20, 
   onLanguageChange,
-  preventNavigation = false 
+  preventNavigation = false,
+  openUpward = false,
+  variant = 'light'
 }: ModernLanguageSwitcherProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -80,85 +84,67 @@ export default function ModernLanguageSwitcher({
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
-        <Menu.Button className="group relative overflow-hidden inline-flex w-full justify-center items-center gap-x-2.5 rounded-2xl bg-white/90 backdrop-blur-3xl hover:bg-white/95 px-5 py-3 text-[14px] font-medium text-gray-700 hover:text-gray-900 shadow-sm hover:shadow-lg focus:outline-none transition-all duration-150 ease-out antialiased transform hover:scale-[1.01] active:scale-[0.98]"
-          style={{
-            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-          }}
+        <Menu.Button 
+          className={`group relative inline-flex w-full justify-center items-center gap-x-2 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none transition-colors duration-150 ${
+            variant === 'dark' 
+              ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 hover:text-white' 
+              : 'text-gray-700 hover:text-gray-900'
+          }`}
         >
-          {/* Subtle inner glow */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent rounded-2xl pointer-events-none"></div>
-          
-          <span className="relative z-10 text-[13px] font-semibold tracking-[-0.01em] transition-all duration-300 group-hover:scale-[1.02]">{currentLocale.toUpperCase()}</span>
-          <ChevronDownIcon className="relative z-10 -mr-1 h-4 w-4 text-gray-500 group-hover:text-gray-700 transition-all duration-150 ease-out group-hover:rotate-180" aria-hidden="true" />
-          
-          {/* Subtle shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-400 ease-out"></div>
+          <span className="text-sm font-medium">{currentLocale.toUpperCase()}</span>
+          <ChevronDownIcon 
+            className={`h-4 w-4 transition-all duration-150 group-hover:rotate-180 ${
+              variant === 'dark' ? 'text-gray-400 group-hover:text-gray-200' : 'text-gray-500 group-hover:text-gray-700'
+            }`} 
+            aria-hidden="true" 
+          />
         </Menu.Button>
       </div>
 
       <Transition
         as={Fragment}
-        enter="transition ease-out duration-300"
-        enterFrom="transform opacity-0 scale-95 translate-y-2"
-        enterTo="transform opacity-100 scale-100 translate-y-0"
-        leave="transition ease-in duration-200"
-        leaveFrom="transform opacity-100 scale-100 translate-y-0"
-        leaveTo="transform opacity-0 scale-95 translate-y-2"
+        enter="transition ease-out duration-200"
+        enterFrom="transform opacity-0 scale-95"
+        enterTo="transform opacity-100 scale-100"
+        leave="transition ease-in duration-150"
+        leaveFrom="transform opacity-100 scale-100"
+        leaveTo="transform opacity-0 scale-95"
       >
         <Menu.Items 
-          className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl bg-white/90 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] focus:outline-none overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200"
-          style={{ 
-            zIndex,
-            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-          }}
+          className={`absolute right-0 ${openUpward ? 'bottom-full mb-2' : 'mt-2'} w-56 ${openUpward ? 'origin-bottom-right' : 'origin-top-right'} rounded-lg bg-white shadow-lg focus:outline-none`}
+          style={{ zIndex }}
         >
-          {/* Enhanced top highlight with gradient */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent"></div>
-          
-          {/* Inner glow for premium depth */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent pointer-events-none"></div>
-          
-          <div className="relative py-3">
-            {supportedLocales.map((locale: string, index) => (
+          <div className="py-1">
+            {supportedLocales.map((locale: string) => (
               <Menu.Item key={locale}>
                 {({ active }) => (
                   <button
                     onClick={() => handleLanguageChange(locale)}
                     className={`${
-                      active ? 'bg-gray-50/70 backdrop-blur-sm text-gray-900 shadow-sm' : 'text-gray-700'
+                      active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
                     } ${
-                      locale === currentLocale ? 'bg-gray-100/80 text-gray-900 font-semibold shadow-inner' : ''
-                    } group relative overflow-hidden flex items-center w-full px-5 py-3.5 mx-2 rounded-xl text-[14px] transition-all duration-150 ease-out hover:scale-[1.01] antialiased ${
-                      index !== supportedLocales.length - 1 ? 'mb-1' : ''
-                    }`}
+                      locale === currentLocale ? 'bg-gray-50 font-semibold' : ''
+                    } flex items-center w-full px-4 py-2 text-sm transition-colors duration-150`}
                   >
-                    {/* Hover shine effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-300 ease-out"></div>
-                    
-                    <span className="relative z-10 mr-4 text-[11px] font-bold text-gray-600 w-9 text-center bg-gray-100/90 backdrop-blur-sm rounded-lg px-2 py-1.5 shadow-sm">
+                    <span className="mr-3 text-xs font-medium text-gray-500 w-8 text-center">
                       {locale.toUpperCase()}
                     </span>
-                    <span className="relative z-10 flex-1 text-left font-medium tracking-[-0.01em] transition-all duration-300 group-hover:scale-[1.01]">
+                    <span className="flex-1 text-left">
                       {getLanguageName(locale)}
                     </span>
                     {locale === currentLocale && (
-                      <span className="relative z-10 ml-3 flex items-center">
-                        <div className="w-2.5 h-2.5 bg-gray-700 rounded-full shadow-sm animate-pulse"></div>
+                      <span className="ml-2">
+                        <div className="w-2 h-2 bg-gray-700 rounded-full"></div>
                       </span>
                     )}
                     {locale === defaultLanguage && (
-                      <span className="relative z-10 ml-3 text-[10px] text-gray-500 bg-gray-100/90 backdrop-blur-sm px-2.5 py-1.5 rounded-full font-semibold shadow-sm">(Default)</span>
+                      <span className="ml-2 text-xs text-gray-400">(Default)</span>
                     )}
                   </button>
                 )}
               </Menu.Item>
             ))}
           </div>
-          
-          {/* Enhanced bottom accent with depth */}
-          <div className="absolute inset-x-3 bottom-0 h-px bg-gradient-to-r from-transparent via-black/6 to-transparent"></div>
         </Menu.Items>
       </Transition>
     </Menu>
