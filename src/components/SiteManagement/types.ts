@@ -69,7 +69,7 @@ export interface Settings {
   
   // Layout & Design (settings table)
   header_style?: string;
-  footer_color?: string;
+  footer_style?: string;
   menu_width?: string;
   font_family?: string;
   

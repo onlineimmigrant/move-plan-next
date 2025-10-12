@@ -251,7 +251,9 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   };
 
   const handleSectionChange = (sectionKey: string, field: keyof Settings, value: any) => {
+    console.log('📋 SettingsFormFields handleSectionChange:', { sectionKey, field, value, valueType: typeof value });
     onChange(field as keyof Settings, value);
+    console.log('📋 SettingsFormFields onChange called');
     
     // Ensure the section being edited is open
     setSectionStates(prev => ({

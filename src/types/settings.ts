@@ -22,6 +22,26 @@ export interface Size {
   created_at: string;
 }
 
+export type FooterType = 'default' | 'light' | 'compact' | 'stacked' | 'minimal' | 'grid';
+export type HeaderType = 'default' | 'minimal' | 'centered' | 'sidebar' | 'mega' | 'transparent' | 'scrolled';
+export type MenuWidth = 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
+
+export interface FooterStyle {
+  type?: FooterType;
+  color?: string;
+  color_hover?: string;
+  background?: string;
+}
+
+export interface HeaderStyle {
+  type?: HeaderType;
+  color?: string;
+  color_hover?: string;
+  background?: string;
+  menu_width?: MenuWidth;
+  menu_items_are_text?: boolean;
+}
+
 export interface Settings {
   site: string | null | undefined; // Simplified to match usage
   id: number;
@@ -29,7 +49,8 @@ export interface Settings {
   image: string;
   menu_width: string;
   menu_items_are_text: boolean;
-  footer_color: string;
+  header_style: HeaderStyle | string; // Support both JSONB object and legacy string
+  footer_style: FooterStyle | string; // Support both JSONB object and legacy string
   favicon: string | null;
   seo_title: string | null;
   seo_description: string | null;

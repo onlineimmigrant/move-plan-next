@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -9,6 +9,7 @@ import { MenuItem, SubMenuItem } from '@/types/menu';
 import ModernLanguageSwitcher from './ModernLanguageSwitcher';
 import LocalizedLink from './LocalizedLink';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
+import { FooterType } from '@/types/settings';
 
 // Static translations for footer
 const FOOTER_TRANSLATIONS = {
@@ -197,153 +198,497 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
   const handleNavigation = useMemo(() => (path: string) => () => router.push(path), [router]);
 
-  const footerBackground = settings?.footer_color || 'neutral-900';
+  // Handle footer_style - support both JSONB and legacy string
+  const footerStyles = useMemo(() => {
+    if (!settings?.footer_style) {
+      return {
+        type: 'default' as FooterType,
+        background: 'neutral-900',
+        color: 'neutral-400',
+        colorHover: 'white'
+      };
+    }
 
-  // Rest of the component remains unchanged
-  return (
-    <footer className={`bg-${footerBackground} text-white py-12 px-6 md:px-8 min-h-[400px]`} role="contentinfo">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    // If it's an object (JSONB), use the properties
+    if (typeof settings.footer_style === 'object' && settings.footer_style !== null) {
+      return {
+        type: (settings.footer_style.type || 'default') as FooterType,
+        background: settings.footer_style.background || 'neutral-900',
+        color: settings.footer_style.color || 'neutral-400',
+        colorHover: settings.footer_style.color_hover || 'white'
+      };
+    }
+
+    // Legacy string support - use it as background only
+    return {
+      type: 'default' as FooterType,
+      background: settings.footer_style,
+      color: 'neutral-400',
+      colorHover: 'white'
+    };
+  }, [settings?.footer_style]);
+
+  // Helper to get link color classes
+  const getLinkColorClasses = useCallback((isHeading = false) => {
+    const hasHexColor = footerStyles.color.startsWith('#');
+    const hasHexHover = footerStyles.colorHover.startsWith('#');
+    
+    if (hasHexColor || hasHexHover) {
+      return ''; // Use inline styles instead
+    }
+    
+    return isHeading 
+      ? `hover:text-${footerStyles.colorHover}` 
+      : `text-${footerStyles.color} hover:text-${footerStyles.colorHover}`;
+  }, [footerStyles]);
+
+  // Helper to get link inline styles
+  const getLinkStyles = useCallback((isHovered: boolean) => {
+    const hasHexColor = footerStyles.color.startsWith('#');
+    const hasHexHover = footerStyles.colorHover.startsWith('#');
+    
+    if (!hasHexColor && !hasHexHover) {
+      return {};
+    }
+    
+    return {
+      color: isHovered && hasHexHover ? footerStyles.colorHover : (hasHexColor ? footerStyles.color : undefined)
+    };
+  }, [footerStyles]);
+
+  // Link wrapper component with hover state
+  const FooterLink = ({ href, children, className = '', isHeading = false }: { href: string; children: React.ReactNode; className?: string; isHeading?: boolean }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    
+    return (
+      <span
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={getLinkStyles(isHovered)}
+      >
+        <LocalizedLink
+          href={href}
+          className={`transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${getLinkColorClasses(isHeading)} ${className}`}
+        >
+          {children}
+        </LocalizedLink>
+      </span>
+    );
+  };
+
+  // Render footer based on type
+  const renderFooterContent = () => {
+    switch (footerStyles.type) {
+      case 'light':
+        return renderLightFooter();
+      case 'compact':
+        return renderCompactFooter();
+      case 'stacked':
+        return renderStackedFooter();
+      case 'minimal':
+        return renderMinimalFooter();
+      case 'grid':
+        return renderGridFooter();
+      case 'default':
+      default:
+        return renderDefaultFooter();
+    }
+  };
+
+  // DEFAULT FOOTER - Current multi-column grid
+  const renderDefaultFooter = () => (
+    <>
+      <div className="flex justify-between items-center mb-8">
+        <button
+          onClick={() => setShowSettings(true)}
+          className={`text-${footerStyles.color} hover:text-${footerStyles.colorHover} text-sm font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400`}
+          style={{
+            color: footerStyles.color.startsWith('#') ? footerStyles.color : undefined,
+            '--hover-color': footerStyles.colorHover.startsWith('#') ? footerStyles.colorHover : undefined
+          } as React.CSSProperties}
+          onMouseEnter={(e) => {
+            if (footerStyles.colorHover.startsWith('#')) {
+              e.currentTarget.style.color = footerStyles.colorHover;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (footerStyles.color.startsWith('#')) {
+              e.currentTarget.style.color = footerStyles.color;
+            }
+          }}
+          aria-label={translations.privacySettings}
+        >
+          {translations.privacySettings}
+        </button>
+      </div>
+
+      <nav className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-5" aria-label="Footer navigation">
+        {menuItems.length === 0 ? (
+          <span className="text-neutral-500 text-sm">No menu items available</span>
+        ) : (
+          <>
+            {itemsWithSubitems.map((item) => {
+              const translatedDisplayName = currentLocale 
+                ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+                : item.display_name;
+
+              return (
+                <div key={item.id} className="col-span-1 min-h-[200px]">
+                  <h3 className="text-base font-semibold mb-4">
+                    <FooterLink
+                      href={item.url_name || '#'}
+                      className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                      isHeading={true}
+                    >
+                      {translatedDisplayName}
+                    </FooterLink>
+                  </h3>
+                  <ul className="space-y-2">
+                    {item.website_submenuitem
+                      ?.map((subItem) => {
+                        const translatedSubItemName = currentLocale 
+                          ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
+                          : subItem.name;
+
+                        return (
+                          <li key={subItem.id}>
+                            <FooterLink
+                              href={subItem.url_name || '#'}
+                              className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                            >
+                              {translatedSubItemName}
+                            </FooterLink>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </div>
+              );
+            })}
+
+            {groupedItemsWithoutSubitems.map((group, index) => (
+              <div key={`group-${index}`} className="col-span-1 min-h-[200px]">
+                <h3 className="text-base font-semibold mb-4">
+                  <FooterLink
+                    href={group[0]?.url_name || '#'}
+                    className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                    isHeading={true}
+                  >
+                    {itemsWithSubitems.length ? '' : translations.links}
+                  </FooterLink>
+                </h3>
+                <ul className="space-y-2">
+                  {group.map((item) => {
+                    const translatedDisplayName = currentLocale 
+                      ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+                      : item.display_name;
+
+                    return (
+                      <li key={item.id}>
+                        <FooterLink
+                          href={item.url_name || '#'}
+                          className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                        >
+                          {translatedDisplayName}
+                        </FooterLink>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+
+            <div className="col-span-1 min-h-[200px]">
+              <h3 className="text-base font-semibold mb-4">{translations.profile}</h3>
+              <ul className="space-y-2">
+                {isAuthenticated ? (
+                  <li>
+                    <button
+                      onClick={handleLogout}
+                      type="button"
+                      className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                      aria-label={translations.logout}
+                    >
+                      {translations.logout}
+                    </button>
+                  </li>
+                ) : (
+                  <>
+                    <li>
+                      <button
+                        type="button"
+                        onClick={handleNavigation('/login')}
+                        className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                        aria-label={translations.login}
+                      >
+                        {translations.login}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        onClick={handleNavigation('/register')}
+                        className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                        aria-label={translations.register}
+                      >
+                        {translations.register}
+                      </button>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+          </>
+        )}
+      </nav>
+
+      <div className="mt-12 border-t border-neutral-500 pt-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <small className="text-xs text-neutral-500">
+            © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
+          </small>
+          {settings?.with_language_switch && (
+            <ModernLanguageSwitcher openUpward={true} variant="footer" />
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  // LIGHT FOOTER - Minimal single-column centered
+  const renderLightFooter = () => (
+    <div className="text-center max-w-4xl mx-auto">
+      <nav className="mb-8" aria-label="Footer navigation">
+        <ul className="flex flex-wrap justify-center gap-6">
+          {itemsWithSubitems.slice(0, 5).map((item) => {
+            const translatedDisplayName = currentLocale 
+              ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+              : item.display_name;
+            return (
+              <li key={item.id}>
+                <FooterLink href={item.url_name || '#'} className="text-sm font-medium">
+                  {translatedDisplayName}
+                </FooterLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      
+      <div className="border-t border-opacity-20 pt-6 space-y-4" style={{ borderColor: footerStyles.color }}>
+        <button
+          onClick={() => setShowSettings(true)}
+          className="text-sm hover:underline"
+          style={{ color: footerStyles.color }}
+          aria-label={translations.privacySettings}
+        >
+          {translations.privacySettings}
+        </button>
+        <p className="text-xs opacity-60" style={{ color: footerStyles.color }}>
+          © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
+        </p>
+        {settings?.with_language_switch && (
+          <ModernLanguageSwitcher openUpward={true} variant="footer" />
+        )}
+      </div>
+    </div>
+  );
+
+  // COMPACT FOOTER - Horizontal navigation bar style
+  const renderCompactFooter = () => (
+    <div className="max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 py-6">
+        <nav className="flex flex-wrap justify-center md:justify-start gap-6" aria-label="Footer navigation">
+          {[...itemsWithSubitems, ...groupedItemsWithoutSubitems.flat()].slice(0, 6).map((item) => {
+            const translatedDisplayName = currentLocale 
+              ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+              : item.display_name;
+            return (
+              <FooterLink key={item.id} href={item.url_name || '#'} className="text-sm">
+                {translatedDisplayName}
+              </FooterLink>
+            );
+          })}
           <button
             onClick={() => setShowSettings(true)}
-            className="text-neutral-400 hover:text-white text-sm font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+            className="text-sm"
+            style={{ color: footerStyles.color }}
             aria-label={translations.privacySettings}
           >
             {translations.privacySettings}
           </button>
+        </nav>
+        
+        <div className="flex items-center gap-6">
+          {settings?.with_language_switch && (
+            <ModernLanguageSwitcher openUpward={true} variant="footer" />
+          )}
+          <p className="text-xs whitespace-nowrap" style={{ color: footerStyles.color }}>
+            © {new Date().getFullYear()} {settings?.site || 'Company'}
+          </p>
         </div>
+      </div>
+    </div>
+  );
 
-        <nav className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-5" aria-label="Footer navigation">
-          {menuItems.length === 0 ? (
-            <span className="text-neutral-500 text-sm">No menu items available</span>
-          ) : (
-            <>
-              {itemsWithSubitems.map((item) => {
-                // Get translated content for menu item
-                const translatedDisplayName = currentLocale 
-                  ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
-                  : item.display_name;
-
+  // STACKED FOOTER - Vertical sections with dividers
+  const renderStackedFooter = () => (
+    <div className="max-w-4xl mx-auto space-y-8">
+      {itemsWithSubitems.map((item, index) => {
+        const translatedDisplayName = currentLocale 
+          ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+          : item.display_name;
+        return (
+          <div 
+            key={item.id} 
+            className={`py-6 ${index > 0 ? 'border-t' : ''}`}
+            style={{ borderColor: index > 0 ? `${footerStyles.color}33` : undefined }}
+          >
+            <h3 className="text-lg font-semibold mb-4 text-center">
+              <FooterLink href={item.url_name || '#'} isHeading={true}>
+                {translatedDisplayName}
+              </FooterLink>
+            </h3>
+            <ul className="flex flex-wrap justify-center gap-4">
+              {item.website_submenuitem?.map((subItem) => {
+                const translatedSubItemName = currentLocale 
+                  ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
+                  : subItem.name;
                 return (
-                  <div key={item.id} className="col-span-1 min-h-[200px]">
-                    <h3 className="text-base font-semibold mb-4">
-                      <LocalizedLink
-                        href={item.url_name || '#'}
-                        className="hover:text-neutral-300 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                      >
-                        {translatedDisplayName}
-                      </LocalizedLink>
-                    </h3>
-                    <ul className="space-y-2">
-                      {item.website_submenuitem
-                        ?.map((subItem) => {
-                          // Get translated content for submenu item
-                          const translatedSubItemName = currentLocale 
-                            ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
-                            : subItem.name;
-
-                          return (
-                            <li key={subItem.id}>
-                              <LocalizedLink
-                                href={subItem.url_name || '#'}
-                                className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                              >
-                                {translatedSubItemName}
-                              </LocalizedLink>
-                            </li>
-                          );
-                        })}
-                    </ul>
-                  </div>
+                  <li key={subItem.id}>
+                    <FooterLink href={subItem.url_name || '#'} className="text-sm">
+                      {translatedSubItemName}
+                    </FooterLink>
+                  </li>
                 );
               })}
-
-              {groupedItemsWithoutSubitems.map((group, index) => (
-                <div key={`group-${index}`} className="col-span-1 min-h-[200px]">
-                  <h3 className="text-base font-semibold mb-4">
-                    <LocalizedLink
-                      href={group[0]?.url_name || '#'}
-                      className="hover:text-neutral-300 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                    >
-                      {itemsWithSubitems.length ? '' : translations.links}
-                    </LocalizedLink>
-                  </h3>
-                  <ul className="space-y-2">
-                    {group.map((item) => {
-                      // Get translated content for menu item
-                      const translatedDisplayName = currentLocale 
-                        ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
-                        : item.display_name;
-
-                      return (
-                        <li key={item.id}>
-                          <LocalizedLink
-                            href={item.url_name || '#'}
-                            className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                          >
-                            {translatedDisplayName}
-                          </LocalizedLink>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-
-              <div className="col-span-1 min-h-[200px]">
-                <h3 className="text-base font-semibold mb-4">{translations.profile}</h3>
-                <ul className="space-y-2">
-                  {isAuthenticated ? (
-                    <li>
-                      <button
-                        onClick={handleLogout}
-                        type="button"
-                        className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                        aria-label={translations.logout}
-                      >
-                        {translations.logout}
-                      </button>
-                    </li>
-                  ) : (
-                    <>
-                      <li>
-                        <button
-                          type="button"
-                          onClick={handleNavigation('/login')}
-                          className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                          aria-label={translations.login}
-                        >
-                          {translations.login}
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          type="button"
-                          onClick={handleNavigation('/register')}
-                          className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                          aria-label={translations.register}
-                        >
-                          {translations.register}
-                        </button>
-                      </li>
-                    </>
-                  )}
-                </ul>
-              </div>
-            </>
+            </ul>
+          </div>
+        );
+      })}
+      
+      <div className="border-t pt-6 text-center" style={{ borderColor: `${footerStyles.color}33` }}>
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="text-sm"
+            style={{ color: footerStyles.color }}
+            aria-label={translations.privacySettings}
+          >
+            {translations.privacySettings}
+          </button>
+          {settings?.with_language_switch && (
+            <ModernLanguageSwitcher openUpward={true} variant="footer" />
           )}
-        </nav>
+        </div>
+        <p className="text-xs" style={{ color: footerStyles.color }}>
+          © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
+        </p>
+      </div>
+    </div>
+  );
 
-        <div className="mt-12 border-t border-neutral-500 pt-6">
+  // MINIMAL FOOTER - Ultra-clean minimal design
+  const renderMinimalFooter = () => (
+    <div className="max-w-4xl mx-auto text-center py-8">
+      <nav className="mb-6" aria-label="Footer navigation">
+        <ul className="flex flex-wrap justify-center gap-8 text-sm">
+          {[...itemsWithSubitems, ...groupedItemsWithoutSubitems.flat()].slice(0, 4).map((item) => {
+            const translatedDisplayName = currentLocale 
+              ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+              : item.display_name;
+            return (
+              <li key={item.id}>
+                <FooterLink href={item.url_name || '#'}>{translatedDisplayName}</FooterLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      
+      <div className="space-y-3">
+        <button
+          onClick={() => setShowSettings(true)}
+          className="text-xs opacity-60 hover:opacity-100 transition-opacity"
+          style={{ color: footerStyles.color }}
+          aria-label={translations.privacySettings}
+        >
+          {translations.privacySettings}
+        </button>
+        <p className="text-xs opacity-50" style={{ color: footerStyles.color }}>
+          © {new Date().getFullYear()} {settings?.site || 'Company'}
+        </p>
+      </div>
+    </div>
+  );
+
+  // GRID FOOTER - Balanced 4-column grid
+  const renderGridFooter = () => {
+    const allItems = [...itemsWithSubitems, ...groupedItemsWithoutSubitems.flat()];
+    const columns = 4;
+    const itemsPerColumn = Math.ceil(allItems.length / columns);
+    const gridColumns = Array.from({ length: columns }, (_, i) => 
+      allItems.slice(i * itemsPerColumn, (i + 1) * itemsPerColumn)
+    );
+
+    return (
+      <>
+        <nav className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12" aria-label="Footer navigation">
+          {gridColumns.map((column, colIndex) => (
+            <div key={`col-${colIndex}`}>
+              <ul className="space-y-3">
+                {column.map((item) => {
+                  const translatedDisplayName = currentLocale 
+                    ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+                    : item.display_name;
+                  return (
+                    <li key={item.id}>
+                      <FooterLink href={item.url_name || '#'} className="text-sm">
+                        {translatedDisplayName}
+                      </FooterLink>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+        
+        <div className="border-t pt-6" style={{ borderColor: `${footerStyles.color}33` }}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <small className="text-xs text-neutral-500">
-              © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
-            </small>
+            <div className="flex items-center gap-6">
+              <button
+                onClick={() => setShowSettings(true)}
+                className="text-sm"
+                style={{ color: footerStyles.color }}
+                aria-label={translations.privacySettings}
+              >
+                {translations.privacySettings}
+              </button>
+              <p className="text-xs" style={{ color: footerStyles.color }}>
+                © {new Date().getFullYear()} {settings?.site || 'Company'}
+              </p>
+            </div>
             {settings?.with_language_switch && (
-              <ModernLanguageSwitcher openUpward={true} variant="dark" />
+              <ModernLanguageSwitcher openUpward={true} variant="footer" />
             )}
           </div>
         </div>
+      </>
+    );
+  };
+
+  // Rest of the component remains unchanged
+  return (
+    <footer 
+      className={`bg-${footerStyles.background} text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : footerStyles.type === 'minimal' ? 'py-6' : 'py-12'} min-h-[${footerStyles.type === 'compact' || footerStyles.type === 'minimal' ? '200px' : '400px'}]`} 
+      role="contentinfo"
+      style={{
+        backgroundColor: footerStyles.background.startsWith('#') ? footerStyles.background : undefined
+      }}
+    >
+      <div className={footerStyles.type === 'light' || footerStyles.type === 'stacked' || footerStyles.type === 'minimal' ? 'max-w-5xl mx-auto' : 'max-w-7xl mx-auto'}>
+        {renderFooterContent()}
       </div>
     </footer>
   );

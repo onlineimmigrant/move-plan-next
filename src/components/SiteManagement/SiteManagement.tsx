@@ -980,8 +980,8 @@ export default function SiteManagement() {
           secondary_color: data.settings?.secondary_color || 'gray',
           
           // Layout & Design (settings table)
-          header_style: data.settings?.header_style || 'default',
-          footer_color: data.settings?.footer_color || 'gray',
+          header_style: data.settings?.header_style || { type: 'default', background: 'white', color: 'gray-700', color_hover: 'gray-900', menu_width: '7xl', menu_items_are_text: true },
+          footer_style: data.settings?.footer_style || { type: 'default', background: 'neutral-900', color: 'neutral-400', color_hover: 'white' },
           menu_width: data.settings?.menu_width || '280px',
           font_family: data.settings?.font_family || 'Inter',
           
@@ -1090,6 +1090,11 @@ export default function SiteManagement() {
 
       console.log('Saving settings:', settings); // Debug log
       console.log('Selected organization:', selectedOrganization); // Debug log
+      console.log('🎨 Footer style from settings:', {
+        value: settings.footer_style,
+        type: typeof settings.footer_style,
+        stringified: JSON.stringify(settings.footer_style)
+      });
 
       // Separate organization fields, hero fields, menu items, and other settings
       const { 
@@ -1175,6 +1180,12 @@ export default function SiteManagement() {
         p_description_weight
       };
 
+      console.log('🎨 pureSettings footer_style:', {
+        value: pureSettings.footer_style,
+        type: typeof pureSettings.footer_style,
+        stringified: JSON.stringify(pureSettings.footer_style)
+      });
+
       // Use the correct API structure that expects organization and settings
       const requestBody = {
         organization: {
@@ -1200,6 +1211,11 @@ export default function SiteManagement() {
         faqs: faqs || []
       };
 
+      console.log('🎨 Request body settings.footer_style:', {
+        value: requestBody.settings.footer_style,
+        type: typeof requestBody.settings.footer_style,
+        stringified: JSON.stringify(requestBody.settings.footer_style)
+      });
       console.log('Request body:', requestBody); // Debug log
 
       const response = await fetch(`/api/organizations/${selectedOrganization.id}`, {
@@ -1272,8 +1288,8 @@ export default function SiteManagement() {
             site: refreshData.settings?.site || refreshData.organization.name || '',
             primary_color: refreshData.settings?.primary_color || 'sky',
             secondary_color: refreshData.settings?.secondary_color || 'gray',
-            header_style: refreshData.settings?.header_style || 'default',
-            footer_color: refreshData.settings?.footer_color || 'gray',
+            header_style: refreshData.settings?.header_style || { type: 'default', background: 'white', color: 'gray-700', color_hover: 'gray-900', menu_width: '7xl', menu_items_are_text: true },
+            footer_style: refreshData.settings?.footer_style || { type: 'default', background: 'neutral-900', color: 'neutral-400', color_hover: 'white' },
             menu_width: refreshData.settings?.menu_width || '280px',
             font_family: refreshData.settings?.font_family || 'Inter',
             image: refreshData.settings?.image || refreshData.settings?.logo_url || null,

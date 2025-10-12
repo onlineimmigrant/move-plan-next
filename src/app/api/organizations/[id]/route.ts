@@ -248,6 +248,7 @@ export async function GET(
         is_displayed_on_footer,
         order,
         react_icon_id,
+        menu_items_are_text,
         organization_id,
         description_translation
       `)
@@ -943,10 +944,107 @@ export async function PUT(
         ...cleanSettingsData 
       } = settingsData;
 
+      console.log('[API] 🎨 cleanSettingsData.footer_style:', {
+        value: cleanSettingsData.footer_style,
+        type: typeof cleanSettingsData.footer_style,
+        stringified: JSON.stringify(cleanSettingsData.footer_style)
+      });
+
       console.log('[API] Extracted arrays:', {
         features: features ? `${features.length} items` : 'undefined',
         faqs: faqs ? `${faqs.length} items` : 'undefined', 
         banners: banners ? `${banners.length} items` : 'undefined',
+      });
+
+      console.log('[API] 🎨 footer_style BEFORE processing:', {
+        value: cleanSettingsData.footer_style,
+        type: typeof cleanSettingsData.footer_style,
+        isObject: typeof cleanSettingsData.footer_style === 'object',
+        stringified: JSON.stringify(cleanSettingsData.footer_style)
+      });
+
+      // Process footer_style to ensure JSONB format
+      if (cleanSettingsData.footer_style) {
+        // If it's already an object (JSONB), ensure it has the type field
+        if (typeof cleanSettingsData.footer_style === 'object') {
+          console.log('[API] ✅ footer_style is already an object (JSONB)');
+          // Add default type if missing
+          if (!cleanSettingsData.footer_style.type) {
+            console.log('[API] 🔄 Adding default type to footer_style');
+            cleanSettingsData.footer_style.type = 'default';
+          }
+        }
+        // If it's a string (legacy), convert to JSONB format
+        else if (typeof cleanSettingsData.footer_style === 'string') {
+          console.log('[API] 🔄 Converting string footer_style to JSONB');
+          cleanSettingsData.footer_style = {
+            type: 'default',
+            background: cleanSettingsData.footer_style,
+            color: 'neutral-400',
+            color_hover: 'white'
+          };
+        }
+      } else {
+        console.log('[API] ⚠️ footer_style is missing or null');
+      }
+
+      console.log('[API] 🎨 footer_style AFTER processing:', {
+        value: cleanSettingsData.footer_style,
+        type: typeof cleanSettingsData.footer_style,
+        stringified: JSON.stringify(cleanSettingsData.footer_style)
+      });
+
+      // Process header_style to ensure JSONB format
+      console.log('[API] 🎨 header_style BEFORE processing:', {
+        value: cleanSettingsData.header_style,
+        type: typeof cleanSettingsData.header_style,
+        isObject: typeof cleanSettingsData.header_style === 'object',
+        stringified: JSON.stringify(cleanSettingsData.header_style)
+      });
+
+      if (cleanSettingsData.header_style) {
+        // If it's already an object (JSONB), ensure it has all required fields
+        if (typeof cleanSettingsData.header_style === 'object') {
+          console.log('[API] ✅ header_style is already an object (JSONB)');
+          // Add default fields if missing
+          cleanSettingsData.header_style = {
+            type: cleanSettingsData.header_style.type || 'default',
+            background: cleanSettingsData.header_style.background || 'white',
+            color: cleanSettingsData.header_style.color || 'gray-700',
+            color_hover: cleanSettingsData.header_style.color_hover || 'gray-900',
+            menu_width: cleanSettingsData.header_style.menu_width || '7xl',
+            menu_items_are_text: cleanSettingsData.header_style.menu_items_are_text ?? true
+          };
+          console.log('[API] 🔄 Ensured all header_style fields are present');
+        }
+        // If it's a string (legacy), convert to JSONB format
+        else if (typeof cleanSettingsData.header_style === 'string') {
+          console.log('[API] 🔄 Converting string header_style to JSONB');
+          cleanSettingsData.header_style = {
+            type: 'default',
+            background: 'white',
+            color: 'gray-700',
+            color_hover: 'gray-900',
+            menu_width: '7xl',
+            menu_items_are_text: true
+          };
+        }
+      } else {
+        console.log('[API] ⚠️ header_style is missing or null, setting defaults');
+        cleanSettingsData.header_style = {
+          type: 'default',
+          background: 'white',
+          color: 'gray-700',
+          color_hover: 'gray-900',
+          menu_width: '7xl',
+          menu_items_are_text: true
+        };
+      }
+
+      console.log('[API] 🎨 header_style AFTER processing:', {
+        value: cleanSettingsData.header_style,
+        type: typeof cleanSettingsData.header_style,
+        stringified: JSON.stringify(cleanSettingsData.header_style)
       });
 
       // Check if settings record exists
@@ -961,8 +1059,16 @@ export async function PUT(
         return NextResponse.json({ error: 'Error checking settings' }, { status: 500 });
       }
 
+      console.log('[API] 📝 About to update settings with cleanSettingsData:', {
+        footer_style: cleanSettingsData.footer_style,
+        footer_style_type: typeof cleanSettingsData.footer_style,
+        footer_style_json: JSON.stringify(cleanSettingsData.footer_style),
+        all_keys: Object.keys(cleanSettingsData)
+      });
+
       if (existingSettings) {
         // Update existing settings
+        console.log('[API] 🔄 Updating existing settings for org:', orgId);
         const { data: settings, error: settingsUpdateError } = await supabase
           .from('settings')
           .update(cleanSettingsData)
@@ -971,13 +1077,18 @@ export async function PUT(
           .single();
 
         if (settingsUpdateError) {
-          console.error('Error updating settings:', settingsUpdateError);
+          console.error('[API] ❌ Error updating settings:', settingsUpdateError);
           return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
         }
 
+        console.log('[API] ✅ Settings updated successfully:', {
+          footer_style: settings.footer_style,
+          footer_style_type: typeof settings.footer_style
+        });
         updatedSettings = settings;
       } else {
         // Create new settings record
+        console.log('[API] ➕ Creating new settings for org:', orgId);
         const { data: settings, error: settingsCreateError } = await supabase
           .from('settings')
           .insert({
@@ -988,10 +1099,14 @@ export async function PUT(
           .single();
 
         if (settingsCreateError) {
-          console.error('Error creating settings:', settingsCreateError);
+          console.error('[API] ❌ Error creating settings:', settingsCreateError);
           return NextResponse.json({ error: 'Failed to create settings' }, { status: 500 });
         }
 
+        console.log('[API] ✅ Settings created successfully:', {
+          footer_style: settings.footer_style,
+          footer_style_type: typeof settings.footer_style
+        });
         updatedSettings = settings;
       }
     }
@@ -1069,6 +1184,8 @@ export async function PUT(
             is_displayed: convertToBoolean(item.is_displayed),
             is_displayed_on_footer: convertToBoolean(item.is_displayed_on_footer),
             order: item.order || index + 1,
+            react_icon_id: item.react_icon_id,
+            menu_items_are_text: item.menu_items_are_text,
             organization_id: orgId
           };
         });

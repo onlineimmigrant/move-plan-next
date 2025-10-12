@@ -12,7 +12,7 @@ interface ModernLanguageSwitcherProps {
   onLanguageChange?: (locale: Locale) => void;
   preventNavigation?: boolean;
   openUpward?: boolean;
-  variant?: 'light' | 'dark';
+  variant?: 'light' | 'dark' | 'footer';
 }
 
 export default function ModernLanguageSwitcher({ 
@@ -88,13 +88,19 @@ export default function ModernLanguageSwitcher({
           className={`group relative inline-flex w-full justify-center items-center gap-x-2 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none transition-colors duration-150 ${
             variant === 'dark' 
               ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 hover:text-white' 
+              : variant === 'footer'
+              ? 'bg-transparent text-neutral-500 hover:text-neutral-400'
               : 'text-gray-700 hover:text-gray-900'
           }`}
         >
           <span className="text-sm font-medium">{currentLocale.toUpperCase()}</span>
           <ChevronDownIcon 
             className={`h-4 w-4 transition-all duration-150 group-hover:rotate-180 ${
-              variant === 'dark' ? 'text-gray-400 group-hover:text-gray-200' : 'text-gray-500 group-hover:text-gray-700'
+              variant === 'dark' 
+                ? 'text-gray-400 group-hover:text-gray-200' 
+                : variant === 'footer'
+                ? 'text-neutral-500 group-hover:text-neutral-400'
+                : 'text-gray-500 group-hover:text-gray-700'
             }`} 
             aria-hidden="true" 
           />

@@ -373,12 +373,33 @@ export default function GlobalSettingsModal() {
       value: Array.isArray(value) ? value : (typeof value === 'object' ? 'object' : value)
     });
     
+    // Special logging for footer_style
+    if (field === 'footer_style') {
+      console.log('[GlobalSettingsModal] 🎨 FOOTER_STYLE CHANGE:', {
+        field,
+        value,
+        valueType: typeof value,
+        isObject: typeof value === 'object',
+        stringified: JSON.stringify(value)
+      });
+    }
+    
     setSettings(prev => {
       const updated = {
         ...prev,
         [field]: value
       };
       console.log('[GlobalSettingsModal] 📝 Settings updated, new keys:', Object.keys(updated));
+      
+      // Special logging for footer_style
+      if (field === 'footer_style') {
+        console.log('[GlobalSettingsModal] 🎨 Settings state after update:', {
+          footer_style: updated.footer_style,
+          footer_style_type: typeof updated.footer_style,
+          footer_style_json: JSON.stringify(updated.footer_style)
+        });
+      }
+      
       return updated;
     });
   };

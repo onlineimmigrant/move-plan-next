@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ComputerDesktopIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
 import { Settings } from './types';
+import { HeaderStyle } from '@/types/settings';
 
 interface LivePreviewProps {
   settings: Settings;
@@ -71,11 +72,19 @@ export default function LivePreview({
           if (settings.secondary_color) {
             url.searchParams.set('preview_secondary_color', settings.secondary_color);
           }
+          // Pass header_style as JSON string (JSONB object)
           if (settings.header_style) {
-            url.searchParams.set('preview_header_style', settings.header_style);
+            const headerStyleStr = typeof settings.header_style === 'object' 
+              ? JSON.stringify(settings.header_style)
+              : settings.header_style;
+            url.searchParams.set('preview_header_style', headerStyleStr);
           }
-          if (settings.footer_color) {
-            url.searchParams.set('preview_footer_color', settings.footer_color);
+          // Pass footer_style as JSON string (JSONB object)
+          if (settings.footer_style) {
+            const footerStyleStr = typeof settings.footer_style === 'object'
+              ? JSON.stringify(settings.footer_style)
+              : settings.footer_style;
+            url.searchParams.set('preview_footer_style', footerStyleStr);
           }
           if (settings.site) {
             url.searchParams.set('preview_site_title', settings.site);
@@ -83,8 +92,16 @@ export default function LivePreview({
           if (settings.image) {
             url.searchParams.set('preview_logo_url', settings.image);
           }
-          if (settings.menu_width) {
-            url.searchParams.set('preview_menu_width', settings.menu_width);
+          // Use menu_width from header_style JSONB, fallback to old field for backward compatibility
+          let menuWidth: string | undefined;
+          if (typeof settings.header_style === 'object' && settings.header_style !== null) {
+            const headerStyle = settings.header_style as HeaderStyle;
+            menuWidth = headerStyle.menu_width;
+          } else {
+            menuWidth = settings.menu_width;
+          }
+          if (menuWidth) {
+            url.searchParams.set('preview_menu_width', menuWidth);
           }
           if (settings.font_family) {
             url.searchParams.set('preview_font_family', settings.font_family);

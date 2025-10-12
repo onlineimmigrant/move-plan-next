@@ -25,7 +25,10 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         is_displayed,
         is_displayed_on_footer,
         order,
+        react_icon_id,
+        menu_items_are_text,
         organization_id,
+        react_icons (icon_name),
         website_submenuitem(
           id,
           name,
@@ -56,6 +59,8 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
           is_displayed,
           is_displayed_on_footer,
           order,
+          react_icon_id,
+          menu_items_are_text,
           organization_id
         `)
         .eq('organization_id', organizationId)
@@ -94,51 +99,66 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
     console.log(`fetchMenuItems - fetched ${data?.length || 0} menu items with submenu data`);
     
     // Transform data to match expected interface
-    const menuItems: MenuItem[] = data?.map((item: any) => ({
-      id: item.id,
-      display_name: item.display_name,
-      display_name_translation: item.display_name_translation,
-      url_name: item.url_name,
-      is_displayed: item.is_displayed,
-      is_displayed_on_footer: item.is_displayed_on_footer,
-      is_new_window: false, // Default value since this field might not exist
-      order: item.order,
-      created_at: undefined, // Field doesn't exist in database
-      organization_id: item.organization_id,
-      icon_name: null, // Removed react_icons join to avoid schema conflicts
-      website_submenuitem: item.website_submenuitem?.map((submenu: any) => ({
-        id: submenu.id,
-        name: submenu.name,
-        name_translation: submenu.name_translation,
-        url_name: submenu.url_name,
-        description: submenu.description,
-        description_translation: submenu.description_translation,
-        is_displayed: true, // Default since field doesn't exist
-        is_new_window: false, // Default since field doesn't exist
-        order: submenu.order,
-        menu_item_id: submenu.menu_item_id,
-        image: submenu.image
-      })) || [],
-      // Legacy aliases for backward compatibility
-      name: item.display_name,
-      name_translation: item.display_name_translation,
-      url: item.url_name,
-      is_visible: item.is_displayed,
-      order_position: item.order,
-      submenu_items: item.website_submenuitem?.map((submenu: any) => ({
-        id: submenu.id,
-        name: submenu.name,
-        name_translation: submenu.name_translation,
-        url: submenu.url_name,
-        description: submenu.description,
-        description_translation: submenu.description_translation,
-        is_visible: true,
-        is_new_window: false,
-        order_position: submenu.order,
-        website_menuitem_id: submenu.menu_item_id,
-        image: submenu.image
-      })) || []
-    })) || [];
+    const menuItems: MenuItem[] = data?.map((item: any) => {
+      // Handle react_icons as either an array or single object
+      let iconName: string | null = null;
+      if (item.react_icons) {
+        if (Array.isArray(item.react_icons) && item.react_icons.length > 0) {
+          iconName = item.react_icons[0].icon_name;
+        } else if (item.react_icons.icon_name) {
+          iconName = item.react_icons.icon_name;
+        }
+      }
+
+      return {
+        id: item.id,
+        display_name: item.display_name,
+        display_name_translation: item.display_name_translation,
+        url_name: item.url_name,
+        is_displayed: item.is_displayed,
+        is_displayed_on_footer: item.is_displayed_on_footer,
+        is_new_window: false, // Default value since this field might not exist
+        order: item.order,
+        react_icon_id: item.react_icon_id,
+        menu_items_are_text: item.menu_items_are_text,
+        created_at: undefined, // Field doesn't exist in database
+        organization_id: item.organization_id,
+        icon_name: iconName,
+        react_icons: item.react_icons,
+        website_submenuitem: item.website_submenuitem?.map((submenu: any) => ({
+          id: submenu.id,
+          name: submenu.name,
+          name_translation: submenu.name_translation,
+          url_name: submenu.url_name,
+          description: submenu.description,
+          description_translation: submenu.description_translation,
+          is_displayed: true, // Default since field doesn't exist
+          is_new_window: false, // Default since field doesn't exist
+          order: submenu.order,
+          menu_item_id: submenu.menu_item_id,
+          image: submenu.image
+        })) || [],
+        // Legacy aliases for backward compatibility
+        name: item.display_name,
+        name_translation: item.display_name_translation,
+        url: item.url_name,
+        is_visible: item.is_displayed,
+        order_position: item.order,
+        submenu_items: item.website_submenuitem?.map((submenu: any) => ({
+          id: submenu.id,
+          name: submenu.name,
+          name_translation: submenu.name_translation,
+          url: submenu.url_name,
+          description: submenu.description,
+          description_translation: submenu.description_translation,
+          is_visible: true,
+          is_new_window: false,
+          order_position: submenu.order,
+          website_menuitem_id: submenu.menu_item_id,
+          image: submenu.image
+        })) || []
+      };
+    }) || [];
 
     return menuItems;
   } catch (error) {

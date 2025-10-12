@@ -26,6 +26,8 @@ export interface MenuItem {
   is_displayed_on_footer?: boolean; // Added missing property
   is_new_window?: boolean;
   order: number; // Updated field name to match database
+  react_icon_id?: number;
+  menu_items_are_text?: boolean; // Whether to display menu items as text only (no icons)
   created_at?: string;
   description?: string;
   description_translation?: Record<string, string>;

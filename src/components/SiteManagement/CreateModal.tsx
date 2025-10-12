@@ -857,7 +857,7 @@ export default function CreateModal({ isOpen, onClose, onSubmit, onOrganizationC
                 primary_color: 'emerald',
                 secondary_color: 'gray',
                 header_style: 'default',
-                footer_color: 'gray',
+                footer_style: 'gray',
                 menu_width: '280px',
                 font_family: '',
                 image: null,

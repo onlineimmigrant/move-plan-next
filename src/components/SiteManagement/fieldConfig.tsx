@@ -17,6 +17,8 @@ import { ProductSelect } from './ProductSelect';
 import { FeatureSelect } from './FeatureSelect';
 import { FAQSelect } from './FAQSelect';
 import { BannerSelect } from './BannerSelect';
+import { FooterStyleField } from './FooterStyleField';
+import { HeaderStyleField } from './HeaderStyleField';
 // Cookie Management components
 import { CookieCategoriesSelect } from './CookieCategoriesSelect';
 import { CookieServicesSelect } from './CookieServicesSelect';
@@ -43,7 +45,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners' | 'cookie-consent' | 'cookie-categories' | 'cookie-services' | 'cookie-consent-records' | 'ai-agents';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners' | 'cookie-consent' | 'cookie-categories' | 'cookie-services' | 'cookie-consent-records' | 'ai-agents' | 'footer-style' | 'header-style';
   placeholder?: string;
   span?: 'full' | 'half';
   disabled?: boolean;
@@ -162,7 +164,15 @@ interface AIAgentsFieldConfig extends BaseFieldConfig {
   type: 'ai-agents';
 }
 
-export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig | BannersFieldConfig | CookieConsentFieldConfig | CookieCategoriesFieldConfig | CookieServicesFieldConfig | CookieConsentRecordsFieldConfig | AIAgentsFieldConfig;
+interface FooterStyleFieldConfig extends BaseFieldConfig {
+  type: 'footer-style';
+}
+
+interface HeaderStyleFieldConfig extends BaseFieldConfig {
+  type: 'header-style';
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig | BannersFieldConfig | CookieConsentFieldConfig | CookieCategoriesFieldConfig | CookieServicesFieldConfig | CookieConsentRecordsFieldConfig | AIAgentsFieldConfig | FooterStyleFieldConfig | HeaderStyleFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -344,7 +354,7 @@ export const sectionsConfig: SectionConfig[] = [
         key: 'footer-settings',
         columns: 1,
         fields: [
-          { name: 'footer_color', label: 'Footer Color', type: 'color' }
+          { name: 'footer_style', label: 'Footer Style', type: 'footer-style' }
         ]
       }
     ]
@@ -545,8 +555,13 @@ export const renderField = ({
   readOnly = false
 }: RenderFieldProps): React.ReactElement | null => {
   const handleChange = (name: string, newValue: any) => {
+    console.log('🔧 fieldConfig handleChange called:', { name, newValue, readOnly });
     if (!readOnly) {
+      console.log('🔧 fieldConfig calling parent onChange');
       onChange(name, newValue);
+      console.log('🔧 fieldConfig parent onChange called');
+    } else {
+      console.log('🔧 fieldConfig blocked by readOnly');
     }
   };
 
@@ -892,6 +907,30 @@ export const renderField = ({
             onChange={(agents: any) => handleChange(field.name, agents)}
             organizationId={allSettings?.organization_id}
             session={allSettings?.session}
+          />
+        </div>
+      );
+
+    case 'footer-style':
+      return (
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <FooterStyleField
+            label={field.label}
+            name={field.name}
+            value={value}
+            onChange={handleChange}
+          />
+        </div>
+      );
+
+    case 'header-style':
+      return (
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <HeaderStyleField
+            label={field.label}
+            name={field.name}
+            value={value}
+            onChange={handleChange}
           />
         </div>
       );

@@ -29,6 +29,7 @@ interface MenuItem {
   is_displayed_on_footer: boolean;
   order: number;
   react_icon_id?: number;
+  menu_items_are_text?: boolean;
   react_icons?: ReactIcon | ReactIcon[];
   website_submenuitem?: SubMenuItem[];
   organization_id: string | null;
@@ -68,6 +69,7 @@ export async function GET(request: Request) {
         is_displayed_on_footer,
         "order",
         react_icon_id,
+        menu_items_are_text,
         organization_id,
         react_icons (icon_name),
         website_submenuitem (
@@ -132,9 +134,20 @@ export async function GET(request: Request) {
     const filteredData: MenuItem[] = data.map((item) => {
       // Handle react_icons as either an array or single object
       let reactIcons: ReactIcon | ReactIcon[] | undefined = item.react_icons;
-      if (Array.isArray(item.react_icons)) {
-        // If react_icons is an array, take the first item or set to undefined
-        reactIcons = item.react_icons.length > 0 ? item.react_icons[0] : undefined;
+      let iconName: string | null = null;
+      
+      if (item.react_icons) {
+        if (Array.isArray(item.react_icons)) {
+          // If react_icons is an array, take the first item or set to undefined
+          reactIcons = item.react_icons.length > 0 ? item.react_icons[0] : undefined;
+          if (item.react_icons.length > 0) {
+            iconName = item.react_icons[0].icon_name;
+          }
+        } else {
+          // Single object case
+          const reactIcon = item.react_icons as ReactIcon;
+          iconName = reactIcon.icon_name;
+        }
       }
 
       // Get submenu items for this menu item
@@ -148,6 +161,7 @@ export async function GET(request: Request) {
 
       return {
         ...item,
+        icon_name: iconName,
         react_icons: reactIcons,
         website_submenuitem: submenuItems,
       };

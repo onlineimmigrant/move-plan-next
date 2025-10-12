@@ -20,7 +20,7 @@ export interface Settings {
   image: string;
   menu_width: string;
   menu_items_are_text: boolean;
-  footer_color: string;
+  footer_style: string;
   favicon: string | null;
   seo_title: string | null;
   seo_description: string | null;

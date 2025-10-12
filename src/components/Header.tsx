@@ -17,17 +17,8 @@ const LoginModal = dynamic(() => import('./LoginModal'), { ssr: false });
 const ContactModal = dynamic(() => import('./contact/ContactModal'), { ssr: false });
 const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'), { ssr: false });
 
-// Optimized icon imports - only import what we need
-import {
-  PlusIcon,
-  MinusIcon,
-  Bars3Icon,
-  XMarkIcon,
-  ArrowLeftOnRectangleIcon,
-  ShoppingCartIcon,
-  UserIcon,
-  MapIcon,
-} from '@heroicons/react/24/outline';
+// Import all available Heroicons dynamically
+import * as HeroIcons from '@heroicons/react/24/outline';
 import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu';
 
 interface HeaderProps {
@@ -54,6 +45,30 @@ const Header: React.FC<HeaderProps> = ({
   const isLoggedIn = !!session;
   const { settings } = useSettings();
   const t = useHeaderTranslations();
+
+  // Parse header_style JSONB structure
+  const headerStyle = useMemo(() => {
+    if (typeof settings.header_style === 'object' && settings.header_style !== null) {
+      return settings.header_style;
+    }
+    // Fallback to default structure if legacy string or null
+    return {
+      type: 'default' as const,
+      background: 'white',
+      color: 'gray-700',
+      color_hover: 'gray-900',
+      menu_width: '7xl' as const,
+      menu_items_are_text: true
+    };
+  }, [settings.header_style]);
+
+  // Extract individual values for easier use
+  const headerType = headerStyle.type || 'default';
+  const headerBackground = headerStyle.background || 'white';
+  const headerColor = headerStyle.color || 'gray-700';
+  const headerColorHover = headerStyle.color_hover || 'gray-900';
+  const menuWidth = headerStyle.menu_width || '7xl';
+  const globalMenuItemsAreText = headerStyle.menu_items_are_text ?? true;
 
   // Optimized scroll effect with throttling
   useEffect(() => {
@@ -86,10 +101,34 @@ const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
+  // Individual display mode per menu item
+  // Each item can have its own menu_items_are_text setting
+  // If not set, fall back to global header_style.menu_items_are_text
+  const getItemDisplayMode = useCallback((item: MenuItem) => {
+    // If explicitly set on the item, use that value
+    if (item.menu_items_are_text !== undefined && item.menu_items_are_text !== null) {
+      return item.menu_items_are_text;
+    }
+    // Fall back to global setting from header_style
+    return globalMenuItemsAreText;
+  }, [globalMenuItemsAreText]);
+
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('Menu items in Header:', JSON.stringify(menuItems, null, 2));
-      console.log('Fixed banners height in Header:', fixedBannersHeight);
+      console.log('Header Component Debug:');
+      console.log('- Menu items:', JSON.stringify(menuItems, null, 2));
+      console.log('- Fixed banners height:', fixedBannersHeight);
+      console.log('- Header style JSONB:', headerStyle);
+      console.log('- Header type:', headerType);
+      console.log('- Menu width:', menuWidth);
+      console.log('- Global menu items are text:', globalMenuItemsAreText);
+      console.log('- Individual item display modes:', menuItems?.map(item => ({
+        display_name: item.display_name,
+        menu_items_are_text: item.menu_items_are_text,
+        display_mode: getItemDisplayMode(item) ? 'text' : 'icon',
+        has_react_icon_id: !!item.react_icon_id,
+        icon_name: item.icon_name
+      })));
       
       // Debug: Check submenu descriptions and images
       menuItems?.forEach((item) => {
@@ -109,38 +148,64 @@ const Header: React.FC<HeaderProps> = ({
         }
       });
     }
-  }, [menuItems, fixedBannersHeight]);
+  }, [menuItems, fixedBannersHeight, headerStyle, headerType, menuWidth, globalMenuItemsAreText, getItemDisplayMode]);
 
   // Memoized functions for better performance
-  const getIconName = useCallback((reactIcons: ReactIcon | ReactIcon[] | null | undefined): string | undefined => {
-    if (!reactIcons) return undefined;
-    if (Array.isArray(reactIcons)) {
-      return reactIcons.length > 0 ? reactIcons[0].icon_name : undefined;
+  const getIconName = useCallback((item: MenuItem): string | undefined => {
+    console.log(`[getIconName] Processing item: "${item.display_name}"`);
+    console.log(`[getIconName] - icon_name (top-level):`, item.icon_name);
+    console.log(`[getIconName] - react_icon_id:`, item.react_icon_id);
+    console.log(`[getIconName] - react_icons:`, item.react_icons);
+    
+    // First check if icon_name is already extracted at top level
+    if (item.icon_name) {
+      console.log(`[getIconName] ✓ Using top-level icon_name: "${item.icon_name}"`);
+      return item.icon_name;
     }
-    return reactIcons.icon_name;
+    
+    // Otherwise extract from react_icons
+    if (!item.react_icons) {
+      console.log(`[getIconName] ✗ No react_icons found for item: "${item.display_name}"`);
+      return undefined;
+    }
+    
+    if (Array.isArray(item.react_icons)) {
+      const iconName = item.react_icons.length > 0 ? item.react_icons[0].icon_name : undefined;
+      console.log(`[getIconName] ✓ Extracted icon_name from array:`, iconName);
+      return iconName;
+    }
+    
+    const iconName = item.react_icons.icon_name;
+    console.log(`[getIconName] ✓ Extracted icon_name from object:`, iconName);
+    return iconName;
   }, []);
 
-  // Create a dynamic icon map for better performance
-  const iconMap = useMemo(() => {
-    const dynamicImport = async (iconName: string) => {
-      try {
-        const iconModule = await import('@heroicons/react/24/outline');
-        return iconModule[iconName as keyof typeof iconModule];
-      } catch (error) {
-        console.log(`Icon not found for iconName: ${iconName}, defaulting to MapIcon`);
-        return MapIcon;
-      }
-    };
-    return { dynamicImport };
+  // Create a dynamic icon component map from all HeroIcons
+  const getIconComponent = useCallback((iconName: string | undefined) => {
+    console.log(`[getIconComponent] Looking up icon: "${iconName}"`);
+    
+    if (!iconName) {
+      console.log(`[getIconComponent] ✗ No iconName provided, using MapIcon`);
+      return HeroIcons.MapIcon;
+    }
+    
+    // Try to get the icon from HeroIcons namespace
+    const IconComponent = (HeroIcons as any)[iconName];
+    
+    if (!IconComponent) {
+      console.warn(`[getIconComponent] ✗ Icon "${iconName}" not found in HeroIcons, using MapIcon as fallback`);
+      console.log(`[getIconComponent] Available icons sample:`, Object.keys(HeroIcons).slice(0, 10).join(', ') + '...');
+      return HeroIcons.MapIcon;
+    }
+    
+    console.log(`[getIconComponent] ✓ Found icon component for "${iconName}"`);
+    return IconComponent;
   }, []);
 
   const renderIcon = useCallback((iconName: string | undefined) => {
-    if (!iconName) {
-      return <MapIcon className="h-6 w-6 text-gray-600" />;
-    }
-    // For now, use MapIcon as fallback - can be enhanced with dynamic loading if needed
-    return <MapIcon className="h-6 w-6 text-gray-600" />;
-  }, []);
+    const IconComponent = getIconComponent(iconName);
+    return <IconComponent className="h-6 w-6 text-gray-600" />;
+  }, [getIconComponent]);
 
   // Memoize callback functions for better performance
   const handleHomeNavigation = useCallback(() => {
@@ -204,6 +269,9 @@ const Header: React.FC<HeaderProps> = ({
             const isActive = pathname.startsWith(`/${item.url_name}`) || 
                             displayedSubItems.some(subItem => pathname.startsWith(`/${subItem.url_name}`));
 
+            // Check individual item's display mode
+            const showAsText = getItemDisplayMode(item);
+
             return (
               <div 
                 key={item.id} 
@@ -215,14 +283,32 @@ const Header: React.FC<HeaderProps> = ({
                   <>
                     <button
                       type="button"
-                      className="group cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 rounded-xl focus:outline-none transition-colors duration-200"
+                      className={`group cursor-pointer flex items-center justify-center px-4 py-2.5 rounded-xl focus:outline-none transition-colors duration-200 ${
+                        // Apply Tailwind color classes if not hex
+                        !headerColor.startsWith('#') ? `text-${headerColor} hover:text-${headerColorHover}` : ''
+                      }`}
+                      style={{
+                        // Apply hex colors via inline style
+                        color: headerColor.startsWith('#') ? headerColor : undefined,
+                      }}
                       title={translatedDisplayName}
                       aria-label={t.openMenuFor(translatedDisplayName)}
                       onClick={() => setOpenSubmenu(openSubmenu === item.id ? null : item.id)}
+                      onMouseEnter={(e) => {
+                        if (headerColorHover.startsWith('#')) {
+                          e.currentTarget.style.color = headerColorHover;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (headerColor.startsWith('#')) {
+                          e.currentTarget.style.color = headerColor;
+                        }
+                      }}
                     >
-                      {settings?.menu_items_are_text ? (
+                      {showAsText ? (
                         <span className={`text-[15px] font-medium transition-colors duration-200 ${
-                          isActive ? 'text-gray-900 font-semibold' : 'text-gray-700 group-hover:text-gray-900'
+                          // Only apply default classes if using hex colors (which are in inline styles)
+                          headerColor.startsWith('#') ? '' : (isActive ? 'font-semibold' : '')
                         }`}>{translatedDisplayName}</span>
                       ) : item.image ? (
                         <Image
@@ -242,7 +328,7 @@ const Header: React.FC<HeaderProps> = ({
                         />
                       ) : (
                         <div className="transition-all duration-300 group-hover:scale-105">
-                          {renderIcon(getIconName(item.react_icons))}
+                          {renderIcon(getIconName(item))}
                         </div>
                       )}
                       <svg className="ml-1.5 h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-all duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,9 +339,15 @@ const Header: React.FC<HeaderProps> = ({
                     {/* Mega menu or simple dropdown based on items count */}
                     {displayedSubItems.length >= 2 ? (
                       // Full-width mega menu for 2+ items
-                      <div className={`fixed left-0 right-0 top-[calc(100%+0.5rem)] bg-white border border-gray-200 rounded-lg shadow-lg z-50 transition-all duration-200 mx-4 sm:mx-8 ${
+                      <div className={`fixed left-0 right-0 top-[calc(100%+0.5rem)] bg-white border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
                         openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
-                      }`}>
+                      }`}
+                        style={{
+                          // Ensure mega menu has solid background even with transparent header
+                          backgroundColor: 'white',
+                          boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+                        }}
+                      >
                         <div className="px-6 py-6 max-w-7xl mx-auto">
                           <h3 className="text-base font-semibold text-gray-900 mb-4">{translatedDisplayName}</h3>
                           
@@ -337,9 +429,16 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                     ) : (
                       // Simple dropdown for < 2 items
-                      <div className={`absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 transition-all duration-200 ${
-                        openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
-                      }`}>
+                      <div 
+                        className={`absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[60] transition-all duration-200 ${
+                          openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
+                        }`}
+                        style={{
+                          // Ensure dropdown has solid background even with transparent header
+                          backgroundColor: 'white',
+                          boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+                        }}
+                      >
                         <div className="p-2">
                           {displayedSubItems.map((subItem) => {
                             const translatedSubItemName = currentLocale 
@@ -389,43 +488,65 @@ const Header: React.FC<HeaderProps> = ({
                     )}
                   </>
                 ) : (
-                  <LocalizedLink
-                    href={item.url_name}
-                    onClick={() => setOpenSubmenu(null)}
-                    className="cursor-pointer flex items-center justify-center px-4 py-2.5 text-gray-700 hover:text-gray-900 rounded-xl focus:outline-none transition-colors duration-200 group"
-                    title={translatedDisplayName}
-                    aria-label={t.goTo(translatedDisplayName)}
+                  <div
+                    className={`cursor-pointer transition-colors duration-200 ${
+                      // Apply Tailwind color classes if not hex
+                      !headerColor.startsWith('#') ? `text-${headerColor} hover:text-${headerColorHover}` : ''
+                    }`}
+                    style={{
+                      // Apply hex colors via inline style
+                      color: headerColor.startsWith('#') ? headerColor : undefined,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (headerColorHover.startsWith('#')) {
+                        e.currentTarget.style.color = headerColorHover;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (headerColor.startsWith('#')) {
+                        e.currentTarget.style.color = headerColor;
+                      }
+                    }}
                   >
-                    {settings?.menu_items_are_text ? (
-                      <span className={`text-[15px] font-medium transition-colors duration-200 ${
-                        isActive ? 'text-gray-900 font-semibold' : 'text-gray-700 group-hover:text-gray-900'
-                      }`}>{translatedDisplayName}</span>
-                    ) : item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={translatedDisplayName}
-                        width={24}
-                        height={24}
-                        className="h-6 w-6 text-gray-600 transition-all duration-300 group-hover:scale-105"
-                        onError={() =>
-                          console.error(
-                            `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
-                          )
-                        }
-                      />
-                    ) : (
-                      <div className="transition-all duration-300 group-hover:scale-105">
-                        {renderIcon(getIconName(item.react_icons))}
-                      </div>
-                    )}
-                  </LocalizedLink>
+                    <LocalizedLink
+                      href={item.url_name}
+                      onClick={() => setOpenSubmenu(null)}
+                      className="flex items-center justify-center px-4 py-2.5 rounded-xl focus:outline-none transition-colors duration-200 group"
+                      title={translatedDisplayName}
+                      aria-label={t.goTo(translatedDisplayName)}
+                    >
+                      {showAsText ? (
+                        <span className={`text-[15px] font-medium transition-colors duration-200 ${
+                          // Only apply default classes if using hex colors
+                          headerColor.startsWith('#') ? '' : (isActive ? 'font-semibold' : '')
+                        }`}>{translatedDisplayName}</span>
+                      ) : item.image ? (
+                        <Image
+                          src={item.image}
+                          alt={translatedDisplayName}
+                          width={24}
+                          height={24}
+                          className="h-6 w-6 text-gray-600 transition-all duration-300 group-hover:scale-105"
+                          onError={() =>
+                            console.error(
+                              `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
+                            )
+                          }
+                        />
+                      ) : (
+                        <div className="transition-all duration-300 group-hover:scale-105">
+                          {renderIcon(getIconName(item))}
+                        </div>
+                      )}
+                    </LocalizedLink>
+                  </div>
                 )}
               </div>
             );
           })
       )}
     </>
-  ), [filteredMenuItems, currentLocale, settings?.menu_items_are_text, t, setIsContactOpen]);
+  ), [filteredMenuItems, currentLocale, getItemDisplayMode, t, pathname, openSubmenu, setOpenSubmenu, renderIcon, getIconName, settings?.image, headerColor, headerColorHover]);
 
   const renderMobileMenuItems = useMemo(() => (
     <div className="space-y-3">
@@ -469,9 +590,9 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                           <div className="transition-colors duration-200">
                             {open ? (
-                              <MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                              <HeroIcons.MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                             ) : (
-                              <PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                              <HeroIcons.PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                             )}
                           </div>
                         </Disclosure.Button>
@@ -588,19 +709,58 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <>      
       <nav
-        className={`fixed left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isScrolled 
-            ? 'bg-white/95 backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
-            : 'md:bg-white/80 md:backdrop-blur-2xl'
-        }`}
+        className={`
+          ${headerType === 'scrolled' ? 'absolute' : 'fixed'} 
+          left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+          ${
+            // For transparent type: start transparent, become solid on scroll
+            headerType === 'transparent' 
+              ? (isScrolled 
+                  ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]'
+                  : 'bg-transparent border-b border-transparent'
+                )
+              // For other types: always have backdrop blur
+              : (isScrolled 
+                  ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
+                  : 'md:backdrop-blur-2xl'
+                )
+          } 
+          ${
+            // Apply background color - use Tailwind class if not hex, otherwise inline style handles it
+            // For transparent type: no background until scrolled
+            headerType === 'transparent'
+              ? (isScrolled && !headerBackground.startsWith('#')
+                  ? `bg-${headerBackground}/95`
+                  : ''
+                )
+              : (!headerBackground.startsWith('#') 
+                  ? (isScrolled ? `bg-${headerBackground}/95` : `md:bg-${headerBackground}/80`)
+                  : ''
+                )
+          }
+        `}
         style={{ 
           top: `${fixedBannersHeight}px`,
-          backdropFilter: isScrolled || isDesktop ? 'blur(24px) saturate(200%) brightness(105%)' : 'none',
-          WebkitBackdropFilter: isScrolled || isDesktop ? 'blur(24px) saturate(200%) brightness(105%)' : 'none',
+          // Apply custom hex background color via inline style
+          backgroundColor: headerType === 'transparent'
+            ? (isScrolled && headerBackground.startsWith('#')
+                ? `${headerBackground}f2` // Only show background when scrolled
+                : 'transparent'
+              )
+            : (headerBackground.startsWith('#') 
+                ? (isScrolled ? `${headerBackground}f2` : `${headerBackground}cc`) // f2 = 95% opacity, cc = 80% opacity
+                : undefined
+              ),
+          backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && (isScrolled || isDesktop)) 
+            ? 'blur(24px) saturate(200%) brightness(105%)' 
+            : 'none',
+          WebkitBackdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && (isScrolled || isDesktop))
+            ? 'blur(24px) saturate(200%) brightness(105%)' 
+            : 'none',
         }}
       >
       <div
-        className={`mx-auto max-w-${settings?.menu_width || '7xl'} p-4 pl-8 sm:px-6 flex justify-between items-center min-h-[64px]`}
+        className={`mx-auto max-w-${menuWidth} p-4 pl-8 sm:px-6 flex justify-between items-center min-h-[64px]`}
       >
         <button
           type="button"
@@ -659,7 +819,7 @@ const Header: React.FC<HeaderProps> = ({
                 className="cursor-pointer relative"
                 aria-label={t.viewBasket(totalItems)}
               >
-                <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
+                <HeroIcons.ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                   {totalItems}
                 </span>
@@ -673,7 +833,7 @@ const Header: React.FC<HeaderProps> = ({
                 title={t.profile}
                 aria-label={t.openProfileMenu}
               >
-                <UserIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
+                <HeroIcons.UserIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
               </button>
               
               {/* Clean profile dropdown */}
@@ -683,7 +843,7 @@ const Header: React.FC<HeaderProps> = ({
                   {/* Profile header */}
                   <div className="flex items-center space-x-3 mb-4 pb-3 border-b border-gray-200">
                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <UserIcon className="h-5 w-5 text-gray-600" />
+                      <HeroIcons.UserIcon className="h-5 w-5 text-gray-600" />
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900">{t.profile}</h3>
@@ -698,7 +858,7 @@ const Header: React.FC<HeaderProps> = ({
                       className="flex items-center space-x-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors duration-150"
                     >
                       <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
-                        <UserIcon className="h-4 w-4 text-gray-600" />
+                        <HeroIcons.UserIcon className="h-4 w-4 text-gray-600" />
                       </div>
                       <div className="flex-1">
                         <span className="text-sm font-medium text-gray-800">{t.account}</span>
@@ -728,7 +888,7 @@ const Header: React.FC<HeaderProps> = ({
                       className="flex items-center space-x-3 w-full p-2.5 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors duration-150 mt-2 border-t border-gray-200 pt-3"
                     >
                       <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                        <ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
+                        <HeroIcons.ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
                       </div>
                       <div className="flex-1 text-left">
                         <span className="text-sm font-medium">{t.logout}</span>
@@ -747,7 +907,7 @@ const Header: React.FC<HeaderProps> = ({
               title={t.login}
               aria-label={t.openLoginModal}
             >
-              <ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
+              <HeroIcons.ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
             </button>
           )}
           </div>
@@ -760,7 +920,7 @@ const Header: React.FC<HeaderProps> = ({
               className="cursor-pointer relative mr-4"
               aria-label={t.viewBasket(totalItems)}
             >
-              <ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
+              <HeroIcons.ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
               </span>
@@ -772,7 +932,7 @@ const Header: React.FC<HeaderProps> = ({
             className="p-2.5 text-gray-600 hover:text-gray-800 transition-colors duration-200"
             aria-label={isOpen ? t.closeMenu : t.openMenu}
           >
-            {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+            {isOpen ? <HeroIcons.XMarkIcon className="h-6 w-6" /> : <HeroIcons.Bars3Icon className="h-6 w-6" />}
           </button>
         </div>
       </div>
@@ -807,9 +967,9 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                       <div className="transition-colors duration-200">
                         {open ? (
-                          <MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                          <HeroIcons.MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                         ) : (
-                          <PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                          <HeroIcons.PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                         )}
                       </div>
                     </Disclosure.Button>
@@ -820,7 +980,7 @@ const Header: React.FC<HeaderProps> = ({
                         className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
                       >
                         <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <UserIcon className="h-4 w-4 text-gray-600" />
+                          <HeroIcons.UserIcon className="h-4 w-4 text-gray-600" />
                         </div>
                         <div className="flex-1 text-left">
                           <span className="text-sm font-medium block">{t.account}</span>
@@ -848,7 +1008,7 @@ const Header: React.FC<HeaderProps> = ({
                         className="flex items-center space-x-3 w-full p-4 text-red-600 hover:text-red-700 transition-colors duration-200"
                       >
                         <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                          <ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
+                          <HeroIcons.ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
                         </div>
                         <div className="flex-1 text-left">
                           <span className="text-sm font-medium block">{t.logout}</span>

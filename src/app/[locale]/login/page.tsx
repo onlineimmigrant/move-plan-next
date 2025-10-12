@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const logoCompany = settings.image;
-  const backgroundColor = settings.footer_color;
+  const backgroundColor = settings.footer_style;
 
   const t = useAuthTranslations();
 

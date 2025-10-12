@@ -194,7 +194,7 @@ export default function EditModal({
         primary_color: 'sky',
         secondary_color: 'gray',
         header_style: 'default',
-        footer_color: 'gray',
+        footer_style: 'gray',
         menu_width: '280px',
         font_family: '',
         image: null,
@@ -223,6 +223,18 @@ export default function EditModal({
 
   const handleSettingChange = (field: keyof Settings, value: any) => {
     console.log(`[EditModal] Setting change: ${field} = ${value}`);
+    
+    // Special logging for footer_style
+    if (field === 'footer_style') {
+      console.log('[EditModal] 🎨 FOOTER_STYLE CHANGE:', {
+        field,
+        value,
+        valueType: typeof value,
+        isObject: typeof value === 'object',
+        stringified: JSON.stringify(value)
+      });
+    }
+    
     if (field === 'cookie_services') {
       console.log(`[EditModal] Cookie services change - new count: ${Array.isArray(value) ? value.length : 0}`);
     }
@@ -231,6 +243,16 @@ export default function EditModal({
         ...prev,
         [field]: value
       };
+      
+      // Special logging for footer_style after state update
+      if (field === 'footer_style') {
+        console.log('[EditModal] 🎨 Settings state after update:', {
+          footer_style: newSettings.footer_style,
+          footer_style_type: typeof newSettings.footer_style,
+          footer_style_json: JSON.stringify(newSettings.footer_style)
+        });
+      }
+      
       if (field === 'cookie_services') {
         console.log(`[EditModal] Updated settings.cookie_services:`, newSettings.cookie_services);
         console.log(`[EditModal] New cookie services count:`, Array.isArray(newSettings.cookie_services) ? newSettings.cookie_services.length : 0);
