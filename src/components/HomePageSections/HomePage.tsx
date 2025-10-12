@@ -337,7 +337,7 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
             </div>
           }
         >
-          <section className="py-16 bg-gray-50">
+          <section className="">
             <Suspense fallback={<BrandsSkeleton />}>
               <Brands 
                 brands={data.brands || []} 

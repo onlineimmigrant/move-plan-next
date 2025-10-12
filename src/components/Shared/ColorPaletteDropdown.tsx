@@ -320,7 +320,7 @@ export default function ColorPaletteDropdown({
           const rect = buttonRef.current!.getBoundingClientRect();
           return (
             <div 
-              className="fixed bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[9999] w-80 max-h-96 overflow-y-auto"
+              className="dropdown-container fixed bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[9999] w-80 max-h-96 overflow-y-auto"
               style={{
                 top: `${rect.bottom + 8}px`,
                 left: `${rect.left}px`,
@@ -358,7 +358,7 @@ export default function ColorPaletteDropdown({
         document.body
       )}
       {isOpen && !useFixedPosition && (
-        <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[100] w-80 max-h-96 overflow-y-auto">
+        <div className="dropdown-container absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[100] w-80 max-h-96 overflow-y-auto">
           <div className="grid grid-cols-6 gap-2">
             {COLOR_PALETTE.map((color) => (
               <button

@@ -635,7 +635,7 @@ const Header: React.FC<HeaderProps> = ({
             <div className="relative group">
               <button
                 type="button"
-                className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 hover:bg-gray-50/50 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased"
+                className="p-3"
                 title={t.profile}
                 aria-label={t.openProfileMenu}
               >

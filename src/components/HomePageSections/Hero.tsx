@@ -311,7 +311,7 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   return (
     <div
       ref={heroRef}
-      className={`pt-16 min-h-screen relative isolate group px-6 lg:px-8 ${backgroundClass} flex items-center justify-center`}
+      className={`pt-48 sm:pt-16 min-h-screen relative isolate group px-6 lg:px-8 ${backgroundClass} flex items-center justify-center`}
       style={backgroundStyle}
     >
       {/* Hover Edit Buttons for Admin */}
