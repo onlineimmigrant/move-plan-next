@@ -15,8 +15,28 @@ import TestStructuredData from '@/components/TestStructuredData';
 import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
 import ClientStructuredDataInjector from '@/components/ClientStructuredDataInjector';
 import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
+import { supabaseServer } from '@/lib/supabaseServerClient';
 
 export const revalidate = 0;
+
+// Fetch cookie categories at build time with ISR (24h cache)
+async function getCookieCategories() {
+  try {
+    const { data, error } = await supabaseServer
+      .from('cookie_category')
+      .select('id, name, description, cookie_service(id, name, description, active)');
+    
+    if (error) {
+      console.error('Error fetching cookie categories:', error);
+      return [];
+    }
+    
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error fetching cookie categories:', error);
+    return [];
+  }
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const currentDomain = await getDomain();
@@ -182,6 +202,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
   console.log('RootLayout - menuItems:', menuItems.length, 'items fetched');
   
+  // Fetch cookie categories at build time (cached)
+  const cookieCategories = await getCookieCategories();
+  console.log('RootLayout - cookieCategories:', cookieCategories.length, 'categories fetched');
+  
+  // Check if user has already accepted cookies (server-side check)
+  const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
+  console.log('RootLayout - cookieAccepted:', cookieAccepted);
+  
   // Use dynamic locale instead of static language from settings
   const language = currentLocale;
 
@@ -209,6 +237,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           activeLanguages={getSupportedLocales(settings as any)}
           baseUrl={currentDomain}
           menuItems={menuItems}
+          cookieCategories={cookieCategories}
+          cookieAccepted={cookieAccepted}
         >
           <LanguageSuggestionBanner currentLocale={currentLocale} />
           {children}

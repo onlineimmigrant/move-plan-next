@@ -18,6 +18,7 @@ interface CookieSettingsProps {
     site?: string;
   };
   closeSettings: () => void;
+  categories?: Category[];
 }
 
 interface Category {
@@ -34,12 +35,13 @@ interface Consent {
 const CookieSettings: React.FC<CookieSettingsProps> = ({
   headerData,
   closeSettings,
+  categories: initialCategories = [],
 }) => {
   const { session } = useAuth();
   const translations = useCookieTranslations();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [consent, setConsent] = useState<Consent>({ services: [] });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialCategories.length === 0);
   const [error, setError] = useState<string | null>(null);
 
   // State for dragging
@@ -52,6 +54,22 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
     console.log('Session:', session); // Debug session
     
     const fetchCategories = async () => {
+      // Skip fetch if categories provided from props
+      if (initialCategories.length > 0) {
+        console.log('Using categories from props:', initialCategories);
+        setCategories(initialCategories);
+        
+        // Set essential service IDs from props
+        const essentialServiceIds = initialCategories
+          .filter((category) => isEssentialCategory(category.name))
+          .flatMap((category) => category.cookie_service.map((service) => service.id));
+        console.log('Essential service IDs from props:', essentialServiceIds);
+        setConsent({ services: essentialServiceIds });
+        
+        return essentialServiceIds;
+      }
+      
+      // Fallback: fetch if not provided
       try {
         const response = await fetch('/api/cookies/categories');
         if (!response.ok) {
@@ -135,7 +153,10 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
     };
 
     const fetchData = async () => {
-      setLoading(true);
+      // Only set loading if we need to fetch
+      if (initialCategories.length === 0) {
+        setLoading(true);
+      }
       try {
         const essentialServiceIds = await fetchCategories();
         await fetchUserConsent(essentialServiceIds);
@@ -147,7 +168,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
     };
 
     fetchData();
-  }, []); // No session dependency to avoid re-fetching
+  }, [initialCategories]); // Add initialCategories as dependency
 
   // Log consent for debugging
   useEffect(() => {

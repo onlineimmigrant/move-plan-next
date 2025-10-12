@@ -1,13 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import CookieSettings from './CookieSettings';
+import dynamic from 'next/dynamic';
 import { setCookie, getCookie, sendConsentToBackend } from '@/utils/cookieUtils';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { useAuth } from '@/context/AuthContext'; 
 import { useCookieTranslations } from './useCookieTranslations';
 import Link from 'next/link';
 import Button from '@/ui/Button';
+
+// Dynamic import for CookieSettings - only loads when settings button clicked
+const CookieSettings = dynamic(() => import('./CookieSettings'), {
+  ssr: false,
+  loading: () => null,
+});
 
 
 interface CookieBannerProps {
@@ -17,6 +23,7 @@ interface CookieBannerProps {
     image_for_privacy_settings?: string;
   };
   activeLanguages: string[];
+  categories?: any[]; // Use any[] to accept server-side data format
 }
 
 interface Category {
@@ -26,40 +33,52 @@ interface Category {
   services: { id: number; name: string; description: string }[];
 }
 
-const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages }) => {
+const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages, categories: initialCategories = [] }) => {
   const { session } = useAuth(); // Get session
   const translations = useCookieTranslations();
   const [isVisible, setIsVisible] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const { showSettings, setShowSettings } = useCookieSettings();
 
   useEffect(() => {
     const accepted = getCookie('cookies_accepted');
     setIsVisible(accepted !== 'true');
 
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/cookies/categories');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    // Only fetch categories if not provided from props
+    if (initialCategories.length === 0) {
+      const fetchCategories = async () => {
+        try {
+          const response = await fetch('/api/cookies/categories');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          const validData = Array.isArray(data)
+            ? data.map((category) => ({
+                id: category.id,
+                name: category.name,
+                description: category.description_en || '',
+                services: Array.isArray(category.cookie_service) ? category.cookie_service : [],
+              }))
+            : [];
+          setCategories(validData);
+        } catch (error) {
+          console.error('Error fetching categories:', error);
+          setCategories([]);
         }
-        const data = await response.json();
-        const validData = Array.isArray(data)
-          ? data.map((category) => ({
-              id: category.id,
-              name: category.name,
-              description: category.description_en || '',
-              services: Array.isArray(category.cookie_service) ? category.cookie_service : [],
-            }))
-          : [];
-        setCategories(validData);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        setCategories([]);
-      }
-    };
-    fetchCategories();
-  }, []);
+      };
+      fetchCategories();
+    } else {
+      // Use categories from props and map cookie_service to services
+      const mappedCategories = initialCategories.map((category: any) => ({
+        id: category.id,
+        name: category.name,
+        description: category.description || '',
+        services: Array.isArray(category.cookie_service) ? category.cookie_service : [],
+      }));
+      setCategories(mappedCategories);
+    }
+  }, [initialCategories]);
 
   const handleAcceptAll = async () => {
     setIsVisible(false);
@@ -97,74 +116,78 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
       {isVisible && (
         <div className="fixed inset-x-0 bottom-0 z-75 p-4 sm:p-6">
           <div className="mx-auto max-w-3xl">
+            {/* Optimized glassmorphism design - using will-change and transform for better performance */}
             <div 
-              className="relative overflow-hidden rounded-[28px] bg-white/90 backdrop-blur-3xl border border-black/8 shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] animate-in slide-in-from-bottom-6 fade-in-0"
-              style={{ 
+              className="relative overflow-hidden rounded-[28px] bg-white/90 backdrop-blur-3xl border border-black/8 shadow-[0_20px_60px_rgba(0,0,0,0.08),0_8px_16px_rgba(0,0,0,0.04)] transition-all duration-500 ease-out hover:shadow-[0_24px_72px_rgba(0,0,0,0.12),0_12px_24px_rgba(0,0,0,0.06)]"
+              style={{
                 backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)'
+                WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+                willChange: 'transform, opacity',
               }}
             >
-              {/* Subtle top highlight with gradient */}
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
+              {/* Optimized gradient overlays - using single layer with better performance */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/20 to-transparent pointer-events-none" />
               
-              {/* Inner glow for depth */}
-              <div className="absolute inset-0 rounded-[28px] bg-gradient-to-b from-white/20 via-transparent to-transparent pointer-events-none"></div>
-              
-              <div className="relative px-7 py-6 sm:px-9 sm:py-8">
-                <div className="flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
-                  {/* Content Section - Enhanced Apple typography */}
+              {/* Optimized shine effect - using transform3d for GPU acceleration */}
+              <div 
+                className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+                style={{ willChange: 'opacity' }}
+              >
+                <div 
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-shine"
+                  style={{ 
+                    transform: 'translateZ(0)',
+                    animation: 'shine 3s ease-in-out infinite',
+                  }}
+                />
+              </div>
+
+              <div className="relative px-6 py-5 sm:px-8 sm:py-6">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  {/* Content Section - Enhanced Typography */}
                   <div className="flex-1 max-w-md">
-                    <h2 className="text-[17px] font-semibold text-gray-900 leading-tight mb-3 tracking-[-0.01em] antialiased">
+                    <h2 className="text-base font-semibold text-gray-900 tracking-tight leading-tight mb-2 antialiased">
                       Privacy & Cookies
                     </h2>
-                    <p className="text-[14px] leading-[1.45] text-gray-600 font-normal antialiased opacity-90">
+                    <p className="text-sm leading-relaxed text-gray-600/90 antialiased">
                       {translations.cookieNotice}
                     </p>
                   </div>
 
-                  {/* Actions Section - Refined Apple button system */}
-                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-2.5 sm:flex-shrink-0">
-                    {/* Subtle tertiary action */}
+                  {/* Actions Section - Premium Button Styles */}
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-shrink-0">
+                    {/* Settings Button */}
                     <button
                       onClick={() => setShowSettings(true)}
-                      className="group relative flex items-center justify-center px-5 py-3 text-[14px] font-medium text-gray-700 bg-transparent hover:bg-black/4 active:bg-black/8 rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-black/8 focus:ring-offset-2 focus:ring-offset-transparent"
+                      className="relative px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 group overflow-hidden"
+                      style={{ willChange: 'transform' }}
                     >
-                      <span className="relative z-10 transition-all duration-300 group-hover:scale-[1.02] group-active:scale-[0.98] antialiased">
-                        {translations.settings}
-                      </span>
-                      {/* Subtle ripple effect */}
-                      <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/3 transition-colors duration-300"></div>
+                      <span className="relative z-10">{translations.settings}</span>
+                      <div className="absolute inset-0 bg-gray-100/0 group-hover:bg-gray-100/80 transition-all duration-300 rounded-full" />
                     </button>
                     
-                    {/* Refined secondary action */}
+                    {/* Reject Button */}
                     <button
                       onClick={handleRejectAll}
-                      className="group relative flex items-center justify-center px-6 py-3 text-[14px] font-medium text-gray-700 bg-gray-50/80 hover:bg-gray-100/90 active:bg-gray-150/90 backdrop-blur-sm rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-gray-300/40 focus:ring-offset-2 focus:ring-offset-transparent shadow-sm hover:shadow-md"
+                      className="relative px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100/60 hover:bg-gray-200/80 backdrop-blur-sm rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 overflow-hidden group"
+                      style={{ willChange: 'transform' }}
                     >
-                      <span className="relative z-10 transition-all duration-300 group-hover:scale-[1.02] group-active:scale-[0.98] antialiased">
-                        {translations.rejectAll}
-                      </span>
+                      <span className="relative z-10">{translations.rejectAll}</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                     
-                    {/* Premium Apple primary button - Elegant gray */}
+                    {/* Accept Button - Premium Style */}
                     <button
                       onClick={handleAcceptAll}
-                      className="group relative overflow-hidden flex items-center justify-center px-7 py-3 text-[14px] font-semibold text-white bg-gray-700 hover:bg-gray-800 active:bg-gray-900 rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-gray-600/25 focus:ring-offset-2 focus:ring-offset-transparent shadow-[0_4px_16px_rgba(75,85,99,0.24)] hover:shadow-[0_6px_20px_rgba(75,85,99,0.32)]"
+                      className="relative px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-800 hover:from-black hover:to-gray-900 rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] overflow-hidden group"
+                      style={{ willChange: 'transform' }}
                     >
-                      <span className="relative z-20 transition-all duration-300 group-hover:scale-[1.02] group-active:scale-[0.95] antialiased">
-                        {translations.acceptAll}
-                      </span>
-                      {/* Enhanced shine animation */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
-                      {/* Subtle inner highlight */}
-                      <div className="absolute inset-x-0 top-0 h-px bg-white/30 rounded-full"></div>
+                      <span className="relative z-10">{translations.acceptAll}</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                   </div>
                 </div>
               </div>
-              
-              {/* Refined bottom accent */}
-              <div className="absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-black/4 to-transparent"></div>
             </div>
           </div>
         </div>
@@ -175,6 +198,7 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
           closeSettings={() => setShowSettings(false)}
           headerData={headerData}
           activeLanguages={activeLanguages}
+          categories={initialCategories}
         />
       )}
     </>

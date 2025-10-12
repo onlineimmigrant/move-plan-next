@@ -45,6 +45,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true); // Default to true for SSR
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
   const { basket } = useBasket();
   const { session, logout } = useAuth();
@@ -72,6 +73,17 @@ const Header: React.FC<HeaderProps> = ({
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Detect desktop/mobile for backdrop filter
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    checkDesktop(); // Check on mount
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
   useEffect(() => {
@@ -583,8 +595,8 @@ const Header: React.FC<HeaderProps> = ({
         }`}
         style={{ 
           top: `${fixedBannersHeight}px`,
-          backdropFilter: isScrolled || window.innerWidth >= 768 ? 'blur(24px) saturate(200%) brightness(105%)' : 'none',
-          WebkitBackdropFilter: isScrolled || window.innerWidth >= 768 ? 'blur(24px) saturate(200%) brightness(105%)' : 'none',
+          backdropFilter: isScrolled || isDesktop ? 'blur(24px) saturate(200%) brightness(105%)' : 'none',
+          WebkitBackdropFilter: isScrolled || isDesktop ? 'blur(24px) saturate(200%) brightness(105%)' : 'none',
         }}
       >
       <div

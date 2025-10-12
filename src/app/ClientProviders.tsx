@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/AuthContext'; // Verify this export exists
 import { BasketProvider } from '@/context/BasketContext'; // Verify this export exists
 import { SettingsProvider } from '@/context/SettingsContext'; // Verify this export exists
-import { CookieSettingsProvider } from '@/context/CookieSettingsContext'; // Verify this export exists
+import { CookieSettingsProvider, useCookieSettings } from '@/context/CookieSettingsContext'; // Verify this export exists
 import { BannerProvider } from '@/context/BannerContext'; // Verify this export exists
 import { PostEditModalProvider } from '@/components/modals/PostEditModal/context';
 import { TemplateSectionEditProvider } from '@/components/modals/TemplateSectionModal/context';
@@ -24,7 +24,7 @@ import SiteMapModal from '@/components/modals/SiteMapModal/SiteMapModal';
 import GlobalSettingsModal from '@/components/modals/GlobalSettingsModal/GlobalSettingsModal';
 import HeroSectionEditModal from '@/components/modals/HeroSectionModal/HeroSectionEditModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
-import CookieBanner from '@/components/cookie/CookieBanner';
+import dynamic from 'next/dynamic';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import TemplateSections from '@/components/TemplateSections';
 import TemplateHeadingSections from '@/components/TemplateHeadingSections';
@@ -33,6 +33,18 @@ import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager'
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import ChatHelpWidget from '@/components/ChatHelpWidget';
+
+// Dynamic import for CookieBanner - loaded only when needed
+const CookieBanner = dynamic(() => import('@/components/cookie/CookieBanner'), {
+  ssr: false,
+  loading: () => null,
+});
+
+// Dynamic import for CookieSettings - loaded only when opened from Footer
+const CookieSettings = dynamic(() => import('@/components/cookie/CookieSettings'), {
+  ssr: false,
+  loading: () => null,
+});
 import UniversalNewButton from '@/components/AdminQuickActions/UniversalNewButton';
 import CommandPalette from '@/components/AdminQuickActions/CommandPalette';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
@@ -42,6 +54,30 @@ import { TemplateHeadingSection } from '@/types/template_heading_section';
 import { useBanner } from '@/context/BannerContext';
 import { Banner } from '@/components/banners/types';
 import { MenuItem } from '@/types/menu';
+
+// Wrapper component for standalone CookieSettings modal (opened from Footer)
+function StandaloneCookieSettings({ 
+  headerData, 
+  activeLanguages, 
+  cookieCategories 
+}: { 
+  headerData: any; 
+  activeLanguages: string[]; 
+  cookieCategories: any[];
+}) {
+  const { showSettings, setShowSettings } = useCookieSettings();
+  
+  if (!showSettings) return null;
+  
+  return (
+    <CookieSettings
+      closeSettings={() => setShowSettings(false)}
+      headerData={headerData}
+      activeLanguages={activeLanguages}
+      categories={cookieCategories}
+    />
+  );
+}
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -54,6 +90,8 @@ interface ClientProvidersProps {
   };
   baseUrl: string;
   menuItems?: MenuItem[];
+  cookieCategories?: any[];
+  cookieAccepted?: boolean;
 }
 
 export default function ClientProviders({
@@ -67,12 +105,33 @@ export default function ClientProviders({
   },
   baseUrl,
   menuItems = [],
+  cookieCategories = [],
+  cookieAccepted = false,
 }: ClientProvidersProps) {
   const pathname = usePathname() || '/'; // Fallback to '/' if usePathname returns null
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [headings, setHeadings] = useState<TemplateHeadingSection[]>([]);
   const [loading, setLoading] = useState(false); // Start with false to avoid blocking initial render
   const cache = useMemo(() => new Map<string, { sections: TemplateSection[]; headings: TemplateHeadingSection[] }>(), []);
+  
+  // Phase 2: Lazy load cookie banner - delay by 1.5 seconds for better LCP
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  useEffect(() => {
+    // Only show banner if user hasn't accepted cookies
+    if (!cookieAccepted) {
+      // Delay banner appearance by 1.5 seconds to allow hero content to paint first
+      const timer = setTimeout(() => {
+        // Double-check cookie on client side (in case it changed)
+        const hasCookie = typeof document !== 'undefined' && document.cookie.includes('cookies_accepted=true');
+        if (!hasCookie) {
+          setShowCookieBanner(true);
+        }
+      }, 1500); // 1.5 second delay for optimal LCP
+
+      return () => clearTimeout(timer);
+    }
+  }, [cookieAccepted]);
 
   // Create QueryClient instance
   const [queryClient] = useState(() => new QueryClient({
@@ -180,19 +239,7 @@ export default function ClientProviders({
     });
   }, [pathname, cache]);
 
-  const showNavbarFooter = useMemo(() => {
-    // Extract the path without locale prefix for hidden route checking
-    // Pathname format: /[locale]/path or /path
-    const pathSegments = pathname.split('/').filter(Boolean);
-    const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/; // Matches 'en', 'es', 'en-US', etc.
-    
-    // If first segment looks like a locale, remove it to get the actual route
-    const routePath = pathSegments.length > 0 && localePattern.test(pathSegments[0])
-      ? '/' + pathSegments.slice(1).join('/')
-      : pathname;
-    
-    return !hideNavbarFooterPrefixes.some((prefix) => routePath.startsWith(prefix));
-  }, [pathname]);
+  const showNavbarFooter = !hideNavbarFooterPrefixes.some((prefix) => pathname.startsWith(prefix));
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -218,8 +265,23 @@ export default function ClientProviders({
                                 loading={loading}
                                 headerData={headerData}
                                 activeLanguages={activeLanguages}
+                                cookieCategories={cookieCategories}
+                                cookieAccepted={cookieAccepted}
                               />
-                              <CookieBanner headerData={headerData} activeLanguages={activeLanguages} />
+                              {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
+                              {showCookieBanner && (
+                                <CookieBanner 
+                                  headerData={headerData} 
+                                  activeLanguages={activeLanguages}
+                                  categories={cookieCategories}
+                                />
+                              )}
+                              {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
+                              <StandaloneCookieSettings 
+                                headerData={headerData}
+                                activeLanguages={activeLanguages}
+                                cookieCategories={cookieCategories}
+                              />
                             </CookieSettingsProvider>
                             <PostEditModal />
                             <TemplateSectionEditModal />
@@ -251,6 +313,8 @@ function BannerAwareContent({
   loading,
   headerData,
   activeLanguages,
+  cookieCategories,
+  cookieAccepted,
 }: {
   children: React.ReactNode;
   showNavbarFooter: boolean;
@@ -258,6 +322,8 @@ function BannerAwareContent({
   loading: boolean;
   headerData: any;
   activeLanguages: string[];
+  cookieCategories: any[];
+  cookieAccepted: boolean;
 }) {
   const { banners, getFixedBannersHeight } = useBanner() || { banners: [], getFixedBannersHeight: () => 0 }; // Fallback for null context
   const fixedBanners = useMemo(

@@ -282,10 +282,24 @@ article ul li,
   }
 }
 
+/* Optimized shine animation for cookie banner */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) translateZ(0);
+  }
+  100% {
+    transform: translateX(100%) translateZ(0);
+  }
+}
+
 .animate-shimmer {
   background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
   background-size: 200px 100%;
   animation: shimmer 2s infinite;
+}
+
+.animate-shine {
+  animation: shine 3s ease-in-out infinite;
 }
 
 /* Touch-friendly interactions */
