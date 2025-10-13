@@ -4,21 +4,24 @@ import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
-import HelpCenterSection from '@/components/TemplateSections/HelpCenterSection';
-import { RealEstateModal } from '@/components/TemplateSections/RealEstateModal';
-import BlogPostSlider from '@/components/TemplateSections/BlogPostSlider';
-import ContactForm from '@/components/contact/ContactForm';
-import BrandsSection from '@/components/TemplateSections/BrandsSection';
-import FAQSectionWrapper from '@/components/TemplateSections/FAQSectionWrapper';
-import PricingPlansSectionWrapper from '@/components/TemplateSections/PricingPlansSectionWrapper';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { HoverEditButtons } from '@/ui/Button';
 import { isAdminClient } from '@/lib/auth';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { cn } from '@/lib/utils';
 import { SliderNavigation } from '@/ui/SliderNavigation';
+
+// Dynamic imports for heavy section components (Phase 2 optimization)
+const FeedbackAccordion = dynamic(() => import('@/components/TemplateSections/FeedbackAccordion'));
+const HelpCenterSection = dynamic(() => import('@/components/TemplateSections/HelpCenterSection'));
+const RealEstateModal = dynamic(() => import('@/components/TemplateSections/RealEstateModal').then(mod => ({ default: mod.RealEstateModal })));
+const BlogPostSlider = dynamic(() => import('@/components/TemplateSections/BlogPostSlider'));
+const ContactForm = dynamic(() => import('@/components/contact/ContactForm'));
+const BrandsSection = dynamic(() => import('@/components/TemplateSections/BrandsSection'));
+const FAQSectionWrapper = dynamic(() => import('@/components/TemplateSections/FAQSectionWrapper'));
+const PricingPlansSectionWrapper = dynamic(() => import('@/components/TemplateSections/PricingPlansSectionWrapper'));
 
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
@@ -169,12 +172,11 @@ interface TemplateSectionData {
   organization_id: string | null;
 }
 
-const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }) => {
+const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo(({ section }) => {
   // Early return to avoid null/undefined issues
   if (!section) {
     return null;
   }
-
   // Debug: Log section data to see if metrics are present
   console.log('TemplateSection rendered:', {
     id: section.id,
@@ -538,7 +540,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
                                     } object-cover`}
                                     width={300}
                                     height={300}
-                                    priority={false}
+                                    loading="lazy"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                   />
                                 )}
                               </div>
@@ -718,6 +721,16 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
       `}</style>
     </section>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  // Only re-render if section id or critical properties change
+  return (
+    prevProps.section.id === nextProps.section.id &&
+    prevProps.section.section_title === nextProps.section.section_title &&
+    prevProps.section.website_metric.length === nextProps.section.website_metric.length
+  );
+});
+
+TemplateSection.displayName = 'TemplateSection';
 
 export default TemplateSection;

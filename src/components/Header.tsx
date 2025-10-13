@@ -38,7 +38,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
   const [isDesktop, setIsDesktop] = useState(true); // Default to true for SSR
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
   const { basket } = useBasket();
@@ -91,15 +91,15 @@ const Header: React.FC<HeaderProps> = ({
           // Always show when at the top (within 100px)
           if (currentScrollY < 100) {
             setIsVisible(true);
-          } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+          } else if (currentScrollY > lastScrollYRef.current && currentScrollY > 100) {
             // Scrolling down and past 100px - hide header
             setIsVisible(false);
-          } else if (currentScrollY < lastScrollY) {
+          } else if (currentScrollY < lastScrollYRef.current) {
             // Scrolling up - show header immediately
             setIsVisible(true);
           }
           
-          setLastScrollY(currentScrollY);
+          lastScrollYRef.current = currentScrollY;
           ticking = false;
         });
         ticking = true;
@@ -108,7 +108,7 @@ const Header: React.FC<HeaderProps> = ({
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []); // Empty dependency array - only set up once!
 
   // Detect desktop/mobile for backdrop filter
   useEffect(() => {

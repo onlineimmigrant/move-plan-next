@@ -622,3 +622,13 @@ html, body {
 .scrollbar-track-gray-100::-webkit-scrollbar-track {
   background-color: rgb(243 244 246);
 }
+
+/* Skeleton loader shimmer animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
