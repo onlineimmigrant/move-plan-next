@@ -43,7 +43,7 @@ export const GlobalHashCleanup = () => {
 /**
  * Usage in your layout.tsx or app component:
  * 
- * import { GlobalHashCleanup } from './components/realEstateModal/GlobalHashCleanup';
+ * import { GlobalHashCleanup } from '@/components/TemplateSections/RealEstateModal/GlobalHashCleanup';
  * 
  * export default function Layout({ children }) {
  *   return (

@@ -37,7 +37,7 @@ const Brands: React.FC<BrandsProps> = memo(({ brands, textContent }) => {
   const duplicatedBrands = useMemo(() => [...brands, ...brands], [brands]);
 
   return (
-    <section className="py-16 bg-gray-50/50" aria-labelledby="brands-heading">
+    <section className="py-16 " aria-labelledby="brands-heading">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
        {/*
         <h2 

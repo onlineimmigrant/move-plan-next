@@ -35,11 +35,16 @@ interface TemplateSectionData {
   image_metrics_height?: string;
   is_image_bottom: boolean;
   is_slider?: boolean;
-  website_metric?: Metric[];
-  organization_id: string | null;
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
   is_real_estate_modal?: boolean;
+  is_brand?: boolean;
+  is_article_slider?: boolean;
+  is_contact_section?: boolean;
+  is_faq_section?: boolean;
+  is_pricingplans_section?: boolean;
+  website_metric?: Metric[];
+  organization_id: string | null;
   url_page?: string;
 }
 
@@ -100,6 +105,11 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_reviews_section: false,
         is_help_center_section: false,
         is_real_estate_modal: false,
+        is_brand: false,
+        is_article_slider: false,
+        is_contact_section: false,
+        is_faq_section: false,
+        is_pricingplans_section: false,
         website_metric: [],
         organization_id: null,
         url_page: urlPage || '',
@@ -140,10 +150,15 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_section_title_aligned_right: data.is_section_title_aligned_right,
         is_image_bottom: data.is_image_bottom,
         is_slider: data.is_slider,
-        image_metrics_height: data.image_metrics_height,
         is_reviews_section: data.is_reviews_section,
         is_help_center_section: data.is_help_center_section,
         is_real_estate_modal: data.is_real_estate_modal,
+        is_brand: data.is_brand,
+        is_article_slider: data.is_article_slider,
+        is_contact_section: data.is_contact_section,
+        is_faq_section: data.is_faq_section,
+        is_pricingplans_section: data.is_pricingplans_section,
+        image_metrics_height: data.image_metrics_height,
       };
 
       console.log('Saving template section:', { url, method, payload, hasUrlPage: 'url_page' in payload, urlPageValue: (payload as any).url_page });

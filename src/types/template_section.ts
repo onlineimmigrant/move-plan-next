@@ -13,6 +13,13 @@ export interface TemplateSection {
   is_section_title_aligned_right?: boolean;
   is_image_bottom?: boolean;
   is_slider?: boolean;
+  is_help_center_section?: boolean;
+  is_real_estate_modal?: boolean;
+  is_brand?: boolean;
+  is_article_slider?: boolean;
+  is_contact_section?: boolean;
+  is_faq_section?: boolean;
+  is_pricingplans_section?: boolean;
   image_metrics_height?: string;
   order?: number;
   url_page?: string;

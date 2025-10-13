@@ -36,11 +36,16 @@ interface TemplateSectionData {
   image_metrics_height?: string;
   is_image_bottom: boolean;
   is_slider?: boolean;
-  website_metric: Metric[];
-  organization_id: string | null;
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
   is_real_estate_modal?: boolean;
+  is_brand?: boolean;
+  is_article_slider?: boolean;
+  is_contact_section?: boolean;
+  is_faq_section?: boolean;
+  is_pricingplans_section?: boolean;
+  website_metric: Metric[];
+  organization_id: string | null;
 }
 
 // Inner component that uses the context

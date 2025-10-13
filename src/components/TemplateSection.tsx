@@ -5,9 +5,14 @@ import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import FeedbackAccordion from './FeedbackAccordion';
-import HelpCenterSection from './HelpCenterSection';
-import { RealEstateModal } from './realEstateModal';
+import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
+import HelpCenterSection from '@/components/TemplateSections/HelpCenterSection';
+import { RealEstateModal } from '@/components/TemplateSections/RealEstateModal';
+import BlogPostSlider from '@/components/TemplateSections/BlogPostSlider';
+import ContactForm from '@/components/contact/ContactForm';
+import BrandsSection from '@/components/TemplateSections/BrandsSection';
+import FAQSectionWrapper from '@/components/TemplateSections/FAQSectionWrapper';
+import PricingPlansSectionWrapper from '@/components/TemplateSections/PricingPlansSectionWrapper';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { HoverEditButtons } from '@/ui/Button';
 import { isAdminClient } from '@/lib/auth';
@@ -146,11 +151,16 @@ interface TemplateSectionData {
   image_metrics_height?: string;
   is_image_bottom: boolean;
   is_slider?: boolean;
-  website_metric: Metric[];
-  organization_id: string | null;
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
   is_real_estate_modal?: boolean;
+  is_brand?: boolean;
+  is_article_slider?: boolean;
+  is_contact_section?: boolean;
+  is_faq_section?: boolean;
+  is_pricingplans_section?: boolean;
+  website_metric: Metric[];
+  organization_id: string | null;
 }
 
 const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }) => {
@@ -325,7 +335,14 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
 
   return (
     <section
-      className={`${section.is_slider ? 'px-0' : 'px-4'} py-32 text-xl min-h-[600px] relative group`}
+      className={`${
+        // Remove padding for new special sections that manage their own layout
+        section.is_brand || section.is_article_slider || section.is_contact_section || section.is_faq_section || section.is_pricingplans_section
+          ? 'px-0 py-0 min-h-0'
+          : section.is_slider 
+          ? 'px-0 py-32 min-h-[600px]' 
+          : 'px-4 py-32 min-h-[600px]'
+      } text-xl relative group`}
       style={{ backgroundColor: getColorValue(section.background_color || 'white') }}
     >
       {/* Hover Edit Buttons for Admin */}
@@ -338,7 +355,14 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
       )}
       
       <div
-        className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto space-y-12 ${section.is_slider ? 'py-4' : 'py-4 sm:p-8 sm:rounded-xl'}`}
+        className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto ${
+          // Remove spacing for new special sections that manage their own layout
+          section.is_brand || section.is_article_slider || section.is_contact_section || section.is_faq_section || section.is_pricingplans_section
+            ? '' 
+            : section.is_slider 
+            ? 'py-4 space-y-12' 
+            : 'py-4 sm:p-8 sm:rounded-xl space-y-12'
+        }`}
       >
         {section.is_reviews_section ? (
           <FeedbackAccordion type="all_products" />
@@ -346,6 +370,16 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
           <HelpCenterSection section={section} />
         ) : section.is_real_estate_modal ? (
           <RealEstateModal />
+        ) : section.is_brand ? (
+          <BrandsSection section={section} />
+        ) : section.is_article_slider ? (
+          <BlogPostSlider backgroundColor={section.background_color} />
+        ) : section.is_contact_section ? (
+          <ContactForm />
+        ) : section.is_faq_section ? (
+          <FAQSectionWrapper section={section} />
+        ) : section.is_pricingplans_section ? (
+          <PricingPlansSectionWrapper section={section} />
         ) : (
           <>
             {/* Section Title and Description */}

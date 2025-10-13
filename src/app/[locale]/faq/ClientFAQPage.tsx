@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import FAQSection from '../../../components/HomePageSections/FAQSection';
+import FAQSection from '../../../components/TemplateSections/FAQSection';
 import { FAQ } from '@/types/faq';
 import { useProductTranslations } from '../../../components/product/useProductTranslations';
 

@@ -54,12 +54,18 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const [hasTemplateSections, setHasTemplateSections] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const baseUrl = useMemo(() =>
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
     []
   );
+
+  // Set mounted state on client-side only
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Check admin status client-side
   useEffect(() => {
@@ -339,7 +345,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           <div className="grid lg:grid-cols-8 gap-x-4">
             {/* TOC Sidebar */}
             <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
-              {toc.length > 0 && (
+              {isMounted && toc.length > 0 && (
                 <div className="hidden lg:block mt-16 sticky top-32">
                   <TOC toc={toc} handleScrollTo={handleScrollTo} />
                 </div>

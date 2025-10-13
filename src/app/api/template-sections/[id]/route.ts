@@ -57,10 +57,15 @@ export async function PUT(
       is_section_title_aligned_right: body.is_section_title_aligned_right ?? false,
       is_image_bottom: body.is_image_bottom ?? false,
       is_slider: body.is_slider ?? false,
-      image_metrics_height: body.image_metrics_height || null,
       is_reviews_section: body.is_reviews_section ?? false,
       is_help_center_section: body.is_help_center_section ?? false,
       is_real_estate_modal: body.is_real_estate_modal ?? false,
+      is_brand: body.is_brand ?? false,
+      is_article_slider: body.is_article_slider ?? false,
+      is_contact_section: body.is_contact_section ?? false,
+      is_faq_section: body.is_faq_section ?? false,
+      is_pricingplans_section: body.is_pricingplans_section ?? false,
+      image_metrics_height: body.image_metrics_height || null,
     };
 
     // Handle translation fields

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import FeedbackAccordion from '@/components/FeedbackAccordion';
+import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
 
 interface BlogResource {
   id: number;

@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import CategoriesBar from '@/components/product/CategoriesBar';
 import IconButton from '@/ui/IconButton';
-import FeedbackAccordion from '@/components/FeedbackAccordion';
+import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
 import { useProductTranslations } from '@/components/product/useProductTranslations';
 
 type Product = {

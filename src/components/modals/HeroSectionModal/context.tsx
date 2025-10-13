@@ -82,14 +82,27 @@ export function HeroSectionEditProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<any>(null);
   const { showToast } = useToast();
 
-  // Get session on mount
+  // Get session on mount - using useCallback to prevent re-renders
   useEffect(() => {
+    let isMounted = true;
+    
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (isMounted && session) {
+          setSession(session);
+        }
+      } catch (error) {
+        console.error('[HeroSectionEditContext] Error getting session:', error);
+      }
     };
+    
     getSession();
-  }, []);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - only run once on mount
 
   const openModal = useCallback((orgId: string, section?: HeroSectionData) => {
     console.log('[HeroSectionEditContext] openModal called:', { orgId, section });

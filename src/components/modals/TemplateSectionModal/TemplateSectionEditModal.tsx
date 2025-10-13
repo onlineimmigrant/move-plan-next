@@ -16,6 +16,11 @@ import {
   RectangleStackIcon,
   PhotoIcon,
   PlusIcon,
+  BuildingOfficeIcon,
+  NewspaperIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftRightIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 import { useTemplateSectionEdit } from './context';
 import ColorPaletteDropdown, { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
@@ -107,6 +112,11 @@ interface TemplateSectionFormData {
   is_reviews_section: boolean;
   is_help_center_section: boolean;
   is_real_estate_modal: boolean;
+  is_brand: boolean;
+  is_article_slider: boolean;
+  is_contact_section: boolean;
+  is_faq_section: boolean;
+  is_pricingplans_section: boolean;
   url_page?: string;
   website_metric?: Metric[];
 }
@@ -144,6 +154,11 @@ export default function TemplateSectionEditModal() {
     is_reviews_section: false,
     is_help_center_section: false,
     is_real_estate_modal: false,
+    is_brand: false,
+    is_article_slider: false,
+    is_contact_section: false,
+    is_faq_section: false,
+    is_pricingplans_section: false,
     url_page: undefined,
     website_metric: undefined,
   });
@@ -166,6 +181,11 @@ export default function TemplateSectionEditModal() {
         is_reviews_section: editingSection.is_reviews_section || false,
         is_help_center_section: editingSection.is_help_center_section || false,
         is_real_estate_modal: editingSection.is_real_estate_modal || false,
+        is_brand: editingSection.is_brand || false,
+        is_article_slider: editingSection.is_article_slider || false,
+        is_contact_section: editingSection.is_contact_section || false,
+        is_faq_section: editingSection.is_faq_section || false,
+        is_pricingplans_section: editingSection.is_pricingplans_section || false,
         url_page: editingSection.url_page,
         website_metric: editingSection.website_metric,
       });
@@ -412,6 +432,102 @@ export default function TemplateSectionEditModal() {
                   <RectangleStackIcon className="w-5 h-5" />
                 </button>
                 <Tooltip content="Enable horizontal slider/carousel for metrics" />
+              </div>
+
+              <div className="w-px h-6 bg-gray-300 mx-1" />
+
+              {/* Brand Section */}
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({ ...formData, is_brand: !formData.is_brand })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_brand
+                      ? 'bg-purple-100 text-purple-500 border border-purple-200'
+                      : 'text-gray-400 hover:text-purple-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <BuildingOfficeIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Display brand logos carousel" />
+              </div>
+
+              {/* Article Slider Section */}
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({ ...formData, is_article_slider: !formData.is_article_slider })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_article_slider
+                      ? 'bg-indigo-100 text-indigo-500 border border-indigo-200'
+                      : 'text-gray-400 hover:text-indigo-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <NewspaperIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Display featured blog posts slider" />
+              </div>
+
+              {/* Contact Form Section */}
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({ ...formData, is_contact_section: !formData.is_contact_section })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_contact_section
+                      ? 'bg-green-100 text-green-500 border border-green-200'
+                      : 'text-gray-400 hover:text-green-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <EnvelopeIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Display contact form" />
+              </div>
+
+              {/* FAQ Section */}
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({ ...formData, is_faq_section: !formData.is_faq_section })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_faq_section
+                      ? 'bg-blue-100 text-blue-500 border border-blue-200'
+                      : 'text-gray-400 hover:text-blue-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Display FAQ accordion" />
+              </div>
+
+              {/* Pricing Plans Section */}
+              <div className="relative group">
+                <button
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      is_pricingplans_section: !prev.is_pricingplans_section,
+                      // Disable other special sections
+                      is_reviews_section: false,
+                      is_help_center_section: false,
+                      is_real_estate_modal: false,
+                      is_slider: false,
+                      is_brand: false,
+                      is_article_slider: false,
+                      is_contact_section: false,
+                      is_faq_section: false,
+                    }));
+                  }}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_pricingplans_section
+                      ? 'bg-yellow-500 text-white border border-yellow-600'
+                      : 'text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 border border-transparent'
+                  )}
+                >
+                  <CurrencyDollarIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Display pricing plans slider" />
               </div>
 
               <div className="w-px h-6 bg-gray-300 mx-1" />

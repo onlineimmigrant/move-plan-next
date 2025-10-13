@@ -8,12 +8,10 @@ import { WidgetSize } from '../ChatWidget/types';
 import { useFAQs } from './hooks/useFAQs';
 import { useArticles } from './hooks/useArticles';
 import { useFeatures } from './hooks/useFeatures';
-import { usePricingPlans } from './hooks/usePricingPlans';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
 import type { FAQ } from '@/types/faq';
 import type { Article } from './hooks/useArticles';
 import type { Feature } from './hooks/useFeatures';
-import type { PricingPlan } from './hooks/usePricingPlans';
 
 type HeroIconName = keyof typeof Icons;
 
@@ -36,68 +34,21 @@ export default function WelcomeTab({
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null);
-  const [expandedPricingPlan, setExpandedPricingPlan] = useState<string | null>(null);
-  const [currentOfferingSlide, setCurrentOfferingSlide] = useState(0);
-  const [itemsPerView, setItemsPerView] = useState(3); // Default to 3 for desktop
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Update items per view based on screen size
-  useEffect(() => {
-    const updateItemsPerView = () => {
-      if (window.innerWidth < 768) {
-        setItemsPerView(1); // Mobile: 1 card
-      } else if (window.innerWidth < 1024) {
-        setItemsPerView(2); // Tablet: 2 cards
-      } else {
-        setItemsPerView(3); // Desktop: 3 cards
-      }
-    };
-    
-    updateItemsPerView();
-    window.addEventListener('resize', updateItemsPerView);
-    return () => window.removeEventListener('resize', updateItemsPerView);
-  }, []);
   
   // Fetch Help Center items for display (when not searching)
   const { faqs: helpCenterFAQs, loading: faqLoading, error: faqError } = useFAQs(true);
   const { articles: helpCenterArticles, loading: articlesLoading, error: articlesError } = useArticles(true);
   const { features: helpCenterFeatures, loading: featuresLoading, error: featuresError } = useFeatures(true);
-  const { pricingPlans: helpCenterPricingPlans, loading: pricingLoading, error: pricingError } = usePricingPlans(true);
   
   // Fetch ALL items for search functionality
   const { faqs: allFAQs, loading: allFaqsLoading } = useFAQs(false);
   const { articles: allArticles, loading: allArticlesLoading } = useArticles(false);
   const { features: allFeatures, loading: allFeaturesLoading } = useFeatures(false);
-  const { pricingPlans: allPricingPlans, loading: allPricingLoading } = usePricingPlans(false);
-  
-  // Track scroll position on mobile to update current slide indicator
-  useEffect(() => {
-    if (itemsPerView !== 1 || !scrollContainerRef.current || !helpCenterPricingPlans.length) return;
-    
-    const container = scrollContainerRef.current;
-    let scrollTimeout: NodeJS.Timeout;
-    
-    const handleScroll = () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        const scrollLeft = container.scrollLeft;
-        const cardWidth = container.scrollWidth / helpCenterPricingPlans.length;
-        const newIndex = Math.round(scrollLeft / cardWidth);
-        setCurrentOfferingSlide(newIndex);
-      }, 100);
-    };
-    
-    container.addEventListener('scroll', handleScroll);
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, [itemsPerView, helpCenterPricingPlans.length]);
   
   const { t } = useHelpCenterTranslations();
 
-  const loading = faqLoading || articlesLoading || featuresLoading || pricingLoading;
-  const error = faqError || articlesError || featuresError || pricingError;
+  const loading = faqLoading || articlesLoading || featuresLoading;
+  const error = faqError || articlesError || featuresError;
 
   // Use ALL items for search, not just Help Center items
   const filteredFAQs = (searchQuery.trim() ? allFAQs : helpCenterFAQs).filter((faq: FAQ) =>
@@ -120,14 +71,7 @@ export default function WelcomeTab({
     (feature.content?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
   );
 
-  const filteredPricingPlans = (searchQuery.trim() ? allPricingPlans : helpCenterPricingPlans).filter((plan: PricingPlan) =>
-    !searchQuery.trim() ||
-    (plan.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (plan.package?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (plan.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
-  );
-
-  const hasSearchResults = searchQuery.trim() && (filteredFAQs.length > 0 || filteredArticles.length > 0 || filteredFeatures.length > 0 || filteredPricingPlans.length > 0);
+  const hasSearchResults = searchQuery.trim() && (filteredFAQs.length > 0 || filteredArticles.length > 0 || filteredFeatures.length > 0);
 
   const renderFeatureIcon = (iconName?: string) => {
     if (!iconName || iconName.trim() === '') {
@@ -247,15 +191,6 @@ export default function WelcomeTab({
                 {allFeatures.length}
               </span>
             </button>
-            <button
-              onClick={() => router.push('/help-center?tab=offerings')}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
-            >
-              <span className="text-base sm:text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.offerings || 'Offerings'}</span>
-              <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
-                {allPricingPlans.length}
-              </span>
-            </button>
           </div>
         )}
 
@@ -268,7 +203,6 @@ export default function WelcomeTab({
                 filteredFAQs.length > 0,
                 filteredArticles.length > 0,
                 filteredFeatures.length > 0,
-                filteredPricingPlans.length > 0,
               ].filter(Boolean).length;
 
               // Dynamic grid classes based on number of columns
@@ -578,140 +512,12 @@ export default function WelcomeTab({
                 </div>
               </div>
             )}
-
-            {/* Offerings Results Column */}
-            {filteredPricingPlans.length > 0 && (
-              <div className="space-y-5">
-                <button
-                  onClick={() => router.push('/products')}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
-                >
-                  <span className="text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.offerings || 'Offerings'}</span>
-                  <span className="flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-sky-100 group-hover:text-sky-700 transition-colors duration-300">
-                    {filteredPricingPlans.length}
-                  </span>
-                  <svg className="w-4 h-4 text-gray-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                <div className="space-y-4">
-                  {filteredPricingPlans.slice(0, 3).map((plan: PricingPlan, index) => (
-                    <div key={plan.id} className="group relative"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      {/* Glass morphism card */}
-                      <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border border-gray-200/40 rounded-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-white/80 group-hover:border-sky-200/60 group-hover:scale-[1.02]"
-                        style={{
-                          backdropFilter: 'blur(24px) saturate(200%)',
-                          WebkitBackdropFilter: 'blur(24px) saturate(200%)',
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-br from-sky-50/30 via-white/20 to-blue-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                      
-                      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(14, 165, 233, 0.1))',
-                          filter: 'blur(1px)',
-                        }}
-                      />
-                      
-                      <div className="relative p-6 sm:p-8">
-                        <button
-                          onClick={() => setExpandedPricingPlan(expandedPricingPlan === plan.id ? null : plan.id)}
-                          className="w-full text-left flex items-start justify-between group/button"
-                        >
-                          <div className="flex items-start gap-3 flex-1 pr-4 sm:pr-8">
-                            {/* Product Image or Icon */}
-                            <div className="flex-shrink-0 w-12 h-12 neomorphic rounded-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-yellow-50">
-                              {plan.links_to_image ? (
-                                <img src={plan.links_to_image} alt={plan.product_name} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-2xl">💎</span>
-                              )}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <span className="text-gray-900 font-semibold text-base sm:text-[18px] leading-relaxed antialiased tracking-[-0.02em] group-hover/button:text-gray-800 transition-colors duration-500 block">
-                                {plan.product_name || plan.package}
-                              </span>
-                              {plan.measure && (
-                                <span className="inline-block mt-2 px-3 py-1 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
-                                  {plan.measure}
-                                </span>
-                              )}
-                              {/* Price Display */}
-                              <div className="mt-2 flex items-baseline gap-2">
-                                <span className="text-xl font-bold text-gray-900">
-                                  {plan.currency_symbol}{(plan.is_promotion && plan.promotion_price ? plan.promotion_price : plan.price) / 100}
-                                </span>
-                                {plan.is_promotion && plan.promotion_price && (
-                                  <span className="text-sm text-gray-400 line-through">
-                                    {plan.currency_symbol}{plan.price / 100}
-                                  </span>
-                                )}
-                                {plan.recurring_interval && plan.recurring_interval !== 'one_time' && (
-                                  <span className="text-sm text-gray-500">/ {plan.recurring_interval}</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="relative flex-shrink-0 mt-1">
-                            <div className="absolute inset-0 bg-white/70 backdrop-blur-xl rounded-full border border-gray-200/40 group-hover/button:border-sky-300/60 transition-all duration-500"
-                              style={{
-                                backdropFilter: 'blur(16px) saturate(180%)',
-                                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                              }}
-                            />
-                            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/button:scale-110 group-hover/button:rotate-180">
-                              <ChevronDownIcon 
-                                className={`h-4 w-4 sm:h-5 sm:w-5 text-gray-500 group-hover/button:text-sky-600 transition-all duration-500 group-hover/button:scale-110 ${
-                                  expandedPricingPlan === plan.id ? 'rotate-180 text-sky-600' : ''
-                                }`}
-                              />
-                            </div>
-                          </div>
-                        </button>
-                        
-                        {expandedPricingPlan === plan.id && (
-                          <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200/40 animate-in slide-in-from-top-6 duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-sky-50/30 backdrop-blur-sm rounded-2xl border border-sky-200/30 -m-4 sm:-m-6 p-4 sm:p-6"
-                                style={{
-                                  backdropFilter: 'blur(8px)',
-                                  WebkitBackdropFilter: 'blur(8px)',
-                                }}
-                              />
-                              <div className="relative p-4 sm:p-6">
-                                {plan.description && (
-                                  <p className="text-gray-700 text-sm leading-relaxed mb-4">
-                                    {plan.description}
-                                  </p>
-                                )}
-                                
-                                <button
-                                  onClick={() => router.push(`/products/${plan.product_slug || plan.product_id}`)}
-                                  className="inline-flex items-center gap-1.5 text-sky-600 hover:text-sky-700 font-medium text-sm transition-all duration-300 group/link"
-                                >
-                                  <span>View details & purchase</span>
-                                  <span className="text-base group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-300">↗</span>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
             </div>
               );
             })()}
 
             {/* No Results - Full Width */}
-            {filteredFAQs.length === 0 && filteredArticles.length === 0 && filteredFeatures.length === 0 && filteredPricingPlans.length === 0 && (
+            {filteredFAQs.length === 0 && filteredArticles.length === 0 && filteredFeatures.length === 0 && (
               <div className="text-center py-16">
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <MagnifyingGlassIcon className="h-10 w-10 text-gray-400" />
@@ -944,261 +750,6 @@ export default function WelcomeTab({
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* Hot Offerings - Product Cards with Slider */}
-        {!searchQuery.trim() && helpCenterPricingPlans.length > 0 && (
-          <div className="pb-48 sm:pb-56 lg:pb-64">
-            <div className="pt-8 sm:pt-12 border-t border-gray-100 max-w-7xl mx-auto">
-              <div className="text-center mb-8 sm:mb-12">
-                <h2 className="text-2xl sm:text-4xl font-light text-gray-900 mb-3 sm:mb-4 tracking-tight">{t.hotOfferings || 'Hot Offerings'}</h2>
-                <p className="text-base sm:text-lg text-gray-500 font-light">{t.hotOfferingsDescription || 'Special pricing plans just for you'}</p>
-              </div>
-              
-              {/* Slider Container with Navigation */}
-              <div className="relative">
-                {/* Navigation Arrows - Hidden on mobile, visible on tablet+ */}
-                {helpCenterPricingPlans.length > itemsPerView && (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentOfferingSlide(prev => Math.max(0, prev - 1));
-                      }}
-                      disabled={currentOfferingSlide === 0}
-                      className="hidden sm:flex absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 items-center justify-center group border border-gray-200/50 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
-                      aria-label="Previous offerings"
-                    >
-                      <svg className="w-6 h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentOfferingSlide(prev => Math.min(helpCenterPricingPlans.length - itemsPerView, prev + 1));
-                      }}
-                      disabled={currentOfferingSlide >= helpCenterPricingPlans.length - itemsPerView}
-                      className="hidden sm:flex absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 items-center justify-center group border border-gray-200/50 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
-                      aria-label="Next offerings"
-                    >
-                      <svg className="w-6 h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </>
-                )}
-                
-                {/* Scrollable Cards Container */}
-                <div 
-                  ref={scrollContainerRef}
-                  className="overflow-x-auto overflow-y-visible scrollbar-hide snap-x snap-mandatory sm:overflow-hidden"
-                  style={{ WebkitOverflowScrolling: 'touch' }}
-                >
-                  <div className="sm:px-12 md:px-16 lg:px-20">
-                    {/* Cards Container - Touch scroll on mobile, transform on desktop */}
-                    <div 
-                      className="flex gap-4 sm:gap-6 sm:transition-transform sm:duration-500 sm:ease-in-out"
-                      style={{
-                        transform: itemsPerView === 1 ? 'none' : `translateX(-${currentOfferingSlide * (100 / itemsPerView)}%)`,
-                      }}
-                    >
-                  {helpCenterPricingPlans.map((plan: PricingPlan, index: number) => (
-                    <div
-                      key={plan.id}
-                      onClick={() => router.push(`/products/${plan.product_slug || plan.product_id}`)}
-                      className="group cursor-pointer flex-shrink-0 snap-center"
-                      style={{ 
-                        width: itemsPerView === 1 
-                          ? 'calc(85vw - 2rem)' // Mobile: 85% viewport width with padding
-                          : itemsPerView === 2 
-                          ? 'calc(50% - 12px)' 
-                          : 'calc(33.333% - 16px)',
-                        animationDelay: `${index * 100}ms` 
-                      }}
-                    >
-                      {/* Product Card - Similar to /products page */}
-                      <div className="bg-white rounded-xl border border-gray-200 hover:border-sky-400 transition-all duration-300 overflow-hidden flex flex-col h-full min-h-[420px]">
-                        {/* Product Image */}
-                        {plan.links_to_image && plan.links_to_image.trim() !== '' ? (
-                          <div className="w-full h-52 sm:h-56 lg:h-60 flex-shrink-0 overflow-hidden">
-                            <img
-                              src={plan.links_to_image}
-                              alt={plan.product_name || plan.package || 'Product'}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              loading="lazy"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-full h-52 sm:h-56 lg:h-60 flex-shrink-0 bg-gradient-to-br from-amber-50 to-yellow-50 flex items-center justify-center">
-                            <span className="text-6xl">💎</span>
-                          </div>
-                        )}
-                        
-                        {/* Card Content */}
-                        <div className="p-4 sm:p-6 flex flex-col flex-grow">
-                          {/* Product Name */}
-                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-sky-400 transition-colors duration-200 min-h-[3rem]">
-                            {plan.product_name || plan.package}
-                          </h3>
-                          
-                          {/* Package/Type, Measure, and Promotion Badges in one row */}
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {plan.package && (
-                              <span className="inline-block px-3 py-1 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
-                                {plan.package}
-                              </span>
-                            )}
-                            {plan.measure && (
-                              <span className="inline-block px-3 py-1 bg-amber-50 text-amber-600 text-xs font-medium rounded-full tracking-wide uppercase border border-amber-100">
-                                {plan.measure}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Description */}
-                          {plan.description && (
-                            <p className="text-sm text-gray-600 mb-4 line-clamp-2 flex-grow">
-                              {plan.description}
-                            </p>
-                          )}
-                          
-                          {/* Pricing Section */}
-                          <div className="mt-auto">
-                            <div className="flex items-baseline gap-2 mb-3">
-                              <div className="flex items-baseline gap-2">
-                                {plan.is_promotion && plan.promotion_price ? (
-                                  <>
-                                    <span className="text-xl sm:text-2xl font-bold text-sky-600">
-                                      {plan.currency_symbol}{(plan.promotion_price / 100).toFixed(2)}
-                                    </span>
-                                    <span className="text-sm text-gray-400 line-through">
-                                      {plan.currency_symbol}{(plan.price / 100).toFixed(2)}
-                                    </span>
-                                  </>
-                                ) : (
-                                  <span className="text-xl sm:text-2xl font-bold text-gray-700">
-                                    {plan.currency_symbol}{(plan.price / 100).toFixed(2)}
-                                  </span>
-                                )}
-                              </div>
-                              {plan.type !== 'one_time' && plan.recurring_interval && plan.recurring_interval !== 'one_time' && (
-                                <span className="text-sm text-gray-500 font-medium">
-                                  / {plan.recurring_interval}
-                                </span>
-                              )}
-                            </div>
-                            
-                            {/* Promotion Badge */}
-                            {plan.is_promotion && plan.promotion_percent && (
-                              <div className="mb-3">
-                                <div className="relative inline-block">
-                                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-sm animate-pulse"></div>
-                                  <span className="relative block px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-red-500 via-red-600 to-pink-600 rounded-full shadow-xl border-2 border-white/30 backdrop-blur-sm">
-                                    <span className="flex items-center gap-1">
-                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                      </svg>
-                                      -{plan.promotion_percent}% OFF
-                                    </span>
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* View Details Arrow */}
-                            <div className="flex justify-end">
-                              <span className="text-sky-400 transition-all duration-300 group-hover:translate-x-1">
-                                <ArrowRightIcon className="h-5 w-5" />
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                  </div>
-                </div>
-                
-              {/* Dot Indicators */}
-              {helpCenterPricingPlans.length > itemsPerView && (
-                <div className="flex justify-center gap-2 mt-6">
-                  {Array.from({ 
-                    length: Math.max(0, helpCenterPricingPlans.length - (itemsPerView === 1 ? 1 : itemsPerView) + 1)
-                  }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setCurrentOfferingSlide(index);
-                        // On mobile, scroll to the card
-                        if (itemsPerView === 1 && scrollContainerRef.current) {
-                          const cardWidth = scrollContainerRef.current.scrollWidth / helpCenterPricingPlans.length;
-                          scrollContainerRef.current.scrollTo({
-                            left: cardWidth * index,
-                            behavior: 'smooth'
-                          });
-                        }
-                      }}
-                      className={`transition-all duration-300 rounded-full ${
-                        index === currentOfferingSlide
-                          ? 'w-8 h-2 bg-amber-500'
-                          : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
-                      }`}
-                      aria-label={`Go to offering slide ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              )}
-              
-              {/* Mobile Navigation Buttons - Only visible on mobile */}
-              {helpCenterPricingPlans.length > 1 && itemsPerView === 1 && (
-                <div className="flex sm:hidden justify-center gap-4 mt-4">
-                  <button
-                    onClick={() => {
-                      const newIndex = Math.max(0, currentOfferingSlide - 1);
-                      setCurrentOfferingSlide(newIndex);
-                      if (scrollContainerRef.current) {
-                        const cardWidth = scrollContainerRef.current.scrollWidth / helpCenterPricingPlans.length;
-                        scrollContainerRef.current.scrollTo({
-                          left: cardWidth * newIndex,
-                          behavior: 'smooth'
-                        });
-                      }
-                    }}
-                    disabled={currentOfferingSlide === 0}
-                    className="w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Previous offering"
-                  >
-                    <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => {
-                      const newIndex = Math.min(helpCenterPricingPlans.length - 1, currentOfferingSlide + 1);
-                      setCurrentOfferingSlide(newIndex);
-                      if (scrollContainerRef.current) {
-                        const cardWidth = scrollContainerRef.current.scrollWidth / helpCenterPricingPlans.length;
-                        scrollContainerRef.current.scrollTo({
-                          left: cardWidth * newIndex,
-                          behavior: 'smooth'
-                        });
-                      }
-                    }}
-                    disabled={currentOfferingSlide >= helpCenterPricingPlans.length - 1}
-                    className="w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Next offering"
-                  >
-                    <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
             </div>
           </div>
         )}

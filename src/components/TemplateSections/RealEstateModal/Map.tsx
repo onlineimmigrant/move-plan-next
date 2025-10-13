@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { loadYandexMapsAPI } from '../../utils/yandexMapsLoader';
+import { loadYandexMapsAPI } from '@/utils/yandexMapsLoader';
 
 export const Map: React.FC = () => {
   const [mapType, setMapType] = useState<'map' | 'panorama'>('map');

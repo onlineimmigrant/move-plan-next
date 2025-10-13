@@ -27,7 +27,11 @@ interface BlogPost {
   organization_id?: string;
 }
 
-const BlogPostSlider: React.FC = () => {
+interface BlogPostSliderProps {
+  backgroundColor?: string;
+}
+
+const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
   const { settings } = useSettings();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,8 +124,22 @@ const BlogPostSlider: React.FC = () => {
     return null;
   }
 
+  // Determine if we should use the gradient background
+  // Use gradient when backgroundColor is undefined, 'transparent', 'white', or any white variant
+  const shouldUseGradient = !backgroundColor || 
+    backgroundColor === 'transparent' || 
+    backgroundColor.toLowerCase() === 'white' ||
+    backgroundColor.toLowerCase() === '#ffffff' ||
+    backgroundColor.toLowerCase() === '#fff' ||
+    backgroundColor.toLowerCase() === 'rgb(255, 255, 255)' ||
+    backgroundColor.toLowerCase() === 'rgba(255, 255, 255, 1)';
+
+  const sectionClassName = shouldUseGradient 
+    ? 'py-16 bg-gradient-to-br from-slate-50 via-white to-blue-50' 
+    : 'py-16';
+
   return (
-    <section className="py-16 bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <section className={sectionClassName}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Slider Container */}
         <div 

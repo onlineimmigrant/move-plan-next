@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-import FeedbackAccordion from '@/components/FeedbackAccordion';
+import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
 import DotGrid from '@/components/AnimateElements/DotGrid';
 import ShapeBlur from '@/components/AnimateElements/ShapeBlur';
 import LetterGlitch from '@/components/AnimateElements/LetterGlitch';

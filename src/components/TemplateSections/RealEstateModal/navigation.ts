@@ -12,7 +12,7 @@ import { getRealEstateModalControls } from './RealEstateModal';
  * @param type - The tab type to open ('about', 'value', 'where', 'price')
  * 
  * Usage:
- * import { openRealEstateCard } from './components/realEstateModal/navigation';
+ * import { openRealEstateCard } from '@/components/TemplateSections/RealEstateModal/navigation';
  * 
  * // In a button click handler
  * onClick={() => openRealEstateCard('about')}

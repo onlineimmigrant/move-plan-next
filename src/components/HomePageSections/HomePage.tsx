@@ -12,20 +12,7 @@ const Hero = dynamic(() => import('@/components/HomePageSections/Hero'), {
   loading: () => <HeroSkeleton />
 });
 
-const BlogPostSlider = dynamic(() => import('@/components/HomePageSections/BlogPostSlider'), {
-  ssr: false,
-  loading: () => <BlogSliderSkeleton />
-});
-
-const Brands = dynamic(() => import('@/components/HomePageSections/Brands'), { 
-  ssr: false,
-  loading: () => <BrandsSkeleton />
-});
-
-const FAQSection = dynamic(() => import('@/components/HomePageSections/FAQSection'), { 
-  ssr: false,
-  loading: () => <FAQSkeleton />
-});
+// Removed: BlogPostSlider, Brands, FAQSection - now universal via template sections
 
 // Skeleton components for better UX
 const HeroSkeleton = () => (
@@ -40,52 +27,7 @@ const HeroSkeleton = () => (
   </div>
 );
 
-const BlogSliderSkeleton = () => (
-  <div className="py-16 bg-gradient-to-br from-slate-50 via-white to-blue-50 animate-pulse">
-    <div className="max-w-7xl mx-auto px-4">
-      <div className="text-center mb-12">
-        <div className="h-10 bg-gray-200 rounded w-64 mx-auto mb-4"></div>
-        <div className="h-6 bg-gray-200 rounded w-96 mx-auto"></div>
-      </div>
-      <div className="relative rounded-2xl overflow-hidden bg-white shadow-xl">
-        <div className="h-96 bg-gray-200"></div>
-        <div className="p-12 space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-6 bg-gray-200 rounded w-full"></div>
-          <div className="h-6 bg-gray-200 rounded w-5/6"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const BrandsSkeleton = () => (
-  <div className="py-16 bg-gray-50 animate-pulse">
-    <div className="max-w-7xl mx-auto px-4">
-      <div className="h-8 bg-gray-200 rounded w-48 mx-auto mb-12"></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-12 bg-gray-200 rounded"></div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-const FAQSkeleton = () => (
-  <div className="py-16 animate-pulse">
-    <div className="max-w-5xl mx-auto px-4">
-      <div className="h-10 bg-gray-200 rounded w-80 mx-auto mb-12"></div>
-      <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="border-b border-gray-200 pb-4">
-            <div className="h-6 bg-gray-200 rounded w-full mb-2"></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
+// Removed skeleton components - no longer needed since sections moved to template sections
 
 // Error boundary component
 class ErrorBoundary extends React.Component<
@@ -328,57 +270,8 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
         <Hero hero={data.hero} />
       </ErrorBoundary>
 
-      {/* Brands Section - Less critical, can be lazy loaded */}
-      {(data.brands?.length ?? 0) > 0 && (
-        <ErrorBoundary 
-          fallback={
-            <div className="py-8 text-center text-gray-500">
-              Failed to load brands section
-            </div>
-          }
-        >
-          <section className="">
-            <Suspense fallback={<BrandsSkeleton />}>
-              <Brands 
-                brands={data.brands || []} 
-                textContent={{ brands_heading: data.brands_heading || 'Our Trusted Partners' }} 
-              />
-            </Suspense>
-          </section>
-        </ErrorBoundary>
-      )}
-
-      {/* FAQ Section - Least critical, lazy load 
-      {(data.faqs?.length ?? 0) > 0 && (
-        <ErrorBoundary 
-          fallback={
-            <div className="py-8 text-center text-gray-500">
-              Failed to load FAQ section
-            </div>
-          }
-        >
-          <section className="py-16">
-            <div className="mx-auto max-w-5xl px-4">
-              <Suspense fallback={<FAQSkeleton />}>
-                <FAQSection faqs={data.faqs || []} />
-              </Suspense>
-            </div>
-          </section>
-        </ErrorBoundary>
-      )}*/}
-
-      {/* Blog Post Slider - Featured articles - Bottom of page */}
-      <ErrorBoundary 
-        fallback={
-          <div className="py-8 text-center text-gray-500">
-            Failed to load featured articles
-          </div>
-        }
-      >
-        <Suspense fallback={<BlogSliderSkeleton />}>
-          <BlogPostSlider />
-        </Suspense>
-      </ErrorBoundary>
+      {/* Removed: Brands, FAQ, and BlogPostSlider sections */}
+      {/* These are now universal and can be added via template sections on any page */}
 
       {/* Pricing Modal */}
       <PricingModal 
