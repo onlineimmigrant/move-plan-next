@@ -21,7 +21,9 @@ import {
   EnvelopeIcon,
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
+import { RadioGroup } from '@headlessui/react';
 import { useTemplateSectionEdit } from './context';
 import ColorPaletteDropdown, { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import DeleteSectionModal from './DeleteSectionModal';
@@ -81,6 +83,73 @@ const HEIGHT_OPTIONS = [
   { value: 'h-96', label: '24rem' },
 ];
 
+// Section type options
+const SECTION_TYPE_OPTIONS = [
+  {
+    value: 'general' as const,
+    label: 'General Content',
+    description: 'Standard section with title, description, and metrics',
+    icon: ChatBubbleBottomCenterTextIcon,
+    color: 'gray',
+  },
+  {
+    value: 'reviews' as const,
+    label: 'Reviews',
+    description: 'Customer reviews and testimonials',
+    icon: StarIcon,
+    color: 'amber',
+  },
+  {
+    value: 'help_center' as const,
+    label: 'Help Center',
+    description: 'FAQ and support knowledge base',
+    icon: QuestionMarkCircleIcon,
+    color: 'cyan',
+  },
+  {
+    value: 'real_estate' as const,
+    label: 'Real Estate',
+    description: 'Property listings and details',
+    icon: HomeModernIcon,
+    color: 'orange',
+  },
+  {
+    value: 'brand' as const,
+    label: 'Brands',
+    description: 'Brand logos carousel',
+    icon: BuildingOfficeIcon,
+    color: 'purple',
+  },
+  {
+    value: 'article_slider' as const,
+    label: 'Article Slider',
+    description: 'Featured blog posts carousel',
+    icon: NewspaperIcon,
+    color: 'indigo',
+  },
+  {
+    value: 'contact' as const,
+    label: 'Contact Form',
+    description: 'Contact information and form',
+    icon: EnvelopeIcon,
+    color: 'green',
+  },
+  {
+    value: 'faq' as const,
+    label: 'FAQ',
+    description: 'Frequently asked questions',
+    icon: ChatBubbleLeftRightIcon,
+    color: 'blue',
+  },
+  {
+    value: 'pricing_plans' as const,
+    label: 'Pricing Plans',
+    description: 'Product pricing cards',
+    icon: CurrencyDollarIcon,
+    color: 'yellow',
+  },
+];
+
 interface Metric {
   id: number;
   title: string;
@@ -109,6 +178,11 @@ interface TemplateSectionFormData {
   is_section_title_aligned_right: boolean;
   is_image_bottom: boolean;
   is_slider: boolean;
+  
+  // New consolidated field
+  section_type: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans';
+  
+  // DEPRECATED - Keep temporarily for backward compat
   is_reviews_section: boolean;
   is_help_center_section: boolean;
   is_real_estate_modal: boolean;
@@ -151,6 +225,7 @@ export default function TemplateSectionEditModal() {
     is_section_title_aligned_right: false,
     is_image_bottom: false,
     is_slider: false,
+    section_type: 'general',
     is_reviews_section: false,
     is_help_center_section: false,
     is_real_estate_modal: false,
@@ -166,6 +241,20 @@ export default function TemplateSectionEditModal() {
   // Initialize form data when editing section changes
   useEffect(() => {
     if (editingSection) {
+      // Determine section_type from boolean flags if not set
+      let sectionType: TemplateSectionFormData['section_type'] = (editingSection as any).section_type || 'general';
+      if (!(editingSection as any).section_type) {
+        // Fallback: derive from boolean flags
+        if (editingSection.is_reviews_section) sectionType = 'reviews';
+        else if (editingSection.is_help_center_section) sectionType = 'help_center';
+        else if (editingSection.is_real_estate_modal) sectionType = 'real_estate';
+        else if (editingSection.is_brand) sectionType = 'brand';
+        else if (editingSection.is_article_slider) sectionType = 'article_slider';
+        else if (editingSection.is_contact_section) sectionType = 'contact';
+        else if (editingSection.is_faq_section) sectionType = 'faq';
+        else if (editingSection.is_pricingplans_section) sectionType = 'pricing_plans';
+      }
+      
       setFormData({
         section_title: editingSection.section_title || '',
         section_description: editingSection.section_description || '',
@@ -178,6 +267,7 @@ export default function TemplateSectionEditModal() {
         is_section_title_aligned_right: editingSection.is_section_title_aligned_right || false,
         is_image_bottom: editingSection.is_image_bottom || false,
         is_slider: editingSection.is_slider || false,
+        section_type: sectionType,
         is_reviews_section: editingSection.is_reviews_section || false,
         is_help_center_section: editingSection.is_help_center_section || false,
         is_real_estate_modal: editingSection.is_real_estate_modal || false,
@@ -292,56 +382,6 @@ export default function TemplateSectionEditModal() {
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 sm:px-6">
           <div className="overflow-x-auto">
             <div className="flex items-center gap-1 py-3 min-w-max">
-              {/* Reviews Section */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_reviews_section: !formData.is_reviews_section })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_reviews_section
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Mark as reviews section for special styling and features" />
-              </div>
-
-              {/* Help Center Section */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_help_center_section: !formData.is_help_center_section })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_help_center_section
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <QuestionMarkCircleIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Mark as help center section for FAQ and support content" />
-              </div>
-
-              {/* Real Estate Modal */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_real_estate_modal: !formData.is_real_estate_modal })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_real_estate_modal
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <HomeModernIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Enable real estate modal features for property listings" />
-              </div>
-
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-
               {/* Alignment buttons */}
               <div className="relative group">
                 <button
@@ -418,119 +458,23 @@ export default function TemplateSectionEditModal() {
                 <Tooltip content="Make section full width without container constraints" />
               </div>
 
-              {/* Enable Slider */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_slider
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <RectangleStackIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Enable horizontal slider/carousel for metrics" />
-              </div>
-
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-
-              {/* Brand Section */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_brand: !formData.is_brand })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_brand
-                      ? 'bg-purple-100 text-purple-500 border border-purple-200'
-                      : 'text-gray-400 hover:text-purple-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <BuildingOfficeIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Display brand logos carousel" />
-              </div>
-
-              {/* Article Slider Section */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_article_slider: !formData.is_article_slider })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_article_slider
-                      ? 'bg-indigo-100 text-indigo-500 border border-indigo-200'
-                      : 'text-gray-400 hover:text-indigo-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <NewspaperIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Display featured blog posts slider" />
-              </div>
-
-              {/* Contact Form Section */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_contact_section: !formData.is_contact_section })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_contact_section
-                      ? 'bg-green-100 text-green-500 border border-green-200'
-                      : 'text-gray-400 hover:text-green-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <EnvelopeIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Display contact form" />
-              </div>
-
-              {/* FAQ Section */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_faq_section: !formData.is_faq_section })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_faq_section
-                      ? 'bg-blue-100 text-blue-500 border border-blue-200'
-                      : 'text-gray-400 hover:text-blue-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <ChatBubbleLeftRightIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Display FAQ accordion" />
-              </div>
-
-              {/* Pricing Plans Section */}
-              <div className="relative group">
-                <button
-                  onClick={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      is_pricingplans_section: !prev.is_pricingplans_section,
-                      // Disable other special sections
-                      is_reviews_section: false,
-                      is_help_center_section: false,
-                      is_real_estate_modal: false,
-                      is_slider: false,
-                      is_brand: false,
-                      is_article_slider: false,
-                      is_contact_section: false,
-                      is_faq_section: false,
-                    }));
-                  }}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_pricingplans_section
-                      ? 'bg-yellow-500 text-white border border-yellow-600'
-                      : 'text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 border border-transparent'
-                  )}
-                >
-                  <CurrencyDollarIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Display pricing plans slider" />
-              </div>
-
-              <div className="w-px h-6 bg-gray-300 mx-1" />
+              {/* Enable Slider - Only for general sections */}
+              {formData.section_type === 'general' && (
+                <div className="relative group">
+                  <button
+                    onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
+                    className={cn(
+                      'p-2 rounded-lg transition-colors',
+                      formData.is_slider
+                        ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                        : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                    )}
+                  >
+                    <RectangleStackIcon className="w-5 h-5" />
+                  </button>
+                  <Tooltip content="Enable horizontal slider/carousel for metrics" />
+                </div>
+              )}
 
               {/* Background Color */}
               <div className="relative group">
@@ -776,6 +720,79 @@ export default function TemplateSectionEditModal() {
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-3 sm:px-6">
+          {/* Section Type Selection */}
+          <div className="py-6 border-b border-gray-200">
+            <label className="block text-sm font-semibold text-gray-700 mb-4">
+              Section Type
+            </label>
+            <RadioGroup
+              value={formData.section_type}
+              onChange={(value) => setFormData({ ...formData, section_type: value })}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {SECTION_TYPE_OPTIONS.map((option) => {
+                  const Icon = option.icon;
+                  
+                  return (
+                    <RadioGroup.Option
+                      key={option.value}
+                      value={option.value}
+                      className={({ checked }) =>
+                        `relative flex cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md
+                        ${checked
+                          ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-500 shadow-sm'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`
+                      }
+                    >
+                      {({ checked }) => (
+                        <div className="flex w-full items-start">
+                          <div className="flex-shrink-0">
+                            <Icon
+                              className={`h-6 w-6 ${
+                                checked ? 'text-sky-600' : 'text-gray-400'
+                              }`}
+                            />
+                          </div>
+                          <div className="ml-3 flex-1">
+                            <RadioGroup.Label
+                              as="p"
+                              className={`text-sm font-semibold ${
+                                checked ? 'text-sky-900' : 'text-gray-900'
+                              }`}
+                            >
+                              {option.label}
+                            </RadioGroup.Label>
+                            <RadioGroup.Description
+                              as="p"
+                              className="text-xs text-gray-500 mt-1 leading-relaxed"
+                            >
+                              {option.description}
+                            </RadioGroup.Description>
+                          </div>
+                          {checked && (
+                            <div className="flex-shrink-0 ml-2">
+                              <div className="rounded-full bg-sky-500 p-1">
+                                <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 12 12">
+                                  <path d="M3.707 5.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414L5 6.586 3.707 5.293z" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </RadioGroup.Option>
+                  );
+                })}
+              </div>
+            </RadioGroup>
+            <p className="text-xs text-gray-500 mt-3">
+              {formData.section_type === 'general' 
+                ? 'Standard section with customizable title, description, and metrics below.'
+                : 'Special section with predefined layout and functionality. Title and description are optional.'}
+            </p>
+          </div>
+
           {/* Content - Preview Area */}
           <div 
             className="rounded-lg overflow-hidden p-3 sm:p-6 my-4 sm:my-6 transition-colors"
@@ -786,6 +803,11 @@ export default function TemplateSectionEditModal() {
             <div className="space-y-2 max-w-4xl mx-auto">
               {/* Section Title - Styled like actual section */}
               <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="text-xs font-medium text-gray-500">
+                    Title {formData.section_type !== 'general' && <span className="text-gray-400 font-normal">(optional)</span>}
+                  </label>
+                </div>
                 <input
                   type="text"
                   value={formData.section_title}
@@ -802,6 +824,11 @@ export default function TemplateSectionEditModal() {
 
               {/* Section Description - Styled like actual section */}
               <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="text-xs font-medium text-gray-500">
+                    Description {formData.section_type !== 'general' && <span className="text-gray-400 font-normal">(optional)</span>}
+                  </label>
+                </div>
                 <textarea
                   ref={descriptionTextareaRef}
                   value={formData.section_description}
@@ -817,25 +844,26 @@ export default function TemplateSectionEditModal() {
                 />
               </div>
 
-              {/* Metrics Section */}
-              <div className="pt-4 sm:pt-6 mt-3 sm:mt-4">
-                {mode === 'create' ? (
-                  <div className="rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/50 p-4 sm:p-6 md:p-8 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-sky-100 flex items-center justify-center">
-                        <RectangleStackIcon className="w-5 h-5 sm:w-6 sm:h-6 text-sky-600" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm sm:text-base font-medium text-sky-900 mb-1">
-                          Save Section to Add Metrics
-                        </h4>
-                        <p className="text-xs sm:text-sm text-sky-700">
-                          Create the section first, then you'll be able to add and manage metrics
-                        </p>
+              {/* Metrics Section - Only for general sections */}
+              {formData.section_type === 'general' && (
+                <div className="pt-4 sm:pt-6 mt-3 sm:mt-4">
+                  {mode === 'create' ? (
+                    <div className="rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/50 p-4 sm:p-6 md:p-8 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-sky-100 flex items-center justify-center">
+                          <RectangleStackIcon className="w-5 h-5 sm:w-6 sm:h-6 text-sky-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm sm:text-base font-medium text-sky-900 mb-1">
+                            Save Section to Add Metrics
+                          </h4>
+                          <p className="text-xs sm:text-sm text-sky-700">
+                            Create the section first, then you'll be able to add and manage metrics
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : editingSection ? (
+                  ) : editingSection ? (
                   <MetricManager
                     sectionId={editingSection.id}
                     metrics={formData.website_metric || []}
@@ -857,7 +885,8 @@ export default function TemplateSectionEditModal() {
                     textStyleVariant={formData.text_style_variant}
                   />
                 ) : null}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 

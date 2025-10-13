@@ -65,6 +65,7 @@ export async function PUT(
       is_contact_section: body.is_contact_section ?? false,
       is_faq_section: body.is_faq_section ?? false,
       is_pricingplans_section: body.is_pricingplans_section ?? false,
+      section_type: body.section_type || 'general',
       image_metrics_height: body.image_metrics_height || null,
     };
 

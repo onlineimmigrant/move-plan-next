@@ -35,6 +35,7 @@ interface TemplateSectionData {
   image_metrics_height?: string;
   is_image_bottom: boolean;
   is_slider?: boolean;
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans';
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
   is_real_estate_modal?: boolean;
@@ -150,6 +151,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_section_title_aligned_right: data.is_section_title_aligned_right,
         is_image_bottom: data.is_image_bottom,
         is_slider: data.is_slider,
+        section_type: data.section_type || 'general',
         is_reviews_section: data.is_reviews_section,
         is_help_center_section: data.is_help_center_section,
         is_real_estate_modal: data.is_real_estate_modal,

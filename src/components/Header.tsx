@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, lazy } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, useRef } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
@@ -37,6 +37,8 @@ const Header: React.FC<HeaderProps> = ({
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [isDesktop, setIsDesktop] = useState(true); // Default to true for SSR
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
   const { basket } = useBasket();
@@ -71,16 +73,33 @@ const Header: React.FC<HeaderProps> = ({
   const menuWidth = headerStyle.menu_width || '7xl';
   const globalMenuItemsAreText = headerStyle.menu_items_are_text ?? true;
 
-  // Optimized scroll effect with throttling
+  // Optimized scroll effect with throttling and direction detection
   useEffect(() => {
     let ticking = false;
+    
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
-          const scrollPosition = window.scrollY;
+          const currentScrollY = window.scrollY;
           const windowHeight = window.innerHeight;
           const scrollThreshold = windowHeight * 0.1;
-          setIsScrolled(scrollPosition > scrollThreshold);
+          
+          // Update isScrolled state
+          setIsScrolled(currentScrollY > scrollThreshold);
+          
+          // Hide/show header based on scroll direction
+          // Always show when at the top (within 100px)
+          if (currentScrollY < 100) {
+            setIsVisible(true);
+          } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            // Scrolling down and past 100px - hide header
+            setIsVisible(false);
+          } else if (currentScrollY < lastScrollY) {
+            // Scrolling up - show header immediately
+            setIsVisible(true);
+          }
+          
+          setLastScrollY(currentScrollY);
           ticking = false;
         });
         ticking = true;
@@ -89,7 +108,7 @@ const Header: React.FC<HeaderProps> = ({
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   // Detect desktop/mobile for backdrop filter
   useEffect(() => {
@@ -720,6 +739,7 @@ const Header: React.FC<HeaderProps> = ({
         `}
         style={{ 
           top: `${fixedBannersHeight}px`,
+          transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
           // Ensure pointer events work even when transparent
           pointerEvents: 'auto',
           // Apply background color via inline style for both hex and Tailwind colors

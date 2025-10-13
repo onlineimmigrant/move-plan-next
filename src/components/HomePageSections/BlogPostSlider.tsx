@@ -160,6 +160,7 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                 const imageUrl = post.media_config?.main_photo && post.media_config.main_photo.trim() !== '' 
                   ? post.media_config.main_photo 
                   : settings?.image;
+                const isSvg = imageUrl?.toLowerCase().endsWith('.svg');
 
                 return (
                   <Link 
@@ -175,7 +176,7 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                             <img
                               src={imageUrl}
                               alt={post.title ?? 'Blog post'}
-                              className="w-full h-full object-contain"
+                              className={isSvg ? 'max-w-[40%] max-h-[40%] object-contain' : 'w-full h-full object-cover'}
                             />
                           </div>
                         ) : (

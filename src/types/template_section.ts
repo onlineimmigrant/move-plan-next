@@ -1,4 +1,16 @@
 // /app/types/template_section.ts
+
+export type SectionType = 
+  | 'general'
+  | 'brand'
+  | 'article_slider'
+  | 'contact'
+  | 'faq'
+  | 'reviews'
+  | 'help_center'
+  | 'real_estate'
+  | 'pricing_plans';
+
 export interface TemplateSection {
   id: string;
   section_title: string;
@@ -13,6 +25,11 @@ export interface TemplateSection {
   is_section_title_aligned_right?: boolean;
   is_image_bottom?: boolean;
   is_slider?: boolean;
+  
+  // New consolidated field
+  section_type: SectionType;
+  
+  // DEPRECATED - Keep for backward compatibility during migration
   is_help_center_section?: boolean;
   is_real_estate_modal?: boolean;
   is_brand?: boolean;
@@ -20,6 +37,8 @@ export interface TemplateSection {
   is_contact_section?: boolean;
   is_faq_section?: boolean;
   is_pricingplans_section?: boolean;
+  is_reviews_section?: boolean;
+  
   image_metrics_height?: string;
   order?: number;
   url_page?: string;

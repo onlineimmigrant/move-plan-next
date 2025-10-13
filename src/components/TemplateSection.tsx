@@ -151,6 +151,11 @@ interface TemplateSectionData {
   image_metrics_height?: string;
   is_image_bottom: boolean;
   is_slider?: boolean;
+  
+  // New consolidated field
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans';
+  
+  // DEPRECATED - Keep for backward compatibility
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
   is_real_estate_modal?: boolean;
@@ -159,6 +164,7 @@ interface TemplateSectionData {
   is_contact_section?: boolean;
   is_faq_section?: boolean;
   is_pricingplans_section?: boolean;
+  
   website_metric: Metric[];
   organization_id: string | null;
 }
@@ -356,31 +362,45 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
       
       <div
         className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto ${
-          // Remove spacing for new special sections that manage their own layout
-          section.is_brand || section.is_article_slider || section.is_contact_section || section.is_faq_section || section.is_pricingplans_section
+          // Remove spacing for special sections that manage their own layout
+          ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'help_center', 'real_estate'].includes(section.section_type || '')
             ? '' 
             : section.is_slider 
             ? 'py-4 space-y-12' 
             : 'py-4 sm:p-8 sm:rounded-xl space-y-12'
         }`}
       >
-        {section.is_reviews_section ? (
-          <FeedbackAccordion type="all_products" />
-        ) : section.is_help_center_section ? (
-          <HelpCenterSection section={section} />
-        ) : section.is_real_estate_modal ? (
-          <RealEstateModal />
-        ) : section.is_brand ? (
-          <BrandsSection section={section} />
-        ) : section.is_article_slider ? (
-          <BlogPostSlider backgroundColor={section.background_color} />
-        ) : section.is_contact_section ? (
-          <ContactForm />
-        ) : section.is_faq_section ? (
-          <FAQSectionWrapper section={section} />
-        ) : section.is_pricingplans_section ? (
-          <PricingPlansSectionWrapper section={section} />
-        ) : (
+        {(() => {
+          // Render based on section_type
+          switch (section.section_type) {
+            case 'reviews':
+              return <FeedbackAccordion type="all_products" />;
+            
+            case 'help_center':
+              return <HelpCenterSection section={section} />;
+            
+            case 'real_estate':
+              return <RealEstateModal />;
+            
+            case 'brand':
+              return <BrandsSection section={section} />;
+            
+            case 'article_slider':
+              return <BlogPostSlider backgroundColor={section.background_color} />;
+            
+            case 'contact':
+              return <ContactForm />;
+            
+            case 'faq':
+              return <FAQSectionWrapper section={section} />;
+            
+            case 'pricing_plans':
+              return <PricingPlansSectionWrapper section={section} />;
+            
+            case 'general':
+            default:
+              // General content section
+              return (
           <>
             {/* Section Title and Description */}
             <div
@@ -667,7 +687,9 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = ({ section }
               </div>
             )}
           </>
-        )}
+              );
+          }
+        })()}
       </div>
 
       {/* CSS for hover effect and neumorphism */}
