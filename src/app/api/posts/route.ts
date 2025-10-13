@@ -3,27 +3,52 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 import { getOrganizationId } from '@/lib/supabase';
 
-// Define a type for the blog post body
+// Define a type for the blog post body - UPDATED FOR JSONB
 type BlogPostBody = {
+  // Core fields
   title: string;
   slug: string;
   content: string;
   description?: string;
-  display_this_post?: boolean;
-  display_as_blog_post?: boolean;
-  main_photo?: string | null;
-  section_id?: number | null;
-  subsection?: string | null;
-  is_with_author?: boolean;
-  is_company_author?: boolean;
   faq_section_is_title?: boolean;
-  author_id?: number | null;
-  cta_card_one_id?: number | null;
-  cta_card_two_id?: number | null;
-  cta_card_three_id?: number | null;
-  cta_card_four_id?: number | null;
-  product_1_id?: number | null;
-  product_2_id?: number | null;
+  
+  // JSONB configuration objects
+  display_config?: {
+    display_this_post?: boolean;
+    display_as_blog_post?: boolean;
+    is_displayed_first_page?: boolean;
+    is_help_center?: boolean;
+    help_center_order?: number;
+  };
+  
+  organization_config?: {
+    section_id?: number | null;
+    subsection?: string | null;
+    order?: number;
+  };
+  
+  cta_config?: {
+    cta_cards?: number[];  // Array of CTA card IDs
+  };
+  
+  author_config?: {
+    is_with_author?: boolean;
+    is_company_author?: boolean;
+    author_id?: number | null;
+  };
+  
+  product_config?: {
+    products?: number[];  // Array of product IDs
+  };
+  
+  media_config?: {
+    main_photo?: string | null;
+  };
+  
+  // Metadata
+  organization_id?: number;
+  created_on?: string;
+  last_modified?: string;
 };
 
 // Single Supabase client instance
@@ -43,6 +68,39 @@ const envErrorResponse = () => {
 
 const hasEnvVars = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Helper function to flatten JSONB fields for backward compatibility
+function flattenBlogPost(post: any) {
+  if (!post) return post;
+  
+  return {
+    ...post,
+    // Flatten display_config
+    display_this_post: post.display_config?.display_this_post ?? post.display_this_post,
+    display_as_blog_post: post.display_config?.display_as_blog_post ?? post.display_as_blog_post,
+    is_displayed_first_page: post.display_config?.is_displayed_first_page ?? post.is_displayed_first_page,
+    is_help_center: post.display_config?.is_help_center ?? post.is_help_center,
+    help_center_order: post.display_config?.help_center_order ?? post.help_center_order,
+    // Flatten organization_config
+    section_id: post.organization_config?.section_id ?? post.section_id,
+    subsection: post.organization_config?.subsection ?? post.subsection,
+    order: post.organization_config?.order ?? post.order,
+    // Flatten media_config
+    main_photo: post.media_config?.main_photo ?? post.main_photo,
+    // Flatten author_config
+    is_with_author: post.author_config?.is_with_author ?? post.is_with_author,
+    is_company_author: post.author_config?.is_company_author ?? post.is_company_author,
+    author_id: post.author_config?.author_id ?? post.author_id,
+    // Flatten CTA cards (array)
+    cta_card_one_id: post.cta_config?.cta_cards?.[0] ?? post.cta_card_one_id,
+    cta_card_two_id: post.cta_config?.cta_cards?.[1] ?? post.cta_card_two_id,
+    cta_card_three_id: post.cta_config?.cta_cards?.[2] ?? post.cta_card_three_id,
+    cta_card_four_id: post.cta_config?.cta_cards?.[3] ?? post.cta_card_four_id,
+    // Flatten products (array)
+    product_1_id: post.product_config?.products?.[0] ?? post.product_1_id,
+    product_2_id: post.product_config?.products?.[1] ?? post.product_2_id,
+  };
+}
+
 // GET handler for listing all posts
 export async function GET(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
@@ -60,7 +118,14 @@ export async function GET(request: NextRequest) {
   try {
     const { data: posts, error: fetchError } = await supabase
       .from('blog_post')
-      .select('id, slug, title, description, main_photo, display_this_post, display_as_blog_post, subsection, order, section_id, organization_id, created_on')
+      .select(`
+        id, slug, title, description,
+        display_config,
+        organization_config,
+        media_config,
+        faq_section_is_title,
+        organization_id, created_on
+      `)
       .eq('organization_id', organizationId)
       .order('created_on', { ascending: false });
 
@@ -72,7 +137,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(posts || [], { status: 200 });
+    return NextResponse.json((posts || []).map(flattenBlogPost), { status: 200 });
   } catch (error) {
     console.error('Error in GET /api/posts:', error);
     return NextResponse.json(
@@ -95,22 +160,36 @@ export async function POST(request: NextRequest) {
       slug,
       content,
       description = '',
-      display_this_post = true,
-      display_as_blog_post = false,
-      main_photo = null,
-      section_id = null,
-      subsection = null,
-      is_with_author = false,
-      is_company_author = false,
       faq_section_is_title = false,
-      author_id = null,
-      cta_card_one_id = null,
-      cta_card_two_id = null,
-      cta_card_three_id = null,
-      cta_card_four_id = null,
-      product_1_id = null,
-      product_2_id = null,
+      
+      // Extract nested JSONB fields (with defaults)
+      display_config = {},
+      organization_config = {},
+      cta_config = {},
+      author_config = {},
+      product_config = {},
+      media_config = {},
     } = body;
+
+    // Extract individual fields for easier handling
+    const display_this_post = display_config.display_this_post ?? true;
+    const display_as_blog_post = display_config.display_as_blog_post ?? false;
+    const is_displayed_first_page = display_config.is_displayed_first_page ?? false;
+    const is_help_center = display_config.is_help_center ?? false;
+    const help_center_order = display_config.help_center_order ?? 0;
+    
+    const section_id = organization_config.section_id ?? null;
+    const subsection = organization_config.subsection ?? null;
+    const order = organization_config.order ?? 0;
+    
+    const cta_cards = cta_config.cta_cards ?? [];
+    const products = product_config.products ?? [];
+    
+    const is_with_author = author_config.is_with_author ?? false;
+    const is_company_author = author_config.is_company_author ?? false;
+    const author_id = author_config.author_id ?? null;
+    
+    const main_photo = media_config.main_photo ?? null;
 
     if (!title || !slug || !content) {
       console.error('Missing required fields:', { title: !!title, slug: !!slug, content: !!content });
@@ -146,32 +225,49 @@ export async function POST(request: NextRequest) {
 
     console.log('Inserting new post into Supabase...');
     
-    // Build insert data object, only including fields that have values
-    const insertData: Record<string, any> = {
+    // Build insert data with JSONB fields
+    const insertData = {
       title,
       slug,
       content,
       description,
-      display_this_post,
-      display_as_blog_post,
+      faq_section_is_title,
       created_on: new Date().toISOString(),
       organization_id: organizationId,
+      
+      // JSONB fields
+      display_config: {
+        display_this_post,
+        display_as_blog_post,
+        is_displayed_first_page,
+        is_help_center,
+        help_center_order,
+      },
+      
+      organization_config: {
+        section_id,
+        subsection,
+        order,
+      },
+      
+      cta_config: {
+        cta_cards,
+      },
+      
+      author_config: {
+        is_with_author,
+        is_company_author,
+        author_id,
+      },
+      
+      product_config: {
+        products,
+      },
+      
+      media_config: {
+        main_photo,
+      },
     };
-    
-    // Add optional fields only if they have values
-    if (main_photo !== null) insertData.main_photo = main_photo;
-    if (section_id !== null) insertData.section_id = section_id;
-    if (subsection !== null) insertData.subsection = subsection;
-    if (is_with_author) insertData.is_with_author = is_with_author;
-    if (is_company_author) insertData.is_company_author = is_company_author;
-    if (faq_section_is_title) insertData.faq_section_is_title = faq_section_is_title;
-    if (cta_card_one_id !== null) insertData.cta_card_one_id = cta_card_one_id;
-    if (cta_card_two_id !== null) insertData.cta_card_two_id = cta_card_two_id;
-    if (cta_card_three_id !== null) insertData.cta_card_three_id = cta_card_three_id;
-    if (cta_card_four_id !== null) insertData.cta_card_four_id = cta_card_four_id;
-    if (product_1_id !== null) insertData.product_1_id = product_1_id;
-    if (product_2_id !== null) insertData.product_2_id = product_2_id;
-    // Note: author_id is intentionally omitted as it doesn't exist in the schema
     
     const { data: newPost, error: insertError } = await supabase
       .from('blog_post')

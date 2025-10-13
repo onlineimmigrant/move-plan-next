@@ -12,12 +12,18 @@ interface BlogPost {
   slug: string;
   title: string | null;
   description: string | null;
-  display_this_post?: boolean;
-  display_as_blog_post?: boolean;
-  is_displayed_first_page?: boolean;
-  main_photo?: string | null;
-  subsection?: string | null;
-  section_id?: string | null;
+  display_config?: {
+    display_this_post?: boolean;
+    display_as_blog_post?: boolean;
+    is_displayed_first_page?: boolean;
+  };
+  media_config?: {
+    main_photo?: string | null;
+  };
+  organization_config?: {
+    subsection?: string | null;
+    section_id?: number | null;
+  };
   organization_id?: string;
 }
 
@@ -133,7 +139,9 @@ const BlogPostSlider: React.FC = () => {
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
               {posts.map((post) => {
-                const imageUrl = post.main_photo && post.main_photo.trim() !== '' ? post.main_photo : settings?.image;
+                const imageUrl = post.media_config?.main_photo && post.media_config.main_photo.trim() !== '' 
+                  ? post.media_config.main_photo 
+                  : settings?.image;
                 const isSvg = imageUrl?.toLowerCase().endsWith('.svg');
 
                 return (
@@ -163,9 +171,9 @@ const BlogPostSlider: React.FC = () => {
                       {/* Content Section */}
                       <div className="p-8 md:p-12">
                         <div className="max-w-3xl mx-auto">
-                          {post.subsection && (
+                          {post.organization_config?.subsection && (
                             <span className="inline-block px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-sm font-medium mb-4">
-                              {post.subsection}
+                              {post.organization_config.subsection}
                             </span>
                           )}
                           <h3 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 group-hover:text-gray-700 transition-colors">

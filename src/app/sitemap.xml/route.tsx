@@ -35,8 +35,12 @@ interface StaticPageData {
 interface BlogPostData {
   slug: string;
   last_modified: string | null;
-  display_this_post: boolean;
-  section_id: string | null;
+  display_config: {
+    display_this_post?: boolean;
+  } | null;
+  organization_config: {
+    section_id?: number | null;
+  } | null;
 }
 
 interface FeatureData {
@@ -218,9 +222,9 @@ export async function GET(request: NextRequest): Promise<Response> {
         .limit(1000), // Allow up to 1000 static pages
       supabase
         .from('blog_post')
-        .select('slug, last_modified, display_this_post, section_id')
+        .select('slug, last_modified, display_config, organization_config')
         .eq('organization_id', effectiveOrgId)
-        .eq('display_this_post', true)
+        .eq('display_config->>display_this_post', 'true')
         .limit(1000), // Allow up to 1000 blog posts
       supabase
         .from('feature')
@@ -251,7 +255,7 @@ export async function GET(request: NextRequest): Promise<Response> {
 
     // Process blog posts
     const dynamicPages: SitemapPage[] = (posts || []).map((post: BlogPostData) => ({
-      url: `${baseUrl}${getPostUrl({ section_id: post.section_id, slug: post.slug })}`,
+      url: `${baseUrl}${getPostUrl({ section_id: post.organization_config?.section_id?.toString() ?? null, slug: post.slug })}`,
       lastmod: formatDateToISO(post.last_modified),
       priority: 0.8,
     }));
@@ -372,7 +376,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     ] = await Promise.allSettled([
       supabase.from('organizations').select('base_url, type').eq('id', effectiveOrgId).single(),
       supabase.from('sitemap_static_pages').select('url_path, priority, last_modified').eq('organization_id', effectiveOrgId).limit(1000),
-      supabase.from('blog_post').select('slug, last_modified, display_this_post, section_id').eq('organization_id', effectiveOrgId).eq('display_this_post', true).limit(1000),
+      supabase.from('blog_post').select('slug, last_modified, display_config, organization_config').eq('organization_id', effectiveOrgId).eq('display_config->>display_this_post', 'true').limit(1000),
       supabase.from('feature').select('slug, created_at').eq('organization_id', effectiveOrgId).limit(1000),
       supabase.from('product').select('slug, updated_at').eq('organization_id', effectiveOrgId).limit(1000)
     ]);

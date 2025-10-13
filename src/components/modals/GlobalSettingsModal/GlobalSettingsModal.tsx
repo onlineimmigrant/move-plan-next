@@ -340,6 +340,7 @@ export default function GlobalSettingsModal() {
         features: data.features || [],
         faqs: data.faqs || [],
         banners: data.banners || [],
+        blog_posts: data.blog_posts || [],
         products: data.products || [],
         pricing_plans: data.pricing_plans || [],
         menu_items: data.menu_items || [],
@@ -471,11 +472,11 @@ export default function GlobalSettingsModal() {
         columns: settingsAny.columns,
       };
 
-      // Create clean settings object without hero, features, faqs, banners, products, pricing_plans, menu_items, submenu_items fields
+      // Create clean settings object without hero, features, faqs, banners, blog_posts, products, pricing_plans, menu_items, submenu_items fields
       const cleanSettings = { ...settings };
       const fieldsToRemove = [
         ...Object.keys(heroFields),
-        'features', 'faqs', 'banners', 'products', 'pricing_plans', 'menu_items', 'submenu_items'
+        'features', 'faqs', 'banners', 'blog_posts', 'products', 'pricing_plans', 'menu_items', 'submenu_items'
       ];
       
       fieldsToRemove.forEach(key => {
@@ -488,6 +489,7 @@ export default function GlobalSettingsModal() {
         features: settingsAny.features?.length || 0,
         faqs: settingsAny.faqs?.length || 0,
         banners: settingsAny.banners?.length || 0,
+        blog_posts: settingsAny.blog_posts?.length || 0,
         products: settingsAny.products?.length || 0,
         pricing_plans: settingsAny.pricing_plans?.length || 0,
         menu_items: settingsAny.menu_items?.length || 0,
@@ -495,6 +497,7 @@ export default function GlobalSettingsModal() {
       });
       console.log('[GlobalSettingsModal] Settings keys:', Object.keys(settingsAny));
       console.log('[GlobalSettingsModal] Has banners?', 'banners' in settingsAny, 'Value:', settingsAny.banners);
+      console.log('[GlobalSettingsModal] Has blog_posts?', 'blog_posts' in settingsAny, 'Value:', settingsAny.blog_posts);
       console.log('[GlobalSettingsModal] Has products?', 'products' in settingsAny, 'Value:', settingsAny.products);
       console.log('[GlobalSettingsModal] Has features?', 'features' in settingsAny, 'Value:', settingsAny.features);
       
@@ -511,6 +514,7 @@ export default function GlobalSettingsModal() {
           features: settingsAny.features,
           faqs: settingsAny.faqs,
           banners: settingsAny.banners,
+          blog_posts: settingsAny.blog_posts,
           products: settingsAny.products,
           pricing_plans: settingsAny.pricing_plans,
           menu_items: settingsAny.menu_items,

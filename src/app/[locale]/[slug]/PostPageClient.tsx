@@ -138,7 +138,10 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
 
   // Generate TOC
   const toc: TOCItem[] = useMemo(() => {
+    // Check if we're in the browser (client-side only)
+    if (typeof window === 'undefined') return [];
     if (!post || !post.content) return [];
+    
     const tocItems: TOCItem[] = [];
     const parser = new DOMParser();
     const doc = parser.parseFromString(post.content, 'text/html');

@@ -8,6 +8,29 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Helper function to flatten blog post JSONB structure to flat fields for backward compatibility
+function flattenBlogPost(post: any) {
+  return {
+    ...post,
+    // Flatten display_config
+    display_this_post: post.display_config?.display_this_post,
+    display_as_blog_post: post.display_config?.display_as_blog_post,
+    is_displayed_first_page: post.display_config?.is_displayed_first_page,
+    is_help_center: post.display_config?.is_help_center,
+    help_center_order: post.display_config?.help_center_order,
+    // Flatten organization_config
+    section_id: post.organization_config?.section_id,
+    subsection: post.organization_config?.subsection,
+    order: post.organization_config?.order,
+    // Flatten media_config
+    main_photo: post.media_config?.main_photo,
+    // Keep JSONB fields for components that use them
+    display_config: post.display_config,
+    organization_config: post.organization_config,
+    media_config: post.media_config,
+  };
+}
+
 // Helper function for robust boolean conversion
 function convertToBoolean(value: any): boolean {
   console.log('🔍 convertToBoolean called with:');
@@ -290,7 +313,7 @@ export async function GET(
       website_menuitem_id: item.menu_item_id
     })) || [];
 
-    // Fetch the organization's blog posts
+    // Fetch the organization's blog posts (using JSONB fields)
     const { data: blog_posts, error: blogPostsError } = await supabase
       .from('blog_post')
       .select(`
@@ -299,20 +322,22 @@ export async function GET(
         slug,
         description,
         content,
-        order,
-        display_this_post,
-        display_as_blog_post,
         organization_id,
         created_on,
-        last_modified
+        last_modified,
+        display_config,
+        organization_config,
+        media_config
       `)
       .eq('organization_id', orgId)
-      .order('order', { ascending: true });
+      .order('created_on', { ascending: false });
 
     if (blogPostsError) {
-      console.error('Error fetching blog posts:', blogPostsError);
+      console.error('❌ Error fetching blog posts:', blogPostsError);
       return NextResponse.json({ error: 'Error fetching blog posts' }, { status: 500 });
     }
+
+    console.log('✅ Fetched blog posts:', blog_posts?.length || 0, 'posts for org:', orgId);
 
     // Fetch the organization's products
     const { data: products, error: productsError } = await supabase
@@ -589,13 +614,27 @@ export async function GET(
     console.log('🍪 Returning cookie_consent_records in response:', cookie_consent_records || []);
     console.log('💰 Returning products with nested pricing_plans:', structuredProducts?.length || 0);
 
+    // Flatten blog_posts for backward compatibility
+    const flattenedBlogPosts = (blog_posts || []).map(flattenBlogPost);
+    
+    console.log('📝 Flattening blog_posts:', {
+      original: blog_posts?.length || 0,
+      flattened: flattenedBlogPosts.length,
+      sample: flattenedBlogPosts[0] ? {
+        id: flattenedBlogPosts[0].id,
+        title: flattenedBlogPosts[0].title,
+        hasDisplayConfig: !!flattenedBlogPosts[0].display_config,
+        display_this_post: flattenedBlogPosts[0].display_this_post
+      } : 'none'
+    });
+
     return NextResponse.json({
       organization,
       settings: settings || null,
       website_hero: website_hero || null,
       menu_items: structuredMenuItems || [],
       submenu_items: mappedSubmenuItems || [],
-      blog_posts: blog_posts || [],
+      blog_posts: flattenedBlogPosts,
       products: structuredProducts || [], // Structured products with nested pricing plans
       pricing_plans: mappedPricingPlans || [], // All pricing plans (for backward compatibility)
       features: features || [],
@@ -709,6 +748,7 @@ export async function PUT(
     console.log('🔍 HAS FAQS:', !!body.faqs);
     console.log('🔍 HAS FEATURES:', !!body.features);
     console.log('🔍 HAS BANNERS:', !!body.banners);
+    console.log('🔍 HAS BLOG_POSTS:', !!body.blog_posts, 'COUNT:', body.blog_posts?.length || 0);
     console.log('🔍 HAS PRICING_PLANS:', !!body.pricing_plans);
 
     const { organization: orgData, settings: settingsData, website_hero: heroData, menu_items: menuItems, submenu_items: submenuItems, blog_posts: blogPosts, products, pricing_plans, features, faqs, banners, cookie_categories, cookie_services, cookie_consent_records } = body;
@@ -1343,6 +1383,16 @@ export async function PUT(
 
     // Update blog posts if data provided
     if (blogPosts && Array.isArray(blogPosts)) {
+      console.log('📝 Processing blog_posts:', blogPosts.length, 'posts');
+      console.log('📝 Sample blog post:', blogPosts[0] ? {
+        id: blogPosts[0].id,
+        title: blogPosts[0].title,
+        hasDisplayConfig: !!blogPosts[0].display_config,
+        hasOrgConfig: !!blogPosts[0].organization_config,
+        display_this_post: blogPosts[0].display_this_post,
+        order: blogPosts[0].order
+      } : 'none');
+      
       // Get existing blog posts for this organization
       const { data: existingBlogPosts, error: existingBlogPostsError } = await supabase
         .from('blog_post')
@@ -1390,14 +1440,33 @@ export async function PUT(
         
         if (validBlogPosts.length > 0) {
           const blogPostsWithOrgId = validBlogPosts.map((post, index) => {
+            // Build JSONB configs from flat fields or existing JSONB
+            const display_config = {
+              display_this_post: convertToBoolean(post.display_this_post ?? post.display_config?.display_this_post),
+              display_as_blog_post: convertToBoolean(post.display_as_blog_post ?? post.display_config?.display_as_blog_post),
+              is_displayed_first_page: convertToBoolean(post.is_displayed_first_page ?? post.display_config?.is_displayed_first_page),
+              is_help_center: convertToBoolean(post.is_help_center ?? post.display_config?.is_help_center),
+              help_center_order: post.help_center_order ?? post.display_config?.help_center_order ?? null,
+            };
+
+            const organization_config = {
+              section_id: post.section_id ?? post.organization_config?.section_id ?? null,
+              subsection: post.subsection ?? post.organization_config?.subsection ?? null,
+              order: parseInt(String(post.order ?? post.organization_config?.order)) || index + 1,
+            };
+
+            const media_config = {
+              main_photo: post.main_photo ?? post.media_config?.main_photo ?? null,
+            };
+
             const postData: any = {
               title: post.title.trim(),
               slug: post.slug.trim(),
               description: post.description || '',
               content: post.content || '',
-              order: parseInt(String(post.order)) || index + 1,
-              display_this_post: convertToBoolean(post.display_this_post),
-              display_as_blog_post: convertToBoolean(post.display_as_blog_post),
+              display_config,
+              organization_config,
+              media_config,
               organization_id: orgId,
               created_on: post.created_on || new Date().toISOString(),
               last_modified: new Date().toISOString()
@@ -2368,6 +2437,9 @@ export async function PUT(
       }));
     }
 
+    // Flatten blog_posts for backward compatibility (same as GET)
+    const flattenedUpdatedBlogPosts = (updatedBlogPosts || []).map(flattenBlogPost);
+
     return NextResponse.json({
       success: true,
       organization: updatedOrg,
@@ -2382,7 +2454,7 @@ export async function PUT(
         is_visible: true,
         is_new_window: false
       })) || [],
-      blog_posts: updatedBlogPosts || [],
+      blog_posts: flattenedUpdatedBlogPosts,
       products: updatedProducts || [],
       pricing_plans: updatedPricingPlans || [],
       features: updatedFeatures || [],

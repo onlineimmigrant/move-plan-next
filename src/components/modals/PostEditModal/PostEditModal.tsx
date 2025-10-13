@@ -92,20 +92,21 @@ export default function PostEditModal() {
         setTitle(post.title || '');
         setDescription(post.description || '');
         setContent(post.content || '');
-        setSection(post.section || '');
-        setSubsection(post.subsection || '');
+        // Handle both flat and JSONB formats for backward compatibility
+        setSection(post.section || post.organization_config?.section_id?.toString() || '');
+        setSubsection(post.subsection || post.organization_config?.subsection || '');
         setSlug(post.slug || '');
         setAuthorName(post.author_name || '');
-        setMainPhoto(post.main_photo || '');
+        setMainPhoto(post.main_photo || post.media_config?.main_photo || '');
         setSecondaryPhoto(post.secondary_photo || '');
         setMetaDescription(post.metadescription_for_page || '');
-        setOrder(post.order?.toString() || '');
-        setHelpCenterOrder(post.help_center_order?.toString() || '');
-        setDisplayThisPost(post.display_this_post ?? true);
-        setIsDisplayedFirstPage(post.is_displayed_first_page ?? false);
-        setIsCompanyAuthor(post.is_company_author ?? false);
-        setDisplayAsBlogPost(post.display_as_blog_post ?? true);
-        setIsHelpCenter(post.is_help_center ?? false);
+        setOrder(post.order?.toString() || post.organization_config?.order?.toString() || '');
+        setHelpCenterOrder(post.help_center_order?.toString() || post.display_config?.help_center_order?.toString() || '');
+        setDisplayThisPost(post.display_this_post ?? post.display_config?.display_this_post ?? true);
+        setIsDisplayedFirstPage(post.is_displayed_first_page ?? post.display_config?.is_displayed_first_page ?? false);
+        setIsCompanyAuthor(post.is_company_author ?? post.author_config?.is_company_author ?? false);
+        setDisplayAsBlogPost(post.display_as_blog_post ?? post.display_config?.display_as_blog_post ?? true);
+        setIsHelpCenter(post.is_help_center ?? post.display_config?.is_help_center ?? false);
         setCreatedOn(post.created_on || '');
       } else if (mode === 'create') {
         // Clear all fields for create mode
@@ -280,25 +281,37 @@ export default function PostEditModal() {
         return;
       }
       
+      // Build JSONB-structured data for the new API format
       let postData: any = {
         title: title.trim(),
         description: description.trim(),
         content,
-        display_this_post: displayThisPost,
-        is_displayed_first_page: isDisplayedFirstPage,
-        is_company_author: isCompanyAuthor,
-        display_as_blog_post: displayAsBlogPost,
-        is_help_center: isHelpCenter,
+        // JSONB fields
+        display_config: {
+          display_this_post: displayThisPost,
+          display_as_blog_post: displayAsBlogPost,
+          is_displayed_first_page: isDisplayedFirstPage,
+          is_help_center: isHelpCenter,
+          help_center_order: helpCenterOrder.trim() ? parseInt(helpCenterOrder) : 0,
+        },
+        organization_config: {
+          section_id: section.trim() ? parseInt(section) : null,
+          subsection: subsection.trim() || null,
+          order: order.trim() ? parseInt(order) : 0,
+        },
+        author_config: {
+          is_with_author: false, // You might want to add a field for this
+          is_company_author: isCompanyAuthor,
+          author_id: null, // Add field if needed
+        },
+        media_config: {
+          main_photo: mainPhoto.trim() || null,
+        },
       };
       
-      if (subsection.trim()) postData.subsection = subsection.trim();
-      if (section.trim()) postData.section = section.trim();
       if (authorName.trim()) postData.author_name = authorName.trim();
-      if (mainPhoto.trim()) postData.main_photo = mainPhoto.trim();
       if (secondaryPhoto.trim()) postData.secondary_photo = secondaryPhoto.trim();
       if (metaDescription.trim()) postData.metadescription_for_page = metaDescription.trim();
-      if (order.trim()) postData.order = parseInt(order);
-      if (helpCenterOrder.trim()) postData.help_center_order = parseInt(helpCenterOrder);
       if (createdOn) postData.created_on = createdOn;
       
       let url: string;
@@ -314,8 +327,9 @@ export default function PostEditModal() {
         method = 'POST';
       } else {
         if (slug.trim()) postData.slug = slug.trim();
-        url = `/api/posts/${editingPost?.id}`;
-        method = 'PUT';
+        // Use slug-based route instead of ID
+        url = `/api/posts/${editingPost?.slug || slug}`;
+        method = 'PATCH'; // Changed from PUT to PATCH
       }
       
       const response = await fetch(url, {
