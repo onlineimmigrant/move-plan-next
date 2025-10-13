@@ -16,6 +16,17 @@ import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
 import ClientStructuredDataInjector from '@/components/ClientStructuredDataInjector';
 import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
 import { supabaseServer } from '@/lib/supabaseServerClient';
+import { Inter } from 'next/font/google';
+
+// Optimize font loading to prevent CLS
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap', // Prevents flash of invisible text (FOIT)
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true, // Matches fallback font metrics
+  variable: '--font-inter'
+});
 
 export const revalidate = 0;
 
@@ -229,7 +240,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         <SimpleLayoutSEO />
       </head>
-      <body>
+      <body className={`${inter.variable} antialiased`} style={{ fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
         {settings.google_tag && <GoogleTagManagerNoscript gtmId={settings.google_tag} />}
         <ClientProviders
           settings={settings}

@@ -389,15 +389,16 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
         </div>
       )}
 
-      {/* Full-page background image */}
+      {/* Full-page background image - CLS optimized with fill prop */}
       {hero.image && isImageFullPage && (
         <Image
           src={hero.image}
           alt={`Image of ${translatedH1Title}`}
-          className="absolute inset-0 -z-10 h-auto w-auto object-contain sm:h-auto sm:w-auto sm:object-contain"
-          width={1280}
-          height={720}
+          fill
+          className="-z-10 object-cover"
           priority={true}
+          sizes="100vw"
+          quality={90}
         />
       )}
 
@@ -497,20 +498,25 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
         <div className={imagePosition === 'left' && shouldShowInlineImage ? 'order-1' : 'order-1'}>
           {shouldShowInlineImage && hero.image && (
             <div className={`text-${hero.title_style?.alignment || 'center'}`}>
-              <Image
-                src={hero.image}
-                alt={`Image of ${translatedH1Title}`}
-                className="object-contain"
-                width={hero.image_style?.width || 400}
-                height={hero.image_style?.height || 300}
+              {/* CLS optimized: aspect-ratio container prevents layout shift */}
+              <div 
+                className="relative mx-auto"
                 style={{
-                  width: hero.image_style?.width || 400,
-                  height: hero.image_style?.height || 300,
+                  aspectRatio: `${hero.image_style?.width || 400} / ${hero.image_style?.height || 300}`,
                   maxWidth: '100%',
-                  maxHeight: '400px'
+                  width: hero.image_style?.width || 400
                 }}
-                priority={false}
-              />
+              >
+                <Image
+                  src={hero.image}
+                  alt={`Image of ${translatedH1Title}`}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 50vw"
+                  priority={false}
+                  quality={85}
+                />
+              </div>
             </div>
           )}
         </div>

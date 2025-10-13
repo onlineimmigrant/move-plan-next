@@ -535,13 +535,16 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                                   <Image
                                     src={metric.image}
                                     alt={metric.title || 'Metric image'}
-                                    className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto w-auto ${
-                                      section.image_metrics_height || 'h-48'
-                                    } object-cover`}
+                                    className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto object-cover`}
                                     width={300}
                                     height={300}
                                     loading="lazy"
                                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    style={{
+                                      aspectRatio: '1 / 1',
+                                      maxWidth: '100%',
+                                      height: 'auto'
+                                    }}
                                   />
                                 )}
                               </div>
@@ -662,12 +665,16 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                           <Image
                             src={metric.image}
                             alt={metric.title || 'Metric image'}
-                            className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto w-auto ${
-                              section.image_metrics_height || 'h-48'
-                            } object-cover`}
+                            className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto object-cover`}
                             width={300}
                             height={300}
                             priority={false}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            style={{
+                              aspectRatio: '1 / 1',
+                              maxWidth: '100%',
+                              height: 'auto'
+                            }}
                           />
                         )}
                       </div>
