@@ -171,4 +171,11 @@ export default async function Page() {
   );
 }
 
-export const revalidate = 0; // Disable ISR caching completely for instant hero updates
+// ============================================================================
+// INCREMENTAL STATIC REGENERATION (ISR) CONFIGURATION
+// ============================================================================
+// Changed from 0 (no caching) to 3600 (1 hour cache) for better performance
+// Use /api/revalidate to update cache immediately when admin saves changes
+// This provides both fast page loads AND instant updates on-demand
+export const revalidate = 3600; // Cache for 1 hour, revalidate on-demand
+// ============================================================================

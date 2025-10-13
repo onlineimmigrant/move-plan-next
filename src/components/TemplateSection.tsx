@@ -10,6 +10,7 @@ import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal
 import { HoverEditButtons } from '@/ui/Button';
 import { isAdminClient } from '@/lib/auth';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 import { cn } from '@/lib/utils';
 import { SliderNavigation } from '@/ui/SliderNavigation';
 
@@ -26,7 +27,7 @@ const PricingPlansSectionWrapper = dynamic(() => import('@/components/TemplateSe
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
   default: {
-    sectionTitle: 'text-3xl sm:text-4xl lg:text-5xl font-normal text-gray-800',
+    sectionTitle: 'text-3xl font-bold text-gray-900 mb-4 tracking-[-0.02em] antialiased',
     sectionDescription: 'text-lg font-light text-gray-700',
     metricTitle: 'text-xl sm:text-2xl font-normal text-gray-800',
     metricDescription: 'text-base font-light text-gray-700'
@@ -136,12 +137,24 @@ interface Metric {
   is_image_rounded_full: boolean;
   is_card_type: boolean;
   background_color?: string;
+  is_gradient?: boolean;
+  gradient?: {
+    from: string;
+    via?: string;
+    to: string;
+  };
   organization_id: string | null;
 }
 
 interface TemplateSectionData {
   id: number;
   background_color?: string;
+  is_gradient?: boolean;
+  gradient?: {
+    from: string;
+    via?: string;
+    to: string;
+  };
   is_full_width: boolean;
   is_section_title_aligned_center: boolean;
   is_section_title_aligned_right: boolean;
@@ -341,6 +354,15 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
     }
   };
 
+  // Calculate section background style (gradient or solid color)
+  const sectionBackgroundStyle = useMemo(() => {
+    return getBackgroundStyle(
+      section.is_gradient,
+      section.gradient,
+      section.background_color || 'white'
+    );
+  }, [section.is_gradient, section.gradient, section.background_color]);
+
   return (
     <section
       className={`${
@@ -351,7 +373,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
           ? 'px-0 py-32 min-h-[600px]' 
           : 'px-4 py-32 min-h-[600px]'
       } text-xl relative group`}
-      style={{ backgroundColor: getColorValue(section.background_color || 'white') }}
+      style={sectionBackgroundStyle}
     >
       {/* Hover Edit Buttons for Admin */}
       {isAdmin && (
@@ -470,15 +492,22 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                           : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8`
                         : '';
 
-                      const bgColor = metric.is_card_type 
-                        ? getColorValue(metric.background_color || (isCodedHarmony ? 'gray-50' : 'white'))
+                      // Calculate metric background style (gradient or solid color)
+                      const metricBgStyle = metric.is_card_type
+                        ? getBackgroundStyle(
+                            metric.is_gradient,
+                            metric.gradient,
+                            metric.background_color || (isCodedHarmony ? 'gray-50' : 'white')
+                          )
                         : undefined;
                       
                       console.log(`Metric ${metric.id} rendering:`, {
                         background_color: metric.background_color,
-                        bgColor,
+                        is_gradient: metric.is_gradient,
+                        gradient: metric.gradient,
                         is_card_type: metric.is_card_type,
-                        isCodedHarmony
+                        isCodedHarmony,
+                        metricBgStyle
                       });
 
                       return (
@@ -489,14 +518,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                             isMobile ? "w-full max-w-[400px]" : "flex-1 min-w-[250px] max-w-[400px]",
                             cardStyles
                           )}
-                          style={metric.is_card_type && bgColor ? (
-                            isCodedHarmony ? {
-                              '--neomorphic-bg': bgColor,
-                              '--neomorphic-bg-hover': bgColor,
-                            } as React.CSSProperties : {
-                              backgroundColor: bgColor
-                            }
-                          ) : undefined}
+                          style={metric.is_card_type && metricBgStyle ? metricBgStyle : undefined}
                         >
                             {metric.image && (
                               <div className={cn(
@@ -604,29 +626,29 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                     : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl card-hover`
                   : '';
 
-                const bgColor = metric.is_card_type 
-                  ? getColorValue(metric.background_color || (isCodedHarmony ? 'gray-50' : 'white'))
+                // Calculate metric background style (gradient or solid color)
+                const metricBgStyle = metric.is_card_type
+                  ? getBackgroundStyle(
+                      metric.is_gradient,
+                      metric.gradient,
+                      metric.background_color || (isCodedHarmony ? 'gray-50' : 'white')
+                    )
                   : undefined;
                 
                 console.log(`Metric ${metric.id} rendering (grid):`, {
                   background_color: metric.background_color,
-                  bgColor,
+                  is_gradient: metric.is_gradient,
+                  gradient: metric.gradient,
                   is_card_type: metric.is_card_type,
-                  isCodedHarmony
+                  isCodedHarmony,
+                  metricBgStyle
                 });
 
                 return (
                   <div
                     key={metric.id}
                     className={`space-y-4 flex flex-col mx-auto min-h-[350px] ${cardStyles}`}
-                    style={metric.is_card_type && bgColor ? (
-                      isCodedHarmony ? {
-                        '--neomorphic-bg': bgColor,
-                        '--neomorphic-bg-hover': bgColor,
-                      } as React.CSSProperties : {
-                        backgroundColor: bgColor
-                      }
-                    ) : undefined}
+                    style={metric.is_card_type && metricBgStyle ? metricBgStyle : undefined}
                   >
                     {metric.image && (
                       <div className={cn(

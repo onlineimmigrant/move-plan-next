@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import { usePathname } from 'next/navigation';
@@ -9,6 +9,7 @@ import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadi
 import { HoverEditButtons } from '@/ui/Button';
 import { isAdminClient } from '@/lib/auth';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 
 interface TemplateHeadingSectionData {
   id: number;
@@ -29,6 +30,12 @@ interface TemplateHeadingSectionData {
   text_style_variant?: 'default' | 'apple' | 'codedharmony';
   is_text_link?: boolean;
   background_color?: string;
+  is_gradient?: boolean;
+  gradient?: {
+    from: string;
+    via?: string;
+    to: string;
+  };
 }
 
 interface TemplateHeadingSectionProps {
@@ -155,19 +162,29 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
               )
             : '';
           
+          // Calculate heading section background style (gradient or solid color)
+          const headingBackgroundStyle = useMemo(() => {
+            // Determine fallback color based on style variant
+            const fallbackColor = isApple 
+              ? 'rgb(255 255 255 / 0.95)' 
+              : isCodedHarmony 
+              ? 'rgb(255 255 255)' 
+              : isClean 
+              ? 'transparent' 
+              : 'white';
+            
+            return getBackgroundStyle(
+              section.is_gradient,
+              section.gradient,
+              section.background_color || fallbackColor
+            );
+          }, [section.is_gradient, section.gradient, section.background_color, isApple, isCodedHarmony, isClean]);
+          
           return (
           <section
             key={section.id}
             className={`relative isolate group ${!isClean ? 'px-6 lg:px-8' : ''} ${styleVar.section} font-sans overflow-hidden`}
-            style={{
-              backgroundColor: section.background_color 
-                ? getColorValue(section.background_color)
-                : (
-                  isApple ? 'rgb(255 255 255 / 0.95)' : 
-                  isCodedHarmony ? 'rgb(255 255 255)' :
-                  isClean ? 'transparent' : 'white'
-                )
-            }}
+            style={headingBackgroundStyle}
           >
             {/* Hover Edit Buttons for Admin */}
             {isAdmin && (

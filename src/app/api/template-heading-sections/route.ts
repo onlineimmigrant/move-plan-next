@@ -88,7 +88,9 @@ export async function GET(request: Request) {
         style_variant,
         text_style_variant,
         is_text_link,
-        background_color
+        background_color,
+        is_gradient,
+        gradient
       `)
       .eq('url_page', decodedUrlPage)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)

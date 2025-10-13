@@ -13,6 +13,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { useTemplateHeadingSectionEdit } from './context';
 import ColorPaletteDropdown, { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+import EditableGradientPicker from '@/components/Shared/EditableFields/EditableGradientPicker';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import Button from '@/ui/Button';
 import { cn } from '@/lib/utils';
@@ -70,6 +72,8 @@ interface TemplateHeadingFormData {
   image_first: boolean;
   is_included_templatesection: boolean;
   background_color: string;
+  is_gradient: boolean;
+  gradient: { from: string; via?: string; to: string } | null;
   text_style_variant: 'default' | 'apple' | 'codedharmony';
   is_text_link: boolean;
   title_alignment: 'left' | 'center' | 'right';
@@ -104,6 +108,8 @@ export default function TemplateHeadingSectionEditModal() {
     image_first: false,
     is_included_templatesection: false,
     background_color: 'white',
+    is_gradient: false,
+    gradient: null,
     text_style_variant: 'default',
     is_text_link: false,
     title_alignment: 'left',
@@ -124,6 +130,8 @@ export default function TemplateHeadingSectionEditModal() {
         image_first: editingSection.image_first || false,
         is_included_templatesection: editingSection.is_included_templatesection || false,
         background_color: (editingSection as any).background_color || 'white',
+        is_gradient: editingSection.is_gradient || false,
+        gradient: editingSection.gradient || null,
         text_style_variant: (editingSection.text_style_variant as any) || 'default',
         is_text_link: editingSection.is_text_link || false,
         title_alignment: 'left',
@@ -455,12 +463,30 @@ export default function TemplateHeadingSectionEditModal() {
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-6">
+          {/* Background Style */}
+          <div className="py-6 border-b border-gray-200">
+            <EditableGradientPicker
+              label="Heading Section Background"
+              isGradient={formData.is_gradient}
+              gradient={formData.gradient}
+              solidColor={formData.background_color}
+              onGradientChange={(isGradient, gradient) => 
+                setFormData({ ...formData, is_gradient: isGradient, gradient })
+              }
+              onSolidColorChange={(color) => 
+                setFormData({ ...formData, background_color: color })
+              }
+            />
+          </div>
+
           {/* Content - Preview Area */}
           <div 
             className="rounded-lg overflow-hidden p-3 sm:p-6 my-6 transition-colors"
-            style={{
-              backgroundColor: getColorValue(formData.background_color || 'white')
-            }}
+            style={getBackgroundStyle(
+              formData.is_gradient,
+              formData.gradient,
+              formData.background_color || 'white'
+            )}
           >
           <div className="max-w-7xl mx-auto">
             {/* Desktop Layout - Two Columns if image exists */}

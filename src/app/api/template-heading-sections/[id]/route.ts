@@ -52,6 +52,8 @@ export async function PUT(
       text_style_variant: body.text_style_variant || 'default',
       is_text_link: body.is_text_link ?? false,
       background_color: body.background_color || 'white',
+      is_gradient: body.is_gradient ?? false,
+      gradient: body.gradient || null,
     };
 
     // Handle translation fields

@@ -4,9 +4,20 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { organizationId, paths, tags } = body;
+    const { organizationId, paths, tags, secret } = body;
 
-    console.log('Revalidation request:', { organizationId, paths, tags });
+    console.log('🔄 Revalidation request:', { organizationId, paths, tags, hasSecret: !!secret });
+
+    // Verify secret token to prevent abuse
+    const expectedSecret = process.env.REVALIDATION_SECRET;
+    
+    if (expectedSecret && secret !== expectedSecret) {
+      console.error('❌ Invalid revalidation secret');
+      return NextResponse.json(
+        { success: false, message: 'Invalid secret token' }, 
+        { status: 401 }
+      );
+    }
 
     // Revalidate specific paths if provided
     if (paths && Array.isArray(paths)) {

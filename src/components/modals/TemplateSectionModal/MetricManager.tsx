@@ -19,11 +19,13 @@ import EditableTextField from '@/components/Shared/EditableFields/EditableTextFi
 import EditableTextArea from '@/components/Shared/EditableFields/EditableTextArea';
 import EditableToggle from '@/components/Shared/EditableFields/EditableToggle';
 import EditableColorPicker from '@/components/Shared/EditableFields/EditableColorPicker';
+import EditableGradientPicker from '@/components/Shared/EditableFields/EditableGradientPicker';
 import ColorPaletteDropdown, { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import Button from '@/ui/Button';
 import { useToast } from '@/components/Shared/ToastContainer';
 import DeleteMetricModal from './DeleteMetricModal';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 
 // Text style variants matching TemplateSection
 const TEXT_VARIANTS = {
@@ -83,6 +85,12 @@ const getEmbedUrl = (url: string): string => {
   return url;
 };
 
+interface GradientStyle {
+  from: string;
+  via?: string;
+  to: string;
+}
+
 interface Metric {
   id: number;
   title: string;
@@ -94,6 +102,8 @@ interface Metric {
   is_image_rounded_full: boolean;
   is_card_type: boolean;
   background_color?: string;
+  is_gradient?: boolean;
+  gradient?: GradientStyle | null;
   organization_id: string | null;
 }
 
@@ -121,6 +131,8 @@ interface EditingMetric {
   is_title_displayed: boolean;
   is_card_type: boolean;
   background_color: string;
+  is_gradient: boolean;
+  gradient: GradientStyle | null;
 }
 
 export default function MetricManager({ 
@@ -177,6 +189,8 @@ export default function MetricManager({
     is_title_displayed: true,
     is_card_type: false,
     background_color: 'white',
+    is_gradient: false,
+    gradient: null,
   });
 
   // Fetch available metrics
@@ -297,6 +311,8 @@ export default function MetricManager({
         is_title_displayed: true,
         is_card_type: false,
         background_color: 'white',
+        is_gradient: false,
+        gradient: null,
       });
       onMetricsChange();
       fetchAvailableMetrics();
@@ -625,13 +641,20 @@ export default function MetricManager({
               value={editingMetric.is_image_rounded_full}
               onChange={(value) => setEditingMetric({ ...editingMetric, is_image_rounded_full: value })}
             />
-
-            <EditableColorPicker
-              label="Background Color"
-              value={editingMetric.background_color}
-              onChange={(value) => setEditingMetric({ ...editingMetric, background_color: value })}
-            />
           </div>
+
+          <EditableGradientPicker
+            label="Background"
+            isGradient={editingMetric.is_gradient}
+            gradient={editingMetric.gradient}
+            solidColor={editingMetric.background_color}
+            onGradientChange={(isGradient, gradient) => 
+              setEditingMetric({ ...editingMetric, is_gradient: isGradient, gradient })
+            }
+            onSolidColorChange={(color) => 
+              setEditingMetric({ ...editingMetric, background_color: color })
+            }
+          />
 
           <div className="flex justify-end gap-2 pt-2">
             <Button
@@ -676,6 +699,13 @@ export default function MetricManager({
                 : 'text-center p-4 sm:p-6 gap-y-4'
               : '';
 
+            // Create background style supporting gradients
+            const metricBgStyle = getBackgroundStyle(
+              metric.is_gradient || false,
+              metric.gradient,
+              metric.background_color || 'white'
+            );
+
             return (
             <div
               key={metric.id}
@@ -690,7 +720,7 @@ export default function MetricManager({
                 cardClasses
               )}
               style={{
-                backgroundColor: metric.background_color ? getColorValue(metric.background_color) : '#FFFFFF',
+                ...metricBgStyle,
                 ...(metric.is_card_type && {
                   borderRadius: '1.5rem',
                 })

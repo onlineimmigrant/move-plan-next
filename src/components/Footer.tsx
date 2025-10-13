@@ -11,6 +11,7 @@ import LocalizedLink from './LocalizedLink';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import { FooterType } from '@/types/settings';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 
 
 // Static translations for footer
@@ -207,7 +208,9 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         type: 'default' as FooterType,
         background: 'neutral-900',
         color: 'neutral-400',
-        colorHover: 'white'
+        colorHover: 'white',
+        is_gradient: false,
+        gradient: undefined
       };
     }
 
@@ -217,7 +220,9 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         type: (settings.footer_style.type || 'default') as FooterType,
         background: settings.footer_style.background || 'neutral-900',
         color: settings.footer_style.color || 'neutral-400',
-        colorHover: settings.footer_style.color_hover || 'white'
+        colorHover: settings.footer_style.color_hover || 'white',
+        is_gradient: settings.footer_style.is_gradient || false,
+        gradient: settings.footer_style.gradient || undefined
       };
     }
 
@@ -226,7 +231,9 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       type: 'default' as FooterType,
       background: settings.footer_style,
       color: 'neutral-400',
-      colorHover: 'white'
+      colorHover: 'white',
+      is_gradient: false,
+      gradient: undefined
     };
   }, [settings?.footer_style]);
 
@@ -727,7 +734,11 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       className={`text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : footerStyles.type === 'minimal' ? 'py-6' : 'py-12'}`}
       role="contentinfo"
       style={{
-        backgroundColor: getColorValue(footerStyles.background),
+        ...getBackgroundStyle(
+          footerStyles.is_gradient,
+          footerStyles.gradient,
+          footerStyles.background
+        ),
         minHeight: footerStyles.type === 'compact' || footerStyles.type === 'minimal' ? '200px' : '400px'
       }}
     >

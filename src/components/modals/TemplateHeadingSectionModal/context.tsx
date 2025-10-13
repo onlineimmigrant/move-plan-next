@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { useToast } from '@/components/Shared/ToastContainer';
+import { revalidateHomepage } from '@/lib/revalidation';
 
 // Types
 interface TemplateHeadingSectionData {
@@ -23,6 +24,8 @@ interface TemplateHeadingSectionData {
   text_style_variant?: 'default' | 'apple' | 'codedharmony';
   is_text_link?: boolean;
   background_color?: string;
+  is_gradient?: boolean;
+  gradient?: { from: string; via?: string; to: string } | null;
   organization_id?: string | null;
 }
 
@@ -118,6 +121,11 @@ export const TemplateHeadingSectionEditProvider: React.FC<TemplateHeadingSection
       
       // Show success message
       toast.success(mode === 'create' ? 'Heading section created successfully!' : 'Heading section updated successfully!');
+      
+      // Trigger cache revalidation for instant updates in production
+      revalidateHomepage(savedSection.organization_id || undefined).catch(err => {
+        console.warn('⚠️ Cache revalidation failed (non-critical):', err);
+      });
       
       return savedSection;
     } catch (error) {

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, lazy, useRef } from 'react';
 import Image from 'next/image';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { useBasket } from '@/context/BasketContext';
@@ -52,7 +53,11 @@ const Header: React.FC<HeaderProps> = ({
   // Parse header_style JSONB structure
   const headerStyle = useMemo(() => {
     if (typeof settings.header_style === 'object' && settings.header_style !== null) {
-      return settings.header_style;
+      return {
+        ...settings.header_style,
+        is_gradient: settings.header_style.is_gradient || false,
+        gradient: settings.header_style.gradient || undefined
+      };
     }
     // Fallback to default structure if legacy string or null
     return {
@@ -61,7 +66,9 @@ const Header: React.FC<HeaderProps> = ({
       color: 'gray-700',
       color_hover: 'gray-900',
       menu_width: '7xl' as const,
-      menu_items_are_text: true
+      menu_items_are_text: true,
+      is_gradient: false,
+      gradient: undefined
     };
   }, [settings.header_style]);
 
@@ -72,6 +79,35 @@ const Header: React.FC<HeaderProps> = ({
   const headerColorHover = headerStyle.color_hover || 'gray-900';
   const menuWidth = headerStyle.menu_width || '7xl';
   const globalMenuItemsAreText = headerStyle.menu_items_are_text ?? true;
+
+  // Calculate header background style (gradient or solid color)
+  const headerBackgroundStyle = useMemo(() => {
+    // For transparent headers, handle special case
+    if (headerType === 'transparent' && !isScrolled) {
+      return { backgroundColor: 'transparent' };
+    }
+    
+    // Get gradient or solid color background
+    const baseStyle = getBackgroundStyle(
+      headerStyle.is_gradient,
+      headerStyle.gradient,
+      headerBackground
+    );
+    
+    // Add opacity for blur effect
+    if (baseStyle.backgroundImage) {
+      // Gradient: Keep as-is, opacity handled by backdrop-filter
+      return baseStyle;
+    } else if (baseStyle.backgroundColor) {
+      // Solid color: Add opacity based on scroll state
+      const opacity = isScrolled ? 'f2' : 'cc'; // 95% or 80%
+      return {
+        backgroundColor: baseStyle.backgroundColor + opacity
+      };
+    }
+    
+    return baseStyle;
+  }, [headerType, isScrolled, headerStyle.is_gradient, headerStyle.gradient, headerBackground]);
 
   // Optimized scroll effect with throttling and direction detection
   useEffect(() => {
@@ -740,26 +776,8 @@ const Header: React.FC<HeaderProps> = ({
         style={{ 
           top: `${fixedBannersHeight}px`,
           transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
-          // Ensure pointer events work even when transparent
           pointerEvents: 'auto',
-          // Apply background color via inline style for both hex and Tailwind colors
-          backgroundColor: (() => {
-            if (headerType === 'transparent') {
-              // Transparent type: no background until scrolled
-              if (!isScrolled) return 'transparent';
-              // When scrolled, show background with 95% opacity
-              const bgColor = getColorValue(headerBackground);
-              return bgColor + 'f2'; // Add 95% opacity (f2 in hex)
-            } else {
-              // Other types: always have background
-              const bgColor = getColorValue(headerBackground);
-              if (isScrolled) {
-                return bgColor + 'f2'; // 95% opacity when scrolled
-              } else {
-                return bgColor + 'cc'; // 80% opacity when not scrolled
-              }
-            }
-          })(),
+          ...headerBackgroundStyle, // Apply gradient or solid color
           backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && (isScrolled || isDesktop)) 
             ? 'blur(24px) saturate(200%) brightness(105%)' 
             : 'none',

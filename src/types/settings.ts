@@ -26,11 +26,20 @@ export type FooterType = 'default' | 'light' | 'compact' | 'stacked' | 'minimal'
 export type HeaderType = 'default' | 'minimal' | 'centered' | 'sidebar' | 'mega' | 'transparent' | 'scrolled';
 export type MenuWidth = 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
 
+// Shared gradient interface
+export interface GradientStyle {
+  from: string;
+  via?: string;
+  to: string;
+}
+
 export interface FooterStyle {
   type?: FooterType;
   color?: string;
   color_hover?: string;
   background?: string;
+  is_gradient?: boolean;        // 🆕 Gradient support
+  gradient?: GradientStyle;      // 🆕 Gradient colors
 }
 
 export interface HeaderStyle {
@@ -40,6 +49,8 @@ export interface HeaderStyle {
   background?: string;
   menu_width?: MenuWidth;
   menu_items_are_text?: boolean;
+  is_gradient?: boolean;        // 🆕 Gradient support
+  gradient?: GradientStyle;      // 🆕 Gradient colors
 }
 
 export interface Settings {

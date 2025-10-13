@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { useToast } from '@/components/Shared/ToastContainer';
+import { revalidateHomepage } from '@/lib/revalidation';
 
 // Types
 interface Metric {
@@ -23,6 +24,8 @@ interface Metric {
 interface TemplateSectionData {
   id: number;
   background_color?: string;
+  is_gradient?: boolean;
+  gradient?: { from: string; via?: string; to: string } | null;
   is_full_width: boolean;
   is_section_title_aligned_center: boolean;
   is_section_title_aligned_right: boolean;
@@ -145,6 +148,8 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         section_description_translation: data.section_description_translation,
         text_style_variant: data.text_style_variant,
         background_color: data.background_color,
+        is_gradient: data.is_gradient,
+        gradient: data.gradient,
         grid_columns: data.grid_columns,
         is_full_width: data.is_full_width,
         is_section_title_aligned_center: data.is_section_title_aligned_center,
@@ -193,6 +198,11 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
       
       // Show success message
       toast.success(mode === 'create' ? 'Section created successfully!' : 'Section updated successfully!');
+      
+      // Trigger cache revalidation for instant updates in production
+      revalidateHomepage(savedSection.organization_id || undefined).catch(err => {
+        console.warn('⚠️ Cache revalidation failed (non-critical):', err);
+      });
       
       return savedSection;
     } catch (error) {

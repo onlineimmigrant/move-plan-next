@@ -51,6 +51,8 @@ export async function PUT(
       section_description: body.section_description || null,
       text_style_variant: body.text_style_variant || 'default',
       background_color: body.background_color || null,
+      is_gradient: body.is_gradient ?? false,
+      gradient: body.gradient || null,
       grid_columns: body.grid_columns || 3,
       is_full_width: body.is_full_width ?? false,
       is_section_title_aligned_center: body.is_section_title_aligned_center ?? false,

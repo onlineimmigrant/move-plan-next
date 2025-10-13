@@ -102,17 +102,15 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
       ref={sectionRef}
       className={`px-4 py-20 ${section.background_color ? `bg-${section.background_color}` : 'bg-gradient-to-b from-gray-50/50 to-white'}`}
     >
-      <div className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto`}>
+            <div className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto`}>
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-[32px] font-bold text-gray-900 mb-4 tracking-[-0.02em] antialiased">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4 tracking-[-0.02em] antialiased">
             {section.section_title || 'Help Center'}
           </h2>
-          {section.section_description && (
-            <p className="text-[18px] text-gray-600 antialiased max-w-2xl mx-auto leading-relaxed">
-              {section.section_description}
-            </p>
-          )}
+          <p className="text-[18px] text-gray-600 antialiased max-w-2xl mx-auto leading-relaxed">
+            {section.section_description}
+          </p>
         </div>
 
         {/* Apple-style Tab Navigation */}

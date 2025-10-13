@@ -26,6 +26,8 @@ import {
 import { RadioGroup } from '@headlessui/react';
 import { useTemplateSectionEdit } from './context';
 import ColorPaletteDropdown, { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+import EditableGradientPicker from '@/components/Shared/EditableFields/EditableGradientPicker';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 import DeleteSectionModal from './DeleteSectionModal';
 import MetricManager from './MetricManager';
 import Button from '@/ui/Button';
@@ -170,6 +172,8 @@ interface TemplateSectionFormData {
   section_title: string;
   section_description: string;
   background_color: string;
+  is_gradient: boolean;
+  gradient: { from: string; via?: string; to: string } | null;
   text_style_variant: 'default' | 'apple' | 'codedharmony';
   grid_columns: number;
   image_metrics_height: string;
@@ -217,6 +221,8 @@ export default function TemplateSectionEditModal() {
     section_title: '',
     section_description: '',
     background_color: 'white',
+    is_gradient: false,
+    gradient: null,
     text_style_variant: 'default',
     grid_columns: 3,
     image_metrics_height: '300px',
@@ -259,6 +265,8 @@ export default function TemplateSectionEditModal() {
         section_title: editingSection.section_title || '',
         section_description: editingSection.section_description || '',
         background_color: editingSection.background_color || 'white',
+        is_gradient: editingSection.is_gradient || false,
+        gradient: editingSection.gradient || null,
         text_style_variant: editingSection.text_style_variant || 'default',
         grid_columns: editingSection.grid_columns || 3,
         image_metrics_height: editingSection.image_metrics_height || '300px',
@@ -793,12 +801,30 @@ export default function TemplateSectionEditModal() {
             </p>
           </div>
 
+          {/* Background Style */}
+          <div className="py-6 border-b border-gray-200">
+            <EditableGradientPicker
+              label="Section Background"
+              isGradient={formData.is_gradient}
+              gradient={formData.gradient}
+              solidColor={formData.background_color}
+              onGradientChange={(isGradient, gradient) => 
+                setFormData({ ...formData, is_gradient: isGradient, gradient })
+              }
+              onSolidColorChange={(color) => 
+                setFormData({ ...formData, background_color: color })
+              }
+            />
+          </div>
+
           {/* Content - Preview Area */}
           <div 
             className="rounded-lg overflow-hidden p-3 sm:p-6 my-4 sm:my-6 transition-colors"
-            style={{
-              backgroundColor: getColorValue(formData.background_color || 'white')
-            }}
+            style={getBackgroundStyle(
+              formData.is_gradient, 
+              formData.gradient, 
+              formData.background_color || 'white'
+            )}
           >
             <div className="space-y-2 max-w-4xl mx-auto">
               {/* Section Title - Styled like actual section */}

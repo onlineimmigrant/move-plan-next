@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { useToast } from '@/components/Shared/ToastContainer';
 import { createClient } from '@supabase/supabase-js';
+import { revalidateHomepage } from '@/lib/revalidation';
 
 // Create Supabase client
 const supabase = createClient(
@@ -195,6 +196,11 @@ export function HeroSectionEditProvider({ children }: { children: ReactNode }) {
         
         showToast('success', 'Hero section created successfully!');
         
+        // Revalidate cache to show changes immediately
+        revalidateHomepage(organizationId).catch(err => 
+          console.warn('Cache revalidation failed (non-critical):', err)
+        );
+        
         // Update local state
         setEditingSection(result.website_hero);
         setMode('edit');
@@ -262,6 +268,11 @@ export function HeroSectionEditProvider({ children }: { children: ReactNode }) {
         console.log('[HeroSectionEditContext] Update response:', result);
 
         showToast('success', 'Hero section updated successfully!');
+        
+        // Revalidate cache to show changes immediately
+        revalidateHomepage(organizationId).catch(err => 
+          console.warn('Cache revalidation failed (non-critical):', err)
+        );
         
         // Update local state
         setEditingSection({ ...editingSection, ...data });

@@ -81,6 +81,8 @@ export async function GET(request: Request) {
         section_description_translation,
         text_style_variant,
         background_color,
+        is_gradient,
+        gradient,
         grid_columns,
         is_full_width,
         is_section_title_aligned_center,
@@ -113,6 +115,8 @@ export async function GET(request: Request) {
             is_image_rounded_full,
             is_title_displayed,
             background_color,
+            is_gradient,
+            gradient,
             is_card_type,
             organization_id
           )
@@ -241,6 +245,8 @@ export async function POST(request: Request) {
       section_description_translation: body.section_description_translation || {},
       text_style_variant: body.text_style_variant || 'default',
       background_color: body.background_color || null,
+      is_gradient: body.is_gradient ?? false,
+      gradient: body.gradient || null,
       grid_columns: body.grid_columns || 3,
       is_full_width: body.is_full_width ?? false,
       is_section_title_aligned_center: body.is_section_title_aligned_center ?? false,

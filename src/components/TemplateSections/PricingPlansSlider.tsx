@@ -95,7 +95,7 @@ export default function PricingPlansSlider({
       <div className="pt-8 sm:pt-12 border-t border-gray-100 max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-4xl font-light text-gray-900 mb-3 sm:mb-4 tracking-tight">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4 tracking-[-0.02em] antialiased">
             {title}
           </h2>
           <p className="text-base sm:text-lg text-gray-500 font-light">
