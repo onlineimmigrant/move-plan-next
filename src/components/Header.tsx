@@ -20,6 +20,7 @@ const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'),
 // Import all available Heroicons dynamically
 import * as HeroIcons from '@heroicons/react/24/outline';
 import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 
 interface HeaderProps {
   companyLogo?: string;
@@ -283,32 +284,24 @@ const Header: React.FC<HeaderProps> = ({
                   <>
                     <button
                       type="button"
-                      className={`group cursor-pointer flex items-center justify-center px-4 py-2.5 rounded-xl focus:outline-none transition-colors duration-200 ${
-                        // Apply Tailwind color classes if not hex
-                        !headerColor.startsWith('#') ? `text-${headerColor} hover:text-${headerColorHover}` : ''
-                      }`}
+                      className="group cursor-pointer flex items-center justify-center px-4 py-2.5 rounded-xl focus:outline-none transition-colors duration-200"
                       style={{
-                        // Apply hex colors via inline style
-                        color: headerColor.startsWith('#') ? headerColor : undefined,
+                        // Apply color via inline style for both hex and Tailwind colors
+                        color: getColorValue(headerColor),
                       }}
                       title={translatedDisplayName}
                       aria-label={t.openMenuFor(translatedDisplayName)}
                       onClick={() => setOpenSubmenu(openSubmenu === item.id ? null : item.id)}
                       onMouseEnter={(e) => {
-                        if (headerColorHover.startsWith('#')) {
-                          e.currentTarget.style.color = headerColorHover;
-                        }
+                        e.currentTarget.style.color = getColorValue(headerColorHover);
                       }}
                       onMouseLeave={(e) => {
-                        if (headerColor.startsWith('#')) {
-                          e.currentTarget.style.color = headerColor;
-                        }
+                        e.currentTarget.style.color = getColorValue(headerColor);
                       }}
                     >
                       {showAsText ? (
                         <span className={`text-[15px] font-medium transition-colors duration-200 ${
-                          // Only apply default classes if using hex colors (which are in inline styles)
-                          headerColor.startsWith('#') ? '' : (isActive ? 'font-semibold' : '')
+                          isActive ? 'font-semibold' : ''
                         }`}>{translatedDisplayName}</span>
                       ) : item.image ? (
                         <Image
@@ -339,13 +332,17 @@ const Header: React.FC<HeaderProps> = ({
                     {/* Mega menu or simple dropdown based on items count */}
                     {displayedSubItems.length >= 2 ? (
                       // Full-width mega menu for 2+ items
-                      <div className={`fixed left-0 right-0 top-[calc(100%+0.5rem)] bg-white border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
+                      <div className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
                         openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
                       }`}
                         style={{
+                          // Calculate top position: banners height + nav height (64px) + gap (8px)
+                          top: `${fixedBannersHeight + 64 + 8}px`,
                           // Ensure mega menu has solid background even with transparent header
                           backgroundColor: 'white',
-                          boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+                          boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+                          // Ensure pointer events work
+                          pointerEvents: openSubmenu === item.id ? 'auto' : 'none'
                         }}
                       >
                         <div className="px-6 py-6 max-w-7xl mx-auto">
@@ -436,7 +433,9 @@ const Header: React.FC<HeaderProps> = ({
                         style={{
                           // Ensure dropdown has solid background even with transparent header
                           backgroundColor: 'white',
-                          boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+                          boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+                          // Ensure pointer events work
+                          pointerEvents: openSubmenu === item.id ? 'auto' : 'none'
                         }}
                       >
                         <div className="p-2">
@@ -489,23 +488,16 @@ const Header: React.FC<HeaderProps> = ({
                   </>
                 ) : (
                   <div
-                    className={`cursor-pointer transition-colors duration-200 ${
-                      // Apply Tailwind color classes if not hex
-                      !headerColor.startsWith('#') ? `text-${headerColor} hover:text-${headerColorHover}` : ''
-                    }`}
+                    className="cursor-pointer transition-colors duration-200"
                     style={{
-                      // Apply hex colors via inline style
-                      color: headerColor.startsWith('#') ? headerColor : undefined,
+                      // Apply color via inline style for both hex and Tailwind colors
+                      color: getColorValue(headerColor),
                     }}
                     onMouseEnter={(e) => {
-                      if (headerColorHover.startsWith('#')) {
-                        e.currentTarget.style.color = headerColorHover;
-                      }
+                      e.currentTarget.style.color = getColorValue(headerColorHover);
                     }}
                     onMouseLeave={(e) => {
-                      if (headerColor.startsWith('#')) {
-                        e.currentTarget.style.color = headerColor;
-                      }
+                      e.currentTarget.style.color = getColorValue(headerColor);
                     }}
                   >
                     <LocalizedLink
@@ -724,33 +716,30 @@ const Header: React.FC<HeaderProps> = ({
                   ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
                   : 'md:backdrop-blur-2xl'
                 )
-          } 
-          ${
-            // Apply background color - use Tailwind class if not hex, otherwise inline style handles it
-            // For transparent type: no background until scrolled
-            headerType === 'transparent'
-              ? (isScrolled && !headerBackground.startsWith('#')
-                  ? `bg-${headerBackground}/95`
-                  : ''
-                )
-              : (!headerBackground.startsWith('#') 
-                  ? (isScrolled ? `bg-${headerBackground}/95` : `md:bg-${headerBackground}/80`)
-                  : ''
-                )
           }
         `}
         style={{ 
           top: `${fixedBannersHeight}px`,
-          // Apply custom hex background color via inline style
-          backgroundColor: headerType === 'transparent'
-            ? (isScrolled && headerBackground.startsWith('#')
-                ? `${headerBackground}f2` // Only show background when scrolled
-                : 'transparent'
-              )
-            : (headerBackground.startsWith('#') 
-                ? (isScrolled ? `${headerBackground}f2` : `${headerBackground}cc`) // f2 = 95% opacity, cc = 80% opacity
-                : undefined
-              ),
+          // Ensure pointer events work even when transparent
+          pointerEvents: 'auto',
+          // Apply background color via inline style for both hex and Tailwind colors
+          backgroundColor: (() => {
+            if (headerType === 'transparent') {
+              // Transparent type: no background until scrolled
+              if (!isScrolled) return 'transparent';
+              // When scrolled, show background with 95% opacity
+              const bgColor = getColorValue(headerBackground);
+              return bgColor + 'f2'; // Add 95% opacity (f2 in hex)
+            } else {
+              // Other types: always have background
+              const bgColor = getColorValue(headerBackground);
+              if (isScrolled) {
+                return bgColor + 'f2'; // 95% opacity when scrolled
+              } else {
+                return bgColor + 'cc'; // 80% opacity when not scrolled
+              }
+            }
+          })(),
           backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && (isScrolled || isDesktop)) 
             ? 'blur(24px) saturate(200%) brightness(105%)' 
             : 'none',

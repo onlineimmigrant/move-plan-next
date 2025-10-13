@@ -10,6 +10,8 @@ import ModernLanguageSwitcher from './ModernLanguageSwitcher';
 import LocalizedLink from './LocalizedLink';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import { FooterType } from '@/types/settings';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+
 
 // Static translations for footer
 const FOOTER_TRANSLATIONS = {
@@ -228,31 +230,20 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
     };
   }, [settings?.footer_style]);
 
-  // Helper to get link color classes
+  // Helper to get link color classes - removed dynamic Tailwind classes
   const getLinkColorClasses = useCallback((isHeading = false) => {
-    const hasHexColor = footerStyles.color.startsWith('#');
-    const hasHexHover = footerStyles.colorHover.startsWith('#');
-    
-    if (hasHexColor || hasHexHover) {
-      return ''; // Use inline styles instead
-    }
-    
-    return isHeading 
-      ? `hover:text-${footerStyles.colorHover}` 
-      : `text-${footerStyles.color} hover:text-${footerStyles.colorHover}`;
-  }, [footerStyles]);
+    // Never use dynamic Tailwind classes - they don't work at runtime
+    // All colors will be applied via inline styles
+    return '';
+  }, []);
 
-  // Helper to get link inline styles
+  // Helper to get link inline styles - support both hex and Tailwind colors
   const getLinkStyles = useCallback((isHovered: boolean) => {
-    const hasHexColor = footerStyles.color.startsWith('#');
-    const hasHexHover = footerStyles.colorHover.startsWith('#');
-    
-    if (!hasHexColor && !hasHexHover) {
-      return {};
-    }
+    const color = getColorValue(footerStyles.color);
+    const hoverColor = getColorValue(footerStyles.colorHover);
     
     return {
-      color: isHovered && hasHexHover ? footerStyles.colorHover : (hasHexColor ? footerStyles.color : undefined)
+      color: isHovered ? hoverColor : color
     };
   }, [footerStyles]);
 
@@ -301,20 +292,15 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       <div className="flex justify-between items-center mb-8">
         <button
           onClick={() => setShowSettings(true)}
-          className={`text-${footerStyles.color} hover:text-${footerStyles.colorHover} text-sm font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400`}
+          className="text-sm font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
           style={{
-            color: footerStyles.color.startsWith('#') ? footerStyles.color : undefined,
-            '--hover-color': footerStyles.colorHover.startsWith('#') ? footerStyles.colorHover : undefined
-          } as React.CSSProperties}
+            color: getColorValue(footerStyles.color)
+          }}
           onMouseEnter={(e) => {
-            if (footerStyles.colorHover.startsWith('#')) {
-              e.currentTarget.style.color = footerStyles.colorHover;
-            }
+            e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
           }}
           onMouseLeave={(e) => {
-            if (footerStyles.color.startsWith('#')) {
-              e.currentTarget.style.color = footerStyles.color;
-            }
+            e.currentTarget.style.color = getColorValue(footerStyles.color);
           }}
           aria-label={translations.privacySettings}
         >
@@ -406,7 +392,16 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     <button
                       onClick={handleLogout}
                       type="button"
-                      className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                      className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                      style={{
+                        color: getColorValue(footerStyles.color)
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = getColorValue(footerStyles.color);
+                      }}
                       aria-label={translations.logout}
                     >
                       {translations.logout}
@@ -418,7 +413,16 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                       <button
                         type="button"
                         onClick={handleNavigation('/login')}
-                        className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                        className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                        style={{
+                          color: getColorValue(footerStyles.color)
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = getColorValue(footerStyles.color);
+                        }}
                         aria-label={translations.login}
                       >
                         {translations.login}
@@ -428,7 +432,16 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                       <button
                         type="button"
                         onClick={handleNavigation('/register')}
-                        className="text-neutral-400 hover:text-white text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                        className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                        style={{
+                          color: getColorValue(footerStyles.color)
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = getColorValue(footerStyles.color);
+                        }}
                         aria-label={translations.register}
                       >
                         {translations.register}
@@ -442,9 +455,9 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         )}
       </nav>
 
-      <div className="mt-12 border-t border-neutral-500 pt-6">
+      <div className="mt-12 border-t pt-6" style={{ borderColor: `${getColorValue(footerStyles.color)}66` }}>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <small className="text-xs text-neutral-500">
+          <small className="text-xs" style={{ color: getColorValue(footerStyles.color), opacity: 0.7 }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
           </small>
           {settings?.with_language_switch && (
@@ -475,16 +488,22 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         </ul>
       </nav>
       
-      <div className="border-t border-opacity-20 pt-6 space-y-4" style={{ borderColor: footerStyles.color }}>
+      <div className="border-t border-opacity-20 pt-6 space-y-4" style={{ borderColor: getColorValue(footerStyles.color) }}>
         <button
           onClick={() => setShowSettings(true)}
-          className="text-sm hover:underline"
-          style={{ color: footerStyles.color }}
+          className="text-sm hover:underline transition-colors duration-200"
+          style={{ color: getColorValue(footerStyles.color) }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = getColorValue(footerStyles.color);
+          }}
           aria-label={translations.privacySettings}
         >
           {translations.privacySettings}
         </button>
-        <p className="text-xs opacity-60" style={{ color: footerStyles.color }}>
+        <p className="text-xs opacity-60" style={{ color: getColorValue(footerStyles.color) }}>
           © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
         </p>
         {settings?.with_language_switch && (
@@ -511,8 +530,14 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           })}
           <button
             onClick={() => setShowSettings(true)}
-            className="text-sm"
-            style={{ color: footerStyles.color }}
+            className="text-sm transition-colors duration-200"
+            style={{ color: getColorValue(footerStyles.color) }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = getColorValue(footerStyles.color);
+            }}
             aria-label={translations.privacySettings}
           >
             {translations.privacySettings}
@@ -523,7 +548,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           {settings?.with_language_switch && (
             <ModernLanguageSwitcher openUpward={true} variant="footer" />
           )}
-          <p className="text-xs whitespace-nowrap" style={{ color: footerStyles.color }}>
+          <p className="text-xs whitespace-nowrap" style={{ color: getColorValue(footerStyles.color) }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}
           </p>
         </div>
@@ -542,7 +567,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           <div 
             key={item.id} 
             className={`py-6 ${index > 0 ? 'border-t' : ''}`}
-            style={{ borderColor: index > 0 ? `${footerStyles.color}33` : undefined }}
+            style={{ borderColor: index > 0 ? `${getColorValue(footerStyles.color)}33` : undefined }}
           >
             <h3 className="text-lg font-semibold mb-4 text-center">
               <FooterLink href={item.url_name || '#'} isHeading={true}>
@@ -567,12 +592,18 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         );
       })}
       
-      <div className="border-t pt-6 text-center" style={{ borderColor: `${footerStyles.color}33` }}>
+      <div className="border-t pt-6 text-center" style={{ borderColor: `${getColorValue(footerStyles.color)}33` }}>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
           <button
             onClick={() => setShowSettings(true)}
-            className="text-sm"
-            style={{ color: footerStyles.color }}
+            className="text-sm transition-colors duration-200"
+            style={{ color: getColorValue(footerStyles.color) }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = getColorValue(footerStyles.color);
+            }}
             aria-label={translations.privacySettings}
           >
             {translations.privacySettings}
@@ -581,7 +612,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             <ModernLanguageSwitcher openUpward={true} variant="footer" />
           )}
         </div>
-        <p className="text-xs" style={{ color: footerStyles.color }}>
+        <p className="text-xs" style={{ color: getColorValue(footerStyles.color) }}>
           © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
         </p>
       </div>
@@ -609,13 +640,19 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       <div className="space-y-3">
         <button
           onClick={() => setShowSettings(true)}
-          className="text-xs opacity-60 hover:opacity-100 transition-opacity"
-          style={{ color: footerStyles.color }}
+          className="text-xs opacity-60 hover:opacity-100 transition-all duration-200"
+          style={{ color: getColorValue(footerStyles.color) }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = getColorValue(footerStyles.color);
+          }}
           aria-label={translations.privacySettings}
         >
           {translations.privacySettings}
         </button>
-        <p className="text-xs opacity-50" style={{ color: footerStyles.color }}>
+        <p className="text-xs opacity-50" style={{ color: getColorValue(footerStyles.color) }}>
           © {new Date().getFullYear()} {settings?.site || 'Company'}
         </p>
       </div>
@@ -654,18 +691,24 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           ))}
         </nav>
         
-        <div className="border-t pt-6" style={{ borderColor: `${footerStyles.color}33` }}>
+        <div className="border-t pt-6" style={{ borderColor: `${getColorValue(footerStyles.color)}33` }}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-6">
               <button
                 onClick={() => setShowSettings(true)}
-                className="text-sm"
-                style={{ color: footerStyles.color }}
+                className="text-sm transition-colors duration-200"
+                style={{ color: getColorValue(footerStyles.color) }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = getColorValue(footerStyles.color);
+                }}
                 aria-label={translations.privacySettings}
               >
                 {translations.privacySettings}
               </button>
-              <p className="text-xs" style={{ color: footerStyles.color }}>
+              <p className="text-xs" style={{ color: getColorValue(footerStyles.color) }}>
                 © {new Date().getFullYear()} {settings?.site || 'Company'}
               </p>
             </div>
@@ -681,10 +724,11 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   // Rest of the component remains unchanged
   return (
     <footer 
-      className={`bg-${footerStyles.background} text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : footerStyles.type === 'minimal' ? 'py-6' : 'py-12'} min-h-[${footerStyles.type === 'compact' || footerStyles.type === 'minimal' ? '200px' : '400px'}]`} 
+      className={`text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : footerStyles.type === 'minimal' ? 'py-6' : 'py-12'}`}
       role="contentinfo"
       style={{
-        backgroundColor: footerStyles.background.startsWith('#') ? footerStyles.background : undefined
+        backgroundColor: getColorValue(footerStyles.background),
+        minHeight: footerStyles.type === 'compact' || footerStyles.type === 'minimal' ? '200px' : '400px'
       }}
     >
       <div className={footerStyles.type === 'light' || footerStyles.type === 'stacked' || footerStyles.type === 'minimal' ? 'max-w-5xl mx-auto' : 'max-w-7xl mx-auto'}>
