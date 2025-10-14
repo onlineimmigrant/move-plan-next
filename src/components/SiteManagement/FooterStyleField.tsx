@@ -11,10 +11,7 @@ interface FooterStyleFieldProps {
 
 const FOOTER_TYPES: { value: FooterType; label: string; description: string }[] = [
   { value: 'default', label: 'Default', description: 'Multi-column grid layout with sections' },
-  { value: 'light', label: 'Light', description: 'Minimal single-column centered design' },
   { value: 'compact', label: 'Compact', description: 'Horizontal navigation bar style' },
-  { value: 'stacked', label: 'Stacked', description: 'Vertical sections with dividers' },
-  { value: 'minimal', label: 'Minimal', description: 'Ultra-clean with minimal elements' },
   { value: 'grid', label: 'Grid', description: 'Balanced 4-column grid layout' }
 ];
 

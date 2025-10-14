@@ -10,6 +10,11 @@ import { usePageCreation } from '@/components/modals/PageCreationModal/context';
 import { usePostEditModal } from '@/components/modals/PostEditModal/context';
 import { useSiteMapModal } from '@/components/modals/SiteMapModal/context';
 import { useGlobalSettingsModal } from '@/components/modals/GlobalSettingsModal/context';
+import { useLayoutManager } from '@/components/modals/LayoutManagerModal/context';
+import { useHeaderEdit } from '@/components/modals/HeaderEditModal/context';
+import { useFooterEdit } from '@/components/modals/FooterEditModal/context';
+import { getOrganizationId } from '@/lib/supabase';
+import { getBaseUrl } from '@/lib/utils';
 
 interface MenuItem {
   label: string;
@@ -35,6 +40,9 @@ const UniversalNewButton: React.FC = () => {
   const { openCreateModal } = usePostEditModal();
   const { openModal: openSiteMapModal } = useSiteMapModal();
   const { openModal: openGlobalSettingsModal } = useGlobalSettingsModal();
+  const { openModal: openLayoutManagerModal } = useLayoutManager();
+  const { openModal: openHeaderEditModal } = useHeaderEdit();
+  const { openModal: openFooterEditModal } = useFooterEdit();
 
   // Check admin status
   useEffect(() => {
@@ -91,6 +99,16 @@ const UniversalNewButton: React.FC = () => {
     {
       label: 'Navigation',
       items: [
+        {
+          label: 'Header',
+          action: 'header',
+          description: 'Edit header style and menu',
+        },
+        {
+          label: 'Footer',
+          action: 'footer',
+          description: 'Edit footer style and menu',
+        },
         {
           label: 'Menu Item',
           action: 'menu',
@@ -163,6 +181,11 @@ const UniversalNewButton: React.FC = () => {
           description: 'Configure site settings',
         },
         {
+          label: 'Page Layout',
+          action: 'page_layout',
+          description: 'Manage page section order',
+        },
+        {
           label: 'Site Map',
           action: 'site_map',
           description: 'View site structure',
@@ -173,7 +196,7 @@ const UniversalNewButton: React.FC = () => {
   ];
 
   // Handle action
-  const handleAction = (action: string) => {
+  const handleAction = async (action: string) => {
     setIsOpen(false);
     
     switch (action) {
@@ -198,6 +221,51 @@ const UniversalNewButton: React.FC = () => {
       case 'global_settings':
         // Open global settings modal
         openGlobalSettingsModal();
+        break;
+      case 'page_layout':
+        // Open page layout manager modal
+        try {
+          const baseUrl = getBaseUrl();
+          const orgId = await getOrganizationId(baseUrl);
+          if (orgId) {
+            openLayoutManagerModal(orgId);
+          } else {
+            alert('Unable to determine organization ID');
+          }
+        } catch (error) {
+          console.error('Error getting organization ID:', error);
+          alert('Error opening page layout manager');
+        }
+        break;
+      case 'header':
+        // Open header edit modal
+        try {
+          const baseUrl = getBaseUrl();
+          const orgId = await getOrganizationId(baseUrl);
+          if (orgId) {
+            openHeaderEditModal(orgId);
+          } else {
+            alert('Unable to determine organization ID');
+          }
+        } catch (error) {
+          console.error('Error getting organization ID:', error);
+          alert('Error opening header edit modal');
+        }
+        break;
+      case 'footer':
+        // Open footer edit modal
+        try {
+          const baseUrl = getBaseUrl();
+          const orgId = await getOrganizationId(baseUrl);
+          if (orgId) {
+            openFooterEditModal(orgId);
+          } else {
+            alert('Unable to determine organization ID');
+          }
+        } catch (error) {
+          console.error('Error getting organization ID:', error);
+          alert('Error opening footer edit modal');
+        }
         break;
       case 'hero':
         // Open global settings modal with hero section expanded

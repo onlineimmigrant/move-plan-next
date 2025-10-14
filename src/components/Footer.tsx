@@ -12,6 +12,7 @@ import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTra
 import { FooterType } from '@/types/settings';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
+import { isAdminClient } from '@/lib/auth';
 
 
 // Static translations for footer
@@ -158,6 +159,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const { session, logout } = useAuth();
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Use translations with fallback
   const translations = useFooterTranslations();
@@ -167,6 +169,15 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   
   const isAuthenticated = !!session;
   const maxItemsPerColumn = 8;
+
+  // Check admin status
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const adminStatus = await isAdminClient();
+      setIsAdmin(adminStatus);
+    };
+    checkAdmin();
+  }, []);
 
   // Memoize menu grouping logic
   const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
@@ -276,15 +287,19 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
   // Render footer based on type
   const renderFooterContent = () => {
-    switch (footerStyles.type) {
-      case 'light':
-        return renderLightFooter();
+    // Map legacy/unsupported types to supported types
+    const typeAsString = footerStyles.type as string;
+    let mappedType: FooterType = footerStyles.type;
+    
+    if (typeAsString === 'light' || typeAsString === 'minimal') {
+      mappedType = 'compact';
+    } else if (typeAsString === 'stacked') {
+      mappedType = 'default';
+    }
+    
+    switch (mappedType) {
       case 'compact':
         return renderCompactFooter();
-      case 'stacked':
-        return renderStackedFooter();
-      case 'minimal':
-        return renderMinimalFooter();
       case 'grid':
         return renderGridFooter();
       case 'default':
@@ -719,9 +734,11 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                 © {new Date().getFullYear()} {settings?.site || 'Company'}
               </p>
             </div>
-            {settings?.with_language_switch && (
-              <ModernLanguageSwitcher openUpward={true} variant="footer" />
-            )}
+            <div className="flex items-center gap-3">
+              {settings?.with_language_switch && (
+                <ModernLanguageSwitcher openUpward={true} variant="footer" />
+              )}
+            </div>
           </div>
         </div>
       </>
@@ -731,7 +748,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   // Rest of the component remains unchanged
   return (
     <footer 
-      className={`text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : footerStyles.type === 'minimal' ? 'py-6' : 'py-12'}`}
+      className={`text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : 'py-12'}`}
       role="contentinfo"
       style={{
         ...getBackgroundStyle(
@@ -739,10 +756,10 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           footerStyles.gradient,
           footerStyles.background
         ),
-        minHeight: footerStyles.type === 'compact' || footerStyles.type === 'minimal' ? '200px' : '400px'
+        minHeight: footerStyles.type === 'compact' ? '200px' : '400px'
       }}
     >
-      <div className={footerStyles.type === 'light' || footerStyles.type === 'stacked' || footerStyles.type === 'minimal' ? 'max-w-5xl mx-auto' : 'max-w-7xl mx-auto'}>
+      <div className="max-w-7xl mx-auto">
         {renderFooterContent()}
       </div>
     </footer>

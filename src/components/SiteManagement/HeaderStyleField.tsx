@@ -10,13 +10,9 @@ interface HeaderStyleFieldProps {
 }
 
 const HEADER_TYPES: { value: HeaderType; label: string; description: string }[] = [
-  { value: 'default', label: 'Default', description: 'Full-featured mega menu with rich content' },
-  { value: 'minimal', label: 'Minimal', description: 'Simplified header with basic navigation' },
-  { value: 'centered', label: 'Centered', description: 'Logo and menu centered in header' },
-  { value: 'sidebar', label: 'Sidebar', description: 'Vertical sidebar navigation' },
-  { value: 'mega', label: 'Mega', description: 'Enhanced mega menu with large dropdowns' },
+  { value: 'default', label: 'Default', description: 'Full-featured header with auto-hide on scroll' },
   { value: 'transparent', label: 'Transparent', description: 'Transparent header that becomes solid on scroll' },
-  { value: 'scrolled', label: 'Scrolled', description: 'Non-fixed header that scrolls with content' }
+  { value: 'fixed', label: 'Fixed', description: 'Always visible header that stays fixed during scrolling' }
 ];
 
 const MENU_WIDTHS: { value: MenuWidth; label: string }[] = [

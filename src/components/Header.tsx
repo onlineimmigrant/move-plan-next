@@ -12,6 +12,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import LocalizedLink from './LocalizedLink';
 import { useHeaderTranslations } from './header/useHeaderTranslations';
+import { isAdminClient } from '@/lib/auth';
 
 // Dynamic imports for better code splitting
 const LoginModal = dynamic(() => import('./LoginModal'), { ssr: false });
@@ -42,6 +43,8 @@ const Header: React.FC<HeaderProps> = ({
   const lastScrollYRef = useRef(0);
   const [isDesktop, setIsDesktop] = useState(true); // Default to true for SSR
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { basket } = useBasket();
   const { session, logout } = useAuth();
   const router = useRouter();
@@ -155,6 +158,15 @@ const Header: React.FC<HeaderProps> = ({
     checkDesktop(); // Check on mount
     window.addEventListener('resize', checkDesktop);
     return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
+
+  // Check admin status
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const adminStatus = await isAdminClient();
+      setIsAdmin(adminStatus);
+    };
+    checkAdmin();
   }, []);
 
   // Individual display mode per menu item
@@ -291,6 +303,41 @@ const Header: React.FC<HeaderProps> = ({
     setIsOpen(!isOpen);
   }, [isOpen]);
 
+  // Helper functions for delayed menu closing
+  const cancelCloseTimeout = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleClose = useCallback(() => {
+    cancelCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenSubmenu(null);
+    }, 300); // 300ms delay before closing
+  }, [cancelCloseTimeout]);
+
+  const handleMenuEnter = useCallback((itemId: number, hasSubitems: boolean) => {
+    if (hasSubitems) {
+      cancelCloseTimeout();
+      setOpenSubmenu(itemId);
+    }
+  }, [cancelCloseTimeout]);
+
+  const handleMenuLeave = useCallback(() => {
+    scheduleClose();
+  }, [scheduleClose]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Memoize filtered menu items for performance
   const filteredMenuItems = useMemo(() => 
     menuItems.filter((item) => item.is_displayed && item.display_name !== 'Profile'),
@@ -332,8 +379,8 @@ const Header: React.FC<HeaderProps> = ({
               <div 
                 key={item.id} 
                 className="relative"
-                onMouseEnter={() => displayedSubItems.length > 0 && setOpenSubmenu(item.id)}
-                onMouseLeave={() => setOpenSubmenu(null)}
+                onMouseEnter={() => handleMenuEnter(item.id, displayedSubItems.length > 0)}
+                onMouseLeave={handleMenuLeave}
               >
                 {displayedSubItems.length > 0 ? (
                   <>
@@ -387,18 +434,21 @@ const Header: React.FC<HeaderProps> = ({
                     {/* Mega menu or simple dropdown based on items count */}
                     {displayedSubItems.length >= 2 ? (
                       // Full-width mega menu for 2+ items
-                      <div className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
-                        openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
-                      }`}
+                      <div 
+                        className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
+                          openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
+                        }`}
                         style={{
-                          // Calculate top position: banners height + nav height (64px) + gap (8px)
-                          top: `${fixedBannersHeight + 64 + 8}px`,
+                          // Calculate top position: banners height + nav height (64px) + gap (16px for visual separation)
+                          top: `${fixedBannersHeight + 64 + 16}px`,
                           // Ensure mega menu has solid background even with transparent header
                           backgroundColor: 'white',
                           boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
                           // Ensure pointer events work
                           pointerEvents: openSubmenu === item.id ? 'auto' : 'none'
                         }}
+                        onMouseEnter={cancelCloseTimeout}
+                        onMouseLeave={handleMenuLeave}
                       >
                         <div className="px-6 py-6 max-w-7xl mx-auto">
                           <h3 className="text-base font-semibold text-gray-900 mb-4">{translatedDisplayName}</h3>
@@ -430,7 +480,7 @@ const Header: React.FC<HeaderProps> = ({
                                         alt={translatedSubItemName}
                                         fill
                                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                                        className="object-cover rounded-t-lg"
+                                        className="object-contain rounded-t-lg p-2"
                                         loading="lazy"
                                         placeholder="blur"
                                         blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
@@ -492,6 +542,8 @@ const Header: React.FC<HeaderProps> = ({
                           // Ensure pointer events work
                           pointerEvents: openSubmenu === item.id ? 'auto' : 'none'
                         }}
+                        onMouseEnter={cancelCloseTimeout}
+                        onMouseLeave={handleMenuLeave}
                       >
                         <div className="p-2">
                           {displayedSubItems.map((subItem) => {
@@ -757,7 +809,7 @@ const Header: React.FC<HeaderProps> = ({
     <>      
       <nav
         className={`
-          ${headerType === 'scrolled' ? 'absolute' : 'fixed'} 
+          fixed
           left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${
             // For transparent type: start transparent, become solid on scroll
@@ -775,7 +827,8 @@ const Header: React.FC<HeaderProps> = ({
         `}
         style={{ 
           top: `${fixedBannersHeight}px`,
-          transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
+          // For 'fixed' type, always stay visible. For others, hide on scroll down
+          transform: (headerType === 'fixed' || isVisible) ? 'translateY(0)' : 'translateY(-100%)',
           pointerEvents: 'auto',
           ...headerBackgroundStyle, // Apply gradient or solid color
           backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && (isScrolled || isDesktop)) 
@@ -969,7 +1022,7 @@ const Header: React.FC<HeaderProps> = ({
       {isOpen && (
         <div className="md:hidden fixed inset-0 bg-white/95 backdrop-blur-3xl border-t border-black/8 shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-y-auto z-30"
           style={{
-            top: `${fixedBannersHeight + 64}px`, // Position below the header
+            top: `${fixedBannersHeight + 64}px`, // Position directly below the header (no gap on mobile)
             backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
             WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
           }}

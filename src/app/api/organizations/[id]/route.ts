@@ -1003,12 +1003,12 @@ export async function PUT(
         stringified: JSON.stringify(cleanSettingsData.footer_style)
       });
 
-      // Process footer_style to ensure JSONB format
+      // Process footer_style to ensure JSONB format - PRESERVE ALL EXISTING FIELDS
       if (cleanSettingsData.footer_style) {
-        // If it's already an object (JSONB), ensure it has the type field
+        // If it's already an object (JSONB), keep it as-is (preserves gradient, is_gradient, etc.)
         if (typeof cleanSettingsData.footer_style === 'object') {
-          console.log('[API] ✅ footer_style is already an object (JSONB)');
-          // Add default type if missing
+          console.log('[API] ✅ footer_style is already an object (JSONB) - preserving all fields');
+          // Only add type if completely missing
           if (!cleanSettingsData.footer_style.type) {
             console.log('[API] 🔄 Adding default type to footer_style');
             cleanSettingsData.footer_style.type = 'default';
@@ -1020,8 +1020,14 @@ export async function PUT(
           cleanSettingsData.footer_style = {
             type: 'default',
             background: cleanSettingsData.footer_style,
-            color: 'neutral-400',
-            color_hover: 'white'
+            color: 'gray-400',
+            color_hover: 'white',
+            is_gradient: false,
+            gradient: {
+              from: 'gray-900',
+              via: 'gray-800',
+              to: 'gray-700'
+            }
           };
         }
       } else {
@@ -1034,7 +1040,7 @@ export async function PUT(
         stringified: JSON.stringify(cleanSettingsData.footer_style)
       });
 
-      // Process header_style to ensure JSONB format
+      // Process header_style to ensure JSONB format - PRESERVE ALL EXISTING FIELDS
       console.log('[API] 🎨 header_style BEFORE processing:', {
         value: cleanSettingsData.header_style,
         type: typeof cleanSettingsData.header_style,
@@ -1043,19 +1049,13 @@ export async function PUT(
       });
 
       if (cleanSettingsData.header_style) {
-        // If it's already an object (JSONB), ensure it has all required fields
+        // If it's already an object (JSONB), keep it as-is (preserves gradient, is_gradient, etc.)
         if (typeof cleanSettingsData.header_style === 'object') {
-          console.log('[API] ✅ header_style is already an object (JSONB)');
-          // Add default fields if missing
-          cleanSettingsData.header_style = {
-            type: cleanSettingsData.header_style.type || 'default',
-            background: cleanSettingsData.header_style.background || 'white',
-            color: cleanSettingsData.header_style.color || 'gray-700',
-            color_hover: cleanSettingsData.header_style.color_hover || 'gray-900',
-            menu_width: cleanSettingsData.header_style.menu_width || '7xl',
-            menu_items_are_text: cleanSettingsData.header_style.menu_items_are_text ?? true
-          };
-          console.log('[API] 🔄 Ensured all header_style fields are present');
+          console.log('[API] ✅ header_style is already an object (JSONB) - preserving all fields including gradient');
+          // Don't overwrite! Just ensure type exists
+          if (!cleanSettingsData.header_style.type) {
+            cleanSettingsData.header_style.type = 'default';
+          }
         }
         // If it's a string (legacy), convert to JSONB format
         else if (typeof cleanSettingsData.header_style === 'string') {
@@ -1066,7 +1066,13 @@ export async function PUT(
             color: 'gray-700',
             color_hover: 'gray-900',
             menu_width: '7xl',
-            menu_items_are_text: true
+            menu_items_are_text: true,
+            is_gradient: false,
+            gradient: {
+              from: 'gray-900',
+              via: 'gray-800',
+              to: 'gray-700'
+            }
           };
         }
       } else {
@@ -1077,7 +1083,13 @@ export async function PUT(
           color: 'gray-700',
           color_hover: 'gray-900',
           menu_width: '7xl',
-          menu_items_are_text: true
+          menu_items_are_text: true,
+          is_gradient: false,
+          gradient: {
+            from: 'gray-900',
+            via: 'gray-800',
+            to: 'gray-700'
+          }
         };
       }
 

@@ -22,8 +22,8 @@ export interface Size {
   created_at: string;
 }
 
-export type FooterType = 'default' | 'light' | 'compact' | 'stacked' | 'minimal' | 'grid';
-export type HeaderType = 'default' | 'minimal' | 'centered' | 'sidebar' | 'mega' | 'transparent' | 'scrolled';
+export type FooterType = 'default' | 'compact' | 'grid';
+export type HeaderType = 'default' | 'transparent' | 'fixed';
 export type MenuWidth = 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
 
 // Shared gradient interface
