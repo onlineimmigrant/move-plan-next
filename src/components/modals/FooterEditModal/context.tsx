@@ -110,14 +110,17 @@ export const FooterEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const fetchFooterData = useCallback(async (organizationId: string) => {
     setIsLoading(true);
     try {
-      if (!session?.access_token) {
+      // Get fresh session each time to avoid stale session issues
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      
+      if (!freshSession?.access_token) {
         throw new Error('No active session found. Please log in again.');
       }
 
       // Fetch organization data for footer style
       const orgResponse = await fetch(`/api/organizations/${organizationId}`, {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${freshSession.access_token}`
         }
       });
       if (!orgResponse.ok) throw new Error('Failed to fetch organization');
@@ -154,7 +157,7 @@ export const FooterEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         `/api/menu-items?organization_id=${organizationId}`,
         {
           headers: {
-            'Authorization': `Bearer ${session.access_token}`
+            'Authorization': `Bearer ${freshSession.access_token}`
           }
         }
       );
@@ -186,16 +189,16 @@ export const FooterEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } finally {
       setIsLoading(false);
     }
-  }, [session]);
+  }, []); // Remove session dependency
 
   // Fetch footer data when modal opens with an organizationId
   useEffect(() => {
-    if (isOpen && organizationId && session?.access_token) {
+    if (isOpen && organizationId) {
       fetchFooterData(organizationId).catch(error => {
         console.error('[FooterEditContext] Error fetching footer data:', error);
       });
     }
-  }, [isOpen, organizationId, session?.access_token, fetchFooterData]);
+  }, [isOpen, organizationId, fetchFooterData]); // Remove session?.access_token dependency
 
   const saveFooterStyle = useCallback(async (organizationId: string, style: string) => {
     setIsSaving(true);
