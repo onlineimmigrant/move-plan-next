@@ -377,8 +377,8 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                 {/* Code block copy functionality */}
                 <CodeBlockCopy />
                 
-                {/* Mobile TOC - Below Content */}
-                {toc.length > 0 && (
+                {/* Mobile TOC - Below Content - Client-side only to prevent hydration mismatch */}
+                {isMounted && toc.length > 0 && (
                   <div className="lg:hidden mt-12 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

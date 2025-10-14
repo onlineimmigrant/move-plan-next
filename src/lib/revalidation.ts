@@ -27,25 +27,14 @@ interface RevalidationResponse {
  */
 export async function revalidateCache(options: RevalidationOptions): Promise<RevalidationResponse> {
   try {
-    const secret = process.env.NEXT_PUBLIC_REVALIDATION_SECRET;
-    
-    if (!secret) {
-      console.warn('⚠️ NEXT_PUBLIC_REVALIDATION_SECRET not configured - revalidation skipped');
-      return {
-        success: false,
-        message: 'Revalidation secret not configured'
-      };
-    }
-
+    // Note: We don't send a secret from client-side for security reasons
+    // The API route should validate the user's session instead
     const response = await fetch('/api/revalidate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...options,
-        secret,
-      }),
+      body: JSON.stringify(options),
     });
 
     if (!response.ok) {

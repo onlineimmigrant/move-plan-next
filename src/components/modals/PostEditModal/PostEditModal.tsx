@@ -7,6 +7,7 @@ import { InformationCircleIcon } from '@heroicons/react/24/outline';
 import PostEditor from '@/components/PostPage/PostEditor';
 import { useRouter } from 'next/navigation';
 import { BaseModal } from '@/components/modals/_shared';
+import { revalidatePage } from '@/lib/revalidation';
 
 // Utility function to generate slug from title
 const generateSlug = (title: string): string => {
@@ -353,6 +354,12 @@ export default function PostEditModal() {
       if (updatePost) {
         updatePost(savedPost);
       }
+      
+      // Trigger cache revalidation for instant updates in production
+      const postSlug = savedPost.slug || slug;
+      revalidatePage(postSlug).catch(err => {
+        console.warn('⚠️ Cache revalidation failed (non-critical):', err);
+      });
       
       closeModal();
       
