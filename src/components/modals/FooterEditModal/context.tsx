@@ -44,11 +44,13 @@ interface FooterEditContextType {
   isSaving: boolean;
   organizationId: string | null;
   footerStyle: string;
+  footerStyleFull: any; // Full JSONB object
   menuItems: MenuItem[];
   openModal: (organizationId: string) => void;
   closeModal: () => void;
   fetchFooterData: (organizationId: string) => Promise<void>;
   saveFooterStyle: (organizationId: string, style: string) => Promise<void>;
+  updateFooterStyleFull: (organizationId: string, styleObject: any) => Promise<void>;
   updateMenuItems: (items: MenuItem[]) => Promise<void>;
   updateMenuItem: (itemId: string, updates: Partial<MenuItem>) => Promise<void>;
   deleteMenuItem: (itemId: string) => Promise<void>;
@@ -393,17 +395,74 @@ export const FooterEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [session, menuItems]);
 
+  const updateFooterStyleFull = useCallback(async (organizationId: string, styleObject: any) => {
+    setIsSaving(true);
+    try {
+      if (!session?.access_token) {
+        throw new Error('No active session found. Please log in again.');
+      }
+
+      console.log('[FooterEditContext] Updating full footer style:', styleObject);
+
+      const response = await fetch(`/api/organizations/${organizationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          settings: {
+            footer_style: styleObject
+          }
+        })
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to update footer style';
+        try {
+          const error = await response.json();
+          errorMessage = error.message || errorMessage;
+        } catch (e) {
+          // Response body is empty or not JSON
+          errorMessage = `${errorMessage} (${response.status} ${response.statusText})`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Update local state
+      setFooterStyleFull(styleObject);
+      if (styleObject.type) {
+        setFooterStyle(styleObject.type);
+      }
+
+      // Revalidate cache
+      await fetch('/api/revalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: `org-${organizationId}` })
+      });
+
+    } catch (error) {
+      console.error('[FooterEditContext] Error updating footer style:', error);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [session]);
+
   const value: FooterEditContextType = {
     isOpen,
     isLoading,
     isSaving,
     organizationId,
     footerStyle,
+    footerStyleFull,
     menuItems,
     openModal,
     closeModal,
     fetchFooterData,
     saveFooterStyle,
+    updateFooterStyleFull,
     updateMenuItems,
     updateMenuItem,
     deleteMenuItem

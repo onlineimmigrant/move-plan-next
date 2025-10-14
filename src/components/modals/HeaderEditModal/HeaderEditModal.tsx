@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/components/Shared/ToastContainer';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import Image from 'next/image';
+import { StyleSettingsPanel } from '../_shared/StyleSettingsPanel';
 import {
   DndContext,
   closestCenter,
@@ -700,10 +701,12 @@ function HeaderEditModal() {
     isSaving,
     organizationId,
     headerStyle,
+    headerStyleFull,
     menuItems,
     closeModal,
     fetchHeaderData,
     saveHeaderStyle,
+    updateHeaderStyleFull,
     updateMenuItems,
     updateMenuItem
   } = useHeaderEdit();
@@ -1080,6 +1083,24 @@ function HeaderEditModal() {
                   ))}
                 </div>
               </div>
+
+              {/* Style Settings Panel */}
+              <StyleSettingsPanel
+                type="header"
+                style={headerStyleFull || selectedStyle}
+                onStyleChange={(newStyle) => {
+                  if (organizationId) {
+                    updateHeaderStyleFull(organizationId, newStyle)
+                      .then(() => {
+                        toast.success('Header style updated successfully');
+                      })
+                      .catch((error) => {
+                        console.error('Failed to update header style:', error);
+                        toast.error('Failed to update header style');
+                      });
+                  }
+                }}
+              />
 
               {/* Menu Items */}
               <div>

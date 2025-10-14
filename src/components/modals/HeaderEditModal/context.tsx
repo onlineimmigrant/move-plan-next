@@ -44,11 +44,13 @@ interface HeaderEditContextType {
   isSaving: boolean;
   organizationId: string | null;
   headerStyle: string;
+  headerStyleFull: any; // Full JSONB object
   menuItems: MenuItem[];
   openModal: (organizationId: string) => void;
   closeModal: () => void;
   fetchHeaderData: (organizationId: string) => Promise<void>;
   saveHeaderStyle: (organizationId: string, style: string) => Promise<void>;
+  updateHeaderStyleFull: (organizationId: string, styleObject: any) => Promise<void>;
   updateMenuItems: (items: MenuItem[]) => Promise<void>;
   updateMenuItem: (itemId: string, updates: Partial<MenuItem>) => Promise<void>;
   deleteMenuItem: (itemId: string) => Promise<void>;
@@ -395,17 +397,74 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [session, menuItems]);
 
+  const updateHeaderStyleFull = useCallback(async (organizationId: string, styleObject: any) => {
+    setIsSaving(true);
+    try {
+      if (!session?.access_token) {
+        throw new Error('No active session found. Please log in again.');
+      }
+
+      console.log('[HeaderEditContext] Updating full header style:', styleObject);
+
+      const response = await fetch(`/api/organizations/${organizationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          settings: {
+            header_style: styleObject
+          }
+        })
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to update header style';
+        try {
+          const error = await response.json();
+          errorMessage = error.message || errorMessage;
+        } catch (e) {
+          // Response body is empty or not JSON
+          errorMessage = `${errorMessage} (${response.status} ${response.statusText})`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Update local state
+      setHeaderStyleFull(styleObject);
+      if (styleObject.type) {
+        setHeaderStyle(styleObject.type);
+      }
+
+      // Revalidate cache
+      await fetch('/api/revalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: `org-${organizationId}` })
+      });
+
+    } catch (error) {
+      console.error('[HeaderEditContext] Error updating header style:', error);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [session]);
+
   const value: HeaderEditContextType = {
     isOpen,
     isLoading,
     isSaving,
     organizationId,
     headerStyle,
+    headerStyleFull,
     menuItems,
     openModal,
     closeModal,
     fetchHeaderData,
     saveHeaderStyle,
+    updateHeaderStyleFull,
     updateMenuItems,
     updateMenuItem,
     deleteMenuItem

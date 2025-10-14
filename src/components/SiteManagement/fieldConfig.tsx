@@ -336,9 +336,7 @@ export const sectionsConfig: SectionConfig[] = [
         key: 'header-settings',
         columns: 2,
         fields: [
-          { name: 'header_style', label: 'Header Style', type: 'select', options: headerStyleOptions },
-          { name: 'menu_width', label: 'Menu Width', type: 'select', options: menuWidthOptions },
-          { name: 'menu_items_are_text', label: 'Text-only Menu Items', type: 'checkbox' }
+          { name: 'header_style', label: 'Header Style', type: 'select', options: headerStyleOptions }
         ]
       },
       {

@@ -38,6 +38,7 @@ export interface FooterStyle {
   color?: string;
   color_hover?: string;
   background?: string;
+  menu_width?: MenuWidth;       // 🆕 Menu width support
   is_gradient?: boolean;        // 🆕 Gradient support
   gradient?: GradientStyle;      // 🆕 Gradient colors
 }
@@ -58,8 +59,6 @@ export interface Settings {
   id: number;
   organization_id: string;
   image: string;
-  menu_width: string;
-  menu_items_are_text: boolean;
   header_style: HeaderStyle | string; // Support both JSONB object and legacy string
   footer_style: FooterStyle | string; // Support both JSONB object and legacy string
   favicon: string | null;

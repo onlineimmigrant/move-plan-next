@@ -70,7 +70,6 @@ export interface Settings {
   // Layout & Design (settings table)
   header_style?: string;
   footer_style?: string;
-  menu_width?: string;
   font_family?: string;
   
   // Images (settings table)

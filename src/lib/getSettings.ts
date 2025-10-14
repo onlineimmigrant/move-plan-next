@@ -202,8 +202,6 @@ export function getDefaultSettings(): Settings {
     site: 'App', // Always provide a valid string
     image: '/images/logo.svg',
     organization_id: '',
-    menu_width: '7xl',
-    menu_items_are_text: true,
     header_style: {
       type: 'default',
       background: 'white',
@@ -216,7 +214,8 @@ export function getDefaultSettings(): Settings {
       type: 'default',
       background: 'neutral-900',
       color: 'neutral-400',
-      color_hover: 'white'
+      color_hover: 'white',
+      menu_width: '7xl'
     },
     favicon: '/images/favicon.ico',
     seo_title: null,
@@ -276,8 +275,6 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
         site,
         image,
         organization_id,
-        menu_width,
-        menu_items_are_text,
         header_style,
         footer_style,
         favicon,
@@ -309,8 +306,6 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       site: data.site,
       image: data.image,
       organization_id: data.organization_id ?? organizationId,
-      menu_width: data.menu_width,
-      menu_items_are_text: data.menu_items_are_text,
       header_style: data.header_style,
       footer_style: data.footer_style,
       favicon: data.favicon ?? null,

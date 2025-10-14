@@ -195,7 +195,6 @@ export default function EditModal({
         secondary_color: 'gray',
         header_style: 'default',
         footer_style: 'gray',
-        menu_width: '280px',
         font_family: '',
         image: null,
         favicon: null,

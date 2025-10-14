@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/components/Shared/ToastContainer';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import Image from 'next/image';
+import { StyleSettingsPanel } from '../_shared/StyleSettingsPanel';
 import {
   DndContext,
   closestCenter,
@@ -700,10 +701,12 @@ function FooterEditModal() {
     isSaving,
     organizationId,
     footerStyle,
+    footerStyleFull,
     menuItems,
     closeModal,
     fetchFooterData,
     saveFooterStyle,
+    updateFooterStyleFull,
     updateMenuItems,
     updateMenuItem
   } = useFooterEdit();
@@ -1080,6 +1083,24 @@ function FooterEditModal() {
                   ))}
                 </div>
               </div>
+
+              {/* Style Settings Panel */}
+              <StyleSettingsPanel
+                type="footer"
+                style={footerStyleFull || selectedStyle}
+                onStyleChange={(newStyle) => {
+                  if (organizationId) {
+                    updateFooterStyleFull(organizationId, newStyle)
+                      .then(() => {
+                        toast.success('Footer style updated successfully');
+                      })
+                      .catch((error) => {
+                        console.error('Failed to update footer style:', error);
+                        toast.error('Failed to update footer style');
+                      });
+                  }
+                }}
+              />
 
               {/* Menu Items */}
               <div>

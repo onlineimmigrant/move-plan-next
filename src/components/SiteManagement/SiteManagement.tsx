@@ -982,7 +982,6 @@ export default function SiteManagement() {
           // Layout & Design (settings table)
           header_style: data.settings?.header_style || { type: 'default', background: 'white', color: 'gray-700', color_hover: 'gray-900', menu_width: '7xl', menu_items_are_text: true },
           footer_style: data.settings?.footer_style || { type: 'default', background: 'neutral-900', color: 'neutral-400', color_hover: 'white' },
-          menu_width: data.settings?.menu_width || '280px',
           font_family: data.settings?.font_family || 'Inter',
           
           // Images (settings table)
@@ -1042,7 +1041,9 @@ export default function SiteManagement() {
           // Legacy fields for compatibility
           domain: data.settings?.domain || '',
           billing_panel_stripe: data.settings?.billing_panel_stripe || '',
-          menu_items_are_text: data.settings?.menu_items_are_text || false,
+          menu_items_are_text: typeof data.settings?.header_style === 'object' && data.settings.header_style !== null 
+            ? (data.settings.header_style as any).menu_items_are_text ?? false
+            : false,
           seo_og_image: data.settings?.seo_og_image || '',
           seo_twitter_card: data.settings?.seo_twitter_card || 'summary',
           
@@ -1290,7 +1291,6 @@ export default function SiteManagement() {
             secondary_color: refreshData.settings?.secondary_color || 'gray',
             header_style: refreshData.settings?.header_style || { type: 'default', background: 'white', color: 'gray-700', color_hover: 'gray-900', menu_width: '7xl', menu_items_are_text: true },
             footer_style: refreshData.settings?.footer_style || { type: 'default', background: 'neutral-900', color: 'neutral-400', color_hover: 'white' },
-            menu_width: refreshData.settings?.menu_width || '280px',
             font_family: refreshData.settings?.font_family || 'Inter',
             image: refreshData.settings?.image || refreshData.settings?.logo_url || null,
             favicon: refreshData.settings?.favicon || refreshData.settings?.favicon_url || null,

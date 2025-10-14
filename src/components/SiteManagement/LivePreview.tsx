@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ComputerDesktopIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
 import { Settings } from './types';
-import { HeaderStyle } from '@/types/settings';
+import { HeaderStyle, FooterStyle } from '@/types/settings';
 
 interface LivePreviewProps {
   settings: Settings;
@@ -92,13 +92,16 @@ export default function LivePreview({
           if (settings.image) {
             url.searchParams.set('preview_logo_url', settings.image);
           }
-          // Use menu_width from header_style JSONB, fallback to old field for backward compatibility
+          // Use menu_width from header_style JSONB or footer_style JSONB
           let menuWidth: string | undefined;
           if (typeof settings.header_style === 'object' && settings.header_style !== null) {
             const headerStyle = settings.header_style as HeaderStyle;
             menuWidth = headerStyle.menu_width;
-          } else {
-            menuWidth = settings.menu_width;
+          }
+          // Fallback to footer_style.menu_width if header doesn't have it
+          if (!menuWidth && typeof settings.footer_style === 'object' && settings.footer_style !== null) {
+            const footerStyle = settings.footer_style as FooterStyle;
+            menuWidth = footerStyle.menu_width;
           }
           if (menuWidth) {
             url.searchParams.set('preview_menu_width', menuWidth);
