@@ -2,17 +2,27 @@
 
 ## Problem
 
-The HeaderEditModal, FooterEditModal, and LayoutManagerModal were failing to work on production (Vercel) with errors:
+The HeaderEditModal, FooterEditModal, LayoutManagerModal, and GlobalSettingsModal were failing to work on production (Vercel) with errors:
+
 ```
 Error fetching organization by baseUrl
-Error fetching organization by tenantId
+Error fetching organization by tenantId: 
+{
+  code: "42703",
+  message: "column organizations.tenant_id does not exist",
+  tenantId: "16d2b7bb-f4c7-41ce-b6e2-8f532ceaa5df"
+}
 ```
 
-The modals worked fine on local machines but failed in production due to a race condition with session loading.
+```
+Error loading organization and settings: Error: Organization not found for current domain
+```
 
-## Root Cause
+The modals worked fine on local machines but failed in production.
 
-### Issue 1: Session Race Condition
+## Root Causes
+
+### Issue 1: Session Race Condition (HeaderEditModal, FooterEditModal)
 
 The modals had a `useEffect` that depended on `session?.access_token`:
 
@@ -53,9 +63,37 @@ const fetchHeaderData = useCallback(async (organizationId: string) => {
 
 **Problem**: The `session` state variable might be stale or null when the function is called.
 
+### Issue 2: Non-Existent Database Column (All Modals + GlobalSettingsModal)
+
+The `getOrganizationId()` function in `/src/lib/supabase.ts` was querying a non-existent column:
+
+```typescript
+// BROKEN CODE
+const { data: tenantData, error: tenantError } = await supabase
+  .from('organizations')
+  .select('id, type')
+  .eq('tenant_id', tenantId)  // ❌ Column doesn't exist!
+  .single();
+```
+
+**Problem**: The `organizations` table schema is:
+```sql
+CREATE TABLE organizations (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255),
+    type VARCHAR(50),
+    base_url TEXT,
+    base_url_local TEXT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+```
+
+There is **NO `tenant_id` column**. The `NEXT_PUBLIC_TENANT_ID` environment variable should be treated as the organization **ID** directly, not as a separate lookup field.
+
 ## Solution
 
-Following the pattern from **HeroSectionModal** (which works correctly), we:
+### Fix 1: Session Race Condition (HeaderEditModal, FooterEditModal)
 
 1. **Get fresh session inside each fetch function** instead of relying on state
 2. **Remove session dependency** from useEffect
@@ -137,11 +175,49 @@ The LayoutManagerModal doesn't use authentication because:
 - No Authorization header needed
 - Works fine as-is
 
+### Fix 2: Non-Existent Database Column (getOrganizationId)
+
+Fixed `/src/lib/supabase.ts` to query by `id` instead of non-existent `tenant_id`:
+
+```typescript
+// FIXED CODE
+if (tenantId) {
+  console.log('Attempting fallback with tenantId as organization ID:', tenantId);
+  const { data: tenantData, error: tenantError } = await supabase
+    .from('organizations')
+    .select('id, type')
+    .eq('id', tenantId) // ✅ Query by ID directly
+    .single();
+
+  if (tenantError || !tenantData) {
+    console.error('Error fetching organization by ID (tenantId):', {
+      message: tenantError?.message || 'No error message',
+      code: tenantError?.code || 'No code',
+      details: tenantError?.details || 'No details',
+      hint: tenantError?.hint || 'No hint',
+      tenantId,
+    });
+    return null;
+  }
+
+  console.log('Fetched organization by ID (tenantId):', tenantData.id);
+  return tenantData.id;
+}
+```
+
+**Impact**: This fixes:
+- ✅ HeaderEditModal
+- ✅ FooterEditModal  
+- ✅ LayoutManagerModal
+- ✅ GlobalSettingsModal
+- ✅ All components that use `getOrganizationId()` (40+ usages across the codebase)
+
 ## Testing Checklist
 
 ✅ **Local Testing**:
 - [ ] HeaderEditModal opens and loads data
 - [ ] FooterEditModal opens and loads data
+- [ ] GlobalSettingsModal opens and loads data
 - [ ] Can edit header styles
 - [ ] Can edit footer styles
 - [ ] Can reorder menu items
@@ -150,19 +226,30 @@ The LayoutManagerModal doesn't use authentication because:
 ✅ **Production Testing** (after deployment):
 - [ ] HeaderEditModal opens and loads data on Vercel
 - [ ] FooterEditModal opens and loads data on Vercel  
+- [ ] GlobalSettingsModal opens and loads data on Vercel
 - [ ] Can edit and save changes
-- [ ] No "Error fetching organization" errors
+- [ ] No "Error fetching organization by tenantId" errors
+- [ ] No "column organizations.tenant_id does not exist" errors
+- [ ] No "Organization not found for current domain" errors
 - [ ] Modal data loads consistently
 
 ## Files Modified
 
-1. `/src/components/modals/HeaderEditModal/context.tsx`
+1. `/src/lib/supabase.ts`
+   - Line ~48: Changed `.eq('tenant_id', tenantId)` to `.eq('id', tenantId)`
+   - Updated error messages and console logs
+   - Added comment explaining tenantId IS the organization ID
+
+2. `/src/components/modals/HeaderEditModal/context.tsx`
+   - Line ~110: Added fresh session fetch in `fetchHeaderData`
+   - Line ~155: Updated to use `freshSession.access_token`
+2. `/src/components/modals/HeaderEditModal/context.tsx`
    - Line ~110: Added fresh session fetch in `fetchHeaderData`
    - Line ~155: Updated to use `freshSession.access_token`
    - Line ~188: Removed `session` dependency from useCallback
    - Line ~193: Removed `session?.access_token` from useEffect
 
-2. `/src/components/modals/FooterEditModal/context.tsx`
+3. `/src/components/modals/FooterEditModal/context.tsx`
    - Line ~110: Added fresh session fetch in `fetchFooterData`
    - Line ~157: Updated to use `freshSession.access_token`
    - Line ~186: Removed `session` dependency from useCallback
@@ -170,10 +257,12 @@ The LayoutManagerModal doesn't use authentication because:
 
 ## Related Context
 
-- HeroSectionModal uses session state but doesn't auto-fetch on open
-- LayoutManagerModal doesn't need auth (uses service role)
-- The errors about "baseUrl" and "tenantId" were from the page trying to determine organization, not the modals themselves
+- **HeroSectionModal** uses session state but doesn't auto-fetch on open
+- **LayoutManagerModal** doesn't need auth (uses service role)
+- The `NEXT_PUBLIC_TENANT_ID` env var is the organization ID itself, not a lookup key
+- The organizations table has NO `tenant_id` column
 - Production has slower session loading than localhost, exposing race conditions
+- The `getOrganizationId()` fix impacts 40+ components across the codebase
 
 ## Future Improvements
 

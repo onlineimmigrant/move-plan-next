@@ -39,17 +39,17 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
       baseUrl: currentUrl,
     });
 
-    // Fallback to tenantId if provided
+    // Fallback to tenantId if provided - tenantId IS the organization ID
     if (tenantId) {
-      console.log('Attempting fallback with tenantId:', tenantId);
+      console.log('Attempting fallback with tenantId as organization ID:', tenantId);
       const { data: tenantData, error: tenantError } = await supabase
         .from('organizations')
         .select('id, type')
-        .eq('tenant_id', tenantId)
+        .eq('id', tenantId) // Query by ID directly, not tenant_id
         .single();
 
       if (tenantError || !tenantData) {
-        console.error('Error fetching organization by tenantId:', {
+        console.error('Error fetching organization by ID (tenantId):', {
           message: tenantError?.message || 'No error message',
           code: tenantError?.code || 'No code',
           details: tenantError?.details || 'No details',
@@ -59,7 +59,7 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
         return null;
       }
 
-      console.log('Fetched organization ID by tenantId:', tenantData.id);
+      console.log('Fetched organization by ID (tenantId):', tenantData.id);
       return tenantData.id;
     }
 
