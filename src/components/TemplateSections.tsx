@@ -150,6 +150,68 @@ const TemplateSections: React.FC = () => {
     fetchSections();
   }, [pathname, refreshKey, basePath]); // Added refreshKey and basePath dependencies
 
+  // Listen for template-section-updated events (like Hero component does)
+  useEffect(() => {
+    const handleSectionUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('[TemplateSections] Received template-section-updated event:', customEvent.detail);
+      
+      // Force refresh by clearing cache
+      cachedSections.current.clear();
+      
+      // Trigger re-fetch
+      const fetchSections = async () => {
+        setIsLoading(true);
+        setError(null);
+
+        if (!pathname) {
+          setError('Pathname is undefined');
+          setIsLoading(false);
+          return;
+        }
+
+        const encodedPathname = encodeURIComponent(basePath);
+        const url = `/api/template-sections?url_page=${encodedPathname}`;
+
+        try {
+          const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-store' // Force fresh data
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Failed to fetch template sections: ${response.statusText}`);
+          }
+
+          const data: TemplateSectionData[] = await response.json();
+          console.log('[TemplateSections] Fetched fresh sections after update:', data.length);
+          
+          cachedSections.current.set(basePath, {
+            data,
+            timestamp: Date.now()
+          });
+          setSections(data);
+        } catch (err) {
+          console.error('Error fetching template sections:', err);
+          setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchSections();
+    };
+
+    window.addEventListener('template-section-updated', handleSectionUpdate);
+    window.addEventListener('template-heading-section-updated', handleSectionUpdate);
+
+    return () => {
+      window.removeEventListener('template-section-updated', handleSectionUpdate);
+      window.removeEventListener('template-heading-section-updated', handleSectionUpdate);
+    };
+  }, [pathname, basePath]);
+
   if (isLoading) {
     return (
       <>

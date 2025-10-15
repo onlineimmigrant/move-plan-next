@@ -204,6 +204,11 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         console.warn('⚠️ Cache revalidation failed (non-critical):', err);
       });
       
+      // Dispatch custom event to notify components of updates (like HeroSectionModal does)
+      window.dispatchEvent(new CustomEvent('template-section-updated', { 
+        detail: savedSection 
+      }));
+      
       return savedSection;
     } catch (error) {
       console.error('Error saving section:', error);

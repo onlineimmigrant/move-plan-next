@@ -361,6 +361,11 @@ export default function PostEditModal() {
         console.warn('⚠️ Cache revalidation failed (non-critical):', err);
       });
       
+      // Dispatch custom event to notify components of updates (like HeroSectionModal does)
+      window.dispatchEvent(new CustomEvent('post-updated', { 
+        detail: savedPost 
+      }));
+      
       closeModal();
       
       if (returnUrl) {

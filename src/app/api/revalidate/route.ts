@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     if (paths && Array.isArray(paths)) {
       for (const path of paths) {
         try {
-          revalidatePath(path);
+          revalidatePath(path, 'page');
           console.log(`✅ Revalidated path: ${path}`);
         } catch (error) {
           console.warn(`⚠️ Failed to revalidate path ${path}:`, error);

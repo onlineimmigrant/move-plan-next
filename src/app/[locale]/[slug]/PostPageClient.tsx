@@ -77,6 +77,23 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
     checkAdminStatus();
   }, []);
 
+  // Listen for post-updated events (like Hero component does)
+  useEffect(() => {
+    const handlePostUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('[PostPageClient] Received post-updated event:', customEvent.detail);
+      
+      // Reload the page to fetch fresh post data
+      window.location.reload();
+    };
+
+    window.addEventListener('post-updated', handlePostUpdate);
+
+    return () => {
+      window.removeEventListener('post-updated', handlePostUpdate);
+    };
+  }, []);
+
   // Check if there are any template sections or headings for this page
   useEffect(() => {
     const checkTemplateSections = async () => {
@@ -338,7 +355,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   }
 
   return (
-    <main className="px-4 sm:pt-4 sm:pb-16">
+    <main className="px-4 sm:pt-4 sm:pb-16 bg-white">
       {!isLandingPost ? (
         // Only render the grid if we have content or need to show the empty message
         (shouldShowMainContent || shouldShowNoContentMessage) ? (
@@ -353,7 +370,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
             </aside>
 
             {/* Main Content */}
-            <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900">
+            <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900 bg-white">
               {shouldShowMainContent ? (
                 <>
                   <div
@@ -379,7 +396,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                 
                 {/* Mobile TOC - Below Content - Client-side only to prevent hydration mismatch */}
                 {isMounted && toc.length > 0 && (
-                  <div className="lg:hidden mt-12 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200">
+                  <div className="lg:hidden mt-12 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
