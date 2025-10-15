@@ -146,7 +146,11 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
       console.log('Fetched post:', postData);
       return NextResponse.json(flattenBlogPost(postData), {
         status: 200,
-        headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' },
+        headers: { 
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'CDN-Cache-Control': 'no-store',
+          'Vercel-CDN-Cache-Control': 'no-store',
+        },
       });
     } catch (error) {
       console.error('Error in GET /api/posts/[slug] with fallback:', error);
@@ -187,7 +191,11 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     console.log('Fetched post:', postData);
     return NextResponse.json(flattenBlogPost(postData), {
       status: 200,
-      headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' },
+      headers: { 
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'CDN-Cache-Control': 'no-store',
+        'Vercel-CDN-Cache-Control': 'no-store',
+      },
     });
   } catch (error) {
     console.error('Error in GET /api/posts/[slug]:', error);

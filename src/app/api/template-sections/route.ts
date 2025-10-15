@@ -179,7 +179,9 @@ export async function GET(request: Request) {
     return NextResponse.json(transformedSections, {
       status: 200,
       headers: {
-        'Cache-Control': 's-maxage=3600, stale-while-revalidate',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'CDN-Cache-Control': 'no-store',
+        'Vercel-CDN-Cache-Control': 'no-store',
       },
     });
   } catch (error) {

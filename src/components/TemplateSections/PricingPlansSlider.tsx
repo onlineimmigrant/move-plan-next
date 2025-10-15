@@ -92,7 +92,7 @@ export default function PricingPlansSlider({
 
   return (
     <div className={`pb-48 sm:pb-56 lg:pb-64 ${className}`}>
-      <div className="pt-8 sm:pt-12 border-t border-gray-100 max-w-7xl mx-auto">
+      <div className="pt-8 sm:pt-12  max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4 tracking-[-0.02em] antialiased">
