@@ -373,7 +373,10 @@ export default function PostEditModal() {
       } else if (mode === 'create') {
         router.push(`/${savedPost.slug}`);
       } else {
-        router.refresh();
+        // Force full page reload to show changes in production (like HeroSectionModal)
+        setTimeout(() => {
+          window.location.reload();
+        }, 500); // Small delay to allow modal to close
       }
     } catch (error: any) {
       console.error('Error saving post:', error);

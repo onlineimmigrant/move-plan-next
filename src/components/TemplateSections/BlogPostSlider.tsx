@@ -39,9 +39,22 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
   const autoScrollInterval = useRef<NodeJS.Timeout | null>(null);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Fetch blog posts that should be displayed on first page
   useEffect(() => {
@@ -68,9 +81,9 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
     fetchFeaturedPosts();
   }, [baseUrl]);
 
-  // Auto-scroll functionality
+  // Auto-scroll functionality (disabled on mobile)
   useEffect(() => {
-    if (posts.length <= 1 || isHovered) return;
+    if (posts.length <= 1 || isHovered || isMobile) return;
 
     autoScrollInterval.current = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % posts.length);
@@ -81,7 +94,7 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
         clearInterval(autoScrollInterval.current);
       }
     };
-  }, [posts.length, isHovered]);
+  }, [posts.length, isHovered, isMobile]);
 
   const handlePrevious = () => {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + posts.length) % posts.length);
@@ -135,8 +148,8 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
     backgroundColor.toLowerCase() === 'rgba(255, 255, 255, 1)';
 
   const sectionClassName = shouldUseGradient 
-    ? 'py-16 bg-gradient-to-br from-slate-50 via-white to-blue-50' 
-    : 'py-16';
+    ? 'py-8 md:py-12 bg-gradient-to-br from-slate-50 via-white to-blue-50' 
+    : 'py-8 md:py-12';
 
   return (
     <section className={sectionClassName}>
@@ -168,8 +181,8 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                     className="min-w-full group"
                   >
                     <div className="relative overflow-hidden">
-                      {/* Image Section */}
-                      <div className="relative h-[500px]">
+                      {/* Image Section - Reduced height */}
+                      <div className="relative h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px]">
                         {imageUrl ? (
                           <div className="w-full h-full flex items-center justify-center">
                             <img
@@ -180,28 +193,28 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                           </div>
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center">
-                            <span className="text-8xl">📄</span>
+                            <span className="text-5xl md:text-8xl">📄</span>
                           </div>
                         )}
                       </div>
 
-                      {/* Content Section */}
-                      <div className="p-8 md:p-12">
+                      {/* Content Section - Reduced spacing on mobile */}
+                      <div className="p-4 md:p-8 lg:p-10">
                         <div className="max-w-3xl mx-auto">
                           {post.organization_config?.subsection && (
-                            <span className="inline-block px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-sm font-medium mb-4">
+                            <span className="inline-block px-2.5 py-0.5 md:px-3 md:py-1 bg-sky-100 text-sky-700 rounded-full text-xs md:text-sm font-medium mb-2 md:mb-4">
                               {post.organization_config.subsection}
                             </span>
                           )}
-                          <h3 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 group-hover:text-gray-700 transition-colors">
+                          <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 md:mb-4 group-hover:text-gray-700 transition-colors">
                             {post.title ?? 'Untitled'}
                           </h3>
-                          <p className="text-lg text-gray-600 line-clamp-3">
+                          <p className="text-base md:text-lg text-gray-600 line-clamp-2 md:line-clamp-3">
                             {post.description ?? 'No description available'}
                           </p>
-                          <div className="mt-6 inline-flex items-center text-sky-600 font-medium group-hover:text-sky-700">
+                          <div className="mt-4 md:mt-6 inline-flex items-center text-sky-600 text-sm md:text-base font-medium group-hover:text-sky-700">
                             Read More
-                            <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 md:w-5 md:h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           </div>

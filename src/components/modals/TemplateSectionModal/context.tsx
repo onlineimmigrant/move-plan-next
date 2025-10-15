@@ -209,6 +209,11 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         detail: savedSection 
       }));
       
+      // For new sections, reload page (like HeroSectionModal does for creates)
+      if (mode === 'create') {
+        window.location.reload();
+      }
+      
       return savedSection;
     } catch (error) {
       console.error('Error saving section:', error);

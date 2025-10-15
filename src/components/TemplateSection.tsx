@@ -326,9 +326,9 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
     }
   };
 
-  // Auto-play effect
+  // Auto-play effect (disabled on mobile)
   useEffect(() => {
-    if (section.is_slider && isAutoPlaying && totalDots > 1) {
+    if (section.is_slider && isAutoPlaying && totalDots > 1 && !isMobile) {
       autoPlayInterval.current = setInterval(() => {
         nextSlide();
       }, 5000); // Change slide every 5 seconds
@@ -339,7 +339,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
         }
       };
     }
-  }, [section.is_slider, isAutoPlaying, totalDots, nextSlide]); // Added nextSlide (now stable with useCallback)
+  }, [section.is_slider, isAutoPlaying, totalDots, nextSlide, isMobile]); // Added isMobile dependency
 
   // Pause auto-play on hover
   const handleMouseEnter = () => {
