@@ -122,20 +122,15 @@ export const TemplateHeadingSectionEditProvider: React.FC<TemplateHeadingSection
       // Show success message
       toast.success(mode === 'create' ? 'Heading section created successfully!' : 'Heading section updated successfully!');
       
-      // Trigger cache revalidation for instant updates in production
-      revalidateHomepage(savedSection.organization_id || undefined).catch(err => {
-        console.warn('⚠️ Cache revalidation failed (non-critical):', err);
-      });
-      
-      // Dispatch custom event to notify components of updates (like HeroSectionModal does)
+      // Dispatch custom event to notify components of updates (EXACTLY like HeroSectionModal does)
       window.dispatchEvent(new CustomEvent('template-heading-section-updated', { 
         detail: savedSection 
       }));
       
-      // Force page reload to show changes (like HeroSectionModal does)
-      setTimeout(() => {
-        window.location.reload();
-      }, 500); // Small delay to allow toast to show
+      // Trigger cache revalidation for instant updates in production
+      revalidateHomepage(savedSection.organization_id || undefined).catch(err => {
+        console.warn('⚠️ Cache revalidation failed (non-critical):', err);
+      });
       
       return savedSection;
     } catch (error) {

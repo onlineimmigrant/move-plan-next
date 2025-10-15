@@ -150,57 +150,46 @@ const TemplateSections: React.FC = () => {
     fetchSections();
   }, [pathname, refreshKey, basePath]); // Added refreshKey and basePath dependencies
 
-  // Listen for template-section-updated events (like Hero component does)
+  // Listen for template-section-updated events (EXACTLY like Hero component does)
   useEffect(() => {
-    const handleSectionUpdate = (event: Event) => {
+    const handleSectionUpdate = async (event: Event) => {
       const customEvent = event as CustomEvent;
       console.log('[TemplateSections] Received template-section-updated event:', customEvent.detail);
       
-      // Force refresh by clearing cache
-      cachedSections.current.clear();
+      // Fetch fresh data from API to ensure we have the latest (EXACTLY like Hero does)
+      if (!pathname) return;
       
-      // Trigger re-fetch
-      const fetchSections = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        if (!pathname) {
-          setError('Pathname is undefined');
-          setIsLoading(false);
-          return;
-        }
-
+      try {
         const encodedPathname = encodeURIComponent(basePath);
-        const url = `/api/template-sections?url_page=${encodedPathname}`;
-
-        try {
-          const response = await fetch(url, {
-            method: 'GET',
-            cache: 'no-store' // Force fresh data
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Failed to fetch template sections: ${response.statusText}`);
+        const url = `/api/template-sections?url_page=${encodedPathname}&t=${Date.now()}`; // Add timestamp to bypass cache
+        
+        console.log('[TemplateSections] Fetching fresh sections after update from:', url);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          cache: 'no-store', // Force fresh data
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
           }
+        });
 
+        if (response.ok) {
           const data: TemplateSectionData[] = await response.json();
           console.log('[TemplateSections] Fetched fresh sections after update:', data.length);
           
+          // Update client-side cache with fresh data
           cachedSections.current.set(basePath, {
             data,
             timestamp: Date.now()
           });
           setSections(data);
-        } catch (err) {
-          console.error('Error fetching template sections:', err);
-          setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        } finally {
-          setIsLoading(false);
+        } else {
+          console.error('[TemplateSections] Failed to fetch updated sections:', response.status);
         }
-      };
-
-      fetchSections();
+      } catch (err) {
+        console.error('[TemplateSections] Error fetching updated sections:', err);
+      }
     };
 
     window.addEventListener('template-section-updated', handleSectionUpdate);

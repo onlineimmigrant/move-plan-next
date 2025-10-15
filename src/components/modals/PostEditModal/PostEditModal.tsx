@@ -355,16 +355,16 @@ export default function PostEditModal() {
         updatePost(savedPost);
       }
       
+      // Dispatch custom event to notify components of updates (EXACTLY like HeroSectionModal does)
+      window.dispatchEvent(new CustomEvent('post-updated', { 
+        detail: savedPost 
+      }));
+      
       // Trigger cache revalidation for instant updates in production
       const postSlug = savedPost.slug || slug;
       revalidatePage(postSlug).catch(err => {
         console.warn('⚠️ Cache revalidation failed (non-critical):', err);
       });
-      
-      // Dispatch custom event to notify components of updates (like HeroSectionModal does)
-      window.dispatchEvent(new CustomEvent('post-updated', { 
-        detail: savedPost 
-      }));
       
       closeModal();
       
@@ -373,10 +373,8 @@ export default function PostEditModal() {
       } else if (mode === 'create') {
         router.push(`/${savedPost.slug}`);
       } else {
-        // Force full page reload to show changes in production (like HeroSectionModal)
-        setTimeout(() => {
-          window.location.reload();
-        }, 500); // Small delay to allow modal to close
+        // For post updates, the event listener in PostPageClient will handle the reload
+        // This matches the Hero pattern where the component handles the update
       }
     } catch (error: any) {
       console.error('Error saving post:', error);
