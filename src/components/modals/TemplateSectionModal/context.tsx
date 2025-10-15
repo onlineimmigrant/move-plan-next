@@ -209,10 +209,10 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         detail: savedSection 
       }));
       
-      // For new sections, reload page (like HeroSectionModal does for creates)
-      if (mode === 'create') {
+      // Force page reload to show changes (like HeroSectionModal does)
+      setTimeout(() => {
         window.location.reload();
-      }
+      }, 500); // Small delay to allow toast to show
       
       return savedSection;
     } catch (error) {

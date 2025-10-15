@@ -152,55 +152,55 @@ const TemplateSections: React.FC = () => {
 
   // Listen for template-section-updated events (like Hero component does)
   useEffect(() => {
-    const handleSectionUpdate = async (event: Event) => {
+    const handleSectionUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
       console.log('[TemplateSections] Received template-section-updated event:', customEvent.detail);
       
       // Force refresh by clearing cache
       cachedSections.current.clear();
       
-      // Fetch fresh data like Hero component does
-      setIsLoading(true);
-      setError(null);
+      // Trigger re-fetch
+      const fetchSections = async () => {
+        setIsLoading(true);
+        setError(null);
 
-      if (!pathname) {
-        setError('Pathname is undefined');
-        setIsLoading(false);
-        return;
-      }
-
-      const encodedPathname = encodeURIComponent(basePath);
-      // Add timestamp to bypass cache (like Hero does with fresh API call)
-      const url = `/api/template-sections?url_page=${encodedPathname}&_t=${Date.now()}`;
-
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          cache: 'no-store', // Force fresh data
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
-          }
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(`Failed to fetch template sections: ${response.statusText}`);
+        if (!pathname) {
+          setError('Pathname is undefined');
+          setIsLoading(false);
+          return;
         }
 
-        const data: TemplateSectionData[] = await response.json();
-        console.log('[TemplateSections] Fetched fresh sections after update:', data.length);
-        
-        cachedSections.current.set(basePath, {
-          data,
-          timestamp: Date.now()
-        });
-        setSections(data);
-      } catch (err) {
-        console.error('Error fetching template sections:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setIsLoading(false);
-      }
+        const encodedPathname = encodeURIComponent(basePath);
+        const url = `/api/template-sections?url_page=${encodedPathname}`;
+
+        try {
+          const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-store' // Force fresh data
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Failed to fetch template sections: ${response.statusText}`);
+          }
+
+          const data: TemplateSectionData[] = await response.json();
+          console.log('[TemplateSections] Fetched fresh sections after update:', data.length);
+          
+          cachedSections.current.set(basePath, {
+            data,
+            timestamp: Date.now()
+          });
+          setSections(data);
+        } catch (err) {
+          console.error('Error fetching template sections:', err);
+          setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchSections();
     };
 
     window.addEventListener('template-section-updated', handleSectionUpdate);
