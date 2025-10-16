@@ -45,9 +45,10 @@ interface PostHeaderProps {
   };
   isAdmin?: boolean;
   showAdminButtons?: boolean;
+  minimal?: boolean; // Hide description and subsection for minimal type
 }
 
-const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminButtons }) => {
+const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminButtons, minimal = false }) => {
   const { settings } = useSettings();
 
   // Memoize computed values
@@ -82,18 +83,22 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
 
   return (
     <div className="post-header relative">
-      {/* Section and Subsection */}
-      <div className={`flex justify-between items-center text-${textColorHover} ${textSizeHeadings} font-light tracking-tight`}>
-        <Link href="#">
-          <p>{post.section}</p>
-        </Link>
-      </div>
-      <Link href={subsectionUrl}>
-        <span className="flex transition-all transition-300 group items-center mt-2 font-medium text-xs text-sky-500 tracking-widest hover:underline">
-          {post.subsection}
-          <RightArrowDynamic />
-        </span>
-      </Link>
+      {/* Section and Subsection - Hide subsection for minimal */}
+      {!minimal && (
+        <>
+          <div className={`flex justify-between items-center text-${textColorHover} ${textSizeHeadings} font-light tracking-tight`}>
+            <Link href="#">
+              <p>{post.section}</p>
+            </Link>
+          </div>
+          <Link href={subsectionUrl}>
+            <span className="flex transition-all transition-300 group items-center mt-2 font-medium text-xs text-sky-500 tracking-widest hover:underline">
+              {post.subsection}
+              <RightArrowDynamic />
+            </span>
+          </Link>
+        </>
+      )}
 
       {/* Title */}
       <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl font-nunito">
@@ -119,8 +124,10 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
         )}
       </div>
 
-      {/* Description */}
-      <p className="text-xl sm:text-2xl text-gray-700 mt-6 mb-8">{post.description}</p>
+      {/* Description - Hide for minimal */}
+      {!minimal && (
+        <p className="text-xl sm:text-2xl text-gray-700 mt-6 mb-8">{post.description}</p>
+      )}
 
       {/* Optional Divider */}
       <hr className="border-gray-200 mb-8" />

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo, useCallback, lazy, useRef } from 'react';
 import Image from 'next/image';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
-import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { useBasket } from '@/context/BasketContext';
 import { useAuth } from '@/context/AuthContext';
@@ -14,10 +13,10 @@ import LocalizedLink from './LocalizedLink';
 import { useHeaderTranslations } from './header/useHeaderTranslations';
 import { isAdminClient } from '@/lib/auth';
 
-// Dynamic imports for better code splitting
-const LoginModal = dynamic(() => import('./LoginModal'), { ssr: false });
-const ContactModal = dynamic(() => import('./contact/ContactModal'), { ssr: false });
-const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'), { ssr: false });
+// Direct imports since Header is already a client component
+import LoginModal from './LoginModal';
+import ContactModal from './contact/ContactModal';
+import ModernLanguageSwitcher from './ModernLanguageSwitcher';
 
 // Import all available Heroicons dynamically
 import * as HeroIcons from '@heroicons/react/24/outline';

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/AuthContext'; // Verify this export exists
 import { BasketProvider } from '@/context/BasketContext'; // Verify this export exists
@@ -40,17 +40,10 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import ChatHelpWidget from '@/components/ChatHelpWidget';
 
-// Dynamic import for CookieBanner - loaded only when needed
-const CookieBanner = dynamic(() => import('@/components/cookie/CookieBanner'), {
-  ssr: false,
-  loading: () => null,
-});
+// Create lazy wrapper components to avoid SSR bailout error
+import CookieBannerComponent from '@/components/cookie/CookieBanner';
+import CookieSettingsComponent from '@/components/cookie/CookieSettings';
 
-// Dynamic import for CookieSettings - loaded only when opened from Footer
-const CookieSettings = dynamic(() => import('@/components/cookie/CookieSettings'), {
-  ssr: false,
-  loading: () => null,
-});
 import UniversalNewButton from '@/components/AdminQuickActions/UniversalNewButton';
 import CommandPalette from '@/components/AdminQuickActions/CommandPalette';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
@@ -76,7 +69,7 @@ function StandaloneCookieSettings({
   if (!showSettings) return null;
   
   return (
-    <CookieSettings
+    <CookieSettingsComponent
       closeSettings={() => setShowSettings(false)}
       headerData={headerData}
       activeLanguages={activeLanguages}
@@ -279,18 +272,22 @@ export default function ClientProviders({
                               />
                               {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
                               {showCookieBanner && (
-                                <CookieBanner 
-                                  headerData={headerData} 
-                                  activeLanguages={activeLanguages}
-                                  categories={cookieCategories}
-                                />
+                                <Suspense fallback={null}>
+                                  <CookieBannerComponent 
+                                    headerData={headerData} 
+                                    activeLanguages={activeLanguages}
+                                    categories={cookieCategories}
+                                  />
+                                </Suspense>
                               )}
                               {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
-                              <StandaloneCookieSettings 
-                                headerData={headerData}
-                                activeLanguages={activeLanguages}
-                                cookieCategories={cookieCategories}
-                              />
+                              <Suspense fallback={null}>
+                                <StandaloneCookieSettings 
+                                  headerData={headerData}
+                                  activeLanguages={activeLanguages}
+                                  cookieCategories={cookieCategories}
+                                />
+                              </Suspense>
                             </CookieSettingsProvider>
                             <PostEditModal />
                             <TemplateSectionEditModal />

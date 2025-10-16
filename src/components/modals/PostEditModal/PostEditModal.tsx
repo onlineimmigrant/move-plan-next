@@ -3,11 +3,20 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePostEditModal } from './context';
-import { InformationCircleIcon } from '@heroicons/react/24/outline';
+import { InformationCircleIcon, PencilIcon } from '@heroicons/react/24/outline';
 import PostEditor from '@/components/PostPage/PostEditor';
 import { useRouter } from 'next/navigation';
 import { BaseModal } from '@/components/modals/_shared';
 import { revalidatePage } from '@/lib/revalidation';
+import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
+import Image from 'next/image';
+import TOC from '@/components/PostPage/TOC';
+
+interface TOCItem {
+  tag_name: string;
+  tag_text: string;
+  tag_id: string;
+}
 
 // Utility function to generate slug from title
 const generateSlug = (title: string): string => {
@@ -66,7 +75,6 @@ export default function PostEditModal() {
   const [slug, setSlug] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [mainPhoto, setMainPhoto] = useState('');
-  const [secondaryPhoto, setSecondaryPhoto] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [order, setOrder] = useState('');
   const [helpCenterOrder, setHelpCenterOrder] = useState('');
@@ -75,15 +83,81 @@ export default function PostEditModal() {
   const [isCompanyAuthor, setIsCompanyAuthor] = useState(false);
   const [displayAsBlogPost, setDisplayAsBlogPost] = useState(true);
   const [isHelpCenter, setIsHelpCenter] = useState(false);
+  const [postType, setPostType] = useState<'default' | 'minimal' | 'landing'>('default');
   const [createdOn, setCreatedOn] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
+  const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
+  const [toc, setToc] = useState<TOCItem[]>([]);
+  const [isCodeView, setIsCodeView] = useState(false);
   const autoSaveRef = useRef<NodeJS.Timeout>();
   const lastSaveRef = useRef<number>(0);
+  const editorContentRef = useRef<HTMLDivElement>(null);
+  const initialLoadRef = useRef<boolean>(true); // Track if this is initial load
 
   // Computed value for isLandingPage
   const isLandingPage = section === 'Landing';
+
+  // Extract TOC from content
+  useEffect(() => {
+    if (!content || !isFullScreen) {
+      setToc([]);
+      return;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    
+    const tocItems: TOCItem[] = Array.from(headings).map((heading, index) => {
+      const text = heading.textContent || '';
+      const tagName = heading.tagName.toLowerCase();
+      // Generate ID if it doesn't exist
+      const id = heading.id || `heading-${index}`;
+      
+      return {
+        tag_name: tagName,
+        tag_text: text,
+        tag_id: id,
+      };
+    });
+    
+    setToc(tocItems);
+  }, [content, isFullScreen]);
+
+  // Handle TOC scroll - scroll to heading in editor
+  const handleScrollTo = useCallback((id: string) => {
+    // Find the editor's ProseMirror content area
+    const editorContent = document.querySelector('.ProseMirror');
+    if (!editorContent) return;
+
+    // Find the heading with the matching ID or text content
+    const headings = editorContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    let targetHeading: Element | null = null;
+
+    // First try to find by ID
+    targetHeading = editorContent.querySelector(`#${CSS.escape(id)}`);
+
+    // If not found by ID, try to find by matching text
+    if (!targetHeading) {
+      const tocItem = toc.find(item => item.tag_id === id);
+      if (tocItem) {
+        targetHeading = Array.from(headings).find(h => 
+          h.textContent?.trim() === tocItem.tag_text.trim()
+        ) || null;
+      }
+    }
+
+    if (targetHeading) {
+      targetHeading.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Optional: highlight the heading briefly
+      targetHeading.classList.add('ring-2', 'ring-sky-500', 'rounded');
+      setTimeout(() => {
+        targetHeading?.classList.remove('ring-2', 'ring-sky-500', 'rounded');
+      }, 2000);
+    }
+  }, [toc]);
 
   // Initialize form data when modal opens
   useEffect(() => {
@@ -92,14 +166,19 @@ export default function PostEditModal() {
         const post = editingPost as any;
         setTitle(post.title || '');
         setDescription(post.description || '');
-        setContent(post.content || '');
+        
+        // Only update content on initial load, not when editingPost updates after save
+        if (initialLoadRef.current) {
+          setContent(post.content || '');
+          initialLoadRef.current = false;
+        }
+        
         // Handle both flat and JSONB formats for backward compatibility
         setSection(post.section || post.organization_config?.section_id?.toString() || '');
         setSubsection(post.subsection || post.organization_config?.subsection || '');
         setSlug(post.slug || '');
         setAuthorName(post.author_name || '');
         setMainPhoto(post.main_photo || post.media_config?.main_photo || '');
-        setSecondaryPhoto(post.secondary_photo || '');
         setMetaDescription(post.metadescription_for_page || '');
         setOrder(post.order?.toString() || post.organization_config?.order?.toString() || '');
         setHelpCenterOrder(post.help_center_order?.toString() || post.display_config?.help_center_order?.toString() || '');
@@ -108,7 +187,13 @@ export default function PostEditModal() {
         setIsCompanyAuthor(post.is_company_author ?? post.author_config?.is_company_author ?? false);
         setDisplayAsBlogPost(post.display_as_blog_post ?? post.display_config?.display_as_blog_post ?? true);
         setIsHelpCenter(post.is_help_center ?? post.display_config?.is_help_center ?? false);
+        setPostType(post.display_config?.type || 'default');
         setCreatedOn(post.created_on || '');
+        
+        // Set isCodeView to true for landing pages to open them in HTML mode
+        if (post.display_config?.type === 'landing') {
+          setIsCodeView(true);
+        }
       } else if (mode === 'create') {
         // Clear all fields for create mode
         setTitle('');
@@ -119,7 +204,6 @@ export default function PostEditModal() {
         setSlug('');
         setAuthorName('');
         setMainPhoto('');
-        setSecondaryPhoto('');
         setMetaDescription('');
         setOrder('');
         setHelpCenterOrder('');
@@ -128,11 +212,13 @@ export default function PostEditModal() {
         setIsCompanyAuthor(false);
         setDisplayAsBlogPost(true);
         setIsHelpCenter(false);
+        setPostType('default');
         setCreatedOn(new Date().toISOString());
+        initialLoadRef.current = false;
       }
       setIsDirty(false);
     } else {
-      // Clear all fields when modal closes
+      // Clear all fields when modal closes and reset initial load flag
       setTitle('');
       setDescription('');
       setContent('');
@@ -141,7 +227,6 @@ export default function PostEditModal() {
       setSlug('');
       setAuthorName('');
       setMainPhoto('');
-      setSecondaryPhoto('');
       setMetaDescription('');
       setOrder('');
       setHelpCenterOrder('');
@@ -150,10 +235,20 @@ export default function PostEditModal() {
       setIsCompanyAuthor(false);
       setDisplayAsBlogPost(true);
       setIsHelpCenter(false);
+      setPostType('default');
       setCreatedOn('');
       setIsDirty(false);
+      setIsCodeView(false); // Reset to visual mode when closing
+      initialLoadRef.current = true; // Reset for next open
     }
   }, [isOpen, mode, editingPost]);
+
+  // Automatically switch to HTML mode when post type is changed to 'landing'
+  useEffect(() => {
+    if (postType === 'landing') {
+      setIsCodeView(true);
+    }
+  }, [postType]);
 
   // Auto-generate slug from title in create mode
   useEffect(() => {
@@ -176,7 +271,6 @@ export default function PostEditModal() {
       slug,
       authorName,
       mainPhoto,
-      secondaryPhoto,
       metaDescription,
       order,
       helpCenterOrder,
@@ -185,13 +279,14 @@ export default function PostEditModal() {
       isCompanyAuthor,
       displayAsBlogPost,
       isHelpCenter,
+      postType,
       createdOn,
       timestamp: Date.now(),
       postId: editingPost?.id,
     };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
     lastSaveRef.current = Date.now();
-  }, [title, description, content, section, subsection, slug, authorName, mainPhoto, secondaryPhoto, metaDescription, order, helpCenterOrder, displayThisPost, isDisplayedFirstPage, isCompanyAuthor, displayAsBlogPost, isHelpCenter, createdOn, editingPost?.id]);
+  }, [title, description, content, section, subsection, slug, authorName, mainPhoto, metaDescription, order, helpCenterOrder, displayThisPost, isDisplayedFirstPage, isCompanyAuthor, displayAsBlogPost, isHelpCenter, postType, createdOn, editingPost?.id]);
 
   // Set up auto-save interval
   useEffect(() => {
@@ -239,9 +334,6 @@ export default function PostEditModal() {
       case 'mainPhoto':
         setMainPhoto(value as string);
         break;
-      case 'secondaryPhoto':
-        setSecondaryPhoto(value as string);
-        break;
       case 'metaDescription':
         setMetaDescription(value as string);
         break;
@@ -266,6 +358,9 @@ export default function PostEditModal() {
       case 'isHelpCenter':
         setIsHelpCenter(value as boolean);
         break;
+      case 'postType':
+        setPostType(value as 'default' | 'minimal' | 'landing');
+        break;
       case 'createdOn':
         setCreatedOn(value as string);
         break;
@@ -273,7 +368,7 @@ export default function PostEditModal() {
     setIsDirty(true);
   }, []);
 
-  const handleSave = async () => {
+  const handleSaveWithContent = async (contentToSave?: string) => {
     setIsSaving(true);
     
     try {
@@ -282,11 +377,15 @@ export default function PostEditModal() {
         return;
       }
       
+      // Use the content passed from the editor (preserves HTML comments and formatting)
+      // or fall back to the state content
+      const finalContent = contentToSave !== undefined ? contentToSave : content;
+      
       // Build JSONB-structured data for the new API format
       let postData: any = {
         title: title.trim(),
         description: description.trim(),
-        content,
+        content: finalContent,
         // JSONB fields
         display_config: {
           display_this_post: displayThisPost,
@@ -294,6 +393,7 @@ export default function PostEditModal() {
           is_displayed_first_page: isDisplayedFirstPage,
           is_help_center: isHelpCenter,
           help_center_order: helpCenterOrder.trim() ? parseInt(helpCenterOrder) : 0,
+          type: postType,
         },
         organization_config: {
           section_id: section.trim() ? parseInt(section) : null,
@@ -311,7 +411,6 @@ export default function PostEditModal() {
       };
       
       if (authorName.trim()) postData.author_name = authorName.trim();
-      if (secondaryPhoto.trim()) postData.secondary_photo = secondaryPhoto.trim();
       if (metaDescription.trim()) postData.metadescription_for_page = metaDescription.trim();
       if (createdOn) postData.created_on = createdOn;
       
@@ -351,7 +450,10 @@ export default function PostEditModal() {
       localStorage.removeItem(DRAFT_KEY);
       setIsDirty(false);
       
-      if (updatePost) {
+      // Don't update editingPost in context during edit mode
+      // This prevents reloading content and losing comments/formatting
+      // The modal will close and the page will refresh anyway
+      if (updatePost && mode === 'create') {
         updatePost(savedPost);
       }
       
@@ -384,6 +486,11 @@ export default function PostEditModal() {
     }
   };
 
+  // Wrapper for onClick handlers that don't pass content
+  const handleSave = () => {
+    handleSaveWithContent();
+  };
+
   const handleClose = () => {
     if (isDirty) {
       const confirmClose = window.confirm(
@@ -402,7 +509,7 @@ export default function PostEditModal() {
   const modalTitle = (
     <div className="flex items-center gap-2.5">
       <span className="text-xl font-semibold text-gray-900">
-        {mode === 'edit' ? 'Edit Post' : 'Create Post'}
+        Post
       </span>
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${
         mode === 'edit' 
@@ -411,16 +518,32 @@ export default function PostEditModal() {
       }`}>
         {mode === 'edit' ? 'Edit' : 'New'}
       </span>
-      {isDirty && (
-        <span className="inline-flex items-center text-xs text-gray-500">
-          <svg className="animate-spin h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Auto-saving...
-        </span>
-      )}
     </div>
+  );
+
+  // Header actions (+ More button or Back button)
+  const headerActions = !showAdvancedFields ? (
+    <button
+      onClick={() => setShowAdvancedFields(true)}
+      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1.5"
+      title="Advanced settings for SEO, media, and display options"
+    >
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+      <span>More</span>
+    </button>
+  ) : (
+    <button
+      onClick={() => setShowAdvancedFields(false)}
+      className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-1.5"
+      title="Back to editor"
+    >
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      <span>Back</span>
+    </button>
   );
 
   return (
@@ -435,91 +558,230 @@ export default function PostEditModal() {
       fullscreen={isFullScreen}
       showFullscreenButton={true}
       onToggleFullscreen={toggleFullScreen}
+      headerActions={headerActions}
       noPadding={true}
       showFooter={false}
     >
       <div className="flex flex-col h-full">
-        {/* Info Banner - Sky themed */}
-        {!showAdvancedFields && (
-          <div className="px-6 pt-5 pb-4 border-b border-gray-100">
-            <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-3.5">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1.5 flex-1">
-                  <p className="text-sm font-semibold text-sky-900">Rich Text Editor</p>
-                  <p className="text-xs text-sky-800 leading-relaxed">
-                    Use the editor below to format your content. Changes are auto-saved every 2 minutes.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowAdvancedFields(true)}
-                  className="ml-4 px-3 py-1.5 text-xs font-medium text-sky-700 bg-white border border-sky-200 rounded-lg hover:bg-sky-50 transition-colors"
-                >
-                  Advanced
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto bg-white">
-          {/* Title and Description Section */}
-          <div className="p-6 pb-4 bg-white space-y-4 border-b border-gray-100">
-            {/* Subsection */}
-            {!isLandingPage && (
-              <div>
-                <input
-                  type="text"
-                  value={subsection}
-                  onChange={(e) => handleFieldChange('subsection', e.target.value)}
-                  className="px-0 py-1 border-0 focus:outline-none focus:ring-0 font-medium text-xs text-sky-500 tracking-widest placeholder:text-sky-300 bg-transparent uppercase"
-                  placeholder="SUBSECTION"
-                />
-              </div>
-            )}
-            
-            {/* Title */}
-            <div>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => handleFieldChange('title', e.target.value)}
-                className="w-full px-0 py-2 border-0 focus:outline-none focus:ring-0 text-4xl font-bold text-gray-900 placeholder:text-gray-300 bg-transparent"
-                placeholder="Enter post title..."
-              />
-            </div>
-            
-            {/* Description */}
-            <div>
-              <textarea
-                value={description}
-                onChange={(e) => handleFieldChange('description', e.target.value)}
-                rows={3}
-                className="w-full px-0 py-2 border-0 focus:outline-none focus:ring-0 text-lg text-gray-600 placeholder:text-gray-300 resize-none bg-transparent leading-relaxed"
-                placeholder="Brief description or subtitle..."
-              />
-            </div>
-          </div>
-
           {/* Editor or Advanced Fields */}
           {!showAdvancedFields ? (
-            <PostEditor
-              key={`${mode}-${editingPost?.id || 'new'}-${isOpen}`}
-              initialContent={content}
-              onContentChange={handleContentChange}
-              onSave={handleSave}
-            />
+            <div className={isFullScreen ? "grid lg:grid-cols-8 gap-x-4 px-4" : ""}>
+              {/* TOC Sidebar - Only in fullscreen and hidden when in HTML editor for landing pages */}
+              {isFullScreen && !(postType === 'landing' && isCodeView) && (
+                <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
+                  <div className="hidden lg:block mt-8 sticky top-8">
+                    {toc.length > 0 ? (
+                      <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                    ) : (
+                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                          </svg>
+                          Table of Contents
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Add headings to your content to see the table of contents here
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </aside>
+              )}
+
+              {/* Main Content Area */}
+              <div className={isFullScreen ? (postType === 'landing' && isCodeView ? "lg:col-span-8" : "lg:col-span-4") : ""}>
+                {/* Title and Description Section - Hidden when in HTML editor mode for landing pages */}
+                {!(postType === 'landing' && isCodeView) && (
+                  <div className="p-6 pb-4 bg-white space-y-4 border-b border-gray-100">
+                    {/* Subsection */}
+                    {!isLandingPage && (
+                      <div>
+                        <input
+                          type="text"
+                          value={subsection}
+                          onChange={(e) => handleFieldChange('subsection', e.target.value)}
+                          className="px-0 py-1 border-0 focus:outline-none focus:ring-0 font-medium text-xs text-sky-500 tracking-widest placeholder:text-sky-300 bg-transparent uppercase"
+                          placeholder="SUBSECTION"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Title */}
+                    <div>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => handleFieldChange('title', e.target.value)}
+                        className="w-full px-0 py-2 border-0 focus:outline-none focus:ring-0 text-4xl font-bold text-gray-900 placeholder:text-gray-300 bg-transparent"
+                        placeholder="Enter post title..."
+                      />
+                    </div>
+                    
+                    {/* Description */}
+                    <div>
+                      <textarea
+                        value={description}
+                        onChange={(e) => handleFieldChange('description', e.target.value)}
+                        rows={3}
+                        className="w-full px-0 py-2 border-0 focus:outline-none focus:ring-0 text-lg text-gray-600 placeholder:text-gray-300 resize-none bg-transparent leading-relaxed"
+                        placeholder="Brief description or subtitle..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Landing Page Type Notice - Hidden when in HTML editor */}
+                {postType === 'landing' && !isCodeView && (
+                  <div className="mx-4 mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-amber-900 mb-1">Landing Page Mode</h4>
+                        <p className="text-xs text-amber-800 leading-relaxed mb-2">
+                          This is a landing page without standard blog styling. Use the <strong>HTML editor</strong> (click the <code className="px-1.5 py-0.5 bg-amber-100 rounded text-amber-900">&lt;/&gt;</code> button in the toolbar) to create custom layouts with full HTML/CSS control.
+                        </p>
+                        <p className="text-xs text-amber-700">
+                          💡 <strong>Tip:</strong> Table of contents, description, and author information will not be displayed for this page type.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Editor */}
+                <PostEditor
+                  key={`${mode}-${editingPost?.id || 'new'}-${isOpen}`}
+                  initialContent={content}
+                  onContentChange={handleContentChange}
+                  onSave={handleSaveWithContent}
+                  onCodeViewChange={setIsCodeView}
+                  postType={postType}
+                  initialCodeView={postType === 'landing'}
+                />
+              </div>
+
+              {/* Right Sidebar - Only in fullscreen */}
+              {isFullScreen && (
+                <aside className="lg:col-span-2"></aside>
+              )}
+            </div>
           ) : (
-            <div className="px-6 py-6 bg-white space-y-6">
-              {/* Back button */}
-              <div className="flex items-center justify-between pb-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Advanced Settings</h3>
-                <button
-                  onClick={() => setShowAdvancedFields(false)}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  ← Back to Editor
-                </button>
+            <div className="px-6 py-6 bg-white">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {/* Section Title */}
+                <div className="pb-4 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Advanced Settings</h3>
+                </div>
+
+              {/* Type Section */}
+              <div className="space-y-4">
+                <div className="inline-flex items-center px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg">
+                  <span className="text-sm font-semibold text-purple-900 uppercase tracking-wide">Type</span>
+                </div>
+                
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700 block">
+                    Post Display Type
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {/* Default Type */}
+                    <button
+                      type="button"
+                      onClick={() => handleFieldChange('postType', 'default')}
+                      className={`relative flex flex-col items-center p-4 rounded-lg border-2 transition-all ${
+                        postType === 'default'
+                          ? 'border-purple-500 bg-purple-50 shadow-md'
+                          : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/30'
+                      }`}
+                    >
+                      <svg className="w-8 h-8 mb-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-sm font-semibold text-gray-900">Default</span>
+                      <span className="text-xs text-gray-500 mt-1 text-center">Full blog post with TOC & author</span>
+                      {postType === 'default' && (
+                        <div className="absolute top-2 right-2">
+                          <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Minimal Type */}
+                    <button
+                      type="button"
+                      onClick={() => handleFieldChange('postType', 'minimal')}
+                      className={`relative flex flex-col items-center p-4 rounded-lg border-2 transition-all ${
+                        postType === 'minimal'
+                          ? 'border-purple-500 bg-purple-50 shadow-md'
+                          : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/30'
+                      }`}
+                    >
+                      <svg className="w-8 h-8 mb-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-sm font-semibold text-gray-900">Minimal</span>
+                      <span className="text-xs text-gray-500 mt-1 text-center">Content only, no TOC or metadata</span>
+                      {postType === 'minimal' && (
+                        <div className="absolute top-2 right-2">
+                          <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Landing Type */}
+                    <button
+                      type="button"
+                      onClick={() => handleFieldChange('postType', 'landing')}
+                      className={`relative flex flex-col items-center p-4 rounded-lg border-2 transition-all ${
+                        postType === 'landing'
+                          ? 'border-purple-500 bg-purple-50 shadow-md'
+                          : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/30'
+                      }`}
+                    >
+                      <svg className="w-8 h-8 mb-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                      <span className="text-sm font-semibold text-gray-900">Landing</span>
+                      <span className="text-xs text-gray-500 mt-1 text-center">Custom HTML, no blog styling</span>
+                      {postType === 'landing' && (
+                        <div className="absolute top-2 right-2">
+                          <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Type descriptions */}
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-xs text-gray-600 leading-relaxed">
+                        {postType === 'default' && (
+                          <span><strong>Default:</strong> Standard blog post with table of contents, description, author info, and date.</span>
+                        )}
+                        {postType === 'minimal' && (
+                          <span><strong>Minimal:</strong> Clean content-only view without TOC, description, or author information.</span>
+                        )}
+                        {postType === 'landing' && (
+                          <span><strong>Landing:</strong> Custom HTML page without blog styling. Use the HTML editor to create your layout.</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* SEO & Identity Section */}
@@ -638,40 +900,62 @@ export default function PostEditModal() {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-4">
+                  {/* Main Photo - Image Gallery */}
                   <div className="space-y-1.5">
                     <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                      Main Photo URL
-                      <Tooltip content="Primary image for the post">
+                      Main Photo
+                      <Tooltip content="Primary image for the post - Click to select from gallery">
                         <InformationCircleIcon className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
                       </Tooltip>
                     </label>
-                    <input
-                      type="url"
-                      value={mainPhoto}
-                      onChange={(e) => handleFieldChange('mainPhoto', e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                               focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
-                               transition-all duration-150 text-gray-900 placeholder-gray-400 text-sm"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                      Secondary Photo URL
-                      <Tooltip content="Secondary or thumbnail image">
-                        <InformationCircleIcon className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
-                      </Tooltip>
-                    </label>
-                    <input
-                      type="url"
-                      value={secondaryPhoto}
-                      onChange={(e) => handleFieldChange('secondaryPhoto', e.target.value)}
-                      placeholder="https://example.com/thumbnail.jpg"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                               focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
-                               transition-all duration-150 text-gray-900 placeholder-gray-400 text-sm"
-                    />
+                    <div 
+                      className="relative w-full h-48 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-400 transition-colors cursor-pointer group overflow-hidden flex items-center justify-center"
+                      onClick={() => setIsImageGalleryOpen(true)}
+                    >
+                      {mainPhoto ? (
+                        <>
+                          <div className="relative h-full max-w-full flex items-center justify-center">
+                            <Image
+                              src={mainPhoto}
+                              alt="Main photo"
+                              width={0}
+                              height={0}
+                              sizes="100vw"
+                              style={{ width: 'auto', height: '100%', maxWidth: '100%' }}
+                              className="object-contain rounded-lg"
+                              loading="lazy"
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                            <PencilIcon className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 group-hover:text-purple-600 transition-colors">
+                          <svg className="w-12 h-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                          </svg>
+                          <p className="text-sm font-medium">Click to select image</p>
+                          <p className="text-xs text-gray-400 mt-1">Choose from gallery</p>
+                        </div>
+                      )}
+                    </div>
+                    {mainPhoto && (
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-gray-500 truncate flex-1 mr-2" title={mainPhoto}>
+                          {mainPhoto}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFieldChange('mainPhoto', '');
+                          }}
+                          className="text-xs text-red-600 hover:text-red-700 font-medium"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -794,65 +1078,71 @@ export default function PostEditModal() {
                   />
                 </div>
               </div>
-
-              {/* Save button in advanced fields */}
-              <div className="pt-4 border-t border-gray-200 flex gap-3">
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving || !title.trim()}
-                  className="flex-1 px-4 py-2.5 bg-sky-600 text-white font-medium rounded-lg hover:bg-sky-700 
-                           disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isSaving ? 'Saving...' : mode === 'edit' ? 'Update Post' : 'Create Post'}
-                </button>
-                <button
-                  onClick={() => setShowAdvancedFields(false)}
-                  className="px-4 py-2.5 bg-white text-gray-700 font-medium border border-gray-300 rounded-lg 
-                           hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer - only show when not in advanced fields */}
-        {!showAdvancedFields && (
-          <div className="px-6 py-3 border-t border-gray-200 bg-white flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              {isDirty ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin h-4 w-4 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Draft saved locally
-                </span>
-              ) : (
-                <span>All changes saved</span>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg 
-                         hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving || !title.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 
-                         disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isSaving ? 'Saving...' : mode === 'edit' ? 'Update' : 'Publish'}
-              </button>
+        {/* Info Banner - Before Footer - Only show for new posts */}
+        {!showAdvancedFields && mode === 'create' && (
+          <div className="hidden md:block px-6 py-4 border-t border-gray-100 bg-gray-50">
+            <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-3.5">
+              <div className="flex items-center">
+                <div className="space-y-1.5 flex-1">
+                  <p className="text-sm font-semibold text-sky-900">💡 Quick Tip</p>
+                  <p className="text-xs text-sky-800 leading-relaxed">
+                    Enter your title and description above, then use the editor toolbar to format your content. Click "+ More" in the header for advanced settings. Changes auto-save every 2 minutes.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
+
+        {/* Footer - Fixed for both regular and advanced modes */}
+        <div className="px-6 py-3 border-t border-gray-200 bg-white flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            {isDirty ? (
+              <span className="flex items-center">
+                <svg className="animate-spin h-4 w-4 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Draft saved locally
+              </span>
+            ) : (
+              <span>All changes saved</span>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={showAdvancedFields ? () => setShowAdvancedFields(false) : handleClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg 
+                       hover:bg-gray-50 transition-colors"
+            >
+              {showAdvancedFields ? 'Back to Editor' : 'Cancel'}
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving || !title.trim()}
+              className="px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSaving ? 'Saving...' : mode === 'edit' ? 'Update' : 'Publish'}
+            </button>
+          </div>
+        </div>
       </div>
+      
+      {/* Image Gallery Modal */}
+      <ImageGalleryModal
+        isOpen={isImageGalleryOpen}
+        onClose={() => setIsImageGalleryOpen(false)}
+        onSelectImage={(imageUrl) => {
+          handleFieldChange('mainPhoto', imageUrl);
+          setIsImageGalleryOpen(false);
+        }}
+      />
     </BaseModal>
   );
 }

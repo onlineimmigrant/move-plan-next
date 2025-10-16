@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
 import Link from 'next/link';
 import PostHeader from '@/components/PostPage/PostHeader';
+import AdminButtons from '@/components/PostPage/AdminButtons';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
 import CodeBlockCopy from '@/components/CodeBlockCopy';
@@ -36,6 +37,7 @@ interface Post {
   section_id?: string | null;
   last_modified: string;
   display_this_post: boolean;
+  type?: 'default' | 'minimal' | 'landing';
   reviews?: { rating: number; author: string; comment: string }[];
   faqs?: { question: string; answer: string }[];
   organization_id?: string;
@@ -328,22 +330,38 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   }, [isAdmin, handleContentUpdate]);
 
   // Memoized content checks
+  const postType = useMemo(() => post?.type || 'default', [post?.type]);
+  
   const shouldShowMainContent = useMemo(() => 
-    post && (!post.section || post.section !== 'Landing') && post.content?.length > 0,
+    post && post.content?.length > 0,
     [post]
   );
 
   const shouldShowNoContentMessage = useMemo(() =>
     post && 
-    (!post.section || post.section !== 'Landing') && 
     (!post.content || post.content.length === 0) &&
     !hasTemplateSections,
     [post, hasTemplateSections]
   );
 
   const isLandingPost = useMemo(() => 
-    post?.section === 'Landing',
-    [post?.section]
+    postType === 'landing',
+    [postType]
+  );
+  
+  const isMinimalPost = useMemo(() => 
+    postType === 'minimal',
+    [postType]
+  );
+  
+  const showTOC = useMemo(() => 
+    postType === 'default' && toc.length > 0,
+    [postType, toc.length]
+  );
+  
+  const showPostHeader = useMemo(() => 
+    postType === 'default' || postType === 'minimal',
+    [postType]
   );
 
   if (!post) {
@@ -360,9 +378,9 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
         // Only render the grid if we have content or need to show the empty message
         (shouldShowMainContent || shouldShowNoContentMessage) ? (
           <div className="grid lg:grid-cols-8 gap-x-4">
-            {/* TOC Sidebar */}
+            {/* TOC Sidebar - Only show for default type */}
             <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
-              {isMounted && toc.length > 0 && (
+              {isMounted && showTOC && (
                 <div className="hidden lg:block mt-16 sticky top-32">
                   <TOC toc={toc} handleScrollTo={handleScrollTo} />
                 </div>
@@ -373,17 +391,21 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
             <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900 bg-white">
               {shouldShowMainContent ? (
                 <>
-                  <div
-                    onMouseEnter={() => setIsHeaderHovered(true)}
-                    onMouseLeave={() => setIsHeaderHovered(false)}
-                    className="relative"
-                  >
-                    <PostHeader
-                      post={post}
-                      isAdmin={isAdmin}
-                      showAdminButtons={isHeaderHovered}
-                    />
-                  </div>
+                  {showPostHeader && (
+                    <div
+                      onMouseEnter={() => setIsHeaderHovered(true)}
+                      onMouseLeave={() => setIsHeaderHovered(false)}
+                      className="relative"
+                    >
+                      <PostHeader
+                        post={post}
+                        isAdmin={isAdmin}
+                        showAdminButtons={isHeaderHovered}
+                        minimal={isMinimalPost}
+                      />
+                    </div>
+                  )}
+                  
                   <article
                     ref={contentRef}
                     className="prose prose-sm sm:prose lg:prose-xl font-light text-gray-600 table-scroll-container"
@@ -394,8 +416,8 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                 {/* Code block copy functionality */}
                 <CodeBlockCopy />
                 
-                {/* Mobile TOC - Below Content - Client-side only to prevent hydration mismatch */}
-                {isMounted && toc.length > 0 && (
+                {/* Mobile TOC - Below Content - Only for default type */}
+                {isMounted && showTOC && (
                   <div className="lg:hidden mt-12 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -427,7 +449,14 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
         </div>
         ) : null
       ) : post.content ? (
-        <LandingPostContent post={post} />
+        <div className="relative">
+          {isAdmin && (
+            <div className="absolute top-4 right-4 z-50">
+              <AdminButtons post={post} />
+            </div>
+          )}
+          <LandingPostContent post={post} />
+        </div>
       ) : null}
     </main>
   );

@@ -40,7 +40,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
           <div className="text-xl">{title}</div>
         )}
         {subtitle && (
-          <p className="text-sm text-gray-600 mt-1">{subtitle}</p>
+          <p className="hidden md:block text-sm text-gray-600 mt-1">{subtitle}</p>
         )}
       </div>
 

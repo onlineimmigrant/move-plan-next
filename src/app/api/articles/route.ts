@@ -13,6 +13,7 @@ function flattenBlogPost(post: any) {
     display_as_blog_post: post.display_config?.display_as_blog_post ?? post.display_as_blog_post,
     is_help_center: post.display_config?.is_help_center ?? post.is_help_center,
     help_center_order: post.display_config?.help_center_order ?? post.help_center_order,
+    type: post.display_config?.type ?? 'default',
     // Flatten organization_config
     subsection: post.organization_config?.subsection ?? post.subsection,
     // Flatten media_config

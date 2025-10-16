@@ -58,6 +58,7 @@ export interface BaseModalProps {
   showCloseButton?: boolean;
   showFullscreenButton?: boolean;
   onToggleFullscreen?: () => void;
+  headerActions?: ReactNode;
   
   // Body customization
   noPadding?: boolean;
@@ -122,6 +123,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   showCloseButton = true,
   showFullscreenButton = false,
   onToggleFullscreen,
+  headerActions,
   noPadding = false,
   scrollable = true,
   footerAlign = 'right',
@@ -190,6 +192,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
               isFullscreen={fullscreen}
               showCloseButton={showCloseButton}
               showFullscreenButton={showFullscreenButton}
+              actions={headerActions}
               className={headerClassName}
             />
           </div>
@@ -202,6 +205,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             isFullscreen={fullscreen}
             showCloseButton={showCloseButton}
             showFullscreenButton={showFullscreenButton}
+            actions={headerActions}
             className={headerClassName}
           />
         )}

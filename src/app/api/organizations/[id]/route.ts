@@ -18,6 +18,7 @@ function flattenBlogPost(post: any) {
     is_displayed_first_page: post.display_config?.is_displayed_first_page,
     is_help_center: post.display_config?.is_help_center,
     help_center_order: post.display_config?.help_center_order,
+    type: post.display_config?.type ?? 'default',
     // Flatten organization_config
     section_id: post.organization_config?.section_id,
     subsection: post.organization_config?.subsection,
