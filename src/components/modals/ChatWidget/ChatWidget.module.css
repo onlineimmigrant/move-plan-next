@@ -1,0 +1,517 @@
+/* components/ChatWidget/ChatWidget.module.css */
+.typingDots span {
+  animation: blink 1s infinite;
+}
+
+.typingDots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingDots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+.fullscreenContainer {
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.mobileHalfContainer {
+  width: 100vw;
+  height: 50vh;
+  bottom: 2rem;
+  right: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.centeredMessages {
+  max-width: 80rem; /* max-w-5xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.centeredInput {
+  max-width: 48rem; /* Matches Grok/ChatGPT input width */
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.taskBadgeContainer {
+  max-height: 4rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) rgba(241, 245, 249, 0.3);
+}
+
+.taskBadgeContainer::-webkit-scrollbar {
+  height: 4px;
+}
+
+.taskBadgeContainer::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.3);
+  border-radius: 2px;
+  margin: 0 0.5rem;
+}
+
+.taskBadgeContainer::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.taskBadgeContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.7);
+}
+
+.taskBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #f1f5f9; /* bg-gray-100 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #4b5563; /* text-gray-600 */
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.taskBadge:hover {
+  background-color: #e5e7eb; /* bg-gray-200 */
+}
+
+.taskBadge.selected {
+  background-color: #e0f2fe; /* bg-sky-100 */
+  color: #0284c7; /* text-sky-600 */
+}
+
+.addTaskButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem;
+  margin: 0.25rem;
+  background-color: #f1f5f9; /* bg-gray-100 */
+  border-radius: 9999px; /* rounded-full */
+  color: #4b5563; /* text-gray-600 */
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.addTaskButton:hover {
+  background-color: #e5e7eb; /* bg-gray-200 */
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000010 !important;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  max-width: 32rem; /* max-w-lg */
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10000011 !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) rgba(241, 245, 249, 0.3);
+  -webkit-overflow-scrolling: touch;
+}
+
+.modalContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalContent::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.3);
+  border-radius: 3px;
+}
+
+.modalContent::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.modalContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.7);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .modalContent {
+    max-width: 95vw;
+    max-height: 90vh;
+    margin: 1rem;
+    padding: 1rem;
+  }
+}
+
+.modalHeader {
+  background: linear-gradient(to right, #f8fafc, #eff6ff); /* bg-gradient-to-r from-slate-50 to-blue-50 */
+  border-bottom: 1px solid #e2e8f0; /* border-slate-200 */
+  padding: 0.75rem 1rem;
+  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  cursor: move;
+}
+
+.modalTitle {
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 600; /* font-semibold */
+  color: #334155; /* text-slate-700 */
+}
+
+.modalSubtitle {
+  font-size: 0.75rem; /* text-xs */
+  color: #64748b; /* text-slate-500 */
+  margin-top: 0.25rem;
+}
+
+.modalCloseButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem; /* w-8 */
+  height: 2rem; /* h-8 */
+  border-radius: 0.5rem; /* rounded-lg */
+  color: #64748b; /* text-slate-600 */
+  transition: all 0.2s;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+}
+
+.modalCloseButton:hover {
+  background-color: #fef2f2; /* bg-red-50 */
+  color: #dc2626; /* text-red-600 */
+}
+
+.modalCloseButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5); /* ring-red-500 */
+}
+
+.modalBody {
+  padding: 0;
+}
+
+.modalSection {
+  margin-bottom: 1.5rem;
+}
+
+.modalSection:last-child {
+  margin-bottom: 0;
+}
+
+.modalSectionTitle {
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+  color: #64748b; /* text-slate-500 */
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em; /* tracking-wider */
+}
+
+.modalInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.875rem; /* text-sm */
+  transition: all 0.2s;
+  background-color: #ffffff;
+}
+
+.modalInput:focus {
+  outline: none;
+  border-color: #3b82f6; /* border-blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); /* ring-blue-500/10 */
+}
+
+.modalTextarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.875rem; /* text-sm */
+  transition: all 0.2s;
+  background-color: #ffffff;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modalTextarea:focus {
+  outline: none;
+  border-color: #3b82f6; /* border-blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); /* ring-blue-500/10 */
+}
+
+.modalBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #f1f5f9; /* bg-gray-100 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  color: #4b5563; /* text-gray-600 */
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  border: none;
+  font-weight: 500;
+}
+
+.modalBadge:hover {
+  background-color: #e5e7eb; /* bg-gray-200 */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.modalBadge.selected {
+  background-color: #e0f2fe; /* bg-sky-100 */
+  color: #0284c7; /* text-sky-600 */
+}
+
+.modalBadgeDelete {
+  margin-left: 0.5rem;
+  color: #6b7280; /* text-gray-500 */
+  transition: color 0.2s;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.125rem;
+  border-radius: 0.25rem;
+}
+
+.modalBadgeDelete:hover {
+  color: #374151; /* text-gray-700 */
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.modalButton {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.modalButton:disabled {
+  background-color: #e5e7eb; /* bg-gray-200 */
+  cursor: not-allowed;
+}
+
+.modalButton {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.modalButton:disabled {
+  background-color: #e5e7eb; /* bg-gray-200 */
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .centeredMessages {
+    max-width: 100%;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .centeredInput {
+    max-width: 100%;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .taskBadgeContainer {
+    max-height: 5rem; /* Approx. two lines on mobile */
+  }
+
+  .taskBadge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem; /* text-xs */
+  }
+
+  .addTaskButton {
+    padding: 0.375rem;
+  }
+}
+
+.modalFormContainer {
+  border: 1px solid #e2e8f0; /* border-slate-200 */
+  border-radius: 1rem; /* rounded-2xl */
+  padding: 1rem;
+  background-color: #ffffff;
+  position: relative;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.modalFormContainer:focus-within {
+  border-color: #93c5fd; /* border-blue-300 */
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); /* ring-4 ring-blue-100 */
+}
+
+.modalFormFields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.modalFormRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.modalFormInput {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 0.875rem; /* text-sm */
+  transition: all 0.2s;
+  background-color: transparent;
+  color: #1e293b; /* text-slate-800 */
+  outline: none;
+}
+
+.modalFormInput::placeholder {
+  color: #94a3b8; /* placeholder-slate-400 */
+}
+
+.modalFormInput:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.modalFormTextarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 0.875rem; /* text-sm */
+  transition: all 0.2s;
+  background-color: transparent;
+  color: #1e293b; /* text-slate-800 */
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+  line-height: 1.625; /* leading-relaxed */
+}
+
+.modalFormTextarea::placeholder {
+  color: #94a3b8; /* placeholder-slate-400 */
+}
+
+.modalFormTextarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.modalFormButton {
+  padding: 0;
+  background-color: #3b82f6; /* bg-blue-500 */
+  color: #ffffff;
+  border: none;
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem; /* w-8 */
+  height: 2rem; /* h-8 */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.modalFormButton:hover:not(:disabled) {
+  background-color: #2563eb; /* bg-blue-600 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.modalFormButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.modalFormButton:focus:not(:disabled) {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.modalFormButton:disabled {
+  background-color: #e2e8f0; /* bg-slate-200 */
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.modalAddButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem; /* w-8 */
+  height: 2rem; /* h-8 */
+  border-radius: 0.5rem; /* rounded-lg */
+  color: #64748b; /* text-slate-500 */
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modalAddButton:hover:not(:disabled) {
+  background-color: #eff6ff; /* bg-blue-50 */
+  color: #2563eb; /* text-blue-600 */
+}
+
+.modalAddButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.modalAddButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -9,6 +9,7 @@ import { BannerProvider } from '@/context/BannerContext';
 import  BannerDisplay  from '@/components/banners/BannerDisplay';
 import { supabase } from '@/lib/supabaseClient';
 import Loading from '@/ui/Loading';
+import TicketsAccountToggleButton from '@/components/modals/TicketsAccountModal/TicketsAccountToggleButton';
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const { session, setSession } = useAuth();
@@ -50,6 +51,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <BannerProvider>
         <BannerDisplay />
         {children}
+        <TicketsAccountToggleButton />
       </BannerProvider>
     </StudentProvider>
   );

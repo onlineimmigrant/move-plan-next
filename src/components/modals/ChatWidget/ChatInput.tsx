@@ -38,6 +38,8 @@ interface ChatInputProps {
   selectedSettings: Record<string, any> | null;
   setSelectedSettings: (settings: Record<string, any> | null) => void;
   onSettingsUpdated: (settings: Record<string, any>) => void;
+  onModalOpen: () => void;
+  onModalClose: () => void;
 }
 
 export default function ChatInput({
@@ -69,6 +71,8 @@ export default function ChatInput({
   selectedSettings,
   setSelectedSettings,
   onSettingsUpdated,
+  onModalOpen,
+  onModalClose,
 }: ChatInputProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -102,10 +106,13 @@ export default function ChatInput({
       {isAuthenticated && (
         <>
           <div className={styles.taskBadgeContainer}>
-            <div className="flex flex-wrap items-center">
+            <div className="flex items-center gap-2 px-1">
               <Tooltip content="Manage Tasks">
                 <button
-                  onClick={() => setIsTaskModalOpen(true)}
+                  onClick={() => {
+                    setIsTaskModalOpen(true);
+                    onModalOpen();
+                  }}
                   className={styles.addTaskButton}
                   disabled={!model}
                 >
@@ -116,7 +123,7 @@ export default function ChatInput({
                 <button
                   key={task.name}
                   onClick={() => setSelectedTask(task.name === selectedTask?.name ? null : task)}
-                  className={`${styles.taskBadge} ${task.name === selectedTask?.name ? styles.selected : ''}`}
+                  className={`${styles.taskBadge} ${task.name === selectedTask?.name ? styles.selected : ''} flex-shrink-0 whitespace-nowrap`}
                 >
                   {task.name}
                 </button>
@@ -125,7 +132,10 @@ export default function ChatInput({
           </div>
           <TaskManagerModal
             isOpen={isTaskModalOpen}
-            onClose={() => setIsTaskModalOpen(false)}
+            onClose={() => {
+              setIsTaskModalOpen(false);
+              onModalClose();
+            }}
             model={model}
             userRole={userRole}
             accessToken={accessToken}
@@ -133,7 +143,10 @@ export default function ChatInput({
           />
           <SettingsModal
             isOpen={isSettingsModalOpen}
-            onClose={() => setIsSettingsModalOpen(false)}
+            onClose={() => {
+              setIsSettingsModalOpen(false);
+              onModalClose();
+            }}
             accessToken={accessToken}
             defaultSettings={defaultSettings}
             selectedSettings={selectedSettings}
@@ -142,73 +155,83 @@ export default function ChatInput({
           />
         </>
       )}
-      <div className="border border-gray-200 rounded-xl bg-gray-50 p-2">
-        <div className="flex items-end">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
-            className="rounded p-2 flex-grow resize-none focus:outline-none bg-gray-50"
-            placeholder={selectedTask ? `Enter text for "${selectedTask.name}"...` : 'Ask...'}
-            disabled={!isAuthenticated || isTyping}
-            rows={1}
-          />
-          <Tooltip content="Send">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100 transition-all duration-200">
+        <div className="flex items-end gap-3">
+          <div className="flex-1 relative">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
+              className="w-full resize-none border-0 bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0 text-base leading-relaxed min-h-[44px] max-h-[120px]"
+              placeholder={selectedTask ? `Ask about "${selectedTask.name}"...` : 'Ask me anything...'}
+              disabled={!isAuthenticated || isTyping}
+              rows={1}
+            />
+          </div>
+
+          <Tooltip content="Send message">
             <button
               onClick={sendMessage}
-              className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full ml-2 disabled:bg-gray-200 hover:bg-gray-200 transition-colors"
+              className="flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:cursor-not-allowed"
               disabled={!isAuthenticated || isTyping || !input.trim()}
             >
               <ArrowUpIcon className="h-5 w-5" />
             </button>
           </Tooltip>
         </div>
-        <div className="flex justify-between space-x-2 mt-2">
-          <div className="flex space-x-2">
-            <Tooltip content="Search History">
+        <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center gap-2">
+            <Tooltip content="Search history">
               <button
                 onClick={toggleSearchInput}
-                className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-gray-200 transition-colors"
+                className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!isAuthenticated}
               >
-                <MagnifyingGlassIcon className="h-5 w-5" />
+                <MagnifyingGlassIcon className="h-4 w-4" />
               </button>
             </Tooltip>
-            <Tooltip content="Save History">
+
+            <Tooltip content="Save chat">
               <button
                 onClick={toggleSaveInput}
-                className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full disabled:bg-gray-200 hover:bg-gray-200 transition-colors"
+                className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!isAuthenticated}
               >
-                <BookmarkIcon className="h-5 w-5" />
+                <BookmarkIcon className="h-4 w-4" />
               </button>
             </Tooltip>
           </div>
-          <Tooltip content="Manage Settings">
+
+          <Tooltip content="Settings">
             <button
-              onClick={() => setIsSettingsModalOpen(true)}
-              className={`cursor-pointer p-2 rounded-full disabled:bg-gray-200 hover:bg-sky-200 transition-colors ${
-                selectedSettings ? 'bg-sky-100 text-sky-600' : 'bg-gray-100 text-gray-600'
+              onClick={() => {
+                setIsSettingsModalOpen(true);
+                onModalOpen();
+              }}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed ${
+                selectedSettings && Object.keys(selectedSettings).length > 0
+                  ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                  : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
               }`}
               disabled={!isAuthenticated}
             >
-              <Cog6ToothIcon className="h-5 w-5" />
+              <Cog6ToothIcon className="h-4 w-4" />
             </button>
           </Tooltip>
         </div>
         {showSearchInput && (
-          <div className="mt-2 relative">
+          <div className="mt-3 relative">
             <Combobox value={null} onChange={loadChatHistory}>
               <Combobox.Input
-                className="cursor-pointer rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search history"
+                placeholder="Search chat history..."
                 value={query}
               />
-              <Combobox.Options className="absolute bottom-full mb-1 max-h-60 w-[calc(100%-2rem)] overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 ring-opacity-5 focus:outline-none">
+              <Combobox.Options className="absolute bottom-full mb-2 max-h-60 w-full overflow-auto rounded-xl bg-white py-2 shadow-xl ring-1 ring-slate-200 focus:outline-none border border-slate-100 z-10">
                 {filteredHistories.length === 0 && query !== '' ? (
-                  <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                  <div className="px-4 py-3 text-sm text-slate-500 text-center">
                     No chat histories found.
                   </div>
                 ) : (
@@ -217,12 +240,15 @@ export default function ChatInput({
                       key={history.id}
                       value={history}
                       className={({ active }) =>
-                        `relative cursor-pointer select-none py-2 px-4 ${
-                          active ? 'bg-sky-100 text-sky-900' : 'text-gray-900'
+                        `relative cursor-pointer select-none px-4 py-3 transition-colors duration-150 ${
+                          active ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
                         }`
                       }
                     >
-                      {history.name}
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-sm font-medium truncate">{history.name}</span>
+                      </div>
                     </Combobox.Option>
                   ))
                 )}
@@ -231,25 +257,27 @@ export default function ChatInput({
           </div>
         )}
         {showSaveInput && (
-          <div className="mt-2 flex items-center space-x-2">
-            <input
-              type="text"
-              value={historyName}
-              onChange={(e) => setHistoryName(e.target.value)}
-              className="rounded p-2 flex-grow bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="Name your chat history"
-              disabled={!isAuthenticated || isSaving}
-            />
-            <Tooltip content="Save or Close">
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={historyName}
+                onChange={(e) => setHistoryName(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder="Name your chat..."
+                disabled={!isAuthenticated || isSaving}
+              />
+            </div>
+            <Tooltip content="Save chat">
               <button
                 onClick={saveChatHistory}
-                className="bg-teal-500 text-white p-2 rounded-full disabled:bg-gray-200 hover:bg-teal-600 transition-colors"
+                className="flex items-center justify-center w-10 h-10 bg-green-500 hover:bg-green-600 disabled:bg-slate-200 text-white rounded-lg shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:cursor-not-allowed"
                 disabled={!isAuthenticated || isSaving}
               >
                 {isSaving ? (
-                  <span className="text-sm">...</span>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
-                  <BookmarkIcon className="h-5 w-5" />
+                  <BookmarkIcon className="h-4 w-4" />
                 )}
               </button>
             </Tooltip>

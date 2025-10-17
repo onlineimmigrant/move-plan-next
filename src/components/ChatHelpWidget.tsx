@@ -3,18 +3,18 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { useHelpCenterTranslations } from './ChatHelpWidget/useHelpCenterTranslations';
-import ChatHelpToggleButton from './ChatHelpWidget/ChatHelpToggleButton';
-import ChatHelpHeader from './ChatHelpWidget/ChatHelpHeader';
-import ChatHelpTabs from './ChatHelpWidget/ChatHelpTabs';
-import WelcomeTab from './ChatHelpWidget/WelcomeTab';
-import ConversationTab from './ChatHelpWidget/ConversationTab';
-import ArticlesTab from './ChatHelpWidget/ArticlesTab';
-import AIAgentTab from './ChatHelpWidget/AIAgentTab';
-import FAQView from './ChatHelpWidget/FAQView';
-import ChatWidget from './ChatWidget';
-import { WidgetSize } from './ChatWidget/types';
-import styles from './ChatWidget/ChatWidget.module.css';
+import { useHelpCenterTranslations } from './modals/ChatHelpWidget/useHelpCenterTranslations';
+import ChatHelpToggleButton from './modals/ChatHelpWidget/ChatHelpToggleButton';
+import ChatHelpHeader from './modals/ChatHelpWidget/ChatHelpHeader';
+import ChatHelpTabs from './modals/ChatHelpWidget/ChatHelpTabs';
+import WelcomeTab from './modals/ChatHelpWidget/WelcomeTab';
+import ConversationTab from './modals/ChatHelpWidget/ConversationTab';
+import ArticlesTab from './modals/ChatHelpWidget/ArticlesTab';
+import AIAgentTab from './modals/ChatHelpWidget/AIAgentTab';
+import FAQView from './modals/ChatHelpWidget/FAQView';
+import ChatWidget from './modals/ChatWidget/ChatWidget';
+import { WidgetSize } from './modals/ChatWidget/types';
+import styles from './modals/ChatWidget/ChatWidget.module.css';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -327,7 +327,7 @@ export default function ChatHelpWidget() {
   };
 
   return (
-    <div className={`z-62 transition-opacity duration-300 ${
+    <div className={`${showChatWidget ? 'z-[10000003]' : 'z-[9997]'} transition-opacity duration-300 ${
       isMobile && !isScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
     }`}>
       {showChatWidget ? (
@@ -338,6 +338,7 @@ export default function ChatHelpWidget() {
           onReturnToHelpCenter={handleReturnToHelpCenter} 
           initialSize={chatWidgetSize}
           initialOpen={true}
+          forceHighZIndex={true}
         />
       ) : (
         // Show ChatHelpWidget normally
@@ -345,7 +346,10 @@ export default function ChatHelpWidget() {
           <ChatHelpToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} />
           {isOpen && (
             <div
-              className={`z-63 fixed min-h-[480px] bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
+              className={`z-[9999] fixed min-h-[480px] bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col overflow-hidden transition-all duration-300 ease-out ${sizeClasses[size]}`}
+              role="dialog"
+              aria-labelledby="help-center-title"
+              aria-modal="true"
             >
               <ChatHelpHeader
                 size={size}

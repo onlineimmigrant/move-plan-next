@@ -2,12 +2,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import WelcomeTab from '@/components/ChatHelpWidget/WelcomeTab';
-import AIAgentTab from '@/components/ChatHelpWidget/AIAgentTab';
-import ConversationTab from '@/components/ChatHelpWidget/ConversationTab';
-import { WidgetSize } from '@/components/ChatWidget/types';
+import WelcomeTab from '@/components/modals/ChatHelpWidget/WelcomeTab';
+import AIAgentTab from '@/components/modals/ChatHelpWidget/AIAgentTab';
+import ConversationTab from '@/components/modals/ChatHelpWidget/ConversationTab';
+import { WidgetSize } from '@/components/modals/ChatWidget/types';
 import { useAuth } from '@/context/AuthContext';
-import { useHelpCenterTranslations } from '@/components/ChatHelpWidget/useHelpCenterTranslations';
+import { useHelpCenterTranslations } from '@/components/modals/ChatHelpWidget/useHelpCenterTranslations';
 
 // Types - simplified to match TemplateSectionData
 interface HelpCenterSectionData {

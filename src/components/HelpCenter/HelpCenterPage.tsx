@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import { QuestionMarkCircleIcon, DocumentTextIcon, ChatBubbleLeftRightIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
-import { useHelpCenterTranslations } from '@/components/ChatHelpWidget/useHelpCenterTranslations';
+import { useHelpCenterTranslations } from '@/components/modals/ChatHelpWidget/useHelpCenterTranslations';
 import { useSettings } from '@/context/SettingsContext';
 import { useRouter } from 'next/navigation';
 import ModernLanguageSwitcher from '@/components/ModernLanguageSwitcher';
-import WelcomeTab from '@/components/ChatHelpWidget/WelcomeTab';
-import ArticlesTab from '@/components/ChatHelpWidget/ArticlesTab';
-import FAQView from '@/components/ChatHelpWidget/FAQView';
-import ConversationTab from '@/components/ChatHelpWidget/ConversationTab';
-import AIAgentTab from '@/components/ChatHelpWidget/AIAgentTab';
+import WelcomeTab from '@/components/modals/ChatHelpWidget/WelcomeTab';
+import ArticlesTab from '@/components/modals/ChatHelpWidget/ArticlesTab';
+import FAQView from '@/components/modals/ChatHelpWidget/FAQView';
+import ConversationTab from '@/components/modals/ChatHelpWidget/ConversationTab';
+import AIAgentTab from '@/components/modals/ChatHelpWidget/AIAgentTab';
 
 interface HelpCenterPageProps {
   locale: string;

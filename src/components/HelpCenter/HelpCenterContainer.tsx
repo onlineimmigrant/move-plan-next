@@ -4,15 +4,15 @@ import { createClient } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import ModernLanguageSwitcher from '@/components/ModernLanguageSwitcher';
-import { useHelpCenterTranslations } from '@/components/ChatHelpWidget/useHelpCenterTranslations';
-import ChatHelpTabs from '@/components/ChatHelpWidget/ChatHelpTabs';
-import WelcomeTab from '@/components/ChatHelpWidget/WelcomeTab';
-import ConversationTab from '@/components/ChatHelpWidget/ConversationTab';
-import ArticlesTab from '@/components/ChatHelpWidget/ArticlesTab';
-import AIAgentTab from '@/components/ChatHelpWidget/AIAgentTab';
-import FAQView from '@/components/ChatHelpWidget/FAQView';
-import FeaturesView from '@/components/ChatHelpWidget/FeaturesView';
-import OfferingsView from '@/components/ChatHelpWidget/OfferingsView';
+import { useHelpCenterTranslations } from '@/components/modals/ChatHelpWidget/useHelpCenterTranslations';
+import ChatHelpTabs from '@/components/modals/ChatHelpWidget/ChatHelpTabs';
+import WelcomeTab from '@/components/modals/ChatHelpWidget/WelcomeTab';
+import ConversationTab from '@/components/modals/ChatHelpWidget/ConversationTab';
+import ArticlesTab from '@/components/modals/ChatHelpWidget/ArticlesTab';
+import AIAgentTab from '@/components/modals/ChatHelpWidget/AIAgentTab';
+import FAQView from '@/components/modals/ChatHelpWidget/FAQView';
+import FeaturesView from '@/components/modals/ChatHelpWidget/FeaturesView';
+import OfferingsView from '@/components/modals/ChatHelpWidget/OfferingsView';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

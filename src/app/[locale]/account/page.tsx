@@ -20,7 +20,7 @@ import {
 
 } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
-import ChatWidget from '@/components/ChatWidget';
+import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 export default function AccountPage() {

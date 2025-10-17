@@ -8,7 +8,7 @@ import Tooltip from '@/components/Tooltip';
 import Link from 'next/link';
 import InfoCards from '@/components/ai/InfoCards';
 import DialogModals from '@/components/ai/DialogModals';
-import ChatWidget from '@/components/ChatWidget';
+import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 import Image from 'next/image';
 import DisclosureButton from '@/ui/DisclosureButton';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';

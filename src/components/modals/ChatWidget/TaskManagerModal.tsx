@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { createPortal } from 'react-dom';
+import { XMarkIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import { Task, Model, Role } from './types';
 import styles from './ChatWidget.module.css';
 import Button from '@/ui/Button';
-import Tooltip from '../Tooltip';
+import Tooltip from '../../Tooltip';
 
 interface TaskManagerModalProps {
   isOpen: boolean;
@@ -169,70 +170,86 @@ export default function TaskManagerModal({
   const canManageTasks = userRole === 'admin' || model.type === 'user';
 
   if (!canManageTasks) {
-    return (
-      <div className={styles.modalOverlay}>
-        <div className={styles.modalContent}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Manage Tasks for {model.name}</h2>
-            <button onClick={onClose} className="text-gray-600 hover:text-gray-800">
-              <XMarkIcon className="h-6 w-6" />
-            </button>
+    return createPortal(
+      <div className={styles.modalOverlay} style={{ zIndex: 10000010 }}>
+        <div className={styles.modalContent} style={{ zIndex: 10000011 }}>
+          <div className={styles.modalHeader}>
+            <div className="flex justify-between items-center w-full">
+              <h2 className={styles.modalTitle}>Manage Tasks for {model.name}</h2>
+              <button onClick={onClose} className={styles.modalCloseButton}>
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-          <div className="text-red-500 mb-4">You do not have permission to manage tasks for this model.</div>
+          <div className={styles.modalBody}>
+            <div className="text-red-500">You do not have permission to manage tasks for this model.</div>
+          </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-lg font-semibold">Tasks</h2>
-          <span>{model.name}</span>
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-800">
-            <XMarkIcon className="h-6 w-6" />
-          </button>
+  return createPortal(
+    <div className={styles.modalOverlay} style={{ zIndex: 10000010 }}>
+      <div className={styles.modalContent} style={{ zIndex: 10000011 }}>
+        <div className={styles.modalHeader}>
+          <div className="flex justify-between items-center w-full">
+            <div>
+              <h2 className={styles.modalTitle}>Tasks</h2>
+              <p className={styles.modalSubtitle}>{model.name}</p>
+            </div>
+            <button onClick={onClose} className={styles.modalCloseButton}>
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+        <div className={styles.modalBody}>
         {error && <div className="text-red-500 mb-4">{error}</div>}
-        <div className="mb-4">
-          <h3 className="text-md font-medium mb-2">New Task</h3>
-          <input
-            type="text"
-            value={newTaskName}
-            onChange={(e) => setNewTaskName(e.target.value)}
-            placeholder="Task name"
-            className="w-full p-2 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-            disabled={isSaving}
-          />
-          <textarea
-            value={newTaskSystemMessage}
-            onChange={(e) => setNewTaskSystemMessage(e.target.value)}
-            placeholder="System message"
-            className="w-full p-2 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-            rows={4}
-            disabled={isSaving}
-          />
-          <Button
-            onClick={addTask}
-            className="my-4"
-            disabled={isSaving}
-          >
-            Add
-          </Button>
+        <div className={styles.modalSection}>
+          <h3 className={styles.modalSectionTitle}>New Task</h3>
+          <div className={styles.modalFormContainer}>
+            <div className={styles.modalFormFields}>
+              <input
+                type="text"
+                value={newTaskName}
+                onChange={(e) => setNewTaskName(e.target.value)}
+                placeholder="Task name"
+                className={styles.modalFormInput}
+                disabled={isSaving}
+              />
+              <textarea
+                value={newTaskSystemMessage}
+                onChange={(e) => setNewTaskSystemMessage(e.target.value)}
+                placeholder="System message"
+                className={styles.modalFormTextarea}
+                rows={3}
+                disabled={isSaving}
+              />
+            </div>
+            <div className="flex justify-end items-center mt-3 pt-3 border-t border-slate-100">
+              <button
+                onClick={addTask}
+                disabled={isSaving || !newTaskName.trim() || !newTaskSystemMessage.trim()}
+                className={styles.modalFormButton}
+              >
+                <ArrowUpIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
-        <div>
-          <h3 className="text-md font-medium mb-2">Existing</h3>
+        <div className={styles.modalSection}>
+          <h3 className={styles.modalSectionTitle}>Existing Tasks</h3>
           {tasks.length === 0 ? (
             <p className="text-gray-500">No tasks defined.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-2">
               {tasks.map((task) => (
-                <div key={task.name} className="relative group">
+                <div key={task.name} className="relative group flex-shrink-0">
                      <Tooltip content={task.system_message} variant='info-top'>
                   <button
                     onClick={() => setEditingTask(task)}
-                    className="bg-sky-100 text-sky-800 text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2 hover:bg-sky-200 disabled:bg-sky-50"
+                    className={`${styles.modalBadge} ${task.name === editingTask?.name ? styles.selected : ''}`}
                     disabled={isSaving}
                   >
                     <span>{task.name}</span>
@@ -241,9 +258,9 @@ export default function TaskManagerModal({
                         e.stopPropagation();
                         deleteTask(task.name);
                       }}
-                      className="text-red-500 hover:text-red-700"
+                      className={styles.modalBadgeDelete}
                     >
-                      &times;
+                      ×
                     </span>
                   </button>
                  
@@ -255,41 +272,48 @@ export default function TaskManagerModal({
             </div>
           )}
           {editingTask && (
-            <div className="mt-4">
-              <h3 className="text-md font-medium mb-2">Edit Task</h3>
-              <input
-                type="text"
-                value={editingTask.name}
-                onChange={(e) => setEditingTask({ ...editingTask, name: e.target.value })}
-                className="w-full p-1 mb-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-                disabled={isSaving}
-              />
-              <textarea
-                value={editingTask.system_message}
-                onChange={(e) => setEditingTask({ ...editingTask, system_message: e.target.value })}
-                className="w-full p-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-                rows={3}
-                disabled={isSaving}
-              />
-              <div className="flex space-x-2 mt-1">
-                <Button
-                  onClick={() => updateTask(editingTask.name)}
-                  disabled={isSaving}
-                >
-                  Save
-                </Button>
-                <button
-                  onClick={() => setEditingTask(null)}
-                  className={`${styles.modalButton} bg-gray-300 text-gray-600 hover:bg-gray-400 disabled:bg-gray-200`}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
+            <div className={styles.modalSection}>
+              <h3 className={styles.modalSectionTitle}>Edit Task</h3>
+              <div className={styles.modalFormContainer}>
+                <div className={styles.modalFormFields}>
+                  <input
+                    type="text"
+                    value={editingTask.name}
+                    onChange={(e) => setEditingTask({ ...editingTask, name: e.target.value })}
+                    className={styles.modalFormInput}
+                    disabled={isSaving}
+                  />
+                  <textarea
+                    value={editingTask.system_message}
+                    onChange={(e) => setEditingTask({ ...editingTask, system_message: e.target.value })}
+                    className={styles.modalFormTextarea}
+                    rows={3}
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setEditingTask(null)}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Button>
+                  <button
+                    onClick={() => updateTask(editingTask.name)}
+                    disabled={isSaving || !editingTask.name.trim() || !editingTask.system_message.trim()}
+                    className={styles.modalFormButton}
+                  >
+                    <ArrowUpIcon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

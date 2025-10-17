@@ -6,6 +6,7 @@ import { Message, ChatMessagesProps } from './types';
 import styles from './ChatWidget.module.css';
 import { jsPDF } from 'jspdf';
 import { createClient } from '@supabase/supabase-js';
+import SaveFileModal from './SaveFileModal';
 
 // Types for better type safety
 interface HtmlElement {
@@ -211,8 +212,8 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
   const [showFilenameForm, setShowFilenameForm] = useState<number | null>(null);
-  const [filenameInput, setFilenameInput] = useState<string>('');
-  const [fileFormat, setFileFormat] = useState<'txt' | 'pdf' | 'json'>('txt');
+  const [currentMessageIndex, setCurrentMessageIndex] = useState<number | null>(null);
+  const [defaultFilename, setDefaultFilename] = useState<string>('');
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -222,7 +223,7 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && showFilenameForm !== null) {
         setShowFilenameForm(null);
-        setFilenameInput('');
+        setDefaultFilename('');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -252,10 +253,16 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
   };
 
   const openFilenameForm = (index: number, format: 'txt' | 'pdf' | 'json') => {
-    const defaultFilename = getDefaultFilename(messages[index].content, index);
-    setFilenameInput(defaultFilename);
-    setFileFormat(format);
+    const filename = getDefaultFilename(messages[index].content, index);
+    setDefaultFilename(filename);
+    setCurrentMessageIndex(index);
     setShowFilenameForm(index);
+  };
+
+  const handleSaveFile = (filename: string, format: 'txt' | 'pdf' | 'json') => {
+    if (currentMessageIndex !== null) {
+      saveFile(messages[currentMessageIndex].content, currentMessageIndex, format, filename);
+    }
   };
 
   const saveFile = useCallback(async (content: string, index: number, format: 'txt' | 'pdf' | 'json', customFilename: string) => {
@@ -371,33 +378,34 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
 
       setError(null);
       setShowFilenameForm(null);
-      setFilenameInput('');
     } catch (err: any) {
       console.error('[ChatMessages] Save file error:', err);
       setError(err.message || `Failed to save message to ${format} file`);
     }
-  }, [accessToken, userId, messages, setError, setShowFilenameForm, setFilenameInput]);
+  }, [accessToken, userId, messages, setError]);
 
   return (
-    <div className={`flex-1 overflow-y-auto mb-4 p-4 ${isFullscreen ? styles.centeredMessages : ''}`}>
+    <div className={`flex-1 overflow-y-auto p-6 space-y-4 ${isFullscreen ? styles.centeredMessages : ''}`}>
       {messages.map((msg, index) => (
         <div
           key={index}
-          className={`mb-2 mx-auto max-w-4xl ${msg.role === 'user' ? 'text-right' : 'text-left'}`}
+          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
         >
           <div
-            className={`relative inline-block p-4 rounded ${
-              msg.role === 'user' ? 'bg-sky-100' : 'bg-gray-50 px-8 sm:px-12 pb-16 rounded-xl border border-gray-100'
-            }`}
+            className={`max-w-[85%] sm:max-w-[75%] lg:max-w-[65%] ${
+              msg.role === 'user'
+                ? 'bg-blue-500 text-white rounded-2xl rounded-tr-sm shadow-md px-4 py-3'
+                : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3'
+            } relative group hover:shadow-lg transition-all duration-200`}
           >
-            <div className="flex mb-2 sticky top-0 justify-end">
+            <div className="flex mb-2.5 justify-end gap-1">
               {msg.role === 'assistant' && (
                 <>
-                  <div className="space-x-2 opacity-90 z-10 bg-gray-50">
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <Tooltip variant="info-top" content="Copy Message">
                       <button
                         onClick={() => copyMessage(msg.content, index)}
-                        className="cursor-pointer text-sky-500 hover:text-sky-700 p-1 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         aria-label="Copy message"
                       >
                         {copiedMessageId === index ? (
@@ -410,7 +418,7 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
                     <Tooltip variant="info-top" content="Save as Text">
                       <button
                         onClick={() => openFilenameForm(index, 'txt')}
-                        className="cursor-pointer text-sky-500 hover:text-sky-700 p-1 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         aria-label="Save message as text"
                       >
                         <DocumentTextIcon className="h-4 w-4" />
@@ -419,7 +427,7 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
                     <Tooltip variant="info-top" content="Save as PDF">
                       <button
                         onClick={() => openFilenameForm(index, 'pdf')}
-                        className="cursor-pointer text-sky-500 hover:text-sky-700 p-1 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         aria-label="Save message as PDF"
                       >
                         <DocumentArrowDownIcon className="h-4 w-4" />
@@ -428,89 +436,24 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
                     <Tooltip variant="info-top" content="Save as JSON">
                       <button
                         onClick={() => openFilenameForm(index, 'json')}
-                        className="cursor-pointer text-sky-500 hover:text-sky-700 p-1 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         aria-label="Save message as JSON"
                       >
                         <DocumentTextIcon className="h-4 w-4" />
                       </button>
                     </Tooltip>
                   </div>
-                  {showFilenameForm === index && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-                      <div className="p-4 bg-white border-2 rounded-lg shadow-md border-gray-200 transition-all duration-300 max-w-md w-full">
-                        <h3 className="text-sm font-semibold text-gray-800 mb-2">Save File</h3>
-                        <div className="flex flex-col gap-2">
-                          <input
-                            type="text"
-                            value={filenameInput}
-                            onChange={(e) => setFilenameInput(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ''))}
-                            className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent text-gray-800 text-sm"
-                            placeholder="Enter filename"
-                            aria-label="Filename"
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => setFileFormat('txt')}
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                fileFormat === 'txt'
-                                  ? 'bg-sky-500 text-white'
-                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                              }`}
-                              aria-label="Select TXT format"
-                            >
-                              TXT
-                            </button>
-                            <button
-                              onClick={() => setFileFormat('pdf')}
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                fileFormat === 'pdf'
-                                  ? 'bg-sky-500 text-white'
-                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                              }`}
-                              aria-label="Select PDF format"
-                            >
-                              PDF
-                            </button>
-                            <button
-                              onClick={() => setFileFormat('json')}
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                fileFormat === 'json'
-                                  ? 'bg-sky-500 text-white'
-                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                              }`}
-                              aria-label="Select JSON format"
-                            >
-                              JSON
-                            </button>
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => setShowFilenameForm(null)}
-                              className="px-3 py-1 text-gray-500 hover:text-gray-700 text-sm font-medium"
-                              aria-label="Cancel save file"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => saveFile(msg.content, index, fileFormat, filenameInput)}
-                              className="px-3 py-1 bg-sky-500 text-white rounded-lg hover:bg-sky-600 text-sm font-medium"
-                              aria-label="Save file"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
             </div>
-            <div className="overflow-y-auto">
+            <div className="overflow-y-auto prose prose-sm max-w-none">
               {msg.role === 'assistant' && msg.taskName && (
-                <h1 className="text-gray-900 text-base italic mb-4">{msg.taskName}</h1>
+                <div className="inline-flex items-center gap-2 mb-3 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full">
+                  <span className="text-xs font-medium text-blue-700">{msg.taskName}</span>
+                </div>
               )}
-              <span
+              <div
+                className={`${msg.role === 'user' ? 'text-white whitespace-pre-wrap leading-relaxed' : 'text-slate-800 leading-relaxed'}`}
                 dangerouslySetInnerHTML={{
                   __html: msg.role === 'assistant' ? msg.content : msg.content.replace(/\n/g, '<br>'),
                 }}
@@ -521,15 +464,26 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
       ))}
       
       {isTyping && (
-        <div className="text-left mb-2">
-          <span className="inline-block p-2 rounded bg-gray-100">
-            <span className={styles.typingDots}>
-              Typing<span>.</span><span>.</span><span>.</span>
-            </span>
-          </span>
+        <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3 max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]">
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+              </div>
+              <span className="text-sm text-slate-500 font-medium">Thinking...</span>
+            </div>
+          </div>
         </div>
       )}
       <div ref={messagesEndRef} />
+      <SaveFileModal
+        isOpen={showFilenameForm !== null}
+        onClose={() => setShowFilenameForm(null)}
+        onSave={handleSaveFile}
+        defaultFilename={defaultFilename}
+      />
     </div>
   );
 }

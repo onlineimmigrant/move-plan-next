@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { createPortal } from 'react-dom';
+import { XMarkIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import { Role } from './types';
 import styles from './ChatWidget.module.css';
 import Button from '@/ui/Button';
-import Tooltip from '../Tooltip';
+import Tooltip from '../../Tooltip';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -187,18 +188,21 @@ export default function SettingsModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-lg font-semibold">Settings</h2>
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-800">
-            <XMarkIcon className="h-6 w-6" />
-          </button>
+  return createPortal(
+    <div className={styles.modalOverlay} style={{ zIndex: 10000010 }}>
+      <div className={styles.modalContent} style={{ zIndex: 10000011 }}>
+        <div className={styles.modalHeader}>
+          <div className="flex justify-between items-center w-full">
+            <h2 className={styles.modalTitle}>Settings</h2>
+            <button onClick={onClose} className={styles.modalCloseButton}>
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+        <div className={styles.modalBody}>
         {error && <div className="text-red-500 mb-4">{error}</div>}
-        <div className="mb-4">
-          <h3 className="text-md font-medium mb-2">Status</h3>
+        <div className={styles.modalSection}>
+          <h3 className={styles.modalSectionTitle}>Status</h3>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -212,44 +216,50 @@ export default function SettingsModal({
             </span>
           </label>
         </div>
-        <div className="mb-4">
-          <h3 className="text-md font-medium mb-2">New Setting</h3>
-          <input
-            type="text"
-            value={newSettingKey}
-            onChange={(e) => setNewSettingKey(e.target.value)}
-            placeholder='Setting key, e.g., "Full Name"'
-            className="w-full p-2 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-            disabled={isSaving}
-          />
-          <input
-            type="text"
-            value={newSettingValue}
-            onChange={(e) => setNewSettingValue(e.target.value)}
-            placeholder='Setting value, e.g., "John Doe"'
-            className="w-full p-2 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-            disabled={isSaving}
-          />
-          <Button
-            onClick={addSetting}
-            className="my-4"
-            disabled={isSaving}
-          >
-            Add
-          </Button>
+        <div className={styles.modalSection}>
+          <h3 className={styles.modalSectionTitle}>New Setting</h3>
+          <div className={styles.modalFormContainer}>
+            <div className={styles.modalFormFields}>
+              <input
+                type="text"
+                value={newSettingKey}
+                onChange={(e) => setNewSettingKey(e.target.value)}
+                placeholder='Setting key, e.g., "Full Name"'
+                className={styles.modalFormInput}
+                disabled={isSaving}
+              />
+              <input
+                type="text"
+                value={newSettingValue}
+                onChange={(e) => setNewSettingValue(e.target.value)}
+                placeholder='Setting value, e.g., "John Doe"'
+                className={styles.modalFormInput}
+                disabled={isSaving}
+              />
+            </div>
+            <div className="flex justify-end items-center mt-3 pt-3 border-t border-slate-100">
+              <button
+                onClick={addSetting}
+                disabled={isSaving || !newSettingKey.trim() || !newSettingValue.trim()}
+                className={styles.modalFormButton}
+              >
+                <ArrowUpIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
-        <div>
-          <h3 className="text-md font-medium mb-2">Existing</h3>
+        <div className={styles.modalSection}>
+          <h3 className={styles.modalSectionTitle}>Existing Settings</h3>
           {Object.keys(defaultSettings).length === 0 ? (
             <p className="text-gray-500">No settings defined.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-2">
               {Object.entries(defaultSettings).map(([key, value]) => (
-                <div key={key} className="relative group">
+                <div key={key} className="relative group flex-shrink-0">
                   <Tooltip content={JSON.stringify(value)} variant="info-top">
                     <button
                       onClick={() => setEditingSetting({ key, value: JSON.stringify(value) })}
-                      className="bg-sky-100 text-sky-800 text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2 hover:bg-sky-200 disabled:bg-sky-50"
+                      className={styles.modalBadge}
                       disabled={isSaving}
                     >
                       <span>{key}</span>
@@ -258,7 +268,7 @@ export default function SettingsModal({
                           e.stopPropagation();
                           deleteSetting(key);
                         }}
-                        className="text-red-500 hover:text-red-700"
+                        className={styles.modalBadgeDelete}
                       >
                         ×
                       </span>
@@ -269,41 +279,48 @@ export default function SettingsModal({
             </div>
           )}
           {editingSetting && (
-            <div className="mt-4">
-              <h3 className="text-md font-medium mb-2">Edit Setting</h3>
-              <input
-                type="text"
-                value={editingSetting.key}
-                onChange={(e) => setEditingSetting({ ...editingSetting, key: e.target.value })}
-                className="w-full p-1 mb-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-                disabled={isSaving}
-              />
-              <input
-                type="text"
-                value={editingSetting.value}
-                onChange={(e) => setEditingSetting({ ...editingSetting, value: e.target.value })}
-                className="w-full p-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-                disabled={isSaving}
-              />
-              <div className="flex space-x-2 mt-1">
-                <Button
-                  onClick={() => updateSetting(editingSetting.key)}
-                  disabled={isSaving}
-                >
-                  Save
-                </Button>
-                <button
-                  onClick={() => setEditingSetting(null)}
-                  className={`${styles.modalButton} bg-gray-300 text-gray-600 hover:bg-gray-400 disabled:bg-gray-200`}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
+            <div className={styles.modalSection}>
+              <h3 className={styles.modalSectionTitle}>Edit Setting</h3>
+              <div className={styles.modalFormContainer}>
+                <div className={styles.modalFormFields}>
+                  <input
+                    type="text"
+                    value={editingSetting.key}
+                    onChange={(e) => setEditingSetting({ ...editingSetting, key: e.target.value })}
+                    className={styles.modalFormInput}
+                    disabled={isSaving}
+                  />
+                  <input
+                    type="text"
+                    value={editingSetting.value}
+                    onChange={(e) => setEditingSetting({ ...editingSetting, value: e.target.value })}
+                    className={styles.modalFormInput}
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setEditingSetting(null)}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Button>
+                  <button
+                    onClick={() => updateSetting(editingSetting.key)}
+                    disabled={isSaving || !editingSetting.key.trim() || !editingSetting.value.trim()}
+                    className={styles.modalFormButton}
+                  >
+                    <ArrowUpIcon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

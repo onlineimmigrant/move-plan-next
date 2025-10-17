@@ -16,7 +16,7 @@ import ExplanationModal from '@/components/quiz/ExplanationModal';
 import { courseIdFromSlug, shuffleArray } from '@/lib/quizUtils';
 import { Quiz, Question, UserSession, Choice } from '@/components/quiz/Types';
 import NavbarEduPro from '@/components/quiz/NavbarEduProQuiz';
-import ChatWidget from '@/components/ChatWidget';
+import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

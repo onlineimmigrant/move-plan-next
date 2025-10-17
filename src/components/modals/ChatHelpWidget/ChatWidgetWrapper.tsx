@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeftIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { createClient } from '@supabase/supabase-js';
-import ChatMessages from '../modals/ChatWidget/ChatMessages';
-import ChatInput from '../modals/ChatWidget/ChatInput';
-import ModelSelector from '../modals/ChatWidget/ModelSelector';
-import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from '../modals/ChatWidget/types';
-import { useHelpCenterTranslations } from '../modals/ChatHelpWidget/useHelpCenterTranslations';
-import styles from '../modals/ChatWidget/ChatWidget.module.css';
+import ChatMessages from '../ChatWidget/ChatMessages';
+import ChatInput from '../ChatWidget/ChatInput';
+import ModelSelector from '../ChatWidget/ModelSelector';
+import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from '../ChatWidget/types';
+import { useHelpCenterTranslations } from './useHelpCenterTranslations';
+import styles from '../ChatWidget/ChatWidget.module.css';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

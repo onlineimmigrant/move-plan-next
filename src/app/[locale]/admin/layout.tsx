@@ -10,6 +10,7 @@ import TablesChildMenu from './components/TablesChildMenu';
 import ReportsChildMenu from './components/ReportsChildMenu';
 import { sidebarLinks, getFilteredSidebarLinks, DisclosureKey as TablesDisclosureKey } from '@/lib/sidebarLinks';
 import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib/reportSidebarLinks';
+import TicketsAdminToggleButton from '@/components/modals/TicketsAdminModal/TicketsAdminToggleButton';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -140,6 +141,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <main className="flex-1 overflow-y-auto min-h-screen">
               <div className="max-w-7xl mx-auto px-0 sm:px-6 md:px-8">{children}</div>
             </main>
+            <TicketsAdminToggleButton />
           </div>
         </ModalProvider>
       </BasketProvider>

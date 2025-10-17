@@ -1,7 +1,7 @@
 // components/ChatHelpWidget/ConversationTab.tsx
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { PaperAirplaneIcon, UserIcon, UserCircleIcon, ArrowUpIcon, ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/outline';
+import { ArrowUpIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { WidgetSize } from '../ChatWidget/types';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
 
@@ -41,6 +41,8 @@ export default function ConversationTab({
   const [inputValue, setInputValue] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connected');
   const [isTyping, setIsTyping] = useState(false);
+  const [showSearchInput, setShowSearchInput] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -66,6 +68,14 @@ export default function ConversationTab({
     if (textarea) {
       textarea.style.height = 'auto';
       textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+    }
+  }, [inputValue]);
+
+  // Hide search input when user starts typing in the message field
+  useEffect(() => {
+    if (inputValue.trim() && showSearchInput) {
+      setShowSearchInput(false);
+      setSearchQuery('');
     }
   }, [inputValue]);
 
@@ -160,61 +170,52 @@ export default function ConversationTab({
     return `Thank you for your question about "${userInput}". I want to make sure I give you the most helpful response possible.\n\nCould you provide a bit more detail about what you\'re looking for? For example:\n• Account setup or registration help\n• Technical questions or troubleshooting\n• Pricing and billing information\n• General support assistance\n\nI\'m here to help with whatever you need! For additional support, you can also [contact our team](/contact). 😊`;
   };
 
-  const getMessageIcon = (sender: string) => {
-    if (sender === 'user') {
-      return <UserIcon className="h-5 w-5" />;
-    } else {
-      return <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5" />;
-    }
-  };
-
   return (
     <div className={`h-full flex flex-col ${size === 'fullscreen' ? 'max-w-2xl mx-auto' : ''}`}>
       {/* Messages Container */}
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto pb-4">
+      <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-4">
         {messages.map((message) => (
-          <div key={message.id} className="flex items-start space-x-2">
-            <div className={`p-2 rounded-full ${
-              message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-sky-500 text-white'
-            }`}>
-              {getMessageIcon(message.sender)}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-1">
-                <span className="text-sm font-medium text-gray-800">
+          <div 
+            key={message.id} 
+            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+          >
+            <div
+              className={`max-w-[85%] sm:max-w-[75%] lg:max-w-[65%] ${
+                message.sender === 'user'
+                  ? 'bg-blue-500 text-white rounded-2xl rounded-tr-sm shadow-md px-4 py-3'
+                  : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3'
+              } relative group hover:shadow-lg transition-all duration-200`}
+            >
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className={`text-xs font-medium ${
+                  message.sender === 'user' ? 'text-white/90' : 'text-slate-600'
+                }`}>
                   {message.sender === 'user' ? 'You' : message.agentName || 'ChatBot'}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className={`text-xs ${
+                  message.sender === 'user' ? 'text-white/70' : 'text-slate-400'
+                }`}>
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <div className={`p-3 rounded-lg ${
-                message.sender === 'user'
-                  ? 'bg-blue-500 text-white ml-8'
-                  : 'bg-gray-100 text-gray-800'
-              }`}>
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <div className="prose prose-sm max-w-none">
+                <p className="text-sm whitespace-pre-wrap leading-relaxed m-0">{message.content}</p>
               </div>
             </div>
           </div>
         ))}
         
         {isTyping && (
-          <div className="flex items-start space-x-2">
-            <div className="p-2 rounded-full bg-sky-500 text-white">
-              <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-1">
-                <span className="text-sm font-medium text-gray-800">ChatBot</span>
-                <span className="text-xs text-gray-500">typing...</span>
+          <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="max-w-[85%] sm:max-w-[75%] lg:max-w-[65%] bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3">
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-600">ChatBot</span>
+                <span className="text-xs text-slate-400">typing...</span>
               </div>
-              <div className="bg-gray-100 text-gray-800 p-3 rounded-lg">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                </div>
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
               </div>
             </div>
           </div>
@@ -223,15 +224,44 @@ export default function ConversationTab({
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-200 bg-white">
-        {/* Quick Action Badges */}
-        <div className="mb-3">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {quickReplies.map((reply, index) => (
+      <div className="bg-white px-4 pb-4">
+        {/* Quick Action Badges - Horizontal scrolling like ChatWidget */}
+        <div className="mb-3 max-h-16 overflow-x-auto overflow-y-hidden -mx-1 px-1 py-1" 
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(156, 163, 175, 0.5) rgba(241, 245, 249, 0.3)'
+          }}
+        >
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              height: 4px;
+            }
+            div::-webkit-scrollbar-track {
+              background: rgba(241, 245, 249, 0.3);
+              border-radius: 2px;
+              margin: 0 0.5rem;
+            }
+            div::-webkit-scrollbar-thumb {
+              background: rgba(156, 163, 175, 0.5);
+              border-radius: 2px;
+              transition: background-color 0.2s ease;
+            }
+            div::-webkit-scrollbar-thumb:hover {
+              background: rgba(107, 114, 128, 0.7);
+            }
+          `}</style>
+          <div className="flex items-center gap-2">
+            {quickReplies
+              .filter(reply => 
+                !searchQuery.trim() || 
+                reply.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((reply, index) => (
               <button
                 key={index}
                 onClick={() => handleQuickReply(reply)}
-                className="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200 hover:border-gray-300 transition-all duration-200 font-medium"
+                className="inline-flex items-center flex-shrink-0 whitespace-nowrap px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-full hover:bg-slate-200 transition-colors duration-200"
               >
                 {reply}
               </button>
@@ -239,37 +269,65 @@ export default function ConversationTab({
           </div>
         </div>
         
-        <div className="border border-gray-200 rounded-xl bg-gray-50 p-2">
-          <div className="flex items-end">
-            <textarea
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
-              placeholder={t.typeMessage}
-              className="rounded p-2 flex-grow resize-none focus:outline-none bg-gray-50"
-              rows={1}
-              disabled={isTyping}
-            />
+        {/* Input Container - matching ChatWidget style */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100 transition-all duration-200">
+          <div className="flex items-end gap-3">
+            <div className="flex-1 relative">
+              <textarea
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
+                placeholder={t.typeMessage}
+                className="w-full resize-none border-0 bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0 text-base leading-relaxed min-h-[44px] max-h-[120px]"
+                rows={1}
+                disabled={isTyping}
+              />
+            </div>
             <button
               onClick={() => handleSendMessage()}
               disabled={!inputValue.trim() || isTyping}
-              className="cursor-pointer bg-gray-100 text-gray-600 p-2 rounded-full ml-2 disabled:bg-gray-200 hover:bg-gray-200 transition-colors"
+              className="flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowUpIcon className="h-5 w-5" />
             </button>
           </div>
-        </div>
-        
-        <div className="mt-2 text-xs text-gray-500 text-center">
-          <a 
-            href="/contact" 
-            className="text-sky-600 hover:text-sky-700 underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t.needMoreHelp}
-          </a>
+
+          {/* Action buttons below input */}
+          <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+            <div className="flex items-center gap-2 flex-1">
+              <button
+                onClick={() => {
+                  setShowSearchInput(!showSearchInput);
+                  if (showSearchInput) {
+                    setSearchQuery('');
+                  }
+                }}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+                  showSearchInput 
+                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                    : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
+                }`}
+                title="Search actions"
+              >
+                <MagnifyingGlassIcon className="h-4 w-4" />
+              </button>
+
+              {/* Search Input - inline */}
+              {showSearchInput && (
+                <div className="flex-1 animate-in slide-in-from-left-2 duration-200">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                    placeholder="Search quick actions..."
+                    autoFocus
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

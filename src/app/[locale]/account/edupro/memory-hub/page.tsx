@@ -11,7 +11,7 @@ import CardSyncPlanner from '@/components/ai/CardSyncPlanner';
 import HelpModal from '@/components/ai/HelpModal';
 import { Flashcard, PlanFlashcard } from '@/lib/types';
 import { PlannerContext } from '@/lib/context';
-import ChatWidget from '@/components/ChatWidget';
+import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 
 const supabase = createClient(

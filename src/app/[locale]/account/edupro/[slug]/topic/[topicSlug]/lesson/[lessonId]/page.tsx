@@ -24,7 +24,7 @@ import {
 } from '@/types/edupro';
 import ProgressStatisticsCurrent from '@/components/quiz/ProgressStatisticsCurrent';
 import Button from '@/ui/Button';
-import ChatWidget from '@/components/ChatWidget';
+import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 import Tooltip from '@/components/Tooltip';
 
 

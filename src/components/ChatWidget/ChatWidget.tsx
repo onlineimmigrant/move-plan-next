@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import ChatToggleButton from './ChatWidget/ChatToggleButton';
-import ChatHeader from './ChatWidget/ChatHeader';
-import ChatMessages from './ChatWidget/ChatMessages';
-import ChatInput from './ChatWidget/ChatInput';
-import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from './ChatWidget/types';
-import styles from './ChatWidget/ChatWidget.module.css';
+import ChatToggleButton from '../modals/ChatWidget/ChatToggleButton';
+import ChatHeader from '../modals/ChatWidget/ChatHeader';
+import ChatMessages from '../modals/ChatWidget/ChatMessages';
+import ChatInput from '../modals/ChatWidget/ChatInput';
+import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from '../modals/ChatWidget/types';
+import styles from '../modals/ChatWidget/ChatWidget.module.css';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,12 +21,14 @@ interface ChatWidgetProps {
   onReturnToHelpCenter?: () => void;
   initialSize?: WidgetSize;
   initialOpen?: boolean;
+  forceHighZIndex?: boolean;
 }
 
 export default function ChatWidget({ 
   onReturnToHelpCenter, 
   initialSize = 'initial', 
-  initialOpen = false 
+  initialOpen = false,
+  forceHighZIndex = false
 }: ChatWidgetProps = {}) {
   // Check localStorage for saved open state, fallback to initialOpen
   const [isOpen, setIsOpen] = useState(() => {
@@ -58,22 +60,34 @@ export default function ChatWidget({
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<Role>('user');
   const [defaultSettings, setDefaultSettings] = useState<Record<string, any>>({});
   const [selectedSettings, setSelectedSettings] = useState<Record<string, any> | null>(null);
   const router = useRouter();
 
-  // Detect mobile device
+  // Detect device type for responsive behavior
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth <= 640;
-      setIsMobile(mobile);
-      setSize(mobile ? 'half' : 'initial');
+    const checkDevice = () => {
+      const width = window.innerWidth;
+      const isMobileDevice = width <= 640;
+      const isTabletDevice = width > 640 && width <= 1024;
+
+      setIsMobile(isMobileDevice);
+
+      // Auto-adjust size based on device
+      if (isMobileDevice) {
+        setSize('half');
+      } else if (isTabletDevice && size === 'half') {
+        setSize('initial');
+      }
+      // Keep current size for desktop
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, [size]);
 
   // Save open state to localStorage whenever it changes
   useEffect(() => {
@@ -552,10 +566,41 @@ const sendMessage = async () => {
     });
   };
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle shortcuts when widget is open
+      if (!isOpen) return;
+
+      // Escape to close widget
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsOpen(false);
+      }
+
+      // Ctrl/Cmd + Enter to toggle size (only when not typing in input)
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        const activeElement = document.activeElement;
+        const isInputFocused = activeElement?.tagName === 'TEXTAREA' ||
+                              activeElement?.tagName === 'INPUT';
+
+        if (!isInputFocused) {
+          event.preventDefault();
+          toggleSize();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, toggleSize]);
+
   const sizeClasses = {
-    initial: 'w-[400px] h-[750px] bottom-8 right-4',
-    half: isMobile ? styles.mobileHalfContainer : 'w-1/2 h-[750px] bottom-8 right-4',
-    fullscreen: styles.fullscreenContainer,
+    initial: 'w-[400px] h-[600px] bottom-6 right-6 sm:w-[450px] sm:h-[650px]',
+    half: isMobile
+      ? 'w-full h-[50vh] bottom-0 right-0 rounded-none'
+      : 'w-1/2 h-[600px] bottom-6 right-6 sm:w-1/2 sm:h-[650px]',
+    fullscreen: 'w-screen h-screen top-0 right-0 bottom-0 left-0 rounded-none',
   };
 
   const handleTasksUpdated = (updatedTasks: Task[]) => {
@@ -579,11 +624,14 @@ const sendMessage = async () => {
   const tasks: Task[] = selectedModel?.task || [];
 
   return (
-    <div className="z-62">
-      <ChatToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} />
+    <>
+      <ChatToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} isModalOpen={isModalOpen} />
       {isOpen && (
         <div
-          className={`z-63 fixed bg-white border-2 border-gray-200 rounded-lg shadow-sm flex flex-col transition-all duration-300 ${sizeClasses[size]}`}
+          className={`${isModalOpen || forceHighZIndex ? "z-[10000002]" : "z-[9999]"} fixed bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col overflow-hidden transition-all duration-300 ease-out ${sizeClasses[size]}`}
+          role="dialog"
+          aria-labelledby="chat-widget-title"
+          aria-modal="true"
         >
           <ChatHeader
             size={size}
@@ -653,10 +701,12 @@ const sendMessage = async () => {
               selectedSettings={selectedSettings}
               setSelectedSettings={setSelectedSettings}
               onSettingsUpdated={handleSettingsUpdated}
+              onModalOpen={() => setIsModalOpen(true)}
+              onModalClose={() => setIsModalOpen(false)}
             />
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

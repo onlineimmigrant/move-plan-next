@@ -45,32 +45,41 @@ export default function ChatHeader({
   };
 
   return (
-    <div className="flex justify-between items-center mb-2 bg-gray-50 px-4 shadow rounded-t-lg">
-      <div className="flex items-center space-x-2">
+    <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200 rounded-t-xl shadow-sm">
+      {/* Left side - Navigation and size controls */}
+      <div className="flex items-center gap-2">
         {onReturnToHelpCenter && (
           <Tooltip content="Return to Help Center">
             <button
               onClick={onReturnToHelpCenter}
-              className="cursor-pointer text-sky-500 hover:text-sky-700 p-1"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              aria-label="Return to help center"
             >
-              <ArrowLeftIcon className="h-5 w-5" />
+              <ArrowLeftIcon className="h-4 w-4" />
             </button>
           </Tooltip>
         )}
+
         <Tooltip variant="right" content={getTooltipContent()}>
           <button
             onClick={toggleSize}
-            className="cursor-pointer text-sky-500 hover:text-sky-700 p-1"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            aria-label={getTooltipContent()}
           >
             {size === 'fullscreen' ? (
-              <ArrowsPointingInIcon className="h-5 w-5" />
+              <ArrowsPointingInIcon className="h-4 w-4" />
             ) : (
-              <ArrowsPointingOutIcon className="h-5 w-5" />
+              <ArrowsPointingOutIcon className="h-4 w-4" />
             )}
           </button>
         </Tooltip>
       </div>
-      <div className="flex items-center space-x-2">
+
+      {/* Center - Title and Model selector */}
+      <div className="flex-1 flex flex-col items-center justify-center mx-4">
+        <h2 id="chat-widget-title" className="text-sm font-semibold text-slate-700 mb-1">
+          AI Assistant
+        </h2>
         <ModelSelector
           selectedModel={selectedModel}
           models={models}
@@ -78,14 +87,19 @@ export default function ChatHeader({
           goToSettings={goToSettings}
         />
       </div>
-      <Tooltip content="Close">
-        <button
-          onClick={closeWidget}
-          className="cursor-pointer text-sky-500 hover:text-sky-700 p-1"
-        >
-          <XMarkIcon className="h-5 w-5" />
-        </button>
-      </Tooltip>
+
+      {/* Right side - Close button */}
+      <div className="flex items-center">
+        <Tooltip content="Close">
+          <button
+            onClick={closeWidget}
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            aria-label="Close chat widget"
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
+        </Tooltip>
+      </div>
     </div>
   );
 }
