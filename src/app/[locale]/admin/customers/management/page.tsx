@@ -180,7 +180,7 @@ export default function AdminTicketsPage() {
                     className={`text-sm ${
                       ticket.status === 'open'
                         ? 'text-green-500'
-                        : ticket.status === 'in_progress'
+                        : ticket.status === 'in progress'
                         ? 'text-yellow-500'
                         : 'text-red-500'
                     }`}
@@ -230,7 +230,7 @@ export default function AdminTicketsPage() {
                   className="border rounded-md px-4 py-2 mb-4"
                 >
                   <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
+                  <option value="in progress">In Progress</option>
                   <option value="closed">Closed</option>
                 </select>
                 <textarea

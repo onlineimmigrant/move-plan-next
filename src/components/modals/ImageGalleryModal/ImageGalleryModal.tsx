@@ -369,6 +369,7 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
       noPadding={true}
       draggable={true}
       resizable={true}
+      zIndex={10005}
     >
       {/* Search Bar & Upload - Directly below header */}
       <div className="sticky top-0 z-10 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white">

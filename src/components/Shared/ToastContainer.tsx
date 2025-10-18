@@ -65,7 +65,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
       {children}
       
       {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-md w-full pointer-events-none">
+      <div className="fixed top-4 right-4 z-[10100] flex flex-col gap-2 max-w-md w-full pointer-events-none">
         <div className="flex flex-col gap-2 pointer-events-auto">
           {toasts.map(toast => (
             <Toast

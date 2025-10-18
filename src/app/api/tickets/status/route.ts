@@ -59,6 +59,68 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Update failed: No data returned' }, { status: 500 });
     }
 
+    const updatedTicket = data[0];
+
+    // Send email notification to customer about status change
+    try {
+      const { data: settings, error: settingsError } = await supabase
+        .from('settings')
+        .select('domain, site')
+        .eq('organization_id', organization_id)
+        .single();
+
+      if (!settingsError && settings) {
+        const ticketUrl = `https://${settings.domain}/account/profile/tickets/${ticket_id}`;
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+
+        if (baseUrl) {
+          // Determine customer email
+          let customerEmail = updatedTicket.email;
+          if (updatedTicket.customer_id) {
+            const { data: customer } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('id', updatedTicket.customer_id)
+              .single();
+            if (customer?.email) {
+              customerEmail = customer.email;
+            }
+          }
+
+          if (customerEmail) {
+            const statusMessages = {
+              'open': 'Your ticket is now open and waiting to be reviewed.',
+              'in progress': 'Your ticket is being worked on by our support team.',
+              'closed': 'Your ticket has been resolved and closed.'
+            };
+
+            await fetch(`${baseUrl}/api/send-email`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'ticket_status_update',
+                to: customerEmail,
+                organization_id,
+                user_id: updatedTicket.customer_id,
+                name: updatedTicket.full_name || 'Customer',
+                emailDomainRedirection: ticketUrl,
+                placeholders: {
+                  ticket_id: ticket_id,
+                  ticket_subject: updatedTicket.subject || 'No Subject',
+                  old_status: 'previous status',
+                  new_status: status,
+                  status_message: statusMessages[status as keyof typeof statusMessages] || 'Status has been updated.',
+                },
+              }),
+            });
+          }
+        }
+      }
+    } catch (emailError) {
+      console.error('Error sending status change email (non-blocking):', emailError);
+      // Don't fail the request if email fails
+    }
+
     return NextResponse.json({ message: 'Ticket status updated successfully', data: data[0] }, { status: 200 });
   } catch (error: any) {
     console.error('Error in /api/tickets/status:', error);

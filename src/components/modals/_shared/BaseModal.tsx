@@ -72,6 +72,9 @@ export interface BaseModalProps {
   headerClassName?: string;
   bodyClassName?: string;
   footerClassName?: string;
+  
+  // Z-index override
+  zIndex?: number;
 }
 
 /**
@@ -111,26 +114,27 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   subtitle,
   children,
   footer,
-  showFooter = true,
+  showFooter,
   primaryAction,
   secondaryAction,
+  size = 'md',
+  noPadding = false,
   closeOnBackdropClick = true,
   closeOnEscape = true,
-  size = 'lg',
-  draggable = false,
-  resizable = false,
-  fullscreen = false,
-  showCloseButton = true,
-  showFullscreenButton = false,
-  onToggleFullscreen,
-  headerActions,
-  noPadding = false,
-  scrollable = true,
-  footerAlign = 'right',
   className,
   headerClassName,
   bodyClassName,
   footerClassName,
+  draggable = false,
+  resizable = false,
+  fullscreen = false,
+  showCloseButton,
+  showFullscreenButton,
+  onToggleFullscreen,
+  headerActions,
+  scrollable,
+  footerAlign,
+  zIndex,
 }) => {
   const handleBackdropClick = closeOnBackdropClick ? onClose : undefined;
 
@@ -172,6 +176,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
       onClose={onClose}
       closeOnBackdropClick={closeOnBackdropClick}
       closeOnEscape={closeOnEscape}
+      zIndex={zIndex}
     >
       <ModalBackdrop onClick={handleBackdropClick} />
       <ModalContent

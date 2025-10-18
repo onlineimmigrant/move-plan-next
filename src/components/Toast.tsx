@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { FaCheckCircle, FaExclamationCircle, FaTimes } from 'react-icons/fa';
+import { FaCheckCircle, FaExclamationCircle, FaTimes, FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
 
 interface ToastProps {
   message: string;
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning' | 'info';
   onClose: () => void;
   duration?: number; // Duration in milliseconds
 }
@@ -27,13 +27,42 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
     }
   }, []);
 
-  const bgColor = type === 'success' ? 'sky-600' : 'red-600';
-  const icon = type === 'success' ? <FaCheckCircle className="h-8 w-8" /> : <FaExclamationCircle className="h-8 w-8" />;
+  const getToastStyles = () => {
+    switch (type) {
+      case 'success':
+        return {
+          bgColor: 'sky-600',
+          icon: <FaCheckCircle className="h-8 w-8" />,
+        };
+      case 'error':
+        return {
+          bgColor: 'red-600',
+          icon: <FaExclamationCircle className="h-8 w-8" />,
+        };
+      case 'warning':
+        return {
+          bgColor: 'amber-500',
+          icon: <FaExclamationTriangle className="h-8 w-8" />,
+        };
+      case 'info':
+        return {
+          bgColor: 'blue-500',
+          icon: <FaInfoCircle className="h-8 w-8" />,
+        };
+      default:
+        return {
+          bgColor: 'gray-600',
+          icon: <FaInfoCircle className="h-8 w-8" />,
+        };
+    }
+  };
+
+  const { bgColor, icon } = getToastStyles();
 
   return (
     <div
       ref={toastRef}
-      className={`fixed top-4 right-4 z-60 flex items-center p-4 rounded-md shadow-lg border-2 bg-white text-gray-700 border-${bgColor} max-w-sm animate-slide-in`}
+      className={`fixed top-4 right-4 z-[10100] flex items-center p-4 rounded-md shadow-lg border-2 bg-white text-gray-700 border-${bgColor} max-w-sm animate-slide-in`}
       role="alert"
       aria-live="assertive"
       tabIndex={-1}
