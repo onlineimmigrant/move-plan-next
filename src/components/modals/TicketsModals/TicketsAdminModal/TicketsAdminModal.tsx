@@ -80,6 +80,7 @@ import {
   getAvatarDisplayName,
   highlightText,
   renderAvatar,
+  processTicketResponses,
 } from './utils/ticketHelpers';
 
 // Import API functions
@@ -290,12 +291,16 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // Realtime subscription effect - direct implementation like TicketsAccountModal
   useEffect(() => {
     if (isOpen) {
-      console.log('🚀 Admin modal opened - setting up realtime');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 Admin modal opened - setting up realtime');
+      }
       setupRealtimeSubscription();
     }
 
     return () => {
-      console.log('🔌 Unsubscribing from realtime (admin modal cleanup)');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔌 Unsubscribing from realtime (admin modal cleanup)');
+      }
       if (realtimeChannelRef.current) {
         realtimeChannelRef.current.unsubscribe();
         realtimeChannelRef.current = null;
@@ -497,7 +502,8 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     ticketId: selectedTicket?.id,
     onTypingStart: () => setIsCustomerTyping(true),
     onTypingStop: () => setIsCustomerTyping(false),
-    typingTimeoutRef
+    typingTimeoutRef,
+    showTypingFrom: 'customer' // Admin modal shows when customer is typing
   });
 
   // Auto-hide search when user starts typing a response
@@ -553,10 +559,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
       console.log('✅ Responses fetched (admin):', responsesData?.length);
       
       // Process responses to flatten attachments
-      const processedResponses = (responsesData || []).map((response: any) => ({
-        ...response,
-        attachments: response.ticket_attachments || []
-      }));
+      const processedResponses = processTicketResponses(responsesData || []);
       
       const updatedTicket = {
         ...ticketData,

@@ -1,94 +1,42 @@
 /**
- * Shared TypeScript types for TicketsAdminModal and related components
+ * TicketsAdminModal-specific TypeScript types
+ * Shared types are imported from ../shared/types
  */
 
-import { TicketAttachment } from '@/lib/fileUpload';
+// Import shared types
+import type {
+  Ticket,
+  TicketResponse,
+  TicketNote,
+  TicketTag,
+  TicketTagAssignment,
+  Avatar,
+  AdminUser,
+  PredefinedResponse,
+  WidgetSize,
+  ToastState,
+  MessageItemProps,
+  TicketAttachment,
+} from '../shared/types';
+
+// Re-export shared types for backward compatibility
+export type {
+  Ticket,
+  TicketResponse,
+  TicketNote,
+  TicketTag,
+  TicketTagAssignment,
+  Avatar,
+  AdminUser,
+  PredefinedResponse,
+  WidgetSize,
+  ToastState,
+  MessageItemProps,
+  TicketAttachment,
+} from '../shared/types';
 
 // ============================================================================
-// Core Ticket Types
-// ============================================================================
-
-export interface TicketResponse {
-  id: string;
-  message: string;
-  is_admin: boolean;
-  created_at: string;
-  created_by?: string | null;
-  avatar_id?: string;
-  is_read?: boolean;
-  read_at?: string;
-  attachments?: TicketAttachment[];
-}
-
-export interface TicketNote {
-  id: string;
-  ticket_id: string;
-  admin_id: string;
-  note_text: string;
-  created_at: string;
-  updated_at: string;
-  is_pinned: boolean;
-  admin_email?: string;
-  admin_full_name?: string;
-}
-
-export interface TicketTag {
-  id: string;
-  organization_id: string;
-  name: string;
-  color: string;
-  icon?: string;
-  created_at: string;
-}
-
-export interface TicketTagAssignment {
-  ticket_id: string;
-  tag_id: string;
-  tag?: TicketTag;
-}
-
-export interface Ticket {
-  id: string;
-  subject: string;
-  status: string;
-  customer_id: string | null;
-  created_at: string;
-  message: string;
-  preferred_contact_method: string | null;
-  email: string;
-  full_name?: string;
-  assigned_to?: string | null;
-  priority?: string;
-  ticket_responses: TicketResponse[];
-  tags?: TicketTag[];
-}
-
-// ============================================================================
-// Avatar & Admin Types
-// ============================================================================
-
-export interface Avatar {
-  id: string;
-  title: string;
-  full_name?: string;
-  image?: string;
-}
-
-export interface AdminUser {
-  id: string;
-  email: string;
-  full_name?: string;
-}
-
-export interface PredefinedResponse {
-  id: string;
-  order: number;
-  subject: string;
-  text: string;
-}
-
-// ============================================================================
-// Filter & Sort Types
+// Admin-Specific Filter & Sort Types
 // ============================================================================
 
 export type TicketStatus = 'all' | 'open' | 'in progress' | 'closed';
@@ -122,17 +70,6 @@ export interface GroupedTickets {
   open: Ticket[];
   'in progress': Ticket[];
   closed: Ticket[];
-}
-
-// ============================================================================
-// UI State Types
-// ============================================================================
-
-export type WidgetSize = 'initial' | 'half' | 'fullscreen';
-
-export interface ToastState {
-  message: string;
-  type: 'success' | 'error';
 }
 
 // ============================================================================
@@ -184,13 +121,7 @@ export interface TicketMetadataProps {
   isUpdating: boolean;
 }
 
-export interface MessageItemProps {
-  message: TicketResponse;
-  isAdmin: boolean;
-  avatar?: Avatar;
-  senderName?: string;
-  senderEmail?: string;
-}
+// MessageItemProps is imported from shared/types
 
 // ============================================================================
 // Hook Return Types

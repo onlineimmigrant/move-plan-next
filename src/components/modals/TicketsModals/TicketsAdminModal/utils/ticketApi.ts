@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { processTicketResponses } from '../../shared/utils/responseHelpers';
 import type {
   Ticket,
   TicketResponse,
@@ -86,10 +87,7 @@ export async function fetchTickets(params: {
       }
 
       // Process responses to flatten attachments
-      const processedResponses = (ticket.ticket_responses || []).map((response: any) => ({
-        ...response,
-        attachments: response.ticket_attachments || []
-      }));
+      const processedResponses = processTicketResponses(ticket.ticket_responses || []);
 
       return {
         ...ticket,
@@ -364,10 +362,7 @@ export async function refreshSelectedTicket(ticketId: string) {
     }
     
     // Process responses to flatten attachments
-    const processedResponses = (responsesData || []).map((response: any) => ({
-      ...response,
-      attachments: response.ticket_attachments || []
-    }));
+    const processedResponses = processTicketResponses(responsesData || []);
     
     // Fetch tags for this ticket
     const { data: tagAssignments, error: tagError } = await supabase

@@ -10,7 +10,7 @@ import TablesChildMenu from './components/TablesChildMenu';
 import ReportsChildMenu from './components/ReportsChildMenu';
 import { sidebarLinks, getFilteredSidebarLinks, DisclosureKey as TablesDisclosureKey } from '@/lib/sidebarLinks';
 import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib/reportSidebarLinks';
-import TicketsAdminToggleButton from '@/components/modals/TicketsAdminModal/TicketsAdminToggleButton';
+import TicketsAdminToggleButton from '@/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminToggleButton';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();

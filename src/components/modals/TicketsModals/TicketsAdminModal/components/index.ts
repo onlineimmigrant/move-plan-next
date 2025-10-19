@@ -33,3 +33,6 @@ export { default as Messages } from './Messages';
 
 // Header Components
 export { default as TicketModalHeader } from './TicketModalHeader';
+
+// Re-export shared components
+export { TypingIndicator, AvatarChangeIndicator, ReadReceipts } from '../../shared/components';

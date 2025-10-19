@@ -3,6 +3,7 @@ import { CheckIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import { Ticket, Avatar } from '../types';
 import { TicketAttachment } from '@/lib/fileUpload';
+import { TypingIndicator, AvatarChangeIndicator, ReadReceipts } from '../../shared/components';
 import {
   formatFullDate,
   formatTimeOnly,
@@ -153,14 +154,13 @@ export default function Messages({
             <React.Fragment key={response.id}>
               {/* Show avatar change indicator */}
               {avatarChanged && (
-                <div className="flex items-center gap-3 my-3 animate-fade-in">
-                  <div className="flex-1 border-t border-slate-300"></div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    {renderAvatar(avatar, displayName, response.is_admin)}
-                    <span>{displayName} {isCurrentAvatar ? '(You)' : ''} joined the conversation</span>
-                  </div>
-                  <div className="flex-1 border-t border-slate-300"></div>
-                </div>
+                <AvatarChangeIndicator
+                  avatar={avatar}
+                  displayName={displayName}
+                  isAdmin={response.is_admin}
+                  isCurrentAvatar={isCurrentAvatar || false}
+                  renderAvatar={renderAvatar}
+                />
               )}
               
               <div className={`flex items-start ${response.is_admin ? 'justify-end' : 'justify-start'} animate-slide-in`}>
@@ -175,20 +175,7 @@ export default function Messages({
                           {new Date(response.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {/* Show read receipts only for admin messages */}
-                        {response.is_admin && (
-                          response.is_read ? (
-                            // Double checkmark for read messages - bright color
-                            <span className="inline-flex items-center ml-1 relative">
-                              <CheckIcon className="h-3 w-3 text-cyan-300" />
-                              <CheckIcon className="h-3 w-3 text-cyan-300 -ml-1.5" />
-                            </span>
-                          ) : (
-                            // Single checkmark for sent but not read - dimmed
-                            <span className="inline-flex ml-1">
-                              <CheckIcon className="h-3 w-3 opacity-50" />
-                            </span>
-                          )
-                        )}
+                        {response.is_admin && <ReadReceipts isRead={response.is_read || false} />}
                         
                         {/* Display attachments */}
                         {response.attachments && response.attachments.length > 0 && (
@@ -251,17 +238,7 @@ export default function Messages({
         })}
 
         {/* Typing Indicator */}
-        {isCustomerTyping && (
-          <div className="flex justify-start mb-3 fade-in">
-            <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
-          </div>
-        )}
+        {isCustomerTyping && <TypingIndicator />}
 
         <div ref={messagesEndRef} />
       </div>
