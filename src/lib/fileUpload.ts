@@ -148,7 +148,7 @@ export const saveAttachmentMetadata = async (
       .single();
 
     if (error) {
-      console.error('❌ Error saving metadata:', error);
+      console.error('❌ Error saving metadata:', error.message || error);
       return { data: null, error: error.message };
     }
 
@@ -161,34 +161,54 @@ export const saveAttachmentMetadata = async (
 };
 
 /**
- * Upload file and save metadata in one operation
+ * Upload file to storage only (without saving metadata)
+ */
+export const uploadFileOnly = async (
+  file: File,
+  ticketId: string,
+  responseId: string
+): Promise<{ path: string | null; error?: string }> => {
+  // Validate file first
+  const validation = validateFile(file);
+  if (!validation.valid) {
+    return { path: null, error: validation.error };
+  }
+
+  // Upload to storage
+  const uploadResult = await uploadFileToStorage(file, ticketId, responseId);
+  if (uploadResult.error || !uploadResult.path) {
+    return { path: null, error: uploadResult.error || 'Upload failed' };
+  }
+
+  return { path: uploadResult.path };
+};
+
+/**
+ * Upload file to storage and save attachment metadata to database
  */
 export const uploadAttachment = async (
   file: File,
   ticketId: string,
   responseId: string
 ): Promise<{ attachment: TicketAttachment | null; error?: string }> => {
-  // Validate file first
-  const validation = validateFile(file);
-  if (!validation.valid) {
-    return { attachment: null, error: validation.error };
-  }
+  try {
+    // First upload file to storage
+    const uploadResult = await uploadFileOnly(file, ticketId, responseId);
+    if (uploadResult.error || !uploadResult.path) {
+      return { attachment: null, error: uploadResult.error || 'Upload failed' };
+    }
 
-  // Upload to storage
-  const uploadResult = await uploadFileToStorage(file, ticketId, responseId);
-  if (uploadResult.error || !uploadResult.path) {
-    return { attachment: null, error: uploadResult.error || 'Upload failed' };
-  }
+    // Then save metadata to database
+    const metadataResult = await saveAttachmentMetadata(ticketId, responseId, file, uploadResult.path);
+    if (metadataResult.error || !metadataResult.data) {
+      return { attachment: null, error: metadataResult.error || 'Failed to save metadata' };
+    }
 
-  // Save metadata
-  const metadataResult = await saveAttachmentMetadata(ticketId, responseId, file, uploadResult.path);
-  if (metadataResult.error || !metadataResult.data) {
-    // Try to delete the uploaded file since metadata save failed
-    await deleteFileFromStorage(uploadResult.path);
-    return { attachment: null, error: metadataResult.error || 'Failed to save metadata' };
+    return { attachment: metadataResult.data };
+  } catch (err: any) {
+    console.error('❌ Unexpected error in uploadAttachment:', err);
+    return { attachment: null, error: err.message || 'Upload failed' };
   }
-
-  return { attachment: metadataResult.data };
 };
 
 /**

@@ -18,7 +18,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [duration]); // Removed onClose from dependencies to prevent timer reset on re-renders
 
   // Focus management for accessibility
   useEffect(() => {

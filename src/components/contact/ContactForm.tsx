@@ -8,6 +8,7 @@ import Button from '@/ui/Button'
 import { supabase } from '@/lib/supabase'
 import { useSettings } from '@/context/SettingsContext'
 import { useContactTranslations } from './useContactTranslations'
+import KnowledgeBaseWidget from '../KnowledgeBaseWidget/KnowledgeBaseWidget'
 
 type ContactFormProps = {
   onSuccess?: () => void
@@ -32,6 +33,8 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
   const [success, setSuccess] = useState(false)
   const [math, setMath] = useState({ num1: 0, num2: 0, answer: 0 })
   const [isMounted, setIsMounted] = useState(false)
+  const [articleResolved, setArticleResolved] = useState(false)
+  const [showKbWidget, setShowKbWidget] = useState(false)
   const dateRef = useRef<HTMLInputElement>(null)
 
   // Set mounted state for client-side hydration
@@ -118,7 +121,16 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
     }
-  }, [errors])
+    
+    // Show KB widget when subject or message has meaningful content
+    if ((name === 'subject' || name === 'message') && value.trim().length >= 10) {
+      setShowKbWidget(true)
+    } else if (name === 'subject' && value.trim().length < 10 && form.message.trim().length < 10) {
+      setShowKbWidget(false)
+    } else if (name === 'message' && value.trim().length < 10 && form.subject.trim().length < 10) {
+      setShowKbWidget(false)
+    }
+  }, [errors, form.message, form.subject])
 
   // Enhanced date toggle function
   const toggleDate = useCallback((mode: string) => {
@@ -159,6 +171,8 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
     setDateMode('any')
     setShowDate(false)
     setErrors({})
+    setArticleResolved(false)
+    setShowKbWidget(false)
     generateMathChallenge()
   }, [generateMathChallenge])
 
@@ -167,6 +181,12 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
     e.preventDefault()
     setErrors({})
     setSuccess(false)
+    
+    // Prevent submission if article resolved the issue
+    if (articleResolved) {
+      setErrors({ submit: 'Great! Since the article solved your issue, no need to submit a ticket. Thank you!' })
+      return
+    }
 
     const validationErrors = validate()
     if (Object.keys(validationErrors).length) {
@@ -230,6 +250,25 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
       setSubmitting(false)
     }
   }
+  
+  // KB Widget callbacks
+  const handleArticleHelpful = useCallback(async (articleId: number, helpful: boolean) => {
+    console.log(`Article ${articleId} marked as ${helpful ? 'helpful' : 'not helpful'}`)
+    // Tracking is handled by the KB Widget component
+  }, [])
+  
+  const handleArticleSolved = useCallback(() => {
+    setArticleResolved(true)
+    setErrors({ 
+      submit: '✅ Great! The article resolved your issue. No need to submit a support ticket. Feel free to browse more articles in our Help Center!' 
+    })
+    setSuccess(true)
+    // Reset form after 5 seconds
+    setTimeout(() => {
+      resetForm()
+      setSuccess(false)
+    }, 5000)
+  }, [resetForm])
 
   // Don't render until mounted to prevent hydration issues
   if (!isMounted) {
@@ -585,6 +624,19 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
             </p>
           </div>
         </div>
+
+        {/* Knowledge Base Widget - Show suggestions based on subject/message */}
+        {showKbWidget && !articleResolved && (
+          <div className="animate-in slide-in-from-top-4 duration-500">
+            <KnowledgeBaseWidget
+              searchQuery={`${form.subject} ${form.message}`.trim()}
+              onArticleHelpful={handleArticleHelpful}
+              onArticleSolved={handleArticleSolved}
+              compact={false}
+              maxSuggestions={5}
+            />
+          </div>
+        )}
 
         {/* Apple-style Security Section */}
         <div 

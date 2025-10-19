@@ -23,7 +23,7 @@ export default function Toast({ type, message, onClose, duration = 5000 }: Toast
 
       return () => clearTimeout(timer);
     }
-  }, [duration, onClose]);
+  }, [duration]); // Removed onClose from dependencies to prevent timer reset on re-renders
 
   const icons = {
     success: <CheckCircleIcon className="h-6 w-6 text-green-600" />,

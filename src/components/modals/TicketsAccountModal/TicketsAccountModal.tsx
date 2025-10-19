@@ -10,6 +10,7 @@ import Toast from '@/components/Toast';
 import Tooltip from '@/components/Tooltip';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 import { TicketAttachment, FileUploadProgress, ALLOWED_MIME_TYPES, validateFile, uploadAttachment, downloadAttachment, getAttachmentUrl, deleteAttachment, isImageFile, isPdfFile, getFileIcon, formatFileSize, createLocalPreviewUrl } from '@/lib/fileUpload';
+import TicketStatusTracker from '@/components/TicketStatusTracker/TicketStatusTracker';
 
 interface TicketResponse {
   id: string;
@@ -28,6 +29,8 @@ interface Ticket {
   status: string;
   customer_id: string | null;
   created_at: string;
+  updated_at?: string;
+  assigned_to?: string | null;
   message: string;
   preferred_contact_method: string | null;
   email: string;
@@ -126,32 +129,33 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
       if (selectedTicket.id && isOpen) {
         markMessagesAsRead(selectedTicket.id);
       }
-      
-      // Load attachment URLs for images
-      loadAttachmentUrls();
     }
   }, [selectedTicket?.ticket_responses?.length, isOpen]); // Watch length, not the array itself
   
-  // Load signed URLs for image attachments
-  const loadAttachmentUrls = async () => {
-    if (!selectedTicket?.ticket_responses) return;
+  // Load signed URLs for image attachments - takes responses as parameter like admin modal
+  const loadAttachmentUrls = async (responses: any[]) => {
+    const urlsMap: Record<string, string> = {};
     
-    const urls: {[key: string]: string} = {};
-    
-    for (const response of selectedTicket.ticket_responses) {
-      if (response.attachments) {
+    for (const response of responses) {
+      if (response.attachments && Array.isArray(response.attachments)) {
         for (const attachment of response.attachments) {
+          // Only load URLs for image files
           if (isImageFile(attachment.file_type)) {
-            const { url } = await getAttachmentUrl(attachment.file_path);
-            if (url) {
-              urls[attachment.id] = url;
+            try {
+              const result = await getAttachmentUrl(attachment.file_path);
+              if (result.url) {
+                urlsMap[attachment.id] = result.url;
+              }
+            } catch (error) {
+              console.error('Error loading attachment URL:', error);
             }
           }
         }
       }
     }
     
-    setAttachmentUrls(urls);
+    // Merge new URLs with existing ones instead of replacing
+    setAttachmentUrls(prev => ({ ...prev, ...urlsMap }));
   };
 
   // Mark messages as read when user starts typing (indicates they're actively viewing)
@@ -288,7 +292,7 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     try {
       const { data: ticketData, error: ticketError } = await supabase
         .from('tickets')
-        .select('id, subject, status, customer_id, created_at, message, preferred_contact_method, email, full_name')
+        .select('id, subject, status, customer_id, created_at, updated_at, assigned_to, message, preferred_contact_method, email, full_name')
         .eq('id', currentTicket.id)
         .single();
       
@@ -329,6 +333,12 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
       
       console.log('🔄 Selected ticket refreshed (customer) - responses:', updatedTicket.ticket_responses.length, 'Previous:', currentTicket.ticket_responses?.length);
       setSelectedTicket(updatedTicket);
+      
+      // Load attachment URLs for any new images - same as admin modal
+      if (updatedTicket.ticket_responses && updatedTicket.ticket_responses.length > 0) {
+        loadAttachmentUrls(updatedTicket.ticket_responses);
+      }
+      
       // Force scroll after state update
       setTimeout(() => scrollToBottom(), 100);
     } catch (err) {
@@ -336,8 +346,28 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     }
   };
 
-  const setupRealtimeSubscription = () => {
+  const setupRealtimeSubscription = async () => {
     try {
+      // Get current user for filtering
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('❌ No authenticated user for realtime subscription');
+        return;
+      }
+
+      // Fetch user's tickets to get ticket IDs for response filtering
+      const { data: userTickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('id')
+        .eq('customer_id', user.id);
+
+      if (ticketsError) {
+        console.error('❌ Error fetching user tickets for realtime filter:', ticketsError);
+        return;
+      }
+
+      const ticketIds = userTickets?.map(t => t.id).join(',') || 'null';
+
       const channel = supabase
         .channel('customer-tickets-channel', {
           config: {
@@ -347,10 +377,11 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
         })
         .on(
           'postgres_changes',
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'tickets'
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tickets',
+            filter: `customer_id=eq.${user.id}`
           },
           (payload) => {
             console.log('✅ Realtime (Customer): Ticket change', payload);
@@ -360,15 +391,19 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
         )
         .on(
           'postgres_changes',
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'ticket_responses'
+          {
+            event: '*',
+            schema: 'public',
+            table: 'ticket_responses',
+            filter: `ticket_id=in.(${ticketIds})`
           },
           (payload) => {
             console.log('✅ Realtime (Customer): Response change', payload);
-            fetchTickets();
-            refreshSelectedTicket();
+            // Add small delay to ensure attachments are saved before fetching
+            setTimeout(() => {
+              fetchTickets();
+              refreshSelectedTicket();
+            }, 500); // 500ms delay to ensure attachments are committed
           }
         )
         .subscribe((status) => {
@@ -710,22 +745,30 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
         }
       }
 
-      // Replace optimistic message with real one including attachments
+      // Replace optimistic message with real one including attachments - same as admin modal
+      const responseWithAttachments = { ...data, attachments: uploadedAttachments };
+      
       setSelectedTicket((t) =>
         t && t.id === selectedTicket.id
           ? {
               ...t,
               ticket_responses: t.ticket_responses.map(r => 
-                r.id === tempId ? { ...data, attachments: uploadedAttachments } : r
+                r.id === tempId ? responseWithAttachments : r
               ),
             }
           : t
       );
       
-      const successMessage = filesToUpload.length > 0 
-        ? `Response sent with ${uploadedAttachments.length} file(s)` 
-        : 'Response sent successfully';
-      setToast({ message: successMessage, type: 'success' });
+      // Load attachment URLs for the newly uploaded attachments - immediately, not in timeout
+      if (uploadedAttachments.length > 0) {
+        await loadAttachmentUrls([responseWithAttachments]);
+        console.log('✅ URLs loaded after upload');
+      }
+      
+      // No toast needed - message appearance in thread provides sufficient feedback
+      
+      // Force a small delay to ensure URLs are in state before realtime refresh
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error: any) {
       // Revert optimistic update on error
       setSelectedTicket((t) =>
@@ -748,6 +791,10 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     setSelectedTicket(ticket);
     // Mark admin messages as read when customer opens the ticket
     markMessagesAsRead(ticket.id);
+    // Load attachment URLs for image previews - same as admin modal
+    if (ticket.ticket_responses) {
+      loadAttachmentUrls(ticket.ticket_responses);
+    }
   };
 
   const toggleSize = () => {
@@ -934,6 +981,20 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
               {/* Messages */}
               <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-slate-50">
                 <div className={`space-y-4 ${size === 'fullscreen' || size === 'half' ? 'max-w-2xl mx-auto' : ''}`}>
+                
+                {/* Ticket Status Tracker */}
+                <TicketStatusTracker
+                  status={selectedTicket.status as 'open' | 'in-progress' | 'closed'}
+                  createdAt={selectedTicket.created_at}
+                  assignedTo={selectedTicket.assigned_to || undefined}
+                  assignedToName={(() => {
+                    if (!selectedTicket.assigned_to) return undefined;
+                    const avatar = avatars.find(a => a.id === selectedTicket.assigned_to);
+                    return avatar?.full_name || avatar?.title || 'Support Team';
+                  })()}
+                  lastUpdatedAt={selectedTicket.updated_at}
+                  className="mb-6"
+                />
                 
                 {/* Initial message - show "You" indicator */}
                 <div className="flex items-center gap-3 my-3">
@@ -1136,14 +1197,11 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
                 {/* Typing Indicator */}
                 {isAdminTyping && (
                   <div className="flex items-start justify-start animate-fade-in">
-                    <div className="bg-white border border-slate-200 text-slate-600 rounded-2xl rounded-tl-sm shadow-sm px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                          <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                          <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                        </div>
-                        <span className="text-sm italic">Admin is typing...</span>
+                    <div className="bg-white border border-slate-200 text-slate-600 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3">
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                       </div>
                     </div>
                   </div>
