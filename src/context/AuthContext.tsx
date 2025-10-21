@@ -49,7 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', userId)
         .single();
       if (error || !data) {
-        console.error('Profile fetch error:', error?.message || 'No profile found');
+        // Don't log error for common cases (e.g., no profile exists yet, network issues during dev)
+        if (error && 
+            !error.message.includes('JSON object requested') &&
+            !error.message.includes('Failed to fetch') &&
+            !error.message.includes('Network request failed')) {
+          console.error('Profile fetch error:', error?.message || 'No profile found');
+        }
         setIsAdmin(false);
         setOrganizationId(null);
         setOrganizationType(null);
@@ -63,7 +69,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setFullName(data.full_name || null);
       return data.role === 'admin';
     } catch (err: unknown) {
-      console.error('Profile fetch failed:', (err as Error).message);
+      const errorMessage = (err as Error).message;
+      // Only log unexpected errors (ignore network timeouts during dev)
+      if (!errorMessage.includes('Failed to fetch') && !errorMessage.includes('Network request failed')) {
+        console.error('Profile fetch failed:', errorMessage);
+      }
       setIsAdmin(false);
       setOrganizationId(null);
       setOrganizationType(null);

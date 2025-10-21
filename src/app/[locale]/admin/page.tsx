@@ -13,17 +13,10 @@ import {
   Cog6ToothIcon,
   UserCircleIcon,
   CogIcon, ChatBubbleLeftIcon, ArrowsRightLeftIcon,RocketLaunchIcon
-
-
-
-
-
-
-
-
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
 import Tooltip from '@/components/Tooltip';
+import { MeetingsAdminToggleButton } from '@/components/modals/MeetingsModals/MeetingsAdminModal';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -112,6 +105,9 @@ export default function AdminDashboardPage() {
               <div className='my-16 sm:my-32 flex justify-center'>
       <CogIcon className='h-16 w-16 text-sky-600'/>
       </div>
+      
+      {/* Admin Meetings Toggle Button - visible only on admin pages */}
+      <MeetingsAdminToggleButton />
       </div>
     </div>
   );

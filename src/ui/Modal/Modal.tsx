@@ -82,19 +82,18 @@ export const ModalContent: React.FC<ModalContentProps> = ({
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
     
     if (isMobile) {
-      // Mobile: Use static centered mode instead of draggable
+      // Mobile: Use fullscreen mode
       return (
         <div 
           className={cn(
-            'fixed inset-0 flex items-center justify-center p-3',
+            'fixed inset-0 flex items-center justify-center',
             className
           )}
           onClick={onClick}
         >
           <div 
             className={cn(
-              'relative bg-white rounded-lg shadow-xl w-full flex flex-col',
-              'max-h-[95vh]',
+              'relative bg-white w-full h-full flex flex-col',
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -139,16 +138,18 @@ export const ModalContent: React.FC<ModalContentProps> = ({
   return (
     <div 
       className={cn(
-        'fixed inset-0 flex items-center justify-center p-3 sm:p-4',
+        'fixed inset-0 flex items-center justify-center',
+        'sm:p-4',
         className
       )}
       onClick={onClick}
     >
       <div 
         className={cn(
-          'relative bg-white rounded-lg shadow-xl w-full flex flex-col',
-          'max-h-[95vh] sm:max-h-[90vh]',
-          sizeClasses[size],
+          'relative bg-white flex flex-col',
+          'w-full h-full sm:rounded-lg sm:shadow-xl sm:w-auto sm:h-auto',
+          'sm:max-h-[90vh]',
+          'sm:' + sizeClasses[size],
         )}
         onClick={(e) => e.stopPropagation()}
       >

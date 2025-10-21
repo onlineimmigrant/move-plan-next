@@ -49,13 +49,18 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
         .single();
 
       if (tenantError || !tenantData) {
-        console.error('Error fetching organization by ID (tenantId):', {
-          message: tenantError?.message || 'No error message',
-          code: tenantError?.code || 'No code',
-          details: tenantError?.details || 'No details',
-          hint: tenantError?.hint || 'No hint',
-          tenantId,
-        });
+        // Suppress common development errors (network issues, session initialization)
+        if (tenantError && 
+            !tenantError.message?.includes('Failed to fetch') && 
+            !tenantError.message?.includes('Network request failed')) {
+          console.error('Error fetching organization by ID (tenantId):', {
+            message: tenantError?.message || 'No error message',
+            code: tenantError?.code || 'No code',
+            details: tenantError?.details || 'No details',
+            hint: tenantError?.hint || 'No hint',
+            tenantId,
+          });
+        }
         return null;
       }
 

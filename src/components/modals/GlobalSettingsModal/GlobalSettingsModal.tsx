@@ -50,6 +50,7 @@ export default function GlobalSettingsModal() {
     { id: 'menu', label: 'Menu', title: 'Menu', subtitle: 'Navigation menu configuration', parent: 'layout' },
     { id: 'blog', label: 'Blog', title: 'Blog Settings', subtitle: 'Blog posts and categories', parent: 'content' },
     { id: 'cookies', label: 'Cookies', title: 'Cookie Consent', subtitle: 'Cookie consent and privacy settings', parent: 'consent' },
+    { id: 'meeting-types', label: 'Meeting Types', title: 'Meeting Types', subtitle: 'Manage meeting types for booking system', parent: 'meetings' },
   ];
 
   // Get current section metadata

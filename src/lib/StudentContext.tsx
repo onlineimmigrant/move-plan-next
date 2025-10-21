@@ -58,7 +58,11 @@ export function StudentProvider({ children }: { children: React.ReactNode }) {
           .eq('organization_id', currentOrgId);
 
         if (error) {
-          console.error('StudentProvider: Database error:', error.message);
+          // Suppress common development errors (network issues during hot reload)
+          if (!error.message?.includes('Failed to fetch') && 
+              !error.message?.includes('Network request failed')) {
+            console.error('StudentProvider: Database error:', error.message);
+          }
           setIsStudent(false);
           setOrganizationId(null);
           return;

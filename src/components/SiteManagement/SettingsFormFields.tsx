@@ -39,6 +39,10 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
   const [sectionStates, setSectionStates] = useState<Record<string, boolean>>({});
   const [lastActiveSections, setLastActiveSections] = useState<Set<string>>(new Set());
   const lastInitialSection = useRef<string | undefined>(undefined); // Track last initial section
+  
+  // State for meeting types modal (used conditionally but declared at top level)
+  const [showAddEditModal, setShowAddEditModal] = useState(false);
+  const [editingMeetingType, setEditingMeetingType] = useState<any>(null);
 
   // Debug: Track changes to cookie_services
   useEffect(() => {
@@ -348,6 +352,48 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
     );
   };
 
+  // Handle custom sections that don't use the standard form field approach
+  if (initialSection === 'meeting-types') {
+    // Dynamically import MeetingTypesSection
+    const MeetingTypesSection = React.lazy(() => import('./sections/MeetingTypesSection'));
+    const AddEditMeetingTypeModal = React.lazy(() => import('./modals/AddEditMeetingTypeModal'));
+    
+    return (
+      <div className="space-y-4 pb-64" data-settings-container>
+        <React.Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+          </div>
+        }>
+          <MeetingTypesSection
+            organizationId={organizationId || ''}
+            onAddClick={() => {
+              setEditingMeetingType(null);
+              setShowAddEditModal(true);
+            }}
+            onEditClick={(meetingType: any) => {
+              setEditingMeetingType(meetingType);
+              setShowAddEditModal(true);
+            }}
+          />
+          <AddEditMeetingTypeModal
+            isOpen={showAddEditModal}
+            onClose={() => {
+              setShowAddEditModal(false);
+              setEditingMeetingType(null);
+            }}
+            onSave={() => {
+              // Refresh the meeting types list - this will be handled by the section component
+              window.dispatchEvent(new CustomEvent('refreshMeetingTypes'));
+            }}
+            organizationId={organizationId || ''}
+            meetingType={editingMeetingType}
+          />
+        </React.Suspense>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 pb-64" data-settings-container>
       {sectionsConfig
@@ -363,6 +409,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             'menu': { section: 'layout', subsection: 'menu-items' },
             'blog': { section: 'content', subsection: 'blog-posts' },
             'cookies': { section: 'consent' }, // Show entire consent section
+            'meeting-types': { section: 'meeting-types' }, // Custom section
           };
 
           // If initialSection is provided, filter based on mapping
@@ -399,6 +446,7 @@ const SettingsFormFields: React.FC<SettingsFormFieldsProps> = ({
             'menu': { section: 'layout', subsection: 'menu-items' },
             'blog': { section: 'content', subsection: 'blog-posts' },
             'cookies': { section: 'consent' },
+            'meeting-types': { section: 'meeting-types' },
           };
 
           const mapping = initialSection ? sectionMapping[initialSection] : null;

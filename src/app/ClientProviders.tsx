@@ -53,6 +53,7 @@ import { TemplateHeadingSection } from '@/types/template_heading_section';
 import { useBanner } from '@/context/BannerContext';
 import { Banner } from '@/components/banners/types';
 import { MenuItem } from '@/types/menu';
+import { MeetingsAccountToggleButton } from '@/components/modals/MeetingsModals';
 
 // Wrapper component for standalone CookieSettings modal (opened from Footer)
 function StandaloneCookieSettings({ 
@@ -380,6 +381,7 @@ function BannerAwareContent({
         <ChatHelpWidget />
         <UniversalNewButton />
         <CommandPalette />
+        <MeetingsAccountToggleButton />
       </div>
     </>
   );
