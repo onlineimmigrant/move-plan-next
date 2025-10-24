@@ -37,7 +37,7 @@ export interface HeroData {
   h1_text_size?: string;
   h1_text_size_mobile?: string;
   image?: string | null; // hero_image
-  title_alighnement?: string;
+  title_alignment?: string;
   title_block_width?: string;
   is_bg_gradient?: boolean;
   is_image_full_page?: boolean;
@@ -98,9 +98,8 @@ export interface Settings {
   hero_description_translation?: Record<string, string>;
   hero_button_translation?: Record<string, string>;
   
-  // Legacy hero fields (for backward compatibility with old database structure)
-  // These are mapped from/to JSONB fields in the migration logic
-  title_alighnement?: string;
+  // Legacy hero fields (for backward compatibility with old UI)
+  title_alignment?: string;
   title_block_width?: string;
   title_block_columns?: number;
   is_seo_title?: boolean;
@@ -115,19 +114,19 @@ export interface Settings {
   h1_text_color_gradient_via?: string;
   p_description?: string;
   p_description_translation?: Record<string, string>;
+  p_description_color?: string;
   p_description_size?: string;
   p_description_size_mobile?: string;
   p_description_weight?: string;
-  p_description_color?: string;
-  button_main_get_started?: string;
-  button_explore?: string;
-  is_image_full_page?: boolean;
-  image_first?: boolean;
-  background_color?: string;
   is_bg_gradient?: boolean;
+  background_color?: string;
   background_color_gradient_from?: string;
   background_color_gradient_to?: string;
   background_color_gradient_via?: string;
+  is_image_full_page?: boolean;
+  image_first?: boolean;
+  button_main_get_started?: string;
+  button_explore?: string;
   animation_element?: string;
   
   // SEO & Analytics

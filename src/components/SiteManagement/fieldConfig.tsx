@@ -386,7 +386,7 @@ export const sectionsConfig: SectionConfig[] = [
         key: 'general',
         columns: 3, // Change to 3 columns for alignment, width, and columns
         fields: [
-          { name: 'title_alighnement', label: 'Alignment', type: 'alignment' },
+          { name: 'title_alignment', label: 'Alignment', type: 'alignment' },
           { name: 'title_block_width', label: 'Width', type: 'block-width' },
           { name: 'title_block_columns', label: 'Columns', type: 'columns' },
           { name: 'is_seo_title', label: 'Use Title as SEO Title', type: 'checkbox' }

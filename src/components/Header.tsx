@@ -102,8 +102,8 @@ const Header: React.FC<HeaderProps> = ({
       return { backgroundColor: 'transparent' };
     }
     
-    // For ring_card_mini, use full opacity
-    if (headerType === 'ring_card_mini') {
+    // For ring_card_mini and mini, use full opacity
+    if (headerType === 'ring_card_mini' || headerType === 'mini') {
       const baseStyle = getBackgroundStyle(
         headerStyle.is_gradient,
         headerStyle.gradient,
@@ -838,8 +838,8 @@ const Header: React.FC<HeaderProps> = ({
           fixed
           left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${
-            headerType === 'ring_card_mini'
-              ? 'px-4 pt-6' // Container padding for ring_card_mini - generous top spacing for floating effect
+            headerType === 'ring_card_mini' || headerType === 'mini'
+              ? 'px-4 pt-6' // Container padding for ring_card_mini and mini - generous top spacing for floating effect
               : ''
           }
           ${
@@ -849,8 +849,8 @@ const Header: React.FC<HeaderProps> = ({
                   ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]'
                   : 'bg-transparent border-b border-transparent'
                 )
-              // For ring_card_mini: no backdrop blur, border on inner container
-              : headerType === 'ring_card_mini'
+              // For ring_card_mini and mini: no backdrop blur, border handled on inner container
+              : (headerType === 'ring_card_mini' || headerType === 'mini')
               ? ''
               // For other types: always have backdrop blur
               : (isScrolled 
@@ -864,12 +864,12 @@ const Header: React.FC<HeaderProps> = ({
           // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
           transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(-100%)',
           pointerEvents: 'auto',
-          // For ring_card_mini, don't apply background to outer nav
-          ...(headerType === 'ring_card_mini' ? { backgroundColor: 'transparent' } : headerBackgroundStyle),
-          backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && headerType !== 'ring_card_mini' && (isScrolled || isDesktop)) 
+          // For ring_card_mini and mini, don't apply background to outer nav
+          ...((headerType === 'ring_card_mini' || headerType === 'mini') ? { backgroundColor: 'transparent' } : headerBackgroundStyle),
+          backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && headerType !== 'ring_card_mini' && headerType !== 'mini' && (isScrolled || isDesktop)) 
             ? 'blur(24px) saturate(200%) brightness(105%)' 
             : 'none',
-          WebkitBackdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && headerType !== 'ring_card_mini' && (isScrolled || isDesktop))
+          WebkitBackdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && headerType !== 'ring_card_mini' && headerType !== 'mini' && (isScrolled || isDesktop))
             ? 'blur(24px) saturate(200%) brightness(105%)' 
             : 'none',
         }}
@@ -880,11 +880,13 @@ const Header: React.FC<HeaderProps> = ({
           ${
             headerType === 'ring_card_mini'
               ? 'border border-gray-200 rounded-full shadow-sm'
+              : headerType === 'mini'
+              ? ''
               : ''
           }
         `}
         style={
-          headerType === 'ring_card_mini'
+          (headerType === 'ring_card_mini' || headerType === 'mini')
             ? headerBackgroundStyle
             : undefined
         }
@@ -932,8 +934,8 @@ const Header: React.FC<HeaderProps> = ({
           
           {/* Action Items - Right Side Group */}
           <div className="absolute right-0 flex items-center space-x-3">
-            {/* Language Switcher - Hidden for ring_card_mini */}
-            {settings?.with_language_switch && headerType !== 'ring_card_mini' && (
+            {/* Language Switcher - Hidden for ring_card_mini and mini */}
+            {settings?.with_language_switch && headerType !== 'ring_card_mini' && headerType !== 'mini' && (
               <div className="hidden lg:block">
                 <ModernLanguageSwitcher />
               </div>
@@ -954,7 +956,7 @@ const Header: React.FC<HeaderProps> = ({
             )}
             
             {/* Profile/Login */}
-            {isLoggedIn && headerType !== 'ring_card_mini' ? (
+            {isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
             <div 
               className="relative group"
               onMouseEnter={cancelCloseTimeout}
@@ -1150,7 +1152,7 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
             </div>
-          ) : headerType !== 'ring_card_mini' ? (
+          ) : headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
             <button
               type="button"
               onClick={handleLoginModal}

@@ -260,12 +260,6 @@ export async function GET(
       return NextResponse.json({ error: 'Error fetching hero data' }, { status: 500 });
     }
 
-    console.log('🎯 [GET] Hero data fetched:', {
-      hasHero: !!website_hero,
-      heroKeys: website_hero ? Object.keys(website_hero) : [],
-      heroData: website_hero
-    });
-
     // Fetch the organization's menu items
     const { data: menu_items, error: menuError } = await supabase
       .from('website_menuitem')
@@ -633,14 +627,6 @@ export async function GET(
         hasDisplayConfig: !!flattenedBlogPosts[0].display_config,
         display_this_post: flattenedBlogPosts[0].display_this_post
       } : 'none'
-    });
-
-    console.log('🎯 [GET] Returning website_hero in response:', {
-      hasHero: !!website_hero,
-      heroKeys: website_hero ? Object.keys(website_hero) : [],
-      title: website_hero?.title,
-      description: website_hero?.description,
-      name: website_hero?.name
     });
 
     return NextResponse.json({

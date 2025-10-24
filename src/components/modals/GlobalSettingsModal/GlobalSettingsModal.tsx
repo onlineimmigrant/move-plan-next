@@ -307,67 +307,47 @@ export default function GlobalSettingsModal() {
         // Ensure language has a default
         language: data.settings?.language || 'en',
         
-        // Hero Section Fields - NEW JSONB SCHEMA with migration from old fields
+        // Hero Section Fields - NEW JSONB SCHEMA with proper defaults
         hero_id: data.website_hero?.id || null,
         hero_name: data.website_hero?.name || data.settings?.site || '',
-        hero_title: data.website_hero?.title || (data.website_hero as any)?.h1_title || '',
-        hero_description: data.website_hero?.description || (data.website_hero as any)?.p_description || '',
-        hero_button: data.website_hero?.button || (data.website_hero as any)?.button_main_get_started || 'Get Started',
+        hero_title: data.website_hero?.title || '',
+        hero_description: data.website_hero?.description || '',
+        hero_button: data.website_hero?.button || 'Get Started',
         hero_image: data.website_hero?.image || null,
         hero_animation_element: data.website_hero?.animation_element || '',
         hero_display_order: data.website_hero?.display_order || 0,
         
-        // JSONB style fields with migration from old flat fields (matching HeroSectionEditModal logic)
+        // JSONB style fields with proper nested defaults
         hero_title_style: data.website_hero?.title_style || {
-          color: (data.website_hero as any)?.h1_text_color || 'gray-800',
-          is_gradient: data.website_hero?.title_style?.is_gradient || (data.website_hero as any)?.is_h1_gradient || false,
-          size: {
-            desktop: (data.website_hero as any)?.h1_text_size || 'text-7xl',
-            mobile: (data.website_hero as any)?.h1_text_size_mobile || 'text-5xl'
-          },
-          alignment: (data.website_hero as any)?.title_alighnement || 'center',
-          blockWidth: (data.website_hero as any)?.title_block_width || '2xl',
-          blockColumns: (data.website_hero as any)?.title_block_columns || 1,
-          gradient: data.website_hero?.title_style?.gradient || ((data.website_hero as any)?.is_h1_gradient ? {
-            from: (data.website_hero as any)?.h1_text_color_gradient_from || 'gray-700',
-            via: (data.website_hero as any)?.h1_text_color_gradient_via || 'gray-700',
-            to: (data.website_hero as any)?.h1_text_color_gradient_to || 'indigo-200'
-          } : undefined)
+          color: 'gray-800',
+          size: { desktop: 'text-7xl', mobile: 'text-5xl' },
+          alignment: 'center',
+          blockWidth: '2xl',
+          blockColumns: 1
         },
         hero_description_style: data.website_hero?.description_style || {
-          color: (data.website_hero as any)?.p_description_color || 'gray-600',
-          size: {
-            desktop: (data.website_hero as any)?.p_description_size || 'text-2xl',
-            mobile: (data.website_hero as any)?.p_description_size_mobile || 'text-lg'
-          },
-          weight: (data.website_hero as any)?.p_description_weight || 'normal'
+          color: 'gray-600',
+          size: { desktop: 'text-2xl', mobile: 'text-lg' },
+          weight: 'normal'
         },
         hero_image_style: data.website_hero?.image_style || {
-          position: (data.website_hero as any)?.image_position || ((data.website_hero as any)?.is_image_full_page ? 'full' : ((data.website_hero as any)?.image_first ? 'left' : 'right')),
-          fullPage: (data.website_hero as any)?.is_image_full_page || false,
-          width: data.website_hero?.image_style?.width || 400,
-          height: data.website_hero?.image_style?.height || 300
+          position: 'right',
+          fullPage: false,
+          width: 400,
+          height: 300
         },
         hero_background_style: data.website_hero?.background_style || {
-          color: (data.website_hero as any)?.background_color || 'white',
-          is_gradient: data.website_hero?.background_style?.is_gradient || (data.website_hero as any)?.is_bg_gradient || false,
-          gradient: data.website_hero?.background_style?.gradient || ((data.website_hero as any)?.is_bg_gradient ? {
-            from: (data.website_hero as any)?.background_color_gradient_from || 'sky-50',
-            via: (data.website_hero as any)?.background_color_gradient_via || 'transparent',
-            to: (data.website_hero as any)?.background_color_gradient_to || ''
-          } : undefined),
-          seo_title: data.website_hero?.background_style?.seo_title || (data.website_hero as any)?.seo_title || '',
-          column: data.website_hero?.background_style?.column || (data.website_hero as any)?.column || 1
+          color: 'white'
         },
         hero_button_style: data.website_hero?.button_style || {
-          aboveDescription: (data.website_hero as any)?.button_main_above_description || false,
-          isVideo: (data.website_hero as any)?.button_main_is_for_video || false,
-          url: (data.website_hero as any)?.button_url || '/products'
+          aboveDescription: false,
+          isVideo: false,
+          url: '/products'
         },
         
-        // JSONB translation fields with migration
-        hero_title_translation: data.website_hero?.title_translation || (data.website_hero as any)?.h1_title_translation || {},
-        hero_description_translation: data.website_hero?.description_translation || (data.website_hero as any)?.p_description_translation || {},
+        // JSONB translation fields
+        hero_title_translation: data.website_hero?.title_translation || {},
+        hero_description_translation: data.website_hero?.description_translation || {},
         hero_button_translation: data.website_hero?.button_translation || {},
         
         // All entity arrays - LOAD UPFRONT
@@ -503,16 +483,64 @@ export default function GlobalSettingsModal() {
         button_translation: settingsAny.hero_button_translation,
       } : null;
 
-      // Determine which fields to remove based on active section
-      const fieldsToRemove = [
-        // Always remove these array fields from settings object
-        'features', 'faqs', 'banners', 'blog_posts', 'products', 'pricing_plans', 'menu_items', 'submenu_items'
+      // Always remove hero fields from settings (they belong to website_hero table)
+      const heroFieldsToRemove = [
+        // New JSONB schema fields
+        'hero_id',
+        'hero_name',
+        'hero_title',
+        'hero_description',
+        'hero_button',
+        'hero_image',
+        'hero_animation_element',
+        'hero_display_order',
+        'hero_title_style',
+        'hero_description_style',
+        'hero_image_style',
+        'hero_background_style',
+        'hero_button_style',
+        'hero_title_translation',
+        'hero_description_translation',
+        'hero_button_translation',
+        // Legacy hero fields (from old flat schema)
+        'title_alignment',
+        'title_block_width',
+        'title_block_columns',
+        'is_seo_title',
+        'h1_title',
+        'h1_title_translation',
+        'h1_text_size',
+        'h1_text_size_mobile',
+        'h1_text_color',
+        'is_h1_gradient_text',
+        'h1_text_color_gradient_from',
+        'h1_text_color_gradient_to',
+        'h1_text_color_gradient_via',
+        'p_description',
+        'p_description_translation',
+        'p_description_color',
+        'p_description_size',
+        'p_description_size_mobile',
+        'p_description_weight',
+        'is_bg_gradient',
+        'background_color',
+        'background_color_gradient_from',
+        'background_color_gradient_to',
+        'background_color_gradient_via',
+        'is_image_full_page',
+        'image_first',
+        'button_main_get_started',
+        'button_explore',
+        'animation_element'
       ];
       
-      // Only remove hero fields if we're actually on the hero section
-      if (heroFields) {
-        fieldsToRemove.push(...Object.keys(heroFields));
-      }
+      // Fields to remove from settings object
+      const fieldsToRemove = [
+        // Always remove these array fields from settings object
+        'features', 'faqs', 'banners', 'blog_posts', 'products', 'pricing_plans', 'menu_items', 'submenu_items',
+        // Always remove hero fields (they belong to website_hero table)
+        ...heroFieldsToRemove
+      ];
 
       // Create clean settings object
       const cleanSettings = { ...settings };

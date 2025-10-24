@@ -1064,8 +1064,8 @@ function HeaderEditModal() {
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
                   Header Style
                 </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['default', 'transparent', 'fixed'].map((style) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {['default', 'transparent', 'fixed', 'mini', 'ring_card_mini'].map((style) => (
                     <button
                       key={style}
                       onClick={() => setSelectedStyle(style)}
@@ -1077,7 +1077,7 @@ function HeaderEditModal() {
                       )}
                     >
                       <div className="font-semibold text-sm capitalize">
-                        {style}
+                        {style === 'ring_card_mini' ? 'Ring Card' : style}
                       </div>
                     </button>
                   ))}
