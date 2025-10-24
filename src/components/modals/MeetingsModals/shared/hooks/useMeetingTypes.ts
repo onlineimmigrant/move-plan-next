@@ -23,11 +23,15 @@ export const useMeetingTypes = (organizationId?: string, isAdmin: boolean = fals
       const response = await fetch(`/api/meetings/types?organization_id=${organizationId}`);
 
       if (!response.ok) {
-        throw new Error('Failed to load meeting types');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[useMeetingTypes] API Error:', response.status, errorData);
+        throw new Error(errorData.error || `Failed to load meeting types (${response.status})`);
       }
 
       const data = await response.json();
       let types = data.meeting_types || [];
+
+      console.log('[useMeetingTypes] Loaded meeting types:', types.length);
 
       // Filter based on user role and type settings
       if (!isAdmin) {
@@ -43,7 +47,7 @@ export const useMeetingTypes = (organizationId?: string, isAdmin: boolean = fals
 
       setMeetingTypes(types);
     } catch (err) {
-      console.error('Error loading meeting types:', err);
+      console.error('[useMeetingTypes] Error loading meeting types:', err);
       setError(err instanceof Error ? err.message : 'Failed to load meeting types');
       setMeetingTypes([]);
     } finally {

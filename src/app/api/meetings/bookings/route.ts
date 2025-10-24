@@ -89,7 +89,7 @@ const createBookingSchema = z.object({
 const updateBookingSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  status: z.enum(['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show']).optional(),
+  status: z.enum(['scheduled', 'confirmed', 'waiting', 'in_progress', 'completed', 'cancelled', 'no_show']).optional(),
   notes: z.string().optional(),
 });
 
@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
     let organizationId = searchParams.get('organization_id');
     const hostUserId = searchParams.get('host_user_id');
     const customerId = searchParams.get('customer_id');
+    const customerEmail = searchParams.get('customer_email');
     const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
@@ -109,11 +110,12 @@ export async function GET(request: NextRequest) {
       organizationId = await getOrganizationId(baseUrl);
       if (!organizationId) {
         console.error('Organization not found for baseUrl:', baseUrl);
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+        return NextResponse.json({ success: false, error: 'Organization not found' }, { status: 404 });
       }
       console.log('Using fallback organization_id:', organizationId);
     }
 
+    // First, get bookings with meeting types
     let query = supabase
       .from('bookings')
       .select(`
@@ -121,7 +123,7 @@ export async function GET(request: NextRequest) {
         meeting_type:meeting_types(*)
       `)
       .eq('organization_id', organizationId)
-      .order('scheduled_at', { ascending: false })
+      .order('scheduled_at', { ascending: true })
       .range(offset, offset + limit - 1);
 
     if (hostUserId) {
@@ -132,22 +134,53 @@ export async function GET(request: NextRequest) {
       query = query.eq('customer_id', customerId);
     }
 
+    if (customerEmail) {
+      query = query.eq('customer_email', customerEmail);
+    }
+
     if (status) {
-      query = query.eq('status', status);
+      // Support multiple statuses separated by comma
+      const statuses = status.split(',').map(s => s.trim());
+      if (statuses.length === 1) {
+        query = query.eq('status', statuses[0]);
+      } else {
+        query = query.in('status', statuses);
+      }
     }
 
     const { data: bookings, error } = await query;
 
     if (error) {
       console.error('Error fetching bookings:', error);
-      return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 });
+      return NextResponse.json({ success: false, error: 'Failed to fetch bookings' }, { status: 500 });
     }
 
-    return NextResponse.json({ bookings });
+    // Enrich bookings with host profile data
+    if (bookings && bookings.length > 0) {
+      const hostIds = [...new Set(bookings.map(b => b.host_user_id).filter(Boolean))];
+      
+      if (hostIds.length > 0) {
+        const { data: hosts } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', hostIds);
+
+        if (hosts) {
+          const hostMap = new Map(hosts.map(h => [h.id, h]));
+          bookings.forEach(booking => {
+            if (booking.host_user_id) {
+              booking.host = hostMap.get(booking.host_user_id);
+            }
+          });
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, bookings: bookings || [] });
 
   } catch (error) {
     console.error('Error in GET /api/meetings/bookings:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -239,8 +272,94 @@ export async function POST(request: NextRequest) {
       // The room can be created later when needed
     }
 
-    // TODO: Send confirmation email
-    // TODO: Create calendar event
+    // Send confirmation email to customer
+    try {
+      const { data: settings } = await supabase
+        .from('settings')
+        .select('domain, site')
+        .eq('organization_id', meetingType.organization_id)
+        .single();
+
+      const { data: hostProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', booking.host_user_id)
+        .single();
+
+      if (settings) {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+        if (!baseUrl) {
+          console.error('NEXT_PUBLIC_BASE_URL is not defined');
+        } else {
+          const isDevelopment = process.env.NODE_ENV === 'development' || baseUrl.includes('localhost');
+          const customerFacingUrl = isDevelopment 
+            ? baseUrl
+            : `https://${settings.domain}`;
+          
+          const meetingLink = `${customerFacingUrl}/account?openMeeting=${booking.id}`;
+          
+          // Format meeting time in the booking's timezone
+          const scheduledDate = new Date(booking.scheduled_at);
+          const meetingTime = scheduledDate.toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZoneName: 'short',
+            timeZone: booking.timezone || 'UTC'
+          });
+
+          console.log('[bookings] Sending booking confirmation email:', {
+            to: validatedData.customer_email,
+            bookingId: booking.id,
+            meetingLink,
+            meetingTime,
+            organizationId: meetingType.organization_id,
+          });
+
+          const emailPayload = {
+            type: 'meeting_invitation',
+            to: validatedData.customer_email,
+            organization_id: meetingType.organization_id,
+            name: validatedData.customer_name,
+            emailDomainRedirection: meetingLink,
+            placeholders: {
+              meeting_title: validatedData.title,
+              host_name: hostProfile?.full_name || 'Your host',
+              meeting_time: meetingTime,
+              duration_minutes: validatedData.duration_minutes.toString(),
+              meeting_notes: validatedData.description || '',
+              meeting_notes_html: validatedData.description 
+                ? `<div class="info-row"><span class="info-label">Notes:</span> ${validatedData.description}</div>` 
+                : '',
+            },
+          };
+
+          console.log('[bookings] Email payload:', JSON.stringify(emailPayload, null, 2));
+
+          const emailResponse = await fetch(`${baseUrl}/api/send-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emailPayload),
+          });
+
+          console.log('[bookings] Email response status:', emailResponse.status);
+
+          if (!emailResponse.ok) {
+            const errorText = await emailResponse.text();
+            console.error('[bookings] Failed to send confirmation email:', emailResponse.status, errorText);
+          } else {
+            const emailResult = await emailResponse.json();
+            console.log('[bookings] Confirmation email sent successfully:', emailResult);
+          }
+        }
+      }
+    } catch (emailError) {
+      console.error('Error sending confirmation email:', emailError);
+      // Don't fail the whole request if email fails
+    }
 
     return NextResponse.json({ booking }, { status: 201 });
 

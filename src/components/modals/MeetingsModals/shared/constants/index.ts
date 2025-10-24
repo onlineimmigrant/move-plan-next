@@ -28,6 +28,8 @@ export const CALENDAR_VIEW_LABELS = {
 export const BOOKING_STATUSES = {
   SCHEDULED: 'scheduled',
   CONFIRMED: 'confirmed',
+  WAITING: 'waiting',
+  IN_PROGRESS: 'in_progress',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
   NO_SHOW: 'no_show',
@@ -36,6 +38,8 @@ export const BOOKING_STATUSES = {
 export const BOOKING_STATUS_LABELS = {
   [BOOKING_STATUSES.SCHEDULED]: 'Scheduled',
   [BOOKING_STATUSES.CONFIRMED]: 'Confirmed',
+  [BOOKING_STATUSES.WAITING]: 'Waiting',
+  [BOOKING_STATUSES.IN_PROGRESS]: 'In Progress',
   [BOOKING_STATUSES.COMPLETED]: 'Completed',
   [BOOKING_STATUSES.CANCELLED]: 'Cancelled',
   [BOOKING_STATUSES.NO_SHOW]: 'No Show',

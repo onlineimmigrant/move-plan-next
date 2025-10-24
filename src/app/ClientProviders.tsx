@@ -19,6 +19,8 @@ import { HeaderEditProvider } from '@/components/modals/HeaderEditModal/context'
 import { FooterEditProvider } from '@/components/modals/FooterEditModal/context';
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
+import { MeetingProvider } from '@/context/MeetingContext';
+import ManagedVideoCall from '@/components/modals/MeetingsModals/ManagedVideoCall';
 import PostEditModal from '@/components/modals/PostEditModal/PostEditModal';
 import TemplateSectionEditModal from '@/components/modals/TemplateSectionModal/TemplateSectionEditModal';
 import TemplateHeadingSectionEditModal from '@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal';
@@ -247,30 +249,33 @@ export default function ClientProviders({
         <BannerProvider>
           <BasketProvider>
             <SettingsProvider initialSettings={settings}>
-              <ToastProvider>
-                <HeaderEditProvider>
-                  <FooterEditProvider>
-                    <LayoutManagerProvider>
-                      <PostEditModalProvider>
-                        <TemplateSectionEditProvider>
-                          <TemplateHeadingSectionEditProvider>
-                            <HeroSectionEditProvider>
-                              <PageCreationProvider>
-                                <SiteMapModalProvider>
-                                  <GlobalSettingsModalProvider>
-                                  <DynamicLanguageUpdater />
-                                  <DefaultLocaleCookieManager />
-                                  <CookieSettingsProvider>
-                              <BannerAwareContent
-                                children={children}
-                                showNavbarFooter={showNavbarFooter}
-                                menuItems={menuItems}
-                                loading={loading}
-                                headerData={headerData}
-                                activeLanguages={activeLanguages}
-                                cookieCategories={cookieCategories}
-                                cookieAccepted={cookieAccepted}
-                              />
+              <MeetingProvider>
+                <ToastProvider>
+                  <HeaderEditProvider>
+                    <FooterEditProvider>
+                      <LayoutManagerProvider>
+                        <PostEditModalProvider>
+                          <TemplateSectionEditProvider>
+                            <TemplateHeadingSectionEditProvider>
+                              <HeroSectionEditProvider>
+                                <PageCreationProvider>
+                                  <SiteMapModalProvider>
+                                    <GlobalSettingsModalProvider>
+                                    <DynamicLanguageUpdater />
+                                    <DefaultLocaleCookieManager />
+                                    <CookieSettingsProvider>
+                                {/* VideoCall Modal - Renders at root level (z-2000) */}
+                                <ManagedVideoCall />
+                                <BannerAwareContent
+                                  children={children}
+                                  showNavbarFooter={showNavbarFooter}
+                                  menuItems={menuItems}
+                                  loading={loading}
+                                  headerData={headerData}
+                                  activeLanguages={activeLanguages}
+                                  cookieCategories={cookieCategories}
+                                  cookieAccepted={cookieAccepted}
+                                />
                               {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
                               {showCookieBanner && (
                                 <Suspense fallback={null}>
@@ -311,6 +316,7 @@ export default function ClientProviders({
             </FooterEditProvider>
           </HeaderEditProvider>
         </ToastProvider>
+              </MeetingProvider>
             </SettingsProvider>
           </BasketProvider>
         </BannerProvider>

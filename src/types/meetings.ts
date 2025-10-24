@@ -29,7 +29,7 @@ export interface AvailabilitySchedule {
   updated_at: string;
 }
 
-export type BookingStatus = 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+export type BookingStatus = 'scheduled' | 'confirmed' | 'waiting' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
 
 export interface Booking {
   id: string;
@@ -53,6 +53,13 @@ export interface Booking {
   cancellation_reason?: string;
   cancelled_at?: string;
   cancelled_by?: string;
+  // Waiting room fields
+  waiting_since?: string;
+  approved_by?: string;
+  approved_at?: string;
+  rejected_by?: string;
+  rejected_at?: string;
+  rejection_reason?: string;
   created_at: string;
   updated_at: string;
 }

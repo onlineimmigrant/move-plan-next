@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { VideoCameraIcon, PhoneIcon } from '@heroicons/react/24/outline';
-import { VideoCall } from '../VideoCall';
+import { VideoCallModal } from '../../modals/MeetingsModals';
 import ServiceStatusBanner from './ServiceStatusBanner';
 
 interface TestVideoCallProps {
@@ -19,6 +19,9 @@ export default function TestVideoCall({ bookingId }: TestVideoCallProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [testBookingId, setTestBookingId] = useState(bookingId || '');
+  
+  // Generate a stable identity that persists across component renders
+  const userIdentityRef = useRef(`TestUser-${Date.now()}`);
 
   const createRoom = async () => {
     if (!testBookingId.trim()) {
@@ -73,7 +76,7 @@ export default function TestVideoCall({ bookingId }: TestVideoCallProps) {
         },
         body: JSON.stringify({
           booking_id: testBookingId,
-          identity: `TestUser-${Date.now()}`, // Unique identity for testing
+          identity: userIdentityRef.current, // Use stable identity
         }),
       });
 
@@ -100,11 +103,11 @@ export default function TestVideoCall({ bookingId }: TestVideoCallProps) {
 
   if (isInCall && roomData) {
     return (
-      <VideoCall
+      <VideoCallModal
         token={roomData.token}
         roomName={roomData.room_name}
         onLeave={leaveCall}
-        participantName={`TestUser-${Date.now()}`}
+        participantName={userIdentityRef.current}
       />
     );
   }

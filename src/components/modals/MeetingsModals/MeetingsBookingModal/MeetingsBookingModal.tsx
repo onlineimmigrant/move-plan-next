@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ArrowLeftIcon, CalendarIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Calendar, BookingForm } from '@/components/modals/MeetingsModals/shared/components';
+import MyBookingsList from './MyBookingsList';
 import {
   MeetingsBookingModalProps,
   TimeSlot
@@ -27,6 +28,9 @@ import { supabase } from '@/lib/supabase';
 
 export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot }: MeetingsBookingModalProps) {
   const { settings } = useSettings();
+
+  // Tab state - NEW
+  const [activeTab, setActiveTab] = useState<'my-meetings' | 'book-new'>('my-meetings');
 
   // View state
   const [currentView, setCurrentView] = useState<'calendar' | 'booking'>(MODAL_VIEWS.CALENDAR);
@@ -317,26 +321,35 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
 
   // Get modal title with icon
   const getModalTitle = () => {
+    if (activeTab === 'my-meetings') {
+      return 'My Meetings';
+    }
     if (currentView === 'calendar') {
       return (
         <div className="flex items-center gap-2">
           <CalendarIcon className="hidden sm:inline w-6 h-6 text-blue-600" />
-          <span>Meetings</span>
+          <span>Book a Meeting</span>
         </div>
       );
     }
     return (
       <div className="flex items-center gap-2">
         <UserGroupIcon className="hidden sm:inline w-6 h-6 text-blue-600" />
-        <span>Meetings</span>
+        <span>Complete Booking</span>
       </div>
     );
   };
 
   // Get subtitle
   const getSubtitle = () => {
+    if (activeTab === 'my-meetings') {
+      return 'View and manage your upcoming meetings';
+    }
+    if (currentView === 'booking' && bookingState.selectedSlot) {
+      return `Selected: ${format(bookingState.selectedSlot.start, 'PPP p')}`;
+    }
     if (currentView === 'calendar') {
-      return 'Calendar';
+      return 'Select a time slot to book your meeting';
     }
     return 'Booking';
   };
@@ -350,6 +363,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
     };
     bookingState.resetForm(customerData);
     setCurrentView(MODAL_VIEWS.CALENDAR);
+    setActiveTab('book-new'); // Stay on book-new tab
   };
 
   const headerActions = currentView === MODAL_VIEWS.BOOKING ? (
@@ -381,6 +395,32 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
         closeOnEscape={true}
         className="meetings-booking-modal"
       >
+        {/* Tab Navigation - Only show if not in booking view */}
+        {currentView !== MODAL_VIEWS.BOOKING && (
+          <div className="flex border-b border-gray-200 mb-6 -mt-2">
+            <button
+              onClick={() => setActiveTab('my-meetings')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'my-meetings'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              My Meetings
+            </button>
+            <button
+              onClick={() => setActiveTab('book-new')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'book-new'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Book New Meeting
+            </button>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
@@ -389,7 +429,9 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
         )}
 
         {/* Content */}
-        {calendarState.isLoading ? (
+        {activeTab === 'my-meetings' && currentView === MODAL_VIEWS.CALENDAR ? (
+          <MyBookingsList organizationId={settings?.organization_id} />
+        ) : calendarState.isLoading ? (
           <CalendarLoading />
         ) : currentView === MODAL_VIEWS.CALENDAR ? (
           meetingTypes.length === 0 ? (

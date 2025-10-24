@@ -10,9 +10,10 @@ const supabase = createClient(
 const updateBookingSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  status: z.enum(['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show']).optional(),
+  status: z.enum(['scheduled', 'confirmed', 'waiting', 'in_progress', 'completed', 'cancelled', 'no_show']).optional(),
   notes: z.string().optional(),
   cancellation_reason: z.string().optional(),
+  rejection_reason: z.string().optional(),
 });
 
 // GET /api/meetings/bookings/[id] - Get single booking

@@ -1,0 +1,1059 @@
+'use client';
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Room, LocalVideoTrack, LocalAudioTrack, RemoteParticipant, RemoteVideoTrack, RemoteAudioTrack, LocalDataTrack } from 'twilio-video';
+import { 
+  VideoCameraIcon, 
+  VideoCameraSlashIcon, 
+  MicrophoneIcon, 
+  PhoneXMarkIcon, 
+  ComputerDesktopIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
+  MinusIcon,
+  XMarkIcon,
+  ChevronUpIcon,
+  InformationCircleIcon,
+  ClipboardDocumentIcon,
+  ChatBubbleLeftRightIcon,
+  PaperAirplaneIcon,
+  HandRaisedIcon,
+  UserGroupIcon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  PaperClipIcon,
+  ArrowDownTrayIcon,
+  SignalIcon,
+  FaceSmileIcon,
+  StopCircleIcon,
+  VideoCameraIcon as VideoCameraIconSolid
+} from '@heroicons/react/24/outline';
+import { useTwilioRoom } from './hooks/useTwilioRoom';
+import { useChat } from './hooks/useChat';
+import { useBackgroundProcessing } from './hooks/useBackgroundProcessing';
+import { useRecording } from './hooks/useRecording';
+import { useVideoCallUI } from './hooks/useVideoCallUI';
+import { useParticipantManagement } from './hooks/useParticipantManagement';
+import { useSettings } from './hooks/useSettings';
+import RemoteParticipantVideo from './components/RemoteParticipantVideo';
+import ChatPanel from './components/ChatPanel';
+import ParticipantsPanel from './components/ParticipantsPanel';
+import SettingsPanel from './components/SettingsPanel';
+import MeetingNotesPanel from './components/MeetingNotesPanel';
+import InfoMenu from './components/InfoMenu';
+import VideoCallHeader from './components/VideoCallHeader';
+
+interface VideoCallProps {
+  token: string;
+  roomName: string;
+  onLeave: () => void;
+  participantName?: string;
+}
+
+interface Participant {
+  identity: string;
+  videoTrack?: RemoteVideoTrack;
+  audioTrack?: RemoteAudioTrack;
+  isVideoEnabled: boolean;
+  isAudioEnabled: boolean;
+}
+
+export default function VideoCallModal({ token, roomName, onLeave, participantName }: VideoCallProps) {
+  // Use the Twilio room hook
+  const {
+    room,
+    isConnected,
+    isConnecting,
+    error: roomError,
+    participants,
+    localAudioTrack,
+    localVideoTrack,
+    localDataTrack,
+    tracksReady,
+    isAudioEnabled,
+    isVideoEnabled,
+    toggleAudio,
+    toggleVideo,
+    disconnect,
+  } = useTwilioRoom(token, roomName, participantName || 'You', false); // TODO: Pass isHost when available
+
+  // Use the chat hook
+  const {
+    showChat,
+    chatMessages,
+    chatInput,
+    unreadCount,
+    chatContainerRef,
+    fileInputRef,
+    toggleChat,
+    sendChatMessage,
+    handleFileSelect,
+    addChatMessage,
+    setChatInput,
+  } = useChat(roomName, participantName || 'You', localDataTrack, isConnected);
+
+  // Use the background processing hook
+  const {
+    backgroundMode,
+    backgroundColor,
+    backgroundImage,
+    showBackgroundMenu,
+    setBackgroundMode,
+    setBackgroundColor,
+    setBackgroundImage,
+    setShowBackgroundMenu,
+    startBackgroundProcessing,
+    stopBackgroundProcessing,
+    restoreOriginalVideoTrack,
+    applyBlurBackground,
+    applyColorBackground,
+    applyImageBackground,
+    backgroundCanvasRef,
+    backgroundVideoRef,
+    processedVideoRef,
+    processedVideoSpotlightRef,
+    processedVideoThumbnailRef,
+    processedStreamRef,
+    animationFrameRef,
+    cachedBackgroundImageRef,
+    originalVideoTrackRef,
+  } = useBackgroundProcessing(room, localVideoTrack);
+
+  // Use the UI hook
+  const {
+    isFullscreen,
+    isMinimized,
+    isMobile,
+    viewMode,
+    pinnedParticipant,
+    showSelfView,
+    showInfoMenu,
+    copiedField,
+    width,
+    height,
+    x,
+    y,
+    isLocalVideoMirrored,
+    setIsFullscreen,
+    setIsMinimized,
+    setViewMode,
+    setPinnedParticipant,
+    setShowSelfView,
+    setShowInfoMenu,
+    setCopiedField,
+    setWidth,
+    setHeight,
+    setX,
+    setY,
+    setIsLocalVideoMirrored,
+    toggleFullscreen,
+    toggleMinimized,
+    getParticipantColor,
+  } = useVideoCallUI();
+
+  // Use the recording hook
+  const {
+    isRecording,
+    recordingStartTime,
+    startRecording,
+    stopRecording,
+  } = useRecording();
+  
+  // Attach local video track to video elements
+  useEffect(() => {
+    if (!localVideoTrack) return;
+
+    const videoTrack = localVideoTrack;
+    const refs = [localVideoRef, localVideoRefSpotlight, localVideoRefThumbnail];
+
+    refs.forEach(ref => {
+      if (ref.current) {
+        videoTrack.attach(ref.current);
+      }
+    });
+
+    return () => {
+      refs.forEach(ref => {
+        if (ref.current) {
+          videoTrack.detach(ref.current);
+        }
+      });
+    };
+  }, [localVideoTrack, viewMode, pinnedParticipant, showSelfView]);
+  
+  // Use the participant management hook
+  const {
+    isHost,
+    raisedHands,
+    handRaised,
+    reactions,
+    waitingParticipants,
+    setIsHost,
+    setRaisedHands,
+    setHandRaised,
+    setReactions,
+    setWaitingParticipants,
+    sendReaction,
+    toggleHandRaise,
+    muteAllParticipants,
+    kickParticipant,
+  } = useParticipantManagement();
+
+  // Use the settings hook
+  const {
+    videoQuality,
+    showSettings,
+    showParticipants,
+    networkStats,
+    isPiP,
+    setVideoQuality,
+    setShowSettings,
+    setShowParticipants,
+    setNetworkStats,
+    setIsPiP,
+    changeVideoQuality,
+    togglePictureInPicture,
+  } = useSettings();
+
+  // Video element refs
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRefSpotlight = useRef<HTMLVideoElement>(null);
+  const localVideoRefThumbnail = useRef<HTMLVideoElement>(null);
+  const screenTrackRef = useRef<LocalVideoTrack | null>(null);
+
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showNotes, setShowNotes] = useState(false);
+  const [meetingNotes, setMeetingNotes] = useState('');
+
+  const toggleScreenShare = async () => {
+    if (isScreenSharing) {
+      if (screenTrackRef.current) {
+        room?.localParticipant.unpublishTrack(screenTrackRef.current);
+        screenTrackRef.current.stop();
+        screenTrackRef.current = null;
+      }
+      setIsScreenSharing(false);
+    } else {
+      try {
+        const screenTrack = await navigator.mediaDevices.getDisplayMedia({ video: true })
+          .then(stream => new LocalVideoTrack(stream.getVideoTracks()[0]));
+        screenTrackRef.current = screenTrack;
+        room?.localParticipant.publishTrack(screenTrack);
+        setIsScreenSharing(true);
+      } catch (err) {
+        console.error('Error starting screen share:', err);
+      }
+    }
+  };
+
+  // Copy to clipboard helper
+  
+  // Copy to clipboard helper
+  
+  // Copy to clipboard helper
+  
+  // Copy to clipboard helper
+  
+  // Copy to clipboard helper
+  
+  // Save chat history to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && chatMessages.length > 0) {
+      localStorage.setItem(`chat-history-${roomName}`, JSON.stringify(chatMessages));
+    }
+  }, [chatMessages, roomName]);
+  
+  // Request chat history when joining room
+  useEffect(() => {
+    if (isConnected && localDataTrack) {
+      // Wait a bit for others to connect
+      const timer = setTimeout(() => {
+        if (localDataTrack) {
+          const message = {
+            type: 'requestChatHistory',
+            requester: participantName || 'Anonymous'
+          };
+          localDataTrack.send(JSON.stringify(message));
+          console.log('📜 Requested chat history');
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isConnected, participantName]);
+  
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  // Handle background mode changes
+  useEffect(() => {
+    console.log('🎨 Background mode changed to:', backgroundMode, 'Color:', backgroundColor, 'Image:', backgroundImage);
+    console.log('🎨 Current room state:', !!room, 'Local track:', !!localVideoTrack);
+
+    const applyBackgroundEffect = async () => {
+      if (!localVideoTrack) {
+        console.log('❌ No local video track available');
+        return;
+      }
+
+      if (!room) {
+        console.log('❌ No room connection available');
+        return;
+      }
+
+      try {
+        // Stop any existing processing
+        stopBackgroundProcessing();
+
+        if (backgroundMode === 'none') {
+          // Restore original video track
+          console.log('🔄 Background effect: None - restoring original track');
+          await restoreOriginalVideoTrack();
+          return;
+        }
+
+        // For any background effect, we need to process the video
+        console.log('🚀 Starting background processing for mode:', backgroundMode);
+        await startBackgroundProcessing();
+
+      } catch (error) {
+        console.error('❌ Failed to apply background effect:', error);
+      }
+    };
+
+    applyBackgroundEffect();
+
+    // Cleanup on unmount
+    return () => {
+      console.log('🧹 Cleaning up background processing');
+      stopBackgroundProcessing();
+    };
+  }, [backgroundMode, backgroundColor, backgroundImage, room]); // Added room dependency
+
+  const leaveCall = () => {
+    if (room) {
+      room.disconnect();
+    }
+    onLeave();
+  };
+
+  // Copy to clipboard helper
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Handle dragging
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0, initialX: 0, initialY: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isFullscreen || isMinimized || isMobile) return;
+    
+    const target = e.target as HTMLElement;
+    if (!target.closest('.drag-handle')) return;
+    
+    isDraggingRef.current = true;
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      initialX: x,
+      initialY: y
+    };
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      
+      const deltaX = e.clientX - dragStartRef.current.x;
+      const deltaY = e.clientY - dragStartRef.current.y;
+      
+      setX(dragStartRef.current.initialX + deltaX);
+      setY(dragStartRef.current.initialY + deltaY);
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    if (isDraggingRef.current) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  if (error) {
+    return (
+      <div
+        className="shadow-2xl rounded-lg overflow-hidden fixed bg-red-50"
+        style={{ 
+          zIndex: 9999,
+          left: window.innerWidth / 2 - 200,
+          top: window.innerHeight / 2 - 150,
+          width: 400,
+          height: 300
+        }}
+      >
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="text-red-600 text-lg font-semibold mb-2">Connection Error</div>
+            <div className="text-red-500">{error}</div>
+            <button
+              onClick={onLeave}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`shadow-2xl ${isMobile ? 'fixed inset-0' : 'fixed'}`}
+      style={{ 
+        zIndex: 9999,
+        width: isMobile ? '100vw' : (isFullscreen ? '100vw' : isMinimized ? 350 : width),
+        height: isMobile ? '100vh' : (isFullscreen ? '100vh' : isMinimized ? 60 : height),
+        left: isMobile ? 0 : x,
+        top: isMobile ? 0 : y,
+        cursor: (isDraggingRef.current && !isMobile) ? 'grabbing' : 'default'
+      }}
+      onMouseDown={handleMouseDown}
+    >
+      <div className="flex flex-col h-full bg-gray-900 text-white">
+        <VideoCallHeader
+          isMobile={isMobile}
+          isMinimized={isMinimized}
+          isFullscreen={isFullscreen}
+          isConnected={isConnected}
+          participants={participants}
+          roomName={roomName}
+          participantName={participantName}
+          viewMode={viewMode}
+          showInfoMenu={showInfoMenu}
+          copiedField={copiedField}
+          onLeave={leaveCall}
+          onToggleMinimized={toggleMinimized}
+          onToggleFullscreen={toggleFullscreen}
+          onSetViewMode={setViewMode}
+          onToggleInfoMenu={() => setShowInfoMenu(!showInfoMenu)}
+          onCopyToClipboard={copyToClipboard}
+        />
+
+        {/* Video Grid - Hidden when minimized but DOM kept */}
+                {isMinimized ? (
+                  <ChevronUpIcon className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                ) : (
+                  <MinusIcon className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                )}
+              </button>
+              
+              {!isMobile && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFullscreen();
+                  }}
+                  className="p-1.5 hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                >
+                  {isFullscreen ? (
+                    <ArrowsPointingInIcon className="w-4 h-4" />
+                  ) : (
+                    <ArrowsPointingOutIcon className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+            </div>
+            
+            {!isMinimized && (
+              <>
+                <div className="h-5 w-px bg-gray-600" />
+                
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+                  <div>
+                    <h2 className="text-sm font-medium">Video Call</h2>
+                    <div className="text-xs text-gray-400">
+                      {participants.size + 1} participant{participants.size !== 0 ? 's' : ''}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+            {isMinimized && (
+              <div className="text-sm font-medium truncate ml-2">Video Call • {participants.size + 1}</div>
+            )}
+          </div>
+          
+          {!isMinimized && (
+            <div className="flex items-center gap-2">
+              {/* Layout Switcher */}
+              {participants.size > 0 && !isMobile && (
+                <div className="flex items-center gap-1 bg-gray-700/50 rounded-lg p-1">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-1.5 rounded transition-all ${viewMode === 'grid' ? 'bg-blue-600 shadow-lg' : 'hover:bg-gray-600'}`}
+                    title="Grid view"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('spotlight')}
+                    className={`p-1.5 rounded transition-all ${viewMode === 'spotlight' ? 'bg-blue-600 shadow-lg' : 'hover:bg-gray-600'}`}
+                    title="Spotlight view"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('sidebar')}
+                    className={`p-1.5 rounded transition-all ${viewMode === 'sidebar' ? 'bg-blue-600 shadow-lg' : 'hover:bg-gray-600'}`}
+                    title="Sidebar view"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+              
+              {/* Info Menu */}
+              <div className="relative" data-info-menu>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInfoMenu(!showInfoMenu);
+                  }}
+                  className={`${isMobile ? 'p-3' : 'p-2'} rounded-lg transition-all ${showInfoMenu ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+                  title="Meeting info"
+                >
+                  <InformationCircleIcon className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} />
+                </button>
+                
+                {showInfoMenu && (
+                  <div className={`absolute right-0 mt-2 ${isMobile ? 'w-80' : 'w-72'} bg-gray-800 rounded-lg shadow-2xl border border-gray-700 z-50 overflow-hidden`}>
+                    <div className="px-4 py-3 bg-gray-700/50 border-b border-gray-600">
+                      <h3 className="text-sm font-semibold">Meeting Information</h3>
+                    </div>
+                    <div className="p-3 space-y-3">
+                      {/* Meeting ID */}
+                      <div>
+                        <label className="text-xs text-gray-400 block mb-1">Meeting ID</label>
+                        <div className="flex items-center gap-2 bg-gray-700/50 rounded px-3 py-2">
+                          <code className="text-xs flex-1 font-mono text-gray-200">{roomName}</code>
+                          <button
+                            onClick={() => copyToClipboard(roomName, 'roomName')}
+                            className="p-1 hover:bg-gray-600 rounded transition-colors"
+                            title="Copy meeting ID"
+                          >
+                            {copiedField === 'roomName' ? (
+                              <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <ClipboardDocumentIcon className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Your Name */}
+                      {participantName && (
+                        <div>
+                          <label className="text-xs text-gray-400 block mb-1">Your Name</label>
+                          <div className="flex items-center gap-2 bg-gray-700/50 rounded px-3 py-2">
+                            <span className="text-xs flex-1 text-gray-200">{participantName}</span>
+                            <button
+                              onClick={() => copyToClipboard(participantName, 'participantName')}
+                              className="p-1 hover:bg-gray-600 rounded transition-colors"
+                              title="Copy your name"
+                            >
+                              {copiedField === 'participantName' ? (
+                                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <ClipboardDocumentIcon className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Connection Status */}
+                      <div>
+                        <label className="text-xs text-gray-400 block mb-1">Status</label>
+                        <div className="flex items-center gap-2 bg-gray-700/50 rounded px-3 py-2">
+                          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+                          <span className="text-xs text-gray-200">{isConnected ? 'Connected' : 'Connecting...'}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Participants */}
+                      <div>
+                        <label className="text-xs text-gray-400 block mb-1">Participants</label>
+                        <div className="bg-gray-700/50 rounded px-3 py-2">
+                          <span className="text-xs text-gray-200">{participants.size + 1} in call</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Video Grid - Hidden when minimized but DOM kept */}
+        <div 
+          className="flex-1 overflow-auto"
+          style={{ display: isMinimized ? 'none' : 'flex' }}
+        >
+          {viewMode === 'grid' && (
+            <div className={`w-full grid gap-2 sm:gap-4 p-2 sm:p-4 ${
+              participants.size === 0 ? 'grid-cols-1' :
+              participants.size === 1 ? 'grid-cols-1 sm:grid-cols-2' :
+              participants.size === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+              participants.size === 3 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' :
+              'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+            } auto-rows-fr`}>
+              {/* Local Video */}
+              <div className="relative bg-gray-800 overflow-hidden aspect-video group">
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className={`w-full h-full object-cover transition-transform duration-200 ${backgroundMode !== 'none' ? 'hidden' : ''}`}
+                  style={{ transform: isLocalVideoMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
+                />
+                <video
+                  ref={processedVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${backgroundMode === 'none' ? 'hidden' : ''}`}
+                  style={{ transform: isLocalVideoMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
+                />
+                <video
+                  ref={backgroundVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="hidden"
+                />
+                <canvas
+                  ref={backgroundCanvasRef}
+                  className="hidden"
+                  width="640"
+                  height="480"
+                />
+                <div className="absolute bottom-2 left-2 bg-gray-900/30 backdrop-blur-sm px-2 py-1 rounded-md text-xs flex items-center gap-1.5">
+                  <span>You ({room?.localParticipant.identity || 'connecting...'})</span>
+                  {!isAudioEnabled && (
+                    <svg className="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd"/>
+                    </svg>
+                  )}
+                  {!isVideoEnabled && <span>(Audio only)</span>}
+                </div>
+                <button
+                  onClick={() => setIsLocalVideoMirrored(!isLocalVideoMirrored)}
+                  className="absolute top-2 right-2 p-1.5 bg-gray-900/20 hover:bg-gray-900/40 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                  title={isLocalVideoMirrored ? "Disable mirror" : "Enable mirror"}
+                >
+                  <svg className="w-5 h-5 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18M12 3l-4 4m4-4l4 4m0 10l-4-4m4 4l4-4" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Remote Participants */}
+              {Array.from(participants.values()).map((participant) => (
+                <RemoteParticipantVideo
+                  key={participant.identity}
+                  participant={participant}
+                  isFullscreen={isFullscreen}
+                  onPin={() => {
+                    setPinnedParticipant(participant.identity);
+                    setViewMode('spotlight');
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {(viewMode === 'spotlight' || viewMode === 'sidebar') && (
+            <div className={`w-full h-full flex ${isMobile ? 'gap-2 p-2' : 'gap-4 p-4'}`}>
+              {/* Main Video Area */}
+              <div className={`${viewMode === 'sidebar' ? 'flex-1' : 'w-full'} relative`}>
+                {pinnedParticipant && participants.get(pinnedParticipant) ? (
+                  <RemoteParticipantVideo
+                    participant={participants.get(pinnedParticipant)!}
+                    isFullscreen={true}
+                    onPin={() => setPinnedParticipant(null)}
+                    isPinned={true}
+                  />
+                ) : (
+                  // Show local video as main when no participant is pinned
+                  <div className="w-full h-full relative bg-gray-800 rounded-lg overflow-hidden group">
+                    <video
+                      ref={localVideoRefSpotlight}
+                      autoPlay
+                      muted
+                      playsInline
+                      className={`w-full h-full object-cover transition-transform duration-200 ${backgroundMode !== 'none' ? 'hidden' : ''}`}
+                      style={{ transform: isLocalVideoMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
+                    />
+                    <video
+                      ref={processedVideoSpotlightRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${backgroundMode === 'none' ? 'hidden' : ''}`}
+                      style={{ transform: isLocalVideoMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
+                    />
+                    <video
+                      ref={backgroundVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="hidden"
+                    />
+                    <canvas
+                      ref={backgroundCanvasRef}
+                      className="hidden"
+                    />
+                    <div className="absolute bottom-4 left-4 bg-gray-900/30 backdrop-blur-sm px-3 py-1.5 rounded-lg text-sm flex items-center gap-2">
+                      <span>You</span>
+                      {!isAudioEnabled && (
+                        <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd"/>
+                        </svg>
+                      )}
+                      {!isVideoEnabled && <span>(Audio only)</span>}
+                    </div>
+                    <button
+                      onClick={() => setIsLocalVideoMirrored(!isLocalVideoMirrored)}
+                      className="absolute top-4 right-4 p-2 bg-gray-900/20 hover:bg-gray-900/40 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                      title={isLocalVideoMirrored ? "Disable mirror" : "Enable mirror"}
+                    >
+                      <svg className="w-6 h-6 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18M12 3l-4 4m4-4l4 4m0 10l-4-4m4 4l4-4" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Sidebar with thumbnails */}
+              <div className={`flex ${viewMode === 'sidebar' ? 'flex-col w-64 gap-3' : 'flex-row gap-3 absolute bottom-4 left-4 right-4'} overflow-auto`}>
+                {/* Local Video Thumbnail - only show if someone else is pinned */}
+                {showSelfView && pinnedParticipant && (
+                  <div 
+                    className="relative bg-gray-800 overflow-hidden rounded-lg group flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all" 
+                    style={{ aspectRatio: '16/9', height: viewMode === 'sidebar' ? 'auto' : '120px' }}
+                    onClick={() => setPinnedParticipant(null)}
+                  >
+                    <video
+                      ref={localVideoRefThumbnail}
+                      autoPlay
+                      muted
+                      playsInline
+                      className={`w-full h-full object-cover transition-transform duration-200 ${backgroundMode !== 'none' ? 'hidden' : ''}`}
+                      style={{ transform: isLocalVideoMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
+                    />
+                    <video
+                      ref={processedVideoThumbnailRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${backgroundMode === 'none' ? 'hidden' : ''}`}
+                      style={{ transform: isLocalVideoMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
+                    />
+                    <video
+                      ref={backgroundVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="hidden"
+                    />
+                    <canvas
+                      ref={backgroundCanvasRef}
+                      className="hidden"
+                    />
+                    <div className="absolute bottom-1.5 left-1.5 bg-gray-900/30 backdrop-blur-sm px-2 py-0.5 rounded text-xs">
+                      You
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowSelfView(false);
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-gray-900/40 hover:bg-gray-900/60 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
+                      title="Hide self view"
+                    >
+                      <XMarkIcon className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Remote Participants Thumbnails */}
+                {Array.from(participants.values())
+                  .filter(p => p.identity !== pinnedParticipant)
+                  .map((participant) => (
+                    <div
+                      key={participant.identity}
+                      className="cursor-pointer flex-shrink-0"
+                      style={{ aspectRatio: '16/9', height: viewMode === 'sidebar' ? 'auto' : '120px' }}
+                      onClick={() => setPinnedParticipant(participant.identity)}
+                    >
+                      <RemoteParticipantVideo
+                        participant={participant}
+                        isFullscreen={false}
+                        onPin={() => setPinnedParticipant(participant.identity)}
+                      />
+                    </div>
+                  ))}
+              </div>
+
+              {/* Show self view button if hidden */}
+              {!showSelfView && (viewMode === 'spotlight' || viewMode === 'sidebar') && (
+                <button
+                  onClick={() => setShowSelfView(true)}
+                  className="absolute bottom-4 left-4 p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+                  title="Show self view"
+                >
+                  <VideoCameraIcon className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Controls - Hidden when minimized */}
+        {!isMinimized && (
+          <div className={`flex items-center justify-center ${isMobile ? 'space-x-6 p-6' : 'space-x-4 p-4'} bg-gray-800`}>
+          <button
+            onClick={toggleVideo}
+            className={`${isMobile ? 'p-4' : 'p-3'} rounded-full ${isVideoEnabled ? 'bg-gray-600 hover:bg-gray-500' : 'bg-red-600 hover:bg-red-500'}`}
+          >
+            {isVideoEnabled ? (
+              <VideoCameraIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
+            ) : (
+              <VideoCameraSlashIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
+            )}
+          </button>
+
+          <button
+            onClick={toggleAudio}
+            className={`${isMobile ? 'p-4' : 'p-3'} rounded-full ${isAudioEnabled ? 'bg-gray-600 hover:bg-gray-500' : 'bg-red-600 hover:bg-red-500'}`}
+          >
+            {isAudioEnabled ? (
+              <MicrophoneIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
+            ) : (
+              <MicrophoneIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'} opacity-50`} />
+            )}
+          </button>
+
+          <button
+            onClick={toggleScreenShare}
+            className={`${isMobile ? 'p-4' : 'p-3'} rounded-full ${isScreenSharing ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'}`}
+          >
+            <ComputerDesktopIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
+          </button>
+          
+          <button
+            onClick={toggleChat}
+            className={`${isMobile ? 'p-4' : 'p-3'} rounded-full relative ${showChat ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'}`}
+          >
+            <ChatBubbleLeftRightIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-white/10 text-gray-100 text-[10px] font-medium rounded-full w-4 h-4 flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+          
+          {!isMobile && (
+            <>
+              <button
+                onClick={() => toggleHandRaise(localDataTrack)}
+                className={`p-3 rounded-full ${handRaised ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-gray-600 hover:bg-gray-500'}`}
+                title={handRaised ? "Lower hand" : "Raise hand"}
+              >
+                <HandRaisedIcon className="w-6 h-6" />
+              </button>
+              
+              <button
+                onClick={() => setShowParticipants(!showParticipants)}
+                className={`p-3 rounded-full relative ${showParticipants ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'}`}
+                title="Participants"
+              >
+                <UserGroupIcon className="w-6 h-6" />
+                {raisedHands.size > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {raisedHands.size}
+                  </span>
+                )}
+              </button>
+              
+              <button
+                onClick={isRecording ? () => stopRecording(roomName) : () => startRecording(room, localAudioTrack, localVideoTrack, roomName)}
+                className={`p-3 rounded-full ${isRecording ? 'bg-red-600 hover:bg-red-500 animate-pulse' : 'bg-gray-600 hover:bg-gray-500'}`}
+                title={isRecording ? "Stop recording" : "Start recording"}
+              >
+                {isRecording ? (
+                  <StopCircleIcon className="w-6 h-6" />
+                ) : (
+                  <VideoCameraIconSolid className="w-6 h-6" />
+                )}
+              </button>
+              
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`p-3 rounded-full ${showSettings ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'}`}
+                title="Settings"
+              >
+                <Cog6ToothIcon className="w-6 h-6" />
+              </button>
+              
+              <button
+                onClick={() => setShowNotes(!showNotes)}
+                className={`p-3 rounded-full ${showNotes ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'}`}
+                title="Meeting notes"
+              >
+                <DocumentTextIcon className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={leaveCall}
+            className={`${isMobile ? 'p-4' : 'p-3'} rounded-full bg-red-600 hover:bg-red-500`}
+          >
+            <PhoneXMarkIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
+          </button>
+        </div>
+        )}
+      </div>
+      
+      {/* Reactions Overlay */}
+      {reactions.map(reaction => (
+        <div
+          key={reaction.id}
+          className="absolute text-6xl animate-bounce pointer-events-none z-50"
+          style={{
+            left: `${reaction.x}%`,
+            top: `${reaction.y}%`,
+            animation: 'float-up 3s ease-out forwards'
+          }}
+        >
+          {reaction.emoji}
+        </div>
+      ))}
+      
+      {/* Reaction Buttons */}
+      {!isMinimized && !isMobile && (
+        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800/90 backdrop-blur-sm rounded-full px-4 py-2 flex gap-2 z-40">
+          {['👍', '❤️', '😂', '👏', '🎉'].map(emoji => (
+            <button
+              key={emoji}
+              onClick={() => sendReaction(emoji, localDataTrack, participantName || 'You')}
+              className="text-2xl hover:scale-125 transition-transform"
+              title={`Send ${emoji}`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+      
+      <ChatPanel
+        showChat={showChat}
+        isMobile={isMobile}
+        chatMessages={chatMessages}
+        chatInput={chatInput}
+        chatContainerRef={chatContainerRef}
+        fileInputRef={fileInputRef}
+        toggleChat={toggleChat}
+        sendChatMessage={sendChatMessage}
+        handleFileSelect={handleFileSelect}
+        setChatInput={setChatInput}
+        sendReaction={(emoji) => sendReaction(emoji, localDataTrack, participantName || 'You')}
+        getParticipantColor={getParticipantColor}
+      />
+
+      <ParticipantsPanel
+        showParticipants={showParticipants}
+        isMobile={isMobile}
+        participants={participants}
+        participantName={participantName}
+        isHost={isHost}
+        isAudioEnabled={isAudioEnabled}
+        isVideoEnabled={isVideoEnabled}
+        handRaised={handRaised}
+        raisedHands={raisedHands}
+        muteAllParticipants={() => muteAllParticipants(isHost, localDataTrack)}
+        kickParticipant={(identity) => kickParticipant(identity, isHost, localDataTrack)}
+      />
+
+      <SettingsPanel
+        showSettings={showSettings}
+        isMobile={isMobile}
+        videoQuality={videoQuality}
+        backgroundMode={backgroundMode}
+        backgroundColor={backgroundColor}
+        backgroundImage={backgroundImage}
+        networkStats={networkStats}
+        isPiP={isPiP}
+        changeVideoQuality={(quality) => changeVideoQuality(quality, localVideoTrack)}
+        setBackgroundMode={setBackgroundMode}
+        setBackgroundColor={setBackgroundColor}
+        setBackgroundImage={setBackgroundImage}
+        togglePictureInPicture={() => togglePictureInPicture(localVideoRef.current)}
+      />
+
+      <MeetingNotesPanel
+        showNotes={showNotes}
+        isMobile={isMobile}
+        meetingNotes={meetingNotes}
+        roomName={roomName}
+        setMeetingNotes={setMeetingNotes}
+      />
+
+      {/* Recording Indicator */}
+      {isRecording && recordingStartTime && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-600 px-4 py-2 rounded-full flex items-center gap-2 z-50">
+          <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+          <span className="text-sm font-medium">
+            Recording {Math.floor((new Date().getTime() - recordingStartTime.getTime()) / 1000)}s
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}

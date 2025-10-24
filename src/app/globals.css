@@ -687,3 +687,31 @@ html, body {
   scrollbar-width: thin;
   scrollbar-color: #14b8a6 rgba(20, 184, 166, 0.1);
 }
+
+/* Video call reactions animation */
+@keyframes float-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-200px) scale(1.5);
+  }
+}
+
+/* Speed test progress animation */
+@keyframes progress {
+  0% {
+    width: 0%;
+    left: 0;
+  }
+  50% {
+    width: 100%;
+    left: 0;
+  }
+  100% {
+    width: 0%;
+    left: 100%;
+  }
+}

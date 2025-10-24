@@ -103,24 +103,27 @@ export default function BookingForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.meeting_type_id || !formData.customer_name || !formData.customer_email || !formData.scheduled_at) {
-      console.error('[BookingForm] Validation failed - Missing required fields:', {
-        meeting_type_id: !!formData.meeting_type_id,
-        customer_name: !!formData.customer_name,
-        customer_email: !!formData.customer_email,
-        scheduled_at: !!formData.scheduled_at
-      });
+    // Validate required fields
+    const missingFields: string[] = [];
+    if (!formData.meeting_type_id) missingFields.push('Meeting Type');
+    if (!formData.customer_name) missingFields.push('Name');
+    if (!formData.customer_email) missingFields.push('Email');
+    if (!formData.scheduled_at) missingFields.push('Date & Time');
+    
+    if (missingFields.length > 0) {
+      console.warn('[BookingForm] Missing required fields:', missingFields.join(', '));
+      // The form UI will show which fields are required
       return;
     }
 
     const submitData: BookingFormData = {
-      meeting_type_id: formData.meeting_type_id,
-      customer_name: formData.customer_name,
-      customer_email: formData.customer_email,
+      meeting_type_id: formData.meeting_type_id!,
+      customer_name: formData.customer_name!,
+      customer_email: formData.customer_email!,
       customer_phone: formData.customer_phone || '',
       title: formData.title || `${meetingTypes.find(mt => mt.id === formData.meeting_type_id)?.name} with ${formData.customer_name}`,
       description: formData.description || '',
-      scheduled_at: formData.scheduled_at,
+      scheduled_at: formData.scheduled_at!,
       timezone: formData.timezone || 'UTC',
       duration_minutes: formData.duration_minutes || 30,
       host_user_id: '00000000-0000-0000-0000-000000000001', // Default host for now

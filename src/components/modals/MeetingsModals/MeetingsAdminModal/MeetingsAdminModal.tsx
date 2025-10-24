@@ -3,13 +3,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
-import { CalendarIcon, UserGroupIcon, ArrowLeftIcon, Cog6ToothIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon, UserGroupIcon, ArrowLeftIcon, Cog6ToothIcon, ClockIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import { Calendar, BookingForm } from '@/components/modals/MeetingsModals/shared/components';
 import { CalendarEvent, CalendarView, BookingFormData, MeetingType, TimeSlot } from '../shared/types';
 import MeetingsSettingsModal from '../MeetingsSettingsModal';
 import MeetingTypesModal from '../MeetingTypesModal';
 import { EventDetailsModal } from '../EventDetailsModal';
+import AdminBookingsList from './AdminBookingsList';
 
 interface MeetingsAdminModalProps {
   /**
@@ -68,7 +69,7 @@ export default function MeetingsAdminModal({
   const { settings } = useSettings();
 
   // View state
-  const [currentView, setCurrentView] = useState<'calendar' | 'booking'>('calendar');
+  const [currentView, setCurrentView] = useState<'calendar' | 'booking' | 'manage-bookings'>('calendar');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -467,6 +468,36 @@ export default function MeetingsAdminModal({
       closeOnEscape={true}
       className="meetings-admin-modal"
     >
+      {/* Tab Navigation (only show when not in booking form) */}
+      {currentView !== 'booking' && (
+        <div className="border-b border-gray-200 mb-4">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            <button
+              onClick={() => setCurrentView('calendar')}
+              className={`${
+                currentView === 'calendar'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+            >
+              <CalendarIcon className="w-5 h-5" />
+              Create Booking
+            </button>
+            <button
+              onClick={() => setCurrentView('manage-bookings')}
+              className={`${
+                currentView === 'manage-bookings'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+            >
+              <UsersIcon className="w-5 h-5" />
+              Manage Bookings
+            </button>
+          </nav>
+        </div>
+      )}
+
       {/* Error Message */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
@@ -479,6 +510,8 @@ export default function MeetingsAdminModal({
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
+      ) : currentView === 'manage-bookings' ? (
+        <AdminBookingsList organizationId={settings?.organization_id} />
       ) : currentView === 'calendar' ? (
         meetingTypes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">

@@ -128,6 +128,28 @@ Address: ${address}
 © 2025 ${siteValue}
 All rights reserved.
     `.trim(),
+    meeting_invitation: `
+Hi ${name},
+
+You've been invited to a video meeting!
+
+Meeting: ${placeholders.meeting_title || 'Video Meeting'}
+Host: ${placeholders.host_name || 'Your host'}
+Date & Time: ${placeholders.meeting_time || 'See link for details'}
+Duration: ${placeholders.duration_minutes || '30'} minutes
+
+${placeholders.meeting_notes ? `Notes: ${placeholders.meeting_notes}\n\n` : ''}Join the meeting: ${emailDomainRedirection}
+
+Meeting Link: ${emailDomainRedirection}
+
+Please join at the scheduled time. If this is an instant meeting, you can join now!
+
+---
+Unsubscribe: ${unsubscribeUrl} | Privacy Policy: ${privacyPolicyUrl}
+Address: ${address}
+© 2025 ${siteValue}
+All rights reserved.
+    `.trim(),
   };
 
   return templates[type] || `
@@ -253,6 +275,22 @@ const generateDefaultHtmlTemplate = (type: string): string => {
       <h1>Hi {{name}},</h1>
       <p>Here's the latest news from {{site}}!</p>
       <a href="{{emailDomainRedirection}}" class="button">Read More</a>
+    `,
+    meeting_invitation: `
+      <h1>Hi {{name}},</h1>
+      <p>You've been invited to a video meeting!</p>
+      <div class="info-box">
+        <div class="info-row"><span class="info-label">Meeting:</span> {{meeting_title}}</div>
+        <div class="info-row"><span class="info-label">Host:</span> {{host_name}}</div>
+        <div class="info-row"><span class="info-label">Date & Time:</span> {{meeting_time}}</div>
+        <div class="info-row"><span class="info-label">Duration:</span> {{duration_minutes}} minutes</div>
+        {{meeting_notes_html}}
+      </div>
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="{{emailDomainRedirection}}" class="button" style="font-size: 16px; padding: 15px 30px;">Join Video Meeting</a>
+      </p>
+      <p style="color: #6B7280; font-size: 14px;">Please join at the scheduled time. If this is an instant meeting, you can join now!</p>
+      <p style="color: #6B7280; font-size: 12px;">Meeting Link: <a href="{{emailDomainRedirection}}" style="color: #4F46E5;">{{emailDomainRedirection}}</a></p>
     `,
   };
 

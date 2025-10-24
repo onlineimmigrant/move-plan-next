@@ -241,25 +241,48 @@ export async function PUT(request: NextRequest) {
       }, { status: 500 });
     }
 
+    // Use the identity from the request (sent by frontend)
+    const identity = validatedData.identity;
+
     console.log('🔑 Generating token with API Key:', apiKeySid.substring(0, 10) + '...');
     console.log('📍 Room:', room.twilio_room_name);
-    console.log('👤 Identity:', validatedData.identity);
+    console.log('👤 Identity (from request):', identity);
+    console.log('🔐 Account SID:', process.env.TWILIO_ACCOUNT_SID?.substring(0, 10) + '...');
+    
+    console.log('Creating AccessToken with:', {
+      accountSid: process.env.TWILIO_ACCOUNT_SID?.substring(0, 10) + '...',
+      apiKeySid: apiKeySid.substring(0, 10) + '...',
+      apiKeySecretLength: apiKeySecret.length,
+      identity: identity
+    });
 
     const accessToken = new twilio.jwt.AccessToken(
       process.env.TWILIO_ACCOUNT_SID!,
       apiKeySid,
       apiKeySecret,
       {
-        identity: validatedData.identity,
+        identity: identity,
         ttl: 3600 // 1 hour
       }
     );
+
+    console.log('✅ AccessToken created successfully');
 
     // Add video grant with room name
     const videoGrant = new twilio.jwt.AccessToken.VideoGrant({
       room: room.twilio_room_name, // Use name instead of SID
     });
-    accessToken.addGrant(videoGrant);    // Update room started_at if this is the first participant
+    accessToken.addGrant(videoGrant);
+
+    // Generate JWT token
+    const jwtToken = accessToken.toJwt();
+    
+    console.log('📝 Generated JWT token (first 50 chars):', jwtToken.substring(0, 50) + '...');
+    console.log('🔍 Token structure check:', {
+      tokenLength: jwtToken.length,
+      hasDots: (jwtToken.match(/\./g) || []).length,
+      startsCorrectly: jwtToken.startsWith('eyJ')
+    });    // Update room started_at if this is the first participant
     const now = new Date().toISOString();
     await supabase
       .from('meeting_rooms')
@@ -289,7 +312,7 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({
-      token: accessToken.toJwt(),
+      token: jwtToken,
       room_name: room.twilio_room_name,
       room_sid: room.twilio_room_sid,
     });
