@@ -12,16 +12,22 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   UserCircleIcon,
-  CogIcon, ChatBubbleLeftIcon, ArrowsRightLeftIcon,RocketLaunchIcon
+  CogIcon, 
+  ChatBubbleLeftIcon, 
+  ArrowsRightLeftIcon,
+  RocketLaunchIcon,
+  VideoCameraIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
 import Tooltip from '@/components/Tooltip';
 import { MeetingsAdminToggleButton } from '@/components/modals/MeetingsModals/MeetingsAdminModal';
+import MeetingsAdminModal from '@/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
+  const [isMeetingsModalOpen, setIsMeetingsModalOpen] = useState(false);
   const { session, supabase } = useAuth();
 
   useEffect(() => {
@@ -56,7 +62,14 @@ export default function AdminDashboardPage() {
     { href: '/admin/site/management', label: 'Site', icon: DevicePhoneMobileIcon, tooltip: 'Site Management' },
     { href: '/admin/products/management', label: 'Products', icon: ArchiveBoxIcon, tooltip: 'Product Management' },
     { href: '/admin/pricingplans/management', label: 'Pricing Plans', icon: CurrencyDollarIcon, tooltip: 'Price Management' },
-    { href: '/admin/cookie_category', label: 'Cookies', icon: ShieldCheckIcon, tooltip: 'Consent Management' },
+    { 
+      onClick: () => setIsMeetingsModalOpen(true), 
+      label: 'Meetings', 
+      icon: VideoCameraIcon, 
+      tooltip: 'Manage Meetings',
+      id: 'meetings-modal',
+      isModal: true
+    },
     //{ href: '/admin/reports/custom', label: 'Reports', icon: ChartBarIcon, tooltip: 'Standard and Custom' },
     { href: '/admin/ai/management', label: 'AI', icon: RocketLaunchIcon, tooltip: 'AI Models' },
     { href: '/admin/site-management', label: 'Settings', icon: Cog6ToothIcon, tooltip:'Website Management' },
@@ -73,12 +86,35 @@ export default function AdminDashboardPage() {
         </h1>
         <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {dashboardLinks.map((item) => {
+            // Check if this is a modal trigger or regular link
+            if (item.isModal) {
+              return (
+                <Tooltip key={item.id} content={item.tooltip}>
+                  <button
+                    onClick={item.onClick}
+                    className="w-full group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300"
+                    title={item.label}
+                    type="button"
+                  >
+                    <div className="transform group-hover:scale-110 transition-transform">
+                      <item.icon
+                        className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors"
+                      />
+                    </div>
+                    <span className="mt-3 text-sm font-medium text-gray-800 group-hover:text-sky-600 text-center sm:text-base">
+                      {item.label}
+                    </span>
+                  </button>
+                </Tooltip>
+              );
+            }
+            
+            // Regular navigation link
             const isActive = pathname === item.href;
             return (
               <Tooltip key={item.href} content={item.tooltip}>
               <Link
-                key={item.href}
-                href={item.href}
+                href={item.href!}
                 className={`group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300 ${
                   isActive ? 'bg-sky-50 shadow-md' : ''
                 }`}
@@ -108,6 +144,12 @@ export default function AdminDashboardPage() {
       
       {/* Admin Meetings Toggle Button - visible only on admin pages */}
       <MeetingsAdminToggleButton />
+      
+      {/* Meetings Admin Modal */}
+      <MeetingsAdminModal
+        isOpen={isMeetingsModalOpen}
+        onClose={() => setIsMeetingsModalOpen(false)}
+      />
       </div>
     </div>
   );

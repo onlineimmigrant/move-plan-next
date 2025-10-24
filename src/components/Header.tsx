@@ -684,7 +684,7 @@ const Header: React.FC<HeaderProps> = ({
                 {displayedSubItems.length > 0 ? (
                   <Disclosure>
                     {({ open }) => (
-                      <div className="border-t border-gray-200/50">
+                      <div>
                         <Disclosure.Button
                           className="flex items-center justify-between w-full p-4 text-gray-800 hover:text-gray-900 focus:outline-none transition-colors duration-200"
                           aria-label={t.toggleMenu(translatedDisplayName)}
@@ -798,7 +798,7 @@ const Header: React.FC<HeaderProps> = ({
                   <LocalizedLink
                     href={item.url_name}
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-between w-full p-4 text-gray-800 hover:text-gray-900 focus:outline-none transition-colors duration-200 border-t border-gray-200/50"
+                    className="flex items-center justify-between w-full p-4 text-gray-800 hover:text-gray-900 focus:outline-none transition-colors duration-200"
                     aria-label={t.goTo(translatedDisplayName)}
                   >
                     <div className="flex items-center space-x-3">
@@ -916,74 +916,197 @@ const Header: React.FC<HeaderProps> = ({
               </LocalizedLink>
             )}
             {isLoggedIn ? (
-            <div className="relative group">
+            <div 
+              className="relative group"
+              onMouseEnter={cancelCloseTimeout}
+              onMouseLeave={handleMenuLeave}
+            >
               <button
                 type="button"
                 className="p-3"
-                title={t.profile}
+                title={isAdmin ? 'Admin' : t.profile}
                 aria-label={t.openProfileMenu}
               >
                 <HeroIcons.UserIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
               </button>
               
-              {/* Clean profile dropdown */}
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+              {/* Mega menu profile dropdown */}
+              <div 
+                className="fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 mx-4 sm:mx-8"
+                style={{
+                  top: `${fixedBannersHeight + 64 + 16}px`,
+                  backgroundColor: 'white',
+                  boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+                }}
+                onMouseEnter={cancelCloseTimeout}
+                onMouseLeave={handleMenuLeave}
               >
-                <div className="p-4">
-                  {/* Profile header */}
-                  <div className="flex items-center space-x-3 mb-4 pb-3 border-b border-gray-200">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <HeroIcons.UserIcon className="h-5 w-5 text-gray-600" />
-                    </div>
+                <div className="px-6 py-6 max-w-7xl mx-auto">
+                  {/* Header */}
+                  <div className="flex items-center space-x-3 mb-6">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900">{t.profile}</h3>
-                      <p className="text-xs text-gray-500">{t.manageAccount}</p>
+                      <h3 className="text-base font-semibold text-gray-900">{isAdmin ? 'Admin' : t.profile}</h3>
                     </div>
                   </div>
                   
-                  {/* Menu items */}
-                  <div className="space-y-1">
-                    <LocalizedLink
-                      href="/account"
-                      className="flex items-center space-x-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors duration-150"
-                    >
-                      <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
-                        <HeroIcons.UserIcon className="h-4 w-4 text-gray-600" />
-                      </div>
-                      <div className="flex-1">
-                        <span className="text-sm font-medium text-gray-800">{t.account}</span>
-                        <p className="text-xs text-gray-500">{t.accountSettings}</p>
-                      </div>
-                    </LocalizedLink>
+                  {/* Menu items in grid */}
+                  <div className={`grid gap-4 ${isAdmin ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
+                    {isAdmin ? (
+                      <>
+                        {/* Dashboard */}
+                        <LocalizedLink
+                          href="/admin"
+                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                        >
+                          {/* Icon container */}
+                          <div className="relative w-full h-32">
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
+                              <HeroIcons.Cog6ToothIcon className="h-10 w-10 text-gray-600" />
+                            </div>
+                          </div>
+                          {/* Content below */}
+                          <div className="p-3">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                              Dashboard
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              Manage your account settings
+                            </p>
+                          </div>
+                        </LocalizedLink>
 
-                    <button
-                      type="button"
-                      onClick={handleContactModal}
-                      className="flex items-center space-x-3 w-full p-2.5 rounded-lg hover:bg-gray-50 transition-colors duration-150"
-                    >
-                      <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
-                        <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1 text-left">
-                        <span className="text-sm font-medium text-gray-800">{t.contact}</span>
-                        <p className="text-xs text-gray-500">{t.getHelpSupport}</p>
-                      </div>
-                    </button>
+                        {/* Tickets */}
+                        <button
+                          type="button"
+                          onClick={handleContactModal}
+                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200 w-full text-left"
+                        >
+                          {/* Icon container */}
+                          <div className="relative w-full h-32">
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
+                              <svg className="h-10 w-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                            </div>
+                          </div>
+                          {/* Content below */}
+                          <div className="p-3">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                              Tickets
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              Get help and support
+                            </p>
+                          </div>
+                        </button>
 
+                        {/* Meetings */}
+                        <LocalizedLink
+                          href="/admin"
+                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                        >
+                          {/* Icon container */}
+                          <div className="relative w-full h-32">
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
+                              <HeroIcons.VideoCameraIcon className="h-10 w-10 text-gray-600" />
+                            </div>
+                          </div>
+                          {/* Content below */}
+                          <div className="p-3">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                              Meetings
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              Schedule and manage meetings
+                            </p>
+                          </div>
+                        </LocalizedLink>
+
+                        {/* AI Agents */}
+                        <LocalizedLink
+                          href="/admin/ai/management"
+                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                        >
+                          {/* Icon container */}
+                          <div className="relative w-full h-32">
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
+                              <HeroIcons.CpuChipIcon className="h-10 w-10 text-gray-600" />
+                            </div>
+                          </div>
+                          {/* Content below */}
+                          <div className="p-3">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                              AI Agents
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              Manage AI models and agents
+                            </p>
+                          </div>
+                        </LocalizedLink>
+                      </>
+                    ) : (
+                      <>
+                        {/* Account */}
+                        <LocalizedLink
+                          href="/account"
+                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                        >
+                          {/* Icon container */}
+                          <div className="relative w-full h-32">
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
+                              <HeroIcons.UserIcon className="h-10 w-10 text-gray-600" />
+                            </div>
+                          </div>
+                          {/* Content below */}
+                          <div className="p-3">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                              {t.account}
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              {t.accountSettings}
+                            </p>
+                          </div>
+                        </LocalizedLink>
+
+                        {/* Contact */}
+                        <button
+                          type="button"
+                          onClick={handleContactModal}
+                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200 w-full text-left"
+                        >
+                          {/* Icon container */}
+                          <div className="relative w-full h-32">
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
+                              <svg className="h-10 w-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                            </div>
+                          </div>
+                          {/* Content below */}
+                          <div className="p-3">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                              {t.contact}
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              {t.getHelpSupport}
+                            </p>
+                          </div>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Logout button - separate at bottom */}
+                  <div className="mt-6">
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex items-center space-x-3 w-full p-2.5 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors duration-150 mt-2 border-t border-gray-200 pt-3"
+                      className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors duration-150"
                     >
                       <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                        <HeroIcons.ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
+                        <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
                       </div>
-                      <div className="flex-1 text-left">
-                        <span className="text-sm font-medium">{t.logout}</span>
-                        <p className="text-xs text-red-500">{t.signOutAccount}</p>
-                      </div>
+                      <span className="text-sm font-medium">{t.logout}</span>
                     </button>
                   </div>
                 </div>
@@ -1044,15 +1167,14 @@ const Header: React.FC<HeaderProps> = ({
             {isLoggedIn ? (
               <Disclosure>
                 {({ open }) => (
-                  <div className="border-t border-gray-200/50 mt-6 pt-6">
+                  <div className="mt-6">
                     <Disclosure.Button
                       className="flex items-center justify-between w-full p-4 text-gray-800 hover:text-gray-900 focus:outline-none transition-colors duration-200"
                       aria-label="Toggle profile menu"
                     >
                       <div className="flex items-center space-x-3">
                         <div className="text-left">
-                          <span className="text-sm font-semibold text-gray-900">{t.profile}</span>
-                          <p className="text-xs text-gray-500">{t.accountSettings}</p>
+                          <span className="text-sm font-semibold text-gray-900">{isAdmin ? 'Admin' : t.profile}</span>
                         </div>
                       </div>
                       <div className="transition-colors duration-200">
@@ -1064,47 +1186,123 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                     </Disclosure.Button>
                     <Disclosure.Panel className="mt-3 space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto scrollbar-hide">
-                      <LocalizedLink
-                        href="/account"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
-                      >
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <HeroIcons.UserIcon className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <span className="text-sm font-medium block">{t.account}</span>
-                          <p className="text-xs text-gray-500">{t.accountSettings}</p>
-                        </div>
-                      </LocalizedLink>
-                      <button
-                        type="button"
-                        onClick={handleContactModal}
-                        className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
-                      >
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 text-left">
-                          <span className="text-sm font-medium block">{t.contact}</span>
-                          <p className="text-xs text-gray-500">{t.getHelpSupport}</p>
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="flex items-center space-x-3 w-full p-4 text-red-600 hover:text-red-700 transition-colors duration-200"
-                      >
-                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                          <HeroIcons.ArrowLeftOnRectangleIcon className="h-4 w-4 text-red-600" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <span className="text-sm font-medium block">{t.logout}</span>
-                          <p className="text-xs text-red-500">{t.signOutAccount}</p>
-                        </div>
-                      </button>
+                      {isAdmin ? (
+                        <>
+                          <LocalizedLink
+                            href="/admin"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
+                          >
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <HeroIcons.Cog6ToothIcon className="h-5 w-5 text-gray-600" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">Dashboard</span>
+                              <p className="text-xs text-gray-500">Manage your account settings</p>
+                            </div>
+                          </LocalizedLink>
+                          
+                          <button
+                            type="button"
+                            onClick={handleContactModal}
+                            className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
+                          >
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">Tickets</span>
+                              <p className="text-xs text-gray-500">Get help and support</p>
+                            </div>
+                          </button>
+                          
+                          <LocalizedLink
+                            href="/admin"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
+                          >
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <HeroIcons.VideoCameraIcon className="h-5 w-5 text-gray-600" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">Meetings</span>
+                              <p className="text-xs text-gray-500">Schedule and manage meetings</p>
+                            </div>
+                          </LocalizedLink>
+                          
+                          <LocalizedLink
+                            href="/admin/ai/management"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
+                          >
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <HeroIcons.CpuChipIcon className="h-5 w-5 text-gray-600" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">AI Agents</span>
+                              <p className="text-xs text-gray-500">Manage AI models and agents</p>
+                            </div>
+                          </LocalizedLink>
+                          
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="flex items-center space-x-3 w-full p-4 text-red-600 hover:text-red-700 transition-colors duration-200"
+                          >
+                            <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                              <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">{t.logout}</span>
+                            </div>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <LocalizedLink
+                            href="/account"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
+                          >
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <HeroIcons.UserIcon className="h-5 w-5 text-gray-600" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">{t.account}</span>
+                              <p className="text-xs text-gray-500">{t.accountSettings}</p>
+                            </div>
+                          </LocalizedLink>
+                          <button
+                            type="button"
+                            onClick={handleContactModal}
+                            className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
+                          >
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">{t.contact}</span>
+                              <p className="text-xs text-gray-500">{t.getHelpSupport}</p>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="flex items-center space-x-3 w-full p-4 text-red-600 hover:text-red-700 transition-colors duration-200"
+                          >
+                            <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                              <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-sm font-medium block">{t.logout}</span>
+                            </div>
+                          </button>
+                        </>
+                      )}
                     </Disclosure.Panel>
                   </div>
                 )}
