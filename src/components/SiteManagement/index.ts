@@ -24,7 +24,7 @@ export { SubsectionDisclosure } from './SubsectionDisclosure';
 export { SubsectionDemo } from './SubsectionDemo';
 
 // Configuration and utilities
-export { sectionsConfig, renderField, menuWidthOptions, headerStyleOptions } from './fieldConfig';
+export { sectionsConfig, renderField, menuWidthOptions, headerStyleOptions, fontFamilyOptions } from './fieldConfig';
 export { colorOptions } from './colorOptions';
 export { animationOptions } from './animationOptions';
 export { AnimationSelect } from './AnimationSelect';

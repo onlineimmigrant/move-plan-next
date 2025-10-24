@@ -16,16 +16,102 @@ import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
 import ClientStructuredDataInjector from '@/components/ClientStructuredDataInjector';
 import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
 import { supabaseServer } from '@/lib/supabaseServerClient';
-import { Inter } from 'next/font/google';
+import { Inter, Roboto, Poppins, Lato, Open_Sans, Montserrat, Nunito, Raleway, Ubuntu, Merriweather } from 'next/font/google';
 
-// Optimize font loading to prevent CLS
+// Optimize font loading to prevent CLS - Load all supported fonts
 const inter = Inter({
   subsets: ['latin'],
-  display: 'swap', // Prevents flash of invisible text (FOIT)
+  display: 'swap',
   preload: true,
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
-  adjustFontFallback: true, // Matches fallback font metrics
+  adjustFontFallback: true,
   variable: '--font-inter'
+});
+
+const roboto = Roboto({
+  weight: ['300', '400', '500', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-roboto'
+});
+
+const poppins = Poppins({
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-poppins'
+});
+
+const lato = Lato({
+  weight: ['300', '400', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-lato'
+});
+
+const openSans = Open_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-opensans'
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-montserrat'
+});
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-nunito'
+});
+
+const raleway = Raleway({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-raleway'
+});
+
+const ubuntu = Ubuntu({
+  weight: ['300', '400', '500', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-ubuntu'
+});
+
+const merriweather = Merriweather({
+  weight: ['300', '400', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-merriweather'
 });
 
 export const revalidate = 0;
@@ -206,6 +292,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
   
   console.log('RootLayout - settings loaded:', !!settings);
+  console.log('🔍 [FONT DEBUG] RootLayout - settings.font_family:', settings?.font_family);
 
   const organizationId = organization?.id || null;
   console.log('RootLayout - organizationId:', organizationId);
@@ -233,6 +320,43 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const faviconUrl = getFaviconUrl(settings.favicon || undefined);
 
+  // Font selection logic - map settings.font_family to CSS variable
+  const selectedFont = settings?.font_family || 'Inter';
+  
+  console.log('🔍 [FONT DEBUG] RootLayout - selectedFont:', selectedFont);
+  
+  const selectedFontVar = (() => {
+    switch (selectedFont) {
+      case 'Roboto': return '--font-roboto';
+      case 'Poppins': return '--font-poppins';
+      case 'Lato': return '--font-lato';
+      case 'Open Sans': return '--font-opensans';
+      case 'Montserrat': return '--font-montserrat';
+      case 'Nunito': return '--font-nunito';
+      case 'Raleway': return '--font-raleway';
+      case 'Ubuntu': return '--font-ubuntu';
+      case 'Merriweather': return '--font-merriweather';
+      case 'Inter':
+      default: return '--font-inter';
+    }
+  })();
+  
+  console.log('🔍 [FONT DEBUG] RootLayout - selectedFontVar:', selectedFontVar);
+
+  // Compose all font variable classes so all fonts are loaded
+  const fontVarsClass = [
+    inter.variable,
+    roboto.variable,
+    poppins.variable,
+    lato.variable,
+    openSans.variable,
+    montserrat.variable,
+    nunito.variable,
+    raleway.variable,
+    ubuntu.variable,
+    merriweather.variable
+  ].join(' ');
+
   return (
     <html lang={language}>
       <head>
@@ -240,7 +364,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         <SimpleLayoutSEO />
       </head>
-      <body className={`${inter.variable} antialiased`} style={{ fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
+      <body 
+        className={`${fontVarsClass} antialiased`} 
+        style={{ 
+          fontFamily: `var(${selectedFontVar}), system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`
+        }}
+      >
         {settings.google_tag && <GoogleTagManagerNoscript gtmId={settings.google_tag} />}
         <ClientProviders
           settings={settings}

@@ -260,6 +260,12 @@ export async function GET(
       return NextResponse.json({ error: 'Error fetching hero data' }, { status: 500 });
     }
 
+    console.log('🎯 [GET] Hero data fetched:', {
+      hasHero: !!website_hero,
+      heroKeys: website_hero ? Object.keys(website_hero) : [],
+      heroData: website_hero
+    });
+
     // Fetch the organization's menu items
     const { data: menu_items, error: menuError } = await supabase
       .from('website_menuitem')
@@ -629,6 +635,14 @@ export async function GET(
       } : 'none'
     });
 
+    console.log('🎯 [GET] Returning website_hero in response:', {
+      hasHero: !!website_hero,
+      heroKeys: website_hero ? Object.keys(website_hero) : [],
+      title: website_hero?.title,
+      description: website_hero?.description,
+      name: website_hero?.name
+    });
+
     return NextResponse.json({
       organization,
       settings: settings || null,
@@ -936,6 +950,9 @@ export async function PUT(
         bannersCount: Array.isArray(settingsData.banners) ? settingsData.banners.length : 0,
       });
       
+      console.log('[API] 🔍 settingsData keys:', Object.keys(settingsData));
+      console.log('[API] 🔍 settingsData type:', typeof settingsData);
+      
       // Filter out fields that don't belong in the settings table
       const { 
         products, 
@@ -989,6 +1006,12 @@ export async function PUT(
         value: cleanSettingsData.footer_style,
         type: typeof cleanSettingsData.footer_style,
         stringified: JSON.stringify(cleanSettingsData.footer_style)
+      });
+
+      console.log('[API] 🔍 FONT_FAMILY DEBUG:', {
+        'settingsData.font_family': settingsData.font_family,
+        'cleanSettingsData.font_family': cleanSettingsData.font_family,
+        'font_family type': typeof cleanSettingsData.font_family
       });
 
       console.log('[API] Extracted arrays:', {
@@ -1122,6 +1145,9 @@ export async function PUT(
       if (existingSettings) {
         // Update existing settings
         console.log('[API] 🔄 Updating existing settings for org:', orgId);
+        console.log('[API] 🔍 cleanSettingsData keys:', Object.keys(cleanSettingsData));
+        console.log('[API] 🔍 cleanSettingsData.font_family:', cleanSettingsData.font_family);
+        
         const { data: settings, error: settingsUpdateError } = await supabase
           .from('settings')
           .update(cleanSettingsData)
@@ -1166,6 +1192,38 @@ export async function PUT(
 
     // Update or create website_hero if data provided
     if (heroData) {
+      console.log('[API] 🎯 Hero data received:', {
+        keys: Object.keys(heroData),
+        hasFields: !!heroData,
+        orgId: orgId
+      });
+      
+      // Filter and clean hero data - only include defined fields that match the new schema
+      const cleanHeroData: any = {};
+      
+      // Map to database columns (NEW JSONB SCHEMA)
+      if (heroData.name !== undefined) cleanHeroData.name = heroData.name;
+      if (heroData.title !== undefined) cleanHeroData.title = heroData.title;
+      if (heroData.description !== undefined) cleanHeroData.description = heroData.description;
+      if (heroData.button !== undefined) cleanHeroData.button = heroData.button;
+      if (heroData.image !== undefined) cleanHeroData.image = heroData.image;
+      if (heroData.animation_element !== undefined) cleanHeroData.animation_element = heroData.animation_element;
+      if (heroData.display_order !== undefined) cleanHeroData.display_order = heroData.display_order;
+      
+      // Handle JSONB style fields
+      if (heroData.title_style !== undefined) cleanHeroData.title_style = heroData.title_style;
+      if (heroData.description_style !== undefined) cleanHeroData.description_style = heroData.description_style;
+      if (heroData.image_style !== undefined) cleanHeroData.image_style = heroData.image_style;
+      if (heroData.background_style !== undefined) cleanHeroData.background_style = heroData.background_style;
+      if (heroData.button_style !== undefined) cleanHeroData.button_style = heroData.button_style;
+      
+      // Handle JSONB translation fields
+      if (heroData.title_translation !== undefined) cleanHeroData.title_translation = heroData.title_translation;
+      if (heroData.description_translation !== undefined) cleanHeroData.description_translation = heroData.description_translation;
+      if (heroData.button_translation !== undefined) cleanHeroData.button_translation = heroData.button_translation;
+      
+      console.log('[API] 🎯 Cleaned hero data:', JSON.stringify(cleanHeroData, null, 2));
+      
       // Check if hero record exists
       const { data: existingHero, error: existingHeroError } = await supabase
         .from('website_hero')
@@ -1174,41 +1232,55 @@ export async function PUT(
         .single();
 
       if (existingHeroError && existingHeroError.code !== 'PGRST116') {
-        console.error('Error checking existing hero:', existingHeroError);
+        console.error('[API] ❌ Error checking existing hero:', existingHeroError);
         return NextResponse.json({ error: 'Error checking hero data' }, { status: 500 });
       }
 
+      console.log('[API] 🎯 Existing hero:', existingHero ? 'found' : 'not found');
+
       if (existingHero) {
-        // Update existing hero
+        // Update existing hero with cleaned data
+        console.log('[API] 🎯 Updating hero with cleaned data');
         const { data: hero, error: heroUpdateError } = await supabase
           .from('website_hero')
-          .update(heroData)
+          .update(cleanHeroData)
           .eq('organization_id', orgId)
           .select()
           .single();
 
         if (heroUpdateError) {
-          console.error('Error updating hero:', heroUpdateError);
-          return NextResponse.json({ error: 'Failed to update hero data' }, { status: 500 });
+          console.error('[API] ❌ Error updating hero:', heroUpdateError);
+          console.error('[API] ❌ Cleaned hero data that failed:', JSON.stringify(cleanHeroData, null, 2));
+          return NextResponse.json({ 
+            error: 'Failed to update hero data',
+            details: heroUpdateError.message 
+          }, { status: 500 });
         }
 
+        console.log('[API] ✅ Hero updated successfully');
         updatedHero = hero;
       } else {
-        // Create new hero record
+        // Create new hero record with cleaned data
+        console.log('[API] 🎯 Creating new hero with cleaned data');
         const { data: hero, error: heroCreateError } = await supabase
           .from('website_hero')
           .insert({
             organization_id: orgId,
-            ...heroData
+            ...cleanHeroData
           })
           .select()
           .single();
 
         if (heroCreateError) {
-          console.error('Error creating hero:', heroCreateError);
-          return NextResponse.json({ error: 'Failed to create hero data' }, { status: 500 });
+          console.error('[API] ❌ Error creating hero:', heroCreateError);
+          console.error('[API] ❌ Cleaned hero data that failed:', JSON.stringify(cleanHeroData, null, 2));
+          return NextResponse.json({ 
+            error: 'Failed to create hero data',
+            details: heroCreateError.message 
+          }, { status: 500 });
         }
 
+        console.log('[API] ✅ Hero created successfully');
         updatedHero = hero;
       }
     }
@@ -2479,8 +2551,13 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error updating organization:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('❌ Error updating organization:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('❌ Error message:', error instanceof Error ? error.message : String(error));
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
 

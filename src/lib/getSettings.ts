@@ -217,6 +217,7 @@ export function getDefaultSettings(): Settings {
       color_hover: 'white',
       menu_width: '7xl'
     },
+    font_family: 'Inter',
     favicon: '/images/favicon.ico',
     seo_title: null,
     seo_description: null,
@@ -277,6 +278,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
         organization_id,
         header_style,
         footer_style,
+        font_family,
         favicon,
         seo_title,
         seo_description,
@@ -308,6 +310,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       organization_id: data.organization_id ?? organizationId,
       header_style: data.header_style,
       footer_style: data.footer_style,
+      font_family: data.font_family ?? 'Inter',
       favicon: data.favicon ?? null,
       seo_title: data.seo_title ?? null,
       seo_description: data.seo_description ?? null,

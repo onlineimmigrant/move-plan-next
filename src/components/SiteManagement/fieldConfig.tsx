@@ -202,6 +202,19 @@ export const aiModelOptions = [
   { name: 'Gemini Pro', value: 'gemini-pro' }
 ];
 
+export const fontFamilyOptions = [
+  { name: 'Inter (Default)', value: 'Inter' },
+  { name: 'Roboto', value: 'Roboto' },
+  { name: 'Poppins', value: 'Poppins' },
+  { name: 'Open Sans', value: 'Open Sans' },
+  { name: 'Lato', value: 'Lato' },
+  { name: 'Montserrat', value: 'Montserrat' },
+  { name: 'Nunito', value: 'Nunito' },
+  { name: 'Raleway', value: 'Raleway' },
+  { name: 'Ubuntu', value: 'Ubuntu' },
+  { name: 'Merriweather', value: 'Merriweather' }
+];
+
 export const textSizeOptions = [
   { name: 'Extra Small', value: 'text-xs' },
   { name: 'Small', value: 'text-sm' },
@@ -315,7 +328,12 @@ export const sectionsConfig: SectionConfig[] = [
         key: 'typography',
         columns: 1,
         fields: [
-          { name: 'font_family', label: 'Font', type: 'text', placeholder: 'e.g., SF Pro Display, Inter, Arial' },
+          { 
+            name: 'font_family', 
+            label: 'Font Family', 
+            type: 'select', 
+            options: fontFamilyOptions
+          },
            { name: 'primary_color', label: 'Primary Color', type: 'color' },
           { name: 'secondary_color', label: 'Secondary Color', type: 'color' }
         ]

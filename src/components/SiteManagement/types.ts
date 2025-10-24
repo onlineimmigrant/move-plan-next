@@ -76,39 +76,59 @@ export interface Settings {
   image?: string | null;
   favicon?: string | null;
   
-  // Hero fields (for form convenience - will be separated to HeroData)
-  hero_image?: string | null;
+  // Hero fields - NEW JSONB SCHEMA (for form convenience - will be separated to HeroData)
+  hero_id?: number | null;
   hero_name?: string;
-  hero_font_family?: string;
+  hero_title?: string;
+  hero_description?: string;
+  hero_button?: string;
+  hero_image?: string | null;
+  hero_animation_element?: string;
+  hero_display_order?: number;
+  
+  // JSONB style fields
+  hero_title_style?: Record<string, any>;
+  hero_description_style?: Record<string, any>;
+  hero_image_style?: Record<string, any>;
+  hero_background_style?: Record<string, any>;
+  hero_button_style?: Record<string, any>;
+  
+  // JSONB translation fields
+  hero_title_translation?: Record<string, string>;
+  hero_description_translation?: Record<string, string>;
+  hero_button_translation?: Record<string, string>;
+  
+  // Legacy hero fields (for backward compatibility with old database structure)
+  // These are mapped from/to JSONB fields in the migration logic
+  title_alighnement?: string;
+  title_block_width?: string;
+  title_block_columns?: number;
+  is_seo_title?: boolean;
   h1_title?: string;
   h1_title_translation?: Record<string, string>;
-  is_seo_title?: boolean;
-  p_description?: string;
-  p_description_translation?: Record<string, string>;
+  h1_text_size?: string;
+  h1_text_size_mobile?: string;
   h1_text_color?: string;
+  is_h1_gradient_text?: boolean;
   h1_text_color_gradient_from?: string;
   h1_text_color_gradient_to?: string;
   h1_text_color_gradient_via?: string;
-  is_h1_gradient_text?: boolean;
-  h1_text_size?: string;
-  h1_text_size_mobile?: string;
-  title_alighnement?: string;
-  title_block_width?: string;
-  is_bg_gradient?: boolean;
-  is_image_full_page?: boolean;
-  title_block_columns?: number;
-  image_first?: boolean;
-  background_color?: string;
-  background_color_gradient_from?: string;
-  background_color_gradient_to?: string;
-  background_color_gradient_via?: string;
-  button_main_get_started?: string;
-  button_explore?: string;
-  animation_element?: string;
-  p_description_color?: string;
+  p_description?: string;
+  p_description_translation?: Record<string, string>;
   p_description_size?: string;
   p_description_size_mobile?: string;
   p_description_weight?: string;
+  p_description_color?: string;
+  button_main_get_started?: string;
+  button_explore?: string;
+  is_image_full_page?: boolean;
+  image_first?: boolean;
+  background_color?: string;
+  is_bg_gradient?: boolean;
+  background_color_gradient_from?: string;
+  background_color_gradient_to?: string;
+  background_color_gradient_via?: string;
+  animation_element?: string;
   
   // SEO & Analytics
   google_analytics_id?: string;

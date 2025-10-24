@@ -170,6 +170,8 @@ export default function EditModal({
         base_url: organization.base_url || '',
         base_url_local: organization.base_url_local || '',
         type: organization.type,
+        // Ensure font_family is included
+        font_family: organization.settings.font_family || 'Inter',
         // Ensure supported_locales is always an array
         supported_locales: Array.isArray(organization.settings.supported_locales) 
           ? organization.settings.supported_locales 
@@ -180,6 +182,7 @@ export default function EditModal({
         language: organization.settings.language || 'en'
       };
       console.log(`[EditModal] Loaded settings:`, loadedSettings);
+      console.log(`[EditModal] 🔍 Font family loaded:`, loadedSettings.font_family);
       setSettings(loadedSettings);
       setOriginalSettings(loadedSettings);
     } else {
@@ -231,6 +234,15 @@ export default function EditModal({
         valueType: typeof value,
         isObject: typeof value === 'object',
         stringified: JSON.stringify(value)
+      });
+    }
+    
+    // Special logging for font_family
+    if (field === 'font_family') {
+      console.log('[EditModal] 🔍 FONT_FAMILY CHANGE:', {
+        field,
+        value,
+        valueType: typeof value
       });
     }
     

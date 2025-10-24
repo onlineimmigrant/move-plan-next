@@ -988,39 +988,68 @@ export default function SiteManagement() {
           image: data.settings?.image || data.settings?.logo_url || null,
           favicon: data.settings?.favicon || data.settings?.favicon_url || null,
           
-          // Hero Section Fields (combined for form convenience, but will be separated on save)
-          hero_image: data.website_hero?.image || null,
+          // Hero Section Fields - NEW JSONB SCHEMA with migration from old fields
+          hero_id: data.website_hero?.id || null,
           hero_name: data.website_hero?.name || data.settings?.site || '',
-          hero_font_family: data.website_hero?.font_family || '',
-          h1_title: data.website_hero?.h1_title || '',
-          h1_title_translation: data.website_hero?.h1_title_translation || {},
-          is_seo_title: data.website_hero?.is_seo_title || false,
-          p_description: data.website_hero?.p_description || '',
-          p_description_translation: data.website_hero?.p_description_translation || {},
-          h1_text_color: data.website_hero?.h1_text_color || 'gray-800',
-          h1_text_color_gradient_from: data.website_hero?.h1_text_color_gradient_from || 'gray-800',
-          h1_text_color_gradient_to: data.website_hero?.h1_text_color_gradient_to || 'blue-500',
-          h1_text_color_gradient_via: data.website_hero?.h1_text_color_gradient_via || '',
-          is_h1_gradient_text: data.website_hero?.is_h1_gradient_text || false,
-          h1_text_size: data.website_hero?.h1_text_size || 'text-xl',
-          h1_text_size_mobile: data.website_hero?.h1_text_size_mobile || 'text-lg',
-          title_alighnement: data.website_hero?.title_alighnement || 'center',
-          title_block_width: data.website_hero?.title_block_width || 'full',
-          is_bg_gradient: data.website_hero?.is_bg_gradient || false,
-          is_image_full_page: data.website_hero?.is_image_full_page || false,
-          title_block_columns: data.website_hero?.title_block_columns || 1,
-          image_first: data.website_hero?.image_first || false,
-          background_color: data.website_hero?.background_color || 'white',
-          background_color_gradient_from: data.website_hero?.background_color_gradient_from || 'white',
-          background_color_gradient_to: data.website_hero?.background_color_gradient_to || 'gray-100',
-          background_color_gradient_via: data.website_hero?.background_color_gradient_via || '',
-          button_main_get_started: data.website_hero?.button_main_get_started || 'Get Started',
-          button_explore: data.website_hero?.button_explore || 'Explore',
-          animation_element: data.website_hero?.animation_element || '',
-          p_description_color: data.website_hero?.p_description_color || 'gray-500',
-          p_description_size: data.website_hero?.p_description_size || 'text-base',
-          p_description_size_mobile: data.website_hero?.p_description_size_mobile || 'text-sm',
-          p_description_weight: data.website_hero?.p_description_weight || 'normal',
+          hero_title: data.website_hero?.title || (data.website_hero as any)?.h1_title || '',
+          hero_description: data.website_hero?.description || (data.website_hero as any)?.p_description || '',
+          hero_button: data.website_hero?.button || (data.website_hero as any)?.button_main_get_started || 'Get Started',
+          hero_image: data.website_hero?.image || null,
+          hero_animation_element: data.website_hero?.animation_element || '',
+          hero_display_order: data.website_hero?.display_order || 0,
+          
+          // JSONB style fields with migration from old flat fields (matching HeroSectionEditModal logic)
+          hero_title_style: data.website_hero?.title_style || {
+            color: (data.website_hero as any)?.h1_text_color || 'gray-800',
+            is_gradient: data.website_hero?.title_style?.is_gradient || (data.website_hero as any)?.is_h1_gradient || false,
+            size: {
+              desktop: (data.website_hero as any)?.h1_text_size || 'text-7xl',
+              mobile: (data.website_hero as any)?.h1_text_size_mobile || 'text-5xl'
+            },
+            alignment: (data.website_hero as any)?.title_alighnement || 'center',
+            blockWidth: (data.website_hero as any)?.title_block_width || '2xl',
+            blockColumns: (data.website_hero as any)?.title_block_columns || 1,
+            gradient: data.website_hero?.title_style?.gradient || ((data.website_hero as any)?.is_h1_gradient ? {
+              from: (data.website_hero as any)?.h1_text_color_gradient_from || 'gray-700',
+              via: (data.website_hero as any)?.h1_text_color_gradient_via || 'gray-700',
+              to: (data.website_hero as any)?.h1_text_color_gradient_to || 'indigo-200'
+            } : undefined)
+          },
+          hero_description_style: data.website_hero?.description_style || {
+            color: (data.website_hero as any)?.p_description_color || 'gray-600',
+            size: {
+              desktop: (data.website_hero as any)?.p_description_size || 'text-2xl',
+              mobile: (data.website_hero as any)?.p_description_size_mobile || 'text-lg'
+            },
+            weight: (data.website_hero as any)?.p_description_weight || 'normal'
+          },
+          hero_image_style: data.website_hero?.image_style || {
+            position: (data.website_hero as any)?.image_position || ((data.website_hero as any)?.is_image_full_page ? 'full' : ((data.website_hero as any)?.image_first ? 'left' : 'right')),
+            fullPage: (data.website_hero as any)?.is_image_full_page || false,
+            width: data.website_hero?.image_style?.width || 400,
+            height: data.website_hero?.image_style?.height || 300
+          },
+          hero_background_style: data.website_hero?.background_style || {
+            color: (data.website_hero as any)?.background_color || 'white',
+            is_gradient: data.website_hero?.background_style?.is_gradient || (data.website_hero as any)?.is_bg_gradient || false,
+            gradient: data.website_hero?.background_style?.gradient || ((data.website_hero as any)?.is_bg_gradient ? {
+              from: (data.website_hero as any)?.background_color_gradient_from || 'sky-50',
+              via: (data.website_hero as any)?.background_color_gradient_via || 'transparent',
+              to: (data.website_hero as any)?.background_color_gradient_to || ''
+            } : undefined),
+            seo_title: data.website_hero?.background_style?.seo_title || (data.website_hero as any)?.seo_title || '',
+            column: data.website_hero?.background_style?.column || (data.website_hero as any)?.column || 1
+          },
+          hero_button_style: data.website_hero?.button_style || {
+            aboveDescription: (data.website_hero as any)?.button_main_above_description || false,
+            isVideo: (data.website_hero as any)?.button_main_is_for_video || false,
+            url: (data.website_hero as any)?.button_url || '/products'
+          },
+          
+          // JSONB translation fields with migration
+          hero_title_translation: data.website_hero?.title_translation || (data.website_hero as any)?.h1_title_translation || {},
+          hero_description_translation: data.website_hero?.description_translation || (data.website_hero as any)?.p_description_translation || {},
+          hero_button_translation: data.website_hero?.button_translation || {},
           
           // SEO & Analytics
           google_analytics_id: data.settings?.google_analytics_id || '',
@@ -1099,38 +1128,22 @@ export default function SiteManagement() {
 
       // Separate organization fields, hero fields, menu items, and other settings
       const { 
-        hero_image,
+        hero_id,
         hero_name,
-        hero_font_family,
-        h1_title,
-        h1_title_translation,
-        is_seo_title,
-        p_description,
-        p_description_translation,
-        h1_text_color,
-        h1_text_color_gradient_from,
-        h1_text_color_gradient_to,
-        h1_text_color_gradient_via,
-        is_h1_gradient_text,
-        h1_text_size,
-        h1_text_size_mobile,
-        title_alighnement,
-        title_block_width,
-        is_bg_gradient,
-        is_image_full_page,
-        title_block_columns,
-        image_first,
-        background_color,
-        background_color_gradient_from,
-        background_color_gradient_to,
-        background_color_gradient_via,
-        button_main_get_started,
-        button_explore,
-        animation_element,
-        p_description_color,
-        p_description_size,
-        p_description_size_mobile,
-        p_description_weight,
+        hero_title,
+        hero_description,
+        hero_button,
+        hero_image,
+        hero_animation_element,
+        hero_display_order,
+        hero_title_style,
+        hero_description_style,
+        hero_image_style,
+        hero_background_style,
+        hero_button_style,
+        hero_title_translation,
+        hero_description_translation,
+        hero_button_translation,
         name, 
         base_url, 
         base_url_local, 
@@ -1145,46 +1158,37 @@ export default function SiteManagement() {
         ...pureSettings 
       } = settings;
 
-      // Prepare hero data for website_hero table
+      // Prepare hero data for website_hero table - NEW JSONB SCHEMA
       const heroData = {
+        name: hero_name || site || '',
+        title: hero_title,
+        description: hero_description,
+        button: hero_button,
         image: hero_image,
-        name: hero_name || site || '', // Use site value if hero_name is empty
-        font_family: hero_font_family,
-        h1_title,
-        h1_title_translation,
-        is_seo_title,
-        p_description,
-        p_description_translation,
-        h1_text_color,
-        h1_text_color_gradient_from,
-        h1_text_color_gradient_to,
-        h1_text_color_gradient_via,
-        is_h1_gradient_text,
-        h1_text_size,
-        h1_text_size_mobile,
-        title_alighnement,
-        title_block_width,
-        is_bg_gradient,
-        is_image_full_page,
-        title_block_columns,
-        image_first,
-        background_color,
-        background_color_gradient_from,
-        background_color_gradient_to,
-        background_color_gradient_via,
-        button_main_get_started,
-        button_explore,
-        animation_element,
-        p_description_color,
-        p_description_size,
-        p_description_size_mobile,
-        p_description_weight
+        animation_element: hero_animation_element,
+        display_order: hero_display_order,
+        // JSONB style fields
+        title_style: hero_title_style,
+        description_style: hero_description_style,
+        image_style: hero_image_style,
+        background_style: hero_background_style,
+        button_style: hero_button_style,
+        // JSONB translation fields
+        title_translation: hero_title_translation,
+        description_translation: hero_description_translation,
+        button_translation: hero_button_translation
       };
 
       console.log('🎨 pureSettings footer_style:', {
         value: pureSettings.footer_style,
         type: typeof pureSettings.footer_style,
         stringified: JSON.stringify(pureSettings.footer_style)
+      });
+
+      console.log('🔍 CLIENT - FONT_FAMILY DEBUG:', {
+        'pureSettings.font_family': pureSettings.font_family,
+        'font_family type': typeof pureSettings.font_family,
+        'pureSettings keys': Object.keys(pureSettings)
       });
 
       // Use the correct API structure that expects organization and settings
@@ -1217,6 +1221,12 @@ export default function SiteManagement() {
         type: typeof requestBody.settings.footer_style,
         stringified: JSON.stringify(requestBody.settings.footer_style)
       });
+      
+      console.log('🔍 CLIENT - REQUEST BODY DEBUG:', {
+        'requestBody.settings.font_family': requestBody.settings.font_family,
+        'settings keys': Object.keys(requestBody.settings)
+      });
+      
       console.log('Request body:', requestBody); // Debug log
 
       const response = await fetch(`/api/organizations/${selectedOrganization.id}`, {
@@ -1295,39 +1305,68 @@ export default function SiteManagement() {
             image: refreshData.settings?.image || refreshData.settings?.logo_url || null,
             favicon: refreshData.settings?.favicon || refreshData.settings?.favicon_url || null,
             
-            // Hero Section Fields (combined for form convenience)
-            hero_image: refreshData.website_hero?.image || null,
+            // Hero Section Fields - NEW JSONB SCHEMA with migration from old fields
+            hero_id: refreshData.website_hero?.id || null,
             hero_name: refreshData.website_hero?.name || refreshData.settings?.site || '',
-            hero_font_family: refreshData.website_hero?.font_family || '',
-            h1_title: refreshData.website_hero?.h1_title || '',
-            h1_title_translation: refreshData.website_hero?.h1_title_translation || {},
-            is_seo_title: refreshData.website_hero?.is_seo_title || false,
-            p_description: refreshData.website_hero?.p_description || '',
-            p_description_translation: refreshData.website_hero?.p_description_translation || {},
-            h1_text_color: refreshData.website_hero?.h1_text_color || 'gray-800',
-            h1_text_color_gradient_from: refreshData.website_hero?.h1_text_color_gradient_from || 'gray-800',
-            h1_text_color_gradient_to: refreshData.website_hero?.h1_text_color_gradient_to || 'blue-500',
-            h1_text_color_gradient_via: refreshData.website_hero?.h1_text_color_gradient_via || '',
-            is_h1_gradient_text: refreshData.website_hero?.is_h1_gradient_text || false,
-            h1_text_size: refreshData.website_hero?.h1_text_size || 'text-xl',
-            h1_text_size_mobile: refreshData.website_hero?.h1_text_size_mobile || 'text-lg',
-            title_alighnement: refreshData.website_hero?.title_alighnement || 'center',
-            title_block_width: refreshData.website_hero?.title_block_width || 'full',
-            is_bg_gradient: refreshData.website_hero?.is_bg_gradient || false,
-            is_image_full_page: refreshData.website_hero?.is_image_full_page || false,
-            title_block_columns: refreshData.website_hero?.title_block_columns || 1,
-            image_first: refreshData.website_hero?.image_first || false,
-            background_color: refreshData.website_hero?.background_color || 'white',
-            background_color_gradient_from: refreshData.website_hero?.background_color_gradient_from || 'white',
-            background_color_gradient_to: refreshData.website_hero?.background_color_gradient_to || 'gray-100',
-            background_color_gradient_via: refreshData.website_hero?.background_color_gradient_via || '',
-            button_main_get_started: refreshData.website_hero?.button_main_get_started || 'Get Started',
-            button_explore: refreshData.website_hero?.button_explore || 'Explore',
-            animation_element: refreshData.website_hero?.animation_element || '',
-            p_description_color: refreshData.website_hero?.p_description_color || 'gray-500',
-            p_description_size: refreshData.website_hero?.p_description_size || 'text-base',
-            p_description_size_mobile: refreshData.website_hero?.p_description_size_mobile || 'text-sm',
-            p_description_weight: refreshData.website_hero?.p_description_weight || 'normal',
+            hero_title: refreshData.website_hero?.title || (refreshData.website_hero as any)?.h1_title || '',
+            hero_description: refreshData.website_hero?.description || (refreshData.website_hero as any)?.p_description || '',
+            hero_button: refreshData.website_hero?.button || (refreshData.website_hero as any)?.button_main_get_started || 'Get Started',
+            hero_image: refreshData.website_hero?.image || null,
+            hero_animation_element: refreshData.website_hero?.animation_element || '',
+            hero_display_order: refreshData.website_hero?.display_order || 0,
+            
+            // JSONB style fields with migration from old flat fields (matching HeroSectionEditModal logic)
+            hero_title_style: refreshData.website_hero?.title_style || {
+              color: (refreshData.website_hero as any)?.h1_text_color || 'gray-800',
+              is_gradient: refreshData.website_hero?.title_style?.is_gradient || (refreshData.website_hero as any)?.is_h1_gradient || false,
+              size: {
+                desktop: (refreshData.website_hero as any)?.h1_text_size || 'text-7xl',
+                mobile: (refreshData.website_hero as any)?.h1_text_size_mobile || 'text-5xl'
+              },
+              alignment: (refreshData.website_hero as any)?.title_alighnement || 'center',
+              blockWidth: (refreshData.website_hero as any)?.title_block_width || '2xl',
+              blockColumns: (refreshData.website_hero as any)?.title_block_columns || 1,
+              gradient: refreshData.website_hero?.title_style?.gradient || ((refreshData.website_hero as any)?.is_h1_gradient ? {
+                from: (refreshData.website_hero as any)?.h1_text_color_gradient_from || 'gray-700',
+                via: (refreshData.website_hero as any)?.h1_text_color_gradient_via || 'gray-700',
+                to: (refreshData.website_hero as any)?.h1_text_color_gradient_to || 'indigo-200'
+              } : undefined)
+            },
+            hero_description_style: refreshData.website_hero?.description_style || {
+              color: (refreshData.website_hero as any)?.p_description_color || 'gray-600',
+              size: {
+                desktop: (refreshData.website_hero as any)?.p_description_size || 'text-2xl',
+                mobile: (refreshData.website_hero as any)?.p_description_size_mobile || 'text-lg'
+              },
+              weight: (refreshData.website_hero as any)?.p_description_weight || 'normal'
+            },
+            hero_image_style: refreshData.website_hero?.image_style || {
+              position: (refreshData.website_hero as any)?.image_position || ((refreshData.website_hero as any)?.is_image_full_page ? 'full' : ((refreshData.website_hero as any)?.image_first ? 'left' : 'right')),
+              fullPage: (refreshData.website_hero as any)?.is_image_full_page || false,
+              width: refreshData.website_hero?.image_style?.width || 400,
+              height: refreshData.website_hero?.image_style?.height || 300
+            },
+            hero_background_style: refreshData.website_hero?.background_style || {
+              color: (refreshData.website_hero as any)?.background_color || 'white',
+              is_gradient: refreshData.website_hero?.background_style?.is_gradient || (refreshData.website_hero as any)?.is_bg_gradient || false,
+              gradient: refreshData.website_hero?.background_style?.gradient || ((refreshData.website_hero as any)?.is_bg_gradient ? {
+                from: (refreshData.website_hero as any)?.background_color_gradient_from || 'sky-50',
+                via: (refreshData.website_hero as any)?.background_color_gradient_via || 'transparent',
+                to: (refreshData.website_hero as any)?.background_color_gradient_to || ''
+              } : undefined),
+              seo_title: refreshData.website_hero?.background_style?.seo_title || (refreshData.website_hero as any)?.seo_title || '',
+              column: refreshData.website_hero?.background_style?.column || (refreshData.website_hero as any)?.column || 1
+            },
+            hero_button_style: refreshData.website_hero?.button_style || {
+              aboveDescription: (refreshData.website_hero as any)?.button_main_above_description || false,
+              isVideo: (refreshData.website_hero as any)?.button_main_is_for_video || false,
+              url: (refreshData.website_hero as any)?.button_url || '/products'
+            },
+            
+            // JSONB translation fields with migration
+            hero_title_translation: refreshData.website_hero?.title_translation || (refreshData.website_hero as any)?.h1_title_translation || {},
+            hero_description_translation: refreshData.website_hero?.description_translation || (refreshData.website_hero as any)?.p_description_translation || {},
+            hero_button_translation: refreshData.website_hero?.button_translation || {},
             
             // SEO & Analytics
             google_analytics_id: refreshData.settings?.google_analytics_id || '',
