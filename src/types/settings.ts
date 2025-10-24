@@ -23,8 +23,9 @@ export interface Size {
 }
 
 export type FooterType = 'default' | 'compact' | 'grid';
-export type HeaderType = 'default' | 'transparent' | 'fixed';
+export type HeaderType = 'default' | 'transparent' | 'fixed' | 'ring_card_mini';
 export type MenuWidth = 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
+export type LogoHeight = 'h-8' | 'h-10' | 'h-12' | 'h-16';
 
 // Shared gradient interface
 export interface GradientStyle {
@@ -50,6 +51,7 @@ export interface HeaderStyle {
   background?: string;
   menu_width?: MenuWidth;
   menu_items_are_text?: boolean;
+  logo_height?: LogoHeight;      // 🆕 Logo height support
   is_gradient?: boolean;        // 🆕 Gradient support
   gradient?: GradientStyle;      // 🆕 Gradient colors
 }

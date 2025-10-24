@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HeaderStyle, FooterStyle, MenuWidth } from '@/types/settings';
+import { HeaderStyle, FooterStyle, MenuWidth, LogoHeight } from '@/types/settings';
 import { Disclosure } from '@headlessui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
@@ -12,6 +12,13 @@ const MENU_WIDTHS: { value: MenuWidth; label: string }[] = [
   { value: '5xl', label: '5X Large (2304px)' },
   { value: '6xl', label: '6X Large (2560px)' },
   { value: '7xl', label: '7X Large (2816px)' }
+];
+
+const LOGO_HEIGHTS: { value: LogoHeight; label: string }[] = [
+  { value: 'h-8', label: 'Small (32px)' },
+  { value: 'h-10', label: 'Medium (40px)' },
+  { value: 'h-12', label: 'Large (48px)' },
+  { value: 'h-16', label: 'Extra Large (64px)' }
 ];
 
 const TAILWIND_COLORS = [
@@ -50,7 +57,8 @@ export const StyleSettingsPanel: React.FC<StyleSettingsPanelProps> = ({
           color: 'gray-700',
           color_hover: 'gray-900',
           menu_width: '7xl',
-          menu_items_are_text: true
+          menu_items_are_text: true,
+          logo_height: 'h-12'
         }
       : {
           type: 'default',
@@ -128,6 +136,27 @@ export const StyleSettingsPanel: React.FC<StyleSettingsPanelProps> = ({
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {/* Logo Height (Header only) */}
+            {type === 'header' && 'logo_height' in currentStyle && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Logo Height (Desktop)
+                </label>
+                <select
+                  value={(currentStyle as HeaderStyle).logo_height || 'h-12'}
+                  onChange={(e) => handleFieldChange('logo_height', e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  {LOGO_HEIGHTS.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">Mobile is fixed at 32px</p>
               </div>
             )}
 

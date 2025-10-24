@@ -80,6 +80,7 @@ const Header: React.FC<HeaderProps> = ({
       color_hover: 'gray-900',
       menu_width: '7xl' as const,
       menu_items_are_text: true,
+      logo_height: 'h-12' as const,
       is_gradient: false,
       gradient: undefined
     };
@@ -92,12 +93,23 @@ const Header: React.FC<HeaderProps> = ({
   const headerColorHover = headerStyle.color_hover || 'gray-900';
   const menuWidth = headerStyle.menu_width || '7xl';
   const globalMenuItemsAreText = headerStyle.menu_items_are_text ?? true;
+  const logoHeight = headerStyle.logo_height || 'h-12'; // Default to h-12
 
   // Calculate header background style (gradient or solid color)
   const headerBackgroundStyle = useMemo(() => {
     // For transparent headers, handle special case
     if (headerType === 'transparent' && !isScrolled) {
       return { backgroundColor: 'transparent' };
+    }
+    
+    // For ring_card_mini, use full opacity
+    if (headerType === 'ring_card_mini') {
+      const baseStyle = getBackgroundStyle(
+        headerStyle.is_gradient,
+        headerStyle.gradient,
+        headerBackground
+      );
+      return baseStyle;
     }
     
     // Get gradient or solid color background
@@ -445,15 +457,17 @@ const Header: React.FC<HeaderProps> = ({
                     {displayedSubItems.length >= 2 ? (
                       // Full-width mega menu for 2+ items
                       <div 
-                        className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
+                        className={`fixed left-0 right-0 border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
                           openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
                         }`}
                         style={{
                           // Calculate top position: banners height + nav height (64px) + gap (16px for visual separation)
                           top: `${fixedBannersHeight + 64 + 16}px`,
-                          // Ensure mega menu has solid background even with transparent header
-                          backgroundColor: 'white',
+                          // Use header background style for consistency
+                          ...headerBackgroundStyle,
                           boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+                          backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+                          WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
                           // Ensure pointer events work
                           pointerEvents: openSubmenu === item.id ? 'auto' : 'none'
                         }}
@@ -542,13 +556,15 @@ const Header: React.FC<HeaderProps> = ({
                     ) : (
                       // Simple dropdown for < 2 items
                       <div 
-                        className={`absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[60] transition-all duration-200 ${
+                        className={`absolute right-0 mt-2 w-64 rounded-lg shadow-lg border border-gray-200 z-[60] transition-all duration-200 ${
                           openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
                         }`}
                         style={{
-                          // Ensure dropdown has solid background even with transparent header
-                          backgroundColor: 'white',
+                          // Use header background style for consistency
+                          ...headerBackgroundStyle,
                           boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+                          backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+                          WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
                           // Ensure pointer events work
                           pointerEvents: openSubmenu === item.id ? 'auto' : 'none'
                         }}
@@ -822,12 +838,20 @@ const Header: React.FC<HeaderProps> = ({
           fixed
           left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${
+            headerType === 'ring_card_mini'
+              ? 'px-4 pt-6' // Container padding for ring_card_mini - generous top spacing for floating effect
+              : ''
+          }
+          ${
             // For transparent type: start transparent, become solid on scroll
             headerType === 'transparent' 
               ? (isScrolled 
                   ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]'
                   : 'bg-transparent border-b border-transparent'
                 )
+              // For ring_card_mini: no backdrop blur, border on inner container
+              : headerType === 'ring_card_mini'
+              ? ''
               // For other types: always have backdrop blur
               : (isScrolled 
                   ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
@@ -837,25 +861,38 @@ const Header: React.FC<HeaderProps> = ({
         `}
         style={{ 
           top: `${fixedBannersHeight}px`,
-          // For 'fixed' type, always stay visible. For others, hide on scroll down
-          transform: (headerType === 'fixed' || isVisible) ? 'translateY(0)' : 'translateY(-100%)',
+          // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
+          transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(-100%)',
           pointerEvents: 'auto',
-          ...headerBackgroundStyle, // Apply gradient or solid color
-          backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && (isScrolled || isDesktop)) 
+          // For ring_card_mini, don't apply background to outer nav
+          ...(headerType === 'ring_card_mini' ? { backgroundColor: 'transparent' } : headerBackgroundStyle),
+          backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && headerType !== 'ring_card_mini' && (isScrolled || isDesktop)) 
             ? 'blur(24px) saturate(200%) brightness(105%)' 
             : 'none',
-          WebkitBackdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && (isScrolled || isDesktop))
+          WebkitBackdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && headerType !== 'ring_card_mini' && (isScrolled || isDesktop))
             ? 'blur(24px) saturate(200%) brightness(105%)' 
             : 'none',
         }}
       >
       <div
-        className={`mx-auto max-w-${menuWidth} p-4 pl-8 sm:px-6 flex justify-between items-center min-h-[64px]`}
+        className={`
+          mx-auto max-w-${menuWidth} py-2 px-4 pl-8 sm:px-6 flex justify-between items-center h-[64px]
+          ${
+            headerType === 'ring_card_mini'
+              ? 'border border-gray-200 rounded-full shadow-sm'
+              : ''
+          }
+        `}
+        style={
+          headerType === 'ring_card_mini'
+            ? headerBackgroundStyle
+            : undefined
+        }
       >
         <button
           type="button"
           onClick={handleHomeNavigation}
-          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200"
+          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200 flex-shrink-0"
           aria-label={t.goToHomepage}
           disabled={!router}
         >
@@ -863,9 +900,9 @@ const Header: React.FC<HeaderProps> = ({
             <Image
               src={settings.image}
               alt="Logo"
-              width={40}
-              height={40}
-              className="h-8 w-auto"
+              width={48}
+              height={48}
+              className={`${logoHeight} w-auto md:${logoHeight} max-[767px]:h-8`}
               priority={true}
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
@@ -887,22 +924,22 @@ const Header: React.FC<HeaderProps> = ({
           </span>
         </button>
 
-        <div className="hidden md:flex items-center justify-end w-full ml-8 relative">
-          {/* Language Switcher - Absolute Right (Desktop Only) */}
-          {settings?.with_language_switch && (
-            <div className="absolute right-0 mr-4 hidden lg:block">
-              <ModernLanguageSwitcher />
-            </div>
-          )}
+        <div className="hidden md:flex items-center justify-center flex-1 ml-8 mr-8 relative">
+          {/* Menu Items - Centered */}
+          <div className="flex items-center justify-center space-x-8 text-sm">
+            {renderMenuItems}
+          </div>
           
-          {/* All Items - Right Side (grouped) */}
-          <div className={`flex items-center space-x-4 ${settings?.with_language_switch ? 'lg:mr-[120px]' : ''}`}>
-            {/* Menu Items */}
-            <div className="flex items-center space-x-6 text-sm">
-              {renderMenuItems}
-            </div>
+          {/* Action Items - Right Side Group */}
+          <div className="absolute right-0 flex items-center space-x-3">
+            {/* Language Switcher - Hidden for ring_card_mini */}
+            {settings?.with_language_switch && headerType !== 'ring_card_mini' && (
+              <div className="hidden lg:block">
+                <ModernLanguageSwitcher />
+              </div>
+            )}
             
-            {/* Action Items */}
+            {/* Basket */}
             {totalItems > 0 && (
               <LocalizedLink
                 href="/basket"
@@ -915,7 +952,9 @@ const Header: React.FC<HeaderProps> = ({
                 </span>
               </LocalizedLink>
             )}
-            {isLoggedIn ? (
+            
+            {/* Profile/Login */}
+            {isLoggedIn && headerType !== 'ring_card_mini' ? (
             <div 
               className="relative group"
               onMouseEnter={cancelCloseTimeout}
@@ -935,7 +974,6 @@ const Header: React.FC<HeaderProps> = ({
                 className="fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 mx-4 sm:mx-8"
                 style={{
                   top: `${fixedBannersHeight + 64 + 16}px`,
-                  backgroundColor: 'white',
                   boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
                 }}
                 onMouseEnter={cancelCloseTimeout}
@@ -1112,7 +1150,7 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
             </div>
-          ) : (
+          ) : headerType !== 'ring_card_mini' ? (
             <button
               type="button"
               onClick={handleLoginModal}
@@ -1122,11 +1160,11 @@ const Header: React.FC<HeaderProps> = ({
             >
               <HeroIcons.ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
             </button>
-          )}
+          ) : null}
           </div>
         </div>
 
-        <div className="flex items-center md:hidden">
+        <div className="flex items-center md:hidden flex-shrink-0">
           {totalItems > 0 && (
             <LocalizedLink
               href="/basket"
@@ -1145,21 +1183,30 @@ const Header: React.FC<HeaderProps> = ({
             className="p-2.5 text-gray-600 hover:text-gray-800 transition-colors duration-200"
             aria-label={isOpen ? t.closeMenu : t.openMenu}
           >
-            {isOpen ? <HeroIcons.XMarkIcon className="h-6 w-6" /> : <HeroIcons.Bars3Icon className="h-6 w-6" />}
+            {isOpen ? <HeroIcons.XMarkIcon className="h-6 w-6" /> : <HeroIcons.Bars3BottomLeftIcon className="h-6 w-6" />}
           </button>
         </div>
       </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile menu - Background overlay for area around header */}
       {isOpen && (
-        <div className="md:hidden fixed inset-0 bg-white/95 backdrop-blur-3xl border-t border-black/8 shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-y-auto z-30"
-          style={{
-            top: `${fixedBannersHeight + 64}px`, // Position directly below the header (no gap on mobile)
-            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-          }}
-        >
+        <>
+          {/* Background for the area above, left, and right of header */}
+          <div 
+            className="md:hidden fixed inset-0 bg-white z-20"
+            style={{
+              top: `${fixedBannersHeight}px`,
+              bottom: 0,
+            }}
+          />
+          
+          {/* Mobile menu content */}
+          <div className="md:hidden fixed inset-0 bg-white overflow-y-auto z-30"
+            style={{
+              top: `${fixedBannersHeight + 64}px`, // Position directly below the header (no gap on mobile)
+            }}
+          >
           <div className="p-6 pb-8">
             {renderMobileMenuItems}
             
@@ -1329,6 +1376,7 @@ const Header: React.FC<HeaderProps> = ({
             )}
           </div>
         </div>
+        </>
       )}
 
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />

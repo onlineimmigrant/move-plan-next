@@ -1,6 +1,6 @@
 import React from 'react';
 import { ColorSelect } from './ColorSelect';
-import { HeaderStyle, HeaderType, MenuWidth } from '@/types/settings';
+import { HeaderStyle, HeaderType, MenuWidth, LogoHeight } from '@/types/settings';
 
 interface HeaderStyleFieldProps {
   label: string;
@@ -26,6 +26,13 @@ const MENU_WIDTHS: { value: MenuWidth; label: string }[] = [
   { value: '7xl', label: '7X Large (2816px)' }
 ];
 
+const LOGO_HEIGHTS: { value: LogoHeight; label: string }[] = [
+  { value: 'h-8', label: 'Small (32px)' },
+  { value: 'h-10', label: 'Medium (40px)' },
+  { value: 'h-12', label: 'Large (48px)' },
+  { value: 'h-16', label: 'Extra Large (64px)' }
+];
+
 export const HeaderStyleField: React.FC<HeaderStyleFieldProps> = ({
   label,
   name,
@@ -44,7 +51,8 @@ export const HeaderStyleField: React.FC<HeaderStyleFieldProps> = ({
           color: 'gray-700',
           color_hover: 'gray-900',
           menu_width: '7xl',
-          menu_items_are_text: true
+          menu_items_are_text: true,
+          logo_height: 'h-12'
         };
 
   console.log('🎨 HeaderStyleField currentValue:', currentValue);
@@ -73,6 +81,15 @@ export const HeaderStyleField: React.FC<HeaderStyleFieldProps> = ({
     const newValue: HeaderStyle = {
       ...currentValue,
       menu_width: e.target.value as MenuWidth
+    };
+    onChange(name, newValue);
+  };
+
+  const handleLogoHeightChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log('🎨 HeaderStyleField handleLogoHeightChange called:', e.target.value);
+    const newValue: HeaderStyle = {
+      ...currentValue,
+      logo_height: e.target.value as LogoHeight
     };
     onChange(name, newValue);
   };
@@ -129,6 +146,27 @@ export const HeaderStyleField: React.FC<HeaderStyleFieldProps> = ({
         </select>
         <p className="mt-1 text-xs text-gray-500">
           Maximum width for header content container
+        </p>
+      </div>
+
+      {/* Logo Height Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Logo Height (Desktop)
+        </label>
+        <select
+          value={currentValue.logo_height || 'h-12'}
+          onChange={handleLogoHeightChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          {LOGO_HEIGHTS.map((height) => (
+            <option key={height.value} value={height.value}>
+              {height.label}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-500">
+          Logo height for desktop view (mobile is fixed at 32px)
         </p>
       </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -14,6 +15,11 @@ import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import { isAdminClient } from '@/lib/auth';
 
+const ContactModal = dynamic(() => import('./contact/ContactModal'), { 
+  ssr: false,
+  loading: () => null
+});
+
 
 // Static translations for footer
 const FOOTER_TRANSLATIONS = {
@@ -22,6 +28,11 @@ const FOOTER_TRANSLATIONS = {
     language: 'Language:', 
     privacySettings: 'Privacy Settings',
     profile: 'Profile',
+    admin: 'Admin',
+    dashboard: 'Dashboard',
+    tickets: 'Tickets',
+    meetings: 'Meetings',
+    aiAgents: 'AI Agents',
     logout: 'Logout',
     login: 'Login',
     register: 'Register',
@@ -32,6 +43,11 @@ const FOOTER_TRANSLATIONS = {
     language: 'Idioma:', 
     privacySettings: 'Configuración de privacidad',
     profile: 'Perfil',
+    admin: 'Admin',
+    dashboard: 'Panel de control',
+    tickets: 'Tickets',
+    meetings: 'Reuniones',
+    aiAgents: 'Agentes IA',
     logout: 'Cerrar sesión',
     login: 'Iniciar sesión',
     register: 'Registrarse',
@@ -42,6 +58,11 @@ const FOOTER_TRANSLATIONS = {
     language: 'Langue :', 
     privacySettings: 'Paramètres de confidentialité',
     profile: 'Profil',
+    admin: 'Admin',
+    dashboard: 'Tableau de bord',
+    tickets: 'Tickets',
+    meetings: 'Réunions',
+    aiAgents: 'Agents IA',
     logout: 'Se déconnecter',
     login: 'Se connecter',
     register: 'S\'inscrire',
@@ -52,6 +73,11 @@ const FOOTER_TRANSLATIONS = {
     language: 'Sprache:', 
     privacySettings: 'Datenschutz-Einstellungen',
     profile: 'Profil',
+    admin: 'Admin',
+    dashboard: 'Dashboard',
+    tickets: 'Tickets',
+    meetings: 'Meetings',
+    aiAgents: 'KI-Agenten',
     logout: 'Abmelden',
     login: 'Anmelden',
     register: 'Registrieren',
@@ -62,6 +88,11 @@ const FOOTER_TRANSLATIONS = {
     language: 'Язык:', 
     privacySettings: 'Настройки конфиденциальности',
     profile: 'Профиль',
+    admin: 'Админ',
+    dashboard: 'Панель управления',
+    tickets: 'Тикеты',
+    meetings: 'Встречи',
+    aiAgents: 'ИИ-агенты',
     logout: 'Выйти',
     login: 'Войти',
     register: 'Зарегистрироваться',
@@ -72,6 +103,11 @@ const FOOTER_TRANSLATIONS = {
     language: 'Lingua:', 
     privacySettings: 'Impostazioni privacy',
     profile: 'Profilo',
+    admin: 'Admin',
+    dashboard: 'Cruscotto',
+    tickets: 'Ticket',
+    meetings: 'Riunioni',
+    aiAgents: 'Agenti IA',
     logout: 'Esci',
     login: 'Accedi',
     register: 'Registrati',
@@ -82,6 +118,11 @@ const FOOTER_TRANSLATIONS = {
     language: 'Idioma:', 
     privacySettings: 'Configurações de privacidade',
     profile: 'Perfil',
+    admin: 'Admin',
+    dashboard: 'Painel',
+    tickets: 'Tickets',
+    meetings: 'Reuniões',
+    aiAgents: 'Agentes IA',
     logout: 'Sair',
     login: 'Entrar',
     register: 'Registrar',
@@ -92,6 +133,11 @@ const FOOTER_TRANSLATIONS = {
     language: 'Język:', 
     privacySettings: 'Ustawienia prywatności',
     profile: 'Profil',
+    admin: 'Admin',
+    dashboard: 'Panel',
+    tickets: 'Zgłoszenia',
+    meetings: 'Spotkania',
+    aiAgents: 'Agenci AI',
     logout: 'Wyloguj',
     login: 'Zaloguj',
     register: 'Zarejestruj',
@@ -102,6 +148,11 @@ const FOOTER_TRANSLATIONS = {
     language: '语言：', 
     privacySettings: '隐私设置',
     profile: '个人资料',
+    admin: '管理员',
+    dashboard: '仪表板',
+    tickets: '工单',
+    meetings: '会议',
+    aiAgents: 'AI代理',
     logout: '登出',
     login: '登录',
     register: '注册',
@@ -112,6 +163,11 @@ const FOOTER_TRANSLATIONS = {
     language: '言语：', 
     privacySettings: 'プライバシー設定',
     profile: 'プロフィール',
+    admin: '管理者',
+    dashboard: 'ダッシュボード',
+    tickets: 'チケット',
+    meetings: 'ミーティング',
+    aiAgents: 'AIエージェント',
     logout: 'ログアウト',
     login: 'ログイン',
     register: '登録',
@@ -141,6 +197,11 @@ function useFooterTranslations() {
     language: translations.language,
     privacySettings: translations.privacySettings,
     profile: translations.profile,
+    admin: translations.admin,
+    dashboard: translations.dashboard,
+    tickets: translations.tickets,
+    meetings: translations.meetings,
+    aiAgents: translations.aiAgents,
     logout: translations.logout,
     login: translations.login,
     register: translations.register,
@@ -160,6 +221,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   // Use translations with fallback
   const translations = useFooterTranslations();
@@ -211,6 +273,10 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   }, [logout, router]);
 
   const handleNavigation = useMemo(() => (path: string) => () => router.push(path), [router]);
+
+  const handleContactModal = useCallback(() => {
+    setIsContactOpen(true);
+  }, []);
 
   // Handle footer_style - support both JSONB and legacy string
   const footerStyles = useMemo(() => {
@@ -407,28 +473,68 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             ))}
 
             <div className="col-span-1 min-h-[200px]">
-              <h3 className="text-base font-semibold mb-4">{translations.profile}</h3>
+              <h3 className="text-base font-semibold mb-4">{isAdmin ? translations.admin : translations.profile}</h3>
               <ul className="space-y-2">
                 {isAuthenticated ? (
-                  <li>
-                    <button
-                      onClick={handleLogout}
-                      type="button"
-                      className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-                      style={{
-                        color: getColorValue(footerStyles.color)
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = getColorValue(footerStyles.color);
-                      }}
-                      aria-label={translations.logout}
-                    >
-                      {translations.logout}
-                    </button>
-                  </li>
+                  <>
+                    {isAdmin && (
+                      <>
+                        <li>
+                          <FooterLink href="/admin" className="text-sm">
+                            {translations.dashboard}
+                          </FooterLink>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            onClick={handleContactModal}
+                            className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                            style={{
+                              color: getColorValue(footerStyles.color)
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = getColorValue(footerStyles.color);
+                            }}
+                            aria-label={translations.tickets}
+                          >
+                            {translations.tickets}
+                          </button>
+                        </li>
+                        <li>
+                          <FooterLink href="/admin" className="text-sm">
+                            {translations.meetings}
+                          </FooterLink>
+                        </li>
+                        <li>
+                          <FooterLink href="/admin/ai/management" className="text-sm">
+                            {translations.aiAgents}
+                          </FooterLink>
+                        </li>
+                      </>
+                    )}
+                    <li>
+                      <button
+                        onClick={handleLogout}
+                        type="button"
+                        className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                        style={{
+                          color: getColorValue(footerStyles.color)
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = getColorValue(footerStyles.color);
+                        }}
+                        aria-label={translations.logout}
+                      >
+                        {translations.logout}
+                      </button>
+                    </li>
+                  </>
                 ) : (
                   <>
                     <li>
@@ -747,22 +853,25 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
   // Rest of the component remains unchanged
   return (
-    <footer 
-      className={`text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : 'py-12'}`}
-      role="contentinfo"
-      style={{
-        ...getBackgroundStyle(
-          footerStyles.is_gradient,
-          footerStyles.gradient,
-          footerStyles.background
-        ),
-        minHeight: footerStyles.type === 'compact' ? '200px' : '400px'
-      }}
-    >
-      <div className="max-w-7xl mx-auto">
-        {renderFooterContent()}
-      </div>
-    </footer>
+    <>
+      <footer 
+        className={`text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : 'py-12'}`}
+        role="contentinfo"
+        style={{
+          ...getBackgroundStyle(
+            footerStyles.is_gradient,
+            footerStyles.gradient,
+            footerStyles.background
+          ),
+          minHeight: footerStyles.type === 'compact' ? '200px' : '400px'
+        }}
+      >
+        <div className="max-w-7xl mx-auto">
+          {renderFooterContent()}
+        </div>
+      </footer>
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+    </>
   );
 };
 
