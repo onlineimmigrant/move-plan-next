@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { GlobeAltIcon, PlusIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Organization } from './types';
 import OrganizationCard from './OrganizationCard';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface OrganizationsGridProps {
   organizations: Organization[];
@@ -34,21 +35,41 @@ export default function OrganizationsGrid({
   loadingOrganizationId = null,
   mostRecentOrganizationId = null
 }: OrganizationsGridProps) {
+  const themeColors = useThemeColors();
+
   if (organizations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-24 px-4 relative">
         {/* Decorative background */}
         <div className="absolute inset-0 bg-gradient-to-br from-sky-50/50 via-white to-indigo-50/50 rounded-3xl"></div>
         <div className="relative z-10">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-100 to-indigo-100 flex items-center justify-center mb-8 border-2 border-sky-200 shadow-lg">
-            <GlobeAltIcon className="w-10 h-10 text-sky-600" />
+          <div 
+            className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 border-2 shadow-lg"
+            style={{
+              background: `linear-gradient(to bottom right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.light})`,
+              borderColor: themeColors.cssVars.primary.light,
+            }}
+          >
+            <GlobeAltIcon 
+              className="w-10 h-10"
+              style={{ color: themeColors.cssVars.primary.base }}
+            />
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-4">No Sites Yet</h3>
           <p className="text-gray-600 mb-10 max-w-md text-lg">Create your first organization site to get started with managing your digital presence.</p>
           {canCreateMore && (
             <button
               onClick={onCreateNew}
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-sky-600 to-indigo-600 text-white rounded-2xl hover:from-sky-700 hover:to-indigo-700 font-semibold transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-sky-200/50 transform hover:scale-105"
+              className="inline-flex items-center px-8 py-4 text-white rounded-2xl font-semibold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
+              style={{
+                background: `linear-gradient(to right, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.active})`,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = `linear-gradient(to right, ${themeColors.cssVars.primary.hover}, ${themeColors.cssVars.primary.active})`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = `linear-gradient(to right, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.active})`;
+              }}
             >
               <PlusIcon className="w-6 h-6 mr-3" />
               Create Your First Site
@@ -84,18 +105,54 @@ export default function OrganizationsGrid({
               const container = document.querySelector('.organizations-scroll-container');
               container?.scrollBy({ left: -200, behavior: 'smooth' });
             }}
-            className="p-3 rounded-xl border-2 border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+            className="p-3 rounded-xl border-2 border-gray-200 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+            style={{
+              ['--hover-border' as any]: themeColors.cssVars.primary.light,
+              ['--hover-bg' as any]: themeColors.cssVars.primary.lighter,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = themeColors.cssVars.primary.light;
+              e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.lighter;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '';
+              e.currentTarget.style.backgroundColor = '';
+            }}
           >
-            <ChevronLeftIcon className="w-5 h-5 text-gray-600 hover:text-sky-600" />
+            <ChevronLeftIcon 
+              className="w-5 h-5 text-gray-600 transition-colors"
+              onMouseEnter={(e) => {
+                (e.currentTarget as SVGElement).style.color = themeColors.cssVars.primary.base;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as SVGElement).style.color = '';
+              }}
+            />
           </button>
           <button 
             onClick={() => {
               const container = document.querySelector('.organizations-scroll-container');
               container?.scrollBy({ left: 200, behavior: 'smooth' });
             }}
-            className="p-3 rounded-xl border-2 border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+            className="p-3 rounded-xl border-2 border-gray-200 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = themeColors.cssVars.primary.light;
+              e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.lighter;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '';
+              e.currentTarget.style.backgroundColor = '';
+            }}
           >
-            <ChevronRightIcon className="w-5 h-5 text-gray-600 hover:text-sky-600" />
+            <ChevronRightIcon 
+              className="w-5 h-5 text-gray-600 transition-colors"
+              onMouseEnter={(e) => {
+                (e.currentTarget as SVGElement).style.color = themeColors.cssVars.primary.base;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as SVGElement).style.color = '';
+              }}
+            />
           </button>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { useCookieTranslations } from './useCookieTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ServiceProps {
   service: {
@@ -25,6 +26,7 @@ const Service: React.FC<ServiceProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const t = useCookieTranslations();
+  const themeColors = useThemeColors();
   const isEssential = isEssentialCategory(service.categoryName);
   const isChecked = consent.services.includes(service.id);
 
@@ -65,13 +67,14 @@ const Service: React.FC<ServiceProps> = ({
             checked={isChecked}
             onChange={handleToggle}
             disabled={isEssential}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-2 focus:ring-offset-transparent ${
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent ${
               isEssential
                 ? 'bg-gray-300/80 cursor-not-allowed'
-                : isChecked
-                ? 'bg-gray-700 shadow-inner'
-                : 'bg-gray-300/80'
+                : !isChecked
+                ? 'bg-gray-300/80'
+                : ''
             }`}
+            style={isChecked && !isEssential ? { backgroundColor: themeColors.cssVars.primary.base } : {}}
           >
             <span
               className={`inline-block h-5 w-5 transform rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm ${

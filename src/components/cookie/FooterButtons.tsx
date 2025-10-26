@@ -3,6 +3,7 @@
 import React from 'react';
 import Button from '@/ui/Button';
 import { useCookieTranslations } from './useCookieTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface FooterButtonsProps {
   saveConsentSettings: () => void;
@@ -14,6 +15,8 @@ const FooterButtons: React.FC<FooterButtonsProps> = ({
   handleConsent,
 }) => {
   const t = useCookieTranslations();
+  const themeColors = useThemeColors();
+  
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:items-center font-medium">
@@ -21,7 +24,10 @@ const FooterButtons: React.FC<FooterButtonsProps> = ({
         <button
           onClick={saveConsentSettings}
           aria-label={t.saveSettings}
-          className="group relative overflow-hidden flex items-center justify-center px-7 py-3 text-[14px] font-semibold text-white bg-gray-700 hover:bg-gray-800 active:bg-gray-900 rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-gray-600/25 focus:ring-offset-2 focus:ring-offset-transparent shadow-[0_4px_16px_rgba(75,85,99,0.24)] hover:shadow-[0_6px_20px_rgba(75,85,99,0.32)]"
+          className="group relative overflow-hidden flex items-center justify-center px-7 py-3 text-[14px] font-semibold text-white rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent shadow-[0_4px_16px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.28)]"
+          style={{ backgroundColor: themeColors.cssVars.primary.base }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.hover}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.base}
         >
           <span className="relative z-20 transition-all duration-300 group-hover:scale-[1.02] group-active:scale-[0.95] antialiased">
             {t.saveSettings}

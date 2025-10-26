@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCookieTranslations } from './useCookieTranslations';
 import Link from 'next/link';
 import Button from '@/ui/Button';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Dynamic import for CookieSettings - only loads when settings button clicked
 const CookieSettings = dynamic(() => import('./CookieSettings'), {
@@ -39,6 +40,7 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
   const [isVisible, setIsVisible] = useState(false);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const { showSettings, setShowSettings } = useCookieSettings();
+  const themeColors = useThemeColors();
 
   useEffect(() => {
     const accepted = getCookie('cookies_accepted');
@@ -179,8 +181,13 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
                     {/* Accept Button - Premium Style */}
                     <button
                       onClick={handleAcceptAll}
-                      className="relative px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-800 hover:from-black hover:to-gray-900 rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] overflow-hidden group"
-                      style={{ willChange: 'transform' }}
+                      className="relative px-6 py-2.5 text-sm font-semibold text-white rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] overflow-hidden group"
+                      style={{ 
+                        backgroundColor: themeColors.cssVars.primary.base,
+                        willChange: 'transform' 
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.hover}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.base}
                     >
                       <span className="relative z-10">{translations.acceptAll}</span>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />

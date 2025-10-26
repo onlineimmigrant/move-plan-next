@@ -1,6 +1,7 @@
 // components/ChatHelpWidget/ChatHelpToggleButton.tsx
 'use client';
 import { RocketLaunchIcon } from '@heroicons/react/24/outline';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ChatHelpToggleButtonProps {
   isOpen: boolean;
@@ -8,6 +9,8 @@ interface ChatHelpToggleButtonProps {
 }
 
 export default function ChatHelpToggleButton({ isOpen, toggleOpen }: ChatHelpToggleButtonProps) {
+  const themeColors = useThemeColors();
+  
   return (
     <button
       onClick={toggleOpen}
@@ -16,17 +19,25 @@ export default function ChatHelpToggleButton({ isOpen, toggleOpen }: ChatHelpTog
         flex items-center justify-center
         w-12 h-12 sm:w-14 sm:h-14
         bottom-4 right-4 sm:bottom-6 sm:right-6
-        bg-gradient-to-br from-gray-600 via-gray-700 to-gray-800
-        hover:from-gray-700 hover:via-gray-800 hover:to-gray-900
         text-white
         rounded-full
         shadow-xl hover:shadow-2xl
         transform hover:scale-110 active:scale-95
         transition-all duration-300 ease-out
-        focus:outline-none focus:ring-4 focus:ring-gray-400 focus:ring-opacity-50
+        focus:outline-none focus:ring-4 focus:ring-opacity-50
         group
         ${isOpen ? 'rotate-45' : ''}
       `}
+      style={{
+        background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+        boxShadow: `0 10px 40px ${themeColors.cssVars.primary.base}40`
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = `linear-gradient(135deg, ${themeColors.cssVars.primary.hover}, ${themeColors.cssVars.primary.active})`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`;
+      }}
       aria-label={isOpen ? 'Close help center' : 'Open help center'}
     >
       <RocketLaunchIcon className="h-6 w-6 transform group-hover:translate-y-[-2px] transition-transform duration-200" />

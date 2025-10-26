@@ -39,8 +39,8 @@ export default function ColorsModal({ isOpen, setIsOpen, setIsMinimized }: Color
     const hex = tailwindColors[color][shade];
     setSettings((prev) => ({
       ...prev,
-      primary_color: settings.footer_style,
-      secondary_color: settings.footer_style,
+      primary_color: hex,
+      secondary_color: hex,
     }));
   };
 

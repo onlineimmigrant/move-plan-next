@@ -5,6 +5,7 @@ import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import Category from './Category';
 import Service from './Service';
 import { useCookieTranslations } from './useCookieTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface TabsProps {
   categories: {
@@ -19,6 +20,7 @@ interface TabsProps {
 
 const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
   const t = useCookieTranslations();
+  const themeColors = useThemeColors();
   const isEssentialCategory = (name: string) => {
     return name.toLowerCase() === 'essential';
   };
@@ -26,27 +28,33 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
   return (
     <TabGroup>
       <TabList className="flex space-x-1 rounded-2xl bg-gray-100/60 backdrop-blur-sm p-1.5 shadow-sm border border-gray-200/50">
-        <Tab
-          className={({ selected }) =>
-            `cursor-pointer w-full py-3 px-6 text-[14px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 focus:ring-offset-transparent antialiased ${
-              selected
-                ? 'bg-white text-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
-                : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
-            }`
-          }
-        >
-          {t.categories}
+        <Tab className="flex-1">
+          {({ selected }) => (
+            <div
+              className={`cursor-pointer flex items-center justify-center w-full py-3 px-6 text-[14px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-transparent antialiased ${
+                selected
+                  ? 'text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
+                  : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
+              }`}
+              style={selected ? { backgroundColor: themeColors.cssVars.primary.base } : {}}
+            >
+              {t.categories}
+            </div>
+          )}
         </Tab>
-        <Tab
-          className={({ selected }) =>
-            `cursor-pointer w-full py-3 px-6 text-[14px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 focus:ring-offset-transparent antialiased ${
-              selected
-                ? 'bg-white text-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
-                : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
-            }`
-          }
-        >
-          {t.services}
+        <Tab className="flex-1">
+          {({ selected }) => (
+            <div
+              className={`cursor-pointer flex items-center justify-center w-full py-3 px-6 text-[14px] font-medium rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-transparent antialiased ${
+                selected
+                  ? 'text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
+                  : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
+              }`}
+              style={selected ? { backgroundColor: themeColors.cssVars.primary.base } : {}}
+            >
+              {t.services}
+            </div>
+          )}
         </Tab>
       </TabList>
 

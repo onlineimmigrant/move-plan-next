@@ -715,3 +715,33 @@ html, body {
     left: 100%;
   }
 }
+
+/* Theme-aware button styles */
+.btn-primary:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+.btn-primary:active {
+  background-color: var(--color-primary-active) !important;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-secondary-hover) !important;
+}
+
+.btn-secondary:active {
+  background-color: var(--color-secondary-active) !important;
+}
+
+.btn-link {
+  color: var(--color-primary-base) !important;
+}
+
+.btn-link:hover {
+  color: var(--color-primary-hover) !important;
+}
+
+.btn-outline:hover {
+  border-color: var(--color-primary-base) !important;
+  color: var(--color-primary-base) !important;
+}

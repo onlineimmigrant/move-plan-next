@@ -5,13 +5,14 @@ import Tooltip from '@/components/Tooltip';
 import ModernLanguageSwitcher from '@/components/ModernLanguageSwitcher';
 import { WidgetSize } from '../ChatWidget/types';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ChatHelpHeaderProps {
   size: WidgetSize;
   toggleSize: () => void;
   closeWidget: () => void;
   isMobile: boolean;
-  currentView?: 'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support';
+  currentView?: 'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support' | 'features';
   onLanguageChange?: (locale: string) => void;
 }
 
@@ -24,6 +25,7 @@ export default function ChatHelpHeader({
   onLanguageChange,
 }: ChatHelpHeaderProps) {
   const { t } = useHelpCenterTranslations();
+  const themeColors = useThemeColors();
   
   const getHeaderTitle = () => {
     switch (currentView) {
@@ -34,6 +36,8 @@ export default function ChatHelpHeader({
         return t.knowledgeBase;
       case 'faq':
         return t.faqs;
+      case 'features':
+        return t.features || 'Features';
       case 'conversation':
       case 'live-support':
         return t.liveSupport;
@@ -60,14 +64,30 @@ export default function ChatHelpHeader({
   };
 
   return (
-    <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200 rounded-t-2xl shadow-sm">
+    <div 
+      className="flex justify-between items-center px-4 py-3 border-b border-slate-200 rounded-t-2xl shadow-sm"
+      style={{
+        background: `linear-gradient(to right, rgb(248 250 252), ${themeColors.cssVars.primary.lighter})`
+      }}
+    >
       {/* Left side - Size control */}
       <div className="flex items-center gap-2">
         <Tooltip variant="right" content={getTooltipContent()}>
           <button
             onClick={toggleSize}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
             aria-label={getTooltipContent()}
+            style={{
+              ['--tw-ring-color' as any]: themeColors.cssVars.primary.base,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = themeColors.cssVars.primary.hover;
+              e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.lighter;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '';
+              e.currentTarget.style.backgroundColor = '';
+            }}
           >
             {size === 'fullscreen' ? (
               <ArrowsPointingInIcon className="h-4 w-4" />

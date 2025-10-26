@@ -11,6 +11,7 @@ import ArticlesTab from '@/components/modals/ChatHelpWidget/ArticlesTab';
 import FAQView from '@/components/modals/ChatHelpWidget/FAQView';
 import ConversationTab from '@/components/modals/ChatHelpWidget/ConversationTab';
 import AIAgentTab from '@/components/modals/ChatHelpWidget/AIAgentTab';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface HelpCenterPageProps {
   locale: string;
@@ -23,6 +24,7 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
   const { t } = useHelpCenterTranslations();
   const { settings } = useSettings();
   const router = useRouter();
+  const themeColors = useThemeColors();
 
   // Client-safe favicon URL logic (same as layout-utils but for client components)
   const getFaviconUrl = (favicon?: string | null): string => {
@@ -160,7 +162,10 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
               router.push('/');
             }
           }}
-          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] mr-8 hover:scale-105 antialiased"
+          className="cursor-pointer flex items-center text-gray-900 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] mr-8 hover:scale-105 antialiased"
+          style={{ color: undefined }}
+          onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
+          onMouseLeave={(e) => e.currentTarget.style.color = ''}
           aria-label="Go to homepage"
         >
           {/* Mobile - Use favicon with proper URL logic */}
@@ -193,14 +198,25 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
             <span className="text-gray-500 hidden sm:block font-light text-lg antialiased">Logo</span>
           )}
           
-          <span className="sr-only tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
+          <span 
+            className="sr-only tracking-tight text-xl font-extrabold bg-clip-text text-transparent"
+            style={{
+              backgroundImage: `linear-gradient(to right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`
+            }}
+          >
             {settings?.site || 'Coded Harmony'}
           </span>
         </button>
         
         <div className='flex items-center space-x-4'>
           <h1 className="text-lg sm:text-3xl font-semibold text-gray-900 tracking-[-0.02em] antialiased">{getHeaderTitle()}</h1>
-          <span className="hidden sm:flex ml-4 px-4 py-2 text-[12px] font-medium bg-sky-50/80 text-sky-600 rounded-full backdrop-blur-sm antialiased">
+          <span 
+            className="hidden sm:flex ml-4 px-4 py-2 text-[12px] font-medium rounded-full backdrop-blur-sm antialiased"
+            style={{
+              backgroundColor: `${themeColors.cssVars.primary.lighter}33`,
+              color: themeColors.cssVars.primary.hover
+            }}
+          >
             {t.supportKnowledgeBase}
           </span>
         </div>
@@ -229,11 +245,18 @@ export default function HelpCenterPage({ locale }: HelpCenterPageProps) {
                     onClick={() => handleTabChange(tab.id)}
                     className={`flex items-center px-4 py-2.5 text-[13px] font-medium rounded-xl whitespace-nowrap transition-all duration-150 ease-out antialiased tracking-[-0.01em] ${
                       isActive
-                        ? 'bg-sky-100/80 text-sky-700 backdrop-blur-sm scale-105'
+                        ? 'backdrop-blur-sm scale-105'
                         : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/60 hover:scale-102'
                     }`}
+                    style={isActive ? {
+                      backgroundColor: `${themeColors.cssVars.primary.lighter}33`,
+                      color: themeColors.cssVars.primary.hover
+                    } : {}}
                   >
-                    <tab.icon className={`mr-2 h-4 w-4 ${isActive ? 'text-sky-600' : 'text-gray-400'} transition-colors duration-150`} />
+                    <tab.icon 
+                      className={`mr-2 h-4 w-4 transition-colors duration-150`}
+                      style={{ color: isActive ? themeColors.cssVars.primary.base : undefined }}
+                    />
                     {tab.label}
                   </button>
                 );

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { SUPPORTED_CURRENCIES, setUserCurrency, getUserCurrency } from '@/lib/currency';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface CurrencySwitcherProps {
   onCurrencyChange?: (currency: string) => void;
@@ -12,6 +13,7 @@ interface CurrencySwitcherProps {
 export default function CurrencySwitcher({ onCurrencyChange, className = '' }: CurrencySwitcherProps) {
   const [currentCurrency, setCurrentCurrency] = useState<string>('USD');
   const [isOpen, setIsOpen] = useState(false);
+  const themeColors = useThemeColors();
 
   useEffect(() => {
     const currency = getUserCurrency();
@@ -57,8 +59,12 @@ export default function CurrencySwitcher({ onCurrencyChange, className = '' }: C
                 key={code}
                 onClick={() => handleCurrencyChange(code)}
                 className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors duration-200 ${
-                  code === currentCurrency ? 'bg-sky-50 text-sky-700' : 'text-gray-700'
+                  code === currentCurrency ? '' : 'text-gray-700'
                 }`}
+                style={code === currentCurrency ? {
+                  backgroundColor: themeColors.cssVars.primary.lighter,
+                  color: themeColors.cssVars.primary.hover,
+                } : {}}
               >
                 <span className="w-6">{info.symbol}</span>
                 <span className="font-medium">{code}</span>

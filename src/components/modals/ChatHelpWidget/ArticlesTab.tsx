@@ -3,12 +3,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import DOMPurify from 'dompurify';
-import { MagnifyingGlassIcon, DocumentTextIcon, ClockIcon, TagIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ClockIcon, TagIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { WidgetSize } from '../ChatWidget/types';
 import { useArticles } from './hooks/useArticles';
 import { useSettings } from '@/context/SettingsContext';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
 import type { Article } from './hooks/useArticles';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { HelpCenterNavBadges } from './HelpCenterNavBadges';
+import { HelpCenterSearchBar } from './HelpCenterSearchBar';
 
 interface ArticlesTabProps {
   size: WidgetSize;
@@ -22,6 +25,7 @@ export default function ArticlesTab({ size, showBackButton, onBack, onBackToHelp
   const router = useRouter();
   const articleSlug = searchParams.get('article');
   const manuallyCleared = useRef(false);
+  const themeColors = useThemeColors();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -86,30 +90,29 @@ export default function ArticlesTab({ size, showBackButton, onBack, onBackToHelp
       <div className={`h-full overflow-y-auto ${size === 'fullscreen' ? 'max-w-4xl mx-auto' : ''}`}>
         <div className="p-8 space-y-8">
           {/* Tab Navigation Badges */}
-          <div className="flex justify-center gap-3 pb-4">
-            <button
-              onClick={() => router.push('/help-center?tab=faq')}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
-            >
-              <span className="text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.faqs}</span>
-              <svg className="w-4 h-4 text-gray-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => router.push('/help-center?tab=articles')}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 border border-sky-600 rounded-2xl shadow-md hover:opacity-90 transition-opacity duration-300"
-            >
-              <span className="text-lg font-semibold text-white">{t.articles}</span>
-            </button>
-          </div>
+          <HelpCenterNavBadges 
+            activeTab="articles" 
+            translations={{
+              faqs: t.faqs,
+              articles: t.articles,
+              features: t.features,
+              offerings: t.offerings
+            }}
+            onNavigate={(tab) => router.push(`/help-center?tab=${tab}`)}
+          />
           
           {/* Article Header */}
           <div className="space-y-6">
             
             <div className="space-y-4">
               <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <span className="bg-sky-50 text-sky-600 px-2 py-1 rounded-full font-medium text-xs">
+                <span 
+                  className="px-2 py-1 rounded-full font-medium text-xs"
+                  style={{
+                    backgroundColor: `${themeColors.cssVars.primary.lighter}33`,
+                    color: themeColors.cssVars.primary.hover
+                  }}
+                >
                   <TagIcon className="h-3 w-3 inline mr-1" />
                   {selectedArticle.subsection || t.general}
                 </span>
@@ -144,7 +147,13 @@ export default function ArticlesTab({ size, showBackButton, onBack, onBackToHelp
               
               {/* Category Tag */}
               <div className="flex flex-wrap gap-2">
-                <span className="px-4 py-2 bg-sky-50 text-sky-600 rounded-full text-sm font-medium">
+                <span 
+                  className="px-4 py-2 rounded-full text-sm font-medium"
+                  style={{
+                    backgroundColor: `${themeColors.cssVars.primary.lighter}33`,
+                    color: themeColors.cssVars.primary.hover
+                  }}
+                >
                   #{selectedArticle.subsection || t.general}
                 </span>
               </div>
@@ -162,61 +171,68 @@ export default function ArticlesTab({ size, showBackButton, onBack, onBackToHelp
     <div className={`h-full overflow-y-auto ${size === 'fullscreen' ? 'max-w-4xl mx-auto' : ''}`}>
       <div className="p-8 space-y-8">
         {/* Tab Navigation Badges */}
-        <div className="flex justify-center gap-3 pb-4">
-          <button
-            onClick={() => router.push('/help-center?tab=faq')}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100/50 hover:from-sky-50 hover:to-sky-100/50 border border-gray-200/50 hover:border-sky-300/50 rounded-2xl transition-all duration-300 group shadow-sm hover:shadow-md"
-          >
-            <span className="text-lg font-semibold text-gray-700 group-hover:text-sky-600 transition-colors duration-300">{t.faqs}</span>
-            <svg className="w-4 h-4 text-gray-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          <button
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 border border-sky-600 rounded-2xl shadow-md cursor-default"
-          >
-            <span className="text-lg font-semibold text-white">{t.articles}</span>
-          </button>
-        </div>
+        <HelpCenterNavBadges 
+          activeTab="articles"
+          showAllBadge={true}
+          translations={{
+            all: 'All',
+            faqs: t.faqs,
+            articles: t.articles,
+            features: t.features,
+            offerings: t.offerings
+          }}
+          onNavigate={(tab) => {
+            if (tab === 'all') {
+              router.push('/help-center');
+            } else {
+              router.push(`/help-center?tab=${tab}`);
+            }
+          }}
+        />
 
         {/* Header - Only show when NOT viewing a specific article */}
         {!selectedArticle && (
           <div className="space-y-6">
             {/* Search Bar */}
-            <div className="relative max-w-2xl mx-auto">
-              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.searchArticles}
-                className="block w-full pl-14 pr-6 py-5 bg-gray-50 rounded-3xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:bg-white transition-all duration-150 ease-out text-lg font-normal hover:bg-gray-100"
-              />
-            </div>
+            <HelpCenterSearchBar 
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t.searchArticles}
+            />
 
-            {/* Category Filter - Scrollable Row */}
-            <div className="overflow-x-auto scrollbar-hide py-2">
-              <div className="flex gap-3 min-w-max px-4">
+            {/* Category Filter - Centered with horizontal scrolling */}
+            <div className="flex justify-center">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 max-w-full">
                 {categories.map((category) => {
                   const count = getCategoryCount(category);
+                  const isActive = selectedCategory === category;
                   return (
                     <button
                       key={category}
                       onClick={() => setSelectedCategory(category)}
-                      className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-150 ease-out whitespace-nowrap flex items-center gap-2 ${
-                        selectedCategory === category
-                          ? 'bg-sky-500 text-white hover:bg-sky-600 scale-105'
-                          : 'bg-white text-gray-600 hover:bg-sky-50 hover:text-sky-600 border border-gray-200 hover:border-sky-200 hover:scale-105'
-                      }`}
+                      className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2"
+                      style={{
+                        backgroundColor: isActive 
+                          ? themeColors.cssVars.primary.base 
+                          : 'white',
+                        color: isActive 
+                          ? 'white' 
+                          : themeColors.cssVars.primary.base,
+                        border: `1px solid ${isActive ? themeColors.cssVars.primary.base : themeColors.cssVars.primary.light}40`,
+                      }}
                     >
                       <span>{category}</span>
-                      <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold ${
-                        selectedCategory === category
-                          ? 'bg-white/20 text-white'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
+                      <span 
+                        className="px-2 py-0.5 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: isActive 
+                            ? 'rgba(255, 255, 255, 0.25)' 
+                            : `${themeColors.cssVars.primary.lighter}60`,
+                          color: isActive 
+                            ? 'white' 
+                            : themeColors.cssVars.primary.hover,
+                        }}
+                      >
                         {count}
                       </span>
                     </button>
@@ -232,7 +248,10 @@ export default function ArticlesTab({ size, showBackButton, onBack, onBackToHelp
           {loading ? (
             <div className="text-center py-16">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+                <div 
+                  className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                  style={{ borderColor: `${themeColors.cssVars.primary.base} transparent transparent transparent` }}
+                ></div>
               </div>
               <p className="text-gray-500 text-xl font-light">{t.loadingContent}</p>
             </div>
@@ -252,30 +271,45 @@ export default function ArticlesTab({ size, showBackButton, onBack, onBackToHelp
             </div>
           ) : (
             <>
-              <div className={`gap-6 ${
-                size === 'initial' 
-                  ? 'space-y-6' 
-                  : size === 'half' 
-                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
-                    : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-              }`}>
+              <div className="space-y-3">
                 {filteredArticles.map((article) => (
-                  <button
+                  <div
                     key={`${article.slug}-${article.id}`}
-                    onClick={() => {
-                      setSelectedArticle(article);
-                      router.push(`/help-center?tab=articles&article=${article.slug}`);
-                    }}
-                    className="w-full p-6 bg-white rounded-3xl hover:scale-[1.02] transition-all duration-300 ease-out text-left group relative overflow-hidden"
+                    className="group relative"
                   >
-                    <div>
-                      <h3 className="text-gray-900 font-semibold text-lg mb-2 group-hover:text-sky-600 transition-colors leading-tight">{article.title}</h3>
-                      {/* Description - only visible on hover */}
-                      <div className="max-h-0 opacity-0 group-hover:max-h-24 group-hover:opacity-100 transition-all duration-300 ease-out overflow-hidden">
-                        <p className="text-gray-600 line-clamp-3 leading-relaxed text-sm pt-2">{article.description}</p>
+                    {/* Glass layers - matching FAQView */}
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl rounded-3xl group-hover:bg-white/80 group-hover:shadow-xl transition-all duration-300 ease-out"
+                      style={{
+                        backdropFilter: 'blur(24px) saturate(200%)',
+                        WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+                      }}
+                    />
+                    <div 
+                      className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"
+                      style={{
+                        background: `linear-gradient(135deg, ${themeColors.cssVars.primary.lighter}30, white 20%, ${themeColors.cssVars.primary.lighter}20)`
+                      }}
+                    />
+                    
+                    <button
+                      onClick={() => {
+                        setSelectedArticle(article);
+                        router.push(`/help-center?tab=articles&article=${article.slug}`);
+                      }}
+                      className="relative w-full p-6 sm:p-8 text-left group/button"
+                    >
+                      <h3 
+                        className="text-gray-900 font-semibold text-base leading-relaxed antialiased tracking-[-0.02em] group-hover/button:text-gray-800 transition-colors duration-300 ease-out"
+                      >
+                        {article.title}
+                      </h3>
+                      
+                      {/* Preview on hover */}
+                      <div className="text-gray-600 text-[15px] leading-relaxed mt-2 max-h-0 opacity-0 group-hover:max-h-20 group-hover:opacity-100 transition-all duration-500 overflow-hidden">
+                        {article.description}
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 ))}
               </div>
 
@@ -285,7 +319,21 @@ export default function ArticlesTab({ size, showBackButton, onBack, onBackToHelp
                   <button
                     onClick={loadMore}
                     disabled={loadingMore}
-                    className="px-8 py-4 bg-white text-gray-700 rounded-full font-medium hover:bg-sky-50 hover:text-sky-600 border-2 border-gray-200 hover:border-sky-300 transition-all duration-150 ease-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-white disabled:hover:text-gray-700 disabled:hover:border-gray-200"
+                    className="px-8 py-4 bg-white text-gray-700 rounded-full font-medium border-2 border-gray-200 transition-all duration-150 ease-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-white disabled:hover:text-gray-700 disabled:hover:border-gray-200"
+                    onMouseEnter={(e) => {
+                      if (!loadingMore) {
+                        e.currentTarget.style.backgroundColor = `${themeColors.cssVars.primary.lighter}40`;
+                        e.currentTarget.style.color = themeColors.cssVars.primary.hover;
+                        e.currentTarget.style.borderColor = themeColors.cssVars.primary.border;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loadingMore) {
+                        e.currentTarget.style.backgroundColor = '';
+                        e.currentTarget.style.color = '';
+                        e.currentTarget.style.borderColor = '';
+                      }
+                    }}
                   >
                     {loadingMore ? (
                       <span className="flex items-center gap-2">

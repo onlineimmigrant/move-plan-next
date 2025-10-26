@@ -3,6 +3,7 @@
 
 import * as Icons from '@heroicons/react/24/outline';
 import { MdOutlineFeaturedPlayList } from 'react-icons/md';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Feature {
   id: string;
@@ -22,6 +23,8 @@ interface Feature {
 type HeroIconName = keyof typeof Icons;
 
 export default function FeatureHeader({ feature }: { feature: Feature }) {
+  const themeColors = useThemeColors();
+
   const renderFeatureIcon = (iconName?: string) => {
     if (!iconName || iconName.trim() === '') {
       return <MdOutlineFeaturedPlayList className="w-6 h-6 text-gray-500" />;
@@ -45,7 +48,14 @@ export default function FeatureHeader({ feature }: { feature: Feature }) {
         </h1>
         {feature.type && (
           <div className="mt-4">
-            <span className="inline-block px-4 py-1.5 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
+            <span 
+              className="inline-block px-4 py-1.5 text-xs font-medium rounded-full tracking-wide uppercase border"
+              style={{
+                backgroundColor: themeColors.cssVars.primary.lighter,
+                color: themeColors.cssVars.primary.base,
+                borderColor: themeColors.cssVars.primary.light,
+              }}
+            >
               {feature.type}
             </span>
           </div>

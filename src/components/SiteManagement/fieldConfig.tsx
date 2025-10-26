@@ -18,6 +18,7 @@ import { FeatureSelect } from './FeatureSelect';
 import { FAQSelect } from './FAQSelect';
 import { BannerSelect } from './BannerSelect';
 import { FooterStyleField } from './FooterStyleField';
+import { ThemeColorPicker } from './ThemeColorPicker';
 import { HeaderStyleField } from './HeaderStyleField';
 // Cookie Management components
 import { CookieCategoriesSelect } from './CookieCategoriesSelect';
@@ -45,7 +46,7 @@ interface SectionConfig {
 interface BaseFieldConfig {
   name: keyof Settings;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners' | 'cookie-consent' | 'cookie-categories' | 'cookie-services' | 'cookie-consent-records' | 'ai-agents' | 'footer-style' | 'header-style';
+  type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkbox' | 'color' | 'animation' | 'image' | 'multi-language' | 'single-language' | 'organization-type' | 'translations' | 'alignment' | 'text-size' | 'text-weight' | 'block-width' | 'columns' | 'menu-items' | 'blog-posts' | 'products' | 'features' | 'faqs' | 'banners' | 'cookie-consent' | 'cookie-categories' | 'cookie-services' | 'cookie-consent-records' | 'ai-agents' | 'footer-style' | 'header-style' | 'theme-color';
   placeholder?: string;
   span?: 'full' | 'half';
   disabled?: boolean;
@@ -172,7 +173,13 @@ interface HeaderStyleFieldConfig extends BaseFieldConfig {
   type: 'header-style';
 }
 
-export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig | BannersFieldConfig | CookieConsentFieldConfig | CookieCategoriesFieldConfig | CookieServicesFieldConfig | CookieConsentRecordsFieldConfig | AIAgentsFieldConfig | FooterStyleFieldConfig | HeaderStyleFieldConfig;
+interface ThemeColorFieldConfig extends BaseFieldConfig {
+  type: 'theme-color';
+  colorField: string;
+  shadeField: string;
+}
+
+export type FieldConfig = TextFieldConfig | TextAreaFieldConfig | SelectFieldConfig | CheckboxFieldConfig | ColorFieldConfig | AnimationFieldConfig | ImageFieldConfig | MultiLanguageFieldConfig | SingleLanguageFieldConfig | OrganizationTypeFieldConfig | TranslationsFieldConfig | AlignmentFieldConfig | TextSizeFieldConfig | TextWeightFieldConfig | BlockWidthFieldConfig | ColumnsFieldConfig | MenuItemsFieldConfig | BlogPostsFieldConfig | ProductsFieldConfig | FeaturesFieldConfig | FAQsFieldConfig | BannersFieldConfig | CookieConsentFieldConfig | CookieCategoriesFieldConfig | CookieServicesFieldConfig | CookieConsentRecordsFieldConfig | AIAgentsFieldConfig | FooterStyleFieldConfig | HeaderStyleFieldConfig | ThemeColorFieldConfig;
 
 export const menuWidthOptions = [
   { name: 'Small', value: 'sm' },
@@ -334,8 +341,20 @@ export const sectionsConfig: SectionConfig[] = [
             type: 'select', 
             options: fontFamilyOptions
           },
-           { name: 'primary_color', label: 'Primary Color', type: 'color' },
-          { name: 'secondary_color', label: 'Secondary Color', type: 'color' }
+          { 
+            name: 'primary_color', 
+            label: 'Primary Brand Color', 
+            type: 'theme-color',
+            colorField: 'primary_color',
+            shadeField: 'primary_shade'
+          },
+          { 
+            name: 'secondary_color', 
+            label: 'Secondary Brand Color', 
+            type: 'theme-color',
+            colorField: 'secondary_color',
+            shadeField: 'secondary_shade'
+          }
         ]
       },
 
@@ -647,6 +666,24 @@ export const renderField = ({
             name={field.name}
             value={value || '#6b7280'}
             onChange={handleChange}
+          />
+        </div>
+      );
+    
+    case 'theme-color':
+      const themeColorField = field as ThemeColorFieldConfig;
+      const colorValue = (allSettings as any)[themeColorField.colorField] || 'sky';
+      const shadeValue = (allSettings as any)[themeColorField.shadeField] || 600;
+      
+      return (
+        <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
+          <ThemeColorPicker
+            label={field.label}
+            colorValue={colorValue}
+            shadeValue={shadeValue}
+            onColorChange={(color: string) => onChange(themeColorField.colorField, color)}
+            onShadeChange={(shade: number) => onChange(themeColorField.shadeField, shade)}
+            disabled={readOnly}
           />
         </div>
       );

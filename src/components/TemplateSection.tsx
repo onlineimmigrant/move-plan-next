@@ -27,22 +27,58 @@ const PricingPlansSectionWrapper = dynamic(() => import('@/components/TemplateSe
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
   default: {
-    sectionTitle: 'text-3xl font-bold text-gray-900 mb-4 tracking-[-0.02em] antialiased',
+    sectionTitle: 'text-3xl sm:text-4xl lg:text-5xl font-normal text-gray-800',
     sectionDescription: 'text-lg font-light text-gray-700',
-    metricTitle: 'text-xl sm:text-2xl font-normal text-gray-800',
-    metricDescription: 'text-base font-light text-gray-700'
+    metricTitle: 'text-xl font-semibold text-gray-900',
+    metricDescription: 'text-base text-gray-600'
   },
   apple: {
-    sectionTitle: 'text-4xl font-light text-gray-900',
+    sectionTitle: 'text-4xl sm:text-5xl font-light text-gray-900',
     sectionDescription: 'text-lg font-light text-gray-600',
-    metricTitle: 'text-xl font-medium text-gray-900',
+    metricTitle: 'text-2xl font-light text-gray-900',
     metricDescription: 'text-base font-light text-gray-600'
   },
   codedharmony: {
     sectionTitle: 'text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 tracking-tight leading-none',
     sectionDescription: 'text-lg sm:text-xl text-gray-500 font-light leading-relaxed',
-    metricTitle: 'text-base sm:text-lg font-semibold text-gray-900 leading-relaxed tracking-[-0.02em]',
-    metricDescription: 'text-sm sm:text-base text-gray-600 font-normal leading-relaxed'
+    metricTitle: 'text-3xl sm:text-4xl font-thin text-gray-900 tracking-tight',
+    metricDescription: 'text-base sm:text-lg text-gray-600 font-light leading-relaxed'
+  },
+  magazine: {
+    sectionTitle: 'text-4xl sm:text-5xl lg:text-7xl font-bold uppercase tracking-tight leading-none',
+    sectionDescription: 'text-sm sm:text-base uppercase tracking-widest font-medium',
+    metricTitle: 'text-lg sm:text-xl font-bold uppercase tracking-wide',
+    metricDescription: 'text-sm leading-relaxed'
+  },
+  startup: {
+    sectionTitle: 'text-4xl sm:text-6xl lg:text-7xl font-black',
+    sectionDescription: 'text-xl sm:text-2xl font-normal leading-relaxed',
+    metricTitle: 'text-2xl sm:text-3xl font-bold',
+    metricDescription: 'text-lg leading-relaxed'
+  },
+  elegant: {
+    sectionTitle: 'text-3xl sm:text-4xl lg:text-5xl font-serif font-light italic',
+    sectionDescription: 'text-base sm:text-lg font-serif leading-loose',
+    metricTitle: 'text-xl sm:text-2xl font-serif font-normal',
+    metricDescription: 'text-sm sm:text-base font-serif leading-relaxed'
+  },
+  brutalist: {
+    sectionTitle: 'text-5xl sm:text-6xl lg:text-8xl font-black uppercase leading-none tracking-tighter',
+    sectionDescription: 'text-xs sm:text-sm uppercase tracking-wider font-bold',
+    metricTitle: 'text-2xl sm:text-3xl font-black uppercase tracking-tight',
+    metricDescription: 'text-xs sm:text-sm uppercase tracking-wide font-medium'
+  },
+  modern: {
+    sectionTitle: 'text-3xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight',
+    sectionDescription: 'text-lg sm:text-xl font-medium',
+    metricTitle: 'text-xl sm:text-2xl font-bold',
+    metricDescription: 'text-base font-normal'
+  },
+  playful: {
+    sectionTitle: 'text-4xl sm:text-5xl lg:text-6xl font-black tracking-wide',
+    sectionDescription: 'text-lg sm:text-xl font-semibold',
+    metricTitle: 'text-2xl sm:text-3xl font-extrabold',
+    metricDescription: 'text-base font-medium leading-relaxed'
   }
 };
 
@@ -554,20 +590,23 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                                     </video>
                                   )
                                 ) : (
-                                  <Image
-                                    src={metric.image}
-                                    alt={metric.title || 'Metric image'}
-                                    className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto object-cover`}
-                                    width={300}
-                                    height={300}
-                                    loading="lazy"
-                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                    style={{
-                                      aspectRatio: '1 / 1',
-                                      maxWidth: '100%',
-                                      height: 'auto'
-                                    }}
-                                  />
+                                  <div className={cn(
+                                    'w-full overflow-hidden flex items-center justify-center',
+                                    section.image_metrics_height || 'h-48'
+                                  )}>
+                                    <Image
+                                      src={metric.image}
+                                      alt={metric.title || 'Metric image'}
+                                      className={cn(
+                                        'object-contain max-w-full max-h-full',
+                                        metric.is_image_rounded_full && 'rounded-full'
+                                      )}
+                                      width={300}
+                                      height={300}
+                                      loading="lazy"
+                                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    />
+                                  </div>
                                 )}
                               </div>
                             )}
@@ -622,8 +661,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                 const isCodedHarmony = section.text_style_variant === 'codedharmony';
                 const cardStyles = metric.is_card_type
                   ? isCodedHarmony
-                    ? `p-8 sm:p-16 rounded-3xl text-center gap-y-8 max-w-xl card-hover neomorphic`
-                    : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 max-w-xl card-hover`
+                    ? `p-8 sm:p-16 rounded-3xl text-center gap-y-8 card-hover neomorphic`
+                    : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 card-hover`
                   : '';
 
                 // Calculate metric background style (gradient or solid color)
@@ -684,20 +723,23 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                             </video>
                           )
                         ) : (
-                          <Image
-                            src={metric.image}
-                            alt={metric.title || 'Metric image'}
-                            className={`${metric.is_image_rounded_full ? 'rounded-full' : ''} mx-auto object-cover`}
-                            width={300}
-                            height={300}
-                            priority={false}
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            style={{
-                              aspectRatio: '1 / 1',
-                              maxWidth: '100%',
-                              height: 'auto'
-                            }}
-                          />
+                          <div className={cn(
+                            'w-full overflow-hidden flex items-center justify-center',
+                            section.image_metrics_height || 'h-48'
+                          )}>
+                            <Image
+                              src={metric.image}
+                              alt={metric.title || 'Metric image'}
+                              className={cn(
+                                'object-contain max-w-full max-h-full',
+                                metric.is_image_rounded_full && 'rounded-full'
+                              )}
+                              width={300}
+                              height={300}
+                              priority={false}
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                          </div>
                         )}
                       </div>
                     )}

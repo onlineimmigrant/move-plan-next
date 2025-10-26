@@ -41,6 +41,7 @@ import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager'
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import ChatHelpWidget from '@/components/ChatHelpWidget';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 // Create lazy wrapper components to avoid SSR bailout error
 import CookieBannerComponent from '@/components/cookie/CookieBanner';
@@ -249,8 +250,9 @@ export default function ClientProviders({
         <BannerProvider>
           <BasketProvider>
             <SettingsProvider initialSettings={settings}>
-              <MeetingProvider>
-                <ToastProvider>
+              <ThemeProvider>
+                <MeetingProvider>
+                  <ToastProvider>
                   <HeaderEditProvider>
                     <FooterEditProvider>
                       <LayoutManagerProvider>
@@ -317,6 +319,7 @@ export default function ClientProviders({
           </HeaderEditProvider>
         </ToastProvider>
               </MeetingProvider>
+            </ThemeProvider>
             </SettingsProvider>
           </BasketProvider>
         </BannerProvider>

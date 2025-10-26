@@ -33,7 +33,7 @@ interface TemplateSectionData {
   section_title_translation?: Record<string, string>;
   section_description?: string;
   section_description_translation?: Record<string, string>;
-  text_style_variant?: 'default' | 'apple' | 'codedharmony';
+  text_style_variant?: 'default' | 'apple' | 'codedharmony' | 'magazine' | 'startup' | 'elegant' | 'brutalist' | 'modern' | 'playful';
   grid_columns: number;
   image_metrics_height?: string;
   is_image_bottom: boolean;

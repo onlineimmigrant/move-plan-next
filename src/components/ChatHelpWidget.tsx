@@ -12,6 +12,7 @@ import ConversationTab from './modals/ChatHelpWidget/ConversationTab';
 import ArticlesTab from './modals/ChatHelpWidget/ArticlesTab';
 import AIAgentTab from './modals/ChatHelpWidget/AIAgentTab';
 import FAQView from './modals/ChatHelpWidget/FAQView';
+import FeaturesView from './modals/ChatHelpWidget/FeaturesView';
 import ChatWidget from './modals/ChatWidget/ChatWidget';
 import { WidgetSize } from './modals/ChatWidget/types';
 import styles from './modals/ChatWidget/ChatWidget.module.css';
@@ -28,7 +29,7 @@ export default function ChatHelpWidget() {
   const { t, getSafeTranslation } = useHelpCenterTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'welcome' | 'conversation' | 'ai'>('welcome');
-  const [currentView, setCurrentView] = useState<'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support'>('welcome');
+  const [currentView, setCurrentView] = useState<'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'knowledge-base' | 'live-support' | 'features'>('welcome');
   const [size, setSize] = useState<WidgetSize>('initial');
   const [isMobile, setIsMobile] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -166,7 +167,7 @@ export default function ChatHelpWidget() {
     setError(null);
   };
 
-  const handleSpecialView = (view: 'faq' | 'knowledge-base' | 'live-support') => {
+  const handleSpecialView = (view: 'faq' | 'knowledge-base' | 'live-support' | 'features') => {
     setCurrentView(view);
   };
 
@@ -281,6 +282,7 @@ export default function ChatHelpWidget() {
             onShowFAQ={() => handleSpecialView('faq')}
             onShowKnowledgeBase={() => handleSpecialView('knowledge-base')}
             onShowLiveSupport={() => handleSpecialView('live-support')}
+            onShowFeatures={() => handleSpecialView('features')}
           />
         );
       case 'conversation':
@@ -307,6 +309,13 @@ export default function ChatHelpWidget() {
             showBackButton={true}
             onBack={() => setCurrentView('welcome')}
             onBackToHelpCenter={() => setCurrentView('welcome')}
+          />
+        );
+      case 'features':
+        return (
+          <FeaturesView
+            size={size}
+            onBack={() => setCurrentView('welcome')}
           />
         );
       case 'ai':

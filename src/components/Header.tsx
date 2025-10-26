@@ -8,6 +8,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useBasket } from '@/context/BasketContext';
 import { useAuth } from '@/context/AuthContext';
 import { Disclosure } from '@headlessui/react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import LocalizedLink from './LocalizedLink';
@@ -62,6 +63,7 @@ const Header: React.FC<HeaderProps> = ({
   const isLoggedIn = !!session;
   const { settings } = useSettings();
   const t = useHeaderTranslations();
+  const themeColors = useThemeColors();
 
   // Parse header_style JSONB structure
   const headerStyle = useMemo(() => {
@@ -894,7 +896,16 @@ const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={handleHomeNavigation}
-          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-200 flex-shrink-0"
+          className="cursor-pointer flex items-center text-gray-900 transition-all duration-200 flex-shrink-0"
+          style={{
+            ['--hover-color' as any]: themeColors.cssVars.primary.base,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = themeColors.cssVars.primary.base;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '';
+          }}
           aria-label={t.goToHomepage}
           disabled={!router}
         >
@@ -921,7 +932,12 @@ const Header: React.FC<HeaderProps> = ({
           ) : (
             <span className="text-gray-500">{t.noLogoAvailable}</span>
           )}
-          <span className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
+          <span 
+            className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r bg-clip-text text-transparent"
+            style={{
+              backgroundImage: `linear-gradient(to right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.light}, ${themeColors.cssVars.primary.base})`,
+            }}
+          >
             {settings?.site || 'Default Site Name'}
           </span>
         </button>

@@ -3,6 +3,7 @@
 import { SparklesIcon, ArrowRightIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { WidgetSize } from '../ChatWidget/types';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface AIAgentTabProps {
   isAuthenticated: boolean;
@@ -38,6 +39,7 @@ export default function AIAgentTab({
   onSwitchToChatWidget,
 }: AIAgentTabProps) {
   const { t } = useHelpCenterTranslations();
+  const themeColors = useThemeColors();
 
   const aiCapabilities = [
     {
@@ -71,8 +73,16 @@ export default function AIAgentTab({
     <div className={`h-full flex flex-col ${size === 'fullscreen' ? 'max-w-4xl mx-auto' : ''}`}>
       {!isAuthenticated ? (
         <div className="h-full flex flex-col items-center justify-center p-6 sm:p-8 text-center">
-          <div className="p-6 bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl mb-6 shadow-sm border border-slate-200">
-            <SparklesIcon className="h-12 w-12 text-blue-500" />
+          <div 
+            className="p-6 rounded-2xl mb-6 shadow-sm border border-slate-200"
+            style={{
+              background: `linear-gradient(135deg, ${themeColors.cssVars.primary.lighter}, rgba(248, 250, 252, 1))`
+            }}
+          >
+            <SparklesIcon 
+              className="h-12 w-12"
+              style={{ color: themeColors.cssVars.primary.base }}
+            />
           </div>
           <h3 className="text-xl font-semibold text-slate-800 mb-3">{t.loginRequired}</h3>
           <p className="text-slate-600 mb-8 max-w-sm leading-relaxed">
@@ -81,7 +91,10 @@ export default function AIAgentTab({
           <div className="space-y-3 w-full max-w-xs">
             <button
               onClick={goToLogin}
-              className="w-full bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+              className="w-full text-white px-6 py-3 rounded-xl transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+              style={{ backgroundColor: themeColors.cssVars.primary.base }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.hover}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.base}
             >
               {t.login}
             </button>
@@ -98,7 +111,12 @@ export default function AIAgentTab({
           {/* AI Agent Header */}
           <div className="text-center space-y-6 w-full max-w-md">
             {/* Benefits Card */}
-            <div className="p-5 bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl shadow-sm border border-slate-200">
+            <div 
+              className="p-5 rounded-2xl shadow-sm border border-slate-200"
+              style={{
+                background: `linear-gradient(135deg, ${themeColors.cssVars.primary.lighter}, rgba(248, 250, 252, 1))`
+              }}
+            >
               <p className="text-sm text-slate-700 leading-relaxed">
                 {t.aiAgentBenefits}
               </p>
@@ -107,11 +125,25 @@ export default function AIAgentTab({
             {/* Switch Button - Enhanced Design */}
             <div className="relative group">
               {/* Glow effect on hover */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+              <div 
+                className="absolute -inset-0.5 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"
+                style={{
+                  background: `linear-gradient(to right, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`
+                }}
+              ></div>
               
               <button
                 onClick={handleSwitchToChatWidget}
-                className="relative w-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                className="relative w-full text-white px-8 py-4 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  background: `linear-gradient(to right, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover}, ${themeColors.cssVars.primary.active})`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = `linear-gradient(to right, ${themeColors.cssVars.primary.hover}, ${themeColors.cssVars.primary.active}, ${themeColors.cssVars.primary.active})`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = `linear-gradient(to right, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover}, ${themeColors.cssVars.primary.active})`;
+                }}
               >
                 <SparklesIcon className="h-5 w-5 animate-pulse" />
                 <span className="text-base">{t.switchToAIAgentMode}</span>
@@ -127,7 +159,9 @@ export default function AIAgentTab({
               {aiCapabilities.map((capability, index) => (
                 <div 
                   key={index} 
-                  className="flex items-start gap-3 p-4 bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200 hover:border-blue-200"
+                  className="flex items-start gap-3 p-4 bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200"
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = `${themeColors.cssVars.primary.light}40`}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = ''}
                 >
                   <span className="text-2xl flex-shrink-0">{capability.icon}</span>
                   <div className="flex-1 text-left">

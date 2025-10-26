@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ArrowUpIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { WidgetSize } from '../ChatWidget/types';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ConversationTabProps {
   isAuthenticated: boolean;
@@ -29,6 +30,7 @@ export default function ConversationTab({
   size,
 }: ConversationTabProps) {
   const { t } = useHelpCenterTranslations();
+  const themeColors = useThemeColors();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -182,9 +184,10 @@ export default function ConversationTab({
             <div
               className={`max-w-[85%] sm:max-w-[75%] lg:max-w-[65%] ${
                 message.sender === 'user'
-                  ? 'bg-blue-500 text-white rounded-2xl rounded-tr-sm shadow-md px-4 py-3'
+                  ? 'text-white rounded-2xl rounded-tr-sm shadow-md px-4 py-3'
                   : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3'
               } relative group hover:shadow-lg transition-all duration-200`}
+              style={message.sender === 'user' ? { backgroundColor: themeColors.cssVars.primary.base } : undefined}
             >
               <div className="mb-1.5 flex items-center gap-2">
                 <span className={`text-xs font-medium ${
@@ -270,7 +273,21 @@ export default function ConversationTab({
         </div>
         
         {/* Input Container - matching ChatWidget style */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100 transition-all duration-200">
+        <div 
+          className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 transition-all duration-200"
+          style={{
+            ['--tw-border-opacity' as any]: '1',
+            ['--tw-ring-opacity' as any]: '0.25',
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = themeColors.cssVars.primary.border;
+            e.currentTarget.style.boxShadow = `0 0 0 4px ${themeColors.cssVars.primary.lighter}`;
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = '';
+            e.currentTarget.style.boxShadow = '';
+          }}
+        >
           <div className="flex items-end gap-3">
             <div className="flex-1 relative">
               <textarea
@@ -287,7 +304,21 @@ export default function ConversationTab({
             <button
               onClick={() => handleSendMessage()}
               disabled={!inputValue.trim() || isTyping}
-              className="flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center w-10 h-10 disabled:bg-slate-200 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: !inputValue.trim() || isTyping ? '' : themeColors.cssVars.primary.base,
+                ['--tw-ring-color' as any]: themeColors.cssVars.primary.base,
+              }}
+              onMouseEnter={(e) => {
+                if (!(!inputValue.trim() || isTyping)) {
+                  e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.hover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!(!inputValue.trim() || isTyping)) {
+                  e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.base;
+                }
+              }}
             >
               <ArrowUpIcon className="h-5 w-5" />
             </button>
@@ -303,11 +334,30 @@ export default function ConversationTab({
                     setSearchQuery('');
                   }
                 }}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
                   showSearchInput 
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                    : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
+                    ? 'text-slate-500'
+                    : 'text-slate-500'
                 }`}
+                style={{
+                  ...(showSearchInput && {
+                    color: themeColors.cssVars.primary.hover,
+                    backgroundColor: themeColors.cssVars.primary.lighter,
+                  }),
+                  ['--tw-ring-color' as any]: themeColors.cssVars.primary.base,
+                }}
+                onMouseEnter={(e) => {
+                  if (!showSearchInput) {
+                    e.currentTarget.style.color = themeColors.cssVars.primary.hover;
+                    e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.lighter;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!showSearchInput) {
+                    e.currentTarget.style.color = '';
+                    e.currentTarget.style.backgroundColor = '';
+                  }
+                }}
                 title="Search actions"
               >
                 <MagnifyingGlassIcon className="h-4 w-4" />
@@ -320,7 +370,10 @@ export default function ConversationTab({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-sm"
+                    style={{
+                      ['--tw-ring-color' as any]: themeColors.cssVars.primary.base,
+                    }}
                     placeholder="Search quick actions..."
                     autoFocus
                   />

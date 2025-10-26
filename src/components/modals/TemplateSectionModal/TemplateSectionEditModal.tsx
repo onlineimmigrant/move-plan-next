@@ -34,8 +34,25 @@ import Button from '@/ui/Button';
 import { cn } from '@/lib/utils';
 import { BaseModal } from '../_shared/BaseModal';
 
-// Tooltip Component - appears above button (like nav menu)
-const Tooltip = ({ content }: { content: string }) => {
+// Tooltip Component - can appear above or below button
+const Tooltip = ({ content, position = 'top' }: { content: string; position?: 'top' | 'bottom' }) => {
+  if (position === 'bottom') {
+    return (
+      <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="relative">
+          {/* Arrow pointing up */}
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2">
+            <div className="w-2 h-2 bg-white border-l border-t border-gray-200 transform rotate-45" />
+          </div>
+          {/* Content */}
+          <div className="bg-white text-gray-700 text-xs rounded-lg shadow-lg border border-gray-200 px-3 py-2 whitespace-normal w-64">
+            {content}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
       <div className="relative">
@@ -57,32 +74,69 @@ const TEXT_VARIANTS = {
   default: {
     sectionTitle: 'text-3xl sm:text-4xl lg:text-5xl font-normal text-gray-800',
     sectionDescription: 'text-lg font-light text-gray-700',
+    metricTitle: 'text-xl font-semibold text-gray-900',
+    metricDescription: 'text-base text-gray-600',
   },
   apple: {
-    sectionTitle: 'text-4xl font-light text-gray-900',
+    sectionTitle: 'text-4xl sm:text-5xl font-light text-gray-900',
     sectionDescription: 'text-lg font-light text-gray-600',
+    metricTitle: 'text-2xl font-light text-gray-900',
+    metricDescription: 'text-base font-light text-gray-600',
   },
   codedharmony: {
     sectionTitle: 'text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 tracking-tight leading-none',
     sectionDescription: 'text-lg sm:text-xl text-gray-500 font-light leading-relaxed',
-  }
+    metricTitle: 'text-3xl sm:text-4xl font-thin text-gray-900 tracking-tight',
+    metricDescription: 'text-base sm:text-lg text-gray-600 font-light leading-relaxed',
+  },
+  magazine: {
+    sectionTitle: 'text-4xl sm:text-5xl lg:text-7xl font-bold uppercase tracking-tight leading-none',
+    sectionDescription: 'text-sm sm:text-base uppercase tracking-widest font-medium',
+    metricTitle: 'text-lg sm:text-xl font-bold uppercase tracking-wide',
+    metricDescription: 'text-sm leading-relaxed',
+  },
+  startup: {
+    sectionTitle: 'text-4xl sm:text-6xl lg:text-7xl font-black',
+    sectionDescription: 'text-xl sm:text-2xl font-normal leading-relaxed',
+    metricTitle: 'text-2xl sm:text-3xl font-bold',
+    metricDescription: 'text-lg leading-relaxed',
+  },
+  elegant: {
+    sectionTitle: 'text-3xl sm:text-4xl lg:text-5xl font-serif font-light italic',
+    sectionDescription: 'text-base sm:text-lg font-serif leading-loose',
+    metricTitle: 'text-xl sm:text-2xl font-serif font-normal',
+    metricDescription: 'text-sm sm:text-base font-serif leading-relaxed',
+  },
+  brutalist: {
+    sectionTitle: 'text-5xl sm:text-6xl lg:text-8xl font-black uppercase leading-none tracking-tighter',
+    sectionDescription: 'text-xs sm:text-sm uppercase tracking-wider font-bold',
+    metricTitle: 'text-2xl sm:text-3xl font-black uppercase tracking-tight',
+    metricDescription: 'text-xs sm:text-sm uppercase tracking-wide font-medium',
+  },
+  modern: {
+    sectionTitle: 'text-3xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight',
+    sectionDescription: 'text-lg sm:text-xl font-medium',
+    metricTitle: 'text-xl sm:text-2xl font-bold',
+    metricDescription: 'text-base font-normal',
+  },
+  playful: {
+    sectionTitle: 'text-4xl sm:text-5xl lg:text-6xl font-black tracking-wide',
+    sectionDescription: 'text-lg sm:text-xl font-semibold',
+    metricTitle: 'text-2xl sm:text-3xl font-extrabold',
+    metricDescription: 'text-base font-medium leading-relaxed',
+  },
 };
 
 // Height options
 const HEIGHT_OPTIONS = [
-  { value: 'h-8', label: '2rem' },
-  { value: 'h-12', label: '3rem' },
-  { value: 'h-16', label: '4rem' },
-  { value: 'h-20', label: '5rem' },
-  { value: 'h-24', label: '6rem' },
-  { value: 'h-32', label: '8rem' },
-  { value: 'h-40', label: '10rem' },
-  { value: 'h-48', label: '12rem' },
-  { value: 'h-56', label: '14rem' },
-  { value: 'h-64', label: '16rem' },
-  { value: 'h-72', label: '18rem' },
-  { value: 'h-80', label: '20rem' },
-  { value: 'h-96', label: '24rem' },
+  { value: 'h-32', label: 'Small', size: '128px' },
+  { value: 'h-40', label: 'Medium', size: '160px' },
+  { value: 'h-48', label: 'Default', size: '192px' },
+  { value: 'h-56', label: 'Large', size: '224px' },
+  { value: 'h-64', label: 'X-Large', size: '256px' },
+  { value: 'h-72', label: 'XX-Large', size: '288px' },
+  { value: 'h-80', label: 'Huge', size: '320px' },
+  { value: 'h-96', label: 'Maximum', size: '384px' },
 ];
 
 // Section type options
@@ -174,7 +228,7 @@ interface TemplateSectionFormData {
   background_color: string;
   is_gradient: boolean;
   gradient: { from: string; via?: string; to: string } | null;
-  text_style_variant: 'default' | 'apple' | 'codedharmony';
+  text_style_variant: 'default' | 'apple' | 'codedharmony' | 'magazine' | 'startup' | 'elegant' | 'brutalist' | 'modern' | 'playful';
   grid_columns: number;
   image_metrics_height: string;
   is_full_width: boolean;
@@ -225,7 +279,7 @@ export default function TemplateSectionEditModal() {
     gradient: null,
     text_style_variant: 'default',
     grid_columns: 3,
-    image_metrics_height: '300px',
+    image_metrics_height: 'h-48',
     is_full_width: false,
     is_section_title_aligned_center: false,
     is_section_title_aligned_right: false,
@@ -269,7 +323,7 @@ export default function TemplateSectionEditModal() {
         gradient: editingSection.gradient || null,
         text_style_variant: editingSection.text_style_variant || 'default',
         grid_columns: editingSection.grid_columns || 3,
-        image_metrics_height: editingSection.image_metrics_height || '300px',
+        image_metrics_height: editingSection.image_metrics_height || 'h-48',
         is_full_width: editingSection.is_full_width || false,
         is_section_title_aligned_center: editingSection.is_section_title_aligned_center || false,
         is_section_title_aligned_right: editingSection.is_section_title_aligned_right || false,
@@ -386,346 +440,6 @@ export default function TemplateSectionEditModal() {
         resizable={true}
         noPadding={true}
       >
-        {/* Fixed Toolbar - Horizontally Scrollable */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 sm:px-6">
-          <div className="overflow-x-auto">
-            <div className="flex items-center gap-1 py-3 min-w-max">
-              {/* Alignment buttons */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({
-                    ...formData,
-                    is_section_title_aligned_center: false,
-                    is_section_title_aligned_right: false,
-                  })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <Bars3BottomLeftIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Align section title to the left" />
-              </div>
-
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({
-                    ...formData,
-                    is_section_title_aligned_center: true,
-                    is_section_title_aligned_right: false,
-                  })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_section_title_aligned_center
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <Bars3Icon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Align section title to the center" />
-              </div>
-
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({
-                    ...formData,
-                    is_section_title_aligned_center: false,
-                    is_section_title_aligned_right: true,
-                  })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_section_title_aligned_right
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <Bars3BottomRightIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Align section title to the right" />
-              </div>
-
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-
-              {/* Full Width */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_full_width
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <ArrowsRightLeftIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Make section full width without container constraints" />
-              </div>
-
-              {/* Enable Slider - Only for general sections */}
-              {formData.section_type === 'general' && (
-                <div className="relative group">
-                  <button
-                    onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
-                    className={cn(
-                      'p-2 rounded-lg transition-colors',
-                      formData.is_slider
-                        ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                        : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                    )}
-                  >
-                    <RectangleStackIcon className="w-5 h-5" />
-                  </button>
-                  <Tooltip content="Enable horizontal slider/carousel for metrics" />
-                </div>
-              )}
-
-              {/* Background Color */}
-              <div className="relative group">
-                <ColorPaletteDropdown
-                  value={formData.background_color}
-                  onChange={async (colorClass) => {
-                    const updatedData = { ...formData, background_color: colorClass };
-                    setFormData(updatedData);
-                    setShowColorPicker(false);
-                  }}
-                  isOpen={showColorPicker}
-                  onToggle={() => {
-                    setShowColorPicker(!showColorPicker);
-                    setShowStylePicker(false);
-                    setShowHeightPicker(false);
-                    setShowColumnPicker(false);
-                  }}
-                  onClose={() => setShowColorPicker(false)}
-                  buttonRef={colorButtonRef}
-                  useFixedPosition={true}
-                />
-              </div>
-
-              {/* Text Style */}
-              <div className="dropdown-container relative group">
-                <button
-                  ref={styleButtonRef}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowStylePicker(!showStylePicker);
-                    setShowColorPicker(false);
-                    setShowHeightPicker(false);
-                    setShowColumnPicker(false);
-                  }}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    showStylePicker
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <SparklesIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Choose text style variant: Default, Apple, or Coded Harmony" />
-                {showStylePicker && styleButtonRef.current && (() => {
-                  const rect = styleButtonRef.current.getBoundingClientRect();
-                  return (
-                    <div 
-                      className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100] w-48"
-                      style={{
-                        top: `${rect.bottom + 8}px`,
-                        left: `${rect.left}px`,
-                      }}
-                    >
-                      {(['default', 'apple', 'codedharmony'] as const).map((style) => (
-                        <button
-                          key={style}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData({ ...formData, text_style_variant: style });
-                            setShowStylePicker(false);
-                          }}
-                          className={cn(
-                            'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                            formData.text_style_variant === style && 'bg-sky-50 text-sky-700 font-medium'
-                          )}
-                        >
-                          {style === 'default' && 'Default'}
-                          {style === 'apple' && 'Apple Style'}
-                          {style === 'codedharmony' && 'Coded Harmony'}
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Grid Columns */}
-              <div className="dropdown-container relative group">
-                <button
-                  ref={columnButtonRef}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowColumnPicker(!showColumnPicker);
-                    setShowColorPicker(false);
-                    setShowStylePicker(false);
-                    setShowHeightPicker(false);
-                  }}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors flex items-center gap-1',
-                    showColumnPicker
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <ViewColumnsIcon className="w-5 h-5" />
-                  <span className="text-xs font-medium">{formData.grid_columns}</span>
-                </button>
-                <Tooltip content={`Grid columns: ${formData.grid_columns} column${formData.grid_columns > 1 ? 's' : ''}`} />
-                {showColumnPicker && columnButtonRef.current && (() => {
-                  const rect = columnButtonRef.current.getBoundingClientRect();
-                  return (
-                    <div 
-                      className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100] w-24"
-                      style={{
-                        top: `${rect.bottom + 8}px`,
-                        left: `${rect.left}px`,
-                      }}
-                    >
-                      {[1, 2, 3, 4, 5, 6].map((cols) => (
-                        <button
-                          key={cols}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData({ ...formData, grid_columns: cols });
-                            setShowColumnPicker(false);
-                          }}
-                          className={cn(
-                            'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                            formData.grid_columns === cols && 'bg-sky-50 text-sky-700 font-medium'
-                          )}
-                        >
-                          {cols} {cols === 1 ? 'col' : 'cols'}
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-
-              {/* Metric & Image Controls Group */}
-              <div className="flex items-center gap-1">
-                {/* Create New Metric */}
-                <div className="relative group">
-                  <button
-                    onClick={() => mode === 'edit' && setShowCreateMetricForm(true)}
-                    disabled={mode === 'create'}
-                    className={cn(
-                      'p-2 rounded-lg border-2 border-dashed transition-colors',
-                      mode === 'create'
-                        ? 'border-gray-200 cursor-not-allowed opacity-50'
-                        : 'border-gray-300 hover:border-sky-500 hover:bg-sky-50'
-                    )}
-                  >
-                    <PlusIcon className={cn(
-                      'w-5 h-5',
-                      mode === 'create' ? 'text-gray-300' : 'text-gray-400 hover:text-sky-600'
-                    )} />
-                  </button>
-                  <Tooltip content={mode === 'create' ? 'Save the section first to add metrics' : 'Create a new metric for this section'} />
-                </div>
-
-                {/* Add Existing Metric */}
-                <div className="relative group">
-                  <button
-                    onClick={() => mode === 'edit' && setShowAddMetricModal(true)}
-                    disabled={mode === 'create'}
-                    className={cn(
-                      'p-2 rounded-lg transition-colors',
-                      mode === 'create'
-                        ? 'text-gray-300 cursor-not-allowed opacity-50'
-                        : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50'
-                    )}
-                  >
-                    <Square2StackIcon className="w-5 h-5" />
-                  </button>
-                  <Tooltip content={mode === 'create' ? 'Save the section first to add metrics' : 'Add an existing metric from library'} />
-                </div>
-
-                {/* Image Position */}
-                <div className="relative group">
-                  <button
-                    onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
-                    className={cn(
-                      'p-2 rounded-lg transition-colors',
-                      formData.is_image_bottom
-                        ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                        : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                    )}
-                  >
-                    <ArrowsUpDownIcon className="w-5 h-5" />
-                  </button>
-                  <Tooltip content={formData.is_image_bottom ? "Image at bottom" : "Image at top"} />
-                </div>
-
-                {/* Image Height */}
-                <div className="dropdown-container relative group">
-                  <button
-                    ref={heightButtonRef}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowHeightPicker(!showHeightPicker);
-                      setShowColorPicker(false);
-                      setShowStylePicker(false);
-                      setShowColumnPicker(false);
-                    }}
-                    className={cn(
-                      'p-2 rounded-lg transition-colors',
-                      showHeightPicker
-                        ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                        : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                    )}
-                  >
-                    <PhotoIcon className="w-5 h-5" />
-                  </button>
-                  <Tooltip content="Set metric image height" />
-                  {showHeightPicker && heightButtonRef.current && (() => {
-                    const rect = heightButtonRef.current.getBoundingClientRect();
-                    return (
-                      <div 
-                        className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100] w-32 max-h-64 overflow-y-auto"
-                        style={{
-                          top: `${rect.bottom + 8}px`,
-                          left: `${rect.left}px`,
-                        }}
-                      >
-                        {HEIGHT_OPTIONS.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setFormData({ ...formData, image_metrics_height: option.label });
-                              setShowHeightPicker(false);
-                            }}
-                            className={cn(
-                              'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                              formData.image_metrics_height === option.label && 'bg-sky-50 text-sky-700 font-medium'
-                            )}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-3 sm:px-6">
           {/* Section Type Selection */}
@@ -801,6 +515,163 @@ export default function TemplateSectionEditModal() {
             </p>
           </div>
 
+          {/* Layout Controls */}
+          <div className="py-6 border-b border-gray-200">
+            <label className="block text-sm font-semibold text-gray-700 mb-4">
+              Layout Controls
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Alignment buttons */}
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({
+                    ...formData,
+                    is_section_title_aligned_center: false,
+                    is_section_title_aligned_right: false,
+                  })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right
+                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <Bars3BottomLeftIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Align section title to the left" position="bottom" />
+              </div>
+
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({
+                    ...formData,
+                    is_section_title_aligned_center: true,
+                    is_section_title_aligned_right: false,
+                  })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_section_title_aligned_center
+                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <Bars3Icon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Align section title to the center" position="bottom" />
+              </div>
+
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({
+                    ...formData,
+                    is_section_title_aligned_center: false,
+                    is_section_title_aligned_right: true,
+                  })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_section_title_aligned_right
+                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <Bars3BottomRightIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Align section title to the right" position="bottom" />
+              </div>
+
+              <div className="w-px h-6 bg-gray-300 mx-1" />
+
+              {/* Full Width */}
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_full_width
+                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <ArrowsRightLeftIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Make section full width without container constraints" position="bottom" />
+              </div>
+
+              {/* Enable Slider - Only for general sections */}
+              {formData.section_type === 'general' && (
+                <div className="relative group">
+                  <button
+                    onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
+                    className={cn(
+                      'p-2 rounded-lg transition-colors',
+                      formData.is_slider
+                        ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                        : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                    )}
+                  >
+                    <RectangleStackIcon className="w-5 h-5" />
+                  </button>
+                  <Tooltip content="Enable horizontal slider/carousel for metrics" position="bottom" />
+                </div>
+              )}
+
+              <div className="w-px h-6 bg-gray-300 mx-1" />
+
+              {/* Grid Columns */}
+              <div className="dropdown-container relative group">
+                <button
+                  ref={columnButtonRef}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowColumnPicker(!showColumnPicker);
+                    setShowColorPicker(false);
+                    setShowStylePicker(false);
+                    setShowHeightPicker(false);
+                  }}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors flex items-center gap-1',
+                    showColumnPicker
+                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <ViewColumnsIcon className="w-5 h-5" />
+                  <span className="text-xs font-medium">{formData.grid_columns}</span>
+                </button>
+                <Tooltip content={`Grid columns: ${formData.grid_columns} column${formData.grid_columns > 1 ? 's' : ''}`} position="bottom" />
+                {showColumnPicker && columnButtonRef.current && (() => {
+                  const rect = columnButtonRef.current.getBoundingClientRect();
+                  return (
+                    <div 
+                      className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100] w-24"
+                      style={{
+                        top: `${rect.bottom + 8}px`,
+                        left: `${rect.left}px`,
+                      }}
+                    >
+                      {[1, 2, 3, 4, 5, 6].map((cols) => (
+                        <button
+                          key={cols}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData({ ...formData, grid_columns: cols });
+                            setShowColumnPicker(false);
+                          }}
+                          className={cn(
+                            'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
+                            formData.grid_columns === cols && 'bg-sky-50 text-sky-700 font-medium'
+                          )}
+                        >
+                          {cols} {cols === 1 ? 'col' : 'cols'}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+
           {/* Background Style */}
           <div className="py-6 border-b border-gray-200">
             <EditableGradientPicker
@@ -815,6 +686,239 @@ export default function TemplateSectionEditModal() {
                 setFormData({ ...formData, background_color: color })
               }
             />
+          </div>
+
+          {/* Text Style Variants */}
+          <div className="py-6 border-b border-gray-200">
+            <label className="block text-sm font-semibold text-gray-700 mb-4">
+              Text Style
+            </label>
+            <RadioGroup
+              value={formData.text_style_variant}
+              onChange={(value) => setFormData({ ...formData, text_style_variant: value })}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { 
+                    value: 'default' as const, 
+                    label: 'Default', 
+                    description: 'Balanced and professional' 
+                  },
+                  { 
+                    value: 'apple' as const, 
+                    label: 'Apple', 
+                    description: 'Clean, minimal, refined' 
+                  },
+                  { 
+                    value: 'codedharmony' as const, 
+                    label: 'Coded Harmony', 
+                    description: 'Ultra-thin, spacious, bold' 
+                  },
+                  { 
+                    value: 'magazine' as const, 
+                    label: 'Magazine', 
+                    description: 'Editorial, uppercase, impact' 
+                  },
+                  { 
+                    value: 'startup' as const, 
+                    label: 'Startup', 
+                    description: 'Bold gradients, energetic' 
+                  },
+                  { 
+                    value: 'elegant' as const, 
+                    label: 'Elegant', 
+                    description: 'Serif, italic, sophisticated' 
+                  },
+                  { 
+                    value: 'brutalist' as const, 
+                    label: 'Brutalist', 
+                    description: 'Massive, raw, powerful' 
+                  },
+                  { 
+                    value: 'modern' as const, 
+                    label: 'Modern', 
+                    description: 'Strong, contemporary, sharp' 
+                  },
+                  { 
+                    value: 'playful' as const, 
+                    label: 'Playful', 
+                    description: 'Fun, vibrant, energetic' 
+                  },
+                ].map((option) => (
+                  <RadioGroup.Option
+                    key={option.value}
+                    value={option.value}
+                    className={({ checked }) =>
+                      `relative flex cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md
+                      ${checked
+                        ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-500 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`
+                    }
+                  >
+                    {({ checked }) => (
+                      <div className="flex w-full items-start">
+                        <div className="flex-shrink-0">
+                          <SparklesIcon
+                            className={`h-6 w-6 ${
+                              checked ? 'text-sky-600' : 'text-gray-400'
+                            }`}
+                          />
+                        </div>
+                        <div className="ml-3 flex-1">
+                          <RadioGroup.Label
+                            as="p"
+                            className={`text-sm font-semibold ${
+                              checked ? 'text-sky-900' : 'text-gray-900'
+                            }`}
+                          >
+                            {option.label}
+                          </RadioGroup.Label>
+                          <RadioGroup.Description
+                            as="p"
+                            className="text-xs text-gray-500 mt-1 leading-relaxed"
+                          >
+                            {option.description}
+                          </RadioGroup.Description>
+                        </div>
+                        {checked && (
+                          <div className="flex-shrink-0 ml-2">
+                            <div className="rounded-full bg-sky-500 p-1">
+                              <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 12 12">
+                                <path d="M3.707 5.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414L5 6.586 3.707 5.293z" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </RadioGroup.Option>
+                ))}
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Metrics Controls */}
+          <div className="py-6 border-b border-gray-200">
+            <label className="block text-sm font-semibold text-gray-700 mb-4">
+              Metrics Controls
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Create New Metric */}
+              <div className="relative group">
+                <button
+                  onClick={() => mode === 'edit' && setShowCreateMetricForm(true)}
+                  disabled={mode === 'create'}
+                  className={cn(
+                    'p-2 rounded-lg border-2 border-dashed transition-colors',
+                    mode === 'create'
+                      ? 'border-gray-200 cursor-not-allowed opacity-50'
+                      : 'border-gray-300 hover:border-sky-500 hover:bg-sky-50'
+                  )}
+                >
+                  <PlusIcon className={cn(
+                    'w-5 h-5',
+                    mode === 'create' ? 'text-gray-300' : 'text-gray-400 hover:text-sky-600'
+                  )} />
+                </button>
+                <Tooltip content={mode === 'create' ? 'Save the section first to add metrics' : 'Create a new metric for this section'} position="bottom" />
+              </div>
+
+              {/* Add Existing Metric */}
+              <div className="relative group">
+                <button
+                  onClick={() => mode === 'edit' && setShowAddMetricModal(true)}
+                  disabled={mode === 'create'}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    mode === 'create'
+                      ? 'text-gray-300 cursor-not-allowed opacity-50'
+                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50'
+                  )}
+                >
+                  <Square2StackIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content={mode === 'create' ? 'Save the section first to add metrics' : 'Add an existing metric from library'} position="bottom" />
+              </div>
+
+              <div className="w-px h-6 bg-gray-300 mx-1" />
+
+              {/* Image Position */}
+              <div className="relative group">
+                <button
+                  onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    formData.is_image_bottom
+                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <ArrowsUpDownIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content={formData.is_image_bottom ? "Image at bottom" : "Image at top"} position="bottom" />
+              </div>
+
+              {/* Image Height */}
+              <div className="dropdown-container relative group">
+                <button
+                  ref={heightButtonRef}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowHeightPicker(!showHeightPicker);
+                    setShowColorPicker(false);
+                    setShowStylePicker(false);
+                    setShowColumnPicker(false);
+                  }}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    showHeightPicker
+                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
+                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
+                  )}
+                >
+                  <PhotoIcon className="w-5 h-5" />
+                </button>
+                <Tooltip content="Set metric image height" position="bottom" />
+                {showHeightPicker && heightButtonRef.current && (
+                  <div 
+                    className="fixed bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] w-48"
+                    style={{
+                      top: `${heightButtonRef.current.getBoundingClientRect().bottom + 8}px`,
+                      left: `${heightButtonRef.current.getBoundingClientRect().left}px`,
+                    }}
+                  >
+                    {HEIGHT_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, image_metrics_height: option.value });
+                          setShowHeightPicker(false);
+                        }}
+                        className={cn(
+                          'w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors flex items-center justify-between group/item',
+                          formData.image_metrics_height === option.value && 'bg-sky-50'
+                        )}
+                      >
+                        <span className={cn(
+                          'text-sm font-medium',
+                          formData.image_metrics_height === option.value ? 'text-sky-700' : 'text-gray-900'
+                        )}>
+                          {option.label}
+                        </span>
+                        <span className={cn(
+                          'text-xs',
+                          formData.image_metrics_height === option.value ? 'text-sky-600' : 'text-gray-500'
+                        )}>
+                          {option.size}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Content - Preview Area */}

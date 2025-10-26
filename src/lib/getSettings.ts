@@ -231,6 +231,10 @@ export function getDefaultSettings(): Settings {
     language: 'en', // Default language fallback
     with_language_switch: false, // Default to false
     supported_locales: null, // Will fall back to DEFAULT_SUPPORTED_LOCALES
+    primary_color: 'sky', // Default primary color
+    primary_shade: 600, // Default primary shade
+    secondary_color: 'gray', // Default secondary color
+    secondary_shade: 500, // Default secondary shade
   };
 }
 
@@ -291,7 +295,11 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
         google_tag,
         language,
         with_language_switch,
-        supported_locales
+        supported_locales,
+        primary_color,
+        primary_shade,
+        secondary_color,
+        secondary_shade
       `)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
@@ -324,6 +332,10 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       language: data.language ?? 'en',
       with_language_switch: (data as any).with_language_switch ?? false,
       supported_locales: data.supported_locales || null,
+      primary_color: data.primary_color ?? 'sky',
+      primary_shade: data.primary_shade ?? 600,
+      secondary_color: data.secondary_color ?? 'gray',
+      secondary_shade: data.secondary_shade ?? 500,
     };
 
     console.log('Settings fetched successfully:', settings);

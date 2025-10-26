@@ -78,4 +78,8 @@ export interface Settings {
   with_language_switch: boolean; // Field for conditional language switcher display
   supported_locales?: string[] | null; // Dynamic supported locales from database
   font_family?: FontFamily | string | null; // Font family selection
+  primary_color?: string | null; // Primary color family (e.g., 'sky', 'blue', 'emerald')
+  primary_shade?: number | null; // Primary color base shade (400, 500, 600, 700, 800)
+  secondary_color?: string | null; // Secondary color family (e.g., 'gray', 'slate', 'zinc')
+  secondary_shade?: number | null; // Secondary color base shade (400, 500, 600, 700, 800)
 }

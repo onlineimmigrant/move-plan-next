@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
-import ModernLanguageSwitcher from '@/components/ModernLanguageSwitcher';
 import { useHelpCenterTranslations } from '@/components/modals/ChatHelpWidget/useHelpCenterTranslations';
 import ChatHelpTabs from '@/components/modals/ChatHelpWidget/ChatHelpTabs';
 import WelcomeTab from '@/components/modals/ChatHelpWidget/WelcomeTab';
@@ -13,6 +12,7 @@ import AIAgentTab from '@/components/modals/ChatHelpWidget/AIAgentTab';
 import FAQView from '@/components/modals/ChatHelpWidget/FAQView';
 import FeaturesView from '@/components/modals/ChatHelpWidget/FeaturesView';
 import OfferingsView from '@/components/modals/ChatHelpWidget/OfferingsView';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +22,7 @@ const supabase = createClient(
 export default function HelpCenterContainer() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
+  const themeColors = useThemeColors();
   
   // Map URL tab parameter to initial view
   const getInitialView = (): 'welcome' | 'conversation' | 'articles' | 'ai' | 'faq' | 'features' | 'offerings' | 'knowledge-base' | 'live-support' => {
@@ -265,26 +266,31 @@ export default function HelpCenterContainer() {
   return (
     <div className="w-full h-screen bg-gradient-to-b from-gray-50/50 to-white flex flex-col">
       {/* Apple-style Header */}
-      <header className="z-11 px-4 sm:px-8 flex justify-between items-center bg-white/95 backdrop-blur-3xl h-20"
+      <header className="z-11 px-4 sm:px-8 flex items-center bg-white/95 backdrop-blur-3xl h-20 relative"
         style={{
           backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
           WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
         }}
       >
-        {/* Logo */}
+        {/* Logo - Left */}
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="cursor-pointer flex items-center text-gray-900 hover:text-sky-600 transition-all duration-150 ease-out mr-8 hover:scale-105 antialiased"
+          className="cursor-pointer flex items-center text-gray-900 transition-all duration-150 ease-out hover:scale-105 antialiased"
+          style={{ 
+            color: undefined 
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
+          onMouseLeave={(e) => e.currentTarget.style.color = ''}
           aria-label="Go to homepage"
         >
-          {/* Mobile - Use favicon with proper URL logic */}
+          {/* Mobile - Use favicon */}
           <img
             src={getFaviconUrl(settings?.favicon || undefined)}
             alt="Logo"
-            width={28}
-            height={28}
-            className="h-7 w-7 sm:hidden rounded-lg "
+            width={32}
+            height={32}
+            className="h-8 w-8 sm:hidden rounded-lg"
             onError={(e) => {
               console.error('Failed to load favicon:', settings?.favicon);
               e.currentTarget.style.display = 'none';
@@ -296,9 +302,9 @@ export default function HelpCenterContainer() {
             <img
               src={settings.image}
               alt="Logo"
-              width={36}
-              height={36}
-              className="hidden sm:block h-9 w-auto rounded-lg "
+              width={40}
+              height={40}
+              className="hidden sm:block h-10 w-auto rounded-lg"
               onError={(e) => {
                 console.error('Failed to load logo:', settings.image);
                 e.currentTarget.style.display = 'none';
@@ -308,13 +314,18 @@ export default function HelpCenterContainer() {
             <span className="text-gray-500 hidden sm:block font-light text-lg antialiased">Logo</span>
           )}
           
-          <span className="sr-only tracking-tight text-xl font-extrabold bg-gradient-to-r from-sky-400 via-sky-500 to-sky-600 bg-clip-text text-transparent">
+          <span 
+            className="sr-only tracking-tight text-xl font-extrabold bg-clip-text text-transparent"
+            style={{
+              backgroundImage: `linear-gradient(to right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`
+            }}
+          >
             {settings?.site || 'Coded Harmony'}
           </span>
         </button>
         
-        {/* Header Title - Clickable to return to welcome */}
-        <div className='flex items-center space-x-4'>
+        {/* Header Title - Centered */}
+        <div className='absolute left-1/2 -translate-x-1/2'>
           <button
             onClick={() => {
               setActiveTab('welcome');
@@ -323,16 +334,21 @@ export default function HelpCenterContainer() {
             }}
             className="group transition-all duration-150 ease-out hover:scale-105"
           >
-            <h1 className="text-lg sm:text-xl font-medium text-gray-900 tracking-[-0.02em] antialiased relative group-hover:text-sky-600 transition-colors">
+            <h1 
+              className="text-lg sm:text-xl font-medium text-gray-900 tracking-[-0.02em] antialiased relative transition-colors"
+              style={{
+                color: undefined
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
+              onMouseLeave={(e) => e.currentTarget.style.color = ''}
+            >
               {getHeaderTitle()}
-              <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full group-hover:w-20 transition-all duration-150" />
+              <span 
+                className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full group-hover:w-20 transition-all duration-150" 
+                style={{ backgroundColor: themeColors.cssVars.primary.base }}
+              />
             </h1>
           </button>
-        </div>
-        
-        {/* Language Switcher - Right Side */}
-        <div className="relative z-50">
-          <ModernLanguageSwitcher zIndex={9999} />
         </div>
       </header>
       

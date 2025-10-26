@@ -9,6 +9,7 @@ import ModelSelector from '../ChatWidget/ModelSelector';
 import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from '../ChatWidget/types';
 import { useHelpCenterTranslations } from './useHelpCenterTranslations';
 import styles from '../ChatWidget/ChatWidget.module.css';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,6 +31,7 @@ export default function ChatWidgetWrapper({
   onReturnToHelpCenter,
   isMobile,
 }: ChatWidgetWrapperProps) {
+  const themeColors = useThemeColors();
   const { t } = useHelpCenterTranslations();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -150,7 +152,10 @@ export default function ChatWidgetWrapper({
           />
           <button
             onClick={toggleSize}
-            className="cursor-pointer text-sky-500 hover:text-sky-700 p-1"
+            className="cursor-pointer p-1 transition-colors duration-200"
+            style={{ color: themeColors.cssVars.primary.base }}
+            onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.hover}
+            onMouseLeave={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
             title={getTooltipContent()}
           >
             {size === 'fullscreen' ? (

@@ -1,4 +1,45 @@
 /** @type {import('tailwindcss').Config} */
+
+// Generate dynamic color safelist for theme system
+function generateColorSafelist() {
+  const colors = [
+    'slate', 'gray', 'zinc', 'neutral', 'stone',
+    'red', 'orange', 'amber', 'yellow', 'lime',
+    'green', 'emerald', 'teal', 'cyan', 'sky',
+    'blue', 'indigo', 'violet', 'purple', 'fuchsia',
+    'pink', 'rose'
+  ];
+  
+  const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
+  
+  const properties = [
+    'bg',           // background
+    'text',         // text color
+    'border',       // border color
+    'ring',         // ring color
+    'from',         // gradient from
+    'via',          // gradient via
+    'to',           // gradient to
+  ];
+  
+  const states = ['', 'hover:', 'focus:', 'active:', 'disabled:'];
+  
+  const safelist = [];
+  
+  // Generate all combinations
+  colors.forEach(color => {
+    shades.forEach(shade => {
+      properties.forEach(prop => {
+        states.forEach(state => {
+          safelist.push(`${state}${prop}-${color}-${shade}`);
+        });
+      });
+    });
+  });
+  
+  return safelist;
+}
+
 module.exports = {
   content: [
     './app/**/*.{js,ts,jsx,tsx}', // Include all files in the app directory
@@ -13,6 +54,8 @@ module.exports = {
     'sm:text-2xl', 'sm:text-3xl', 'sm:text-4xl', 'sm:text-5xl', 'sm:text-6xl', 'sm:text-7xl', 'sm:text-8xl',
     'md:text-xs', 'md:text-sm', 'md:text-base', 'md:text-lg', 'md:text-xl',
     'md:text-2xl', 'md:text-3xl', 'md:text-4xl', 'md:text-5xl', 'md:text-6xl', 'md:text-7xl', 'md:text-8xl',
+    // Dynamic color classes for theme system
+    ...generateColorSafelist(),
   ],
   theme: {
     extend: {

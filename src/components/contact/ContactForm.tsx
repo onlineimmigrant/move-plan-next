@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { useSettings } from '@/context/SettingsContext'
 import { useContactTranslations } from './useContactTranslations'
 import KnowledgeBaseWidget from '../KnowledgeBaseWidget/KnowledgeBaseWidget'
+import { useThemeColors } from '@/hooks/useThemeColors'
 
 type ContactFormProps = {
   onSuccess?: () => void
@@ -17,6 +18,7 @@ type ContactFormProps = {
 export default function ContactForm({ onSuccess }: ContactFormProps) {
   const { settings } = useSettings()
   const { t, getCharactersCountMessage } = useContactTranslations()
+  const themeColors = useThemeColors()
   const orgId = settings.organization_id
 
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
@@ -62,10 +64,10 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
   ], [])
 
   const contacts = useMemo(() => [
-    { value: 'email', label: t.contactByEmail, icon: <FaEnvelope className="w-4 h-4" />, color: 'text-blue-500' },
-    { value: 'phone', label: t.contactByPhone, icon: <FaPhone className="w-4 h-4" />, color: 'text-green-500' },
-    { value: 'telegram', label: t.contactByTelegram, icon: <FaTelegramPlane className="w-4 h-4" />, color: 'text-sky-500' },
-    { value: 'whatsapp', label: t.contactByWhatsapp, icon: <FaWhatsapp className="w-4 h-4" />, color: 'text-emerald-500' },
+    { value: 'email', label: t.contactByEmail, icon: <FaEnvelope className="w-4 h-4" /> },
+    { value: 'phone', label: t.contactByPhone, icon: <FaPhone className="w-4 h-4" /> },
+    { value: 'telegram', label: t.contactByTelegram, icon: <FaTelegramPlane className="w-4 h-4" /> },
+    { value: 'whatsapp', label: t.contactByWhatsapp, icon: <FaWhatsapp className="w-4 h-4" /> },
   ], [t])
 
   // Enhanced validation with better error messages
@@ -450,7 +452,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
               {t.preferredContact}
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {contacts.map(({ value, label, icon, color }) => (
+              {contacts.map(({ value, label, icon }) => (
                 <label
                   key={value}
                   className={`group cursor-pointer flex items-center justify-center p-4 border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] rounded-xl hover:scale-[1.02] ${
@@ -472,7 +474,12 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
                     className="sr-only"
                   />
                   <span className="flex items-center gap-2 text-[14px] font-medium text-gray-700 antialiased transition-colors duration-300 group-hover:text-gray-900">
-                    <span className={`${color} transition-all duration-300 group-hover:scale-105`}>{icon}</span>
+                    <span 
+                      className="transition-all duration-300 group-hover:scale-105"
+                      style={{ color: form.preferredContact === value ? themeColors.cssVars.primary.base : undefined }}
+                    >
+                      {icon}
+                    </span>
                     {label}
                   </span>
                 </label>
@@ -677,7 +684,12 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
         <div className="pt-8">
           <div className="relative group">
             {/* Subtle glow effect behind button */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"></div>
+            <div 
+              className="absolute inset-0 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              style={{ 
+                background: `linear-gradient(to right, ${themeColors.cssVars.primary.light}, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` 
+              }}
+            ></div>
             
             <Button 
               variant="start" 

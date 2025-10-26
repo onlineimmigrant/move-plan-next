@@ -13,6 +13,7 @@ import {
   RectangleGroupIcon,
   EyeIcon,
   EyeSlashIcon,
+  Square2StackIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import EditableTextField from '@/components/Shared/EditableFields/EditableTextField';
@@ -30,16 +31,40 @@ import { getBackgroundStyle } from '@/utils/gradientHelper';
 // Text style variants matching TemplateSection
 const TEXT_VARIANTS = {
   default: {
-    metricTitle: 'text-xl sm:text-2xl font-normal text-gray-800',
-    metricDescription: 'text-base font-light text-gray-700'
+    metricTitle: 'text-xl font-semibold text-gray-900',
+    metricDescription: 'text-base text-gray-600'
   },
   apple: {
-    metricTitle: 'text-xl font-medium text-gray-900',
+    metricTitle: 'text-2xl font-light text-gray-900',
     metricDescription: 'text-base font-light text-gray-600'
   },
   codedharmony: {
-    metricTitle: 'text-base sm:text-lg font-semibold text-gray-900 leading-relaxed tracking-[-0.02em]',
-    metricDescription: 'text-sm sm:text-base text-gray-600 font-normal leading-relaxed'
+    metricTitle: 'text-3xl sm:text-4xl font-thin text-gray-900 tracking-tight',
+    metricDescription: 'text-base sm:text-lg text-gray-600 font-light leading-relaxed'
+  },
+  magazine: {
+    metricTitle: 'text-lg sm:text-xl font-bold uppercase tracking-wide',
+    metricDescription: 'text-sm leading-relaxed'
+  },
+  startup: {
+    metricTitle: 'text-2xl sm:text-3xl font-bold',
+    metricDescription: 'text-lg leading-relaxed'
+  },
+  elegant: {
+    metricTitle: 'text-xl sm:text-2xl font-serif font-normal',
+    metricDescription: 'text-sm sm:text-base font-serif leading-relaxed'
+  },
+  brutalist: {
+    metricTitle: 'text-2xl sm:text-3xl font-black uppercase tracking-tight',
+    metricDescription: 'text-xs sm:text-sm uppercase tracking-wide font-medium'
+  },
+  modern: {
+    metricTitle: 'text-xl sm:text-2xl font-bold',
+    metricDescription: 'text-base font-normal'
+  },
+  playful: {
+    metricTitle: 'text-2xl sm:text-3xl font-extrabold',
+    metricDescription: 'text-base font-medium leading-relaxed'
   }
 };
 
@@ -119,7 +144,7 @@ interface MetricManagerProps {
   setEditingMetricId?: (id: number | null) => void;
   isImageBottom?: boolean; // Preview option
   imageMetricsHeight?: string; // Image height class
-  textStyleVariant?: 'default' | 'apple' | 'codedharmony'; // Text style variant
+  textStyleVariant?: 'default' | 'apple' | 'codedharmony' | 'magazine' | 'startup' | 'elegant' | 'brutalist' | 'modern' | 'playful'; // Text style variant
 }
 
 interface EditingMetric {
@@ -561,117 +586,159 @@ export default function MetricManager({
         </div>
       )}
 
-      {/* Create Form */}
+      {/* Create Form Modal */}
       {showCreateForm && (
-        <div className="border border-blue-300 rounded-lg p-4 bg-blue-50 space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-gray-900">Create New Metric</h4>
-            <button
-              onClick={() => setShowCreateForm(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <XMarkIcon className="w-5 h-5" />
-            </button>
-          </div>
-
-          <EditableTextField
-            label="Title"
-            value={editingMetric.title}
-            onChange={(value) => setEditingMetric({ ...editingMetric, title: value })}
-            required
-          />
-
-          <EditableTextArea
-            label="Description"
-            value={editingMetric.description}
-            onChange={(value) => setEditingMetric({ ...editingMetric, description: value })}
-            required
-            rows={2}
-          />
-
-          {/* Image Gallery Selection */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Metric Image
-            </label>
-            <button
-              type="button"
-              onClick={() => setImageGalleryState({ isOpen: true, metricId: null })}
-              className="w-full group relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-gray-400 transition-colors"
-            >
-              {editingMetric.image ? (
-                <div className="flex items-center gap-4">
-                  <img 
-                    src={editingMetric.image} 
-                    alt="Preview" 
-                    className="w-20 h-20 object-cover rounded-lg"
-                  />
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-gray-900">Change image</p>
-                    <p className="text-xs text-gray-500 truncate">{editingMetric.image}</p>
+        <div 
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCreateForm(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-sky-50 to-white border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
+                    <PlusIcon className="w-5 h-5 text-sky-600" />
                   </div>
-                  <PhotoIcon className="w-6 h-6 text-gray-400 group-hover:text-gray-600" />
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900">Create New Metric</h4>
+                    <p className="text-xs text-gray-500 mt-0.5">Add a new metric to this section</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <PhotoIcon className="w-12 h-12 text-gray-400 group-hover:text-gray-600" />
-                  <span className="text-sm text-gray-600 group-hover:text-gray-900">
-                    Click to select image from gallery
-                  </span>
+                <button
+                  onClick={() => setShowCreateForm(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-lg"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-5 overflow-y-auto max-h-[calc(90vh-140px)]">
+              <EditableTextField
+                label="Title"
+                value={editingMetric.title}
+                onChange={(value) => setEditingMetric({ ...editingMetric, title: value })}
+                required
+              />
+
+              <EditableTextArea
+                label="Description"
+                value={editingMetric.description}
+                onChange={(value) => setEditingMetric({ ...editingMetric, description: value })}
+                required
+                rows={3}
+              />
+
+              {/* Image Gallery Selection */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Metric Image
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setImageGalleryState({ isOpen: true, metricId: null })}
+                  className="w-full group relative border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-sky-400 hover:bg-sky-50/50 transition-all"
+                >
+                  {editingMetric.image ? (
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={editingMetric.image} 
+                        alt="Preview" 
+                        className="w-24 h-24 object-cover rounded-xl border-2 border-gray-200"
+                      />
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-semibold text-gray-900 mb-1">Change image</p>
+                        <p className="text-xs text-gray-500 truncate">{editingMetric.image}</p>
+                      </div>
+                      <PhotoIcon className="w-6 h-6 text-gray-400 group-hover:text-sky-600 transition-colors" />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-gray-100 group-hover:bg-sky-100 flex items-center justify-center transition-colors">
+                        <PhotoIcon className="w-8 h-8 text-gray-400 group-hover:text-sky-600 transition-colors" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-sky-700 transition-colors block">
+                          Click to select image from gallery
+                        </span>
+                        <span className="text-xs text-gray-500 mt-1 block">
+                          Choose from your media library
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              {/* Toggles */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <h5 className="text-sm font-semibold text-gray-700 mb-3">Display Options</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <EditableToggle
+                    label="Show Title"
+                    value={editingMetric.is_title_displayed}
+                    onChange={(value) => setEditingMetric({ ...editingMetric, is_title_displayed: value })}
+                  />
+
+                  <EditableToggle
+                    label="Card Type"
+                    value={editingMetric.is_card_type}
+                    onChange={(value) => setEditingMetric({ ...editingMetric, is_card_type: value })}
+                  />
+
+                  <EditableToggle
+                    label="Rounded Image"
+                    value={editingMetric.is_image_rounded_full}
+                    onChange={(value) => setEditingMetric({ ...editingMetric, is_image_rounded_full: value })}
+                  />
                 </div>
-              )}
-            </button>
-          </div>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <EditableToggle
-              label="Show Title"
-              value={editingMetric.is_title_displayed}
-              onChange={(value) => setEditingMetric({ ...editingMetric, is_title_displayed: value })}
-            />
+              {/* Background Picker */}
+              <EditableGradientPicker
+                label="Background"
+                isGradient={editingMetric.is_gradient}
+                gradient={editingMetric.gradient}
+                solidColor={editingMetric.background_color}
+                onGradientChange={(isGradient, gradient) => 
+                  setEditingMetric({ ...editingMetric, is_gradient: isGradient, gradient })
+                }
+                onSolidColorChange={(color) => 
+                  setEditingMetric({ ...editingMetric, background_color: color })
+                }
+              />
+            </div>
 
-            <EditableToggle
-              label="Card Type"
-              value={editingMetric.is_card_type}
-              onChange={(value) => setEditingMetric({ ...editingMetric, is_card_type: value })}
-            />
-
-            <EditableToggle
-              label="Rounded Image"
-              value={editingMetric.is_image_rounded_full}
-              onChange={(value) => setEditingMetric({ ...editingMetric, is_image_rounded_full: value })}
-            />
-          </div>
-
-          <EditableGradientPicker
-            label="Background"
-            isGradient={editingMetric.is_gradient}
-            gradient={editingMetric.gradient}
-            solidColor={editingMetric.background_color}
-            onGradientChange={(isGradient, gradient) => 
-              setEditingMetric({ ...editingMetric, is_gradient: isGradient, gradient })
-            }
-            onSolidColorChange={(color) => 
-              setEditingMetric({ ...editingMetric, background_color: color })
-            }
-          />
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              onClick={() => setShowCreateForm(false)}
-              variant="secondary"
-              size="sm"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateMetric}
-              variant="primary"
-              size="sm"
-              disabled={isLoading || !editingMetric.title || !editingMetric.description}
-            >
-              {isLoading ? 'Creating...' : 'Create & Add'}
-            </Button>
+            {/* Footer */}
+            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                Fill in the required fields to create a new metric
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowCreateForm(false)}
+                  variant="secondary"
+                  size="sm"
+                  className="hover:bg-gray-200"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateMetric}
+                  variant="primary"
+                  size="sm"
+                  disabled={isLoading || !editingMetric.title || !editingMetric.description}
+                  className="bg-sky-600 hover:bg-sky-700 disabled:bg-gray-300"
+                >
+                  {isLoading ? 'Creating...' : 'Create Metric'}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -693,18 +760,22 @@ export default function MetricManager({
             });
 
             const isCodedHarmony = textStyleVariant === 'codedharmony';
+            
+            // Match TemplateSection card styling exactly
             const cardClasses = metric.is_card_type
               ? isCodedHarmony
-                ? 'text-center p-4 sm:p-6 gap-y-4'
-                : 'text-center p-4 sm:p-6 gap-y-4'
+                ? 'p-8 sm:p-16 rounded-3xl text-center gap-y-8'
+                : 'p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8'
               : '';
 
-            // Create background style supporting gradients
-            const metricBgStyle = getBackgroundStyle(
-              metric.is_gradient || false,
-              metric.gradient,
-              metric.background_color || 'white'
-            );
+            // Create background style supporting gradients - match TemplateSection
+            const metricBgStyle = metric.is_card_type
+              ? getBackgroundStyle(
+                  metric.is_gradient || false,
+                  metric.gradient,
+                  metric.background_color || (isCodedHarmony ? 'gray-50' : 'white')
+                )
+              : undefined;
 
             return (
             <div
@@ -714,17 +785,15 @@ export default function MetricManager({
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               className={cn(
-                'group border rounded-lg transition-all min-h-[350px] flex flex-col min-w-[280px] max-w-[350px] relative',
+                'group transition-all min-h-[350px] flex flex-col relative space-y-4 mx-auto',
+                // Fixed width for consistency
+                'w-[350px] flex-shrink-0',
                 draggedIndex === index ? 'opacity-50' : 'opacity-100',
-                'border-gray-200 hover:border-gray-300',
+                // Add edit mode border
+                'border-2 border-dashed border-gray-200 hover:border-sky-400',
                 cardClasses
               )}
-              style={{
-                ...metricBgStyle,
-                ...(metric.is_card_type && {
-                  borderRadius: '1.5rem',
-                })
-              }}
+              style={metric.is_card_type && metricBgStyle ? metricBgStyle : undefined}
             >
               {/* Floating Control Panel - Icons Only - Positioned relative to outer card */}
               <div className="absolute -top-12 left-0 right-0 z-20 px-2 py-2 flex items-center justify-between">
@@ -867,101 +936,97 @@ export default function MetricManager({
                 </div>
               </div>
 
-              {/* Display mode - Content Area */}
-              <div 
-                className="flex flex-col h-full rounded-lg transition-colors"
-              >
-                {/* Content Area with Padding */}
-                <div className={cn(
-                  'flex flex-col flex-grow',
-                  metric.is_card_type ? 'px-2 py-2' : 'p-4'
-                )}>
-                {/* Image/Video - centered and can be reordered */}
-                {metric.image ? (
-                  <div 
-                    className={cn(
-                      'mb-3 relative group/image',
-                      isImageBottom && 'order-3',
-                      // Videos: full width with negative margins to break out of padding
-                      isVideoUrl(metric.image) 
-                        ? metric.is_card_type ? '-mx-2' : '-mx-4'
-                        : 'flex justify-center' // Images: centered
-                    )}
-                  >
-                    {/* Render Video or Image */}
-                    {isVideoUrl(metric.image) ? (
-                      metric.image.toLowerCase().includes('youtube.com') || 
-                      metric.image.toLowerCase().includes('youtu.be') || 
-                      metric.image.toLowerCase().includes('vimeo.com') ? (
-                        <iframe
-                          src={getEmbedUrl(metric.image)}
-                          className={cn(
-                            'w-full rounded-none',
-                            imageMetricsHeight || 'h-48'
-                          )}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      ) : (
-                        <video
-                          src={metric.image}
-                          controls
-                          className={cn(
-                            'w-full object-cover rounded-none',
-                            imageMetricsHeight || 'h-48'
-                          )}
-                          style={{ maxWidth: '100%' }}
-                        >
-                          Your browser does not support the video tag.
-                        </video>
-                      )
+              {/* Metric Content - Match TemplateSection structure exactly */}
+              {metric.image ? (
+                <div 
+                  className={cn(
+                    'relative group/image',
+                    isImageBottom ? 'order-3' : '',
+                    // Videos: full width with negative margins, no top margin
+                    isVideoUrl(metric.image) 
+                      ? metric.is_card_type 
+                        ? '-mx-8 sm:-mx-16 mt-0' 
+                        : 'mt-0'
+                      : 'mt-8' // Images: normal margin
+                  )}
+                >
+                  {/* Render Video or Image - Match TemplateSection exactly */}
+                  {isVideoUrl(metric.image) ? (
+                    metric.image.toLowerCase().includes('youtube.com') || 
+                    metric.image.toLowerCase().includes('youtu.be') || 
+                    metric.image.toLowerCase().includes('vimeo.com') ? (
+                      <iframe
+                        src={getEmbedUrl(metric.image)}
+                        className={cn(
+                          'w-full rounded-none',
+                          imageMetricsHeight || 'h-48'
+                        )}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
                     ) : (
+                      <video
+                        src={metric.image}
+                        controls
+                        className={cn(
+                          'w-full object-cover rounded-none',
+                          imageMetricsHeight || 'h-48'
+                        )}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    )
+                  ) : (
+                    <div className={cn(
+                      'w-full overflow-hidden flex items-center justify-center',
+                      imageMetricsHeight || 'h-48'
+                    )}>
                       <img
                         src={metric.image}
-                        alt={metric.title}
+                        alt={metric.title || 'Metric image'}
                         className={cn(
-                          'mx-auto w-auto object-cover',
-                          imageMetricsHeight || 'h-48',
-                          metric.is_image_rounded_full ? 'rounded-full' : 'rounded-lg'
+                          'object-contain max-w-full max-h-full',
+                          metric.is_image_rounded_full && 'rounded-full'
                         )}
                       />
-                    )}
-                    {/* Overlay button to change media on hover */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImageGalleryState({ isOpen: true, metricId: metric.id });
-                      }}
-                      className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity rounded-lg flex items-center justify-center"
-                      title="Change media"
-                    >
-                      <PhotoIcon className="w-12 h-12 text-white" />
-                    </button>
-                    {/* Remove media button - top right corner */}
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        try {
-                          const response = await fetch(`/api/metrics/${metric.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ image: null }),
-                          });
-                          if (!response.ok) throw new Error('Failed to remove media');
-                          toast.success('Media removed');
-                          onMetricsChange();
-                        } catch (error) {
-                          console.error('Error removing media:', error);
-                          toast.error('Failed to remove media');
-                        }
-                      }}
-                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover/image:opacity-100 transition-opacity hover:bg-red-600 z-10"
-                      title="Remove media"
-                    >
-                      <XMarkIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
+                    </div>
+                  )}
+                  {/* Overlay button to change media on hover */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setImageGalleryState({ isOpen: true, metricId: metric.id });
+                    }}
+                    className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity rounded-lg flex items-center justify-center"
+                    title="Change media"
+                  >
+                    <PhotoIcon className="w-12 h-12 text-white" />
+                  </button>
+                  {/* Remove media button - top right corner */}
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        const response = await fetch(`/api/metrics/${metric.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ image: null }),
+                        });
+                        if (!response.ok) throw new Error('Failed to remove media');
+                        toast.success('Media removed');
+                        onMetricsChange();
+                      } catch (error) {
+                        console.error('Error removing media:', error);
+                        toast.error('Failed to remove media');
+                      }
+                    }}
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover/image:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                    title="Remove media"
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
                   <div 
                     className={cn('flex justify-center mb-3 relative group/add-media', isImageBottom && 'order-3')}
                   >
@@ -1013,124 +1078,143 @@ export default function MetricManager({
                   </div>
                 )}
 
-                {/* Content - Grows to fill space */}
-                <div className="space-y-2 flex-grow">
-                  {metric.is_title_displayed && (
-                    <input
-                      type="text"
-                          value={metric.title}
-                          onChange={async (e) => {
-                            const newTitle = e.target.value;
-                            try {
-                              const response = await fetch(`/api/metrics/${metric.id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ title: newTitle }),
-                              });
-                              if (!response.ok) throw new Error('Failed to update title');
-                              onMetricsChange();
-                            } catch (error) {
-                              console.error('Error updating title:', error);
-                              toast.error('Failed to update title');
-                            }
-                          }}
-                          className={cn(
-                            'w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent',
-                            textVar.metricTitle
-                          )}
-                          placeholder="Metric title..."
-                        />
-                      )}
-                      <textarea
-                        value={metric.description}
-                        onChange={async (e) => {
-                          const newDescription = e.target.value;
-                          try {
-                            const response = await fetch(`/api/metrics/${metric.id}`, {
-                              method: 'PATCH',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ description: newDescription }),
-                            });
-                            if (!response.ok) throw new Error('Failed to update description');
-                            onMetricsChange();
-                          } catch (error) {
-                            console.error('Error updating description:', error);
-                            toast.error('Failed to update description');
-                          }
-                        }}
-                        rows={3}
-                        className={cn(
-                          'mt-2 w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent resize-none',
-                          textVar.metricDescription
-                        )}
-                        placeholder="Metric description..."
-                      />
-
-                      {/* Image URL Field */}
-                      <input
-                        type="text"
-                        value={metric.image || ''}
-                        onChange={async (e) => {
-                          const newImage = e.target.value;
-                          try {
-                            const response = await fetch(`/api/metrics/${metric.id}`, {
-                              method: 'PATCH',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ image: newImage }),
-                            });
-                            if (!response.ok) throw new Error('Failed to update image');
-                            onMetricsChange();
-                          } catch (error) {
-                            console.error('Error updating image:', error);
-                            toast.error('Failed to update image');
-                          }
-                        }}
-                        className="text-xs text-gray-500 mt-2 w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent"
-                        placeholder="Image URL (optional)..."
-                      />
-                  </div>
-                </div>
+              {/* Title - order-1 to match TemplateSection */}
+              {metric.is_title_displayed && (
+                <h3 className={cn('order-1', textVar.metricTitle)}>
+                  <input
+                    type="text"
+                    value={metric.title}
+                    onChange={async (e) => {
+                      const newTitle = e.target.value;
+                      try {
+                        const response = await fetch(`/api/metrics/${metric.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ title: newTitle }),
+                        });
+                        if (!response.ok) throw new Error('Failed to update title');
+                        onMetricsChange();
+                      } catch (error) {
+                        console.error('Error updating title:', error);
+                        toast.error('Failed to update title');
+                      }
+                    }}
+                    className="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent"
+                    placeholder="Metric title..."
+                  />
+                </h3>
+              )}
+              
+              {/* Description - order-2 to match TemplateSection */}
+              <div className={cn('flex-col order-2', textVar.metricDescription, 'tracking-wider')}>
+                <textarea
+                  value={metric.description}
+                  onChange={async (e) => {
+                    const newDescription = e.target.value;
+                    try {
+                      const response = await fetch(`/api/metrics/${metric.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ description: newDescription }),
+                      });
+                      if (!response.ok) throw new Error('Failed to update description');
+                      onMetricsChange();
+                    } catch (error) {
+                      console.error('Error updating description:', error);
+                      toast.error('Failed to update description');
+                    }
+                  }}
+                  rows={3}
+                  className="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent resize-none"
+                  placeholder="Metric description..."
+                />
               </div>
+
+              {/* Image URL Field - Helper for editing */}
+              <input
+                type="text"
+                value={metric.image || ''}
+                onChange={async (e) => {
+                  const newImage = e.target.value;
+                  try {
+                    const response = await fetch(`/api/metrics/${metric.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ image: newImage }),
+                    });
+                    if (!response.ok) throw new Error('Failed to update image');
+                    onMetricsChange();
+                  } catch (error) {
+                    console.error('Error updating image:', error);
+                    toast.error('Failed to update image');
+                  }
+                }}
+                className="text-xs text-gray-500 mt-2 w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-0 py-1 bg-transparent opacity-50 hover:opacity-100"
+                placeholder="Image URL (optional)..."
+              />
             </div>
-            );
-          })}
-        </div>
-      )}
+          );
+        })}
+      </div>
+    )}
 
       {/* Add Existing Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Add Existing Metric</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop with blur */}
+          <div 
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setShowAddModal(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-sky-50 to-white rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
+                  <Square2StackIcon className="w-5 h-5 text-sky-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Add Existing Metric</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Choose from your metric library</p>
+                </div>
+              </div>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition-colors"
               >
-                <XMarkIcon className="w-6 h-6" />
+                <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
 
+            {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
               {metricsNotInSection.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>All available metrics are already in this section</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center mb-4">
+                    <Square2StackIcon className="w-8 h-8 text-sky-600" />
+                  </div>
+                  <h4 className="text-base font-semibold text-gray-900 mb-2">All Metrics Added</h4>
+                  <p className="text-sm text-gray-500 max-w-sm">
+                    All available metrics are already in this section. Create new metrics to add more.
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-3">
                   {metricsNotInSection.map(metric => (
                     <button
                       key={metric.id}
                       onClick={() => handleAddExisting(metric.id)}
                       disabled={isLoading}
-                      className="w-full text-left border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                      className="group w-full text-left border-2 border-gray-200 rounded-xl p-4 hover:border-sky-400 hover:bg-sky-50/50 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-4">
                         {metric.image && (
                           <div
                             className={cn(
-                              'w-12 h-12 shrink-0 overflow-hidden',
-                              metric.is_image_rounded_full ? 'rounded-full' : 'rounded-lg'
+                              'w-16 h-16 shrink-0 overflow-hidden bg-gray-100',
+                              metric.is_image_rounded_full ? 'rounded-full' : 'rounded-xl'
                             )}
                           >
                             <img
@@ -1140,19 +1224,32 @@ export default function MetricManager({
                             />
                           </div>
                         )}
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-gray-900">{metric.title}</h4>
-                          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-base font-semibold text-gray-900 group-hover:text-sky-700 transition-colors mb-1">
+                            {metric.title}
+                          </h4>
+                          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
                             {metric.description}
                           </p>
                         </div>
-                        <PlusIcon className="w-5 h-5 text-gray-400 shrink-0" />
+                        <div className="shrink-0 w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-sky-500 flex items-center justify-center transition-colors">
+                          <PlusIcon className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                        </div>
                       </div>
                     </button>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Footer */}
+            {metricsNotInSection.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                <p className="text-xs text-gray-600 text-center">
+                  {metricsNotInSection.length} metric{metricsNotInSection.length !== 1 ? 's' : ''} available to add
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

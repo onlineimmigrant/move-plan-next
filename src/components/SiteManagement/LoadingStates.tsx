@@ -1,4 +1,5 @@
 import React from 'react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface LoadingStatesProps {
   type: 'grid' | 'single' | 'inline';
@@ -6,6 +7,8 @@ interface LoadingStatesProps {
 }
 
 export default function LoadingStates({ type, message = 'Loading...' }: LoadingStatesProps) {
+  const themeColors = useThemeColors();
+
   if (type === 'grid') {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -33,7 +36,10 @@ export default function LoadingStates({ type, message = 'Loading...' }: LoadingS
     return (
       <div className="text-center py-12">
         <div className="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-sky-600 mr-3"></div>
+          <div 
+            className="animate-spin rounded-full h-5 w-5 border-b-2 mr-3"
+            style={{ borderBottomColor: themeColors.cssVars.primary.base }}
+          ></div>
           <span className="text-gray-700">{message}</span>
         </div>
       </div>
@@ -43,7 +49,10 @@ export default function LoadingStates({ type, message = 'Loading...' }: LoadingS
   if (type === 'inline') {
     return (
       <div className="inline-flex items-center">
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-sky-600 mr-2"></div>
+        <div 
+          className="animate-spin rounded-full h-4 w-4 border-b-2 mr-2"
+          style={{ borderBottomColor: themeColors.cssVars.primary.base }}
+        ></div>
         <span className="text-gray-600 text-sm">{message}</span>
       </div>
     );

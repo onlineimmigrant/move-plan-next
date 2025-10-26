@@ -2,6 +2,7 @@ import React, { useState, useRef, forwardRef, useImperativeHandle, useMemo } fro
 import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { organizationTypes } from './types';
 import Button from '@/ui/Button';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface HeaderProps {
   canCreateMore: boolean;
@@ -30,6 +31,7 @@ const Header = forwardRef<{ focusSearch: () => void }, HeaderProps>(function Hea
 }, ref) {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const themeColors = useThemeColors();
 
   useImperativeHandle(ref, () => ({
     focusSearch: () => {
@@ -87,14 +89,17 @@ const Header = forwardRef<{ focusSearch: () => void }, HeaderProps>(function Hea
             <div className="flex items-center gap-3 mb-2 sm:mb-3">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 relative">
                 Site Management
-                <span className="absolute -bottom-1 sm:-bottom-2 left-0 w-16 h-1 bg-sky-600 rounded-full" />
+                <span 
+                  className="absolute -bottom-1 sm:-bottom-2 left-0 w-16 h-1 rounded-full"
+                  style={{ backgroundColor: themeColors.cssVars.primary.base }}
+                />
               </h1>
               {/* Desktop Create Site Button */}
               {canCreateMore && (
                 <Button
                   variant="primary"
                   onClick={onCreateNew}
-                  className="hidden sm:flex shadow-xl hover:shadow-2xl hover:shadow-sky-200/50 w-auto transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600"
+                  className="hidden sm:flex shadow-xl hover:shadow-2xl w-auto transform hover:scale-105 transition-all duration-300"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

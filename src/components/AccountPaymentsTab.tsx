@@ -7,6 +7,7 @@ import { useStudentStatus } from '@/lib/StudentContext';
 import Loading from '@/ui/Loading';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 import { useRef, useEffect, useState } from 'react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Tab {
   label: string;
@@ -21,6 +22,7 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
   const pathname = usePathname();
   const { isStudent, isLoading } = useStudentStatus();
   const { t } = useAccountTranslations();
+  const themeColors = useThemeColors();
   const [sliderStyle, setSliderStyle] = useState({ width: 0, transform: 'translateX(0px)' });
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
@@ -65,15 +67,24 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
       <Link href="/account">
         <h1 className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
           {t.account}
-          <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+          <span 
+            className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full"
+            style={{ backgroundColor: themeColors.cssVars.primary.base }}
+          />
         </h1>
       </Link>
       <div className="select-none flex justify-center pb-2">
-        <div className="relative w-full max-w-[480px] h-11 bg-transparent border-2 border-sky-600 rounded-lg cursor-pointer overflow-hidden px-0.5">
+        <div 
+          className="relative w-full max-w-[480px] h-11 bg-transparent border-2 rounded-lg cursor-pointer overflow-hidden px-0.5"
+          style={{ borderColor: themeColors.cssVars.primary.base }}
+        >
           {/* Sliding Background */}
           <div
-            className="absolute top-0.5 bottom-0.5 bg-sky-600 rounded-md transition-all duration-200 ease-in-out"
-            style={sliderStyle}
+            className="absolute top-0.5 bottom-0.5 rounded-md transition-all duration-200 ease-in-out"
+            style={{ 
+              ...sliderStyle,
+              backgroundColor: themeColors.cssVars.primary.base 
+            }}
           ></div>
           {/* Tab Labels */}
           <div className="relative flex h-full" role="tablist" aria-label="Account Tabs">
@@ -82,9 +93,12 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
                 key={tab.href}
                 ref={(el) => { tabRefs.current[index] = el; }}
                 href={tab.href}
-                className={`flex-1 flex justify-center items-center text-sky-600 text-sm sm:text-sm font-medium mona-sans px-0.5 ${
+                className={`flex-1 flex justify-center items-center text-sm sm:text-sm font-medium mona-sans px-0.5 ${
                   pathname === tab.href ? 'font-semibold text-white z-10' : ''
                 }`}
+                style={{
+                  color: pathname === tab.href ? '#ffffff' : themeColors.cssVars.primary.base
+                }}
                 role="tab"
                 aria-selected={pathname === tab.href}
                 aria-current={pathname === tab.href ? 'page' : undefined}
