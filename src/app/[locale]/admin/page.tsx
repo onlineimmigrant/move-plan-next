@@ -22,6 +22,79 @@ import { useAuth } from '@/context/AuthContext';
 import Tooltip from '@/components/Tooltip';
 import { MeetingsAdminToggleButton } from '@/components/modals/MeetingsModals/MeetingsAdminModal';
 import MeetingsAdminModal from '@/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal';
+import { useThemeColors } from '@/hooks/useThemeColors';
+
+// Modal Button Card Component with hover state
+function ModalButtonCard({ item, primary }: any) {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  return (
+    <Tooltip content={item.tooltip}>
+      <button
+        onClick={item.onClick}
+        className="w-full group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
+        style={{
+          backgroundColor: isHovered ? primary.lighter : 'white'
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        title={item.label}
+        type="button"
+      >
+        <div className="transform group-hover:scale-110 transition-transform">
+          <item.icon
+            className="h-10 w-10 transition-colors"
+            style={{ color: isHovered ? primary.base : '#4b5563' }}
+          />
+        </div>
+        <span 
+          className="mt-3 text-sm font-medium text-center sm:text-base transition-colors"
+          style={{ color: isHovered ? primary.base : '#1f2937' }}
+        >
+          {item.label}
+        </span>
+      </button>
+    </Tooltip>
+  );
+}
+
+// Navigation Link Card Component with hover state
+function NavigationLinkCard({ item, pathname, primary }: any) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isActive = pathname === item.href;
+  const isAccountPage = item.href === '/account';
+  
+  return (
+    <Tooltip content={item.tooltip}>
+      <Link
+        href={item.href!}
+        className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
+        style={{
+          backgroundColor: isActive ? primary.lighter : (isHovered ? primary.lighter : 'white')
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        title={item.label}
+        aria-current={isActive ? 'page' : undefined}
+      >
+        <div className="transform group-hover:scale-110 transition-transform">
+          <item.icon
+            className="h-10 w-10 transition-colors"
+            style={{
+              color: (isAccountPage || isHovered) ? primary.base : '#4b5563'
+            }}
+          />
+        </div>
+        <span 
+          className="mt-3 text-sm font-medium text-center sm:text-base transition-colors"
+          style={{ color: isHovered ? primary.base : '#1f2937' }}
+        >
+          {item.label}
+        </span>
+      </Link>
+    </Tooltip>
+  );
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -29,6 +102,8 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isMeetingsModalOpen, setIsMeetingsModalOpen] = useState(false);
   const { session, supabase } = useAuth();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
   useEffect(() => {
     async function checkSession() {
@@ -64,9 +139,9 @@ export default function AdminDashboardPage() {
     { href: '/admin/pricingplans/management', label: 'Pricing Plans', icon: CurrencyDollarIcon, tooltip: 'Price Management' },
     { 
       onClick: () => setIsMeetingsModalOpen(true), 
-      label: 'Meetings', 
+      label: 'Appointments', 
       icon: VideoCameraIcon, 
-      tooltip: 'Manage Meetings',
+      tooltip: 'Manage Appointments',
       id: 'meetings-modal',
       isModal: true
     },
@@ -82,64 +157,24 @@ export default function AdminDashboardPage() {
       <div className="max-w-7xl mx-auto">
         <h1 className="mt-8  mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
           Admin 
-          <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+          <span 
+            className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full" 
+            style={{ backgroundColor: primary.base }}
+          />
         </h1>
         <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {dashboardLinks.map((item) => {
             // Check if this is a modal trigger or regular link
             if (item.isModal) {
-              return (
-                <Tooltip key={item.id} content={item.tooltip}>
-                  <button
-                    onClick={item.onClick}
-                    className="w-full group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300"
-                    title={item.label}
-                    type="button"
-                  >
-                    <div className="transform group-hover:scale-110 transition-transform">
-                      <item.icon
-                        className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors"
-                      />
-                    </div>
-                    <span className="mt-3 text-sm font-medium text-gray-800 group-hover:text-sky-600 text-center sm:text-base">
-                      {item.label}
-                    </span>
-                  </button>
-                </Tooltip>
-              );
+              return <ModalButtonCard key={item.id} item={item} primary={primary} />;
             }
             
             // Regular navigation link
-            const isActive = pathname === item.href;
-            return (
-              <Tooltip key={item.href} content={item.tooltip}>
-              <Link
-                href={item.href!}
-                className={`group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300 ${
-                  isActive ? 'bg-sky-50 shadow-md' : ''
-                }`}
-                title={item.label}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <div className="transform group-hover:scale-110 transition-transform">
-                  <item.icon
-                    className={`h-10 w-10 ${
-                      item.href === '/account'
-                        ? 'text-sky-600'
-                        : 'text-gray-600 group-hover:text-sky-600 transition-colors'
-                    }`}
-                  />
-                </div>
-                <span className="mt-3 text-sm font-medium text-gray-800 group-hover:text-sky-600 text-center sm:text-base">
-                  {item.label}
-                </span>
-              </Link>
-              </Tooltip>
-            );
+            return <NavigationLinkCard key={item.href} item={item} pathname={pathname} primary={primary} />;
           })}
         </div>
               <div className='my-16 sm:my-32 flex justify-center'>
-      <CogIcon className='h-16 w-16 text-sky-600'/>
+      <CogIcon className='h-16 w-16' style={{ color: primary.base }}/>
       </div>
       
       {/* Admin Meetings Toggle Button - visible only on admin pages */}

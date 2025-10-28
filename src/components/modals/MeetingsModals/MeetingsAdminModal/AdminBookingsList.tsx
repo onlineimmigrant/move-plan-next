@@ -18,12 +18,15 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/Shared/ToastContainer';
 import WaitingRoomControls from '../WaitingRoom/WaitingRoomControls';
 import InstantMeetingModal from '../InstantMeetingModal';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface AdminBookingsListProps {
   organizationId?: string;
 }
 
 export default function AdminBookingsList({ organizationId }: AdminBookingsListProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +34,8 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [showInstantMeetingModal, setShowInstantMeetingModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [isCreateHovered, setIsCreateHovered] = useState(false);
   
   const { 
     launchFromBooking, 
@@ -39,6 +44,38 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   } = useMeetingLauncher();
   
   const { success: showSuccess, error: showError, info: showInfo } = useToast();
+
+  // Helper function for relative time display
+  const getRelativeTime = (scheduledAt: string) => {
+    const now = new Date();
+    const scheduled = new Date(scheduledAt);
+    const diffMs = scheduled.getTime() - now.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 0) return 'Started';
+    if (diffMins < 1) return 'Starting now';
+    if (diffMins < 60) return `in ${diffMins} min`;
+    if (diffHours < 24) return `in ${diffHours} hr${diffHours > 1 ? 's' : ''}`;
+    if (diffDays === 1) return 'tomorrow';
+    if (diffDays < 7) return `in ${diffDays} days`;
+    return format(scheduled, 'MMM d');
+  };
+
+  // Helper function to get status border color
+  const getStatusBorderColor = (booking: Booking, timeInfo: any) => {
+    if (booking.status === 'cancelled') return '#ef4444'; // red
+    if (booking.status === 'completed') return '#6b7280'; // gray
+    if (timeInfo.isInProgress) return primary.base; // primary
+    
+    // Urgent warning for meetings starting soon
+    const diffMs = new Date(booking.scheduled_at).getTime() - new Date().getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins > 0 && diffMins <= 15) return '#f59e0b'; // amber
+    
+    return '#10b981'; // green for upcoming
+  };
 
   // Get current user for waiting room controls
   useEffect(() => {
@@ -91,14 +128,34 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
 
       // Filter for future and current meetings
       const now = new Date();
-      const activeBookings = data.bookings.filter((booking: Booking) => {
-        const endTime = new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000);
-        return endTime >= now;
-      });
-
-      // Sort by scheduled_at (upcoming first)
-      const sortedBookings = activeBookings.sort((a: Booking, b: Booking) => {
-        return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
+      
+      // Smart sorting: prioritize by status and time
+      const sortedBookings = data.bookings.sort((a: Booking, b: Booking) => {
+        const aTime = new Date(a.scheduled_at).getTime();
+        const bTime = new Date(b.scheduled_at).getTime();
+        const aEndTime = aTime + a.duration_minutes * 60000;
+        const bEndTime = bTime + b.duration_minutes * 60000;
+        
+        // Priority 1: In-progress meetings (highest)
+        const aInProgress = a.status === 'in_progress';
+        const bInProgress = b.status === 'in_progress';
+        if (aInProgress && !bInProgress) return -1;
+        if (!aInProgress && bInProgress) return 1;
+        
+        // Priority 2: Upcoming active meetings (not cancelled/completed)
+        const aIsActive = !['cancelled', 'completed'].includes(a.status) && aEndTime > now.getTime();
+        const bIsActive = !['cancelled', 'completed'].includes(b.status) && bEndTime > now.getTime();
+        if (aIsActive && !bIsActive) return -1;
+        if (!aIsActive && bIsActive) return 1;
+        
+        // Priority 3: Cancelled meetings
+        const aIsCancelled = a.status === 'cancelled';
+        const bIsCancelled = b.status === 'cancelled';
+        if (aIsCancelled && !bIsCancelled) return 1;
+        if (!aIsCancelled && bIsCancelled) return -1;
+        
+        // Within same category, sort by time (nearest first)
+        return aTime - bTime;
       });
 
       setBookings(sortedBookings);
@@ -189,7 +246,10 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
         </div>
         <button
           onClick={fetchBookings}
-          className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+          className="mt-4 text-sm underline"
+          style={{ color: primary.base }}
+          onMouseEnter={(e) => e.currentTarget.style.color = primary.hover}
+          onMouseLeave={(e) => e.currentTarget.style.color = primary.base}
         >
           Try again
         </button>
@@ -209,7 +269,10 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
         </p>
         <button
           onClick={fetchBookings}
-          className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+          className="mt-4 text-sm underline"
+          style={{ color: primary.base }}
+          onMouseEnter={(e) => e.currentTarget.style.color = primary.hover}
+          onMouseLeave={(e) => e.currentTarget.style.color = primary.base}
         >
           Refresh
         </button>
@@ -228,14 +291,25 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
       )}
 
       {/* Header with Filter Controls and Instant Meeting Button */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">Status:</label>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+              className="rounded-md border-gray-300 text-sm focus:outline-none"
+              style={{
+                borderColor: undefined,
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = primary.base;
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '';
+                e.currentTarget.style.boxShadow = '';
+              }}
             >
               <option value="all">All</option>
               <option value="scheduled">Scheduled</option>
@@ -247,17 +321,31 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
             </select>
           </div>
           
-          {/* Instant Meeting Button */}
-          <button
-            onClick={() => setShowInstantMeetingModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-          >
-            <PlusIcon className="w-4 h-4" />
-            Send Instant Invite
-          </button>
+          {/* Booking count - shown on desktop, moved to left */}
+          <div className="hidden sm:block text-sm text-gray-600">
+            <UsersIcon className="inline w-4 h-4 mr-1" />
+            {bookings.length} {bookings.length === 1 ? 'booking' : 'bookings'}
+          </div>
         </div>
         
-        <div className="text-sm text-gray-600">
+        {/* Instant Meeting Button - full width on mobile, right side on desktop */}
+        <button
+          onClick={() => setShowInstantMeetingModal(true)}
+          onMouseEnter={() => setIsCreateHovered(true)}
+          onMouseLeave={() => setIsCreateHovered(false)}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-md transition-colors"
+          style={{
+            background: isCreateHovered 
+              ? `linear-gradient(135deg, ${primary.hover}, ${primary.active})` 
+              : `linear-gradient(135deg, ${primary.base}, ${primary.hover})`
+          }}
+        >
+          <PlusIcon className="w-4 h-4" />
+          Send Instant Invite
+        </button>
+        
+        {/* Booking count - shown on mobile below button */}
+        <div className="sm:hidden text-sm text-gray-600 w-full text-center">
           <UsersIcon className="inline w-4 h-4 mr-1" />
           {bookings.length} {bookings.length === 1 ? 'booking' : 'bookings'}
         </div>
@@ -279,83 +367,188 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
           const canJoin = booking.status !== 'cancelled' && 
                          booking.status !== 'no_show' && 
                          booking.status !== 'completed';
+          const borderColor = getStatusBorderColor(booking, timeInfo);
+          const isCancelled = booking.status === 'cancelled';
+          const isCompleted = booking.status === 'completed';
+          const isInactive = isCancelled || isCompleted;
+
+          // Calculate time until meeting for countdown
+          const diffMs = new Date(booking.scheduled_at).getTime() - new Date().getTime();
+          const diffMins = Math.floor(diffMs / 60000);
+          const showCountdown = diffMins > 0 && diffMins <= 30;
 
           return (
             <div
               key={booking.id}
-              className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors bg-white"
+              className="relative rounded-lg p-4 hover:shadow-lg transition-all duration-200 bg-white"
+              style={{
+                border: '1px solid #e5e7eb',
+                borderLeft: `4px solid ${borderColor}`,
+                opacity: isInactive ? 0.7 : 1
+              }}
             >
-              <div className="flex items-start justify-between">
-                {/* Meeting Info */}
-                <div className="flex-1">
-                  {/* Meeting Title */}
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">
+              {/* Top Section: Title and Status */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 pr-4">
+                  <h3 
+                    className={`text-base font-semibold mb-1 ${isInactive ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                  >
                     {booking.title}
                   </h3>
 
-                  {/* Customer Info - Name and Email */}
-                  <div className="flex items-center text-sm text-gray-600 mb-2">
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    <span className="font-medium">{booking.customer_name}</span>
-                    <span className="ml-2 text-gray-500">({booking.customer_email})</span>
-                  </div>
-
-                  {/* Meeting Time */}
-                  <div className="flex items-center text-sm text-gray-600 mb-2">
-                    <CalendarIcon className="w-4 h-4 mr-2" />
-                    <span className="font-medium">
-                      {format(new Date(booking.scheduled_at), 'MMM dd, yyyy')}
-                    </span>
-                    <ClockIcon className="w-4 h-4 ml-4 mr-2" />
-                    <span>
-                      {format(new Date(booking.scheduled_at), 'h:mm a')} ({booking.duration_minutes} min)
-                    </span>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        booking.status === 'confirmed' || booking.status === 'scheduled'
-                          ? 'bg-green-100 text-green-800'
-                          : booking.status === 'in_progress'
-                          ? 'bg-blue-100 text-blue-800'
-                          : booking.status === 'completed'
-                          ? 'bg-gray-100 text-gray-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
+                  {/* Meeting Type Badge */}
+                  {booking.meeting_type && (
+                    <span 
+                      className="inline-block px-2 py-0.5 rounded text-xs font-medium mb-2"
+                      style={{
+                        backgroundColor: `${primary.base}15`,
+                        color: primary.base
+                      }}
                     >
-                      {booking.status.replace('_', ' ')}
+                      {(booking.meeting_type as any).name}
                     </span>
+                  )}
+                </div>
 
-                    {/* Time until meeting */}
-                    {timeInfo.timeRemaining && !timeInfo.isInProgress && !timeInfo.isCompleted && (
-                      <span className="text-xs text-gray-500">{timeInfo.timeRemaining}</span>
-                    )}
-                    {timeInfo.isInProgress && (
-                      <span className="text-xs text-blue-600 font-medium">● Meeting in progress</span>
-                    )}
-                  </div>
+                {/* Status Badge */}
+                <div className="flex flex-col items-end gap-1">
+                  <span
+                    className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                    style={{
+                      backgroundColor: isCancelled
+                        ? '#fee2e2'
+                        : isCompleted
+                        ? '#f3f4f6'
+                        : timeInfo.isInProgress
+                        ? `${primary.base}20`
+                        : booking.status === 'waiting'
+                        ? '#fef3c7'
+                        : '#d1fae5',
+                      color: isCancelled
+                        ? '#991b1b'
+                        : isCompleted
+                        ? '#4b5563'
+                        : timeInfo.isInProgress
+                        ? primary.active
+                        : booking.status === 'waiting'
+                        ? '#92400e'
+                        : '#065f46'
+                    }}
+                  >
+                    {isCancelled && '✕ Cancelled'}
+                    {isCompleted && '✓ Completed'}
+                    {!isInactive && booking.status === 'waiting' && '⏳ Waiting'}
+                    {!isInactive && timeInfo.isInProgress && '● In Progress'}
+                    {!isInactive && booking.status === 'confirmed' && '✓ Confirmed'}
+                    {!isInactive && booking.status === 'scheduled' && '📅 Scheduled'}
+                  </span>
+                  
+                  {/* Countdown for meetings starting soon */}
+                  {showCountdown && !isInactive && !timeInfo.isInProgress && (
+                    <span 
+                      className="text-xs font-bold px-2 py-0.5 rounded animate-pulse"
+                      style={{
+                        backgroundColor: diffMins <= 5 ? '#fef3c7' : '#fef3c7',
+                        color: diffMins <= 5 ? '#92400e' : '#92400e'
+                      }}
+                    >
+                      ⏰ {diffMins} min
+                    </span>
+                  )}
+                </div>
+              </div>
 
-                  {/* Notes (if any) */}
-                  {booking.notes && (
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">{booking.notes}</p>
+              {/* Middle Section: Meeting Details */}
+              <div className="space-y-2 mb-3">
+                {/* Customer Info */}
+                <div className="flex items-center text-sm text-gray-700">
+                  <UserIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
+                  <span className="font-medium">{booking.customer_name}</span>
+                  <span className="mx-2 text-gray-400">•</span>
+                  <span className="text-gray-600">{booking.customer_email}</span>
+                </div>
+
+                {/* Date and Time */}
+                <div className="flex items-center text-sm text-gray-700">
+                  <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
+                  <span className="font-medium">
+                    {format(new Date(booking.scheduled_at), 'EEEE, MMM dd, yyyy')}
+                  </span>
+                </div>
+
+                <div className="flex items-center text-sm text-gray-700">
+                  <ClockIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
+                  <span>
+                    {format(new Date(booking.scheduled_at), 'h:mm a')} ({booking.duration_minutes} min)
+                  </span>
+                  <span className="mx-2 text-gray-400">•</span>
+                  <span className="text-gray-600 font-medium">
+                    {getRelativeTime(booking.scheduled_at)}
+                  </span>
+                </div>
+
+                {/* Notes */}
+                {booking.notes && (
+                  <p className="text-sm text-gray-600 mt-2 pl-6 line-clamp-2 italic">
+                    "{booking.notes}"
+                  </p>
+                )}
+              </div>
+
+              {/* Bottom Section: Action Buttons */}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  {/* In-Progress Pulsing Indicator */}
+                  {timeInfo.isInProgress && !isInactive && (
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-3 w-3">
+                        <span 
+                          className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                          style={{ backgroundColor: primary.base }}
+                        ></span>
+                        <span 
+                          className="relative inline-flex rounded-full h-3 w-3"
+                          style={{ backgroundColor: primary.base }}
+                        ></span>
+                      </span>
+                      <span className="text-xs font-semibold" style={{ color: primary.base }}>
+                        Live now
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Time Remaining Info */}
+                  {!timeInfo.isInProgress && !isInactive && timeInfo.timeRemaining && (
+                    <span className="text-xs text-gray-500">
+                      Starts {getRelativeTime(booking.scheduled_at)}
+                    </span>
                   )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="ml-4 flex flex-col gap-2">
-                  {canJoin && (
+                <div className="flex gap-2">
+                  {canJoin && !isInactive ? (
                     <button
                       onClick={() => handleJoinCall(booking)}
+                      onMouseEnter={() => setHoveredButton(booking.id)}
+                      onMouseLeave={() => setHoveredButton(null)}
                       disabled={joiningBookingId === booking.id}
-                      className={`inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm transition-colors ${
+                      className={`inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm transition-all ${
                         joiningBookingId === booking.id
                           ? 'bg-gray-400 text-white cursor-wait'
-                          : timeInfo.isInProgress
-                          ? 'bg-blue-600 text-white hover:bg-blue-700'
-                          : 'bg-green-600 text-white hover:bg-green-700'
+                          : ''
                       }`}
+                      style={
+                        joiningBookingId === booking.id
+                          ? undefined
+                          : {
+                              background: hoveredButton === booking.id
+                                ? `linear-gradient(135deg, ${primary.hover}, ${primary.active})`
+                                : `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                              color: 'white',
+                              boxShadow: hoveredButton === booking.id ? `0 4px 12px ${primary.base}40` : 'none'
+                            }
+                      }
                       title="Join as admin (bypass time restrictions)"
                     >
                       {joiningBookingId === booking.id ? (
@@ -369,13 +562,17 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
                       ) : (
                         <>
                           <VideoCameraIcon className="w-4 h-4 mr-1" />
-                          {timeInfo.isInProgress ? 'Join' : 'Join Early'}
+                          Join
                         </>
                       )}
                     </button>
-                  )}
+                  ) : isCompleted ? (
+                    <span className="text-xs text-gray-400 px-3 py-2">Meeting ended</span>
+                  ) : isCancelled ? (
+                    <span className="text-xs text-gray-400 px-3 py-2">Cancelled</span>
+                  ) : null}
                   
-                  {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+                  {!isInactive && (
                     <button
                       onClick={() => handleCancelBooking(booking.id)}
                       className="inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
@@ -394,9 +591,9 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
       {/* Refresh Button */}
       <button
         onClick={fetchBookings}
-        className="w-full mt-4 text-sm text-gray-600 hover:text-gray-800 underline"
+        className="w-full mt-4 px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
       >
-        Refresh bookings
+        🔄 Refresh appointments
       </button>
     </div>
   );

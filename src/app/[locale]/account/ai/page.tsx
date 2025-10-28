@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import { ArrowLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { TrashIcon } from '@heroicons/react/24/outline';
 import { Combobox, Disclosure, Transition } from '@headlessui/react';
 import Tooltip from '@/components/Tooltip';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 import Image from 'next/image';
 import DisclosureButton from '@/ui/DisclosureButton';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,6 +74,8 @@ interface SelectedModel {
 
 export default function AISettings() {
   const { t } = useAccountTranslations();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [defaultModels, setDefaultModels] = useState<Model[]>([]);
   const [userModels, setUserModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(null);
@@ -87,6 +90,7 @@ export default function AISettings() {
   const [modelQuery, setModelQuery] = useState('');
   const [endpointQuery, setEndpointQuery] = useState('');
   const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'default' | 'custom' | 'add'>('all');
   const router = useRouter();
 
   useEffect(() => {
@@ -261,6 +265,7 @@ export default function AISettings() {
         setNewModel({ name: '', api_key: '', endpoint: '', max_tokens: 200 });
         setModelQuery('');
         setEndpointQuery('');
+        setActiveTab('all'); // Switch to All tab after adding model
       }
     } catch (error: any) {
       setError(error.message || 'Failed to add model.');
@@ -516,43 +521,89 @@ export default function AISettings() {
   return (
     <div className="grid sm:grid-cols-5 mx-auto p-4 rounded-lg min-h-screen gap-4">
       <div className="flex justify-center sm:justify-start">
-        <Tooltip content={t.account}>
-          <Link href="/account">
-            <button className="cursor-pointer  text-sky-600 p-2 rounded-full hover:bg-gray-100 transition-colors mt-16">
-              <ArrowLeftIcon className="h-5 w-5" />
-            </button>
-          </Link>
-        </Tooltip>
         <ChatWidget />
       </div>
       <div className="sm:col-span-3">
         <div className="mt-8 flex flex-col items-center">
           <Tooltip content={t.aiTitle} variant='bottom'>
-            <h1 className="mt-0 sm:mt-2 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
+            <h1 className="mt-0 sm:mt-2 mb-2 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
               {t.ai}
-              <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+              <span 
+                className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full" 
+                style={{ backgroundColor: primary.base }}
+              />
             </h1>
           </Tooltip>
+          <Link 
+            href="/account" 
+            className="text-sm hover:underline transition-colors mb-4"
+            style={{ color: primary.base }}
+          >
+            {t.account}
+          </Link>
         </div>
 
         {error && <div className="text-red-500 mb-4">{error}</div>}
 
-        <Disclosure>
-          {({ open }: { open: boolean }) => (
-            <div>
-              <DisclosureButton>
-                            <span>{t.addCustomModel}</span>
-                <span className="ml-2 text-sky-300 font-bold">{open ? '−' : '+'}</span>
-              </DisclosureButton>
-              <Transition
-                enter="transition ease-out duration-100"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="transition ease-in duration-75"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Disclosure.Panel className="mt-2 border border-gray-200 rounded-xl bg-white p-4">
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-6">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full pb-1">
+            <button
+              onClick={() => setActiveTab('all')}
+              className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 shadow-sm hover:shadow-md"
+              style={{
+                backgroundColor: activeTab === 'all' ? primary.base : 'white',
+                color: activeTab === 'all' ? 'white' : primary.base,
+                border: `1.5px solid ${activeTab === 'all' ? primary.base : primary.light}40`,
+              }}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setActiveTab('default')}
+              className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 shadow-sm hover:shadow-md"
+              style={{
+                backgroundColor: activeTab === 'default' ? primary.base : 'white',
+                color: activeTab === 'default' ? 'white' : primary.base,
+                border: `1.5px solid ${activeTab === 'default' ? primary.base : primary.light}40`,
+              }}
+            >
+              Default
+            </button>
+            <button
+              onClick={() => setActiveTab('custom')}
+              className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 shadow-sm hover:shadow-md"
+              style={{
+                backgroundColor: activeTab === 'custom' ? primary.base : 'white',
+                color: activeTab === 'custom' ? 'white' : primary.base,
+                border: `1.5px solid ${activeTab === 'custom' ? primary.base : primary.light}40`,
+              }}
+            >
+              Custom
+            </button>
+            <button
+              onClick={() => setActiveTab('add')}
+              className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+              style={{
+                backgroundColor: activeTab === 'add' ? primary.base : 'white',
+                color: activeTab === 'add' ? 'white' : primary.base,
+                border: `1.5px solid ${activeTab === 'add' ? primary.base : primary.light}40`,
+                minWidth: '120px'
+              }}
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Add Model</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="border border-gray-200 rounded-xl bg-white p-8">
+          {/* Add Model Tab */}
+          {activeTab === 'add' && (
+            <div className="max-w-2xl mx-auto">
                   <div className="relative">
                     <Combobox
                       value={newModel.name}
@@ -562,7 +613,10 @@ export default function AISettings() {
                       }}
                     >
                       <Combobox.Input
-                        className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 mb-2"
+                        className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 mb-2"
+                        style={{
+                          '--tw-ring-color': primary.base
+                        } as React.CSSProperties}
                         onChange={(e) => {
                           setModelQuery(e.target.value);
                           setNewModel({ ...newModel, name: e.target.value });
@@ -570,7 +624,7 @@ export default function AISettings() {
                         placeholder={t.modelName + " (e.g., grok-3)"}
                         displayValue={(value: string) => value}
                       />
-                      <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
+                      <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
                         {filteredModels.length === 0 && modelQuery !== '' ? (
                           <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
                             No models found. Enter a custom model name.
@@ -580,13 +634,17 @@ export default function AISettings() {
                             <Combobox.Option
                               key={model}
                               value={model}
-                              className={({ active }) =>
-                                `relative cursor-pointer select-none py-2 px-4 ${
-                                  active ? 'bg-sky-100 text-sky-900' : 'text-gray-900'
-                                }`
-                              }
                             >
-                              {model}
+                              {({ active }) => (
+                                <div
+                                  className="relative cursor-pointer select-none py-2 px-4 text-gray-900"
+                                  style={{
+                                    backgroundColor: active ? primary.lighter : 'transparent'
+                                  }}
+                                >
+                                  {model}
+                                </div>
+                              )}
                             </Combobox.Option>
                           ))
                         )}
@@ -598,7 +656,10 @@ export default function AISettings() {
                     value={newModel.api_key}
                     onChange={(e) => setNewModel({ ...newModel, api_key: e.target.value })}
                     placeholder={t.apiKey}
-                    className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 mb-2"
+                    className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 mb-2"
+                    style={{
+                      '--tw-ring-color': primary.base
+                    } as React.CSSProperties}
                     autoComplete="new-password"
                   />
                   <div className="relative">
@@ -610,7 +671,10 @@ export default function AISettings() {
                       }}
                     >
                       <Combobox.Input
-                        className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 mb-2"
+                        className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 mb-2"
+                        style={{
+                          '--tw-ring-color': primary.base
+                        } as React.CSSProperties}
                         onChange={(e) => {
                           setEndpointQuery(e.target.value);
                           setNewModel({ ...newModel, endpoint: e.target.value });
@@ -618,7 +682,7 @@ export default function AISettings() {
                         placeholder={t.apiEndpoint + " (e.g., https://api.x.ai/v1/chat/completions)"}
                         displayValue={(value: string) => value}
                       />
-                      <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
+                      <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
                         {filteredEndpoints.length === 0 && endpointQuery !== '' ? (
                           <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
                             No endpoints found. Enter a custom endpoint.
@@ -628,13 +692,17 @@ export default function AISettings() {
                             <Combobox.Option
                               key={endpoint}
                               value={endpoint}
-                              className={({ active }) =>
-                                `relative cursor-pointer select-none py-2 px-4 ${
-                                  active ? 'bg-sky-100 text-sky-900' : 'text-gray-900'
-                                }`
-                              }
                             >
-                              {endpoint}
+                              {({ active }) => (
+                                <div
+                                  className="relative cursor-pointer select-none py-2 px-4 text-gray-900"
+                                  style={{
+                                    backgroundColor: active ? primary.lighter : 'transparent'
+                                  }}
+                                >
+                                  {endpoint}
+                                </div>
+                              )}
                             </Combobox.Option>
                           ))
                         )}
@@ -646,179 +714,371 @@ export default function AISettings() {
                     value={newModel.max_tokens}
                     onChange={(e) => setNewModel({ ...newModel, max_tokens: parseInt(e.target.value) || 200 })}
                     placeholder={t.maxTokens + " (default: 200)"}
-                    className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 mb-2"
+                    className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 mb-2"
+                    style={{
+                      '--tw-ring-color': primary.base
+                    } as React.CSSProperties}
                     autoComplete="off"
                   />
-                  <Tooltip content={t.addModel}>
-                    <button
-                      onClick={addUserModel}
-                      disabled={loading || !newModel.name || !newModel.api_key || !newModel.endpoint}
-                      className="bg-teal-500 text-white p-2 rounded-full disabled:bg-gray-200 hover:bg-teal-600 transition-colors"
-                    >
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
+                  <button
+                    onClick={addUserModel}
+                    disabled={loading || !newModel.name || !newModel.api_key || !newModel.endpoint}
+                    className="w-full text-white py-3 rounded-xl font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 inline-flex items-center justify-center gap-2"
+                    style={{
+                      backgroundColor: (loading || !newModel.name || !newModel.api_key || !newModel.endpoint) ? '#d1d5db' : primary.base,
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!(loading || !newModel.name || !newModel.api_key || !newModel.endpoint)) {
+                        e.currentTarget.style.backgroundColor = primary.hover;
+                        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!(loading || !newModel.name || !newModel.api_key || !newModel.endpoint)) {
+                        e.currentTarget.style.backgroundColor = primary.base;
+                        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+                      }
+                    }}
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Adding...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Add Model</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+          {/* All Models Tab */}
+          {activeTab === 'all' && (
+            <div>
+              <ul className="space-y-3">
+                {/* Default Models */}
+                {defaultModels.length > 0 && (
+                  <>
+                    <li className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 pt-2 pb-1">{t.defaultModels}</li>
+                    {defaultModels.map((model) => (
+                      <li
+                        key={`default-${model.id}`}
+                        className="bg-white border border-gray-200 flex items-center justify-between py-3 px-4 cursor-pointer rounded-xl group"
+                        style={{ transition: 'all 0.2s' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = primary.lighter;
+                          e.currentTarget.style.borderColor = primary.base;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#ffffff';
+                          e.currentTarget.style.borderColor = '#e5e7eb';
+                        }}
+                        onClick={() => selectModel(model.id, 'default')}
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
-                  </Tooltip>
-                </Disclosure.Panel>
-              </Transition>
+                        <div className="flex items-center gap-3 flex-grow min-w-0">
+                          {model.icon && (
+                            <img
+                              className="h-6 w-6 flex-shrink-0"
+                              src={model.icon}
+                              alt={`${model.name} icon`}
+                              onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
+                          )}
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium text-gray-900 truncate">{model.name}</span>
+                            {model.user_role_to_access === "admin" && (
+                              <span className='text-xs text-gray-500 mt-0.5'>Admin only</span>
+                            )}
+                          </div>
+                        </div>
+                        <Tooltip
+                          content={selectedModel?.id === model.id && selectedModel.type === 'default' ? t.selectedModel : t.selectThisModel}
+                        >
+                          <button
+                            className="p-2.5 rounded-lg transition-all flex-shrink-0"
+                            style={{
+                              backgroundColor: selectedModel?.id === model.id && selectedModel.type === 'default'
+                                ? primary.base
+                                : '#f9fafb',
+                              color: selectedModel?.id === model.id && selectedModel.type === 'default'
+                                ? 'white'
+                                : '#6b7280'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!(selectedModel?.id === model.id && selectedModel.type === 'default')) {
+                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!(selectedModel?.id === model.id && selectedModel.type === 'default')) {
+                                e.currentTarget.style.backgroundColor = '#f9fafb';
+                              }
+                            }}
+                          >
+                            {selectedModel?.id === model.id && selectedModel.type === 'default' ? (
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                            )}
+                          </button>
+                        </Tooltip>
+                      </li>
+                    ))}
+                  </>
+                )}
+                
+                {/* Custom Models */}
+                {userModels.length > 0 && (
+                  <>
+                    <li className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 pt-4 pb-1">{t.customModels}</li>
+                    {userModels.map((model) => (
+                      <li
+                        key={`user-${model.id}`}
+                        className="bg-white border border-gray-200 flex items-center justify-between py-3 px-4 cursor-pointer rounded-xl group"
+                        style={{ transition: 'all 0.2s' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = primary.lighter;
+                          e.currentTarget.style.borderColor = primary.base;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#ffffff';
+                          e.currentTarget.style.borderColor = '#e5e7eb';
+                        }}
+                      >
+                        <span className="text-sm font-medium text-gray-900 flex-grow truncate">{model.name}</span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Tooltip content={t.removeModel}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteUserModel(model.id);
+                              }}
+                              className="p-2 rounded-lg bg-red-50 text-red-600 opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-all"
+                              aria-label="Remove model"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip
+                            content={selectedModel?.id === model.id && selectedModel.type === 'user' ? t.selectedModel : t.selectThisModel}
+                          >
+                            <button
+                              onClick={() => selectModel(model.id, 'user')}
+                              className="p-2.5 rounded-lg transition-all"
+                              style={{
+                                backgroundColor: selectedModel?.id === model.id && selectedModel.type === 'user'
+                                  ? primary.base
+                                  : '#f9fafb',
+                                color: selectedModel?.id === model.id && selectedModel.type === 'user'
+                                  ? 'white'
+                                  : '#6b7280'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!(selectedModel?.id === model.id && selectedModel.type === 'user')) {
+                                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!(selectedModel?.id === model.id && selectedModel.type === 'user')) {
+                                  e.currentTarget.style.backgroundColor = '#f9fafb';
+                                }
+                              }}
+                            >
+                              {selectedModel?.id === model.id && selectedModel.type === 'user' ? (
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                              )}
+                            </button>
+                          </Tooltip>
+                        </div>
+                      </li>
+                    ))}
+                  </>
+                )}
+                
+                {defaultModels.length === 0 && userModels.length === 0 && (
+                  <li className="py-8 text-center text-gray-500">No models available</li>
+                )}
+              </ul>
             </div>
           )}
-        </Disclosure>
 
-        <div className="my-8">
-          <Disclosure defaultOpen>
-            {({ open }: { open: boolean }) => (
-              <div>
-                <DisclosureButton>     <span>{t.availableModels}</span>
-                  <span className="ml-2 text-sky-300 font-bold">{open ? '−' : '+'}</span>
-                </DisclosureButton>
-                <Transition
-                  enter="transition ease-out duration-100"
-                  enterFrom="opacity-0 scale-95"
-                  enterTo="opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="opacity-100 scale-100"
-                  leaveTo="opacity-0 scale-95"
-                >
-                  <Disclosure.Panel className="mt-2 border border-gray-200 rounded-xl py-4 px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-800 mb-1">{t.defaultModels}</h3>
-                        <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
-                          {defaultModels.length === 0 ? (
-                            <li className="py-2 px-4 text-gray-700">{t.noDefaultModels}</li>
+          {/* Default Models Tab */}
+          {activeTab === 'default' && (
+            <div>
+              <ul className="space-y-3">
+                {defaultModels.length === 0 ? (
+                  <li className="py-8 text-center text-gray-500">{t.noDefaultModels}</li>
+                ) : (
+                  defaultModels.map((model) => (
+                    <li
+                      key={model.id}
+                      className="bg-white border border-gray-200 flex items-center justify-between py-3 px-4 cursor-pointer rounded-xl group"
+                      style={{ transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = primary.lighter;
+                        e.currentTarget.style.borderColor = primary.base;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#ffffff';
+                        e.currentTarget.style.borderColor = '#e5e7eb';
+                      }}
+                      onClick={() => selectModel(model.id, 'default')}
+                    >
+                      <div className="flex items-center gap-3 flex-grow min-w-0">
+                        {model.icon && (
+                          <img
+                            className="h-6 w-6 flex-shrink-0"
+                            src={model.icon}
+                            alt={`${model.name} icon`}
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        )}
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-medium text-gray-900 truncate">{model.name}</span>
+                          {model.user_role_to_access === "admin" && (
+                            <span className='text-xs text-gray-500 mt-0.5'>Admin only</span>
+                          )}
+                        </div>
+                      </div>
+                      <Tooltip
+                        content={selectedModel?.id === model.id && selectedModel.type === 'default' ? t.selectedModel : t.selectThisModel}
+                      >
+                        <button
+                          className="p-2.5 rounded-lg transition-all flex-shrink-0"
+                          style={{
+                            backgroundColor: selectedModel?.id === model.id && selectedModel.type === 'default'
+                              ? primary.base
+                              : '#f9fafb',
+                            color: selectedModel?.id === model.id && selectedModel.type === 'default'
+                              ? 'white'
+                              : '#6b7280'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!(selectedModel?.id === model.id && selectedModel.type === 'default')) {
+                              e.currentTarget.style.backgroundColor = '#f3f4f6';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!(selectedModel?.id === model.id && selectedModel.type === 'default')) {
+                              e.currentTarget.style.backgroundColor = '#f9fafb';
+                            }
+                          }}
+                        >
+                          {selectedModel?.id === model.id && selectedModel.type === 'default' ? (
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
                           ) : (
-                            defaultModels.map((model) => (
-                              <li
-                                key={model.id}
-                                className="space-x-4 bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
-                                onClick={() => selectModel(model.id, 'default')}
-                              >
-                                {model.icon && (
-                            <img
-                                className="h-4 w-4 mr-4"
-                                src={model.icon}
-                                alt={`${model.name} icon`}
-                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                            />
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          )}
+                        </button>
+                      </Tooltip>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
+
+          {/* Custom Models Tab */}
+          {activeTab === 'custom' && (
+            <div>
+              <ul className="space-y-3">
+                {userModels.length === 0 ? (
+                  <li className="py-8 text-center text-gray-500">{t.noUserModels}</li>
+                ) : (
+                  userModels.map((model) => (
+                    <li
+                      key={model.id}
+                      className="bg-white border border-gray-200 flex items-center justify-between py-3 px-4 cursor-pointer rounded-xl group"
+                      style={{ transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = primary.lighter;
+                        e.currentTarget.style.borderColor = primary.base;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#ffffff';
+                        e.currentTarget.style.borderColor = '#e5e7eb';
+                      }}
+                    >
+                      <span className="text-sm font-medium text-gray-900 flex-grow truncate">{model.name}</span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Tooltip content={t.removeModel}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteUserModel(model.id);
+                            }}
+                            className="p-2 rounded-lg bg-red-50 text-red-600 opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-all"
+                            aria-label="Remove model"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip
+                          content={selectedModel?.id === model.id && selectedModel.type === 'user' ? t.selectedModel : t.selectThisModel}
+                        >
+                          <button
+                            onClick={() => selectModel(model.id, 'user')}
+                            className="p-2.5 rounded-lg transition-all"
+                            style={{
+                              backgroundColor: selectedModel?.id === model.id && selectedModel.type === 'user'
+                                ? primary.base
+                                : '#f9fafb',
+                              color: selectedModel?.id === model.id && selectedModel.type === 'user'
+                                ? 'white'
+                                : '#6b7280'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!(selectedModel?.id === model.id && selectedModel.type === 'user')) {
+                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!(selectedModel?.id === model.id && selectedModel.type === 'user')) {
+                                e.currentTarget.style.backgroundColor = '#f9fafb';
+                              }
+                            }}
+                          >
+                            {selectedModel?.id === model.id && selectedModel.type === 'user' ? (
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
                             )}
-                                <span className="flex-grow text-xs sm:text-sm">
-                                  {model.name} <span className='sm:ml-4 text-xs font-thin'>{model.user_role_to_access === "admin" ? 'admin' : ''}</span>
-                                </span>
-                                <Tooltip
-                                  content={selectedModel?.id === model.id && selectedModel.type === 'default' ? t.selectedModel : t.selectThisModel}
-                                >
-                                  <button
-                                    className={`p-2 rounded-full ${
-                                      selectedModel?.id === model.id && selectedModel.type === 'default'
-                                        ? 'bg-sky-500 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    } transition-colors`}
-                                  >
-                                    {selectedModel?.id === model.id && selectedModel.type === 'default' ? (
-                                      <svg
-                                        className="h-5 w-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    ) : (
-                                      <svg
-                                        className="h-5 w-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path strokeLinecap="round"
-                                        strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                      </svg>
-                                    )}
-                                  </button>
-                                </Tooltip>
-                              </li>
-                            ))
-                          )}
-                        </ul>
+                          </button>
+                        </Tooltip>
                       </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-800 mb-1">{t.customModels}</h3>
-                        <ul className="bg-white rounded-md shadow-lg ring-1 ring-gray-200 p-2">
-                          {userModels.length === 0 ? (
-                            <li className="py-2 px-4 text-gray-700">{t.noUserModels}</li>
-                          ) : (
-                            userModels.map((model) => (
-                              <li
-                                key={model.id}
-                                className="bg-gray-50 my-1 flex items-center justify-between py-2 px-4 hover:bg-sky-100 hover:text-sky-900 cursor-pointer rounded group"
-                              >
-                                <span className="flex-grow text-xs sm:text-sm">{model.name}</span>
-                                <div className="flex items-center space-x-2">
-                                  <Tooltip content={t.removeModel}>
-                                    <button
-                                      onClick={() => deleteUserModel(model.id)}
-                                      className="p-2 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
-                                      aria-label="Remove model"
-                                    >
-                                      <TrashIcon className="h-5 w-5" />
-                                    </button>
-                                  </Tooltip>
-                                  <Tooltip
-                                    content={selectedModel?.id === model.id && selectedModel.type === 'user' ? t.selectedModel : t.selectThisModel}
-                                  >
-                                    <button
-                                      onClick={() => selectModel(model.id, 'user')}
-                                      className={`p-2 rounded-full ${
-                                        selectedModel?.id === model.id && selectedModel.type === 'user'
-                                          ? 'bg-sky-500 text-white'
-                                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                      } transition-colors`}
-                                    >
-                                      {selectedModel?.id === model.id && selectedModel.type === 'user' ? (
-                                        <svg
-                                          className="h-5 w-5"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      ) : (
-                                        <svg
-                                          className="h-5 w-5"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                        </svg>
-                                      )}
-                                    </button>
-                                  </Tooltip>
-                                </div>
-                              </li>
-                            ))
-                          )}
-                        </ul>
-                      </div>
-                    </div>
-                  </Disclosure.Panel>
-                </Transition>
-              </div>
-            )}
-          </Disclosure>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 

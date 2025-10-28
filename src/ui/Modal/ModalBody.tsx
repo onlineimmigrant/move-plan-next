@@ -21,6 +21,7 @@ export const ModalBody: React.FC<ModalBodyProps> = ({
     <div 
       className={cn(
         'flex-1',
+        !scrollable && 'min-h-0',
         !noPadding && 'p-6',
         scrollable && 'overflow-y-auto',
         className

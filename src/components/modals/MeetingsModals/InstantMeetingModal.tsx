@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Send, Video } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabaseClient';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface MeetingType {
   id: string;
@@ -16,8 +17,12 @@ interface InstantMeetingModalProps {
 }
 
 export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: InstantMeetingModalProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [loading, setLoading] = useState(false);
   const [meetingTypes, setMeetingTypes] = useState<MeetingType[]>([]);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const [formData, setFormData] = useState({
     meeting_type_id: '',
     customer_email: '',
@@ -138,7 +143,7 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-2">
-            <Video className="w-5 h-5 text-blue-600" />
+            <Video className="w-5 h-5" style={{ color: primary.base }} />
             <h2 className="text-xl font-semibold text-gray-900">Send Instant Meeting Invite</h2>
           </div>
           <button
@@ -160,7 +165,13 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
             <select
               value={formData.meeting_type_id}
               onChange={(e) => handleMeetingTypeChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onFocus={() => setFocusedField('meeting_type')}
+              onBlur={() => setFocusedField(null)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
+              style={focusedField === 'meeting_type' ? {
+                borderColor: primary.base,
+                boxShadow: `0 0 0 3px ${primary.base}33`
+              } : undefined}
               required
               disabled={loading}
             >
@@ -181,7 +192,13 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onFocus={() => setFocusedField('title')}
+              onBlur={() => setFocusedField(null)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
+              style={focusedField === 'title' ? {
+                borderColor: primary.base,
+                boxShadow: `0 0 0 3px ${primary.base}33`
+              } : undefined}
               placeholder="Quick consultation"
               required
               disabled={loading}
@@ -197,7 +214,13 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
               type="text"
               value={formData.customer_name}
               onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onFocus={() => setFocusedField('customer_name')}
+              onBlur={() => setFocusedField(null)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
+              style={focusedField === 'customer_name' ? {
+                borderColor: primary.base,
+                boxShadow: `0 0 0 3px ${primary.base}33`
+              } : undefined}
               placeholder="John Doe"
               required
               disabled={loading}
@@ -213,7 +236,13 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
               type="email"
               value={formData.customer_email}
               onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onFocus={() => setFocusedField('customer_email')}
+              onBlur={() => setFocusedField(null)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
+              style={focusedField === 'customer_email' ? {
+                borderColor: primary.base,
+                boxShadow: `0 0 0 3px ${primary.base}33`
+              } : undefined}
               placeholder="customer@example.com"
               required
               disabled={loading}
@@ -229,7 +258,13 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
               type="number"
               value={formData.duration_minutes}
               onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 30 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onFocus={() => setFocusedField('duration')}
+              onBlur={() => setFocusedField(null)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
+              style={focusedField === 'duration' ? {
+                borderColor: primary.base,
+                boxShadow: `0 0 0 3px ${primary.base}33`
+              } : undefined}
               min="15"
               max="480"
               step="15"
@@ -245,7 +280,13 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              onFocus={() => setFocusedField('notes')}
+              onBlur={() => setFocusedField(null)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none resize-none"
+              style={focusedField === 'notes' ? {
+                borderColor: primary.base,
+                boxShadow: `0 0 0 3px ${primary.base}33`
+              } : undefined}
               rows={3}
               placeholder="Additional information for the customer..."
               disabled={loading}
@@ -253,8 +294,14 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
           </div>
 
           {/* Info Notice */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-            <p className="text-sm text-blue-700">
+          <div 
+            className="border rounded-md p-3"
+            style={{
+              backgroundColor: `${primary.base}0d`,
+              borderColor: `${primary.base}33`
+            }}
+          >
+            <p className="text-sm" style={{ color: primary.base }}>
               <strong>Note:</strong> This will create an instant meeting scheduled for now. 
               An invitation email with the meeting link will be sent immediately to the customer.
             </p>
@@ -272,7 +319,12 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              className="flex-1 px-4 py-2 text-white rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{
+                backgroundColor: loading ? undefined : (isHovered ? primary.hover : primary.base)
+              }}
               disabled={loading}
             >
               {loading ? (

@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { XMarkIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import RemoteParticipantVideo from './RemoteParticipantVideo';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ParticipantData {
   identity: string;
@@ -63,6 +64,10 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
   onToggleSelfView,
   onToggleMirror,
 }) => {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+  const [hoveredThumbnail, setHoveredThumbnail] = useState<string | null>(null);
+
   return (
     <div
       className="flex-1 overflow-auto"
@@ -233,8 +238,14 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
             {/* Local Video Thumbnail - only show if someone else is pinned */}
             {showSelfView && pinnedParticipant && (
               <div
-                className="relative bg-gray-800 overflow-hidden rounded-lg group flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-                style={{ aspectRatio: '16/9', height: viewMode === 'sidebar' ? 'auto' : '120px' }}
+                className="relative bg-gray-800 overflow-hidden rounded-lg group flex-shrink-0 cursor-pointer transition-all"
+                style={{ 
+                  aspectRatio: '16/9', 
+                  height: viewMode === 'sidebar' ? 'auto' : '120px',
+                  boxShadow: hoveredThumbnail === 'local' ? `0 0 0 2px ${primary.base}` : undefined
+                }}
+                onMouseEnter={() => setHoveredThumbnail('local')}
+                onMouseLeave={() => setHoveredThumbnail(null)}
                 onClick={onUnpinParticipant}
               >
                 {!isVideoEnabled && (

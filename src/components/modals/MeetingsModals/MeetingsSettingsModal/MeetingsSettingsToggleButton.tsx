@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import MeetingsSettingsModal from '../MeetingsSettingsModal';
 
 interface MeetingsSettingsToggleButtonProps {
@@ -71,7 +72,10 @@ export default function MeetingsSettingsToggleButton({
   showIcon = true,
 }: MeetingsSettingsToggleButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPrimaryHovered, setIsPrimaryHovered] = useState(false);
   const { session, isAdmin } = useAuth();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
   // Check if user is admin
   if (!session || !isAdmin) {
@@ -80,7 +84,7 @@ export default function MeetingsSettingsToggleButton({
 
   // Variant styles
   const variantStyles = {
-    primary: 'bg-gradient-to-br from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500',
+    primary: '',
     secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
     ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500 border border-gray-300',
   };
@@ -103,6 +107,18 @@ export default function MeetingsSettingsToggleButton({
     <>
       <button
         onClick={() => setIsModalOpen(true)}
+        onMouseEnter={() => variant === 'primary' && setIsPrimaryHovered(true)}
+        onMouseLeave={() => variant === 'primary' && setIsPrimaryHovered(false)}
+        onFocus={(e) => {
+          if (variant === 'primary') {
+            e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+          }
+        }}
+        onBlur={(e) => {
+          if (variant === 'primary') {
+            e.currentTarget.style.boxShadow = '';
+          }
+        }}
         className={`
           inline-flex items-center gap-2 rounded-md font-medium
           transition-all duration-200
@@ -112,6 +128,16 @@ export default function MeetingsSettingsToggleButton({
           ${sizeStyles[size]}
           ${className}
         `}
+        style={
+          variant === 'primary'
+            ? {
+                background: isPrimaryHovered
+                  ? `linear-gradient(135deg, ${primary.hover}, ${primary.active})`
+                  : `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                color: 'white'
+              }
+            : undefined
+        }
         type="button"
         aria-label={buttonText}
       >

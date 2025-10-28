@@ -3,9 +3,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
-import MeetingTypesSection from '@/components/SiteManagement/sections/MeetingTypesSection';
-import AddEditMeetingTypeModal from '@/components/SiteManagement/modals/AddEditMeetingTypeModal';
+import MeetingTypesSection from './MeetingTypesSection';
+import AddEditMeetingTypeModal from './AddEditMeetingTypeModal';
 import { ClockIcon } from '@heroicons/react/24/outline';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface MeetingTypesModalProps {
   isOpen: boolean;
@@ -32,13 +33,11 @@ interface MeetingTypesModalProps {
  * />
  * ```
  */
-export default function MeetingTypesModal({
-  isOpen,
-  onClose,
-  organizationId,
-}: MeetingTypesModalProps) {
+export default function MeetingTypesModal({ isOpen, onClose, organizationId }: MeetingTypesModalProps) {
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [editingMeetingType, setEditingMeetingType] = useState<any>(null);
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
   const handleClose = () => {
     setShowAddEditModal(false);
@@ -46,20 +45,13 @@ export default function MeetingTypesModal({
     onClose();
   };
 
-  const modalTitle = (
-    <div className="flex items-center gap-2">
-      <ClockIcon className="w-6 h-6 text-teal-600" />
-      <span>Meeting Types</span>
-    </div>
-  );
-
   return (
     <>
       <BaseModal
         isOpen={isOpen}
         onClose={handleClose}
-        title={modalTitle}
-        subtitle="Manage available meeting types for customer bookings"
+        title="Appointment Types"
+        subtitle="Manage available appointment types for customer bookings"
         size="xl"
         draggable={true}
         resizable={true}
@@ -69,6 +61,8 @@ export default function MeetingTypesModal({
         closeOnBackdropClick={true}
         closeOnEscape={true}
         className="meeting-types-modal"
+        adminBadge={true}
+        adminBadgeColor={primary.base}
       >
         <MeetingTypesSection
           organizationId={organizationId}

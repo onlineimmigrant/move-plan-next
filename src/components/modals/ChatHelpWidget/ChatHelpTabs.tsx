@@ -43,7 +43,7 @@ export default function ChatHelpTabs({
   ];
 
   return (
-    <div className="flex justify-center px-4 py-3">
+    <div className="flex justify-center px-4 pt-3 pb-1">
       <div className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full pb-1">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;

@@ -18,6 +18,7 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { LocalDataTrack, Room, LocalAudioTrack, LocalVideoTrack } from 'twilio-video';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface VideoControlsProps {
   isMinimized: boolean;
@@ -89,6 +90,8 @@ const VideoControls: React.FC<VideoControlsProps> = ({
   onStopRecording,
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
   if (isMinimized) return null;
 
@@ -124,7 +127,16 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 
         <button
           onClick={onToggleChat}
-          className={`${isMobile ? 'p-4' : 'p-3'} rounded-full relative ${showChat ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'} transition-colors duration-200`}
+          className={`${isMobile ? 'p-4' : 'p-3'} rounded-full relative transition-colors duration-200`}
+          style={{
+            backgroundColor: showChat ? primary.base : '#4b5563',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = showChat ? primary.hover : '#6b7280';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = showChat ? primary.base : '#4b5563';
+          }}
           title="Toggle chat"
         >
           <ChatBubbleLeftRightIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
@@ -138,7 +150,16 @@ const VideoControls: React.FC<VideoControlsProps> = ({
         {/* More Menu Button */}
         <button
           onClick={() => setShowMoreMenu(!showMoreMenu)}
-          className={`${isMobile ? 'p-4' : 'p-3'} rounded-full ${showMoreMenu ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'} transition-colors duration-200`}
+          className={`${isMobile ? 'p-4' : 'p-3'} rounded-full transition-colors duration-200`}
+          style={{
+            backgroundColor: showMoreMenu ? primary.base : '#4b5563',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = showMoreMenu ? primary.hover : '#6b7280';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = showMoreMenu ? primary.base : '#4b5563';
+          }}
           title="More options"
         >
           <EllipsisHorizontalIcon className={`${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
@@ -180,9 +201,16 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                   onToggleScreenShare();
                   setShowMoreMenu(false);
                 }}
-                className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 ${
-                  isScreenSharing ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600'
-                }`}
+                className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200"
+                style={{
+                  backgroundColor: isScreenSharing ? primary.base : '#374151',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = isScreenSharing ? primary.hover : '#4b5563';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = isScreenSharing ? primary.base : '#374151';
+                }}
                 title={isScreenSharing ? "Stop screen share" : "Share screen"}
               >
                 <ComputerDesktopIcon className="w-6 h-6" />
@@ -210,9 +238,16 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                   onToggleParticipants();
                   setShowMoreMenu(false);
                 }}
-                className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 relative ${
-                  showParticipants ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600'
-                }`}
+                className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 relative"
+                style={{
+                  backgroundColor: showParticipants ? primary.base : '#374151',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = showParticipants ? primary.hover : '#4b5563';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = showParticipants ? primary.base : '#374151';
+                }}
                 title="Show participants"
               >
                 <UserGroupIcon className="w-6 h-6" />
@@ -230,9 +265,25 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                   onToggleRecording();
                   setShowMoreMenu(false);
                 }}
-                className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 ${
-                  isRecording ? 'bg-red-600 hover:bg-red-500 animate-pulse' : 'bg-gray-700 hover:bg-gray-600'
-                }`}
+                className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200"
+                style={{
+                  backgroundColor: isRecording ? primary.base : '#374151',
+                  animation: isRecording ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isRecording) {
+                    e.currentTarget.style.backgroundColor = '#4b5563';
+                  } else {
+                    e.currentTarget.style.backgroundColor = primary.hover;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isRecording) {
+                    e.currentTarget.style.backgroundColor = '#374151';
+                  } else {
+                    e.currentTarget.style.backgroundColor = primary.base;
+                  }
+                }}
                 title={isRecording ? "Stop recording" : "Start recording"}
               >
                 {isRecording ? (
@@ -249,9 +300,16 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                   onToggleSettings();
                   setShowMoreMenu(false);
                 }}
-                className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 ${
-                  showSettings ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600'
-                }`}
+                className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200"
+                style={{
+                  backgroundColor: showSettings ? primary.base : '#374151',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = showSettings ? primary.hover : '#4b5563';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = showSettings ? primary.base : '#374151';
+                }}
                 title="Open settings"
               >
                 <Cog6ToothIcon className="w-6 h-6" />
@@ -264,9 +322,16 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                   onToggleNotes();
                   setShowMoreMenu(false);
                 }}
-                className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 ${
-                  showNotes ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600'
-                }`}
+                className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200"
+                style={{
+                  backgroundColor: showNotes ? primary.base : '#374151',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = showNotes ? primary.hover : '#4b5563';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = showNotes ? primary.base : '#374151';
+                }}
                 title="Meeting notes"
               >
                 <DocumentTextIcon className="w-6 h-6" />

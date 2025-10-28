@@ -2,6 +2,7 @@
 
 import { SignalIcon, XMarkIcon, MinusIcon, ArrowDownIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import { usePanelManagement } from '../hooks/usePanelManagement';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface SettingsPanelProps {
   showSettings: boolean;
@@ -46,6 +47,8 @@ export default function SettingsPanel({
   panelManagement,
   onClose
 }: SettingsPanelProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const { panels, toggleMinimize, startDrag, bringToFront } = panelManagement;
   const panelState = panels['settings'];
 
@@ -71,13 +74,14 @@ export default function SettingsPanel({
     <div
       className={`absolute ${isMobile ? 'inset-0' : 'w-80 max-h-[80vh]'} bg-gradient-to-b from-slate-800 to-slate-900 rounded-xl shadow-2xl border border-slate-700/50 flex flex-col z-50 backdrop-blur-sm overflow-hidden transition-all duration-200 ${
         isMinimized ? 'h-12' : ''
-      } ${isDragging ? 'shadow-blue-500/30' : ''}`}
+      }`}
       style={{
         left: isMobile ? '0' : position.x,
         top: isMobile ? '0' : position.y,
         transform: isMobile ? 'none' : 'none',
         zIndex,
-        cursor: isDragging ? 'grabbing' : 'default'
+        cursor: isDragging ? 'grabbing' : 'default',
+        boxShadow: isDragging ? `0 20px 25px -5px ${primary.base}30, 0 10px 10px -5px ${primary.base}20` : undefined
       }}
       onMouseDown={() => bringToFront('settings')}
     >
@@ -90,7 +94,10 @@ export default function SettingsPanel({
         }}
       >
         <div className="flex items-center gap-2">
-          <SignalIcon className="w-5 h-5 text-blue-400" />
+          <SignalIcon 
+            className="w-5 h-5" 
+            style={{ color: primary.base }}
+          />
           <h3 className="text-base font-semibold text-white">Settings</h3>
         </div>
         <div className="flex items-center gap-1">
@@ -119,7 +126,16 @@ export default function SettingsPanel({
           <select
             value={videoQuality}
             onChange={(e) => changeVideoQuality(e.target.value as 'low' | 'medium' | 'high' | 'ultra' | 'maximum')}
-            className="w-full bg-slate-700/60 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-slate-700/80 transition-all duration-200 border border-slate-600/50 focus:border-blue-500/50"
+            className="w-full bg-slate-700/60 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:bg-slate-700/80 transition-all duration-200 border border-slate-600/50"
+            style={{ '--ring-color': `${primary.base}80`, '--border-color': `${primary.base}80` } as React.CSSProperties}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = `${primary.base}80`;
+              e.currentTarget.style.boxShadow = `0 0 0 2px ${primary.base}80`;
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'rgb(71 85 105 / 0.5)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             <option value="low">Low (240p)</option>
             <option value="medium">Medium (480p)</option>
@@ -146,9 +162,13 @@ export default function SettingsPanel({
                 onClick={() => setBackgroundMode('none')}
                 className={`py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg ${
                   backgroundMode === 'none'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-blue-500/20'
+                    ? 'text-white'
                     : 'bg-slate-700/80 text-slate-300 hover:bg-slate-600/80 hover:text-white'
                 }`}
+                style={backgroundMode === 'none' ? {
+                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                  boxShadow: `0 10px 15px -3px ${primary.base}33`
+                } : {}}
               >
                 None
               </button>
@@ -156,9 +176,13 @@ export default function SettingsPanel({
                 onClick={() => setBackgroundMode('blur')}
                 className={`py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg ${
                   backgroundMode === 'blur'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-blue-500/20'
+                    ? 'text-white'
                     : 'bg-slate-700/80 text-slate-300 hover:bg-slate-600/80 hover:text-white'
                 }`}
+                style={backgroundMode === 'blur' ? {
+                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                  boxShadow: `0 10px 15px -3px ${primary.base}33`
+                } : {}}
               >
                 Blur
               </button>
@@ -166,9 +190,13 @@ export default function SettingsPanel({
                 onClick={() => setBackgroundMode('color')}
                 className={`py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg ${
                   backgroundMode === 'color'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-blue-500/20'
+                    ? 'text-white'
                     : 'bg-slate-700/80 text-slate-300 hover:bg-slate-600/80 hover:text-white'
                 }`}
+                style={backgroundMode === 'color' ? {
+                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                  boxShadow: `0 10px 15px -3px ${primary.base}33`
+                } : {}}
               >
                 Color
               </button>
@@ -176,9 +204,13 @@ export default function SettingsPanel({
                 onClick={() => setBackgroundMode('image')}
                 className={`py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg ${
                   backgroundMode === 'image'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-blue-500/20'
+                    ? 'text-white'
                     : 'bg-slate-700/80 text-slate-300 hover:bg-slate-600/80 hover:text-white'
                 }`}
+                style={backgroundMode === 'image' ? {
+                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                  boxShadow: `0 10px 15px -3px ${primary.base}33`
+                } : {}}
               >
                 Image
               </button>
@@ -231,7 +263,10 @@ export default function SettingsPanel({
                   />
                   <label
                     htmlFor="background-image-upload"
-                    className="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:from-blue-700 hover:to-blue-600 transition-all duration-200 hover:scale-105 shadow-lg"
+                    className="inline-block px-4 py-2 text-white rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 hover:scale-105 shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})` }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.active})`}
+                    onMouseLeave={(e) => e.currentTarget.style.background = `linear-gradient(135deg, ${primary.base}, ${primary.hover})`}
                   >
                     Choose Image
                   </label>
@@ -301,19 +336,28 @@ export default function SettingsPanel({
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600/50 space-y-4">
             {/* Video Stream Stats */}
             <div>
-              <h4 className="text-xs font-medium text-slate-300 mb-2 flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+              <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                <div 
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: `${primary.base}99` }}
+                ></div>
                 Video Stream Bitrate
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <ArrowDownIcon className="w-4 h-4 text-blue-400" />
+                  <ArrowDownIcon 
+                    className="w-4 h-4" 
+                    style={{ color: `${primary.base}99` }}
+                  />
                   <span className="text-white font-medium">
                     {networkStats.downloadSpeed > 0 ? `${networkStats.downloadSpeed} Mbps` : 'Measuring...'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ArrowUpIcon className="w-4 h-4 text-blue-400" />
+                  <ArrowUpIcon 
+                    className="w-4 h-4" 
+                    style={{ color: `${primary.base}99` }}
+                  />
                   <span className="text-white font-medium">
                     {networkStats.uploadSpeed > 0 ? `${networkStats.uploadSpeed} Mbps` : 'Measuring...'}
                   </span>
@@ -340,11 +384,16 @@ export default function SettingsPanel({
                 <span className="text-slate-400">Quality:</span>
                 <span className={`font-medium px-2 py-1 rounded-full text-xs ${
                   networkStats.quality === 'excellent' ? 'bg-green-500/20 text-green-400' :
-                  networkStats.quality === 'good' ? 'bg-blue-500/20 text-blue-400' :
+                  networkStats.quality === 'good' ? '' :
                   networkStats.quality === 'fair' ? 'bg-yellow-500/20 text-yellow-400' :
                   networkStats.quality === 'poor' ? 'bg-orange-500/20 text-orange-400' :
                   'bg-red-500/20 text-red-400'
-                }`}>
+                }`}
+                style={networkStats.quality === 'good' ? {
+                  backgroundColor: `${primary.base}33`,
+                  color: `${primary.base}cc`
+                } : {}}
+                >
                   {networkStats.quality.charAt(0).toUpperCase() + networkStats.quality.slice(1)}
                 </span>
               </div>
@@ -360,7 +409,17 @@ export default function SettingsPanel({
 
         <button
           onClick={togglePictureInPicture}
-          className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl text-sm font-medium shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-blue-500/20"
+          className="w-full py-3 text-white rounded-xl text-sm font-medium shadow-lg transition-all duration-200 hover:scale-105"
+          style={{ 
+            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+            boxShadow: `0 10px 15px -3px ${primary.base}33`
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.active})`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = `linear-gradient(135deg, ${primary.base}, ${primary.hover})`;
+          }}
         >
           {isPiP ? 'Exit' : 'Enable'} Picture-in-Picture
         </button>

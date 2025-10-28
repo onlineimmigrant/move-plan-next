@@ -1,6 +1,7 @@
 'use client';
 
 import { RemoteVideoTrack, RemoteAudioTrack } from 'twilio-video';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import {
   MicrophoneIcon,
   VideoCameraSlashIcon,
@@ -49,6 +50,8 @@ export default function ParticipantsPanel({
   panelManagement,
   onClose
 }: ParticipantsPanelProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const { panels, toggleMinimize, startDrag, bringToFront } = panelManagement;
   const panelState = panels['participants'];
 
@@ -63,13 +66,14 @@ export default function ParticipantsPanel({
     <div
       className={`absolute ${isMobile ? 'inset-0' : 'w-80 max-h-[80vh]'} bg-gradient-to-b from-slate-800 to-slate-900 rounded-xl shadow-2xl border border-slate-700/50 flex flex-col z-50 backdrop-blur-sm overflow-hidden transition-all duration-200 ${
         isMinimized ? 'h-12' : ''
-      } ${isDragging ? 'shadow-blue-500/30' : ''}`}
+      }`}
       style={{
         left: isMobile ? '0' : position.x,
         top: isMobile ? '0' : position.y,
         transform: isMobile ? 'none' : 'none',
         zIndex,
-        cursor: isDragging ? 'grabbing' : 'default'
+        cursor: isDragging ? 'grabbing' : 'default',
+        boxShadow: isDragging ? `0 20px 25px -5px ${primary.base}30, 0 10px 10px -5px ${primary.base}20` : undefined
       }}
       onMouseDown={() => bringToFront('participants')}
     >
@@ -82,7 +86,13 @@ export default function ParticipantsPanel({
         }}
       >
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg 
+            className="w-5 h-5" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+            style={{ color: primary.base }}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
           </svg>
           <h3 className="text-base font-semibold text-white">Participants</h3>
@@ -114,7 +124,10 @@ export default function ParticipantsPanel({
         {/* Local participant */}
         <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 hover:bg-slate-700/50 transition-all duration-200 border border-slate-600/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+              style={{ background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})` }}
+            >
               <span className="text-sm font-semibold text-white">You</span>
             </div>
             <div>

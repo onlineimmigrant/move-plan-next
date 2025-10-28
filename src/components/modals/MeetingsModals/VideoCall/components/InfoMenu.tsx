@@ -3,6 +3,7 @@
 import React from 'react';
 import { ClipboardDocumentIcon, XMarkIcon, MinusIcon } from '@heroicons/react/24/outline';
 import { usePanelManagement } from '../hooks/usePanelManagement';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface InfoMenuProps {
   showInfoMenu: boolean;
@@ -29,6 +30,8 @@ export default function InfoMenu({
   panelManagement,
   onClose
 }: InfoMenuProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const { panels, toggleMinimize, startDrag, bringToFront } = panelManagement;
   const panelState = panels['info'];
 
@@ -42,15 +45,18 @@ export default function InfoMenu({
 
   return (
     <div
-      className={`absolute ${isMobile ? 'inset-0' : 'w-80'} bg-gradient-to-b from-slate-800 to-slate-900 rounded-xl shadow-2xl border border-slate-700/50 z-50 backdrop-blur-sm overflow-hidden transition-all duration-200 ${
+      className={`absolute ${isMobile ? 'inset-0' : 'w-80'} bg-gradient-to-b from-slate-800 to-slate-900 rounded-xl border border-slate-700/50 z-50 backdrop-blur-sm overflow-hidden transition-all duration-200 ${
         isMinimized ? 'h-12' : ''
-      } ${isDragging ? 'shadow-blue-500/30' : ''}`}
+      }`}
       style={{
         left: isMobile ? '0' : position.x,
         top: isMobile ? '0' : position.y,
         transform: isMobile ? 'none' : 'none',
         zIndex,
-        cursor: isDragging ? 'grabbing' : 'default'
+        cursor: isDragging ? 'grabbing' : 'default',
+        boxShadow: isDragging 
+          ? `0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 30px ${primary.base}4d` 
+          : '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
       }}
       onMouseDown={() => bringToFront('info')}
     >
@@ -63,7 +69,13 @@ export default function InfoMenu({
         }}
       >
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg 
+            className="w-5 h-5" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+            style={{ color: primary.base }}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <h3 className="text-base font-semibold text-white">Meeting Info</h3>

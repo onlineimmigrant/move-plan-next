@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ClockIcon, UserCircleIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import { Booking } from '@/context/MeetingContext';
 import { format } from 'date-fns';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface WaitingRoomProps {
   booking: Booking;
@@ -11,6 +12,8 @@ interface WaitingRoomProps {
 }
 
 export default function WaitingRoom({ booking, onStatusChange }: WaitingRoomProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [waitingTime, setWaitingTime] = useState<string>('');
   const [dots, setDots] = useState('');
   const [isLeaving, setIsLeaving] = useState(false);
@@ -114,8 +117,11 @@ export default function WaitingRoom({ booking, onStatusChange }: WaitingRoomProp
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
       {/* Icon */}
       <div className="relative mb-6">
-        <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
-          <VideoCameraIcon className="w-12 h-12 text-blue-600" />
+        <div 
+          className="w-24 h-24 rounded-full flex items-center justify-center animate-pulse"
+          style={{ backgroundColor: `${primary.base}1a` }}
+        >
+          <VideoCameraIcon className="w-12 h-12" style={{ color: primary.base }} />
         </div>
         <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center border-4 border-white">
           <ClockIcon className="w-5 h-5 text-yellow-600" />
@@ -170,8 +176,14 @@ export default function WaitingRoom({ booking, onStatusChange }: WaitingRoomProp
       </div>
 
       {/* Tips */}
-      <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-100 max-w-md">
-        <p className="text-sm text-blue-800 text-center">
+      <div 
+        className="mt-8 p-4 rounded-lg border max-w-md"
+        style={{
+          backgroundColor: `${primary.base}0d`,
+          borderColor: `${primary.base}33`
+        }}
+      >
+        <p className="text-sm text-center" style={{ color: primary.active }}>
           <strong>Tip:</strong> Make sure your camera and microphone are ready.
           The meeting will start automatically once you're admitted.
         </p>
@@ -182,7 +194,16 @@ export default function WaitingRoom({ booking, onStatusChange }: WaitingRoomProp
         <button
           onClick={handleLeaveWaitingRoom}
           disabled={isLeaving}
-          className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          style={{
+            boxShadow: '0 0 0 2px transparent',
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.boxShadow = `0 0 0 2px ${primary.base}33`;
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 0 2px transparent';
+          }}
         >
           {isLeaving ? 'Leaving...' : 'Leave Waiting Room'}
         </button>

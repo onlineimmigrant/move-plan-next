@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
 import { useSettings } from '@/context/SettingsContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { 
   ClockIcon, 
   CalendarIcon, 
@@ -29,6 +30,8 @@ interface MeetingSettings {
 
 export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSettingsModalProps) {
   const { settings } = useSettings();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,25 +121,21 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const modalTitle = (
-    <div className="flex items-center gap-2">
-      <ClockIcon className="w-6 h-6 text-teal-600" />
-      <span>Meeting Settings</span>
-    </div>
-  );
-
   return (
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={modalTitle}
+      title="Appointment Settings"
+      subtitle="Configure booking options and availability"
       size="lg"
+      adminBadge={true}
+      adminBadgeColor={primary.base}
     >
       <div className="space-y-6">
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: primary.base }}></div>
           </div>
         )}
 
@@ -165,9 +164,20 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
         {!loading && (
           <div className="space-y-6">
             {/* Admin Info Banner - No top rounded corners */}
-            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-b-lg p-4 border-b border-x border-teal-200">
+            <div 
+              className="rounded-b-lg p-4"
+              style={{
+                background: `linear-gradient(135deg, ${primary.base}0d, ${primary.base}1a)`,
+                borderBottom: `1px solid ${primary.base}33`,
+                borderLeft: `1px solid ${primary.base}33`,
+                borderRight: `1px solid ${primary.base}33`
+              }}
+            >
               <div className="flex items-start gap-3">
-                <ClockIcon className="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                            <ClockIcon 
+              className="h-4 w-4 flex-shrink-0" 
+              style={{ color: primary.base }}
+            />
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">
                     Admin Scheduling Access
@@ -197,7 +207,15 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                       ...prev,
                       business_hours_start: `${e.target.value}:00`
                     }))}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = primary.base;
+                      e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '';
+                      e.currentTarget.style.boxShadow = '';
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none transition-all"
                   />
                 </div>
                 <div>
@@ -211,7 +229,15 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                       ...prev,
                       business_hours_end: `${e.target.value}:00`
                     }))}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = primary.base;
+                      e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '';
+                      e.currentTarget.style.boxShadow = '';
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -225,11 +251,12 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                   <button
                     key={duration}
                     onClick={() => setMeetingSettings(prev => ({ ...prev, slot_duration_minutes: duration }))}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
-                      meetingSettings.slot_duration_minutes === duration
-                        ? 'border-teal-600 bg-teal-50 text-teal-700'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                    }`}
+                    className="px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors"
+                    style={{
+                      borderColor: meetingSettings.slot_duration_minutes === duration ? primary.base : '#e5e7eb',
+                      backgroundColor: meetingSettings.slot_duration_minutes === duration ? `${primary.base}1a` : 'white',
+                      color: meetingSettings.slot_duration_minutes === duration ? primary.active : '#374151'
+                    }}
                   >
                     {duration} min
                   </button>
@@ -245,11 +272,12 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                   <button
                     key={index}
                     onClick={() => handleDayToggle(index)}
-                    className={`px-3 py-2 text-xs font-medium rounded-lg border-2 transition-colors ${
-                      meetingSettings.available_days?.includes(index)
-                        ? 'border-teal-600 bg-teal-50 text-teal-700'
-                        : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
-                    }`}
+                    className="px-3 py-2 text-xs font-medium rounded-lg border-2 transition-colors"
+                    style={{
+                      borderColor: meetingSettings.available_days?.includes(index) ? primary.base : '#e5e7eb',
+                      backgroundColor: meetingSettings.available_days?.includes(index) ? `${primary.base}1a` : 'white',
+                      color: meetingSettings.available_days?.includes(index) ? primary.active : '#9ca3af'
+                    }}
                   >
                     {day}
                   </button>
@@ -273,7 +301,15 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                       ...prev,
                       min_booking_notice_hours: parseInt(e.target.value) || 0
                     }))}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = primary.base;
+                      e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '';
+                      e.currentTarget.style.boxShadow = '';
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none transition-all"
                   />
                 </div>
                 <div>
@@ -288,7 +324,15 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                       ...prev,
                       max_booking_days_ahead: parseInt(e.target.value) || 1
                     }))}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = primary.base;
+                      e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '';
+                      e.currentTarget.style.boxShadow = '';
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -307,9 +351,16 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                   ...prev,
                   auto_confirm_bookings: !prev.auto_confirm_bookings
                 }))}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 ${
-                  meetingSettings.auto_confirm_bookings ? 'bg-teal-600' : 'bg-gray-200'
-                }`}
+                onFocus={(e) => {
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.boxShadow = '';
+                }}
+                className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                style={{
+                  backgroundColor: meetingSettings.auto_confirm_bookings ? primary.base : '#e5e7eb'
+                }}
               >
                 <span
                   className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -332,9 +383,16 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                   ...prev,
                   is_24_hours: !prev.is_24_hours
                 }))}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 ${
-                  meetingSettings.is_24_hours ? 'bg-teal-600' : 'bg-gray-200'
-                }`}
+                onFocus={(e) => {
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.boxShadow = '';
+                }}
+                className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                style={{
+                  backgroundColor: meetingSettings.is_24_hours ? primary.base : '#e5e7eb'
+                }}
               >
                 <span
                   className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -345,9 +403,18 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
             </div>
 
             {/* Timezone Info */}
-            <div className="p-4 bg-gradient-to-br from-cyan-50 to-teal-50 rounded-lg border border-cyan-200">
+            <div 
+              className="p-4 rounded-lg"
+              style={{
+                background: `linear-gradient(135deg, ${primary.base}0d, ${primary.base}1a)`,
+                border: `1px solid ${primary.base}33`
+              }}
+            >
               <div className="flex items-center space-x-2">
-                <ClockIcon className="h-5 w-5 text-teal-600" />
+                <ClockIcon 
+                  className="h-5 w-5" 
+                  style={{ color: primary.base }}
+                />
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">Timezone Information</h3>
                   <p className="text-xs text-gray-600 mt-0.5">
@@ -371,7 +438,20 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                onMouseEnter={(e) => {
+                  if (!saving) {
+                    e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.active})`;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!saving) {
+                    e.currentTarget.style.background = `linear-gradient(135deg, ${primary.base}, ${primary.hover})`;
+                  }
+                }}
+                className="px-6 py-2 text-sm font-medium text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                style={{
+                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`
+                }}
               >
                 {saving ? (
                   <>

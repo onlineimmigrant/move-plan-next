@@ -22,6 +22,46 @@ import {
 import Tooltip from '@/components/Tooltip';
 import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
+
+// Navigation Link Card Component with hover state
+function AccountLinkCard({ item, pathname, primary, onLinkClick }: any) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isActive = pathname === item.href;
+  const isAdminPage = item.href === '/admin';
+  
+  return (
+    <Tooltip content={item.tooltip}>
+      <Link
+        href={item.href}
+        onClick={() => onLinkClick(item.href)}
+        className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
+        style={{
+          backgroundColor: isActive ? primary.lighter : (isHovered ? primary.lighter : 'white')
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        title={item.label}
+        aria-current={isActive ? 'page' : undefined}
+      >
+        <div className="transform group-hover:scale-110 transition-transform">
+          <item.icon
+            className="h-10 w-10 transition-colors"
+            style={{
+              color: (isAdminPage || isHovered) ? primary.base : '#4b5563'
+            }}
+          />
+        </div>
+        <span 
+          className="mt-3 text-sm font-medium text-center sm:text-base transition-colors"
+          style={{ color: isHovered ? primary.base : '#1f2937' }}
+        >
+          {item.label}
+        </span>
+      </Link>
+    </Tooltip>
+  );
+}
 
 export default function AccountPage() {
   const { session, isAdmin, fullName, isLoading, error } = useAuth();
@@ -30,6 +70,8 @@ export default function AccountPage() {
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
   const pathname = usePathname();
   const { t } = useAccountTranslations();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
   const combinedLoading = isLoading || studentLoading;
 
@@ -67,7 +109,7 @@ export default function AccountPage() {
       ? [
           {
             label: t.student,
-            icon: <AcademicCapIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+            icon: AcademicCapIcon,
             href: '/account/edupro',
             tooltip: t.learningPlatform,
           },
@@ -75,37 +117,37 @@ export default function AccountPage() {
       : []),
     {
       label: t.profile,
-      icon: <UserIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      icon: UserIcon,
       href: '/account/profile',
       tooltip: t.personalInfo,
     },
         {
       label: t.ai,
-      icon: <RocketLaunchIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      icon: RocketLaunchIcon,
       href: '/account/ai',
       tooltip: t.defineAiModel,
     },
     {
       label: t.purchases,
-      icon: <ShoppingBagIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      icon: ShoppingBagIcon,
       href: '/account/purchases',
       tooltip: t.list,
     },
     {
       label: t.payments,
-      icon: <CreditCardIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      icon: CreditCardIcon,
       href: '/account/payments',
       tooltip: t.list,
     },
     {
       label: t.billing,
-      icon: <DocumentTextIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      icon: DocumentTextIcon,
       href: '/account/payments/billing',
       tooltip: t.billingAccountManagement,
     },
     {
       label: t.receipts,
-      icon: <ReceiptPercentIcon className="h-10 w-10 text-gray-600 group-hover:text-sky-600 transition-colors" />,
+      icon: ReceiptPercentIcon,
       href: '/account/payments/receipts',
       tooltip: t.list,
     },
@@ -113,7 +155,7 @@ export default function AccountPage() {
       ? [
           {
             label: t.admin,
-            icon: <ArrowsRightLeftIcon className="h-10 w-10 text-sky-600 group-hover:text-sky-600 transition-colors" />,
+            icon: ArrowsRightLeftIcon,
             href: '/admin',
             tooltip: t.dashboard,
           },
@@ -135,34 +177,25 @@ export default function AccountPage() {
         <Link href="/account">
           <h1 className="mt-16 sm:mt-18 mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
             {t.account}
-            <span className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+            <span 
+              className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full" 
+              style={{ backgroundColor: primary.base }}
+            />
           </h1>
         </Link>
         <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {dashboardLinks.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Tooltip content={item.tooltip} key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={() => handleLinkClick(item.href)}
-                  className={`group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-sky-50 transition-all duration-300 ${
-                    isActive ? 'bg-sky-50 shadow-md' : ''
-                  }`}
-                  title={item.label}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <div className="transform group-hover:scale-110 transition-transform">{item.icon}</div>
-                  <span className="mt-3 text-sm font-medium text-gray-800 group-hover:text-sky-600 text-center sm:text-base">
-                    {item.label}
-                  </span>
-                </Link>
-              </Tooltip>
-            );
-          })}
+          {dashboardLinks.map((item) => (
+            <AccountLinkCard 
+              key={item.href} 
+              item={item} 
+              pathname={pathname} 
+              primary={primary}
+              onLinkClick={handleLinkClick}
+            />
+          ))}
         </div>
         <div className="my-16 sm:my-32 flex justify-center">
-          <UserCircleIcon className="h-16 w-16 text-sky-600" />
+          <UserCircleIcon className="h-16 w-16" style={{ color: primary.base }} />
         </div>
      {/*{session && <ChatWidget />}*/} 
         {pathname === '/account' && (

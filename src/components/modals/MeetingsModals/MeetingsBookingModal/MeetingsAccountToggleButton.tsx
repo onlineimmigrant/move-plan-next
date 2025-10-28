@@ -6,6 +6,7 @@ import { VideoCameraIcon } from '@heroicons/react/24/outline';
 import MeetingsBookingModal from './MeetingsBookingModal';
 import { useMeetingLauncher } from '@/hooks/useMeetingLauncher';
 import { supabase } from '@/lib/supabase';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 /**
  * MeetingsAccountToggleButton
@@ -27,6 +28,8 @@ export default function MeetingsAccountToggleButton() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { launchFromBooking } = useMeetingLauncher();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
   // Check authentication status
   useEffect(() => {
@@ -88,8 +91,11 @@ export default function MeetingsAccountToggleButton() {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-36 w-14 h-14 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-full shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center z-[9998] group"
-        aria-label="Schedule Meeting"
+        className="fixed bottom-4 right-36 w-14 h-14 text-white rounded-full shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center z-[9998] group"
+        style={{ 
+          background: `linear-gradient(135deg, ${primary.base}, ${primary.hover}, ${primary.active})` 
+        }}
+        aria-label="Schedule Appointment"
       >
         <VideoCameraIcon className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
       </button>

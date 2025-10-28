@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Small UX follow-ups implemented:
 // - Keyboard focus: Input auto-focuses when chat panel opens and is not minimized
@@ -78,6 +79,8 @@ export default function ChatPanel({
   getParticipantColor,
   panelManagement
 }: ChatPanelProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const { panels, toggleMinimize, startDrag, bringToFront } = panelManagement;
   const panelState = panels['chat'];
 
@@ -103,13 +106,14 @@ export default function ChatPanel({
   return (
     <div className={`absolute ${isMobile ? 'inset-0' : 'right-4 top-20 bottom-20 w-80'} bg-gradient-to-b from-slate-800 to-slate-900 rounded-xl shadow-2xl border border-slate-700/50 flex flex-col z-50 backdrop-blur-sm overflow-hidden transition-all duration-200 ${
       isMinimized ? 'h-12' : ''
-    } ${isDragging ? 'shadow-blue-500/30' : ''}`}
+    }`}
       style={{
         left: isMobile ? '0' : position.x,
         top: isMobile ? '0' : position.y,
         transform: isMobile ? 'none' : 'none',
         zIndex,
-        cursor: isDragging ? 'grabbing' : 'default'
+        cursor: isDragging ? 'grabbing' : 'default',
+        boxShadow: isDragging ? `0 20px 25px -5px ${primary.base}30, 0 10px 10px -5px ${primary.base}20` : undefined
       }}
       onMouseDown={() => bringToFront('chat')}
     >
@@ -121,10 +125,16 @@ export default function ChatPanel({
         }}
       >
         <div className="flex items-center gap-2">
-          <ChatBubbleLeftRightIcon className="w-5 h-5 text-blue-400" />
+          <ChatBubbleLeftRightIcon 
+            className="w-5 h-5" 
+            style={{ color: primary.base }}
+          />
           <h3 className="text-base font-semibold text-white">Chat</h3>
           {chatMessages.length > 0 && (
-            <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+            <span 
+              className="text-white text-xs px-2 py-0.5 rounded-full font-medium"
+              style={{ backgroundColor: primary.base }}
+            >
               {chatMessages.length}
             </span>
           )}
@@ -161,23 +171,35 @@ export default function ChatPanel({
           </div>
         ) : (
           chatMessages.map((msg, index) => {
-            const bubbleColor = msg.isLocal
-              ? 'bg-gradient-to-r from-blue-600/90 to-blue-500/90 shadow-lg shadow-blue-500/20'
-              : 'bg-gradient-to-r from-slate-700/90 to-slate-600/90 shadow-lg shadow-slate-700/20';
+            const bubbleStyle = msg.isLocal
+              ? {
+                  background: `linear-gradient(135deg, ${primary.base}e6, ${primary.hover}e6)`,
+                  boxShadow: `0 10px 15px -3px ${primary.base}33`
+                }
+              : {
+                  background: 'linear-gradient(135deg, rgb(51 65 85 / 0.9), rgb(71 85 105 / 0.9))',
+                  boxShadow: '0 10px 15px -3px rgb(51 65 85 / 0.2)'
+                };
 
             return (
               <div
                 key={`${msg.timestamp.getTime()}-${index}`}
                 className={`flex ${msg.isLocal ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}
               >
-                <div className={`max-w-[85%] ${bubbleColor} rounded-2xl p-3 backdrop-blur-sm border border-white/10`}>
+                <div 
+                  className="max-w-[85%] rounded-2xl p-3 backdrop-blur-sm border border-white/10"
+                  style={bubbleStyle}
+                >
                   <div className="text-xs text-slate-300 mb-1.5 font-semibold opacity-90">
                     {msg.sender}
                   </div>
                   {msg.type === 'file' && msg.fileData ? (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-sm text-white">
-                        <PaperClipIcon className="w-4 h-4 text-blue-300" />
+                        <PaperClipIcon 
+                          className="w-4 h-4" 
+                          style={{ color: `${primary.lighter}cc` }}
+                        />
                         <span className="font-medium">{msg.fileData.name}</span>
                       </div>
                       <div className="text-xs text-slate-400 bg-slate-800/50 px-2 py-1 rounded-lg inline-block">
@@ -201,7 +223,19 @@ export default function ChatPanel({
                       <a
                         href={msg.fileData.url}
                         download={msg.fileData.name}
-                        className="flex items-center gap-2 text-xs text-blue-300 hover:text-blue-200 transition-colors bg-blue-500/10 hover:bg-blue-500/20 px-2 py-1 rounded-lg"
+                        className="flex items-center gap-2 text-xs transition-colors px-2 py-1 rounded-lg"
+                        style={{
+                          color: `${primary.lighter}cc`,
+                          backgroundColor: `${primary.base}1a`
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = `${primary.lighter}e6`;
+                          e.currentTarget.style.backgroundColor = `${primary.base}33`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = `${primary.lighter}cc`;
+                          e.currentTarget.style.backgroundColor = `${primary.base}1a`;
+                        }}
                       >
                         <ArrowDownTrayIcon className="w-4 h-4" />
                         Download
@@ -303,12 +337,39 @@ export default function ChatPanel({
               }
             }}
             placeholder="Type a message..."
-            className="flex-1 bg-slate-700/60 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-slate-700/80 transition-all duration-200 placeholder-slate-400 border border-slate-600/50 focus:border-blue-500/50"
+            className="flex-1 bg-slate-700/60 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:bg-slate-700/80 transition-all duration-200 placeholder-slate-400 border border-slate-600/50"
+            style={{
+              '--focus-ring-color': `${primary.base}80`,
+              '--focus-border-color': `${primary.base}80`
+            } as React.CSSProperties}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = `${primary.base}80`;
+              e.currentTarget.style.boxShadow = `0 0 0 2px ${primary.base}80`;
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'rgb(71 85 105 / 0.5)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           />
           <button
             onClick={sendChatMessage}
             disabled={!chatInput.trim()}
-            className="p-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed rounded-xl transition-all duration-200 hover:scale-105 shadow-lg disabled:shadow-none disabled:hover:scale-100"
+            className="p-3 disabled:cursor-not-allowed rounded-xl transition-all duration-200 hover:scale-105 shadow-lg disabled:shadow-none disabled:hover:scale-100"
+            style={{
+              background: chatInput.trim() 
+                ? `linear-gradient(135deg, ${primary.base}, ${primary.hover})`
+                : 'linear-gradient(135deg, rgb(71 85 105), rgb(51 65 85))'
+            }}
+            onMouseEnter={(e) => {
+              if (chatInput.trim()) {
+                e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.lighter})`;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (chatInput.trim()) {
+                e.currentTarget.style.background = `linear-gradient(135deg, ${primary.base}, ${primary.hover})`;
+              }
+            }}
             title="Send message"
           >
             <PaperAirplaneIcon className="w-5 h-5 text-white" />

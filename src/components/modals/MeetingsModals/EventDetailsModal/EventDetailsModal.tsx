@@ -16,6 +16,7 @@ import {
   PencilIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface EventDetails {
   id: string;
@@ -49,13 +50,13 @@ interface EventDetailsModalProps {
 }
 
 const statusConfig = {
-  scheduled: { label: 'Scheduled', color: 'bg-blue-100 text-blue-800', icon: CalendarIcon },
-  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: ClockIcon },
-  confirmed: { label: 'Confirmed', color: 'bg-green-100 text-green-800', icon: CheckIcon },
-  in_progress: { label: 'In Progress', color: 'bg-purple-100 text-purple-800', icon: ClockIcon },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: XMarkIcon },
-  completed: { label: 'Completed', color: 'bg-teal-100 text-teal-800', icon: CheckIcon },
-  no_show: { label: 'No Show', color: 'bg-gray-100 text-gray-800', icon: XMarkIcon },
+  scheduled: { label: 'Scheduled', bgColor: (primary: any) => `${primary}1a`, textColor: (primary: any) => primary, icon: CalendarIcon },
+  pending: { label: 'Pending', bgColor: () => '#fef3c7', textColor: () => '#92400e', icon: ClockIcon },
+  confirmed: { label: 'Confirmed', bgColor: () => '#d1fae5', textColor: () => '#065f46', icon: CheckIcon },
+  in_progress: { label: 'In Progress', bgColor: () => '#e9d5ff', textColor: () => '#581c87', icon: ClockIcon },
+  cancelled: { label: 'Cancelled', bgColor: () => '#fee2e2', textColor: () => '#991b1b', icon: XMarkIcon },
+  completed: { label: 'Completed', bgColor: () => '#ccfbf1', textColor: () => '#115e59', icon: CheckIcon },
+  no_show: { label: 'No Show', bgColor: () => '#f3f4f6', textColor: () => '#1f2937', icon: XMarkIcon },
 };
 
 /**
@@ -91,7 +92,10 @@ export default function EventDetailsModal({
   onStatusChange,
   isAdmin = false,
 }: EventDetailsModalProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   if (!event) return null;
 
@@ -149,7 +153,13 @@ export default function EventDetailsModal({
       <div className="space-y-6 p-6">
         {/* Status Badge */}
         <div className="flex items-center justify-between">
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${currentStatusConfig.color}`}>
+          <div 
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full"
+            style={{
+              backgroundColor: currentStatusConfig.bgColor(primary.base),
+              color: currentStatusConfig.textColor(primary.base)
+            }}
+          >
             <StatusIcon className="w-4 h-4" />
             <span className="text-sm font-medium">{currentStatusConfig.label}</span>
           </div>
@@ -171,8 +181,8 @@ export default function EventDetailsModal({
         {/* Time & Duration */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-teal-50 rounded-lg">
-              <ClockIcon className="w-5 h-5 text-teal-600" />
+            <div className="p-2 rounded-lg" style={{ backgroundColor: `${primary.base}1a` }}>
+              <ClockIcon className="w-5 h-5" style={{ color: primary.base }} />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-700">Time</p>
@@ -183,8 +193,8 @@ export default function EventDetailsModal({
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <CalendarIcon className="w-5 h-5 text-blue-600" />
+            <div className="p-2 rounded-lg" style={{ backgroundColor: `${primary.base}1a` }}>
+              <CalendarIcon className="w-5 h-5" style={{ color: primary.base }} />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-700">Duration</p>
@@ -211,7 +221,10 @@ export default function EventDetailsModal({
               <EnvelopeIcon className="w-5 h-5 text-gray-400" />
               <a
                 href={`mailto:${event.customer_email}`}
-                className="text-sm text-teal-600 hover:text-teal-700 hover:underline"
+                className="text-sm hover:underline"
+                style={{ color: primary.base }}
+                onMouseEnter={(e) => e.currentTarget.style.color = primary.hover}
+                onMouseLeave={(e) => e.currentTarget.style.color = primary.base}
               >
                 {event.customer_email}
               </a>
@@ -222,7 +235,10 @@ export default function EventDetailsModal({
                 <PhoneIcon className="w-5 h-5 text-gray-400" />
                 <a
                   href={`tel:${event.customer_phone}`}
-                  className="text-sm text-teal-600 hover:text-teal-700 hover:underline"
+                  className="text-sm hover:underline"
+                  style={{ color: primary.base }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = primary.hover}
+                  onMouseLeave={(e) => e.currentTarget.style.color = primary.base}
                 >
                   {event.customer_phone}
                 </a>
@@ -262,7 +278,18 @@ export default function EventDetailsModal({
                 {event.status !== 'scheduled' && (
                   <button
                     onClick={() => handleStatusChange('scheduled')}
-                    className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                    className="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: `${primary.base}0d`,
+                      color: primary.base,
+                      borderColor: `${primary.base}33`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = `${primary.base}1a`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = `${primary.base}0d`;
+                    }}
                   >
                     Scheduled
                   </button>
@@ -336,7 +363,14 @@ export default function EventDetailsModal({
               {onEdit && event.status !== 'cancelled' && event.status !== 'completed' && event.status !== 'no_show' && (
                 <button
                   onClick={handleEdit}
-                  className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all"
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                  className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white rounded-lg transition-all"
+                  style={{
+                    background: isHovered 
+                      ? `linear-gradient(to bottom right, ${primary.hover}, ${primary.active})` 
+                      : `linear-gradient(to bottom right, ${primary.base}, ${primary.hover})`
+                  }}
                 >
                   <PencilIcon className="w-4 h-4" />
                   <span>Edit</span>

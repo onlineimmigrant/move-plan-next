@@ -1,5 +1,6 @@
 import React from 'react';
 import { MEETINGS_THEME } from '../theme';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface LoadingStateProps {
   message?: string;
@@ -20,6 +21,9 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   showProgress = false,
   className = '',
 }) => {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+
   const sizeClasses = {
     sm: {
       container: 'h-32',
@@ -45,8 +49,8 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
       <div className="relative">
         {/* Main spinner */}
         <div
-          className={`animate-spin rounded-full border-4 border-gray-200 border-t-blue-500 ${classes.spinner}`}
-          style={{ borderTopColor: MEETINGS_THEME.colors.primary[500] }}
+          className={`animate-spin rounded-full border-4 border-gray-200 ${classes.spinner}`}
+          style={{ borderTopColor: primary.base }}
         />
 
         {/* Progress ring overlay */}
@@ -54,7 +58,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           <div
             className={`absolute inset-0 rounded-full border-4 border-transparent ${classes.spinner}`}
             style={{
-              background: `conic-gradient(${MEETINGS_THEME.colors.primary[500]} ${progress}%, transparent ${progress}%)`,
+              background: `conic-gradient(${primary.base} ${progress}%, transparent ${progress}%)`,
               mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))',
               WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))',
             }}

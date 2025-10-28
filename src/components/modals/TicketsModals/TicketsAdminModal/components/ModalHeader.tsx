@@ -122,7 +122,12 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
             </div>
           </>
         ) : (
-          <h2 className="text-sm font-semibold text-slate-700">Support Tickets</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-slate-700">Support Tickets</h2>
+            <span className="px-2 py-0.5 text-xs font-semibold rounded bg-blue-600 text-white">
+              Admin
+            </span>
+          </div>
         )}
       </div>
 

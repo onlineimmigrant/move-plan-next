@@ -28,9 +28,9 @@ export interface ModalProps {
 
 const sizeClasses = {
   sm: 'max-w-md',
-  md: 'max-w-2xl',
-  lg: 'max-w-4xl',
-  xl: 'max-w-6xl',
+  md: 'max-w-xl',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
   full: 'w-full h-full',
 };
 
@@ -48,10 +48,10 @@ export const ModalContent: React.FC<ModalContentProps> = ({
   onClick,
 }) => {
   const defaultSize = {
-    sm: { width: 448, height: 600 },
-    md: { width: 672, height: 700 },
-    lg: { width: 896, height: 800 },
-    xl: { width: 1152, height: 900 },
+    sm: { width: 448, height: 500 },
+    md: { width: 576, height: 600 },
+    lg: { width: 672, height: 650 },
+    xl: { width: 896, height: 700 },
     full: { width: '100%', height: '100%' },
   };
 
@@ -114,7 +114,7 @@ export const ModalContent: React.FC<ModalContentProps> = ({
             height: initialSize.height,
           }}
           minWidth={400}
-          minHeight={400}
+          minHeight={350}
           bounds="window"
           dragHandleClassName="modal-drag-handle"
           enableResizing={resizable}
@@ -148,7 +148,7 @@ export const ModalContent: React.FC<ModalContentProps> = ({
         className={cn(
           'relative bg-white flex flex-col',
           'w-full h-full sm:rounded-lg sm:shadow-xl sm:w-auto sm:h-auto',
-          'sm:max-h-[90vh]',
+          'sm:max-h-[85vh]',
           'sm:' + sizeClasses[size],
         )}
         onClick={(e) => e.stopPropagation()}

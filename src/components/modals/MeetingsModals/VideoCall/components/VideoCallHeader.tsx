@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import {
   XMarkIcon,
   MinusIcon,
@@ -54,6 +55,9 @@ export default function VideoCallHeader({
   onToggleInfoMenu,
   onCopyToClipboard,
 }: VideoCallHeaderProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+  
   return (
     <>
       {/* Header - Draggable */}
@@ -115,7 +119,14 @@ export default function VideoCallHeader({
                 <div>
                   <h2 className={`${isMobile ? 'text-sm' : 'text-base'} font-semibold text-white`}>
                     {meetingTitle || 'Video Call'}
-                    {userIsHost && <span className="ml-2 text-xs bg-blue-500 px-2 py-0.5 rounded">Host</span>}
+                    {userIsHost && (
+                      <span 
+                        className="ml-2 text-xs px-2 py-0.5 rounded"
+                        style={{ backgroundColor: primary.base, color: 'white' }}
+                      >
+                        Host
+                      </span>
+                    )}
                   </h2>
                   {!isMobile && (
                     <div className={`text-xs text-slate-400 font-medium`}>
@@ -186,9 +197,13 @@ export default function VideoCallHeader({
               }}
               className={`${isMobile ? 'p-3 bg-slate-700/40' : 'p-2.5'} rounded-xl transition-all duration-200 group ${
                 showInfoMenu
-                  ? 'bg-blue-500/90 shadow-lg shadow-blue-500/30 text-white'
-                  : 'hover:bg-slate-600/60 text-slate-300 hover:text-white'
+                  ? 'text-white'
+                  : 'bg-slate-700/40 hover:bg-slate-700/80 text-slate-300 hover:text-white'
               }`}
+              style={showInfoMenu ? {
+                backgroundColor: `${primary.base}e6`,
+                boxShadow: `0 10px 15px -3px ${primary.base}4d`
+              } : {}}
               title="Meeting info"
             >
               <InformationCircleIcon className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} />

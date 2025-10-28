@@ -96,8 +96,8 @@ export const helpCenterTranslations = {
     signup: 'Sign Up',
     
     // AI Agent Tab
-    switchToAIAgentMode: 'Switch to AI Agent Mode',
-    aiAgentBenefits: 'Our system allows you to add your own AI agent and utilize the full functionality of the site even for free or with minimal costs.',
+    switchToAIAgentMode: 'Start AI Agent',
+    aiAgentBenefits: 'Add your AI agent free.',
     aiAgentsCanHelp: 'AI agents can help you with:',
     executeMainTasks: 'Execute main tasks',
     executeMainTasksDesc: 'Automate complex workflows and processes',

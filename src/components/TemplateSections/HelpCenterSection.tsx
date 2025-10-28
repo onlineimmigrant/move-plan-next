@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import WelcomeTab from '@/components/modals/ChatHelpWidget/WelcomeTab';
 import AIAgentTab from '@/components/modals/ChatHelpWidget/AIAgentTab';
 import ConversationTab from '@/components/modals/ChatHelpWidget/ConversationTab';
+import ChatHelpTabs from '@/components/modals/ChatHelpWidget/ChatHelpTabs';
 import { WidgetSize } from '@/components/modals/ChatWidget/types';
 import { useAuth } from '@/context/AuthContext';
 import { useHelpCenterTranslations } from '@/components/modals/ChatHelpWidget/useHelpCenterTranslations';
@@ -62,14 +63,8 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
 
   // Handler functions for tab navigation
   const handleTabChange = (tab: 'welcome' | 'conversation' | 'ai') => {
-    if (tab === 'ai') {
-      router.push('/help-center?tab=ai_agent');
-    } else if (tab === 'conversation') {
-      router.push('/help-center?tab=conversation');
-    } else {
-      // For welcome/browse tab, navigate to help center base page
-      router.push('/help-center');
-    }
+    // Keep user in the same section, just switch tabs internally
+    setActiveTab(tab);
   };
 
   const handleShowFAQ = () => {
@@ -81,7 +76,8 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
   };
 
   const handleShowLiveSupport = () => {
-    router.push('/help-center?tab=conversation');
+    // Stay in section but switch to conversation tab
+    setActiveTab('conversation');
   };
 
   const handleGoToLogin = () => {
@@ -93,14 +89,14 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
   };
 
   const handleSwitchToChatWidget = (forceFullscreen?: boolean) => {
-    // Navigate to help center with AI tab and chat widget active
-    router.push('/help-center?tab=ai&chat=true');
+    // Stay in section, switch to conversation tab for chat
+    setActiveTab('conversation');
   };
 
   return (
     <section
       ref={sectionRef}
-      className={`px-4 py-20 ${section.background_color ? `bg-${section.background_color}` : 'bg-gradient-to-b from-gray-50/50 to-white'}`}
+      className={`sm:px-4 py-20 ${section.background_color ? `bg-${section.background_color}` : 'bg-gradient-to-b from-gray-50/50 to-white'}`}
     >
             <div className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto`}>
         {/* Section Header */}
@@ -113,56 +109,14 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
           </p>
         </div>
 
-        {/* Apple-style Tab Navigation */}
-        <div ref={tabNavRef} className="flex justify-center mb-12 px-2">
-          <div className="relative bg-white/80 backdrop-blur-2xl p-1 sm:p-1.5 rounded-2xl border border-gray-200/50 w-full max-w-2xl">
-            {/* Background slider */}
-            <div 
-              className={`absolute top-1 sm:top-1.5 h-[calc(100%-8px)] sm:h-[calc(100%-12px)] bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-150 ease-out ${
-                activeTab === 'welcome' 
-                  ? 'left-1 sm:left-1.5 w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]' 
-                  : activeTab === 'conversation'
-                  ? 'left-[calc(33.333%+1px)] sm:left-[calc(33.333%+1.5px)] w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]'
-                  : 'left-[calc(66.666%+1px)] sm:left-[calc(66.666%+1.5px)] w-[calc(33.333%-4px)] sm:w-[calc(33.333%-6px)]'
-              }`}
-            />
-            
-            <div className="relative flex">
-              <button
-                onClick={() => setActiveTab('welcome')}
-                className={`relative px-3 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl text-[13px] sm:text-[15px] font-medium transition-all duration-150 ease-out antialiased tracking-[-0.01em] flex-1 ${
-                  activeTab === 'welcome'
-                    ? 'text-gray-900'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <span className="hidden sm:inline">Browse</span>
-                <span className="sm:hidden">Browse</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('conversation')}
-                className={`relative px-3 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl text-[13px] sm:text-[15px] font-medium transition-all duration-150 ease-out antialiased tracking-[-0.01em] flex-1 ${
-                  activeTab === 'conversation'
-                    ? 'text-gray-900'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <span className="hidden sm:inline">Live Chat</span>
-                <span className="sm:hidden">Chat</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('ai')}
-                className={`relative px-3 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl text-[13px] sm:text-[15px] font-medium transition-all duration-150 ease-out antialiased tracking-[-0.01em] flex-1 ${
-                  activeTab === 'ai'
-                    ? 'text-gray-900'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <span className="hidden sm:inline">{t.aiAssistant}</span>
-                <span className="sm:hidden">AI</span>
-              </button>
-            </div>
-          </div>
+        {/* Modern Badge-Style Tab Navigation */}
+        <div ref={tabNavRef} className="mb-6">
+          <ChatHelpTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            isAuthenticated={!!(session && !isLoading)}
+            isFullPage={true}
+          />
         </div>
 
         {/* Apple-style Tab Content Container */}
@@ -182,7 +136,7 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
           <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none" />
           
           {/* Tab Content */}
-          <div className="relative min-h-[500px] p-2 lg:p-12">
+          <div className="relative min-h-[500px] p-2 lg:pb-12">
             {activeTab === 'welcome' ? (
               <WelcomeTab
                 onTabChange={handleTabChange}

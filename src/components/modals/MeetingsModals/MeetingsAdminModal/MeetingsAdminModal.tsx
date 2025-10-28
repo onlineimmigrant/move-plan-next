@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
 import { CalendarIcon, UserGroupIcon, ArrowLeftIcon, Cog6ToothIcon, ClockIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Calendar, BookingForm } from '@/components/modals/MeetingsModals/shared/components';
 import { CalendarEvent, CalendarView, BookingFormData, MeetingType, TimeSlot } from '../shared/types';
 import MeetingsSettingsModal from '../MeetingsSettingsModal';
@@ -67,6 +68,8 @@ export default function MeetingsAdminModal({
   onBookingSuccess,
 }: MeetingsAdminModalProps) {
   const { settings } = useSettings();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
   // View state
   const [currentView, setCurrentView] = useState<'calendar' | 'booking' | 'manage-bookings'>('calendar');
@@ -79,6 +82,7 @@ export default function MeetingsAdminModal({
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [loadingEventDetails, setLoadingEventDetails] = useState(false);
   const [use24Hour, setUse24Hour] = useState<boolean>(true);
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const [meetingSettings, setMeetingSettings] = useState<{
     business_hours_start?: string;
     business_hours_end?: string;
@@ -389,26 +393,8 @@ export default function MeetingsAdminModal({
 
   // Get modal title with icon
   const getModalTitle = () => {
-    if (currentView === 'calendar') {
-      return (
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="hidden sm:inline w-6 h-6 text-blue-600" />
-          <span>Meetings</span>
-          <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
-            Admin
-          </span>
-        </div>
-      );
-    }
-    return (
-      <div className="flex items-center gap-2">
-        <UserGroupIcon className="hidden sm:inline w-6 h-6 text-blue-600" />
-        <span>Meetings</span>
-        <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
-          Admin
-        </span>
-      </div>
-    );
+    // Return simple "Appointments" string - BaseModal will add Admin badge
+    return 'Appointments';
   };
 
   // Get subtitle
@@ -416,32 +402,39 @@ export default function MeetingsAdminModal({
     if (currentView === 'calendar') {
       return 'Calendar';
     }
-    return 'Booking';
+    if (currentView === 'manage-bookings') {
+      return 'Manage Bookings';
+    }
+    return 'New Booking';
   };
 
-  // Header actions for booking view
-  const headerActions = currentView === 'booking' ? (
-    <button
-      onClick={() => setCurrentView('calendar')}
-      className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-    >
-      <ArrowLeftIcon className="w-4 h-4" />
-      Calendar
-    </button>
-  ) : (
+  // Header actions for calendar view only
+  const headerActions = currentView === 'booking' ? null : (
     <div className="flex items-center gap-2">
       <button
         onClick={() => setShowTypesModal(true)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-700 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors"
-        title="Manage meeting types"
+        onMouseEnter={() => setHoveredTab('types')}
+        onMouseLeave={() => setHoveredTab(null)}
+        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors"
+        style={{
+          color: hoveredTab === 'types' ? primary.hover : primary.base,
+          backgroundColor: hoveredTab === 'types' ? `${primary.base}1a` : 'transparent'
+        }}
+        title="Manage appointment types"
       >
         <ClockIcon className="w-4 h-4" />
         Types
       </button>
       <button
         onClick={() => setShowSettingsModal(true)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-md transition-colors"
-        title="Configure meeting settings (including 24-hour format preference)"
+        onMouseEnter={() => setHoveredTab('settings')}
+        onMouseLeave={() => setHoveredTab(null)}
+        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors"
+        style={{
+          color: hoveredTab === 'settings' ? primary.hover : primary.base,
+          backgroundColor: hoveredTab === 'settings' ? `${primary.base}1a` : 'transparent'
+        }}
+        title="Configure appointment settings (including 24-hour format preference)"
       >
         <Cog6ToothIcon className="w-4 h-4" />
         Settings
@@ -462,78 +455,115 @@ export default function MeetingsAdminModal({
       showCloseButton={true}
       showFullscreenButton={false}
       headerActions={headerActions}
-      noPadding={false}
-      scrollable={true}
+      adminBadge={true}
+      adminBadgeColor={primary.base}
+      noPadding={currentView === 'booking'}
+      scrollable={currentView !== 'booking'}
       closeOnBackdropClick={true}
       closeOnEscape={true}
       className="meetings-admin-modal"
     >
-      {/* Tab Navigation (only show when not in booking form) */}
-      {currentView !== 'booking' && (
-        <div className="border-b border-gray-200 mb-4">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <button
-              onClick={() => setCurrentView('calendar')}
-              className={`${
-                currentView === 'calendar'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+      {/* Wrapper for non-booking content to add padding */}
+      {currentView !== 'booking' ? (
+        <div className="-px-6 pb-4">
+          {/* Tab Navigation (only show when not in booking form) */}
+          <div className="mb-4">
+            <nav className="flex gap-3" aria-label="Tabs">
+              <button
+                onClick={() => setCurrentView('calendar')}
+                onMouseEnter={() => setHoveredTab('create')}
+                onMouseLeave={() => setHoveredTab(null)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
+                style={
+                  currentView === 'calendar'
+                    ? {
+                        background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                        color: 'white',
+                        boxShadow: hoveredTab === 'create' 
+                          ? `0 4px 12px ${primary.base}40` 
+                          : `0 2px 4px ${primary.base}30`
+                      }
+                    : {
+                        backgroundColor: hoveredTab === 'create' ? `${primary.lighter}33` : 'white',
+                        color: hoveredTab === 'create' ? primary.hover : primary.base,
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        borderColor: hoveredTab === 'create' ? `${primary.base}80` : `${primary.base}40`
+                      }
+                }
+              >
+                <CalendarIcon className="w-4 h-4" />
+                Create
+              </button>
+              <button
+                onClick={() => setCurrentView('manage-bookings')}
+                onMouseEnter={() => setHoveredTab('manage')}
+                onMouseLeave={() => setHoveredTab(null)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
+                style={
+                  currentView === 'manage-bookings'
+                  ? {
+                      background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                      color: 'white',
+                      boxShadow: hoveredTab === 'manage' 
+                        ? `0 4px 12px ${primary.base}40` 
+                        : `0 2px 4px ${primary.base}30`
+                    }
+                  : {
+                      backgroundColor: hoveredTab === 'manage' ? `${primary.lighter}33` : 'white',
+                      color: hoveredTab === 'manage' ? primary.hover : primary.base,
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      borderColor: hoveredTab === 'manage' ? `${primary.base}80` : `${primary.base}40`
+                    }
+              }
             >
-              <CalendarIcon className="w-5 h-5" />
-              Create Booking
-            </button>
-            <button
-              onClick={() => setCurrentView('manage-bookings')}
-              className={`${
-                currentView === 'manage-bookings'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-            >
-              <UsersIcon className="w-5 h-5" />
-              Manage Bookings
+              <UsersIcon className="w-4 h-4" />
+              Manage
             </button>
           </nav>
         </div>
-      )}
 
-      {/* Error Message */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
-      )}
-
-      {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      ) : currentView === 'manage-bookings' ? (
-        <AdminBookingsList organizationId={settings?.organization_id} />
-      ) : currentView === 'calendar' ? (
-        meetingTypes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <div className="text-gray-500 mb-4">
-              <CalendarIcon className="mx-auto h-12 w-12" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Meeting Types Available</h3>
-            <p className="text-gray-500">Please create meeting types in organization settings first.</p>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-800">{error}</p>
           </div>
-        ) : (
-          <Calendar
-            events={events}
-            currentDate={currentDate}
-            view={calendarView}
-            onDateChange={setCurrentDate}
-            onViewChange={setCalendarView}
-            onEventClick={handleEventClick}
-            onSlotClick={handleSlotClick}
-            loading={false}
-            use24Hour={use24Hour}
-          />
-        )
+        )}
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: primary.base }}></div>
+          </div>
+        ) : currentView === 'manage-bookings' ? (
+          <AdminBookingsList organizationId={settings?.organization_id} />
+        ) : currentView === 'calendar' ? (
+          meetingTypes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <div className="text-gray-500 mb-4">
+                <CalendarIcon className="mx-auto h-12 w-12" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Appointment Types Available</h3>
+              <p className="text-gray-500">Please create appointment types in organization settings first.</p>
+            </div>
+          ) : (
+            <div className="-mb-4">
+              <Calendar
+                events={events}
+                currentDate={currentDate}
+                view={calendarView}
+                onDateChange={setCurrentDate}
+                onViewChange={setCalendarView}
+                onEventClick={handleEventClick}
+                onSlotClick={handleSlotClick}
+                loading={false}
+                use24Hour={use24Hour}
+              />
+            </div>
+          )
+        ) : null}
+      </div>
       ) : (
         <BookingForm
           formData={bookingFormData}
@@ -542,6 +572,7 @@ export default function MeetingsAdminModal({
           onChange={handleBookingFormChange}
           onSubmit={handleBookingSubmit}
           onCancel={() => setCurrentView('calendar')}
+          onBackToCalendar={() => setCurrentView('calendar')}
           isSubmitting={submitting}
           errors={{}}
           isAdmin={true}
@@ -550,6 +581,9 @@ export default function MeetingsAdminModal({
             start: meetingSettings.business_hours_start,
             end: meetingSettings.business_hours_end
           } : undefined}
+          selectedSlot={bookingFormData.scheduled_at ? availableSlots.find(slot => 
+            slot.start.toISOString() === bookingFormData.scheduled_at
+          ) || null : null}
         />
       )}
     </BaseModal>

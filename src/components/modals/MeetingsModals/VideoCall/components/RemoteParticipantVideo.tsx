@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RemoteVideoTrack, RemoteAudioTrack } from 'twilio-video';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Participant {
   identity: string;
@@ -21,6 +22,9 @@ interface RemoteParticipantVideoProps {
 export default function RemoteParticipantVideo({ participant, isFullscreen = false, onPin, isPinned = false }: RemoteParticipantVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+  const [isHovered, setIsHovered] = useState(false);
 
   // Log participant state changes
   useEffect(() => {
@@ -91,7 +95,12 @@ export default function RemoteParticipantVideo({ participant, isFullscreen = fal
     <div
       className={`relative bg-gray-800 overflow-hidden ${
         isFullscreen ? 'h-full' : 'aspect-video rounded-lg'
-      } group ${onPin && !isPinned ? 'cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all' : ''}`}
+      } group ${onPin && !isPinned ? 'cursor-pointer transition-all' : ''}`}
+      style={onPin && !isPinned && isHovered ? {
+        boxShadow: `0 0 0 2px ${primary.base}`
+      } : undefined}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={onPin && !isPinned ? onPin : undefined}
     >
       {participant.isVideoEnabled ? (

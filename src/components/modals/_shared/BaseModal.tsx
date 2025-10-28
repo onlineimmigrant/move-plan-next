@@ -59,6 +59,8 @@ export interface BaseModalProps {
   showFullscreenButton?: boolean;
   onToggleFullscreen?: () => void;
   headerActions?: ReactNode;
+  adminBadge?: boolean; // Whether to show admin badge
+  adminBadgeColor?: string; // Custom color for admin badge (defaults to primary)
   
   // Body customization
   noPadding?: boolean;
@@ -132,11 +134,26 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   showFullscreenButton,
   onToggleFullscreen,
   headerActions,
+  adminBadge = false,
+  adminBadgeColor,
   scrollable,
   footerAlign,
   zIndex,
 }) => {
   const handleBackdropClick = closeOnBackdropClick ? onClose : undefined;
+
+  // Create enhanced title with admin badge if needed
+  const enhancedTitle = adminBadge && typeof title === 'string' ? (
+    <div className="flex items-center gap-2">
+      <span>{title}</span>
+      <span 
+        className="px-2 py-0.5 text-xs font-semibold rounded text-white"
+        style={{ backgroundColor: adminBadgeColor || '#3b82f6' }}
+      >
+        Admin
+      </span>
+    </div>
+  ) : title;
 
   // Render default footer with action buttons if no custom footer provided
   const renderFooter = () => {
@@ -190,7 +207,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
         {draggable && !fullscreen ? (
           <div className="modal-drag-handle cursor-move">
             <ModalHeader
-              title={title}
+              title={enhancedTitle}
               subtitle={subtitle}
               onClose={onClose}
               onToggleFullscreen={onToggleFullscreen}
@@ -203,7 +220,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
           </div>
         ) : (
           <ModalHeader
-            title={title}
+            title={enhancedTitle}
             subtitle={subtitle}
             onClose={onClose}
             onToggleFullscreen={onToggleFullscreen}

@@ -15,6 +15,7 @@ export interface ModalHeaderProps {
   showFullscreenButton?: boolean;
   className?: string;
   actions?: ReactNode;
+  adminBadge?: boolean; // Whether to show admin badge after title
 }
 
 export const ModalHeader: React.FC<ModalHeaderProps> = ({
@@ -27,13 +28,14 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   showFullscreenButton = false,
   className,
   actions,
+  adminBadge = false,
 }) => {
   return (
     <div className={cn(
       'flex items-center justify-between p-6 border-b border-gray-200 bg-white',
       className
     )}>
-      <div className="flex-1">
+      <div className="flex-1 flex items-center gap-2">
         {typeof title === 'string' ? (
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
         ) : (

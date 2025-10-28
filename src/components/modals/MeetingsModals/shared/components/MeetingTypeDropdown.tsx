@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon, ClockIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { MeetingType } from '@/types/meetings';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface MeetingTypeDropdownProps {
   meetingTypes: MeetingType[];
@@ -20,6 +21,8 @@ export default function MeetingTypeDropdown({
   error,
   placeholder = 'Select a meeting type',
 }: MeetingTypeDropdownProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -62,13 +65,26 @@ export default function MeetingTypeDropdown({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-3 py-2 text-left text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+        className={`w-full px-3 py-2 text-left text-sm border rounded-lg focus:outline-none transition-all ${
           error 
             ? 'border-red-300 bg-red-50' 
-            : isOpen 
-              ? 'border-teal-500 bg-teal-50' 
-              : 'border-gray-300 hover:border-teal-400 bg-white'
+            : 'bg-white'
         }`}
+        style={!error ? {
+          borderColor: isOpen ? primary.base : undefined,
+          backgroundColor: isOpen ? `${primary.base}0d` : undefined,
+          boxShadow: isOpen ? `0 0 0 3px ${primary.base}33` : undefined
+        } : undefined}
+        onMouseEnter={(e) => {
+          if (!error && !isOpen) {
+            e.currentTarget.style.borderColor = `${primary.base}66`;
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!error && !isOpen) {
+            e.currentTarget.style.borderColor = '';
+          }
+        }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -129,13 +145,11 @@ export default function MeetingTypeDropdown({
                     {/* Type info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`font-medium text-sm ${
-                          selectedId === type.id ? 'text-teal-900' : 'text-gray-900'
-                        }`}>
+                        <span className="font-medium text-sm text-gray-900">
                           {type.name}
                         </span>
                         {selectedId === type.id && (
-                          <CheckIcon className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                          <CheckIcon className="w-4 h-4 flex-shrink-0" style={{ color: primary.base }} />
                         )}
                       </div>
                       

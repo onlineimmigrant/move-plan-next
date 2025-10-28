@@ -373,14 +373,14 @@ export default function ChatHelpWidget() {
                   {error}
                 </div>
               )}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                {renderActiveTab()}
-              </div>
               <ChatHelpTabs
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
                 isAuthenticated={isAuthenticated}
               />
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                {renderActiveTab()}
+              </div>
             </div>
           )}
         </>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
-import { ArrowLeftIcon, CalendarIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, CalendarIcon, UserGroupIcon, ListBulletIcon } from '@heroicons/react/24/outline';
 import { Calendar, BookingForm } from '@/components/modals/MeetingsModals/shared/components';
 import MyBookingsList from './MyBookingsList';
 import {
@@ -25,12 +25,16 @@ import { MeetingsErrorBoundary } from '../shared/ui';
 import { useSettings } from '@/context/SettingsContext';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
 import { supabase } from '@/lib/supabase';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot }: MeetingsBookingModalProps) {
   const { settings } = useSettings();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
-  // Tab state - NEW
-  const [activeTab, setActiveTab] = useState<'my-meetings' | 'book-new'>('my-meetings');
+  // Tab state - Default to 'book-new' (Create tab) to match admin behavior
+  const [activeTab, setActiveTab] = useState<'my-meetings' | 'book-new'>('book-new');
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
 
   // View state
   const [currentView, setCurrentView] = useState<'calendar' | 'booking'>(MODAL_VIEWS.CALENDAR);
@@ -321,21 +325,26 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
 
   // Get modal title with icon
   const getModalTitle = () => {
+    // For both tabs, show "Appointments" title with appropriate icon
     if (activeTab === 'my-meetings') {
-      return 'My Meetings';
-    }
-    if (currentView === 'calendar') {
       return (
         <div className="flex items-center gap-2">
-          <CalendarIcon className="hidden sm:inline w-6 h-6 text-blue-600" />
-          <span>Book a Meeting</span>
+          <UserGroupIcon 
+            className="hidden sm:inline w-6 h-6" 
+            style={{ color: primary.base }}
+          />
+          <span>Appointments</span>
         </div>
       );
     }
+    // For book-new (Create) tab
     return (
       <div className="flex items-center gap-2">
-        <UserGroupIcon className="hidden sm:inline w-6 h-6 text-blue-600" />
-        <span>Complete Booking</span>
+        <CalendarIcon 
+          className="hidden sm:inline w-6 h-6" 
+          style={{ color: primary.base }}
+        />
+        <span>Appointments</span>
       </div>
     );
   };
@@ -343,15 +352,15 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
   // Get subtitle
   const getSubtitle = () => {
     if (activeTab === 'my-meetings') {
-      return 'View and manage your upcoming meetings';
+      return 'Manage';
     }
     if (currentView === 'booking' && bookingState.selectedSlot) {
       return `Selected: ${format(bookingState.selectedSlot.start, 'PPP p')}`;
     }
     if (currentView === 'calendar') {
-      return 'Select a time slot to book your meeting';
+      return 'Calendar';
     }
-    return 'Booking';
+    return 'New Booking';
   };
 
   // Header actions for booking view
@@ -366,15 +375,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
     setActiveTab('book-new'); // Stay on book-new tab
   };
 
-  const headerActions = currentView === MODAL_VIEWS.BOOKING ? (
-    <button
-      onClick={handleBackToCalendar}
-      className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-    >
-      <ArrowLeftIcon className="w-4 h-4" />
-      Calendar
-    </button>
-  ) : null;
+  const headerActions = null;
 
   return (
     <MeetingsErrorBoundary>
@@ -389,73 +390,114 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
         showCloseButton={true}
         showFullscreenButton={false}
         headerActions={headerActions}
-        noPadding={false}
-        scrollable={true}
+        noPadding={currentView === MODAL_VIEWS.BOOKING}
+        scrollable={currentView !== MODAL_VIEWS.BOOKING}
         closeOnBackdropClick={true}
         closeOnEscape={true}
         className="meetings-booking-modal"
       >
-        {/* Tab Navigation - Only show if not in booking view */}
-        {currentView !== MODAL_VIEWS.BOOKING && (
-          <div className="flex border-b border-gray-200 mb-6 -mt-2">
-            <button
-              onClick={() => setActiveTab('my-meetings')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'my-meetings'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              My Meetings
-            </button>
-            <button
-              onClick={() => setActiveTab('book-new')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'book-new'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Book New Meeting
-            </button>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-800">{error}</p>
-          </div>
-        )}
-
-        {/* Content */}
-        {activeTab === 'my-meetings' && currentView === MODAL_VIEWS.CALENDAR ? (
-          <MyBookingsList organizationId={settings?.organization_id} />
-        ) : calendarState.isLoading ? (
-          <CalendarLoading />
-        ) : currentView === MODAL_VIEWS.CALENDAR ? (
-          meetingTypes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
-              <div className="text-gray-500 mb-4">
-                <CalendarIcon className="mx-auto h-12 w-12" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Meeting Types Available</h3>
-              <p className="text-gray-500">Please check your organization settings or contact support.</p>
+        {/* Wrapper for non-booking content to add padding */}
+        {currentView !== MODAL_VIEWS.BOOKING ? (
+          <div className="p-2 pb-4">
+            {/* Tab Navigation - Only show if not in booking view */}
+            <div className="mb-4 -mt-2">
+              <nav className="flex gap-3" aria-label="Tabs">
+                <button
+                  onClick={() => setActiveTab('book-new')}
+                  onMouseEnter={() => setHoveredTab('book-new')}
+                  onMouseLeave={() => setHoveredTab(null)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
+                  style={
+                    activeTab === 'book-new'
+                      ? {
+                          background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                          color: 'white',
+                          boxShadow: hoveredTab === 'book-new' 
+                            ? `0 4px 12px ${primary.base}40` 
+                            : `0 2px 4px ${primary.base}30`
+                        }
+                      : {
+                          backgroundColor: hoveredTab === 'book-new' ? `${primary.lighter}33` : 'white',
+                          color: hoveredTab === 'book-new' ? primary.hover : primary.base,
+                          borderWidth: '1px',
+                          borderStyle: 'solid',
+                          borderColor: hoveredTab === 'book-new' ? `${primary.base}80` : `${primary.base}40`
+                        }
+                  }
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  Create
+                </button>
+                <button
+                  onClick={() => setActiveTab('my-meetings')}
+                  onMouseEnter={() => setHoveredTab('my-meetings')}
+                  onMouseLeave={() => setHoveredTab(null)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
+                  style={
+                    activeTab === 'my-meetings'
+                      ? {
+                          background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                          color: 'white',
+                          boxShadow: hoveredTab === 'my-meetings' 
+                            ? `0 4px 12px ${primary.base}40` 
+                            : `0 2px 4px ${primary.base}30`
+                        }
+                      : {
+                          backgroundColor: hoveredTab === 'my-meetings' ? `${primary.lighter}33` : 'white',
+                          color: hoveredTab === 'my-meetings' ? primary.hover : primary.base,
+                          borderWidth: '1px',
+                          borderStyle: 'solid',
+                          borderColor: hoveredTab === 'my-meetings' ? `${primary.base}80` : `${primary.base}40`
+                        }
+                  }
+                >
+                  <UserGroupIcon className="w-4 h-4" />
+                  Manage
+                </button>
+              </nav>
             </div>
-          ) : (
-            <Calendar
-              events={calendarState.events}
-              currentDate={calendarState.currentDate}
-              view={calendarState.calendarView}
-              onDateChange={calendarState.setCurrentDate}
-              onViewChange={calendarState.setCalendarView}
-              onEventClick={handleEventClick}
-              onSlotClick={handleSlotClick}
-              loading={false}
-            />
-          )
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            )}
+
+            {/* Content */}
+            {activeTab === 'my-meetings' && currentView === MODAL_VIEWS.CALENDAR ? (
+              <MyBookingsList organizationId={settings?.organization_id} />
+            ) : calendarState.isLoading ? (
+              <CalendarLoading />
+            ) : currentView === MODAL_VIEWS.CALENDAR ? (
+              meetingTypes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                  <div className="text-gray-500 mb-4">
+                    <CalendarIcon className="mx-auto h-12 w-12" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Appointment Types Available</h3>
+                  <p className="text-gray-500">Please check your organization settings or contact support.</p>
+                </div>
+              ) : (
+                <div className="-mx-6 -mb-4">
+                  <Calendar
+                    events={calendarState.events}
+                    currentDate={calendarState.currentDate}
+                    view={calendarState.calendarView}
+                    onDateChange={calendarState.setCurrentDate}
+                    onViewChange={calendarState.setCalendarView}
+                    onEventClick={handleEventClick}
+                    onSlotClick={handleSlotClick}
+                    loading={false}
+                  />
+                </div>
+              )
+            ) : null}
+          </div>
         ) : loadingCustomerData ? (
-          <CustomerDataLoading />
+          <div className="p-6">
+            <CustomerDataLoading />
+          </div>
         ) : (
           <BookingForm
             formData={bookingState.formData}
@@ -464,9 +506,11 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
             onChange={handleBookingFormChange}
             onSubmit={handleBookingSubmit}
             onCancel={handleBackToCalendar}
+            onBackToCalendar={handleBackToCalendar}
             isSubmitting={bookingState.isSubmitting}
             errors={bookingState.errors}
             readOnlyEmail={true}
+            selectedSlot={bookingState.selectedSlot}
           />
         )}
       </BaseModal>
