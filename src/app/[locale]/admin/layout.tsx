@@ -12,10 +12,11 @@ import { sidebarLinks, getFilteredSidebarLinks, DisclosureKey as TablesDisclosur
 import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib/reportSidebarLinks';
 import TicketsAdminToggleButton from '@/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminToggleButton';
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+// Inner component that uses auth context
+function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { isAdmin, isInGeneralOrganization } = useAuth();
-  console.log('[AdminLayout] Rendering for path:', pathname, 'isAdmin:', isAdmin, 'isInGeneralOrganization:', isInGeneralOrganization);
+  const { isAdmin, isSuperadmin, isInGeneralOrganization } = useAuth();
+  console.log('[AdminLayout] Rendering for path:', pathname, 'isAdmin:', isAdmin, 'isSuperadmin:', isSuperadmin, 'isInGeneralOrganization:', isInGeneralOrganization);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isParentMenuCollapsed, setIsParentMenuCollapsed] = useState(true);
@@ -91,7 +92,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthProvider>
       <BasketProvider>
         <ModalProvider>
           <div className="min-h-screen flex bg-gray-50">
@@ -141,8 +141,33 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <main className="flex-1 overflow-y-auto min-h-screen">
               <div className="max-w-7xl mx-auto px-0 sm:px-6 md:px-8">{children}</div>
             </main>
+            
+            {/* Superadmin Portal Button */}
+            {isSuperadmin && (
+              <a
+                href="/superadmin"
+                className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                title="Go to Superadmin Portal"
+              >
+                <span className="text-xl">👑</span>
+                <span className="font-medium hidden sm:inline">Superadmin Portal</span>
+              </a>
+            )}
+            
             <TicketsAdminToggleButton />
           </div>
+        </ModalProvider>
+      </BasketProvider>
+  );
+}
+
+// Outer component that provides auth context
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  return (
+    <AuthProvider>
+      <BasketProvider>
+        <ModalProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
         </ModalProvider>
       </BasketProvider>
     </AuthProvider>

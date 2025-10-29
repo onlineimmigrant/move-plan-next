@@ -8,6 +8,7 @@ import { Session, SupabaseClient } from '@supabase/supabase-js';
 interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
+  isSuperadmin: boolean;
   organizationId: string | null;
   organizationType: string | null;
   fullName: string | null;
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [organizationType, setOrganizationType] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
@@ -57,17 +59,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Profile fetch error:', error?.message || 'No profile found');
         }
         setIsAdmin(false);
+        setIsSuperadmin(false);
         setOrganizationId(null);
         setOrganizationType(null);
         setFullName(null);
         return false;
       }
       console.log('Profile fetched:', { role: data.role, organization_id: data.organization_id, full_name: data.full_name, is_site_creator: data.is_site_creator, organization_type: (data.organizations as any)?.type });
-      setIsAdmin(data.role === 'admin');
+      setIsAdmin(data.role === 'admin' || data.role === 'superadmin');
+      setIsSuperadmin(data.role === 'superadmin');
       setOrganizationId(data.organization_id || null);
       setOrganizationType((data.organizations as any)?.type || null);
       setFullName(data.full_name || null);
-      return data.role === 'admin';
+      return data.role === 'admin' || data.role === 'superadmin';
     } catch (err: unknown) {
       const errorMessage = (err as Error).message;
       // Only log unexpected errors (ignore network timeouts during dev)
@@ -75,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Profile fetch failed:', errorMessage);
       }
       setIsAdmin(false);
+      setIsSuperadmin(false);
       setOrganizationId(null);
       setOrganizationType(null);
       setFullName(null);
@@ -131,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } else {
         setIsAdmin(false);
+        setIsSuperadmin(false);
         setOrganizationId(null);
         setOrganizationType(null);
         setFullName(null);
@@ -179,6 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setSession(null);
       setIsAdmin(false);
+      setIsSuperadmin(false);
       setOrganizationId(null);
       setOrganizationType(null);
       setFullName(null);
@@ -192,8 +199,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isInGeneralOrganization = useMemo(() => organizationType === 'general', [organizationType]);
 
   const contextValue = useMemo(
-    () => ({ session, isAdmin, organizationId, organizationType, fullName, isLoading, error, setSession, login, logout, supabase, isInGeneralOrganization }),
-    [session, isAdmin, organizationId, organizationType, fullName, isLoading, error, isInGeneralOrganization]
+    () => ({ session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, isLoading, error, setSession, login, logout, supabase, isInGeneralOrganization }),
+    [session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, isLoading, error, isInGeneralOrganization]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

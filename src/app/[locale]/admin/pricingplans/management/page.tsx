@@ -111,7 +111,8 @@ export default function PricingPlansManagement() {
         return;
       }
 
-      if (profile.role !== 'admin') {
+      // Allow both admin and superadmin roles
+      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
         router.push('/');
         return;
       }

@@ -20,9 +20,34 @@ export async function isAdminClient(): Promise<boolean> {
       return false;
     }
 
-    return profile.role === 'admin';
+    // Allow both admin and superadmin roles
+    return profile.role === 'admin' || profile.role === 'superadmin';
   } catch (err) {
     console.error('Error checking admin status:', err);
+    return false;
+  }
+}
+
+export async function isSuperadminClient(): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return false;
+    }
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (error || !profile) {
+      return false;
+    }
+
+    return profile.role === 'superadmin';
+  } catch (err) {
+    console.error('Error checking superadmin status:', err);
     return false;
   }
 }

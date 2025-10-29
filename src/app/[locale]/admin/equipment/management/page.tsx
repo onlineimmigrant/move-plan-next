@@ -38,7 +38,8 @@ export default function EquipmentPage({ params }: { params: { locale: string } }
         return;
       }
 
-      if (profile.role !== 'admin') {
+      // Allow both admin and superadmin roles
+      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
         setAuthError('Admin access required');
         setIsAuthorized(false);
         return;

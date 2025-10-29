@@ -75,7 +75,7 @@ const DialogModal = ({ dialogKey, title, description, openDialog, setOpenDialog 
           leaveTo="opacity-0 scale-95"
         >
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            <DialogPanel className="bg-white rounded-lg shadow-lg ring-1 ring-gray-200 p-6 max-w-lg relative">
+            <DialogPanel className="bg-white rounded-lg shadow-lg ring-1 ring-gray-200 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative">
               <Button
                 variant="close"
                 onClick={() => setOpenDialog(null)}
@@ -86,7 +86,11 @@ const DialogModal = ({ dialogKey, title, description, openDialog, setOpenDialog 
               </Button>
               <DialogTitle className="text-lg font-medium text-gray-800">{title}</DialogTitle>
               <Dialog.Description className="mt-2 text-sm text-gray-600">
-                <div ref={descriptionRef} dangerouslySetInnerHTML={{ __html: description }} />
+                <div 
+                  ref={descriptionRef} 
+                  dangerouslySetInnerHTML={{ __html: description }}
+                  className="prose prose-sm max-w-none [&_img]:max-w-full [&_img]:max-h-[400px] [&_img]:h-auto [&_img]:object-contain [&_img]:rounded-lg [&_img]:my-4 [&_img]:shadow-md [&_img]:mx-auto"
+                />
               </Dialog.Description>
             </DialogPanel>
           </div>

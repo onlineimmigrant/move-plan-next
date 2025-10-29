@@ -250,8 +250,6 @@ export interface LinkItem {
     ],
 
     ai: [
-     
-       
         { href: "/admin/ai_integration_aimodel", label: "Model" },
         { href: "/admin/ai_integration_conversationsession", label: "Conversation Session" },
         { href: "/admin/ai_integration_message", label: "AI Message" },

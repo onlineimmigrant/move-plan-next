@@ -1,1089 +1,505 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
-import { TrashIcon } from '@heroicons/react/24/outline';
-import { Combobox, Disclosure, Transition } from '@headlessui/react';
-import Tooltip from '@/components/Tooltip';
-import Link from 'next/link';
 import InfoCards from '@/components/ai/InfoCards';
 import DialogModals from '@/components/ai/DialogModals';
-import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
-import Image from 'next/image';
-import DisclosureButton from '@/ui/DisclosureButton';
-import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import Button from '@/ui/Button';
+import { PREDEFINED_ROLES, MODAL_ANIMATION_STYLES } from '@/components/ai/_shared/types/aiManagement';
+import { useModelManagement } from '@/components/ai/_shared/hooks/useModelManagement';
+import { useComboboxFilters } from '@/components/ai/_shared/hooks/useComboboxFilters';
+import AIFilterBar from '@/components/ai/_shared/components/AIFilterBar';
+// Import shared components - NOW ACTIVE, used directly
+import { 
+  AIModelCard,
+  AILoadingSkeleton, 
+  AINotification, 
+  AIConfirmationDialog,
+  AISearchInput,
+  AITaskManagementModal,
+  AIRoleEditModal,
+  AIIcons
+} from '@/components/ai/_shared';
+import { AIModelEditModal } from '@/components/ai/_shared/components/AIModelEditModal';
+import AITabNavigation from '@/components/ai/_shared/components/AITabNavigation';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Create local aliases for icons used in this page
+const InfoIcon = AIIcons.Info;
+const CloseIcon = AIIcons.X;
 
-// Predefined models and endpoints (unchanged)
-const popularModels = [
-  'grok-3',
-  'grok-3-mini',
-  'grok-3-mini-fast',
-  'gpt-4o',
-  'o1',
-  'o3-mini',
-  'claude-3.5-sonnet',
-  'claude-4-sonnet',
-  'claude-3.7-sonnet',
-  'deepseek-r1',
-  'deepseek-v3',
-  'deepseek-r1-0528',
-  'mistral-large-2',
-  'mistral-small-3.1',
-  'mixtral-8x7b',
-  'llama-4-scout',
-  'llama-4-maverick',
-  'llama-3.3',
-  'gemini-2.0-flash',
-  'gemini-2.5-pro',
-  'gemma-2',
-  'llama-3-70b',
-  'vicuna-13b',
-  'mistral-7b',
-];
+// Import constants from types
+const predefinedRoles = PREDEFINED_ROLES;
+const modalStyles = MODAL_ANIMATION_STYLES;
 
-const popularEndpoints = [
-  'https://api.x.ai/v1/chat/completions',
-  'https://api.openai.com/v1/chat/completions',
-  'https://api.anthropic.com/v1/messages',
-  'https://api.together.ai/v1/completions',
-  'https://generativelanguage.googleapis.com/v1',
-  'https://api.deepseek.com/v1',
-  'https://api.mixtral.ai/v1',
-  'https://api-inference.huggingface.co/v1',
-];
-
-interface Model {
-  id: number;
-  name: string;
-  user_role_to_access?: string;
-  max_tokens?: number;
-  icon?: string | null;
-  src?: string | undefined;
-}
-
-interface SelectedModel {
-  id: number;
-  type: 'default' | 'user';
-}
-
-export default function AISettings() {
-  const { t } = useAccountTranslations();
+export default function AccountAIManagement() {
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
-  const [defaultModels, setDefaultModels] = useState<Model[]>([]);
-  const [userModels, setUserModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(null);
-  const [newModel, setNewModel] = useState({
-    name: '',
-    api_key: '',
-    endpoint: '',
-    max_tokens: 200,
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [modelQuery, setModelQuery] = useState('');
-  const [endpointQuery, setEndpointQuery] = useState('');
+  
+  // Dialog modal state (for InfoCards and DialogModals components)
   const [openDialog, setOpenDialog] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'default' | 'custom' | 'add'>('all');
-  const router = useRouter();
+  
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    confirmVariant?: 'danger' | 'primary';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+  
+  // Use custom hooks for model management with account context
+  const {
+    // Data
+    filteredDefaultModels,
+    selectedEditModel,
+    editModel,
+    newModel,
+    
+    // UI State
+    loading,
+    error,
+    successMessage,
+    activeTab,
+    
+    // Search & Filters
+    modelSearch,
+    filterRole,
+    filterActive,
+    sortBy,
+    sortOrder,
+    
+    // Filter counts
+    totalCount,
+    userCount,
+    adminCount,
+    systemCount,
+    activeCount,
+    inactiveCount,
+    
+    // Validation
+    fieldErrors,
+    touchedFields,
+    hasUnsavedChanges,
+    
+    // Task State
+    taskInputMode,
+    taskBuilder,
+    taskModalOpen,
+    selectedModelForTasks,
+    taskModalMode,
+    
+    // Role State
+    roleModalOpen,
+    selectedModelForRole,
+    editRoleData,
+    
+    // Model Edit Modal State
+    modelEditModalOpen,
+    modelEditMode,
+    
+    // Setters
+    setNewModel,
+    setEditModel,
+    setError,
+    setSuccessMessage,
+    setModelSearch,
+    setFilterRole,
+    setFilterActive,
+    setSortBy,
+    setSortOrder,
+    setTaskInputMode,
+    setTaskBuilder,
+    setHasUnsavedChanges,
+    setEditRoleData,
+    setSelectedEditModel,
+    setActiveTab,
+    setTaskModalMode,
+    
+    // Actions
+    addDefaultModel,
+    updateModel,
+    deleteModel,
+    toggleModelActive,
+    selectModelForEdit,
+    handleTabSwitch,
+    handleFieldChange,
+    handleFieldBlur,
+    
+    // Model Edit Modal Actions
+    openAddModelModal,
+    closeModelEditModal,
+    
+    // Task Actions
+    openTaskModal,
+    closeTaskModal,
+    addTaskToModel,
+    removeTaskFromModel,
+    
+    // Role Actions
+    openRoleModal,
+    closeRoleModal,
+    saveRoleChanges,
+  } = useModelManagement({ context: 'account' });
+  
+  // Use combobox filters hook
+  const {
+    modelQuery,
+    setModelQuery,
+    endpointQuery,
+    setEndpointQuery,
+    roleQuery,
+    setRoleQuery,
+    filteredModels,
+    filteredEndpoints,
+    filteredRoles,
+  } = useComboboxFilters();
 
+  // Modal callback adapters for shared components
+  const handleAddTask = (modelId: string | number, taskName: string, taskMessage: string) => {
+    // Admin's addTaskToModel uses selectedModelForTasks from state, not modelId parameter
+    addTaskToModel(taskName, taskMessage);
+  };
+
+  const handleRemoveTask = (modelId: string | number, taskIndex: number) => {
+    // Admin's removeTaskFromModel takes number modelId
+    removeTaskFromModel(modelId as number, taskIndex);
+  };
+
+  // Role data adapter for shared modal
+  const handleSetRoleData = (data: React.SetStateAction<any>) => {
+    if (typeof data === 'function') {
+      setEditRoleData((prev: any) => {
+        const newData = data(prev);
+        // Ensure isCustomRole is set based on role value
+        return {
+          ...newData,
+          isCustomRole: newData.role === 'custom'
+        };
+      });
+    } else {
+      setEditRoleData({
+        ...data,
+        isCustomRole: data.role === 'custom'
+      });
+    }
+  };
+
+  // Confirmation dialog handlers
+  const handleDeleteWithConfirmation = (modelId: number, modelName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete Model',
+      message: `Are you sure you want to delete "${modelName}"? This action cannot be undone.`,
+      onConfirm: () => {
+        deleteModel(modelId);
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+      },
+      confirmText: 'Delete',
+      confirmVariant: 'danger',
+    });
+  };
+
+  const handleCancelEdit = () => {
+    if (hasUnsavedChanges) {
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Are you sure you want to cancel? All changes will be lost.',
+        onConfirm: () => {
+          setSelectedEditModel(null);
+          setEditModel(null);
+          setActiveTab('models');
+          setConfirmDialog({ ...confirmDialog, isOpen: false });
+        },
+        confirmText: 'Discard Changes',
+        confirmVariant: 'danger',
+      });
+    } else {
+      setSelectedEditModel(null);
+      setEditModel(null);
+      setActiveTab('models');
+    }
+  };
+
+  // Auto-dismiss success messages after 5 seconds
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        setError('Please log in to access AI settings.');
-        console.error('Auth error:', authError?.message);
-        setLoading(false);
-        return;
-      }
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, setSuccessMessage]);
 
-      console.log('User ID:', user.id);
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-      if (profileError || !profile) {
-        setError('Profile not found. Please contact support.');
-        console.error('Profile error:', profileError?.message);
-        setLoading(false);
-        return;
+  // Keyboard escape handler for modals
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && openDialog) {
+        setOpenDialog(null);
       }
-
-      // Fetch default models
-      const { data: defaults, error: defaultsError } = await supabase
-        .from('ai_models_default')
-        .select('id, name, user_role_to_access, max_tokens, icon')
-        .eq('organization_id', profile.organization_id)
-        .eq('is_active', true);
-      if (defaultsError) {
-        setError('Failed to load default models.');
-        console.error('Defaults error:', defaultsError.message);
-      } else {
-        setDefaultModels(defaults || []);
-      }
-
-      // Fetch user models
-      const { data: userModels, error: userModelsError } = await supabase
-        .from('ai_models')
-        .select('id, name, max_tokens')
-        .eq('user_id', user.id);
-      if (userModelsError) {
-        setError('Failed to load user models.');
-        console.error('User models error:', userModelsError.message);
-      } else {
-        setUserModels(userModels || []);
-      }
-
-      // Fetch selected model
-      const { data: settings, error: settingsError } = await supabase
-        .from('ai_user_settings')
-        .select('default_model_id, user_model_id, selected_model_type')
-        .eq('user_id', user.id)
-        .single();
-      if (settingsError && settingsError.code !== 'PGRST116') {
-        console.error('Settings error:', settingsError.message);
-        setError('Failed to load settings.');
-      } else if (settings) {
-        if (settings.selected_model_type === 'user' && settings.user_model_id) {
-          setSelectedModel({ id: settings.user_model_id, type: 'user' });
-        } else if (settings.selected_model_type === 'default' && settings.default_model_id) {
-          setSelectedModel({ id: settings.default_model_id, type: 'default' });
-        } else {
-          setSelectedModel(null);
-        }
-      } else {
-        await supabase.from('ai_user_settings').insert({
-          user_id: user.id,
-          default_model_id: null,
-          user_model_id: null,
-          selected_model_type: null,
-          organization_id: profile.organization_id,
-        });
-        setSelectedModel(null);
-      }
-      console.log('Selected model initialized:', selectedModel);
-      setLoading(false);
     };
-    fetchData();
-  }, []);
-
-  const addUserModel = async () => {
-    setLoading(true);
-    setError(null);
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      setError('Please log in to add a model.');
-      console.error('Auth error:', authError?.message);
-      setLoading(false);
-      return;
-    }
-
-    if (!newModel.name || !newModel.api_key || !newModel.endpoint) {
-      setError('Please fill in all required fields.');
-      setLoading(false);
-      return;
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-    if (profileError || !profile) {
-      setError('Profile not found. Please contact support.');
-      console.error('Profile error:', profileError?.message);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      await supabase
-        .from('ai_models')
-        .update({ is_active: false })
-        .eq('user_id', user.id);
-
-      const { data, error } = await supabase
-        .from('ai_models')
-        .insert({
-          user_id: user.id,
-          organization_id: profile.organization_id,
-          name: newModel.name,
-          api_key: newModel.api_key,
-          endpoint: newModel.endpoint,
-          max_tokens: newModel.max_tokens,
-          system_message: 'You are a helpful assistant for [Your Site’s Purpose].',
-          is_active: true,
-        })
-        .select('id, name, max_tokens')
-        .single();
-
-      if (error) {
-        throw new Error('Failed to add model: ' + error.message);
-      }
-
-      if (data) {
-        setUserModels([...userModels, { id: data.id, name: data.name, max_tokens: data.max_tokens }]);
-        const { error: upsertError } = await supabase
-          .from('ai_user_settings')
-          .upsert(
-            {
-              user_id: user.id,
-              user_model_id: data.id,
-              default_model_id: null,
-              selected_model_type: 'user',
-              organization_id: profile.organization_id,
-            },
-            { onConflict: 'user_id' }
-          );
-        if (upsertError) {
-          throw new Error('Failed to update settings: ' + upsertError.message);
-        }
-        setSelectedModel({ id: data.id, type: 'user' });
-        // Dispatch modelChanged event
-        window.dispatchEvent(
-          new CustomEvent('modelChanged', {
-            detail: {
-              type: 'user',
-              id: data.id,
-              name: data.name,
-              max_tokens: data.max_tokens,
-              icon: null, // User models have no icon
-            },
-          })
-        );
-        console.log('Dispatched modelChanged event:', { id: data.id, type: 'user', name: data.name });
-        setNewModel({ name: '', api_key: '', endpoint: '', max_tokens: 200 });
-        setModelQuery('');
-        setEndpointQuery('');
-        setActiveTab('all'); // Switch to All tab after adding model
-      }
-    } catch (error: any) {
-      setError(error.message || 'Failed to add model.');
-      console.error('Add model error:', error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const selectModel = async (id: number, type: 'default' | 'user') => {
-    setLoading(true);
-    setError(null);
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      setError('Please log in to select a model.');
-      console.error('Auth error:', authError?.message);
-      setLoading(false);
-      return;
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-    if (profileError || !profile) {
-      setError('Profile not found. Please contact support.');
-      console.error('Profile error:', profileError?.message);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const updateData = {
-        user_id: user.id,
-        default_model_id: type === 'default' ? id : null,
-        user_model_id: type === 'user' ? id : null,
-        selected_model_type: type,
-        organization_id: profile.organization_id,
-      };
-      const { error: upsertError } = await supabase
-        .from('ai_user_settings')
-        .upsert(updateData, { onConflict: 'user_id' });
-      if (upsertError) {
-        throw new Error('Failed to update selected model: ' + upsertError.message);
-      }
-
-      // Fetch model details for event
-      let modelDetails: { name: string; max_tokens?: number; icon?: string | null } = {
-        name: 'grok-3-latest',
-        max_tokens: 4096,
-        icon: null,
-      };
-      if (type === 'default') {
-        const { data: defaultModel } = await supabase
-          .from('ai_models_default')
-          .select('name, max_tokens, icon')
-          .eq('id', id)
-          .single();
-        if (defaultModel) {
-          modelDetails = defaultModel;
-        }
-      } else {
-        const { data: userModel } = await supabase
-          .from('ai_models')
-          .select('name, max_tokens')
-          .eq('id', id)
-          .eq('user_id', user.id)
-          .single();
-        if (userModel) {
-          modelDetails = { ...userModel, icon: null };
-        }
-      }
-
-      setSelectedModel({ id, type });
-      // Dispatch modelChanged event
-      window.dispatchEvent(
-        new CustomEvent('modelChanged', {
-          detail: {
-            type,
-            id,
-            name: modelDetails.name,
-            max_tokens: modelDetails.max_tokens || 4096,
-            icon: modelDetails.icon,
-          },
-        })
-      );
-      console.log('Dispatched modelChanged event:', { id, type, name: modelDetails.name });
-    } catch (error: any) {
-      setError(error.message || 'Failed to select model.');
-      console.error('Select model error:', error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteUserModel = async (modelId: number) => {
-    setLoading(true);
-    setError(null);
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      setError('Please log in to delete a model.');
-      console.error('Auth error:', authError?.message);
-      setLoading(false);
-      return;
-    }
-
-    console.log('Deleting model ID:', modelId, 'for user:', user.id);
-
-    try {
-      const { error: deleteError } = await supabase
-        .from('ai_models')
-        .delete()
-        .eq('id', modelId)
-        .eq('user_id', user.id);
-      if (deleteError) {
-        throw new Error('Failed to delete model: ' + deleteError.message);
-      }
-
-      setUserModels(userModels.filter((model) => model.id !== modelId));
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-      if (profileError || !profile) {
-        throw new Error('Profile not found');
-      }
-
-      if (selectedModel?.id === modelId && selectedModel.type === 'user') {
-        const { data: remainingUserModel } = await supabase
-          .from('ai_models')
-          .select('id, name, max_tokens')
-          .eq('user_id', user.id)
-          .limit(1)
-          .single();
-        if (remainingUserModel) {
-          const { error: upsertError } = await supabase
-            .from('ai_user_settings')
-            .upsert(
-              {
-                user_id: user.id,
-                user_model_id: remainingUserModel.id,
-                default_model_id: null,
-                selected_model_type: 'user',
-                organization_id: profile.organization_id,
-              },
-              { onConflict: 'user_id' }
-            );
-          if (upsertError) {
-            throw new Error('Failed to update settings: ' + upsertError.message);
-          }
-          setSelectedModel({ id: remainingUserModel.id, type: 'user' });
-          window.dispatchEvent(
-            new CustomEvent('modelChanged', {
-              detail: {
-                type: 'user',
-                id: remainingUserModel.id,
-                name: remainingUserModel.name,
-                max_tokens: remainingUserModel.max_tokens || 4096,
-                icon: null,
-              },
-            })
-          );
-          console.log('Dispatched modelChanged event:', { id: remainingUserModel.id, type: 'user' });
-        } else {
-          const { data: defaultModel } = await supabase
-            .from('ai_models_default')
-            .select('id, name, max_tokens, icon')
-            .eq('organization_id', profile.organization_id)
-            .eq('is_active', true)
-            .limit(1)
-            .single();
-          if (defaultModel) {
-            const { error: upsertError } = await supabase
-              .from('ai_user_settings')
-              .upsert(
-                {
-                  user_id: user.id,
-                  user_model_id: null,
-                  default_model_id: defaultModel.id,
-                  selected_model_type: 'default',
-                  organization_id: profile.organization_id,
-                },
-                { onConflict: 'user_id' }
-              );
-            if (upsertError) {
-              throw new Error('Failed to update settings: ' + upsertError.message);
-            }
-            setSelectedModel({ id: defaultModel.id, type: 'default' });
-            window.dispatchEvent(
-              new CustomEvent('modelChanged', {
-                detail: {
-                  type: 'default',
-                  id: defaultModel.id,
-                  name: defaultModel.name,
-                  max_tokens: defaultModel.max_tokens || 4096,
-                  icon: defaultModel.icon,
-                },
-              })
-            );
-            console.log('Dispatched modelChanged event:', { id: defaultModel.id, type: 'default' });
-          } else {
-            const { error: upsertError } = await supabase
-              .from('ai_user_settings')
-              .upsert(
-                {
-                  user_id: user.id,
-                  user_model_id: null,
-                  default_model_id: null,
-                  selected_model_type: null,
-                  organization_id: profile.organization_id,
-                },
-                { onConflict: 'user_id' }
-              );
-            if (upsertError) {
-              throw new Error('Failed to update settings: ' + upsertError.message);
-            }
-            setSelectedModel(null);
-            window.dispatchEvent(
-              new CustomEvent('modelChanged', {
-                detail: {
-                  type: null,
-                  id: null,
-                  name: 'grok-3-latest',
-                  max_tokens: 4096,
-                  icon: null,
-                },
-              })
-            );
-            console.log('Dispatched modelChanged event: No models available');
-          }
-        }
-      }
-    } catch (error: any) {
-      setError(error.message || 'Failed to delete model.');
-      console.error('Delete error:', error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredModels = modelQuery
-    ? popularModels.filter((model) => model.toLowerCase().includes(modelQuery.toLowerCase()))
-    : popularModels;
-  const filteredEndpoints = endpointQuery
-    ? popularEndpoints.filter((endpoint) => endpoint.toLowerCase().includes(endpointQuery.toLowerCase()))
-    : popularEndpoints;
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [openDialog]);
 
   return (
-    <div className="grid sm:grid-cols-5 mx-auto p-4 rounded-lg min-h-screen gap-4">
-      <div className="flex justify-center sm:justify-start">
-        <ChatWidget />
-      </div>
-      <div className="sm:col-span-3">
-        <div className="mt-8 flex flex-col items-center">
-          <Tooltip content={t.aiTitle} variant='bottom'>
-            <h1 className="mt-0 sm:mt-2 mb-2 text-2xl sm:text-3xl font-bold text-center text-gray-900 relative">
-              {t.ai}
+    <div className="px-4 md:px-6 lg:px-8 py-6">
+      <style>{modalStyles}</style>
+      <div className="p-2 sm:p-4 rounded-lg min-h-screen relative">
+        {/* Info icon - fixed positioned in top right */}
+        <button
+          onClick={() => setOpenDialog('info')}
+          className="fixed top-4 right-4 sm:top-8 sm:right-8 z-40 p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-lg"
+          aria-label="View AI Management Information"
+        >
+          <InfoIcon className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: primary.base }} />
+        </button>
+        
+        <div className="max-w-7xl mx-auto">
+          <div className="mt-4 sm:mt-8 mb-6 sm:mb-8 flex flex-col items-center">
+            <h1 
+              className="text-lg sm:text-xl font-medium text-gray-900 tracking-[-0.02em] antialiased relative transition-colors group cursor-default"
+            >
+              AI Models
               <span 
-                className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full" 
+                className="absolute -bottom-1 sm:-bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full transition-all duration-150" 
                 style={{ backgroundColor: primary.base }}
               />
-            </h1>
-          </Tooltip>
-          <Link 
-            href="/account" 
-            className="text-sm hover:underline transition-colors mb-4"
-            style={{ color: primary.base }}
-          >
-            {t.account}
-          </Link>
+          </h1>
         </div>
+        
+        {/* Error Message */}
+        {error && (
+          <AINotification
+            type="error"
+            message={error}
+            onClose={() => setError(null)}
+          />
+        )}
 
-        {error && <div className="text-red-500 mb-4">{error}</div>}
+        {/* Success Message */}
+        {successMessage && (
+          <AINotification
+            type="success"
+            message={successMessage}
+            onClose={() => setSuccessMessage(null)}
+          />
+        )}
 
         {/* Tab Navigation */}
-        <div className="flex justify-center mb-6">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full pb-1">
-            <button
-              onClick={() => setActiveTab('all')}
-              className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 shadow-sm hover:shadow-md"
-              style={{
-                backgroundColor: activeTab === 'all' ? primary.base : 'white',
-                color: activeTab === 'all' ? 'white' : primary.base,
-                border: `1.5px solid ${activeTab === 'all' ? primary.base : primary.light}40`,
-              }}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setActiveTab('default')}
-              className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 shadow-sm hover:shadow-md"
-              style={{
-                backgroundColor: activeTab === 'default' ? primary.base : 'white',
-                color: activeTab === 'default' ? 'white' : primary.base,
-                border: `1.5px solid ${activeTab === 'default' ? primary.base : primary.light}40`,
-              }}
-            >
-              Default
-            </button>
-            <button
-              onClick={() => setActiveTab('custom')}
-              className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 shadow-sm hover:shadow-md"
-              style={{
-                backgroundColor: activeTab === 'custom' ? primary.base : 'white',
-                color: activeTab === 'custom' ? 'white' : primary.base,
-                border: `1.5px solid ${activeTab === 'custom' ? primary.base : primary.light}40`,
-              }}
-            >
-              Custom
-            </button>
-            <button
-              onClick={() => setActiveTab('add')}
-              className="px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 inline-flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
-              style={{
-                backgroundColor: activeTab === 'add' ? primary.base : 'white',
-                color: activeTab === 'add' ? 'white' : primary.base,
-                border: `1.5px solid ${activeTab === 'add' ? primary.base : primary.light}40`,
-                minWidth: '120px'
-              }}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span>Add Model</span>
-            </button>
-          </div>
-        </div>
+          <AITabNavigation
+            activeTab={activeTab}
+            selectedEditModel={null}
+            primary={primary}
+            onTabChange={handleTabSwitch}
+            context="account"
+            useModal={true}
+            onAddClick={openAddModelModal}
+          />
 
-        {/* Tab Content */}
-        <div className="border border-gray-200 rounded-xl bg-white p-8">
-          {/* Add Model Tab */}
-          {activeTab === 'add' && (
-            <div className="max-w-2xl mx-auto">
-                  <div className="relative">
-                    <Combobox
-                      value={newModel.name}
-                      onChange={(value: string) => {
-                        setNewModel({ ...newModel, name: value });
-                        setModelQuery(value);
-                      }}
-                    >
-                      <Combobox.Input
-                        className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 mb-2"
-                        style={{
-                          '--tw-ring-color': primary.base
-                        } as React.CSSProperties}
-                        onChange={(e) => {
-                          setModelQuery(e.target.value);
-                          setNewModel({ ...newModel, name: e.target.value });
-                        }}
-                        placeholder={t.modelName + " (e.g., grok-3)"}
-                        displayValue={(value: string) => value}
-                      />
-                      <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
-                        {filteredModels.length === 0 && modelQuery !== '' ? (
-                          <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                            No models found. Enter a custom model name.
-                          </div>
-                        ) : (
-                          filteredModels.map((model) => (
-                            <Combobox.Option
-                              key={model}
-                              value={model}
-                            >
-                              {({ active }) => (
-                                <div
-                                  className="relative cursor-pointer select-none py-2 px-4 text-gray-900"
-                                  style={{
-                                    backgroundColor: active ? primary.lighter : 'transparent'
-                                  }}
-                                >
-                                  {model}
-                                </div>
-                              )}
-                            </Combobox.Option>
-                          ))
-                        )}
-                      </Combobox.Options>
-                    </Combobox>
-                  </div>
-                  <input
-                    type="password"
-                    value={newModel.api_key}
-                    onChange={(e) => setNewModel({ ...newModel, api_key: e.target.value })}
-                    placeholder={t.apiKey}
-                    className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 mb-2"
-                    style={{
-                      '--tw-ring-color': primary.base
-                    } as React.CSSProperties}
-                    autoComplete="new-password"
-                  />
-                  <div className="relative">
-                    <Combobox
-                      value={newModel.endpoint}
-                      onChange={(value: string) => {
-                        setNewModel({ ...newModel, endpoint: value });
-                        setEndpointQuery(value);
-                      }}
-                    >
-                      <Combobox.Input
-                        className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 mb-2"
-                        style={{
-                          '--tw-ring-color': primary.base
-                        } as React.CSSProperties}
-                        onChange={(e) => {
-                          setEndpointQuery(e.target.value);
-                          setNewModel({ ...newModel, endpoint: e.target.value });
-                        }}
-                        placeholder={t.apiEndpoint + " (e.g., https://api.x.ai/v1/chat/completions)"}
-                        displayValue={(value: string) => value}
-                      />
-                      <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-gray-200 focus:outline-none">
-                        {filteredEndpoints.length === 0 && endpointQuery !== '' ? (
-                          <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                            No endpoints found. Enter a custom endpoint.
-                          </div>
-                        ) : (
-                          filteredEndpoints.map((endpoint) => (
-                            <Combobox.Option
-                              key={endpoint}
-                              value={endpoint}
-                            >
-                              {({ active }) => (
-                                <div
-                                  className="relative cursor-pointer select-none py-2 px-4 text-gray-900"
-                                  style={{
-                                    backgroundColor: active ? primary.lighter : 'transparent'
-                                  }}
-                                >
-                                  {endpoint}
-                                </div>
-                              )}
-                            </Combobox.Option>
-                          ))
-                        )}
-                      </Combobox.Options>
-                    </Combobox>
-                  </div>
-                  <input
-                    type="number"
-                    value={newModel.max_tokens}
-                    onChange={(e) => setNewModel({ ...newModel, max_tokens: parseInt(e.target.value) || 200 })}
-                    placeholder={t.maxTokens + " (default: 200)"}
-                    className="border border-gray-200 rounded p-2 w-full bg-gray-50 focus:outline-none focus:ring-2 mb-2"
-                    style={{
-                      '--tw-ring-color': primary.base
-                    } as React.CSSProperties}
-                    autoComplete="off"
-                  />
-                  <button
-                    onClick={addUserModel}
-                    disabled={loading || !newModel.name || !newModel.api_key || !newModel.endpoint}
-                    className="w-full text-white py-3 rounded-xl font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 inline-flex items-center justify-center gap-2"
-                    style={{
-                      backgroundColor: (loading || !newModel.name || !newModel.api_key || !newModel.endpoint) ? '#d1d5db' : primary.base,
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!(loading || !newModel.name || !newModel.api_key || !newModel.endpoint)) {
-                        e.currentTarget.style.backgroundColor = primary.hover;
-                        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!(loading || !newModel.name || !newModel.api_key || !newModel.endpoint)) {
-                        e.currentTarget.style.backgroundColor = primary.base;
-                        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
-                      }
-                    }}
-                  >
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          {/* Models List */}
+          <div>
+            {/* Filters */}
+            <AIFilterBar
+              context="account"
+              filterRole={filterRole}
+              filterActive={filterActive}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              primary={primary}
+              totalCount={totalCount}
+              userCount={userCount}
+              adminCount={adminCount}
+              systemCount={systemCount}
+              activeCount={activeCount}
+              inactiveCount={inactiveCount}
+              setFilterRole={setFilterRole}
+              setFilterActive={setFilterActive}
+              setSortBy={setSortBy}
+              setSortOrder={setSortOrder}
+            />
+
+            {/* Search Input */}
+            <AISearchInput
+              value={modelSearch}
+              onChange={setModelSearch}
+              placeholder="Search models, roles, or tasks..."
+              resultCount={filteredDefaultModels.length}
+              primary={primary as any}
+            />
+
+            {loading ? (
+              <AILoadingSkeleton count={3} context="admin" />
+            ) : (
+              <ul className="space-y-2 sm:space-y-3">
+                  {filteredDefaultModels.length === 0 ? (
+                    <li className="py-12 text-center bg-white rounded-2xl border border-gray-100">
+                      <div className="mx-auto h-12 w-12 text-gray-400 mb-3 flex items-center justify-center">
+                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01" />
                         </svg>
-                        <span>Adding...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        <span>Add Model</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                      </div>
+                      <p className="text-gray-500 text-base mb-3">
+                        {modelSearch || filterRole !== 'all' || filterActive !== 'all' 
+                          ? 'No models match your filters'
+                          : 'No models available yet'}
+                      </p>
+                      {(modelSearch || filterRole !== 'all' || filterActive !== 'all') ? (
+                        <Button
+                          onClick={() => {
+                            setModelSearch('')
+                            setFilterRole('all')
+                            setFilterActive('all')
+                          }}
+                          variant="outline"
+                          size="default"
+                        >
+                          Clear all filters
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={openAddModelModal}
+                          variant="primary"
+                          size="default"
+                        >
+                          Add your first model
+                        </Button>
+                      )}
+                    </li>
+                  ) : (
+                    filteredDefaultModels.map((model) => (
+                      <AIModelCard
+                        key={model.id}
+                        model={model as any}
+                        type={model.type || 'default'}
+                        context="account"
+                        primary={primary as any}
+                        onEdit={(aiModel) => selectModelForEdit(model)}
+                        onDelete={() => handleDeleteWithConfirmation(model.id, model.name)}
+                        onToggleActive={() => toggleModelActive(model.id, !model.is_active)}
+                        onOpenRoleModal={() => openRoleModal(model, predefinedRoles)}
+                        onOpenTaskModal={(aiModel, mode) => openTaskModal(model, mode)}
+                      />
+                    ))
+                  )}
+                </ul>
               )}
-
-          {/* All Models Tab */}
-          {activeTab === 'all' && (
-            <div>
-              <ul className="space-y-3">
-                {/* Default Models */}
-                {defaultModels.length > 0 && (
-                  <>
-                    <li className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 pt-2 pb-1">{t.defaultModels}</li>
-                    {defaultModels.map((model) => (
-                      <li
-                        key={`default-${model.id}`}
-                        className="bg-white border border-gray-200 flex items-center justify-between py-3 px-4 cursor-pointer rounded-xl group"
-                        style={{ transition: 'all 0.2s' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = primary.lighter;
-                          e.currentTarget.style.borderColor = primary.base;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#ffffff';
-                          e.currentTarget.style.borderColor = '#e5e7eb';
-                        }}
-                        onClick={() => selectModel(model.id, 'default')}
-                      >
-                        <div className="flex items-center gap-3 flex-grow min-w-0">
-                          {model.icon && (
-                            <img
-                              className="h-6 w-6 flex-shrink-0"
-                              src={model.icon}
-                              alt={`${model.name} icon`}
-                              onError={(e) => (e.currentTarget.style.display = 'none')}
-                            />
-                          )}
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-medium text-gray-900 truncate">{model.name}</span>
-                            {model.user_role_to_access === "admin" && (
-                              <span className='text-xs text-gray-500 mt-0.5'>Admin only</span>
-                            )}
-                          </div>
-                        </div>
-                        <Tooltip
-                          content={selectedModel?.id === model.id && selectedModel.type === 'default' ? t.selectedModel : t.selectThisModel}
-                        >
-                          <button
-                            className="p-2.5 rounded-lg transition-all flex-shrink-0"
-                            style={{
-                              backgroundColor: selectedModel?.id === model.id && selectedModel.type === 'default'
-                                ? primary.base
-                                : '#f9fafb',
-                              color: selectedModel?.id === model.id && selectedModel.type === 'default'
-                                ? 'white'
-                                : '#6b7280'
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!(selectedModel?.id === model.id && selectedModel.type === 'default')) {
-                                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!(selectedModel?.id === model.id && selectedModel.type === 'default')) {
-                                e.currentTarget.style.backgroundColor = '#f9fafb';
-                              }
-                            }}
-                          >
-                            {selectedModel?.id === model.id && selectedModel.type === 'default' ? (
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                              </svg>
-                            ) : (
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                              </svg>
-                            )}
-                          </button>
-                        </Tooltip>
-                      </li>
-                    ))}
-                  </>
-                )}
-                
-                {/* Custom Models */}
-                {userModels.length > 0 && (
-                  <>
-                    <li className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 pt-4 pb-1">{t.customModels}</li>
-                    {userModels.map((model) => (
-                      <li
-                        key={`user-${model.id}`}
-                        className="bg-white border border-gray-200 flex items-center justify-between py-3 px-4 cursor-pointer rounded-xl group"
-                        style={{ transition: 'all 0.2s' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = primary.lighter;
-                          e.currentTarget.style.borderColor = primary.base;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#ffffff';
-                          e.currentTarget.style.borderColor = '#e5e7eb';
-                        }}
-                      >
-                        <span className="text-sm font-medium text-gray-900 flex-grow truncate">{model.name}</span>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Tooltip content={t.removeModel}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteUserModel(model.id);
-                              }}
-                              className="p-2 rounded-lg bg-red-50 text-red-600 opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-all"
-                              aria-label="Remove model"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </Tooltip>
-                          <Tooltip
-                            content={selectedModel?.id === model.id && selectedModel.type === 'user' ? t.selectedModel : t.selectThisModel}
-                          >
-                            <button
-                              onClick={() => selectModel(model.id, 'user')}
-                              className="p-2.5 rounded-lg transition-all"
-                              style={{
-                                backgroundColor: selectedModel?.id === model.id && selectedModel.type === 'user'
-                                  ? primary.base
-                                  : '#f9fafb',
-                                color: selectedModel?.id === model.id && selectedModel.type === 'user'
-                                  ? 'white'
-                                  : '#6b7280'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!(selectedModel?.id === model.id && selectedModel.type === 'user')) {
-                                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!(selectedModel?.id === model.id && selectedModel.type === 'user')) {
-                                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                                }
-                              }}
-                            >
-                              {selectedModel?.id === model.id && selectedModel.type === 'user' ? (
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : (
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                              )}
-                            </button>
-                          </Tooltip>
-                        </div>
-                      </li>
-                    ))}
-                  </>
-                )}
-                
-                {defaultModels.length === 0 && userModels.length === 0 && (
-                  <li className="py-8 text-center text-gray-500">No models available</li>
-                )}
-              </ul>
-            </div>
-          )}
-
-          {/* Default Models Tab */}
-          {activeTab === 'default' && (
-            <div>
-              <ul className="space-y-3">
-                {defaultModels.length === 0 ? (
-                  <li className="py-8 text-center text-gray-500">{t.noDefaultModels}</li>
-                ) : (
-                  defaultModels.map((model) => (
-                    <li
-                      key={model.id}
-                      className="bg-white border border-gray-200 flex items-center justify-between py-3 px-4 cursor-pointer rounded-xl group"
-                      style={{ transition: 'all 0.2s' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = primary.lighter;
-                        e.currentTarget.style.borderColor = primary.base;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#ffffff';
-                        e.currentTarget.style.borderColor = '#e5e7eb';
-                      }}
-                      onClick={() => selectModel(model.id, 'default')}
-                    >
-                      <div className="flex items-center gap-3 flex-grow min-w-0">
-                        {model.icon && (
-                          <img
-                            className="h-6 w-6 flex-shrink-0"
-                            src={model.icon}
-                            alt={`${model.name} icon`}
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                          />
-                        )}
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-medium text-gray-900 truncate">{model.name}</span>
-                          {model.user_role_to_access === "admin" && (
-                            <span className='text-xs text-gray-500 mt-0.5'>Admin only</span>
-                          )}
-                        </div>
-                      </div>
-                      <Tooltip
-                        content={selectedModel?.id === model.id && selectedModel.type === 'default' ? t.selectedModel : t.selectThisModel}
-                      >
-                        <button
-                          className="p-2.5 rounded-lg transition-all flex-shrink-0"
-                          style={{
-                            backgroundColor: selectedModel?.id === model.id && selectedModel.type === 'default'
-                              ? primary.base
-                              : '#f9fafb',
-                            color: selectedModel?.id === model.id && selectedModel.type === 'default'
-                              ? 'white'
-                              : '#6b7280'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!(selectedModel?.id === model.id && selectedModel.type === 'default')) {
-                              e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!(selectedModel?.id === model.id && selectedModel.type === 'default')) {
-                              e.currentTarget.style.backgroundColor = '#f9fafb';
-                            }
-                          }}
-                        >
-                          {selectedModel?.id === model.id && selectedModel.type === 'default' ? (
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                          )}
-                        </button>
-                      </Tooltip>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          )}
-
-          {/* Custom Models Tab */}
-          {activeTab === 'custom' && (
-            <div>
-              <ul className="space-y-3">
-                {userModels.length === 0 ? (
-                  <li className="py-8 text-center text-gray-500">{t.noUserModels}</li>
-                ) : (
-                  userModels.map((model) => (
-                    <li
-                      key={model.id}
-                      className="bg-white border border-gray-200 flex items-center justify-between py-3 px-4 cursor-pointer rounded-xl group"
-                      style={{ transition: 'all 0.2s' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = primary.lighter;
-                        e.currentTarget.style.borderColor = primary.base;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#ffffff';
-                        e.currentTarget.style.borderColor = '#e5e7eb';
-                      }}
-                    >
-                      <span className="text-sm font-medium text-gray-900 flex-grow truncate">{model.name}</span>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Tooltip content={t.removeModel}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteUserModel(model.id);
-                            }}
-                            className="p-2 rounded-lg bg-red-50 text-red-600 opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-all"
-                            aria-label="Remove model"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip
-                          content={selectedModel?.id === model.id && selectedModel.type === 'user' ? t.selectedModel : t.selectThisModel}
-                        >
-                          <button
-                            onClick={() => selectModel(model.id, 'user')}
-                            className="p-2.5 rounded-lg transition-all"
-                            style={{
-                              backgroundColor: selectedModel?.id === model.id && selectedModel.type === 'user'
-                                ? primary.base
-                                : '#f9fafb',
-                              color: selectedModel?.id === model.id && selectedModel.type === 'user'
-                                ? 'white'
-                                : '#6b7280'
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!(selectedModel?.id === model.id && selectedModel.type === 'user')) {
-                                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!(selectedModel?.id === model.id && selectedModel.type === 'user')) {
-                                e.currentTarget.style.backgroundColor = '#f9fafb';
-                              }
-                            }}
-                          >
-                            {selectedModel?.id === model.id && selectedModel.type === 'user' ? (
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                              </svg>
-                            ) : (
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                              </svg>
-                            )}
-                          </button>
-                        </Tooltip>
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
-      <InfoCards setOpenDialog={setOpenDialog} />
+      {/* InfoCards Modal */}
+      {openDialog === 'info' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            {/* Transparent background overlay - click to close */}
+            <div 
+              className="fixed inset-0"
+              onClick={() => setOpenDialog(null)}
+            />
+            
+            {/* Transparent modal panel with cards */}
+            <div 
+              className="relative inline-block align-middle px-4 pt-5 pb-4 text-left transform transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6"
+            >
+              {/* Close button with visible background */}
+              <div className="absolute top-0 right-0 pt-4 pr-4 z-10">
+                <button
+                  onClick={() => setOpenDialog(null)}
+                  className="bg-white rounded-full p-2 text-gray-400 hover:text-gray-500 shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  style={{ '--tw-ring-color': primary.base } as React.CSSProperties}
+                >
+                  <span className="sr-only">Close</span>
+                  <CloseIcon className="h-6 w-6" />
+                </button>
+              </div>
+              
+              {/* Cards centered */}
+              <div className="flex justify-center">
+                <InfoCards setOpenDialog={setOpenDialog} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DialogModals */}
       <DialogModals openDialog={openDialog} setOpenDialog={setOpenDialog} />
+
+      {/* Model Edit Modal */}
+      <AIModelEditModal
+        isOpen={modelEditModalOpen}
+        mode={modelEditMode}
+        model={modelEditMode === 'edit' ? (editModel || newModel) : newModel}
+        taskBuilder={taskBuilder}
+        fieldErrors={fieldErrors}
+        touchedFields={touchedFields}
+        loading={loading}
+        primary={primary}
+        context="account"
+        modelQuery={modelQuery}
+        endpointQuery={endpointQuery}
+        filteredModels={filteredModels}
+        filteredEndpoints={filteredEndpoints}
+        predefinedRoles={predefinedRoles}
+        onClose={closeModelEditModal}
+        onSubmit={modelEditMode === 'edit' ? updateModel : addDefaultModel}
+        onModelChange={setNewModel}
+        handleFieldChange={handleFieldChange}
+        handleFieldBlur={handleFieldBlur}
+        setModelQuery={setModelQuery}
+        setEndpointQuery={setEndpointQuery}
+        setTaskBuilder={setTaskBuilder}
+        setHasUnsavedChanges={setHasUnsavedChanges}
+      />
+
+      {/* Task Management Modal */}
+      <AITaskManagementModal
+        isOpen={taskModalOpen && !!selectedModelForTasks}
+        selectedModel={selectedModelForTasks!}
+        mode={taskModalMode}
+        setMode={setTaskModalMode}
+        onClose={closeTaskModal}
+        onAddTask={handleAddTask}
+        onRemoveTask={handleRemoveTask}
+        primary={primary}
+        context="account"
+      />
+
+      {/* Role Edit Modal */}
+      <AIRoleEditModal
+        isOpen={roleModalOpen && !!selectedModelForRole}
+        selectedModel={selectedModelForRole!}
+        roleData={editRoleData}
+        setRoleData={handleSetRoleData}
+        filteredRoles={filteredRoles}
+        roleQuery={roleQuery}
+        setRoleQuery={setRoleQuery}
+        onClose={closeRoleModal}
+        onSave={saveRoleChanges}
+        loading={loading}
+        primary={primary}
+        context="account"
+      />
+
+      {/* Confirmation Dialog */}
+      {confirmDialog.isOpen && (
+        <AIConfirmationDialog
+          isOpen={confirmDialog.isOpen}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmText={confirmDialog.confirmText || 'Confirm'}
+          cancelText="Cancel"
+          variant={confirmDialog.confirmVariant === 'danger' ? 'danger' : 'info'}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        />
+      )}
+
     </div>
   );
 }
