@@ -36,7 +36,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+          <div className="fixed inset-0 auth-modal-backdrop" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -52,7 +52,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative bg-white/90 backdrop-blur-md border border-white/20 rounded-2xl p-6 max-w-sm w-full shadow-lg">
+              <Dialog.Panel className="relative auth-modal-content p-6 max-w-sm w-full shadow-lg">
                 {/* Glassmorphism gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl pointer-events-none" />
                 

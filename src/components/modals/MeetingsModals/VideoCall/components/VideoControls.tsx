@@ -15,10 +15,45 @@ import {
   StopCircleIcon,
   VideoCameraIcon as VideoCameraIconSolid,
   EllipsisHorizontalIcon,
-  XMarkIcon
+  XMarkIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
+import { MicrophoneIcon as MicrophoneIconSolid } from '@heroicons/react/24/solid';
 import { LocalDataTrack, Room, LocalAudioTrack, LocalVideoTrack } from 'twilio-video';
 import { useThemeColors } from '@/hooks/useThemeColors';
+
+interface TaskItem {
+  id: string;
+  name: string;
+  description: string;
+  enabled?: boolean;
+}
+
+interface AIModel {
+  id: number;
+  name: string;
+  role: string;
+  description: string | null;
+  task: TaskItem[] | null;
+  system_message: string;
+  api_key: string;
+  endpoint: string;
+  max_tokens: number;
+  icon: string | null;
+  organization_types: string[];
+  required_plan: string;
+  token_limit_period: string | null;
+  token_limit_amount: number | null;
+  is_free: boolean;
+  is_trial: boolean;
+  trial_expires_days: number | null;
+  is_active: boolean;
+  is_featured: boolean;
+  tags: string[];
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
 
 interface VideoControlsProps {
   isMinimized: boolean;
@@ -36,6 +71,13 @@ interface VideoControlsProps {
   isRecording: boolean;
   showSettings: boolean;
   showNotes: boolean;
+  isTranscribing?: boolean;
+  showTranscription?: boolean;
+  isAnalyzing?: boolean;
+  showAnalysis?: boolean;
+  selectedAIModel?: AIModel | null;
+  aiModels?: AIModel[];
+  aiModelsLoading?: boolean;
   room: Room | null;
   roomName: string;
   localDataTrack: LocalDataTrack | null;
@@ -50,6 +92,10 @@ interface VideoControlsProps {
   onToggleRecording: () => void;
   onToggleSettings: () => void;
   onToggleNotes: () => void;
+  onToggleTranscription?: () => void;
+  onToggleAnalysis?: () => void;
+  onRunAnalysis?: () => void;
+  onSelectAIModel?: (model: AIModel) => void;
   onLeaveCall: () => void;
   onStartRecording: (room: Room | null, localAudioTrack: LocalAudioTrack | null, localVideoTrack: LocalVideoTrack | null, roomName: string) => void;
   onStopRecording: (roomName: string) => void;
@@ -71,6 +117,13 @@ const VideoControls: React.FC<VideoControlsProps> = ({
   isRecording,
   showSettings,
   showNotes,
+  isTranscribing = false,
+  showTranscription = false,
+  isAnalyzing = false,
+  showAnalysis = false,
+  selectedAIModel,
+  aiModels = [],
+  aiModelsLoading = false,
   room,
   roomName,
   localDataTrack,
@@ -85,11 +138,16 @@ const VideoControls: React.FC<VideoControlsProps> = ({
   onToggleRecording,
   onToggleSettings,
   onToggleNotes,
+  onToggleTranscription,
+  onToggleAnalysis,
+  onRunAnalysis,
+  onSelectAIModel,
   onLeaveCall,
   onStartRecording,
   onStopRecording,
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showAIMenu, setShowAIMenu] = useState(false);
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
 
@@ -294,6 +352,57 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                 <span className="text-xs font-medium text-center">Recording</span>
               </button>
 
+              {/* Transcription */}
+              {onToggleTranscription && (
+                <button
+                  onClick={() => {
+                    onToggleTranscription();
+                    setShowMoreMenu(false);
+                  }}
+                  className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200"
+                  style={{
+                    backgroundColor: isTranscribing ? primary.base : '#374151',
+                    animation: isTranscribing ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isTranscribing ? primary.hover : '#4b5563';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isTranscribing ? primary.base : '#374151';
+                  }}
+                  title={isTranscribing ? "Stop transcription" : "Start transcription"}
+                >
+                  <MicrophoneIconSolid className="w-6 h-6" />
+                  <span className="text-xs font-medium text-center">Transcribe</span>
+                </button>
+              )}
+
+              {/* AI Analysis */}
+              {onToggleAnalysis && (
+                <button
+                  onClick={() => {
+                    setShowAIMenu(!showAIMenu);
+                  }}
+                  className="p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-200 relative"
+                  style={{
+                    backgroundColor: showAnalysis || showAIMenu ? primary.base : '#374151',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = (showAnalysis || showAIMenu) ? primary.hover : '#4b5563';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = (showAnalysis || showAIMenu) ? primary.base : '#374151';
+                  }}
+                  title="AI Analysis"
+                >
+                  <SparklesIcon className="w-6 h-6" />
+                  <span className="text-xs font-medium text-center">AI Insights</span>
+                  {isAnalyzing && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                  )}
+                </button>
+              )}
+
               {/* Settings */}
               <button
                 onClick={() => {
@@ -337,6 +446,106 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                 <DocumentTextIcon className="w-6 h-6" />
                 <span className="text-xs font-medium text-center">Notes</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Analysis Menu */}
+      {showAIMenu && onRunAnalysis && onSelectAIModel && (
+        <div 
+          className="fixed inset-0 z-50" 
+          onClick={() => setShowAIMenu(false)}
+        >
+          <div 
+            className="absolute bottom-20 right-4 bg-gray-800 rounded-xl shadow-2xl p-4 border border-gray-700"
+            style={{ minWidth: '280px', maxWidth: '320px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="h-5 w-5 text-purple-400" />
+                <h3 className="text-white font-semibold">AI Analysis</h3>
+              </div>
+              <button
+                onClick={() => setShowAIMenu(false)}
+                className="p-1 hover:bg-gray-700 rounded transition-colors"
+              >
+                <XMarkIcon className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Model Selection */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Select AI Model</label>
+                {aiModelsLoading ? (
+                  <div className="text-gray-400 text-sm py-2">Loading models...</div>
+                ) : aiModels && aiModels.length > 0 ? (
+                  <select
+                    value={selectedAIModel?.id || ''}
+                    onChange={(e) => {
+                      const model = aiModels.find(m => m.id === parseInt(e.target.value));
+                      if (model) onSelectAIModel(model);
+                    }}
+                    className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg text-sm border border-gray-600 focus:outline-none focus:border-purple-500"
+                  >
+                    {aiModels.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name} {model.role ? `(${model.role})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="text-gray-400 text-sm py-2">No AI models available</div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    if (onToggleAnalysis) {
+                      onToggleAnalysis();
+                    }
+                    setShowAIMenu(false);
+                  }}
+                  className="w-full px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+                  style={{
+                    backgroundColor: showAnalysis ? '#dc2626' : primary.base,
+                    color: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = showAnalysis ? '#b91c1c' : primary.hover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = showAnalysis ? '#dc2626' : primary.base;
+                  }}
+                >
+                  {showAnalysis ? 'Close Analysis Panel' : 'Show Analysis Panel'}
+                </button>
+
+                {selectedAIModel && (
+                  <button
+                    onClick={() => {
+                      onRunAnalysis();
+                      setShowAIMenu(false);
+                    }}
+                    disabled={isAnalyzing || !isTranscribing}
+                    className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors"
+                  >
+                    {isAnalyzing ? 'Analyzing...' : 'Run Analysis'}
+                  </button>
+                )}
+              </div>
+
+              {/* Info */}
+              {!isTranscribing && (
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  Start transcription first to analyze conversation
+                </p>
+              )}
             </div>
           </div>
         </div>

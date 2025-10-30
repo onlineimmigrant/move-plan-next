@@ -35,6 +35,9 @@ import { useRecording } from './hooks/useRecording';
 import { useVideoCallUI } from './hooks/useVideoCallUI';
 import { useParticipantManagement } from './hooks/useParticipantManagement';
 import { useSettings } from './hooks/useSettings';
+import { useTranscription } from './hooks/useTranscription';
+import { useMeetingAIModels } from './hooks/useMeetingAIModels';
+import { useAIAnalysis } from './hooks/useAIAnalysis';
 import RemoteParticipantVideo from './components/RemoteParticipantVideo';
 import ChatPanel from './components/ChatPanel';
 import ParticipantsPanel from './components/ParticipantsPanel';
@@ -48,6 +51,8 @@ import ReactionPanel from './components/ReactionPanel';
 import RecordingIndicator from './components/RecordingIndicator';
 import MinimizedVideoCallButton from './components/MinimizedVideoCallButton';
 import WaitingRoomControls from '../WaitingRoom/WaitingRoomControls';
+import TranscriptionPanel from './components/TranscriptionPanel';
+import AIAnalysisPanel from './components/AIAnalysisPanel';
 import { usePanelManagement } from './hooks/usePanelManagement';
 
 interface VideoCallProps {
@@ -412,6 +417,34 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
   // Use the panel management hook
   const panelManagement = usePanelManagement();
 
+  // Use transcription hook
+  const {
+    isTranscribing,
+    transcript,
+    error: transcriptionError,
+    startTranscription,
+    stopTranscription,
+    clearTranscript,
+  } = useTranscription(room, localAudioTrack, isConnected, participantName || 'You');
+
+  // Use AI models hook
+  const {
+    models: aiModels,
+    loading: aiModelsLoading,
+    error: aiModelsError,
+    selectedModel,
+    setSelectedModel,
+  } = useMeetingAIModels(currentOrgId);
+
+  // Use AI analysis hook
+  const {
+    isAnalyzing,
+    analysisResult,
+    error: analysisError,
+    analyzeConversation,
+    clearAnalysis,
+  } = useAIAnalysis();
+
   // Video element refs
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const localVideoRefSpotlight = useRef<HTMLVideoElement>(null);
@@ -439,6 +472,8 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
   const [error, setError] = useState<string | null>(null);
   const [showNotes, setShowNotes] = useState(false);
   const [meetingNotes, setMeetingNotes] = useState('');
+  const [showTranscription, setShowTranscription] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   // Register panels when they become visible
   useEffect(() => {
@@ -471,6 +506,18 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
     }
   }, [showChat]);
 
+  useEffect(() => {
+    if (showTranscription) {
+      panelManagement.registerPanel('transcription', { x: 16, y: 280 });
+    }
+  }, [showTranscription]);
+
+  useEffect(() => {
+    if (showAnalysis) {
+      panelManagement.registerPanel('analysis', { x: 432, y: 280 });
+    }
+  }, [showAnalysis]);
+
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
       if (screenTrackRef.current) {
@@ -490,6 +537,59 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
         console.error('Error starting screen share:', err);
       }
     }
+  };
+
+  // Toggle transcription
+  const toggleTranscription = async () => {
+    if (isTranscribing) {
+      stopTranscription();
+      setShowTranscription(false);
+    } else {
+      setShowTranscription(true);
+      await startTranscription();
+    }
+  };
+
+  // Toggle AI analysis
+  const toggleAnalysis = () => {
+    setShowAnalysis(!showAnalysis);
+  };
+
+  // Run AI analysis
+  const runAnalysis = async () => {
+    if (!selectedModel) {
+      console.warn('⚠️ No AI model selected');
+      return;
+    }
+
+    if (transcript.length === 0) {
+      console.warn('⚠️ No transcript available for analysis');
+      return;
+    }
+
+    await analyzeConversation(transcript, selectedModel);
+  };
+
+  // Export transcript
+  const exportTranscript = () => {
+    if (transcript.length === 0) return;
+
+    const textContent = transcript
+      .map(
+        (segment) =>
+          `[${segment.timestamp.toLocaleTimeString()}] ${segment.speaker}: ${segment.text}`
+      )
+      .join('\n');
+
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transcript-${roomName}-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Copy to clipboard helper
@@ -798,6 +898,13 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
           isRecording={isRecording}
           showSettings={showSettings}
           showNotes={showNotes}
+          isTranscribing={isTranscribing}
+          showTranscription={showTranscription}
+          isAnalyzing={isAnalyzing}
+          showAnalysis={showAnalysis}
+          selectedAIModel={selectedModel}
+          aiModels={aiModels}
+          aiModelsLoading={aiModelsLoading}
           room={room}
           roomName={roomName}
           localDataTrack={localDataTrack}
@@ -812,6 +919,10 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
           onToggleRecording={isRecording ? () => stopRecording(roomName) : () => startRecording(room, localAudioTrack, localVideoTrack, roomName)}
           onToggleSettings={() => setShowSettings(!showSettings)}
           onToggleNotes={() => setShowNotes(!showNotes)}
+          onToggleTranscription={toggleTranscription}
+          onToggleAnalysis={toggleAnalysis}
+          onRunAnalysis={runAnalysis}
+          onSelectAIModel={setSelectedModel}
           onLeaveCall={leaveCall}
           onStartRecording={startRecording}
           onStopRecording={stopRecording}
@@ -898,6 +1009,36 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
         copyToClipboard={copyToClipboard}
         panelManagement={panelManagement}
         onClose={() => setShowInfoMenu(false)}
+      />
+
+      {/* Transcription Panel */}
+      <TranscriptionPanel
+        showTranscription={showTranscription}
+        isMobile={isMobile}
+        transcript={transcript}
+        isTranscribing={isTranscribing}
+        error={transcriptionError}
+        onClose={() => {
+          setShowTranscription(false);
+          if (isTranscribing) {
+            stopTranscription();
+          }
+        }}
+        onExport={exportTranscript}
+        panelManagement={panelManagement}
+      />
+
+      {/* AI Analysis Panel */}
+      <AIAnalysisPanel
+        showAnalysis={showAnalysis}
+        isMobile={isMobile}
+        analysisResult={analysisResult}
+        isAnalyzing={isAnalyzing}
+        error={analysisError}
+        selectedModelName={selectedModel?.name}
+        onClose={() => setShowAnalysis(false)}
+        onReanalyze={runAnalysis}
+        panelManagement={panelManagement}
       />
 
       {/* Recording Indicator */}

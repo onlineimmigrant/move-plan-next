@@ -23,13 +23,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left side: Enhanced gradient background */}
-      <div className={`hidden md:flex w-1/2 bg-gradient-to-br from-sky-600 via-sky-700 to-sky-800 items-center justify-center relative overflow-hidden`}>
+      <div className="hidden md:flex w-1/2 auth-gradient-bg items-center justify-center relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-sky-400/20 to-transparent animate-pulse" />
         
         <div className="text-white text-center z-10 px-8">
           <Link href='/' className="block group">
-          <h1 className="tracking-wide text-3xl sm:text-5xl font-bold bg-gradient-to-r from-white to-sky-100 bg-clip-text text-transparent mb-6 group-hover:scale-105 transition-transform duration-300">
+          <h1 className="tracking-wide text-3xl sm:text-5xl font-bold auth-text-gradient mb-6 group-hover:scale-105 transition-transform duration-300">
             {t.welcomeTitle} 
           </h1>
           </Link>
@@ -42,7 +42,7 @@ export default function LoginPage() {
       {/* Right side: Login form with glassmorphism */}
       <div className="w-full md:w-1/2 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
       
-        <div className="w-full max-w-sm p-6 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg mx-4">
+        <div className="w-full max-w-sm p-6 auth-form-container rounded-2xl shadow-lg mx-4">
 
           <h1 className="mb-6 text-center tracking-wide text-xl sm:text-2xl font-bold text-gray-800">
             {t.loginButton}

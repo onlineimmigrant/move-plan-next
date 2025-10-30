@@ -70,18 +70,23 @@ export const AIModelCard: React.FC<AIModelCardProps> = ({
     if (onOpenTaskModal) onOpenTaskModal(model, mode);
   };
 
+  // Determine if this model should have primary border (stronger visual presence)
+  const usePrimaryBorder = context === 'admin' 
+    ? model.type === 'system' // Admin: only system models get primary border
+    : (model.type === 'system' || model.type === 'default'); // Account: both system and default models get primary border
+
   return (
     <li
       className="relative bg-white rounded-2xl group overflow-hidden transition-all duration-300 hover:-translate-y-1"
       style={{ 
-        border: `2px solid ${model.type === 'system' ? primaryColors.base : primaryColors.lighter}`,
-        boxShadow: model.type === 'system' 
+        border: `2px solid ${usePrimaryBorder ? primaryColors.base : primaryColors.lighter}`,
+        boxShadow: usePrimaryBorder
           ? `0 2px 8px rgba(0,0,0,0.04), 0 0 0 1px ${primaryColors.base}`
           : `0 2px 8px rgba(0,0,0,0.04), 0 0 0 1px ${primaryColors.lighter}`,
         cursor: context === 'account' ? 'pointer' : 'default'
       }}
       onMouseEnter={(e) => {
-        if (model.type === 'system') {
+        if (usePrimaryBorder) {
           e.currentTarget.style.borderColor = primaryColors.base;
           e.currentTarget.style.boxShadow = `0 12px 32px -8px ${primaryColors.base}35, 0 0 0 1px ${primaryColors.base}`;
         } else {
@@ -90,7 +95,7 @@ export const AIModelCard: React.FC<AIModelCardProps> = ({
         }
       }}
       onMouseLeave={(e) => {
-        if (model.type === 'system') {
+        if (usePrimaryBorder) {
           e.currentTarget.style.borderColor = primaryColors.base;
           e.currentTarget.style.boxShadow = `0 2px 8px rgba(0,0,0,0.04), 0 0 0 1px ${primaryColors.base}`;
         } else {
@@ -146,21 +151,21 @@ export const AIModelCard: React.FC<AIModelCardProps> = ({
                 {model.name}
               </h3>
               
-              {/* System Badge - Takes precedence over Admin badge */}
-              {model.type === 'system' ? (
-                <span 
-                  className="px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl shadow-sm border"
-                  style={{ 
-                    backgroundColor: '#f3e8ff',
-                    color: '#6b21a8',
-                    borderColor: '#c084fc'
-                  }}
-                >
-                  System
-                </span>
-              ) : (
-                /* Admin Badge - Only show if not system model */
-                context === 'admin' && model.user_role_to_access === 'admin' && (
+              {/* Context-aware badge display */}
+              {context === 'admin' ? (
+                /* Admin context: Show System badge for system models, Admin badge for admin-role models */
+                model.type === 'system' ? (
+                  <span 
+                    className="px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl shadow-sm border"
+                    style={{ 
+                      backgroundColor: '#f3e8ff',
+                      color: '#6b21a8',
+                      borderColor: '#c084fc'
+                    }}
+                  >
+                    System
+                  </span>
+                ) : model.user_role_to_access === 'admin' && (
                   <span 
                     className="px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl shadow-sm border"
                     style={{ 
@@ -172,14 +177,30 @@ export const AIModelCard: React.FC<AIModelCardProps> = ({
                     Admin
                   </span>
                 )
+              ) : (
+                /* Account context: Show "Default" badge for both system and default models */
+                (model.type === 'system' || model.type === 'default') && (
+                  <span 
+                    className="px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl shadow-sm border"
+                    style={{ 
+                      backgroundColor: '#dbeafe',
+                      color: '#1e40af',
+                      borderColor: '#93c5fd'
+                    }}
+                  >
+                    Default
+                  </span>
+                )
               )}
               
               {/* Role Badge */}
               {model.role && (
                 <button
-                  onClick={model.type === 'system' ? undefined : handleOpenRole}
+                  onClick={(context === 'account' && (model.type === 'system' || model.type === 'default')) ? undefined : handleOpenRole}
                   className={`group/rolebadge relative px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl shadow-md border-2 transition-all duration-300 ${
-                    model.type === 'system' ? 'cursor-not-allowed opacity-75' : 'hover:scale-105 cursor-pointer'
+                    (context === 'account' && (model.type === 'system' || model.type === 'default')) 
+                      ? 'cursor-not-allowed opacity-75' 
+                      : 'hover:scale-105 cursor-pointer'
                   }`}
                   style={{ 
                     backgroundColor: '#fef3c7',
@@ -187,19 +208,21 @@ export const AIModelCard: React.FC<AIModelCardProps> = ({
                     borderColor: '#fbbf24'
                   }}
                   onMouseEnter={(e) => {
-                    if (model.type !== 'system') {
+                    if (!(context === 'account' && (model.type === 'system' || model.type === 'default'))) {
                       e.currentTarget.style.backgroundColor = '#fde68a';
                       e.currentTarget.style.borderColor = '#f59e0b';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (model.type !== 'system') {
+                    if (!(context === 'account' && (model.type === 'system' || model.type === 'default'))) {
                       e.currentTarget.style.backgroundColor = '#fef3c7';
                       e.currentTarget.style.borderColor = '#fbbf24';
                     }
                   }}
-                  title={model.type === 'system' ? 'System model role (read-only)' : 'Click to edit role'}
-                  disabled={model.type === 'system'}
+                  title={(context === 'account' && (model.type === 'system' || model.type === 'default')) 
+                    ? 'Default model role (read-only)' 
+                    : 'Click to edit role'}
+                  disabled={context === 'account' && (model.type === 'system' || model.type === 'default')}
                 >
                   <span className="flex items-center gap-1">
                     <AIIcons.User className="h-3 w-3" />
