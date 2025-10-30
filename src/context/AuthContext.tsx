@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Session, SupabaseClient } from '@supabase/supabase-js';
 
@@ -32,9 +32,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [fullName, setFullName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [profileFetched, setProfileFetched] = useState<string | null>(null); // Track which user's profile was fetched
   const router = useRouter();
+  const pathname = usePathname();
+
+  /**
+   * Pages that require authentication
+   */
+  const protectedRoutes = ['/account', '/admin'];
+
+  /**
+   * Check if current path requires authentication
+   */
+  const isProtectedRoute = (path: string): boolean => {
+    const cleanPath = path.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
+    return protectedRoutes.some(route => cleanPath.startsWith(route));
+  };
 
   const fetchProfile = async (userId: string) => {
+    // Avoid fetching the same profile multiple times
+    if (profileFetched === userId) {
+      console.log('Profile already fetched for user:', userId);
+      return isAdmin;
+    }
+
     try {
       console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
@@ -71,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOrganizationId(data.organization_id || null);
       setOrganizationType((data.organizations as any)?.type || null);
       setFullName(data.full_name || null);
+      setProfileFetched(userId); // Mark as fetched
       return data.role === 'admin' || data.role === 'superadmin';
     } catch (err: unknown) {
       const errorMessage = (err as Error).message;
@@ -83,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOrganizationId(null);
       setOrganizationType(null);
       setFullName(null);
+      setProfileFetched(null); // Clear fetched marker
       return false;
     }
   };
@@ -105,11 +128,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(data.session);
         console.log('Initial session:', data.session?.user?.email);
         if (data.session?.user?.id) {
-          const isAdminUser = await fetchProfile(data.session.user.id);
-          if (!isAdminUser && window.location.pathname.startsWith('/admin')) {
-            console.log('Non-admin detected, redirecting to /login');
-            router.push('/login?redirectTo=%2Fadmin');
-          }
+          await fetchProfile(data.session.user.id);
+          // Let layouts handle their own redirects
         }
       } catch (err: unknown) {
         console.error('Session fetch failed:', (err as Error).message);
@@ -126,25 +146,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       console.log('Auth state changed:', event, newSession?.user?.email);
-      console.log('Cookies after auth change:', document.cookie);
       if (newSession?.user?.id) {
-        fetchProfile(newSession.user.id).then((isAdminUser) => {
-          if (!isAdminUser && window.location.pathname.startsWith('/admin')) {
-            console.log('Non-admin detected, redirecting to /login');
-            router.push('/login?redirectTo=%2Fadmin');
-          }
-        });
+        fetchProfile(newSession.user.id);
+        // Let layouts handle their own redirects
       } else {
+        // Clear profile data on logout
         setIsAdmin(false);
         setIsSuperadmin(false);
         setOrganizationId(null);
         setOrganizationType(null);
         setFullName(null);
-        setError('No session found');
-        if (window.location.pathname.startsWith('/admin')) {
-          console.log('No session, redirecting to /login');
-          router.push('/login?redirectTo=%2Fadmin');
-        }
+        setProfileFetched(null);
       }
     });
 
@@ -189,8 +201,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOrganizationId(null);
       setOrganizationType(null);
       setFullName(null);
+      
+      // Clear any auth-related local storage
+      localStorage.removeItem('rememberMe');
+      
       console.log('Cookies after logout:', document.cookie);
-      router.push('/login');
+      
+      // Smart redirect: stay on current page if public, go to home if protected
+      const redirectUrl = pathname && !isProtectedRoute(pathname) ? pathname : '/';
+      console.log('Redirecting after logout to:', redirectUrl);
+      router.push(redirectUrl);
     } finally {
       setIsLoading(false);
     }

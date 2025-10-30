@@ -99,33 +99,14 @@ function NavigationLinkCard({ item, pathname, primary }: any) {
 export default function AdminDashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const [loading, setLoading] = useState(true);
   const [isMeetingsModalOpen, setIsMeetingsModalOpen] = useState(false);
-  const { session, supabase } = useAuth();
+  const { session, isLoading } = useAuth();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
 
-  useEffect(() => {
-    async function checkSession() {
-      if (!session?.user) {
-        console.log('[AdminDashboard] No user found, attempting refresh');
-        const { data, error } = await supabase.auth.getSession();
-        if (error || !data.session?.user) {
-          console.log('[AdminDashboard] Session refresh failed or no user, redirecting to login');
-          router.push('/login?redirectTo=/admin');
-          return;
-        }
-        console.log('[AdminDashboard] Session refreshed: id=', data.session.user.id);
-      } else {
-        console.log('[AdminDashboard] User found: id=', session.user.id);
-      }
-      setLoading(false);
-    }
-
-    checkSession();
-  }, [session, supabase, router]);
-
-  if (loading) {
+  // The layout already handles auth checks, no need to duplicate
+  // Just show loading while AuthContext is initializing
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <Loading />

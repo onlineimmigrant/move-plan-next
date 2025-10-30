@@ -32,6 +32,12 @@ export const useAuthTranslations = () => {
     terms: translations.terms,
     logo: translations.logo,
     
+    // Placeholders
+    emailPlaceholder: translations.emailPlaceholder,
+    passwordPlaceholder: translations.passwordPlaceholder,
+    usernamePlaceholder: translations.usernamePlaceholder,
+    resetEmailPlaceholder: translations.resetEmailPlaceholder,
+    
     // Login page
     loginTitle: translations.loginTitle,
     loginSubtitle: translations.loginSubtitle,

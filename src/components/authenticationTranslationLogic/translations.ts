@@ -12,6 +12,12 @@ export const AUTH_TRANSLATIONS = {
     terms: 'Terms',
     logo: 'Logo',
     
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'Enter your email address',
+    passwordPlaceholder: 'Enter your password',
+    usernamePlaceholder: 'Choose a username',
+    resetEmailPlaceholder: 'Your email address',
+    
     // Login page
     loginTitle: 'Welcome Back',
     loginSubtitle: 'Access your account',
@@ -95,6 +101,12 @@ export const AUTH_TRANSLATIONS = {
     privacy: 'Privacidad',
     terms: 'Términos',
     logo: 'Logo',
+    
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'Ingrese su correo electrónico',
+    passwordPlaceholder: 'Ingrese su contraseña',
+    usernamePlaceholder: 'Elija un nombre de usuario',
+    resetEmailPlaceholder: 'Su correo electrónico',
     
     // Login page
     loginTitle: 'Bienvenido de nuevo',
@@ -180,6 +192,12 @@ export const AUTH_TRANSLATIONS = {
     terms: 'Conditions',
     logo: 'Logo',
     
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'Entrez votre adresse e-mail',
+    passwordPlaceholder: 'Entrez votre mot de passe',
+    usernamePlaceholder: "Choisissez un nom d'utilisateur",
+    resetEmailPlaceholder: 'Votre adresse e-mail',
+    
     // Login page
     loginTitle: 'Bon retour',
     loginSubtitle: 'Connectez-vous à votre compte',
@@ -263,6 +281,12 @@ export const AUTH_TRANSLATIONS = {
     privacy: 'Datenschutz',
     terms: 'Bedingungen',
     logo: 'Logo',
+    
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'Geben Sie Ihre E-Mail-Adresse ein',
+    passwordPlaceholder: 'Geben Sie Ihr Passwort ein',
+    usernamePlaceholder: 'Wählen Sie einen Benutzernamen',
+    resetEmailPlaceholder: 'Ihre E-Mail-Adresse',
     
     // Login page
     loginTitle: 'Willkommen zurück',
@@ -348,6 +372,12 @@ export const AUTH_TRANSLATIONS = {
     terms: 'Условия',
     logo: 'Логотип',
     
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'Введите ваш адрес электронной почты',
+    passwordPlaceholder: 'Введите ваш пароль',
+    usernamePlaceholder: 'Выберите имя пользователя',
+    resetEmailPlaceholder: 'Ваш адрес электронной почты',
+    
     // Login page
     loginTitle: 'Добро пожаловать обратно',
     loginSubtitle: 'Войдите в свою учетную запись',
@@ -431,6 +461,12 @@ export const AUTH_TRANSLATIONS = {
     privacy: 'Privacy',
     terms: 'Termini',
     logo: 'Logo',
+    
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'Inserisci il tuo indirizzo email',
+    passwordPlaceholder: 'Inserisci la tua password',
+    usernamePlaceholder: 'Scegli un nome utente',
+    resetEmailPlaceholder: 'Il tuo indirizzo email',
     
     // Login page
     loginTitle: 'Bentornato',
@@ -516,6 +552,12 @@ export const AUTH_TRANSLATIONS = {
     terms: 'Termos',
     logo: 'Logo',
     
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'Digite seu endereço de e-mail',
+    passwordPlaceholder: 'Digite sua senha',
+    usernamePlaceholder: 'Escolha um nome de usuário',
+    resetEmailPlaceholder: 'Seu endereço de e-mail',
+    
     // Login page
     loginTitle: 'Bem-vindo de volta',
     loginSubtitle: 'Entre na sua conta',
@@ -599,6 +641,12 @@ export const AUTH_TRANSLATIONS = {
     privacy: 'Prywatność',
     terms: 'Warunki',
     logo: 'Logo',
+    
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'Wprowadź swój adres e-mail',
+    passwordPlaceholder: 'Wprowadź swoje hasło',
+    usernamePlaceholder: 'Wybierz nazwę użytkownika',
+    resetEmailPlaceholder: 'Twój adres e-mail',
     
     // Login page
     loginTitle: 'Witamy ponownie',
@@ -684,6 +732,12 @@ export const AUTH_TRANSLATIONS = {
     terms: '条款',
     logo: '标志',
     
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: '输入您的电子邮件地址',
+    passwordPlaceholder: '输入您的密码',
+    usernamePlaceholder: '选择用户名',
+    resetEmailPlaceholder: '您的电子邮件地址',
+    
     // Login page
     loginTitle: '欢迎回来',
     loginSubtitle: '登录您的账户',
@@ -767,6 +821,12 @@ export const AUTH_TRANSLATIONS = {
     privacy: 'プライバシー',
     terms: '利用規約',
     logo: 'ロゴ',
+    
+    // Placeholders (informative text for empty fields)
+    emailPlaceholder: 'メールアドレスを入力してください',
+    passwordPlaceholder: 'パスワードを入力してください',
+    usernamePlaceholder: 'ユーザー名を選択してください',
+    resetEmailPlaceholder: 'あなたのメールアドレス',
     
     // Login page
     loginTitle: 'お帰りなさい',

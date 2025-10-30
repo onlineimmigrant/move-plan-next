@@ -3,12 +3,9 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSettings } from '@/context/SettingsContext';
-
-interface TermsProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { TermsProps } from './types';
 
 export default function Terms({ isOpen, onClose }: TermsProps) {
   const { settings } = useSettings();
@@ -45,13 +42,13 @@ export default function Terms({ isOpen, onClose }: TermsProps) {
                 <div className="flex justify-between items-center mb-4">
                   <Dialog.Title
                     as="h2"
-                    className="text-2xl font-extrabold text-gray-800 bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
+                    className="text-2xl font-extrabold text-gray-800 auth-text-gradient-alt"
                   >
                     Terms of Service Summary
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="cursor-pointer text-gray-600 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-full p-1"
+                    className="cursor-pointer text-gray-600 hover:text-[var(--color-primary-base)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-base)] rounded-full p-1"
                     aria-label="Close terms of service modal"
                   >
                     <svg
@@ -71,48 +68,48 @@ export default function Terms({ isOpen, onClose }: TermsProps) {
                   </button>
                 </div>
                 <div className="text-gray-700 text-sm leading-relaxed">
-                  <p className="mb-4">
+                                    <p className="mb-4">
                     At {settings?.site || 'our platform'}, we provide clear terms to ensure a fair and transparent experience. This summary highlights our key policies. For complete details, read our full{' '}
-                    <Link href="/terms" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                    <Link href="/terms" className="auth-link font-medium cursor-pointer">
                       Terms of Service
                     </Link>.
                   </p>
                   <p className="mb-4">
-                    <strong className="font-semibold text-gray-800">Privacy Policy:</strong> We protect your personal information, such as email and username, and outline how it’s collected, used, and secured. See our{' '}
-                    <Link href="/privacy-policy" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                    <strong className="font-semibold text-gray-800">Privacy Policy:</strong> We protect your personal information, such as email and username, and outline how it's collected, used, and secured. See our{' '}
+                    <Link href="/privacy-policy" className="auth-link font-medium cursor-pointer">
                       Privacy Policy
                     </Link>{' '}
                     for details.
                   </p>
                   <p className="mb-4">
                     <strong className="font-semibold text-gray-800">Cookie Policy:</strong> We use cookies to enhance your experience, track usage, and provide personalized content. Learn more in our{' '}
-                    <Link href="/cookie-policy" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                    <Link href="/cookie-policy" className="auth-link font-medium cursor-pointer">
                       Cookie Policy
                     </Link>.
                   </p>
                   <p className="mb-4">
                     <strong className="font-semibold text-gray-800">Delivery Policy:</strong> Our digital services, such as courses or content, are delivered instantly upon purchase or subscription. Details are in our{' '}
-                    <Link href="/delivery-policy" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                    <Link href="/delivery-policy" className="auth-link font-medium cursor-pointer">
                       Delivery Policy
                     </Link>.
                   </p>
                   <p className="mb-4">
                     <strong className="font-semibold text-gray-800">Return Policy:</strong> We offer refunds for eligible purchases within 14 days, subject to our conditions. See our{' '}
-                    <Link href="/return-policy" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                    <Link href="/return-policy" className="auth-link font-medium cursor-pointer">
                       Return Policy
                     </Link>{' '}
                     for more.
                   </p>
                   <p className="mb-4">
                     <strong className="font-semibold text-gray-800">Licensing Terms:</strong> Content on our platform is licensed for personal, non-commercial use. Read our{' '}
-                    <Link href="/licensing" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                    <Link href="/licensing" className="auth-link font-medium cursor-pointer">
                       Licensing Terms
                     </Link>{' '}
                     for restrictions.
                   </p>
                   <p className="mb-4">
                     Questions? Contact us via our{' '}
-                    <Link href="/contact" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                    <Link href="/contact" className="auth-link font-medium cursor-pointer">
                       contact form
                     </Link>{' '}
     

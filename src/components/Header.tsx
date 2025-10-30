@@ -14,10 +14,15 @@ import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTra
 import LocalizedLink from './LocalizedLink';
 import { useHeaderTranslations } from './header/useHeaderTranslations';
 import { isAdminClient } from '@/lib/auth';
+import { saveReturnUrl } from './LoginRegistration/hooks';
 
 // Dynamic imports with ssr: false for client-only components (modals, language switcher)
 // These need to be client-only to work properly in production
-const LoginModal = dynamic(() => import('./LoginModal'), { 
+const LoginModal = dynamic(() => import('./LoginRegistration/LoginModal'), { 
+  ssr: false,
+  loading: () => null 
+});
+const RegisterModal = dynamic(() => import('./LoginRegistration/RegisterModal'), { 
   ssr: false,
   loading: () => null 
 });
@@ -48,6 +53,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -308,7 +314,21 @@ const Header: React.FC<HeaderProps> = ({
 
   const handleLoginModal = useCallback(() => {
     setIsOpen(false);
+    // Save current page so user can return here after login
+    if (pathname && !pathname.includes('/login')) {
+      saveReturnUrl(pathname);
+    }
     setIsLoginOpen(true);
+  }, [pathname]);
+
+  const handleSwitchToRegister = useCallback(() => {
+    setIsLoginOpen(false);
+    setTimeout(() => setIsRegisterOpen(true), 300);
+  }, []);
+
+  const handleSwitchToLogin = useCallback(() => {
+    setIsRegisterOpen(false);
+    setTimeout(() => setIsLoginOpen(true), 300);
   }, []);
 
   const handleContactModal = useCallback(() => {
@@ -318,10 +338,8 @@ const Header: React.FC<HeaderProps> = ({
 
   const handleLogout = useCallback(() => {
     setIsOpen(false);
-    logout();
-    // Always navigate to the actual home page (root) after logout
-    router.push('/');
-  }, [logout, router]);
+    logout(); // Smart redirect logic is now handled in AuthContext
+  }, [logout]);
 
   const handleMenuToggle = useCallback(() => {
     setIsOpen(!isOpen);
@@ -1397,7 +1415,16 @@ const Header: React.FC<HeaderProps> = ({
         </>
       )}
 
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      <LoginModal 
+        isOpen={isLoginOpen} 
+        onClose={() => setIsLoginOpen(false)}
+        onSwitchToRegister={handleSwitchToRegister}
+      />
+      <RegisterModal 
+        isOpen={isRegisterOpen} 
+        onClose={() => setIsRegisterOpen(false)}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </>
   );

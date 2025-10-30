@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import Button from '@/ui/Button';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
-import { useLogin } from '@/hooks/useLogin';
+import { useLogin } from '@/components/LoginRegistration/hooks';
 
 interface LoginFormProps {
   onShowPrivacy?: () => void;

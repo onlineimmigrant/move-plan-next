@@ -3,12 +3,9 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSettings } from '@/context/SettingsContext';
-
-interface PrivacyProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { PrivacyProps } from './types';
 
 export default function Privacy({ isOpen, onClose }: PrivacyProps) {
   const { settings } = useSettings();
@@ -45,13 +42,13 @@ export default function Privacy({ isOpen, onClose }: PrivacyProps) {
                 <div className="flex justify-between items-center mb-4">
                   <Dialog.Title
                     as="h2"
-                    className="text-2xl font-extrabold text-gray-800 bg-gradient-to-r from-sky-700 via-sky-500 to-sky-700 bg-clip-text text-transparent"
+                    className="text-2xl font-extrabold text-gray-800 auth-text-gradient-alt"
                   >
                     Privacy Policy Summary
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="cursor-pointer text-gray-600 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-full p-1"
+                    className="cursor-pointer text-gray-600 hover:text-[var(--color-primary-base)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-base)] rounded-full p-1"
                     aria-label="Close privacy policy modal"
                   >
                     <svg
@@ -73,7 +70,7 @@ export default function Privacy({ isOpen, onClose }: PrivacyProps) {
                 <div className="text-gray-700 text-sm leading-relaxed">
                   <p className="mb-4">
                     At {settings?.site || 'our platform'}, we value your privacy and are committed to safeguarding your personal information. This summary outlines how we handle your data. For the complete details, read our full{' '}
-                    <Link href="/privacy-policy" className="text-sky-600 hover:text-sky-500 font-medium cursor-pointer">
+                    <Link href="/privacy-policy" className="auth-link font-medium cursor-pointer">
                       Privacy Policy
                     </Link>.
                   </p>

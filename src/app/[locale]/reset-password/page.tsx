@@ -17,6 +17,7 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isValidSession, setIsValidSession] = useState<boolean>(false);
   const { setSession } = useAuth();
   const { settings } = useSettings();
   const router = useRouter();
@@ -25,39 +26,31 @@ export default function ResetPasswordPage() {
 
   const t = useAuthTranslations();
 
-  // Extract token from URL query parameters
+  // Handle Supabase's password recovery flow
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+    // Check if this is a password recovery callback
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
 
-    const validateToken = async () => {
-      if (!token) {
-        setError('No token provided. Please request a new password reset link.');
-        return;
-      }
+    console.log('[ResetPassword] Hash params:', { accessToken: !!accessToken, type });
 
-      try {
-        console.log('Validating token:', token);
-        const { data, error, status } = await supabase
-          .from('password_resets')
-          .select('*')
-          .eq('token', token)
-          .gte('expiry', new Date().toISOString())
-          .single();
-
-        console.log('Token validation result:', { data, error, status });
-        if (error || !data) {
-          setError('Invalid or expired reset link. Please request a new password reset link.');
+    if (type === 'recovery' && accessToken) {
+      // Valid recovery session
+      setIsValidSession(true);
+      console.log('[ResetPassword] Valid recovery session detected');
+    } else {
+      // Check if there's a valid session already (user clicked link)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setIsValidSession(true);
+          console.log('[ResetPassword] Valid session found');
         } else {
-          console.log('Valid reset token found:', data);
+          setError('No valid reset session. Please request a new password reset link.');
+          console.log('[ResetPassword] No valid session');
         }
-      } catch (err) {
-        console.error('Token validation failed:', err);
-        setError('Invalid or expired reset link. Please request a new password reset link.');
-      }
-    };
-
-    validateToken();
+      });
+    }
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -86,31 +79,31 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-
-      if (!token) {
-        throw new Error('No token provided.');
-      }
-
-      // Send password reset request to API route
-      const response = await fetch('/api/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword }),
+      // Use Supabase's native password update
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to reset password.');
+      if (updateError) {
+        console.error('[ResetPassword] Password update error:', updateError);
+        setError(updateError.message || 'Failed to update password. Please try again.');
+        setIsLoading(false);
+        return;
       }
 
-      setSuccess(`${t.registrationSuccessful} ${t.redirectingToLogin}`);
-      setTimeout(() => router.push('/login'), 2000);
+      console.log('[ResetPassword] Password updated successfully');
+      setSuccess('Password updated successfully! Redirecting to login...');
+      
+      // Sign out the user and redirect to login
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        const loginPath = locale ? `/${locale}/login` : '/login';
+        router.push(loginPath);
+      }, 2000);
+
     } catch (err: any) {
-      console.error('Password reset failed:', err);
-      setError(err.message || t.serverError);
+      console.error('[ResetPassword] Password reset failed:', err);
+      setError(err.message || 'Failed to update password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -160,7 +153,22 @@ export default function ResetPasswordPage() {
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           {success && <p className="text-green-500 text-center mb-4">{success}</p>}
 
-          <form onSubmit={handleResetPassword} className="space-y-4">
+          {!isValidSession && !success ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-4">
+                No valid reset session. Please request a new password reset link.
+              </p>
+              <Button
+                variant="primary"
+                type="button"
+                onClick={() => router.push(`/${locale || ''}/login`.replace('//', '/'))}
+                className="w-full"
+              >
+                {t.backToLogin}
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleResetPassword} className="space-y-4">
             <div className="space-y-3">
               <div className="relative">
                 <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-2">
@@ -219,13 +227,14 @@ export default function ResetPasswordPage() {
               <Button
                 variant="outline"
                 type="button"
-                onClick={() => router.push(`/${locale}/login`)}
+                onClick={() => router.push(`/${locale || ''}/login`.replace('//', '/'))}
                 className="w-full"
               >
                 {t.backToLogin}
               </Button>
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>

@@ -371,9 +371,9 @@ export default function AccountAIManagement() {
                       )}
                     </li>
                   ) : (
-                    filteredDefaultModels.map((model) => (
+                    filteredDefaultModels.map((model, index) => (
                       <AIModelCard
-                        key={model.id}
+                        key={`${model.id}-${model.name}-${index}`}
                         model={model as any}
                         type={model.type || 'default'}
                         context="account"

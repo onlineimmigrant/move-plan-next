@@ -9,8 +9,10 @@ import ShapeBlur from '@/components/AnimateElements/ShapeBlur';
 import LetterGlitch from '@/components/AnimateElements/LetterGlitch';
 import Masonry from '@/components/AnimateElements/Masonry';
 import Stepper from '@/components/AnimateElements/Stepper';
-import Privacy from '@/components/Privacy';
-import Terms from '@/components/Terms';
+import Button from '@/ui/Button';
+import Privacy from '@/components/LoginRegistration/Privacy';
+import Terms from '@/components/LoginRegistration/Terms';
+import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import ContactModal from '@/components/contact/ContactModal';
 
 // Define TypeScript interfaces for Stepper

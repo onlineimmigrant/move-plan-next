@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { BasketProvider } from '@/context/BasketContext';
 import { ModalProvider } from '@/context/ModalContext';
@@ -11,12 +11,12 @@ import ReportsChildMenu from './components/ReportsChildMenu';
 import { sidebarLinks, getFilteredSidebarLinks, DisclosureKey as TablesDisclosureKey } from '@/lib/sidebarLinks';
 import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib/reportSidebarLinks';
 import TicketsAdminToggleButton from '@/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminToggleButton';
+import Loading from '@/ui/Loading';
 
 // Inner component that uses auth context
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { isAdmin, isSuperadmin, isInGeneralOrganization } = useAuth();
-  console.log('[AdminLayout] Rendering for path:', pathname, 'isAdmin:', isAdmin, 'isSuperadmin:', isSuperadmin, 'isInGeneralOrganization:', isInGeneralOrganization);
+  const { isAdmin, isSuperadmin, isInGeneralOrganization, isLoading } = useAuth();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isParentMenuCollapsed, setIsParentMenuCollapsed] = useState(true);
@@ -68,7 +68,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     } else {
       setActiveSection('');
     }
-    console.log('pathname:', pathname, 'activeSection:', activeSection);
   }, [pathname]);
 
   const excludedPaths = [
@@ -87,8 +86,23 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
       isTablesHovered) ||
     (!isDesktop && activeSection === 'tables');
 
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loading />
+      </div>
+    );
+  }
+
+  // Don't render if not admin
+  // AuthContext logout will handle redirect
   if (!isAdmin) {
-    return null; // Redirect handled by AuthProvider
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loading />
+      </div>
+    );
   }
 
   return (

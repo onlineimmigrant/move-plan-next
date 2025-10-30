@@ -797,20 +797,48 @@ html, body {
 .auth-input {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--color-primary-light);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 16px; /* Prevent iOS zoom */
 }
 
 .auth-input:focus {
-  --tw-ring-color: var(--color-primary-base);
+  outline: none;
   border-color: var(--color-primary-base);
-  box-shadow: 0 0 0 2px rgba(var(--color-primary-base), 0.2);
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+  transform: translateY(-1px) scale(1.01);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .auth-input:hover:not(:focus) {
-  border-color: rgba(var(--color-primary-base), 0.3);
+  border-color: var(--color-primary-border);
+}
+
+/* Filled input fields get primary light background */
+.auth-input:not(:placeholder-shown) {
+  background: color-mix(in srgb, var(--color-primary-light) 22%, white);
+}
+
+/* Make LEFT icons (envelope, lock) more visible when input is filled */
+/* Target the icon container that comes before the filled input */
+.auth-input:not(:placeholder-shown) {
+  color: var(--color-primary-dark);
+}
+
+/* Override icon colors inside parent with filled input - target left icons only */
+div:has(> .auth-input:not(:placeholder-shown)) > .absolute.inset-y-0.left-0 svg {
+  color: var(--color-primary-dark) !important;
+}
+
+/* Error state for inputs */
+.auth-input.error {
+  border-color: #ef4444;
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Success state for inputs */
+.auth-input.success {
+  border-color: #10b981;
 }
 
 /* Input field animations */
@@ -818,6 +846,12 @@ html, body {
   0% { transform: scale(1); }
   50% { transform: scale(1.01); }
   100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
 }
 
 .auth-input:focus {
@@ -854,12 +888,12 @@ html, body {
 .auth-btn-primary:hover {
   background-color: var(--color-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(var(--color-primary-base), 0.4);
+  box-shadow: 0 6px 20px var(--color-primary-light);
 }
 
 .auth-btn-primary:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(var(--color-primary-base), 0.3);
+  box-shadow: 0 2px 8px var(--color-primary-border);
 }
 
 .auth-btn-outline {
@@ -873,7 +907,7 @@ html, body {
   background-color: var(--color-primary-light);
   border-color: var(--color-primary-base);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--color-primary-base), 0.15);
+  box-shadow: 0 4px 12px var(--color-primary-lighter);
 }
 
 .auth-btn-outline:active {
@@ -882,25 +916,27 @@ html, body {
 
 /* Auth modal styles */
 .auth-modal-backdrop {
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
 }
 
 .auth-modal-content {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px color-mix(in srgb, var(--color-primary-light) 30%, transparent);
 }
 
 /* Auth links and text */
 .auth-link {
-  color: var(--color-secondary-base);
+  color: var(--color-primary-base);
   transition: color 0.2s ease;
 }
 
 .auth-link:hover {
-  color: var(--color-primary-base);
+  color: var(--color-primary-hover);
 }
 
 .auth-text-muted {
@@ -927,6 +963,45 @@ html, body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Staggered form field animations */
+.auth-field-1 { animation: fadeInUp 0.4s ease-out 0.05s both; }
+.auth-field-2 { animation: fadeInUp 0.4s ease-out 0.1s both; }
+.auth-field-3 { animation: fadeInUp 0.4s ease-out 0.15s both; }
+.auth-field-4 { animation: fadeInUp 0.4s ease-out 0.2s both; }
+.auth-field-5 { animation: fadeInUp 0.4s ease-out 0.25s both; }
+
+/* Loading spinner */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
 }
 
 @keyframes fadeInUp {
