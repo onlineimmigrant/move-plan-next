@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import Button from '@/ui/Button';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
@@ -22,6 +23,7 @@ export default function LinkModal({
   hasExistingLink = false 
 }: LinkModalProps) {
   const [url, setUrl] = useState(initialUrl);
+  const themeColors = useThemeColors();
 
   useEffect(() => {
     setUrl(initialUrl);
@@ -86,7 +88,10 @@ export default function LinkModal({
               onKeyDown={handleKeyDown}
               placeholder="https://example.com"
               autoFocus
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{
+                '--tw-ring-color': themeColors.cssVars.primary.base
+              } as React.CSSProperties}
             />
           </div>
 

@@ -37,6 +37,17 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
+  // Read search parameter from URL on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchParam = urlParams.get('search');
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+  }, []);
+
   // Function to get page title based on organization type
   const getPageTitle = (orgType: string): string => {
     switch (orgType) {

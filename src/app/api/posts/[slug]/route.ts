@@ -19,12 +19,17 @@ type BlogPostBody = {
     is_displayed_first_page?: boolean;
     is_help_center?: boolean;
     help_center_order?: number;
+    type?: 'default' | 'minimal' | 'landing' | 'doc_set';
+    is_numbered?: boolean;
   };
   
   organization_config?: {
     section_id?: number | null;
     subsection?: string | null;
     order?: number;
+    doc_set?: string | null;
+    doc_set_order?: number | null;
+    doc_set_title?: string | null;
   };
   
   cta_config?: {
@@ -80,10 +85,14 @@ function flattenBlogPost(post: any) {
     is_help_center: post.display_config?.is_help_center ?? post.is_help_center,
     help_center_order: post.display_config?.help_center_order ?? post.help_center_order,
     type: post.display_config?.type ?? 'default',
+    is_numbered: post.display_config?.is_numbered ?? false,
     // Flatten organization_config
     section_id: post.organization_config?.section_id ?? post.section_id,
     subsection: post.organization_config?.subsection ?? post.subsection,
     order: post.organization_config?.order ?? post.order,
+    doc_set: post.organization_config?.doc_set ?? null,
+    doc_set_order: post.organization_config?.doc_set_order ?? null,
+    doc_set_title: post.organization_config?.doc_set_title ?? null,
     // Flatten media_config
     main_photo: post.media_config?.main_photo ?? post.main_photo,
     // Flatten author_config

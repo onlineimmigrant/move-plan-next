@@ -4,10 +4,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePostEditModal } from './context';
 import { InformationCircleIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import PostEditor from '@/components/PostPage/PostEditor';
 import { useRouter } from 'next/navigation';
 import { BaseModal } from '@/components/modals/_shared';
 import { revalidatePage } from '@/lib/revalidation';
+import { getOrganizationId } from '@/lib/supabase';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import Image from 'next/image';
 import TOC from '@/components/PostPage/TOC';
@@ -67,6 +69,7 @@ export default function PostEditModal() {
   } = usePostEditModal();
 
   const router = useRouter();
+  const themeColors = useThemeColors();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -83,8 +86,13 @@ export default function PostEditModal() {
   const [isCompanyAuthor, setIsCompanyAuthor] = useState(false);
   const [displayAsBlogPost, setDisplayAsBlogPost] = useState(true);
   const [isHelpCenter, setIsHelpCenter] = useState(false);
-  const [postType, setPostType] = useState<'default' | 'minimal' | 'landing'>('default');
+  const [postType, setPostType] = useState<'default' | 'minimal' | 'landing' | 'doc_set'>('default');
+  const [isNumbered, setIsNumbered] = useState(false);
   const [createdOn, setCreatedOn] = useState('');
+  const [docSet, setDocSet] = useState('');
+  const [docSetOrder, setDocSetOrder] = useState('');
+  const [docSetTitle, setDocSetTitle] = useState('');
+  const [availableSets, setAvailableSets] = useState<{ slug: string; title: string }[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
@@ -125,6 +133,31 @@ export default function PostEditModal() {
     
     setToc(tocItems);
   }, [content, isFullScreen]);
+
+  // Fetch available document sets for the organization
+  useEffect(() => {
+    const fetchDocumentSets = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const organizationId = await getOrganizationId(baseUrl);
+        
+        if (!organizationId) return;
+
+        const response = await fetch(`${baseUrl}/api/document-sets?organization_id=${organizationId}`);
+        
+        if (response.ok) {
+          const sets = await response.json();
+          setAvailableSets(sets);
+        }
+      } catch (error) {
+        console.error('Error fetching document sets:', error);
+      }
+    };
+
+    if (isOpen) {
+      fetchDocumentSets();
+    }
+  }, [isOpen]);
 
   // Handle TOC scroll - scroll to heading in editor
   const handleScrollTo = useCallback((id: string) => {
@@ -188,7 +221,11 @@ export default function PostEditModal() {
         setDisplayAsBlogPost(post.display_as_blog_post ?? post.display_config?.display_as_blog_post ?? true);
         setIsHelpCenter(post.is_help_center ?? post.display_config?.is_help_center ?? false);
         setPostType(post.display_config?.type || 'default');
+        setIsNumbered(post.display_config?.is_numbered ?? false);
         setCreatedOn(post.created_on || '');
+        setDocSet(post.doc_set || post.organization_config?.doc_set || '');
+        setDocSetOrder(post.doc_set_order?.toString() || post.organization_config?.doc_set_order?.toString() || '');
+        setDocSetTitle(post.doc_set_title || post.organization_config?.doc_set_title || '');
         
         // Set isCodeView to true for landing pages to open them in HTML mode
         if (post.display_config?.type === 'landing') {
@@ -213,7 +250,11 @@ export default function PostEditModal() {
         setDisplayAsBlogPost(true);
         setIsHelpCenter(false);
         setPostType('default');
+        setIsNumbered(false);
         setCreatedOn(new Date().toISOString());
+        setDocSet('');
+        setDocSetOrder('');
+        setDocSetTitle('');
         initialLoadRef.current = false;
       }
       setIsDirty(false);
@@ -237,6 +278,9 @@ export default function PostEditModal() {
       setIsHelpCenter(false);
       setPostType('default');
       setCreatedOn('');
+      setDocSet('');
+      setDocSetOrder('');
+      setDocSetTitle('');
       setIsDirty(false);
       setIsCodeView(false); // Reset to visual mode when closing
       initialLoadRef.current = true; // Reset for next open
@@ -359,10 +403,22 @@ export default function PostEditModal() {
         setIsHelpCenter(value as boolean);
         break;
       case 'postType':
-        setPostType(value as 'default' | 'minimal' | 'landing');
+        setPostType(value as 'default' | 'minimal' | 'landing' | 'doc_set');
+        break;
+      case 'isNumbered':
+        setIsNumbered(value as boolean);
         break;
       case 'createdOn':
         setCreatedOn(value as string);
+        break;
+      case 'docSet':
+        setDocSet(value as string);
+        break;
+      case 'docSetOrder':
+        setDocSetOrder(value as string);
+        break;
+      case 'docSetTitle':
+        setDocSetTitle(value as string);
         break;
     }
     setIsDirty(true);
@@ -394,11 +450,15 @@ export default function PostEditModal() {
           is_help_center: isHelpCenter,
           help_center_order: helpCenterOrder.trim() ? parseInt(helpCenterOrder) : 0,
           type: postType,
+          is_numbered: isNumbered,
         },
         organization_config: {
           section_id: section.trim() ? parseInt(section) : null,
           subsection: subsection.trim() || null,
           order: order.trim() ? parseInt(order) : 0,
+          doc_set: docSet && docSet !== '__custom__' ? docSet : null,
+          doc_set_order: docSet && docSet !== '__custom__' && docSetOrder.trim() ? parseInt(docSetOrder) : null,
+          doc_set_title: docSet && docSet !== '__custom__' && docSetTitle.trim() ? docSetTitle.trim() : null,
         },
         author_config: {
           is_with_author: false, // You might want to add a field for this
@@ -511,11 +571,18 @@ export default function PostEditModal() {
       <span className="text-xl font-semibold text-gray-900">
         Post
       </span>
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${
-        mode === 'edit' 
-          ? 'bg-amber-100 text-amber-700 border-amber-200'
-          : 'bg-sky-100 text-sky-700 border-sky-200'
-      }`}>
+      <span 
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${
+          mode === 'edit' 
+            ? 'bg-amber-100 text-amber-700 border-amber-200'
+            : ''
+        }`}
+        style={mode === 'create' ? {
+          backgroundColor: themeColors.cssVars.primary.lighter,
+          color: themeColors.cssVars.primary.base,
+          borderColor: themeColors.cssVars.primary.light
+        } : undefined}
+      >
         {mode === 'edit' ? 'Edit' : 'New'}
       </span>
     </div>
@@ -577,7 +644,13 @@ export default function PostEditModal() {
                     ) : (
                       <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                          <svg className="w-4 h-4 mr-2 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg 
+                            className="w-4 h-4 mr-2" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                            style={{ color: themeColors.cssVars.primary.base }}
+                          >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                           </svg>
                           Table of Contents
@@ -603,8 +676,12 @@ export default function PostEditModal() {
                           type="text"
                           value={subsection}
                           onChange={(e) => handleFieldChange('subsection', e.target.value)}
-                          className="px-0 py-1 border-0 focus:outline-none focus:ring-0 font-medium text-xs text-sky-500 tracking-widest placeholder:text-sky-300 bg-transparent uppercase"
+                          className="px-0 py-1 border-0 focus:outline-none focus:ring-0 font-medium text-xs tracking-widest bg-transparent uppercase"
                           placeholder="SUBSECTION"
+                          style={{
+                            color: themeColors.cssVars.primary.base,
+                            '--tw-placeholder-opacity': '0.5'
+                          } as React.CSSProperties}
                         />
                       </div>
                     )}
@@ -688,7 +765,7 @@ export default function PostEditModal() {
                   <label className="text-sm font-medium text-gray-700 block">
                     Post Display Type
                   </label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-4 gap-3">
                     {/* Default Type */}
                     <button
                       type="button"
@@ -760,6 +837,30 @@ export default function PostEditModal() {
                         </div>
                       )}
                     </button>
+
+                    {/* Doc Set Type */}
+                    <button
+                      type="button"
+                      onClick={() => handleFieldChange('postType', 'doc_set')}
+                      className={`relative flex flex-col items-center p-4 rounded-lg border-2 transition-all ${
+                        postType === 'doc_set'
+                          ? 'border-purple-500 bg-purple-50 shadow-md'
+                          : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/30'
+                      }`}
+                    >
+                      <svg className="w-8 h-8 mb-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      <span className="text-sm font-semibold text-gray-900">Doc Set</span>
+                      <span className="text-xs text-gray-500 mt-1 text-center">Part of documentation series</span>
+                      {postType === 'doc_set' && (
+                        <div className="absolute top-2 right-2">
+                          <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
                   </div>
 
                   {/* Type descriptions */}
@@ -778,22 +879,61 @@ export default function PostEditModal() {
                         {postType === 'landing' && (
                           <span><strong>Landing:</strong> Custom HTML page without blog styling. Use the HTML editor to create your layout.</span>
                         )}
+                        {postType === 'doc_set' && (
+                          <span><strong>Doc Set:</strong> Article in a documentation series with Master TOC navigation and prev/next links.</span>
+                        )}
                       </div>
                     </div>
                   </div>
+
+                  {/* Show is_numbered checkbox only for doc_set type */}
+                  {postType === 'doc_set' && (
+                    <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isNumbered}
+                          onChange={(e) => handleFieldChange('isNumbered', e.target.checked)}
+                          className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Show article numbers in Master TOC</span>
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1 ml-6">
+                        When enabled, articles will be numbered (1, 2, 3...) in the Master TOC navigation.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* SEO & Identity Section */}
               <div className="space-y-4">
-                <div className="inline-flex items-center px-3 py-1.5 bg-sky-50 border border-sky-200 rounded-lg">
-                  <span className="text-sm font-semibold text-sky-900 uppercase tracking-wide">SEO & Identity</span>
+                <div 
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg border"
+                  style={{
+                    backgroundColor: themeColors.cssVars.primary.lighter,
+                    borderColor: themeColors.cssVars.primary.light
+                  }}
+                >
+                  <span 
+                    className="text-sm font-semibold uppercase tracking-wide"
+                    style={{ color: themeColors.cssVars.primary.base }}
+                  >
+                    SEO & Identity
+                  </span>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                      Slug {mode === 'create' && <span className="text-xs font-normal text-sky-600">(auto-generated)</span>}
+                      Slug {mode === 'create' && (
+                        <span 
+                          className="text-xs font-normal"
+                          style={{ color: themeColors.cssVars.primary.base }}
+                        >
+                          (auto-generated)
+                        </span>
+                      )}
                       <Tooltip content="URL-friendly identifier for this post">
                         <InformationCircleIcon className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
                       </Tooltip>
@@ -804,8 +944,11 @@ export default function PostEditModal() {
                       onChange={(e) => handleFieldChange('slug', e.target.value)}
                       placeholder="custom-url-slug"
                       className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                               focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
+                               focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
                                transition-all duration-150 text-gray-900 placeholder-gray-400 font-mono text-sm"
+                      style={{
+                        '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                      } as React.CSSProperties}
                     />
                   </div>
 
@@ -822,8 +965,11 @@ export default function PostEditModal() {
                       onChange={(e) => handleFieldChange('authorName', e.target.value)}
                       placeholder="John Doe"
                       className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                               focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
+                               focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
                                transition-all duration-150 text-gray-900 placeholder-gray-400"
+                      style={{
+                        '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                      } as React.CSSProperties}
                     />
                   </div>
                 </div>
@@ -842,8 +988,11 @@ export default function PostEditModal() {
                     maxLength={160}
                     placeholder="A brief description for search engines..."
                     className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                             focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
+                             focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
                              transition-all duration-150 text-gray-900 placeholder-gray-400 resize-none"
+                    style={{
+                      '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                    } as React.CSSProperties}
                   />
                   <div className="flex items-center justify-end">
                     <span className={`text-xs font-medium ${
@@ -868,8 +1017,11 @@ export default function PostEditModal() {
                       onChange={(e) => handleFieldChange('section', e.target.value)}
                       placeholder="Blog, News, etc."
                       className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                               focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
+                               focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
                                transition-all duration-150 text-gray-900 placeholder-gray-400"
+                      style={{
+                        '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                      } as React.CSSProperties}
                     />
                   </div>
 
@@ -886,8 +1038,11 @@ export default function PostEditModal() {
                       onChange={(e) => handleFieldChange('order', e.target.value)}
                       placeholder="1"
                       className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                               focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
+                               focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
                                transition-all duration-150 text-gray-900 placeholder-gray-400"
+                      style={{
+                        '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                      } as React.CSSProperties}
                     />
                   </div>
                 </div>
@@ -972,7 +1127,11 @@ export default function PostEditModal() {
                       type="checkbox"
                       checked={displayThisPost}
                       onChange={(e) => handleFieldChange('displayThisPost', e.target.checked)}
-                      className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
+                      className="w-4 h-4 border-gray-300 rounded focus:ring-2"
+                      style={{
+                        accentColor: themeColors.cssVars.primary.base,
+                        '--tw-ring-color': themeColors.cssVars.primary.base
+                      } as React.CSSProperties}
                     />
                     <div className="flex-1">
                       <span className="text-sm font-medium text-gray-700">Display Post</span>
@@ -985,7 +1144,11 @@ export default function PostEditModal() {
                       type="checkbox"
                       checked={displayAsBlogPost}
                       onChange={(e) => handleFieldChange('displayAsBlogPost', e.target.checked)}
-                      className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
+                      className="w-4 h-4 border-gray-300 rounded focus:ring-2"
+                      style={{
+                        accentColor: themeColors.cssVars.primary.base,
+                        '--tw-ring-color': themeColors.cssVars.primary.base
+                      } as React.CSSProperties}
                     />
                     <div className="flex-1">
                       <span className="text-sm font-medium text-gray-700">Display as Blog Post</span>
@@ -998,7 +1161,11 @@ export default function PostEditModal() {
                       type="checkbox"
                       checked={isDisplayedFirstPage}
                       onChange={(e) => handleFieldChange('isDisplayedFirstPage', e.target.checked)}
-                      className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
+                      className="w-4 h-4 border-gray-300 rounded focus:ring-2"
+                      style={{
+                        accentColor: themeColors.cssVars.primary.base,
+                        '--tw-ring-color': themeColors.cssVars.primary.base
+                      } as React.CSSProperties}
                     />
                     <div className="flex-1">
                       <span className="text-sm font-medium text-gray-700">Feature on First Page</span>
@@ -1011,7 +1178,11 @@ export default function PostEditModal() {
                       type="checkbox"
                       checked={isHelpCenter}
                       onChange={(e) => handleFieldChange('isHelpCenter', e.target.checked)}
-                      className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
+                      className="w-4 h-4 border-gray-300 rounded focus:ring-2"
+                      style={{
+                        accentColor: themeColors.cssVars.primary.base,
+                        '--tw-ring-color': themeColors.cssVars.primary.base
+                      } as React.CSSProperties}
                     />
                     <div className="flex-1">
                       <span className="text-sm font-medium text-gray-700">Help Center Article</span>
@@ -1024,7 +1195,11 @@ export default function PostEditModal() {
                       type="checkbox"
                       checked={isCompanyAuthor}
                       onChange={(e) => handleFieldChange('isCompanyAuthor', e.target.checked)}
-                      className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
+                      className="w-4 h-4 border-gray-300 rounded focus:ring-2"
+                      style={{
+                        accentColor: themeColors.cssVars.primary.base,
+                        '--tw-ring-color': themeColors.cssVars.primary.base
+                      } as React.CSSProperties}
                     />
                     <div className="flex-1">
                       <span className="text-sm font-medium text-gray-700">Company Author</span>
@@ -1049,11 +1224,120 @@ export default function PostEditModal() {
                     onChange={(e) => handleFieldChange('helpCenterOrder', e.target.value)}
                     placeholder="1"
                     className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                             focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
+                             focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
                              transition-all duration-150 text-gray-900 placeholder-gray-400"
+                    style={{
+                      '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                    } as React.CSSProperties}
                   />
                 </div>
               )}
+
+              {/* Document Set Section */}
+              <div className="space-y-4">
+                <div className="inline-flex items-center px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg">
+                  <span className="text-sm font-semibold text-indigo-900 uppercase tracking-wide">Document Set</span>
+                </div>
+                
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Organize this post into a document set for multi-article documentation with shared navigation.
+                  </p>
+                  
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                      Document Set
+                      <Tooltip content="Group posts into document sets for tutorials, guides, and multi-part documentation">
+                        <InformationCircleIcon className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
+                      </Tooltip>
+                    </label>
+                    <div className="space-y-2">
+                      <select
+                        value={docSet}
+                        onChange={(e) => handleFieldChange('docSet', e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
+                                 focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
+                                 transition-all duration-150 text-gray-900"
+                        style={{
+                          '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                        } as React.CSSProperties}
+                      >
+                        <option value="">No Document Set</option>
+                        {availableSets.map((set) => (
+                          <option key={set.slug} value={set.slug}>{set.title}</option>
+                        ))}
+                        <option value="__custom__">+ Create New Set</option>
+                      </select>
+                      
+                      {docSet === '__custom__' && (
+                        <input
+                          type="text"
+                          value={docSetTitle}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            handleFieldChange('docSetTitle', newValue);
+                            handleFieldChange('docSet', newValue.toLowerCase().replace(/\s+/g, '-'));
+                          }}
+                          placeholder="Enter new document set name (e.g., User Guide)"
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
+                                   focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
+                                   transition-all duration-150 text-gray-900 placeholder-gray-400"
+                          style={{
+                            '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                          } as React.CSSProperties}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {docSet && docSet !== '__custom__' && (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                          Set Display Title
+                          <Tooltip content="Human-readable title for the document set">
+                            <InformationCircleIcon className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
+                          </Tooltip>
+                        </label>
+                        <input
+                          type="text"
+                          value={docSetTitle}
+                          onChange={(e) => handleFieldChange('docSetTitle', e.target.value)}
+                          placeholder="e.g., Getting Started Guide"
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
+                                   focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
+                                   transition-all duration-150 text-gray-900 placeholder-gray-400"
+                          style={{
+                            '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                          } as React.CSSProperties}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                          Article Order
+                          <Tooltip content="Display order within the document set (lower numbers appear first)">
+                            <InformationCircleIcon className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
+                          </Tooltip>
+                        </label>
+                        <input
+                          type="number"
+                          value={docSetOrder}
+                          onChange={(e) => handleFieldChange('docSetOrder', e.target.value)}
+                          placeholder="1"
+                          min="0"
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
+                                   focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
+                                   transition-all duration-150 text-gray-900 placeholder-gray-400"
+                          style={{
+                            '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                          } as React.CSSProperties}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
 
               {/* Metadata Section */}
               <div className="space-y-4">
@@ -1073,8 +1357,11 @@ export default function PostEditModal() {
                     value={createdOn ? new Date(createdOn).toISOString().slice(0, 16) : ''}
                     onChange={(e) => handleFieldChange('createdOn', new Date(e.target.value).toISOString())}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white
-                             focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500
+                             focus:bg-white focus:outline-none focus:ring-2 focus:border-transparent
                              transition-all duration-150 text-gray-900"
+                    style={{
+                      '--tw-ring-color': `${themeColors.cssVars.primary.base}30`
+                    } as React.CSSProperties}
                   />
                 </div>
               </div>
@@ -1125,8 +1412,11 @@ export default function PostEditModal() {
             <button
               onClick={handleSave}
               disabled={isSaving || !title.trim()}
-              className="px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 
-                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white rounded-lg 
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:opacity-90"
+              style={{
+                backgroundColor: themeColors.cssVars.primary.base
+              }}
             >
               {isSaving ? 'Saving...' : mode === 'edit' ? 'Update' : 'Publish'}
             </button>

@@ -800,6 +800,21 @@ html, body {
   border: 1px solid var(--color-primary-light);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 16px; /* Prevent iOS zoom */
+  color: #111827 !important; /* Force dark text color for visibility */
+  -webkit-text-fill-color: #111827 !important; /* Override iOS autofill text color */
+}
+
+/* iOS autofill styles - force visibility */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
+.auth-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #111827 !important; /* Force dark text */
+  -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.9) inset !important; /* Light background */
+  box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.9) inset !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid var(--color-primary-light) !important;
+  transition: background-color 5000s ease-in-out 0s; /* Prevent autofill background change */
 }
 
 .auth-input:focus {
@@ -808,6 +823,8 @@ html, body {
   box-shadow: 0 0 0 3px var(--color-primary-light);
   transform: translateY(-1px) scale(1.01);
   background: rgba(255, 255, 255, 0.95);
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
 }
 
 .auth-input:hover:not(:focus) {
@@ -817,6 +834,8 @@ html, body {
 /* Filled input fields get primary light background */
 .auth-input:not(:placeholder-shown) {
   background: color-mix(in srgb, var(--color-primary-light) 22%, white);
+  color: #111827 !important; /* Ensure text is always visible */
+  -webkit-text-fill-color: #111827 !important; /* iOS Safari fix */
 }
 
 /* Make LEFT icons (envelope, lock) more visible when input is filled */
@@ -993,6 +1012,26 @@ div:has(> .auth-input:not(:placeholder-shown)) > .absolute.inset-y-0.left-0 svg 
 .auth-field-3 { animation: fadeInUp 0.4s ease-out 0.15s both; }
 .auth-field-4 { animation: fadeInUp 0.4s ease-out 0.2s both; }
 .auth-field-5 { animation: fadeInUp 0.4s ease-out 0.25s both; }
+
+/* iOS Safari input text visibility fix - CRITICAL */
+/* Force dark text color on all inputs to prevent invisible text */
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="tel"],
+.auth-input {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+/* iOS Safari autofill text visibility - CRITICAL */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #111827 !important;
+  color: #111827 !important;
+}
 
 /* Loading spinner */
 @keyframes spin {

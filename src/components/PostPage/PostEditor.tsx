@@ -19,6 +19,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import { mergeAttributes } from '@tiptap/core';
 import { Node as TiptapNode } from '@tiptap/core';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import Button from '@/ui/Button';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import LinkModal from '@/components/PostPage/LinkModal';
@@ -483,7 +484,7 @@ interface PostEditorProps {
   initialContent?: string;
   onContentChange?: (content: string) => void;
   onCodeViewChange?: (isCodeView: boolean) => void;
-  postType?: 'default' | 'minimal' | 'landing';
+  postType?: 'default' | 'minimal' | 'landing' | 'doc_set';
   initialCodeView?: boolean;
 }
 
@@ -866,6 +867,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
   postType = 'default',
   initialCodeView 
 }) => {
+  const themeColors = useThemeColors();
+  
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -876,7 +879,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
         openOnClick: false,
         autolink: true,
         HTMLAttributes: {
-          class: 'text-sky-700 underline',
+          class: 'editor-link',
           rel: 'noopener noreferrer',
           target: '_blank',
         },
@@ -2338,6 +2341,15 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
   return (
     <div className="post-editor-container">
+      <style jsx>{`
+        :global(.editor-link) {
+          color: ${themeColors.cssVars.primary.base};
+          text-decoration: underline;
+        }
+        :global(.editor-link:hover) {
+          opacity: 0.8;
+        }
+      `}</style>
       <div className="post-editor text-gray-600">
         {/* Enhanced Toolbar - Single elegant row */}
         <div className="sticky top-0 bg-white z-40 px-4 py-2">
@@ -2696,7 +2708,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                                     value="spaces"
                                     checked={indentType === 'spaces'}
                                     onChange={(e) => setIndentType(e.target.value as 'spaces' | 'tabs')}
-                                    className="text-blue-600"
+                                    style={{ accentColor: themeColors.cssVars.primary.base }}
                                   />
                                   <span className="text-xs">Spaces</span>
                                 </label>
@@ -2707,7 +2719,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                                     value="tabs"
                                     checked={indentType === 'tabs'}
                                     onChange={(e) => setIndentType(e.target.value as 'spaces' | 'tabs')}
-                                    className="text-blue-600"
+                                    style={{ accentColor: themeColors.cssVars.primary.base }}
                                   />
                                   <span className="text-xs">Tabs</span>
                                 </label>
@@ -2726,7 +2738,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                                       value="2"
                                       checked={indentSize === 2}
                                       onChange={(e) => setIndentSize(Number(e.target.value) as 2 | 4)}
-                                      className="text-blue-600"
+                                      style={{ accentColor: themeColors.cssVars.primary.base }}
                                     />
                                     <span className="text-xs">2 spaces</span>
                                   </label>
@@ -2737,7 +2749,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                                       value="4"
                                       checked={indentSize === 4}
                                       onChange={(e) => setIndentSize(Number(e.target.value) as 2 | 4)}
-                                      className="text-blue-600"
+                                      style={{ accentColor: themeColors.cssVars.primary.base }}
                                     />
                                     <span className="text-xs">4 spaces</span>
                                   </label>
@@ -2756,7 +2768,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                                     value="lf"
                                     checked={lineEnding === 'lf'}
                                     onChange={(e) => setLineEnding(e.target.value as 'lf' | 'crlf')}
-                                    className="text-blue-600"
+                                    style={{ accentColor: themeColors.cssVars.primary.base }}
                                   />
                                   <span className="text-xs">LF (Unix)</span>
                                 </label>
@@ -2767,7 +2779,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                                     value="crlf"
                                     checked={lineEnding === 'crlf'}
                                     onChange={(e) => setLineEnding(e.target.value as 'lf' | 'crlf')}
-                                    className="text-blue-600"
+                                    style={{ accentColor: themeColors.cssVars.primary.base }}
                                   />
                                   <span className="text-xs">CRLF (Windows)</span>
                                 </label>
@@ -3040,7 +3052,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
                               }
                             }}
                             placeholder="Find..."
-                            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2"
+                            style={{
+                              '--tw-ring-color': themeColors.cssVars.primary.base
+                            } as React.CSSProperties}
                           />
                           <span className="text-xs text-gray-600 whitespace-nowrap">
                             {totalMatches > 0 ? `${currentMatchIndex + 1} of ${totalMatches}` : '0 of 0'}
@@ -3054,7 +3069,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
                             value={replaceText}
                             onChange={(e) => setReplaceText(e.target.value)}
                             placeholder="Replace with..."
-                            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2"
+                            style={{
+                              '--tw-ring-color': themeColors.cssVars.primary.base
+                            } as React.CSSProperties}
                           />
                         </div>
                         
@@ -3218,7 +3236,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                         }
                       }}
                       onKeyDown={handleKeyDown}
-                      className="flex-1 font-mono text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none border-0 block relative z-10"
+                      className="flex-1 font-mono text-sm focus:ring-2 focus:outline-none resize-none border-0 block relative z-10"
                       style={{
                         backgroundColor: syntaxHighlighting ? 'transparent' : (htmlEditorBgColor === 'dark' ? '#1e1e1e' : '#ffffff'),
                         color: syntaxHighlighting ? 'transparent' : (htmlEditorBgColor === 'dark' ? '#d4d4d4' : '#1f2937'),
@@ -3235,7 +3253,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
                         minWidth: '100%',
                         caretColor: htmlEditorBgColor === 'dark' ? '#d4d4d4' : '#1f2937',
                         WebkitTextFillColor: syntaxHighlighting ? 'transparent' : undefined,
-                      }}
+                        '--tw-ring-color': themeColors.cssVars.primary.base,
+                      } as React.CSSProperties}
                       placeholder="Enter HTML content..."
                       spellCheck={false}
                     />

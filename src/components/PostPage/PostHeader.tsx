@@ -4,6 +4,7 @@ import React, { memo, useMemo } from 'react';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { usePostEditModal } from '@/components/modals/PostEditModal/context';
 import AdminButtons from './AdminButtons';
 import Link from 'next/link';
@@ -50,6 +51,7 @@ interface PostHeaderProps {
 
 const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminButtons, minimal = false }) => {
   const { settings } = useSettings();
+  const themeColors = useThemeColors();
 
   // Memoize computed values
   const textSizeHeadings = useMemo(() => 'text-sm', []);
@@ -59,9 +61,11 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
   // Memoize subsection slug and URL
   const { subsectionSlug, subsectionUrl } = useMemo(() => {
     const slug = generateSlug(post.subsection || 'Subsection');
+    // Link to /blog with search parameter to filter by subsection
+    const url = post.subsection ? `/blog?search=${encodeURIComponent(post.subsection)}` : '/blog';
     return {
       subsectionSlug: slug,
-      subsectionUrl: `/${slug}/`
+      subsectionUrl: url
     };
   }, [post.subsection]);
 
@@ -92,7 +96,10 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
             </Link>
           </div>
           <Link href={subsectionUrl}>
-            <span className="flex transition-all transition-300 group items-center mt-2 font-medium text-xs text-sky-500 tracking-widest hover:underline">
+            <span 
+              className="flex transition-all transition-300 group items-center mt-2 font-medium text-xs tracking-widest hover:underline hover:opacity-80"
+              style={{ color: themeColors.cssVars.primary.base }}
+            >
               {post.subsection}
               <RightArrowDynamic />
             </span>
@@ -106,31 +113,25 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
       </h1>
 
       {/* Date and Author Info */}
-      <div className="flex items-center gap-4 text-gray-500 font-light">
+      <div className="flex items-center gap-3 text-sm text-gray-500 mb-1">
         {/* Date */}
-        <div className="flex items-center gap-1">
-          <FiCalendar className="text-gray-400" />
-          <time dateTime={post.created_on}>
-            {formattedDate}
-          </time>
-        </div>
+        <time dateTime={post.created_on} className="font-medium">
+          {formattedDate}
+        </time>
 
-        {/* Display Author or Company Name */}
+        {/* Separator and Author */}
         {authorDisplay && (
-          <div className="flex items-center gap-1">
-            <FiUser className="text-gray-400" />
-            <span>{authorDisplay}</span>
-          </div>
+          <>
+            <span className="text-gray-300">•</span>
+            <span className="font-medium">{authorDisplay}</span>
+          </>
         )}
       </div>
 
       {/* Description - Hide for minimal */}
       {!minimal && (
-        <p className="text-xl sm:text-2xl text-gray-700 mt-6 mb-8">{post.description}</p>
+        <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mt-6 mb-12">{post.description}</p>
       )}
-
-      {/* Optional Divider */}
-      <hr className="border-gray-200 mb-8" />
       
       {/* Neomorphism Admin Buttons - Hover/Touch Activated */}
       {isAdmin && showAdminButtons && (

@@ -6,11 +6,14 @@ import PostHeader from '@/components/PostPage/PostHeader';
 import AdminButtons from '@/components/PostPage/AdminButtons';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
+import MasterTOC from '@/components/PostPage/MasterTOC';
+import DocumentSetNavigation from '@/components/PostPage/DocumentSetNavigation';
 import CodeBlockCopy from '@/components/CodeBlockCopy';
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
 import { getBaseUrl } from '@/lib/utils';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import Loading from '@/ui/Loading';
 
 interface TOCItem {
@@ -37,12 +40,15 @@ interface Post {
   section_id?: string | null;
   last_modified: string;
   display_this_post: boolean;
-  type?: 'default' | 'minimal' | 'landing';
+  type?: 'default' | 'minimal' | 'landing' | 'doc_set';
   reviews?: { rating: number; author: string; comment: string }[];
   faqs?: { question: string; answer: string }[];
   organization_id?: string;
   main_photo?: string;
   additional_photo?: string;
+  doc_set?: string | null;
+  doc_set_order?: number | null;
+  doc_set_title?: string | null;
 }
 
 interface PostPageClientProps {
@@ -58,6 +64,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   const [hasTemplateSections, setHasTemplateSections] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const themeColors = useThemeColors();
 
   const baseUrl = useMemo(() =>
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
@@ -68,6 +75,22 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Handle hash navigation on page load and slug changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      // Reduced delay for faster hash navigation
+      setTimeout(() => {
+        const hash = window.location.hash.substring(1);
+        const element = document.getElementById(hash);
+        if (element) {
+          const yOffset = -100;
+          const yPosition = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: yPosition, behavior: 'smooth' });
+        }
+      }, 100); // Reduced from 300ms to 100ms
+    }
+  }, [post.slug]); // Added dependency to trigger on page navigation
 
   // Check admin status client-side
   useEffect(() => {
@@ -355,12 +378,12 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   );
   
   const showTOC = useMemo(() => 
-    postType === 'default' && toc.length > 0,
+    (postType === 'default' || postType === 'doc_set') && toc.length > 0,
     [postType, toc.length]
   );
   
   const showPostHeader = useMemo(() => 
-    postType === 'default' || postType === 'minimal',
+    postType === 'default' || postType === 'minimal' || postType === 'doc_set',
     [postType]
   );
 
@@ -378,11 +401,25 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
         // Only render the grid if we have content or need to show the empty message
         (shouldShowMainContent || shouldShowNoContentMessage) ? (
           <div className="grid lg:grid-cols-8 gap-x-4">
-            {/* TOC Sidebar - Only show for default type */}
+            {/* TOC Sidebar - Show Master TOC for document sets, regular TOC otherwise */}
             <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
               {isMounted && showTOC && (
-                <div className="hidden lg:block mt-16 sticky top-32">
-                  <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                <div className="hidden lg:block mt-16 sticky top-32 pr-4 lg:border-r lg:border-gray-100">
+                  {((post.doc_set || post.type === 'doc_set') && post.organization_id) ? (
+                    <MasterTOC
+                      currentSlug={post.slug}
+                      docSet={post.doc_set || post.slug}
+                      organizationId={post.organization_id}
+                      handleScrollTo={handleScrollTo}
+                      currentArticleTOC={toc.map(item => ({
+                        level: parseInt(item.tag_name.substring(1)),
+                        text: item.tag_text,
+                        id: item.tag_id
+                      }))}
+                    />
+                  ) : (
+                    <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                  )}
                 </div>
               )}
             </aside>
@@ -416,16 +453,45 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                 {/* Code block copy functionality */}
                 <CodeBlockCopy />
                 
-                {/* Mobile TOC - Below Content - Only for default type */}
+                {/* Document Set Navigation - Only show if post belongs to a document set */}
+                {post.organization_id && (post.doc_set || post.type === 'doc_set') && (
+                  <DocumentSetNavigation
+                    currentSlug={post.slug}
+                    docSet={post.doc_set || post.slug}
+                    organizationId={post.organization_id}
+                  />
+                )}
+                
+                {/* Mobile TOC - Below Content - Show Master TOC for document sets, regular TOC otherwise */}
                 {isMounted && showTOC && (
                   <div className="lg:hidden mt-12 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg 
+                        className="w-5 h-5 mr-2" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                        style={{ color: themeColors.cssVars.primary.base }}
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                       </svg>
                       Table of Contents
                     </h3>
-                    <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                    {((post.doc_set || post.type === 'doc_set') && post.organization_id) ? (
+                      <MasterTOC
+                        currentSlug={post.slug}
+                        docSet={post.doc_set || post.slug}
+                        organizationId={post.organization_id}
+                        handleScrollTo={handleScrollTo}
+                        currentArticleTOC={toc.map(item => ({
+                          level: parseInt(item.tag_name.substring(1)),
+                          text: item.tag_text,
+                          id: item.tag_id
+                        }))}
+                      />
+                    ) : (
+                      <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                    )}
                   </div>
                 )}
               </>

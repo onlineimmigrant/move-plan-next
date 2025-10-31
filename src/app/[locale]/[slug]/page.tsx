@@ -27,6 +27,9 @@ interface Post {
   organization_id?: string;
   main_photo?: string;
   additional_photo?: string;
+  doc_set?: string | null;
+  doc_set_order?: number | null;
+  doc_set_title?: string | null;
 }
 
 // Server-side function to fetch post data
@@ -39,7 +42,9 @@ async function fetchPostData(slug: string): Promise<Post | null> {
     
     const response = await fetch(
       `${baseUrl}/api/posts/${slug}?organization_id=${organizationId}`,
-      { cache: 'no-store' } // Always fetch fresh data
+      { 
+        next: { revalidate: 60 } // Cache for 60 seconds, then revalidate
+      }
     );
     
     if (!response.ok) {

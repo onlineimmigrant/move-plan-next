@@ -2,6 +2,7 @@
 'use client';
 
 import React, { memo, useMemo, useState } from 'react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 
 interface TOCItem {
@@ -23,6 +24,7 @@ const TOCItemComponent: React.FC<{
     level: number;
 }> = memo(({ item, handleScrollTo, level }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const themeColors = useThemeColors();
     const hasChildren = item.children && item.children.length > 0;
 
     const getItemClassName = (tagName: string) => {
@@ -45,7 +47,10 @@ const TOCItemComponent: React.FC<{
                 {hasChildren && (
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className="flex-shrink-0 w-4 h-4 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded"
+                        className="flex-shrink-0 w-4 h-4 mt-1 focus:outline-none focus:ring-2 focus:ring-opacity-50 rounded"
+                        style={{ 
+                            '--tw-ring-color': themeColors.cssVars.primary.base 
+                        } as React.CSSProperties}
                         aria-label={isOpen ? 'Collapse' : 'Expand'}
                     >
                         <svg
@@ -63,7 +68,10 @@ const TOCItemComponent: React.FC<{
                 )}
                 <button
                     onClick={() => handleScrollTo(item.tag_id)}
-                    className={`text-left flex-1 line-clamp-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded px-1 py-0.5 ${!hasChildren ? 'ml-5' : ''}`}
+                    className={`text-left flex-1 line-clamp-1 focus:outline-none focus:ring-2 focus:ring-opacity-50 rounded px-1 py-0.5 ${!hasChildren ? 'ml-5' : ''}`}
+                    style={{ 
+                        '--tw-ring-color': themeColors.cssVars.primary.base 
+                    } as React.CSSProperties}
                     aria-label={`Navigate to ${item.tag_text}`}
                 >
                     {item.tag_text}

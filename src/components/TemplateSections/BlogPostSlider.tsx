@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getOrganizationId } from '@/lib/supabase';
 import { getPostUrl } from '@/lib/postUtils';
 import { useSettings } from '@/context/SettingsContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { SliderNavigation } from '@/ui/SliderNavigation';
 
 interface BlogPost {
@@ -33,6 +34,7 @@ interface BlogPostSliderProps {
 
 const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
   const { settings } = useSettings();
+  const themeColors = useThemeColors();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -147,12 +149,16 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
     backgroundColor.toLowerCase() === 'rgb(255, 255, 255)' ||
     backgroundColor.toLowerCase() === 'rgba(255, 255, 255, 1)';
 
-  const sectionClassName = shouldUseGradient 
-    ? 'py-8 md:py-12 bg-gradient-to-br from-slate-50 via-white to-blue-50' 
-    : 'py-8 md:py-12';
+  // Create gradient background with primary color
+  const gradientStyle = shouldUseGradient ? {
+    background: `linear-gradient(to bottom right, ${themeColors.cssVars.primary.lighter}, white, ${themeColors.cssVars.primary.lighter})`
+  } : {};
 
   return (
-    <section className={sectionClassName}>
+    <section 
+      className="py-8 md:py-12"
+      style={gradientStyle}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Slider Container */}
         <div 
@@ -192,7 +198,12 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                             />
                           </div>
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center">
+                          <div 
+                            className="w-full h-full flex items-center justify-center"
+                            style={{
+                              background: `linear-gradient(to bottom right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.light})`
+                            }}
+                          >
                             <span className="text-5xl md:text-8xl">📄</span>
                           </div>
                         )}
@@ -202,7 +213,13 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                       <div className="p-4 md:p-8 lg:p-10">
                         <div className="max-w-3xl mx-auto">
                           {post.organization_config?.subsection && (
-                            <span className="inline-block px-2.5 py-0.5 md:px-3 md:py-1 bg-sky-100 text-sky-700 rounded-full text-xs md:text-sm font-medium mb-2 md:mb-4">
+                            <span 
+                              className="inline-block px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium mb-2 md:mb-4"
+                              style={{
+                                backgroundColor: themeColors.cssVars.primary.lighter,
+                                color: themeColors.cssVars.primary.base
+                              }}
+                            >
                               {post.organization_config.subsection}
                             </span>
                           )}
@@ -212,7 +229,10 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                           <p className="text-base md:text-lg text-gray-600 line-clamp-2 md:line-clamp-3">
                             {post.description ?? 'No description available'}
                           </p>
-                          <div className="mt-4 md:mt-6 inline-flex items-center text-sky-600 text-sm md:text-base font-medium group-hover:text-sky-700">
+                          <div 
+                            className="mt-4 md:mt-6 inline-flex items-center text-sm md:text-base font-medium group-hover:opacity-80 transition-opacity"
+                            style={{ color: themeColors.cssVars.primary.base }}
+                          >
                             Read More
                             <svg className="w-4 h-4 md:w-5 md:h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
