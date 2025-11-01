@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronRightIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, BookOpenIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { debug } from '@/utils/debug';
 
 // Global cache for document sets to avoid re-fetching
 const documentSetCache = new Map<string, DocumentSet>();
@@ -179,12 +180,13 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [expandedArticles, setExpandedArticles] = useState<Set<string>>(new Set());
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const themeColors = useThemeColors();
   const isFetchingRef = useRef(false);
 
   // Log component mount
   useEffect(() => {
-    console.log('[MasterTOC] Component mounted with props:', { currentSlug, docSet, organizationId });
+    debug.log('MasterTOC', 'Component mounted with props:', { currentSlug, docSet, organizationId });
   }, []);
 
   // Auto-expand current article and set active heading on mount
@@ -223,25 +225,25 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
         // Use relative URL - works in all environments
         const url = `/api/document-sets/${docSet}?organization_id=${organizationId}`;
         
-        console.log('[MasterTOC] Fetching document set:', { docSet, organizationId, url, fullUrl: window?.location?.href });
+        debug.log('MasterTOC', 'Fetching document set:', { docSet, organizationId, url, fullUrl: window?.location?.href });
         
         const response = await fetch(url);
 
-        console.log('[MasterTOC] Response received:', { status: response.status, ok: response.ok });
+        debug.log('MasterTOC', 'Response received:', { status: response.status, ok: response.ok });
 
         if (response.ok) {
           const data = await response.json();
-          console.log('[MasterTOC] Successfully fetched document set:', data);
+          debug.log('MasterTOC', 'Successfully fetched document set:', data);
           // Store in cache
           documentSetCache.set(cacheKey, data);
           setSetData(data);
         } else {
-          console.error('[MasterTOC] Failed to fetch document set:', response.status, response.statusText);
+          debug.error('MasterTOC', 'Failed to fetch document set:', response.status, response.statusText);
           const errorText = await response.text();
-          console.error('[MasterTOC] Error response:', errorText);
+          debug.error('MasterTOC', 'Error response:', errorText);
         }
       } catch (error) {
-        console.error('[MasterTOC] Error fetching document set:', error);
+        debug.error('MasterTOC', 'Error fetching document set:', error);
       } finally {
         setIsLoading(false);
         isFetchingRef.current = false;
@@ -249,10 +251,10 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
     };
 
     if (docSet && organizationId) {
-      console.log('[MasterTOC] Conditions met, fetching...', { docSet, organizationId });
+      debug.log('MasterTOC', 'Conditions met, fetching...', { docSet, organizationId });
       fetchDocumentSet();
     } else {
-      console.warn('[MasterTOC] Missing required params:', { docSet, organizationId });
+      debug.warn('MasterTOC', 'Missing required params:', { docSet, organizationId });
       setIsLoading(false);
     }
   }, [docSet, organizationId]);
@@ -284,6 +286,17 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
     return null;
   }
 
+  // Filter articles based on search query
+  const filteredArticles = searchQuery.trim()
+    ? setData.articles.filter((article) => {
+        const query = searchQuery.toLowerCase();
+        // Search in article title
+        if (article.title.toLowerCase().includes(query)) return true;
+        // Search in TOC headings
+        return article.toc.some((item) => item.text.toLowerCase().includes(query));
+      })
+    : setData.articles;
+
   return (
     <nav className="space-y-1">
       {/* Set Title Header */}
@@ -303,9 +316,40 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
         </span>
       </div>
 
+      {/* Search Input */}
+      <div className="relative mb-4">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search articles..."
+          className="block w-full pl-10 pr-10 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-opacity-20 focus:outline-none transition-all"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600 transition-colors"
+            aria-label="Clear search"
+          >
+            <XMarkIcon className="h-4 w-4 text-gray-400" />
+          </button>
+        )}
+      </div>
+
+      {/* Results Count */}
+      {searchQuery && (
+        <div className="text-xs text-gray-500 mb-2 px-2">
+          {filteredArticles.length} {filteredArticles.length === 1 ? 'result' : 'results'}
+        </div>
+      )}
+
       {/* Articles List */}
       <div className="space-y-1">
-        {setData.articles.map((article, index) => {
+        {filteredArticles.length > 0 ? (
+          filteredArticles.map((article, index) => {
           const isCurrentArticle = article.slug === currentSlug;
           const isExpanded = expandedArticles.has(article.slug);
           
@@ -403,7 +447,12 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
               )}
             </div>
           );
-        })}
+        })
+        ) : (
+          <div className="text-sm text-gray-500 text-center py-4">
+            No articles found matching "{searchQuery}"
+          </div>
+        )}
       </div>
     </nav>
   );

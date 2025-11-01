@@ -8,19 +8,19 @@ import LandingPostContent from '@/components/PostPage/LandingPostContent';
 import TOC from '@/components/PostPage/TOC';
 import MasterTOC from '@/components/PostPage/MasterTOC';
 import DocumentSetNavigation from '@/components/PostPage/DocumentSetNavigation';
+import { BottomSheetTOC } from '@/components/PostPage/BottomSheetTOC';
+import { PostPageSkeleton } from '@/components/PostPage/PostPageSkeleton';
+// import { RelatedArticles } from '@/components/PostPage/RelatedArticles'; // TODO: Temporarily disabled - will be activated later
 import CodeBlockCopy from '@/components/CodeBlockCopy';
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { isAdminClient } from '@/lib/auth';
 import { getBaseUrl } from '@/lib/utils';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useDocumentSetLogic } from '@/hooks/useDocumentSetLogic';
+import { generateTOC, applyTOCIds, type TOCItem } from '@/utils/generateTOC';
+import { debug } from '@/utils/debug';
 import Loading from '@/ui/Loading';
-
-interface TOCItem {
-  tag_name: string;
-  tag_text: string;
-  tag_id: string;
-}
 
 interface Post {
   id: string;
@@ -106,7 +106,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   useEffect(() => {
     const handlePostUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
-      console.log('[PostPageClient] Received post-updated event:', customEvent.detail);
+      debug.log('PostPageClient', 'Received post-updated event:', customEvent.detail);
       
       // Reload the page to fetch fresh post data
       window.location.reload();
@@ -136,7 +136,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           const headingsData = await headingsResponse.json();
           
           const hasSections = sectionsData.length > 0 || headingsData.length > 0;
-          console.log('Template sections check:', { 
+          debug.log('PostPageClient', 'Template sections check:', { 
             sections: sectionsData.length, 
             headings: headingsData.length,
             hasSections 
@@ -144,7 +144,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           setHasTemplateSections(hasSections);
         }
       } catch (error) {
-        console.error('Error checking template sections:', error);
+        debug.error('PostPageClient', 'Error checking template sections:', error);
       }
     };
 
@@ -184,72 +184,19 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
     };
   }, []);
 
-  // Generate TOC
-  const toc: TOCItem[] = useMemo(() => {
-    // Check if we're in the browser (client-side only)
-    if (typeof window === 'undefined') return [];
-    if (!post || !post.content) return [];
-    
-    const tocItems: TOCItem[] = [];
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(post.content, 'text/html');
-    const headings = doc.querySelectorAll('h1, h2, h3, h4, h5');
+  // Generate TOC using utility function
+  const toc: TOCItem[] = useMemo(() => generateTOC(post?.content), [post?.content]);
 
-    console.log('🔍 TOC Generation - Total headings found:', headings.length);
-
-    headings.forEach((heading, index) => {
-      const tagName = heading.tagName.toLowerCase();
-      const tagText = heading.textContent || '';
-      const tagId = heading.id || `${tagName}-${index + 1}`;
-
-      if (!heading.id) {
-        heading.id = tagId;
-      }
-
-      console.log(`  ${index + 1}. ${tagName.toUpperCase()}: "${tagText}" → ID: "${tagId}"`);
-
-      tocItems.push({
-        tag_name: tagName,
-        tag_text: tagText,
-        tag_id: tagId,
-      });
-    });
-
-    console.log('📋 Generated TOC items:', tocItems.map(t => `${t.tag_id}: ${t.tag_text}`));
-    return tocItems;
-  }, [post]);
-
-    // Apply IDs to rendered headings to match TOC
+  // Apply IDs to rendered headings to match TOC
   useEffect(() => {
     if (!contentRef.current || toc.length === 0) {
-      console.log('⏭️ Skipping ID application:', { hasContentRef: !!contentRef.current, tocLength: toc.length });
+      debug.log('PostPageClient', '⏭️ Skipping ID application:', { hasContentRef: !!contentRef.current, tocLength: toc.length });
       return;
     }
 
     // Use setTimeout to ensure DOM is fully rendered
     const timeoutId = setTimeout(() => {
-      console.log('🔧 Applying IDs to rendered DOM...');
-      const headings = contentRef.current!.querySelectorAll('h1, h2, h3, h4, h5');
-      console.log('   Total rendered headings:', headings.length);
-      console.log('   TOC expects', toc.length, 'headings');
-      
-      if (headings.length !== toc.length) {
-        console.warn('⚠️ MISMATCH: DOM has', headings.length, 'headings but TOC has', toc.length);
-      }
-      
-      headings.forEach((heading, index) => {
-        const tagName = heading.tagName.toLowerCase();
-        const oldId = heading.id;
-        // Use global counter like TOC generation does
-        const expectedId = heading.id || `${tagName}-${index + 1}`;
-        
-        // Set ID to match TOC
-        heading.id = expectedId;
-        console.log(`   ${index + 1}. ${tagName.toUpperCase()}: ${oldId ? `"${oldId}"` : '(no id)'} → "${expectedId}"`);
-      });
-      
-      console.log('✅ Final IDs in DOM:', Array.from(headings).map(h => h.id));
-      console.log('📋 TOC expects these IDs:', toc.map(t => t.tag_id));
+      applyTOCIds(contentRef.current!, toc);
     }, 100);
 
     return () => clearTimeout(timeoutId);
@@ -257,7 +204,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
 
   // Memoized scroll handler
   const handleScrollTo = useCallback((id: string) => {
-    console.log('Attempting to scroll to ID:', id);
+    debug.log('PostPageClient', 'Attempting to scroll to ID:', id);
     
     // First try to find by ID
     let element = document.getElementById(id);
@@ -267,12 +214,11 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
       const headings = contentRef.current.querySelectorAll('h1, h2, h3, h4, h5');
       const allHeadings = Array.from(headings);
       
-      console.log('All headings in DOM:', allHeadings.map((h, i) => ({
-        index: i,
-        tag: h.tagName.toLowerCase(),
-        id: h.id || '(none)',
-        text: h.textContent?.substring(0, 50)
-      })));
+      debug.group('PostPageClient', 'All headings in DOM', () => {
+        allHeadings.forEach((h, i) => {
+          debug.log('PostPageClient', `  ${i}: ${h.tagName.toLowerCase()} - ID: ${h.id || '(none)'} - Text: ${h.textContent?.substring(0, 50)}`);
+        });
+      });
       
       // Find the matching heading from TOC
       const tocIndex = toc.findIndex(t => t.tag_id === id);
@@ -280,18 +226,18 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
         element = allHeadings[tocIndex] as HTMLElement;
         // Apply the ID so it works next time
         element.id = id;
-        console.log('✅ Found heading by index, applied ID:', id);
+        debug.log('PostPageClient', '✅ Found heading by index, applied ID:', id);
       }
     }
     
     if (element) {
-      console.log('Scrolling to element');
+      debug.log('PostPageClient', 'Scrolling to element');
       const yOffset = -100;
       const yPosition = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: yPosition, behavior: 'smooth' });
     } else {
-      console.error('❌ Element not found for ID:', id);
-      console.error('Available IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id).filter(Boolean));
+      debug.error('PostPageClient', '❌ Element not found for ID:', id);
+      debug.error('PostPageClient', 'Available IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id).filter(Boolean));
     }
   }, [toc]);
 
@@ -314,12 +260,12 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
       });
 
       if (response.ok) {
-        console.log('Content updated successfully');
+        debug.log('PostPageClient', 'Content updated successfully');
       } else {
-        console.error('Failed to update content:', await response.json());
+        debug.error('PostPageClient', 'Failed to update content:', await response.json());
       }
     } catch (error) {
-      console.error('Error updating content:', error);
+      debug.error('PostPageClient', 'Error updating content:', error);
     }
   }, [baseUrl, slug, post, isAdmin]);
 
@@ -327,21 +273,21 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   const makeEditable = useCallback((e: React.MouseEvent) => {
     if (!isAdmin) return;
     const target = e.target as HTMLElement;
-    console.log('Double-clicked:', target.tagName, 'ID:', target.id);
+    debug.log('PostPageClient', 'Double-clicked:', target.tagName, 'ID:', target.id);
     
     if (['H1', 'H2', 'H3', 'H4', 'H5', 'P', 'UL', 'LI'].includes(target.tagName)) {
       target.contentEditable = 'true';
       target.focus();
       
       const handleBlur = () => {
-        console.log('Blur on:', target.tagName, 'ID:', target.id, 'Content:', target.innerHTML);
+        debug.log('PostPageClient', 'Blur on:', target.tagName, 'ID:', target.id, 'Content:', target.innerHTML);
         target.contentEditable = 'false';
         handleContentUpdate();
       };
 
       const handleKeyDown = (ev: KeyboardEvent) => {
         if (ev.key === 'Enter' && !ev.shiftKey) {
-          console.log('Enter pressed on:', target.tagName, 'ID:', target.id);
+          debug.log('PostPageClient', 'Enter pressed on:', target.tagName, 'ID:', target.id);
           ev.preventDefault();
           target.blur();
         }
@@ -354,6 +300,9 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
 
   // Memoized content checks
   const postType = useMemo(() => post?.type || 'default', [post?.type]);
+  
+  // Use document set logic hook
+  const docSet = useDocumentSetLogic(post);
   
   const shouldShowMainContent = useMemo(() => 
     post && post.content?.length > 0,
@@ -388,11 +337,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   );
 
   if (!post) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loading />
-      </div>
-    );
+    return <PostPageSkeleton />;
   }
 
   return (
@@ -405,32 +350,21 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
             <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
               {isMounted && showTOC && (
                 <div className="hidden lg:block mt-16 sticky top-32 pr-4 lg:border-r lg:border-gray-100">
-                  {(() => {
-                    const shouldShowMasterTOC = (post.doc_set || post.type === 'doc_set') && post.organization_id;
-                    console.log('[PostPageClient] TOC Render Check:', {
-                      shouldShowMasterTOC,
-                      doc_set: post.doc_set,
-                      type: post.type,
-                      organization_id: post.organization_id,
-                      slug: post.slug
-                    });
-                    
-                    return shouldShowMasterTOC && post.organization_id ? (
-                      <MasterTOC
-                        currentSlug={post.slug}
-                        docSet={post.doc_set || post.slug}
-                        organizationId={post.organization_id}
-                        handleScrollTo={handleScrollTo}
-                        currentArticleTOC={toc.map(item => ({
-                          level: parseInt(item.tag_name.substring(1)),
-                          text: item.tag_text,
-                          id: item.tag_id
-                        }))}
-                      />
-                    ) : (
-                      <TOC toc={toc} handleScrollTo={handleScrollTo} />
-                    );
-                  })()}
+                  {docSet.showMasterTOC ? (
+                    <MasterTOC
+                      currentSlug={post.slug}
+                      docSet={docSet.docSetSlug}
+                      organizationId={post.organization_id!}
+                      handleScrollTo={handleScrollTo}
+                      currentArticleTOC={toc.map(item => ({
+                        level: parseInt(item.tag_name.substring(1)),
+                        text: item.tag_text,
+                        id: item.tag_id
+                      }))}
+                    />
+                  ) : (
+                    <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                  )}
                 </div>
               )}
             </aside>
@@ -465,12 +399,12 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                 <CodeBlockCopy />
                 
                 {/* Document Set Navigation - Only show if post belongs to a document set */}
-                {post.organization_id && (post.doc_set || post.type === 'doc_set') && (
+                {docSet.showMasterTOC && (
                   <DocumentSetNavigation
                     currentSlug={post.slug}
-                    docSet={post.doc_set || post.slug}
-                    organizationId={post.organization_id}
-                    isDocSetType={post.type === 'doc_set'}
+                    docSet={docSet.docSetSlug}
+                    organizationId={post.organization_id!}
+                    isDocSetType={docSet.isDocSetType}
                   />
                 )}
                 
@@ -489,11 +423,11 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                       </svg>
                       Table of Contents
                     </h3>
-                    {((post.doc_set || post.type === 'doc_set') && post.organization_id) ? (
+                    {docSet.showMasterTOC ? (
                       <MasterTOC
                         currentSlug={post.slug}
-                        docSet={post.doc_set || post.slug}
-                        organizationId={post.organization_id}
+                        docSet={docSet.docSetSlug}
+                        organizationId={post.organization_id!}
                         handleScrollTo={handleScrollTo}
                         currentArticleTOC={toc.map(item => ({
                           level: parseInt(item.tag_name.substring(1)),
@@ -523,7 +457,19 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           </section>
 
           {/* Right Sidebar */}
-          <aside className="lg:col-span-2"></aside>
+          <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
+            <div className="hidden lg:block mt-16 sticky top-32 pl-4">
+              {/* TODO: Related articles temporarily disabled - will be activated later */}
+              {/* {docSet.showMasterTOC && (
+                <RelatedArticles
+                  currentSlug={post.slug}
+                  docSet={docSet.docSetSlug}
+                  organizationId={post.organization_id!}
+                  maxArticles={4}
+                />
+              )} */}
+            </div>
+          </aside>
         </div>
         ) : null
       ) : post.content ? (
@@ -536,6 +482,15 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           <LandingPostContent post={post} />
         </div>
       ) : null}
+
+      {/* Bottom Sheet TOC for Mobile */}
+      {showTOC && toc.length > 0 && (
+        <BottomSheetTOC
+          toc={toc}
+          handleScrollTo={handleScrollTo}
+          title={docSet.showMasterTOC ? 'Document Navigation' : 'Table of Contents'}
+        />
+      )}
     </main>
   );
 });

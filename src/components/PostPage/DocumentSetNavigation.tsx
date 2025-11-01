@@ -222,7 +222,7 @@ const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
         {previousArticle ? (
           <Link
             href={`/${previousArticle.slug}`}
-            className="group flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-gray-300 bg-white transition-all"
+            className="group flex items-center gap-3 p-4 rounded-lg bg-white hover:bg-gray-50 transition-all w-full"
           >
             <div 
               className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
@@ -235,7 +235,7 @@ const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
             </div>
             <div className="flex-1 min-w-0 text-left">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                Previous
+                Prev
               </p>
               <p 
                 className="font-semibold text-gray-700 truncate transition-colors"
@@ -263,7 +263,7 @@ const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
         {nextArticle && (
           <Link
             href={`/${nextArticle.slug}`}
-            className="group flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-gray-300 bg-white transition-all md:ml-auto"
+            className="group flex items-center gap-3 p-4 rounded-lg bg-white hover:bg-gray-50 transition-all w-full"
           >
             <div className="flex-1 min-w-0 text-right">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">

@@ -1,9 +1,9 @@
 // src/components/PostPage/TOC.tsx
 'use client';
 
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import { useThemeColors } from '@/hooks/useThemeColors';
-
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface TOCItem {
     tag_name: string;
@@ -22,69 +22,104 @@ const TOCItemComponent: React.FC<{
     item: TOCItem;
     handleScrollTo: (id: string) => void;
     level: number;
-}> = memo(({ item, handleScrollTo, level }) => {
+    activeHeadingId?: string;
+}> = memo(({ item, handleScrollTo, level, activeHeadingId }) => {
     const [isOpen, setIsOpen] = useState(false);
     const themeColors = useThemeColors();
     const hasChildren = item.children && item.children.length > 0;
+    const isActive = activeHeadingId === item.tag_id;
+    const primary = themeColors.cssVars.primary.base;
 
-    const getItemClassName = (tagName: string) => {
-        const baseClasses = 'hover:text-gray-400 transition-colors duration-200';
-        switch (tagName) {
-            case 'h2':
-                return `${baseClasses} mt-2`;
-            case 'h3':
-                return `${baseClasses} font-normal ml-2 mt-1`;
-            case 'h4':
-                return `${baseClasses} font-light ml-4 text-xs`;
-            default:
-                return `${baseClasses} font-light ml-6`;
+    // Auto-expand if this item or a child is active
+    useEffect(() => {
+        if (hasChildren && item.children) {
+            const hasActiveChild = item.children.some(child => child.tag_id === activeHeadingId);
+            if (hasActiveChild || isActive) {
+                setIsOpen(true);
+            }
+        }
+    }, [activeHeadingId, isActive, hasChildren, item.children]);
+
+    const getItemStyle = (tagName: string) => {
+        const isH2 = tagName === 'h2';
+        const isH3 = tagName === 'h3';
+        
+        if (isH2) {
+            return {
+                marginTop: '0.5rem',
+                marginBottom: '0.25rem',
+            };
+        } else if (isH3) {
+            return {
+                marginLeft: '0.75rem',
+                marginTop: '0.25rem',
+            };
+        } else {
+            return {
+                marginLeft: '1.5rem',
+                marginTop: '0.25rem',
+            };
         }
     };
 
+    // Get font weight based on heading level
+    const getFontWeight = (tagName: string) => {
+        return tagName === 'h2' ? 'font-semibold' : 'font-normal';
+    };
+
     return (
-        <li className={getItemClassName(item.tag_name)}>
-            <div className="flex items-start gap-1">
+        <li style={getItemStyle(item.tag_name)}>
+            <div className="flex items-center gap-2">
                 {hasChildren && (
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className="flex-shrink-0 w-4 h-4 mt-1 focus:outline-none focus:ring-2 focus:ring-opacity-50 rounded"
-                        style={{ 
-                            '--tw-ring-color': themeColors.cssVars.primary.base 
-                        } as React.CSSProperties}
+                        className="flex-shrink-0 p-0.5 rounded hover:bg-gray-100 transition-colors"
                         aria-label={isOpen ? 'Collapse' : 'Expand'}
                     >
-                        <svg
-                            className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
-                            <path
-                                fillRule="evenodd"
-                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
+                        <ChevronDownIcon 
+                            className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        />
                     </button>
                 )}
                 <button
                     onClick={() => handleScrollTo(item.tag_id)}
-                    className={`text-left flex-1 line-clamp-1 focus:outline-none focus:ring-2 focus:ring-opacity-50 rounded px-1 py-0.5 ${!hasChildren ? 'ml-5' : ''}`}
-                    style={{ 
-                        '--tw-ring-color': themeColors.cssVars.primary.base 
-                    } as React.CSSProperties}
-                    aria-label={`Navigate to ${item.tag_text}`}
+                    className={`flex-1 text-left py-1.5 px-2.5 rounded-lg transition-all text-sm leading-tight relative ${
+                        isActive 
+                            ? getFontWeight(item.tag_name)
+                            : `${getFontWeight(item.tag_name)} text-gray-600 hover:bg-gray-50`
+                    } ${!hasChildren ? 'ml-5' : ''}`}
+                    style={
+                        isActive
+                            ? {
+                                backgroundColor: `color-mix(in srgb, ${primary} 3%, transparent)`,
+                                borderColor: `color-mix(in srgb, ${primary} 8%, transparent)`,
+                                borderWidth: '1px',
+                                borderStyle: 'solid',
+                                color: primary,
+                            }
+                            : {}
+                    }
                 >
-                    {item.tag_text}
+                    {isActive && (
+                        <div 
+                            className="absolute right-0 top-0 bottom-0 w-1 rounded-r-lg"
+                            style={{ backgroundColor: primary }}
+                        />
+                    )}
+                    <span className="block relative z-10 line-clamp-2">
+                        {item.tag_text}
+                    </span>
                 </button>
             </div>
             {hasChildren && isOpen && (
-                <ul className="text-sm font-normal text-gray-700">
+                <ul className="mt-1">
                     {item.children!.map((child, index) => (
                         <TOCItemComponent
                             key={`${child.tag_id}-${index}`}
                             item={child}
                             handleScrollTo={handleScrollTo}
                             level={level + 1}
+                            activeHeadingId={activeHeadingId}
                         />
                     ))}
                 </ul>
@@ -96,6 +131,33 @@ const TOCItemComponent: React.FC<{
 TOCItemComponent.displayName = 'TOCItemComponent';
 
 const TOC: React.FC<TOCProps> = memo(({ toc, handleScrollTo }) => {
+    const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
+
+    // Track active heading based on scroll position
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const handleScroll = () => {
+            const headings = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id]');
+            const scrollPosition = window.scrollY + 120; // Offset for better UX
+
+            let currentHeading: string | undefined;
+
+            headings.forEach((heading) => {
+                const element = heading as HTMLElement;
+                if (element.offsetTop <= scrollPosition) {
+                    currentHeading = element.id;
+                }
+            });
+
+            setActiveHeadingId(currentHeading);
+        };
+
+        handleScroll(); // Initial check
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     // Build hierarchical structure from flat TOC list
     const hierarchicalTOC = useMemo(() => {
         if (!toc || toc.length === 0) return [];
@@ -134,18 +196,21 @@ const TOC: React.FC<TOCProps> = memo(({ toc, handleScrollTo }) => {
     if (!toc || toc.length === 0) return null;
 
     return (
-        <div className="table-of-contents mr-16 bg-white p-4 rounded-lg">
-            <h2 className="mt-8 font-light text-sm text-gray-400 mb-4">On this page</h2>
-            <ul className="text-sm font-normal text-gray-700">
-                {hierarchicalTOC.map((item, index) => (
-                    <TOCItemComponent
-                        key={`${item.tag_id}-${index}`}
-                        item={item}
-                        handleScrollTo={handleScrollTo}
-                        level={parseInt(item.tag_name.substring(1))}
-                    />
-                ))}
-            </ul>
+        <div className="table-of-contents sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <div className="bg-white p-4 rounded-lg">
+                <h2 className="font-semibold text-sm text-gray-900 mb-4">On this page</h2>
+                <ul className="space-y-0.5">
+                    {hierarchicalTOC.map((item, index) => (
+                        <TOCItemComponent
+                            key={`${item.tag_id}-${index}`}
+                            item={item}
+                            handleScrollTo={handleScrollTo}
+                            level={parseInt(item.tag_name.substring(1))}
+                            activeHeadingId={activeHeadingId}
+                        />
+                    ))}
+                </ul>
+            </div>
         </div>
     );
 });

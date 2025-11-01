@@ -1,8 +1,10 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import '@/components/PostPage/PostEditor.css';
+import '@/styles/print.css';
 import { getOrganizationId } from '@/lib/supabase';
 import PostPageClient from './PostPageClient';
+import { PostPageErrorBoundary } from '@/components/PostPage/PostPageErrorBoundary';
 
 interface Post {
   id: string;
@@ -90,7 +92,9 @@ export default async function PostPage({ params }: PostPageProps) {
   return (
     <>
       {/* Client component for interactive functionality */}
-      <PostPageClient post={post} slug={slug} />
+      <PostPageErrorBoundary>
+        <PostPageClient post={post} slug={slug} />
+      </PostPageErrorBoundary>
     </>
   );
 }
