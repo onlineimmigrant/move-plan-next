@@ -1,10 +1,31 @@
 // API endpoint to get all posts in a specific document set
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { JSDOM } from 'jsdom';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+// Helper function to extract TOC from HTML without JSDOM
+function extractTOCFromHTML(html: string): TOCItem[] {
+  const toc: TOCItem[] = [];
+  
+  // Match h2, h3, h4 tags with their content and id
+  const headingRegex = /<h([234])([^>]*?)id=["']([^"']+)["']([^>]*?)>(.*?)<\/h\1>/gi;
+  
+  let match;
+  while ((match = headingRegex.exec(html)) !== null) {
+    const level = parseInt(match[1]);
+    const id = match[3];
+    // Remove HTML tags from text content
+    const text = match[5].replace(/<[^>]+>/g, '').trim();
+    
+    if (text) {
+      toc.push({ level, text, id });
+    }
+  }
+  
+  return toc;
+}
 
 interface TOCItem {
   level: number;
@@ -82,26 +103,14 @@ export async function GET(
 
     // Extract TOC from each post's content
     const postsWithTOC: PostInSet[] = posts.map((post: any) => {
-      const toc: TOCItem[] = [];
+      let toc: TOCItem[] = [];
       
       if (post.content) {
         try {
-          // Parse HTML using jsdom for server-side parsing
+          // Parse HTML using regex (works in all environments)
           console.log('[API] Parsing TOC for post:', post.slug);
-          const dom = new JSDOM(post.content);
-          const doc = dom.window.document;
-          const headings = doc.querySelectorAll('h2, h3, h4');
-          
-          console.log('[API] Found headings:', headings.length);
-          
-          headings.forEach((heading, index) => {
-            const level = parseInt(heading.tagName.substring(1));
-            const text = heading.textContent || '';
-            // Always use the actual ID from the heading element, or generate a fallback
-            const id = heading.id || `${heading.tagName.toLowerCase()}-${index + 1}`;
-            
-            toc.push({ level, text, id });
-          });
+          toc = extractTOCFromHTML(post.content);
+          console.log('[API] Found headings:', toc.length);
         } catch (error) {
           console.error('[API] Error parsing HTML for TOC:', post.slug, error);
         }
