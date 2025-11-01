@@ -44,24 +44,36 @@ const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
   useEffect(() => {
     const fetchDocumentSet = async () => {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const response = await fetch(
-          `${baseUrl}/api/document-sets/${docSet}?organization_id=${organizationId}`
-        );
+        // Use relative URL in production, works both in dev and prod
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+        const url = `${baseUrl}/api/document-sets/${docSet}?organization_id=${organizationId}`;
+        
+        console.log('[DocumentSetNavigation] Fetching document set:', { docSet, organizationId, url });
+        
+        const response = await fetch(url);
 
         if (response.ok) {
           const data = await response.json();
+          console.log('[DocumentSetNavigation] Successfully fetched document set:', data);
           setSetData(data);
+        } else {
+          console.error('[DocumentSetNavigation] Failed to fetch document set:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('[DocumentSetNavigation] Error response:', errorText);
         }
       } catch (error) {
-        console.error('Error fetching document set:', error);
+        console.error('[DocumentSetNavigation] Error fetching document set:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (docSet && organizationId) {
+      console.log('[DocumentSetNavigation] Conditions met, fetching...', { docSet, organizationId });
       fetchDocumentSet();
+    } else {
+      console.warn('[DocumentSetNavigation] Missing required params:', { docSet, organizationId });
+      setIsLoading(false);
     }
   }, [docSet, organizationId]);
 

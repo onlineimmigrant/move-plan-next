@@ -215,19 +215,27 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
     const fetchDocumentSet = async () => {
       isFetchingRef.current = true;
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const response = await fetch(
-          `${baseUrl}/api/document-sets/${docSet}?organization_id=${organizationId}`
-        );
+        // Use relative URL in production, works both in dev and prod
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+        const url = `${baseUrl}/api/document-sets/${docSet}?organization_id=${organizationId}`;
+        
+        console.log('[MasterTOC] Fetching document set:', { docSet, organizationId, url });
+        
+        const response = await fetch(url);
 
         if (response.ok) {
           const data = await response.json();
+          console.log('[MasterTOC] Successfully fetched document set:', data);
           // Store in cache
           documentSetCache.set(cacheKey, data);
           setSetData(data);
+        } else {
+          console.error('[MasterTOC] Failed to fetch document set:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('[MasterTOC] Error response:', errorText);
         }
       } catch (error) {
-        console.error('Error fetching document set:', error);
+        console.error('[MasterTOC] Error fetching document set:', error);
       } finally {
         setIsLoading(false);
         isFetchingRef.current = false;
@@ -235,7 +243,11 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
     };
 
     if (docSet && organizationId) {
+      console.log('[MasterTOC] Conditions met, fetching...', { docSet, organizationId });
       fetchDocumentSet();
+    } else {
+      console.warn('[MasterTOC] Missing required params:', { docSet, organizationId });
+      setIsLoading(false);
     }
   }, [docSet, organizationId]);
 

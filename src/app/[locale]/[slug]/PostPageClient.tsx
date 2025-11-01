@@ -405,21 +405,32 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
             <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
               {isMounted && showTOC && (
                 <div className="hidden lg:block mt-16 sticky top-32 pr-4 lg:border-r lg:border-gray-100">
-                  {((post.doc_set || post.type === 'doc_set') && post.organization_id) ? (
-                    <MasterTOC
-                      currentSlug={post.slug}
-                      docSet={post.doc_set || post.slug}
-                      organizationId={post.organization_id}
-                      handleScrollTo={handleScrollTo}
-                      currentArticleTOC={toc.map(item => ({
-                        level: parseInt(item.tag_name.substring(1)),
-                        text: item.tag_text,
-                        id: item.tag_id
-                      }))}
-                    />
-                  ) : (
-                    <TOC toc={toc} handleScrollTo={handleScrollTo} />
-                  )}
+                  {(() => {
+                    const shouldShowMasterTOC = (post.doc_set || post.type === 'doc_set') && post.organization_id;
+                    console.log('[PostPageClient] TOC Render Check:', {
+                      shouldShowMasterTOC,
+                      doc_set: post.doc_set,
+                      type: post.type,
+                      organization_id: post.organization_id,
+                      slug: post.slug
+                    });
+                    
+                    return shouldShowMasterTOC && post.organization_id ? (
+                      <MasterTOC
+                        currentSlug={post.slug}
+                        docSet={post.doc_set || post.slug}
+                        organizationId={post.organization_id}
+                        handleScrollTo={handleScrollTo}
+                        currentArticleTOC={toc.map(item => ({
+                          level: parseInt(item.tag_name.substring(1)),
+                          text: item.tag_text,
+                          id: item.tag_id
+                        }))}
+                      />
+                    ) : (
+                      <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                    );
+                  })()}
                 </div>
               )}
             </aside>
