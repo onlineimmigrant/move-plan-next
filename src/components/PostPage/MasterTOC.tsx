@@ -182,6 +182,11 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
   const themeColors = useThemeColors();
   const isFetchingRef = useRef(false);
 
+  // Log component mount
+  useEffect(() => {
+    console.log('[MasterTOC] Component mounted with props:', { currentSlug, docSet, organizationId });
+  }, []);
+
   // Auto-expand current article and set active heading on mount
   useEffect(() => {
     // Always expand current article to show its H2 headings
@@ -215,13 +220,14 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
     const fetchDocumentSet = async () => {
       isFetchingRef.current = true;
       try {
-        // Use relative URL in production, works both in dev and prod
-        const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-        const url = `${baseUrl}/api/document-sets/${docSet}?organization_id=${organizationId}`;
+        // Use relative URL - works in all environments
+        const url = `/api/document-sets/${docSet}?organization_id=${organizationId}`;
         
-        console.log('[MasterTOC] Fetching document set:', { docSet, organizationId, url });
+        console.log('[MasterTOC] Fetching document set:', { docSet, organizationId, url, fullUrl: window?.location?.href });
         
         const response = await fetch(url);
+
+        console.log('[MasterTOC] Response received:', { status: response.status, ok: response.ok });
 
         if (response.ok) {
           const data = await response.json();

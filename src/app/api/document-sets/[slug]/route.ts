@@ -30,10 +30,21 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get('organization_id');
 
+    console.log('[API] Document set request:', { slug, organizationId, supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseServiceKey });
+
     if (!organizationId) {
+      console.error('[API] Missing organization_id');
       return NextResponse.json(
         { error: 'organization_id is required' },
         { status: 400 }
+      );
+    }
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[API] Missing Supabase environment variables');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
       );
     }
 
@@ -56,11 +67,14 @@ export async function GET(
     }
 
     if (!posts || posts.length === 0) {
+      console.log('[API] No posts found for document set:', { slug, organizationId });
       return NextResponse.json(
         { error: 'Document set not found' },
         { status: 404 }
       );
     }
+
+    console.log('[API] Found posts:', posts.length);
 
     // Get is_numbered from the first post (or the type=doc_set post if it exists)
     const mainPost = posts.find((p: any) => p.display_config?.type === 'doc_set' && p.slug === slug);
@@ -73,9 +87,12 @@ export async function GET(
       if (post.content) {
         try {
           // Parse HTML using jsdom for server-side parsing
+          console.log('[API] Parsing TOC for post:', post.slug);
           const dom = new JSDOM(post.content);
           const doc = dom.window.document;
           const headings = doc.querySelectorAll('h2, h3, h4');
+          
+          console.log('[API] Found headings:', headings.length);
           
           headings.forEach((heading, index) => {
             const level = parseInt(heading.tagName.substring(1));
@@ -86,7 +103,7 @@ export async function GET(
             toc.push({ level, text, id });
           });
         } catch (error) {
-          console.error('Error parsing HTML for TOC:', error);
+          console.error('[API] Error parsing HTML for TOC:', post.slug, error);
         }
       }
 
@@ -103,6 +120,13 @@ export async function GET(
     // Get the set title: use the type=doc_set post's title if found, otherwise fall back
     const setTitle = mainPost?.title || posts[0]?.organization_config?.doc_set_title || slug;
 
+    console.log('[API] Returning document set:', { 
+      set: slug, 
+      title: setTitle, 
+      is_numbered: isNumbered, 
+      articlesCount: postsWithTOC.length 
+    });
+
     return NextResponse.json({
       set: slug,
       title: setTitle,
@@ -110,9 +134,10 @@ export async function GET(
       articles: postsWithTOC
     });
   } catch (error: any) {
-    console.error('Document set detail API error:', error);
+    console.error('[API] Document set detail API error:', error);
+    console.error('[API] Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }

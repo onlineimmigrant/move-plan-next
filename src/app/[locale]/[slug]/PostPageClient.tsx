@@ -470,6 +470,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                     currentSlug={post.slug}
                     docSet={post.doc_set || post.slug}
                     organizationId={post.organization_id}
+                    isDocSetType={post.type === 'doc_set'}
                   />
                 )}
                 
