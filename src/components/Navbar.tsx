@@ -33,6 +33,8 @@ function Navbar() {
   const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const router = useRouter();
   const pathname = usePathname(); // Get the current URL path
   const { session, logout } = useAuth();
@@ -41,6 +43,35 @@ function Navbar() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Detect scroll direction
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          
+          // Only apply glassmorphism when scrolling up and not at the top
+          if (currentScrollY < lastScrollY && currentScrollY > 50) {
+            setIsScrollingUp(true);
+          } else {
+            setIsScrollingUp(false);
+          }
+          
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   // Determine the current stage based on the pathname
   const getCurrentStage = () => {
@@ -122,7 +153,13 @@ function Navbar() {
   const CONNECTED_APP_URL = 'https://app.letspring.com';
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-green-50 to-transparent  border-gray-200 ">
+    <nav 
+      className={`fixed top-0 left-0 right-0 z-50 border-gray-200 transition-all duration-300 ${
+        isScrollingUp 
+          ? 'backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 shadow-md' 
+          : 'bg-gradient-to-b from-green-50 to-transparent'
+      }`}
+    >
       {/* Top bar */}
       <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
         {/* Logo */}

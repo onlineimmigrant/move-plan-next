@@ -57,6 +57,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isScrollingUp, setIsScrollingUp] = useState(false);
   const lastScrollYRef = useRef(0);
   const [isDesktop, setIsDesktop] = useState(true); // Default to true for SSR
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
@@ -155,6 +156,10 @@ const Header: React.FC<HeaderProps> = ({
           
           // Update isScrolled state
           setIsScrolled(currentScrollY > scrollThreshold);
+          
+          // Detect if scrolling up (for glassmorphism effect)
+          const isGoingUp = currentScrollY < lastScrollYRef.current && currentScrollY > 50;
+          setIsScrollingUp(isGoingUp);
           
           // Hide/show header based on scroll direction
           // Always show when at the top (within 100px)
@@ -863,8 +868,11 @@ const Header: React.FC<HeaderProps> = ({
               : ''
           }
           ${
-            // For transparent type: start transparent, become solid on scroll
-            headerType === 'transparent' 
+            // Apply glassmorphism when scrolling up (no borders, no shadows)
+            isScrollingUp
+              ? 'backdrop-blur-xl'
+              // For transparent type: start transparent, become solid on scroll
+              : headerType === 'transparent' 
               ? (isScrolled 
                   ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]'
                   : 'bg-transparent border-b border-transparent'
@@ -884,14 +892,18 @@ const Header: React.FC<HeaderProps> = ({
           // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
           transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(-100%)',
           pointerEvents: 'auto',
-          // For ring_card_mini and mini, don't apply background to outer nav
-          ...((headerType === 'ring_card_mini' || headerType === 'mini') ? { backgroundColor: 'transparent' } : headerBackgroundStyle),
-          backdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && headerType !== 'ring_card_mini' && headerType !== 'mini' && (isScrolled || isDesktop)) 
-            ? 'blur(24px) saturate(200%) brightness(105%)' 
-            : 'none',
-          WebkitBackdropFilter: (headerType === 'transparent' && isScrolled) || (headerType !== 'transparent' && headerType !== 'ring_card_mini' && headerType !== 'mini' && (isScrolled || isDesktop))
-            ? 'blur(24px) saturate(200%) brightness(105%)' 
-            : 'none',
+          // Apply glassmorphism background when scrolling up (70% opacity like breadcrumbs)
+          ...(isScrollingUp 
+            ? { 
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+              }
+            // For ring_card_mini and mini, don't apply background to outer nav
+            : (headerType === 'ring_card_mini' || headerType === 'mini') 
+            ? { backgroundColor: 'transparent' } 
+            : headerBackgroundStyle
+          ),
         }}
       >
       <div

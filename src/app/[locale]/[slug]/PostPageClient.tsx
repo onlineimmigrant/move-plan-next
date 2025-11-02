@@ -371,43 +371,45 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   }
 
   return (
-    <main className="px-4 sm:pt-4 sm:pb-16 bg-white">
+    <main className="px-4 sm:pt-4 sm:pb-16 bg-white w-full max-w-full overflow-x-hidden">
       {!isLandingPost ? (
         // Only render the grid if we have content or need to show the empty message
         (shouldShowMainContent || shouldShowNoContentMessage) ? (
-          <div className="grid lg:grid-cols-8 gap-x-4">
+          <div className="grid lg:grid-cols-8 gap-x-4 w-full max-w-full">
             {/* TOC Sidebar - Show Master TOC for document sets, regular TOC otherwise */}
-            <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
+            <aside className="lg:col-span-2 pb-8 sm:px-4 w-full relative">
               {isMounted && showTOC && (
-                <div className="hidden lg:block mt-16 sticky top-32 pr-4 lg:border-r lg:border-gray-100">
-                  {docSet.showMasterTOC ? (
-                    <MasterTOC
-                      currentSlug={post.slug}
-                      docSet={docSet.docSetSlug}
-                      organizationId={post.organization_id!}
-                      handleScrollTo={handleScrollTo}
-                      currentArticleTOC={toc.map(item => ({
-                        level: parseInt(item.tag_name.substring(1)),
-                        text: item.tag_text,
-                        id: item.tag_id
-                      }))}
-                    />
-                  ) : (
-                    <TOC toc={toc} handleScrollTo={handleScrollTo} />
-                  )}
+                <div className="hidden lg:block pt-16">
+                  <div className="lg:fixed lg:w-[calc((100vw-1280px)/2+256px)] lg:max-w-[256px] top-24 pr-4 lg:border-r lg:border-gray-100 h-[calc(100vh-10rem)] overflow-y-auto">
+                    {docSet.showMasterTOC ? (
+                      <MasterTOC
+                        currentSlug={post.slug}
+                        docSet={docSet.docSetSlug}
+                        organizationId={post.organization_id!}
+                        handleScrollTo={handleScrollTo}
+                        currentArticleTOC={toc.map(item => ({
+                          level: parseInt(item.tag_name.substring(1)),
+                          text: item.tag_text,
+                          id: item.tag_id
+                        }))}
+                      />
+                    ) : (
+                      <TOC toc={toc} handleScrollTo={handleScrollTo} />
+                    )}
+                  </div>
                 </div>
               )}
             </aside>
 
             {/* Main Content */}
-            <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900 bg-white">
+            <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900 bg-white overflow-hidden">
               {shouldShowMainContent ? (
                 <>
                   {showPostHeader && (
                     <div
                       onMouseEnter={() => setIsHeaderHovered(true)}
                       onMouseLeave={() => setIsHeaderHovered(false)}
-                      className="relative"
+                      className="relative px-4 sm:px-6 lg:px-0"
                     >
                       <PostHeader
                         post={post}
@@ -420,13 +422,38 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                   
                   <article
                     ref={contentRef}
-                    className="prose prose-sm sm:prose lg:prose-xl font-light text-gray-600 table-scroll-container"
+                    className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl font-light text-gray-600 table-scroll-container px-4 sm:px-6 lg:px-0 w-full max-w-full overflow-x-hidden break-words"
                     onDoubleClick={makeEditable}
+                    style={{
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word',
+                      maxWidth: '100%',
+                    }}
                   >
                     {post.content_type === 'markdown' ? (
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                        components={{
+                          // Ensure images are responsive
+                          img: ({node, ...props}) => (
+                            <img {...props} className="max-w-full h-auto" style={{maxWidth: '100%', height: 'auto'}} />
+                          ),
+                          // Ensure tables are scrollable on mobile
+                          table: ({node, ...props}) => (
+                            <div className="overflow-x-auto -mx-4 sm:mx-0">
+                              <table {...props} />
+                            </div>
+                          ),
+                          // Ensure code blocks don't overflow
+                          pre: ({node, ...props}) => (
+                            <pre {...props} className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-6" />
+                          ),
+                          // Ensure long words break properly
+                          p: ({node, ...props}) => (
+                            <p {...props} className="break-words" />
+                          ),
+                        }}
                       >
                         {post.content}
                       </ReactMarkdown>

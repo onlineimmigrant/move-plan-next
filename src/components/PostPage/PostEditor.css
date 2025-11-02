@@ -1,3 +1,15 @@
+/* Global mobile overflow prevention */
+@media (max-width: 640px) {
+  body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+
+  main, article, section, div {
+    max-width: 100% !important;
+  }
+}
+
 .table-wrapper {
     overflow-x: auto;
     max-width: 100%;
@@ -201,4 +213,175 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
+  }
+
+  /* Mobile responsive fixes for markdown/prose content */
+  @media (max-width: 640px) {
+    /* Force everything to fit within viewport */
+    .prose, .prose-sm, .prose-base, .prose-lg, .prose-xl {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      width: 100% !important;
+    }
+
+    .prose *,
+    .prose-sm *,
+    .prose-base *,
+    .prose-lg *,
+    .prose-xl * {
+      max-width: 100% !important;
+    }
+
+    .prose img,
+    .prose-sm img,
+    .prose-base img,
+    .prose-lg img,
+    .prose-xl img {
+      max-width: 100% !important;
+      height: auto !important;
+      width: auto !important;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .prose pre,
+    .prose-sm pre,
+    .prose-base pre,
+    .prose-lg pre,
+    .prose-xl pre {
+      overflow-x: auto;
+      max-width: 100% !important;
+      width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      padding-left: 0.75rem !important;
+      padding-right: 0.75rem !important;
+      border-radius: 0.375rem !important;
+      font-size: 0.75rem !important;
+      line-height: 1.5 !important;
+    }
+
+    .prose pre code,
+    .prose-sm pre code,
+    .prose-base pre code,
+    .prose-lg pre code,
+    .prose-xl pre code {
+      font-size: 0.75rem !important;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+    }
+
+    .prose table,
+    .prose-sm table,
+    .prose-base table,
+    .prose-lg table,
+    .prose-xl table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+      max-width: 100% !important;
+      width: 100% !important;
+      font-size: 0.875rem !important;
+    }
+
+    /* Ensure long words break */
+    .prose p,
+    .prose-sm p,
+    .prose-base p,
+    .prose-lg p,
+    .prose-xl p,
+    .prose li,
+    .prose-sm li,
+    .prose-base li,
+    .prose-lg li,
+    .prose-xl li,
+    .prose h1,
+    .prose-sm h1,
+    .prose-base h1,
+    .prose-lg h1,
+    .prose-xl h1,
+    .prose h2,
+    .prose-sm h2,
+    .prose-base h2,
+    .prose-lg h2,
+    .prose-xl h2,
+    .prose h3,
+    .prose-sm h3,
+    .prose-base h3,
+    .prose-lg h3,
+    .prose-xl h3 {
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      word-break: break-word !important;
+      hyphens: auto !important;
+      max-width: 100% !important;
+    }
+
+    /* Prevent code blocks from overflowing */
+    .prose code,
+    .prose-sm code,
+    .prose-base code,
+    .prose-lg code,
+    .prose-xl code {
+      word-break: break-all !important;
+      white-space: pre-wrap !important;
+      max-width: 100% !important;
+    }
+
+    /* Handle blockquotes */
+    .prose blockquote,
+    .prose-sm blockquote,
+    .prose-base blockquote,
+    .prose-lg blockquote,
+    .prose-xl blockquote {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      padding-left: 1rem !important;
+      padding-right: 0.5rem !important;
+      max-width: 100% !important;
+    }
+
+    /* Handle lists */
+    .prose ul,
+    .prose-sm ul,
+    .prose-base ul,
+    .prose-lg ul,
+    .prose-xl ul,
+    .prose ol,
+    .prose-sm ol,
+    .prose-base ol,
+    .prose-lg ol,
+    .prose-xl ol {
+      padding-left: 1.25rem !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      max-width: 100% !important;
+    }
+
+    /* Handle any divs inside prose */
+    .prose div,
+    .prose-sm div,
+    .prose-base div,
+    .prose-lg div,
+    .prose-xl div {
+      max-width: 100% !important;
+      overflow-x: auto !important;
+    }
+
+    /* Handle iframes and embeds */
+    .prose iframe,
+    .prose-sm iframe,
+    .prose-base iframe,
+    .prose-lg iframe,
+    .prose-xl iframe,
+    .prose video,
+    .prose-sm video,
+    .prose-base video,
+    .prose-lg video,
+    .prose-xl video {
+      max-width: 100% !important;
+      width: 100% !important;
+      height: auto !important;
+    }
   }

@@ -33,10 +33,26 @@ const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) =>
   // Render Markdown if content_type is 'markdown'
   if (post.content_type === 'markdown') {
     return (
-      <div className="w-full max-w-none prose prose-lg prose-gray dark:prose-invert">
+      <div className="w-full max-w-none prose prose-sm sm:prose-base lg:prose-lg prose-gray dark:prose-invert px-4 sm:px-0 overflow-hidden">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw, rehypeSanitize]}
+          components={{
+            // Ensure images are responsive
+            img: ({node, ...props}) => (
+              <img {...props} className="max-w-full h-auto" />
+            ),
+            // Ensure tables are scrollable on mobile
+            table: ({node, ...props}) => (
+              <div className="overflow-x-auto">
+                <table {...props} />
+              </div>
+            ),
+            // Ensure code blocks don't overflow
+            pre: ({node, ...props}) => (
+              <pre {...props} className="overflow-x-auto" />
+            ),
+          }}
         >
           {post.content}
         </ReactMarkdown>
@@ -47,7 +63,7 @@ const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) =>
   // Default: Render as HTML
   return (
     <div 
-      className="w-full max-w-none prose prose-lg prose-gray dark:prose-invert"
+      className="w-full max-w-none prose prose-sm sm:prose-base lg:prose-lg prose-gray dark:prose-invert px-4 sm:px-0 overflow-hidden"
       dangerouslySetInnerHTML={{ __html: processedContent }}
     />
   );

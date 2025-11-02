@@ -7,7 +7,9 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { debug } from '@/utils/debug';
 
 // Global cache for document sets to avoid re-fetching
-const documentSetCache = new Map<string, DocumentSet>();
+// Cache for storing document set data with version
+const CACHE_VERSION = 5;
+const documentSetCache = new Map<string, { version: number; data: DocumentSet }>();
 
 interface TOCItem {
   level: number;
@@ -178,7 +180,7 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
 }) => {
   const [setData, setSetData] = useState<DocumentSet | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [expandedArticles, setExpandedArticles] = useState<Set<string>>(new Set());
+  const [expandedArticles, setExpandedArticles] = useState<Set<string>>(() => new Set([currentSlug]));
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const themeColors = useThemeColors();
@@ -189,10 +191,14 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
     debug.log('MasterTOC', 'Component mounted with props:', { currentSlug, docSet, organizationId });
   }, []);
 
-  // Auto-expand current article and set active heading on mount
+  // Auto-expand current article and set active heading when currentSlug changes
   useEffect(() => {
-    // Always expand current article to show its H2 headings
-    setExpandedArticles(new Set([currentSlug]));
+    // Always ensure current article is expanded when navigating
+    setExpandedArticles(prev => {
+      const next = new Set(prev);
+      next.add(currentSlug);
+      return next;
+    });
     
     // Check for hash and set active heading
     if (typeof window !== 'undefined') {
@@ -203,13 +209,81 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
     }
   }, [currentSlug]);
 
+  // Scroll spy: Track which heading is currently in view
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleScroll = () => {
+      // Get all heading elements in the article
+      const headings = document.querySelectorAll('h2[id], h3[id], h4[id]');
+      
+      if (headings.length === 0) return;
+
+      // Find the heading that's currently most visible
+      // We'll use the heading that's closest to the top of the viewport (but still visible)
+      let currentHeading: Element | null = null;
+      let closestDistance = Infinity;
+
+      headings.forEach((heading) => {
+        const rect = heading.getBoundingClientRect();
+        // Consider headings that are in the top 40% of the viewport
+        const distanceFromTop = Math.abs(rect.top - 100); // 100px offset from top
+        
+        if (rect.top >= -50 && rect.top <= window.innerHeight * 0.4) {
+          if (distanceFromTop < closestDistance) {
+            closestDistance = distanceFromTop;
+            currentHeading = heading;
+          }
+        }
+      });
+
+      // If no heading in the upper part, use the last heading that's above the viewport
+      if (!currentHeading) {
+        const headingsArray = Array.from(headings);
+        for (let i = headingsArray.length - 1; i >= 0; i--) {
+          const rect = headingsArray[i].getBoundingClientRect();
+          if (rect.top < 100) {
+            currentHeading = headingsArray[i];
+            break;
+          }
+        }
+      }
+
+      if (currentHeading && currentHeading.id) {
+        setActiveHeadingId(currentHeading.id);
+      }
+    };
+
+    // Add scroll listener with throttling
+    let ticking = false;
+    const scrollListener = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    // Initial check
+    handleScroll();
+
+    // Add listener
+    window.addEventListener('scroll', scrollListener, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', scrollListener);
+    };
+  }, [currentSlug, currentArticleTOC]);
+
   useEffect(() => {
     const cacheKey = `${docSet}-${organizationId}`;
     
     // Check cache first
-    const cachedData = documentSetCache.get(cacheKey);
-    if (cachedData) {
-      setSetData(cachedData);
+    const cachedEntry = documentSetCache.get(cacheKey);
+    if (cachedEntry && cachedEntry.version === CACHE_VERSION) {
+      setSetData(cachedEntry.data);
       setIsLoading(false);
       return;
     }
@@ -234,8 +308,8 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
         if (response.ok) {
           const data = await response.json();
           debug.log('MasterTOC', 'Successfully fetched document set:', data);
-          // Store in cache
-          documentSetCache.set(cacheKey, data);
+          // Store in cache with version
+          documentSetCache.set(cacheKey, { version: CACHE_VERSION, data });
           setSetData(data);
         } else {
           debug.error('MasterTOC', 'Failed to fetch document set:', response.status, response.statusText);
@@ -357,28 +431,24 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
           const articleTOC = isCurrentArticle && currentArticleTOC ? currentArticleTOC : article.toc;
           
           // Build hierarchical TOC structure for this article
-          const hierarchicalTOC = buildTOCHierarchy(articleTOC);
+          const hierarchicalTOC = buildTOCHierarchy(articleTOC || []);
 
           return (
             <div key={article.id} className="space-y-1">
               {/* Article Title */}
               <div className="flex items-start gap-2 group">
-                {/* Expand/Collapse Button */}
-                {hierarchicalTOC.length > 0 && (
-                  <button
-                    onClick={() => toggleArticle(article.slug)}
-                    className="flex-shrink-0 mt-1 p-0.5 hover:bg-gray-100 rounded transition-colors"
-                  >
-                    <ChevronRightIcon 
-                      className={`w-3.5 h-3.5 text-gray-400 transition-transform ${
-                        isExpanded ? 'rotate-90' : ''
-                      }`}
-                    />
-                  </button>
-                )}
-                {hierarchicalTOC.length === 0 && (
-                  <div className="w-4 flex-shrink-0"></div>
-                )}
+                {/* Expand/Collapse Button - Always show for all articles */}
+                <button
+                  onClick={() => toggleArticle(article.slug)}
+                  className="flex-shrink-0 mt-1 p-0.5 hover:bg-gray-100 rounded transition-colors"
+                  title="Toggle table of contents"
+                >
+                  <ChevronRightIcon 
+                    className={`w-3.5 h-3.5 text-gray-400 transition-transform ${
+                      isExpanded ? 'rotate-90' : ''
+                    }`}
+                  />
+                </button>
 
                 {/* Article Number Badge - Only show if is_numbered is true */}
                 {setData.is_numbered && (
@@ -427,7 +497,7 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
                 </Link>
               </div>
 
-              {/* Article Sub-TOC (only when expanded) - hierarchical with collapsible children */}
+              {/* Article Sub-TOC (when expanded) */}
               {isExpanded && hierarchicalTOC.length > 0 && (
                 <div className={`ml-8 space-y-0.5 animate-in slide-in-from-top-1 duration-200 ${
                   isCurrentArticle ? 'pb-2' : ''

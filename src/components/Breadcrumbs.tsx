@@ -232,34 +232,37 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
 
   return (
     <div className=''>
-      <nav className=" bg-white sm:bg-white w-full fixed bottom-0 text-xs mt-12  mb-0 p-2  px-4 z-51" aria-label="Breadcrumb">
-        <ol className="flex flex-wrap justify-start gap-2 items-center font-semibold">
+      <nav 
+        className="backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 w-full sm:fixed sm:bottom-0 relative sm:mt-0 mt-8 mb-4 sm:mb-0 py-3 px-4 sm:px-6 sm:z-51" 
+        aria-label="Breadcrumb"
+      >
+        <ol className="flex flex-wrap justify-start gap-1.5 items-center text-sm max-w-7xl mx-auto">
           {breadcrumbs.map((crumb, index) => (
             <li key={index} className="flex items-center">
               {crumb.label === 'Home' ? (
                 <a
                   href={crumb.url}
-                  className=" text-gray-400 hover:text-gray-600"
+                  className="text-gray-500 hover:text-blue-600 transition-colors duration-200 p-1.5 hover:bg-blue-500/10 rounded-lg backdrop-blur-sm"
                   title="Navigate to Main Page"
                 >
-                  <RiHomeFill />
+                  <RiHomeFill className="w-4 h-4" />
                 </a>
               ) : (
                 <>
                   <a
                     href={crumb.url}
-                    className={`sm:mx-2 pr-2  ${
+                    className={`px-3 py-1.5 rounded-lg transition-all duration-200 backdrop-blur-sm ${
                       index === breadcrumbs.length - 1
-                        ? 'text-gray-300'
-                        : `text-gray-600 hover:text-gray-400`
+                        ? 'text-gray-800 dark:text-white font-semibold bg-white/60 dark:bg-gray-800/60 cursor-default'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 font-medium'
                     }`}
                   >
                     {crumb.label && ( // Check if the label exists
-                      crumb.label.length > 20 ? `${crumb.label.substring(0, 20)}...` : crumb.label
+                      crumb.label.length > 25 ? `${crumb.label.substring(0, 25)}...` : crumb.label
                     )}
                   </a>
                   {index < breadcrumbs.length - 1 && (
-                    <IoIosArrowForward className="text-gray-400" />
+                    <IoIosArrowForward className="text-gray-400 dark:text-gray-500 mx-1 flex-shrink-0" />
                   )}
                 </>
               )}
