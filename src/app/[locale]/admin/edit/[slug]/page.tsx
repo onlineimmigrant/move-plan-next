@@ -10,10 +10,13 @@ import { ArrowLeftIcon, DocumentCheckIcon, ClockIcon } from '@heroicons/react/24
 const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {
   const router = useRouter();
   const { slug } = React.use(params);
+  
   const [title, setTitle] = useState('');
   const [slugState, setSlugState] = useState(slug);
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
+  const [contentType, setContentType] = useState<'html' | 'markdown'>('html');
+  const [contentLoaded, setContentLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
@@ -22,7 +25,7 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Auto-save functionality
+  // Auto-save functionality (only for metadata, not content)
   const autoSave = useCallback(async () => {
     if (!hasUnsavedChanges) return;
     
@@ -35,7 +38,8 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
           title,
           slug: slugState,
           description,
-          content,
+          // Don't auto-save content - only save on manual save
+          // This prevents issues with stale state and race conditions
         }),
       });
 
@@ -49,7 +53,7 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
     } finally {
       setAutoSaving(false);
     }
-  }, [title, slugState, description, content, hasUnsavedChanges, slug]);
+  }, [title, slugState, description, hasUnsavedChanges, slug]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -74,7 +78,9 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
           setTitle(post.title);
           setSlugState(post.slug);
           setDescription(post.description || '');
-          setContent(post.content);
+          setContent(post.content || '');
+          setContentType(post.content_type || 'html');
+          setContentLoaded(true);
           setHasUnsavedChanges(false);
         } else {
           setError('Failed to fetch post');
@@ -88,29 +94,50 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
     fetchPost();
   }, [slug]);
 
-  const handleSave = async (newContent?: string) => {
+  const handleSave = async (newContent?: string, newContentType?: 'html' | 'markdown') => {
     setSaving(true);
     setError(null);
+    
+    const contentToSave = newContent || content;
+    const contentTypeToSave = newContentType || contentType;
+    
+    console.log('🔄 handleSave called:', {
+      newContent: newContent ? 'provided' : 'using state',
+      newContentType: newContentType || 'using state',
+      contentState: content.substring(0, 50),
+      contentTypeState: contentType,
+      contentToSave: contentToSave.substring(0, 50),
+      contentTypeToSave
+    });
     
     const postData = {
       title,
       slug: slugState,
       description,
-      content: newContent || content,
+      content: contentToSave,
+      content_type: contentTypeToSave,
     };
 
     try {
-      const response = await fetch(`/api/posts/${slug}`, {
-        method: 'PATCH',
+      const url = `/api/posts/${slug}`;
+      
+      const response = await fetch(url, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postData),
       });
 
       if (response.ok) {
+        const responseData = await response.json();
         setHasUnsavedChanges(false);
         setLastSaved(new Date());
         setSuccess('Post saved successfully!');
         setTimeout(() => setSuccess(null), 3000);
+        // Update local state with saved content
+        setContent(contentToSave);
+        if (newContentType) {
+          setContentType(newContentType);
+        }
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to update post');
@@ -224,7 +251,7 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
                 variant="outline"
                 size="sm"
               >
-                {saving ? 'Saving...' : 'Save Draft'}
+                {saving ? 'Updating...' : 'Update'}
               </Button>
               <Button
                 onClick={handlePublish}
@@ -295,14 +322,27 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
 
           {/* Post Editor */}
           <div className="p-0">
-            <PostEditor 
-              onSave={handleSave} 
-              initialContent={content} 
-              onContentChange={(newContent) => {
-                setContent(newContent);
-                setHasUnsavedChanges(true);
-              }}
-            />
+            {!contentLoaded ? (
+              <div className="flex items-center justify-center p-8">
+                <div className="text-gray-500">Loading post...</div>
+              </div>
+            ) : (
+              <PostEditor
+                key={`${slug}-${contentType}`}
+                onSave={(newContent, newContentType) => {
+                  handleSave(newContent, newContentType);
+                }}
+                initialContent={content}
+                initialContentType={contentType}
+                onContentChange={(newContent, newContentType) => {
+                  setContent(newContent);
+                  setContentType(newContentType);
+                }}
+                onEditorChange={() => {
+                  setHasUnsavedChanges(true);
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

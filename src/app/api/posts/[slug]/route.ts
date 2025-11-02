@@ -130,7 +130,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     try {
       const { data: postData, error: postError } = await supabase
         .from('blog_post')
-        .select('*')
+        .select('*, content, content_type') // Explicitly include content fields
         .eq('slug', slug)
         .or(`organization_id.eq.${fallbackOrgId},organization_id.is.null`)
         .single();
@@ -154,6 +154,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
       }
 
       console.log('Fetched post:', postData);
+      console.log('🔍 Content field check:', {
+        hasContent: !!postData.content,
+        contentLength: postData.content?.length || 0,
+        contentType: postData.content_type,
+        contentPreview: postData.content?.substring(0, 100)
+      });
       return NextResponse.json(flattenBlogPost(postData), {
         status: 200,
         headers: { 
@@ -175,7 +181,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     console.log('Fetching post from Supabase for slug:', slug, 'organization_id:', organizationId);
     const { data: postData, error: postError } = await supabase
       .from('blog_post')
-      .select('*')
+      .select('*, content, content_type') // Explicitly include content fields
       .eq('slug', slug)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)
       .single();
@@ -199,7 +205,21 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     }
 
     console.log('Fetched post:', postData);
-    return NextResponse.json(flattenBlogPost(postData), {
+    console.log('🔍 Content field check:', {
+      hasContent: !!postData.content,
+      contentLength: postData.content?.length || 0,
+      contentType: postData.content_type,
+      contentPreview: postData.content?.substring(0, 100)
+    });
+    
+    const flattenedPost = flattenBlogPost(postData);
+    console.log('🔍 After flattening:', {
+      hasContent: !!flattenedPost.content,
+      contentLength: flattenedPost.content?.length || 0,
+      contentType: flattenedPost.content_type
+    });
+    
+    return NextResponse.json(flattenedPost, {
       status: 200,
       headers: { 
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -232,6 +252,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
       title,
       slug: newSlug,
       content,
+      content_type,
       description,
       faq_section_is_title,
       display_config,
@@ -297,7 +318,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
     if (title !== undefined) updateData.title = title;
     if (newSlug !== undefined) updateData.slug = newSlug;
     if (description !== undefined) updateData.description = description;
-    if (content !== undefined) updateData.content = content;
+    if (content !== undefined) {
+      updateData.content = content;
+    }
+    if (content_type !== undefined) {
+      updateData.content_type = content_type;
+    }
     if (faq_section_is_title !== undefined) updateData.faq_section_is_title = faq_section_is_title;
     
     // Update JSONB fields (merge with existing values)
@@ -374,4 +400,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
       { status: 500 }
     );
   }
+}
+
+// PUT handler (alias for PATCH for backward compatibility)
+export async function PUT(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  return PATCH(request, context);
 }

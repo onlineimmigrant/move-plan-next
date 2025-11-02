@@ -71,6 +71,7 @@ export default function PostEditModal() {
   const router = useRouter();
   const themeColors = useThemeColors();
   const [content, setContent] = useState('');
+  const [contentType, setContentType] = useState<'html' | 'markdown'>('html');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [section, setSection] = useState('');
@@ -203,6 +204,7 @@ export default function PostEditModal() {
         // Only update content on initial load, not when editingPost updates after save
         if (initialLoadRef.current) {
           setContent(post.content || '');
+          setContentType(post.content_type || 'html');
           initialLoadRef.current = false;
         }
         
@@ -442,6 +444,7 @@ export default function PostEditModal() {
         title: title.trim(),
         description: description.trim(),
         content: finalContent,
+        content_type: contentType,
         // JSONB fields
         display_config: {
           display_this_post: displayThisPost,
@@ -732,9 +735,15 @@ export default function PostEditModal() {
 
                 {/* Editor */}
                 <PostEditor
-                  key={`${mode}-${editingPost?.id || 'new'}-${isOpen}`}
+                  key={`${mode}-${editingPost?.id || 'new'}-${isOpen}-${contentType}`}
                   initialContent={content}
-                  onContentChange={handleContentChange}
+                  initialContentType={contentType}
+                  onContentChange={(newContent, newContentType) => {
+                    handleContentChange(newContent);
+                    if (newContentType) {
+                      setContentType(newContentType);
+                    }
+                  }}
                   onSave={handleSaveWithContent}
                   onCodeViewChange={setIsCodeView}
                   postType={postType}

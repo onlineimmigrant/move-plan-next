@@ -2,6 +2,11 @@
 
 import React, { useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import { renderToStaticMarkup } from 'react-dom/server';
 import PostHeader from '@/components/PostPage/PostHeader';
 import AdminButtons from '@/components/PostPage/AdminButtons';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
@@ -28,6 +33,7 @@ interface Post {
   title: string;
   description: string;
   content: string;
+  content_type?: 'html' | 'markdown';
   section?: string;
   subsection?: string;
   created_on: string;
@@ -185,7 +191,31 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   }, []);
 
   // Generate TOC using utility function
-  const toc: TOCItem[] = useMemo(() => generateTOC(post?.content), [post?.content]);
+  const toc: TOCItem[] = useMemo(() => {
+    if (!post?.content) return [];
+    
+    // If content is Markdown, convert to HTML first for TOC generation
+    if (post.content_type === 'markdown') {
+      try {
+        // Render Markdown to HTML string for TOC parsing
+        const htmlContent = renderToStaticMarkup(
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw, rehypeSanitize]}
+          >
+            {post.content}
+          </ReactMarkdown>
+        );
+        return generateTOC(htmlContent);
+      } catch (error) {
+        console.error('Error converting Markdown to HTML for TOC:', error);
+        return [];
+      }
+    }
+    
+    // For HTML content, use directly
+    return generateTOC(post.content);
+  }, [post?.content, post?.content_type]);
 
   // Apply IDs to rendered headings to match TOC
   useEffect(() => {
@@ -392,8 +422,18 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                     ref={contentRef}
                     className="prose prose-sm sm:prose lg:prose-xl font-light text-gray-600 table-scroll-container"
                     onDoubleClick={makeEditable}
-                    dangerouslySetInnerHTML={{ __html: post.content }}
-                  />
+                  >
+                    {post.content_type === 'markdown' ? (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                      >
+                        {post.content}
+                      </ReactMarkdown>
+                    ) : (
+                      <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                    )}
+                  </article>
                 
                 {/* Code block copy functionality */}
                 <CodeBlockCopy />

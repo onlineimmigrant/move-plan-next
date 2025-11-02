@@ -1,10 +1,15 @@
 'use client';
 
 import React, { memo, useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 
 interface LandingPostContentProps {
   post: {
     content: string;
+    content_type?: 'html' | 'markdown';
     [key: string]: any;
   };
 }
@@ -25,6 +30,21 @@ const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) =>
     );
   }
 
+  // Render Markdown if content_type is 'markdown'
+  if (post.content_type === 'markdown') {
+    return (
+      <div className="w-full max-w-none prose prose-lg prose-gray dark:prose-invert">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {post.content}
+        </ReactMarkdown>
+      </div>
+    );
+  }
+
+  // Default: Render as HTML
   return (
     <div 
       className="w-full max-w-none prose prose-lg prose-gray dark:prose-invert"

@@ -12,6 +12,7 @@ interface Post {
   title: string;
   description: string;
   content: string;
+  content_type?: 'html' | 'markdown';
   section?: string;
   subsection?: string;
   created_on: string;

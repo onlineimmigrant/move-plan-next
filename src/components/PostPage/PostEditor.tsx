@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -23,6 +23,8 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import Button from '@/ui/Button';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import LinkModal from '@/components/PostPage/LinkModal';
+import MarkdownEditor from '@/components/PostPage/MarkdownEditor';
+import { htmlToMarkdown, markdownToHtml, cleanHtml, unescapeMarkdown } from '@/components/PostPage/converters';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { Node as ProseMirrorNode } from 'prosemirror-model';
@@ -480,10 +482,12 @@ const formatHTML = (html: string, indentType: 'spaces' | 'tabs' = 'spaces', inde
 
 // Define props interface explicitly
 interface PostEditorProps {
-  onSave: (content: string) => void;
+  onSave: (content: string, contentType?: 'html' | 'markdown') => void;
   initialContent?: string;
-  onContentChange?: (content: string) => void;
+  initialContentType?: 'html' | 'markdown';
+  onContentChange?: (content: string, contentType: 'html' | 'markdown') => void; // Changed to include contentType
   onCodeViewChange?: (isCodeView: boolean) => void;
+  onEditorChange?: () => void; // Callback when editor content changes (for marking unsaved changes)
   postType?: 'default' | 'minimal' | 'landing' | 'doc_set';
   initialCodeView?: boolean;
 }
@@ -859,17 +863,32 @@ function startRowResize(e: MouseEvent | TouchEvent, table: HTMLElement, rowIndex
   document.addEventListener('touchend', onEnd);
 }
 
+// Editor mode types
+type EditorMode = 'visual' | 'html' | 'markdown';
+
+// Helper function to get display name for editor mode
+const getEditorModeLabel = (mode: EditorMode): string => {
+  switch (mode) {
+    case 'markdown': return 'Markdown';
+    case 'html': return 'HTML';
+    case 'visual': return 'Visual';
+  }
+};
+
 const PostEditor: React.FC<PostEditorProps> = ({ 
   onSave, 
-  initialContent, 
+  initialContent,
+  initialContentType,
   onContentChange, 
-  onCodeViewChange, 
+  onCodeViewChange,
+  onEditorChange,
   postType = 'default',
   initialCodeView 
 }) => {
   const themeColors = useThemeColors();
   
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         blockquote: false,
@@ -992,8 +1011,9 @@ const PostEditor: React.FC<PostEditorProps> = ({
     ],
     content: initialContent || '<p>Start writing your post here...</p>',
     onUpdate: ({ editor }) => {
+      // Notify parent immediately with current editor HTML
       if (onContentChange) {
-        onContentChange(editor.getHTML());
+        onContentChange(editor.getHTML(), 'html');
       }
     },
     editorProps: {
@@ -1033,15 +1053,43 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
   const [showTableSubmenu, setShowTableSubmenu] = useState(false);
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
-  const [isCodeView, setIsCodeView] = useState(
-    initialCodeView !== undefined ? initialCodeView : postType === 'landing'
-  );
+  
+  // Editor mode state - Initialize based on initialContentType
+  const getInitialEditorMode = (): EditorMode => {
+    if (initialContentType === 'markdown') {
+      return 'markdown';
+    }
+    if (initialCodeView !== undefined) {
+      return initialCodeView ? 'html' : 'visual';
+    }
+    return postType === 'landing' ? 'html' : 'visual';
+  };
+  
+  const [editorMode, setEditorMode] = useState<EditorMode>(getInitialEditorMode());
+  
+  // Update editor mode when initialContentType changes (e.g., when post data loads)
+  const hasSetInitialMode = useRef(false);
+  useEffect(() => {
+    if (initialContentType && !hasSetInitialMode.current) {
+      hasSetInitialMode.current = true;
+      if (initialContentType === 'markdown') {
+        setEditorMode('markdown');
+      }
+    }
+  }, [initialContentType]);
+  
+  // Keep isCodeView for backward compatibility
+  const isCodeView = editorMode === 'html';
+  
   const [htmlContent, setHtmlContent] = useState('');
+  const [markdownContent, setMarkdownContent] = useState('');
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [currentLinkUrl, setCurrentLinkUrl] = useState('');
   const [htmlEditorBgColor, setHtmlEditorBgColor] = useState<'dark' | 'light'>('dark');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showContentTypeModal, setShowContentTypeModal] = useState(false);
+  const [pendingContentType, setPendingContentType] = useState<'html' | 'markdown' | null>(null);
   const [htmlValidationErrors, setHtmlValidationErrors] = useState<string[]>([]);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   
@@ -1080,6 +1128,28 @@ const PostEditor: React.FC<PostEditorProps> = ({
     }
     return 'lf';
   });
+  
+  // Helper function to notify parent with current content and correct content_type
+  const notifyContentChange = useCallback(() => {
+    if (!onContentChange) return;
+    
+    let currentContent: string;
+    let currentContentType: 'html' | 'markdown';
+    
+    if (editorMode === 'markdown') {
+      currentContent = markdownContent;
+      currentContentType = 'markdown';
+    } else if (editorMode === 'html') {
+      currentContent = htmlContent;
+      currentContentType = 'html';
+    } else {
+      // Visual mode - get HTML from editor
+      currentContent = editor?.getHTML() || '';
+      currentContentType = 'html';
+    }
+    
+    onContentChange(currentContent, currentContentType);
+  }, [editorMode, markdownContent, htmlContent, editor, onContentChange]);
   
   // Save beautify settings to localStorage whenever they change
   useEffect(() => {
@@ -1214,7 +1284,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
     
     setHtmlContent(newContent);
     if (onContentChange) {
-      onContentChange(newContent);
+      onContentChange(newContent, 'html');
     }
     
     // Move to next match
@@ -1245,7 +1315,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
     
     setHtmlContent(newContent);
     if (onContentChange) {
-      onContentChange(newContent);
+      onContentChange(newContent, 'html');
     }
     
     setTotalMatches(0);
@@ -1280,9 +1350,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
     if (htmlHistoryIndex > 0) {
       const newIndex = htmlHistoryIndex - 1;
       setHtmlHistoryIndex(newIndex);
-      setHtmlContent(htmlHistory[newIndex]);
+      const newContent = htmlHistory[newIndex];
+      setHtmlContent(newContent);
       if (onContentChange) {
-        onContentChange(htmlHistory[newIndex]);
+        onContentChange(newContent, 'html');
       }
     }
   };
@@ -1292,9 +1363,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
     if (htmlHistoryIndex < htmlHistory.length - 1) {
       const newIndex = htmlHistoryIndex + 1;
       setHtmlHistoryIndex(newIndex);
-      setHtmlContent(htmlHistory[newIndex]);
+      const newContent = htmlHistory[newIndex];
+      setHtmlContent(newContent);
       if (onContentChange) {
-        onContentChange(htmlHistory[newIndex]);
+        onContentChange(newContent, 'html');
       }
     }
   };
@@ -1652,7 +1724,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
     setHtmlContent(newContent);
     if (onContentChange) {
-      onContentChange(newContent);
+      onContentChange(newContent, 'html');
     }
 
     // Restore cursor position
@@ -1696,7 +1768,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
       
       setHtmlContent(newContent);
       if (onContentChange) {
-        onContentChange(newContent);
+        onContentChange(newContent, 'html');
       }
       
       // Position cursor in the center (after "<!-- ")
@@ -1731,7 +1803,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
           
           setHtmlContent(newContent);
           if (onContentChange) {
-            onContentChange(newContent);
+            onContentChange(newContent, 'html');
           }
           
           // Position cursor right after the >
@@ -1834,6 +1906,29 @@ const PostEditor: React.FC<PostEditorProps> = ({
       }
     }
   }, [editor, initialContent]);
+
+  // Initialize content based on content type (only on mount or when initialContent actually changes)
+  const initialContentRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (initialContent && initialContentType && initialContent !== initialContentRef.current) {
+      initialContentRef.current = initialContent;
+      
+      if (initialContentType === 'markdown') {
+        const cleanedMarkdown = unescapeMarkdown(initialContent);
+        setMarkdownContent(cleanedMarkdown);
+        
+        if (editor && editorMode === 'visual') {
+          const htmlFromMarkdown = markdownToHtml(cleanedMarkdown);
+          editor.commands.setContent(htmlFromMarkdown);
+        }
+      } else {
+        setHtmlContent(initialContent);
+        if (editor && editorMode === 'visual') {
+          editor.commands.setContent(initialContent);
+        }
+      }
+    }
+  }, [initialContent, initialContentType, editor, editorMode]);
 
   // Touch scrolling handler for edit mode
   useEffect(() => {
@@ -2123,17 +2218,29 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
   const handleImageSelect = (url: string) => {
     if (url) {
-      // Insert image with default settings
-      editor.chain().focus().insertContent({
-        type: 'image',
-        attrs: {
-          src: url,
-          align: 'left',
-          width: '400px',
-          height: 'auto',
-          alt: '',
-        },
-      }).run();
+      if (editorMode === 'markdown') {
+        // Insert Markdown image syntax
+        const filename = url.split('/').pop() || 'image';
+        const altText = filename.split('.')[0] || 'image';
+        const markdownImage = `![${altText}](${url})`;
+        const newContent = markdownContent + '\n' + markdownImage + '\n';
+        setMarkdownContent(newContent);
+        if (onContentChange) {
+          onContentChange(newContent, 'markdown');
+        }
+      } else {
+        // Insert image with default settings for visual editor
+        editor.chain().focus().insertContent({
+          type: 'image',
+          attrs: {
+            src: url,
+            align: 'left',
+            width: '400px',
+            height: 'auto',
+            alt: '',
+          },
+        }).run();
+      }
       
       console.log('Image inserted:', url);
     }
@@ -2228,62 +2335,144 @@ const PostEditor: React.FC<PostEditorProps> = ({
     editor.chain().focus().toggleHighlight().run();
   };
 
-  const toggleCodeView = () => {
+  const switchEditorMode = (targetMode: EditorMode) => {
     // Prevent switching to visual editor for landing pages
-    if (postType === 'landing' && isCodeView) {
-      // Show alert/notification that visual editor is disabled for landing pages
+    if (postType === 'landing' && targetMode === 'visual') {
       alert('Visual Editor is disabled for Landing Page type.\n\nReason: Landing pages often contain complex HTML structures that may not be fully preserved in visual mode.\n\nTo enable Visual Editor:\n1. Change post type to "Default" or "Minimal"\n2. Be aware that some custom HTML/CSS may be simplified or removed');
       return;
     }
     
-    const newCodeViewState = !isCodeView;
+    if (targetMode === editorMode) return; // Already in this mode
     
-    if (isCodeView) {
-      // Switching from code to visual
+    const currentMode = editorMode;
+    
+    // Handle content conversion when switching modes
+    if (targetMode === 'visual') {
+      // Switching to visual mode
       try {
-        // WARNING: TipTap will strip HTML comments and some formatting
-        // Use the current htmlContent (which may be user-formatted)
-        editor.commands.setContent(htmlContent);
-        if (onContentChange) {
-          onContentChange(htmlContent);
+        if (currentMode === 'html') {
+          // HTML → Visual: Load HTML into TipTap
+          editor.commands.setContent(htmlContent);
+          if (onContentChange) {
+            onContentChange(htmlContent, 'html');
+          }
+        } else if (currentMode === 'markdown') {
+          // Markdown → Visual: Convert markdown to HTML first
+          // This is CRITICAL - TipTap needs HTML, not raw markdown
+          const htmlFromMarkdown = markdownToHtml(markdownContent);
+          editor.commands.setContent(htmlFromMarkdown);
         }
       } catch (error) {
-        console.error('Error parsing HTML:', error);
-        // Could show an error message to user here
+        console.error('Error switching to visual mode:', error);
       }
-    } else {
-      // Switching from visual to code
-      // Get HTML from editor
-      const editorHtml = editor.getHTML();
-      
-      // ALWAYS preserve existing htmlContent when switching back from visual
-      // Only update if htmlContent is empty (first time)
-      if (!htmlContent || htmlContent.trim() === '') {
-        // No existing content, format the HTML from visual editor
-        const htmlToSet = formatHTML(editorHtml, indentType, indentSize, lineEnding);
-        setHtmlContent(htmlToSet);
-      } else {
-        // Content exists - keep the original htmlContent to preserve:
-        // - HTML comments
-        // - Manual formatting
-        // - Custom spacing
-        // Don't overwrite with visual editor's output
-        // (Visual editor strips comments and reformats)
+    } else if (targetMode === 'html') {
+      // Switching to HTML mode
+      if (currentMode === 'visual') {
+        // Visual → HTML: Get HTML from TipTap
+        const editorHtml = editor.getHTML();
+        if (!htmlContent || htmlContent.trim() === '') {
+          const htmlToSet = formatHTML(editorHtml, indentType, indentSize, lineEnding);
+          setHtmlContent(htmlToSet);
+        }
+        // Else preserve existing htmlContent
+      } else if (currentMode === 'markdown') {
+        // Markdown → HTML: Keep markdown as-is for editing
+        // Don't convert - user can edit the raw markdown in HTML mode
+        setHtmlContent(markdownContent);
+      }
+    } else if (targetMode === 'markdown') {
+      // Switching to Markdown mode
+      if (currentMode === 'visual') {
+        // Visual → Markdown: Convert HTML to Markdown
+        const editorHtml = cleanHtml(editor.getHTML());
+        const markdown = htmlToMarkdown(editorHtml); // Already includes unescapeMarkdown
+        setMarkdownContent(markdown);
+      } else if (currentMode === 'html') {
+        // HTML → Markdown: Only convert if it looks like HTML
+        // Check if content starts with HTML tags
+        const trimmedContent = htmlContent.trim();
+        const looksLikeHtml = trimmedContent.startsWith('<') && trimmedContent.includes('>');
+        
+        if (looksLikeHtml) {
+          // Convert HTML to Markdown
+          const markdown = htmlToMarkdown(htmlContent); // Already includes unescapeMarkdown
+          setMarkdownContent(markdown);
+        } else {
+          // Already markdown or plain text - don't convert, but clean escapes
+          const cleaned = unescapeMarkdown(htmlContent);
+          setMarkdownContent(cleaned);
+        }
       }
     }
-    setIsCodeView(newCodeViewState);
     
-    // Notify parent component about code view state change
+    setEditorMode(targetMode);
+    
+    // Notify parent component about code view state change (for backward compatibility)
     if (onCodeViewChange) {
-      onCodeViewChange(newCodeViewState);
+      onCodeViewChange(targetMode === 'html');
     }
+  };
+
+  // Backward compatible toggle function
+  const toggleCodeView = () => {
+    if (editorMode === 'html') {
+      switchEditorMode('visual');
+    } else {
+      switchEditorMode('html');
+    }
+  };
+
+  // Handle content type change with confirmation
+  const handleContentTypeChange = (newType: 'html' | 'markdown') => {
+    const currentType = initialContentType || 'html';
+    
+    // If same type, do nothing
+    if (newType === currentType) return;
+    
+    // Show confirmation modal
+    setPendingContentType(newType);
+    setShowContentTypeModal(true);
+  };
+
+  const confirmContentTypeChange = () => {
+    if (!pendingContentType) return;
+    
+    // Switch to appropriate editor mode
+    if (pendingContentType === 'markdown') {
+      switchEditorMode('markdown');
+    } else {
+      // For HTML, default to visual mode if available
+      if (postType !== 'landing') {
+        switchEditorMode('visual');
+      } else {
+        switchEditorMode('html');
+      }
+    }
+    
+    // Notify parent via onContentChange
+    const currentContent = editorMode === 'markdown' ? markdownContent : 
+                          editorMode === 'html' ? htmlContent : 
+                          editor.getHTML();
+    
+    if (onContentChange) {
+      onContentChange(currentContent, pendingContentType);
+    }
+    
+    // Close modal and reset
+    setShowContentTypeModal(false);
+    setPendingContentType(null);
+  };
+
+  const cancelContentTypeChange = () => {
+    setShowContentTypeModal(false);
+    setPendingContentType(null);
   };
 
   const formatHtmlContent = () => {
     const formatted = formatHTML(htmlContent, indentType, indentSize, lineEnding);
     setHtmlContent(formatted);
     if (onContentChange) {
-      onContentChange(formatted);
+      onContentChange(formatted, 'html');
     }
   };
 
@@ -2295,20 +2484,31 @@ const PostEditor: React.FC<PostEditorProps> = ({
       .trim();
     setHtmlContent(minified);
     if (onContentChange) {
-      onContentChange(minified);
+      onContentChange(minified, 'html');
     }
   };
 
   const handleSave = () => {
-    let contentToSave;
+    let contentToSave: string;
+    let contentType: 'html' | 'markdown';
     
-    if (isCodeView) {
+    console.log('💾 [HANDLE SAVE] Called with editorMode:', editorMode);
+    console.log('💾 [HANDLE SAVE] Current state:', {
+      markdownContentLength: markdownContent.length,
+      htmlContentLength: htmlContent.length,
+      markdownPreview: markdownContent.substring(0, 100),
+      htmlPreview: htmlContent.substring(0, 100)
+    });
+    
+    if (editorMode === 'markdown') {
+      // In Markdown mode, save the markdown content AS-IS
+      // DO NOT process or modify - preserve all newlines and formatting
+      contentToSave = markdownContent;
+      contentType = 'markdown';
+    } else if (editorMode === 'html') {
       // In HTML mode, save exactly what the user has typed (preserve their formatting)
       contentToSave = htmlContent;
-      // Update parent component with the HTML content before saving
-      if (onContentChange) {
-        onContentChange(htmlContent);
-      }
+      contentType = 'html';
       // DON'T update the visual editor when saving from code view
       // (TipTap strips comments and reformats, which we want to avoid)
     } else {
@@ -2331,12 +2531,21 @@ const PostEditor: React.FC<PostEditorProps> = ({
         });
       });
       contentToSave = editor.getHTML();
+      contentType = 'html';
       
       // Format HTML with proper indentation only when saving from visual mode
       contentToSave = formatHTML(contentToSave, indentType, indentSize, lineEnding);
     }
     
-    onSave(contentToSave);
+    // Update parent component with the content (only once, right before saving)
+    // Note: This function is kept for backward compatibility but typically not called
+    // since the Save button has been removed. Use the Update button instead.
+    if (onContentChange) {
+      onContentChange(contentToSave, contentType);
+    }
+    
+    // Pass content_type along with content
+    onSave(contentToSave, contentType);
   };
 
   return (
@@ -2901,17 +3110,15 @@ const PostEditor: React.FC<PostEditorProps> = ({
                     </span>
                   </div>
                   
-                  {/* Group 3: View Toggle */}
-                  <Button
-                    size="sm"
-                    onClick={toggleCodeView}
-                    variant="secondary"
-                    title={postType === 'landing' ? 'Visual Editor disabled for Landing pages. Change post type to enable.' : 'Switch to Visual Editor'}
-                    className="font-mono text-xs"
-                    disabled={postType === 'landing'}
-                  >
-                    Visual
-                  </Button>
+                  {/* Group 3: Content Type Indicator */}
+                  <div className="flex items-center gap-3">
+                    {/* Content Type Indicator */}
+                    <div className="text-xs text-gray-500 font-mono">
+                      Type: <span className="font-semibold text-gray-700">
+                        {getEditorModeLabel(editorMode)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
@@ -2931,6 +3138,72 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 </Button>
               </>
             )}
+          </div>
+        </div>
+
+        {/* Editor Mode Toggle Bar - Shows in ALL modes */}
+        <div className="border-b border-gray-200 bg-gray-50 px-4 py-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            {/* Mode Toggle Buttons */}
+            <div className="flex items-center gap-1 bg-white rounded-md p-0.5 border border-gray-200">
+              <Button
+                size="sm"
+                onClick={() => switchEditorMode('visual')}
+                variant={(editorMode as EditorMode) === 'visual' ? 'secondary' : 'outline'}
+                title={postType === 'landing' ? 'Visual Editor disabled for Landing pages' : 'Visual Editor (WYSIWYG)'}
+                className="font-mono text-xs"
+                disabled={postType === 'landing'}
+              >
+                Visual
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => switchEditorMode('markdown')}
+                variant={(editorMode as EditorMode) === 'markdown' ? 'secondary' : 'outline'}
+                title="Markdown Editor"
+                className="font-mono text-xs"
+              >
+                Markdown
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => switchEditorMode('html')}
+                variant={(editorMode as EditorMode) === 'html' ? 'secondary' : 'outline'}
+                title="HTML Source Editor"
+                className="font-mono text-xs"
+              >
+                HTML
+              </Button>
+            </div>
+
+            {/* Content Type Radio Buttons */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium text-gray-600">Content Type:</span>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-1.5 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="contentType"
+                    value="html"
+                    checked={(initialContentType || 'html') === 'html'}
+                    onChange={() => handleContentTypeChange('html')}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-700 group-hover:text-gray-900">HTML</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="contentType"
+                    value="markdown"
+                    checked={(initialContentType || 'html') === 'markdown'}
+                    onChange={() => handleContentTypeChange('markdown')}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-700 group-hover:text-gray-900">Markdown</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3230,9 +3503,15 @@ const PostEditor: React.FC<PostEditorProps> = ({
                       ref={textareaRef}
                       value={htmlContent}
                       onChange={(e) => {
-                        setHtmlContent(e.target.value);
+                        const newValue = e.target.value;
+                        setHtmlContent(newValue);
+                        // Notify parent immediately with the new value
                         if (onContentChange) {
-                          onContentChange(e.target.value);
+                          onContentChange(newValue, 'html');
+                        }
+                        // Notify parent about editor changes
+                        if (onEditorChange) {
+                          onEditorChange();
                         }
                       }}
                       onKeyDown={handleKeyDown}
@@ -3261,6 +3540,25 @@ const PostEditor: React.FC<PostEditorProps> = ({
                   </div>
                 </div>
               </div>
+            </div>
+          ) : editorMode === 'markdown' ? (
+            <div className="markdown-editor-section">
+              <MarkdownEditor
+                value={markdownContent}
+                onChange={(newValue) => {
+                  setMarkdownContent(newValue);
+                  // Notify parent immediately with the new value
+                  if (onContentChange) {
+                    onContentChange(newValue, 'markdown');
+                  }
+                  // Notify parent about editor changes
+                  if (onEditorChange) {
+                    onEditorChange();
+                  }
+                }}
+                onImageInsert={() => setShowImageGallery(true)}
+                placeholder="Start writing your post in Markdown..."
+              />
             </div>
           ) : (
             <EditorContent
@@ -3328,6 +3626,70 @@ const PostEditor: React.FC<PostEditorProps> = ({
           onClose={() => setShowImageGallery(false)}
           onSelectImage={handleImageSelect}
         />
+
+        {/* Content Type Change Confirmation Modal */}
+        {showContentTypeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Change Content Type?
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    You are about to change the content type from <strong>{(initialContentType || 'html').toUpperCase()}</strong> to <strong>{pendingContentType?.toUpperCase()}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Warning Message */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-amber-900 mb-2">⚠️ Important Warning</h4>
+                <ul className="text-sm text-amber-800 space-y-1.5">
+                  <li>• This change may affect how your content is displayed</li>
+                  <li>• Some formatting or styling may be lost during conversion</li>
+                  <li>• Make sure to review your content after switching</li>
+                  <li>• Consider saving a backup before proceeding</li>
+                </ul>
+              </div>
+
+              {/* Additional Info */}
+              <div className="text-xs text-gray-500 bg-gray-50 rounded p-3">
+                <strong>What happens:</strong>
+                {pendingContentType === 'markdown' ? (
+                  <p className="mt-1">HTML will be converted to Markdown format. Complex HTML structures, inline styles, and custom classes may be simplified or removed.</p>
+                ) : (
+                  <p className="mt-1">Markdown will be converted to HTML format. Basic markdown syntax will be preserved, but you'll have more formatting options available.</p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button
+                  onClick={cancelContentTypeChange}
+                  variant="outline"
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmContentTypeChange}
+                  variant="primary"
+                  size="sm"
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  Proceed with Change
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
