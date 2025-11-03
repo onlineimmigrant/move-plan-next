@@ -377,7 +377,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
         (shouldShowMainContent || shouldShowNoContentMessage) ? (
           <div className="grid lg:grid-cols-8 gap-x-4 w-full max-w-full">
             {/* TOC Sidebar - Show Master TOC for document sets, regular TOC otherwise */}
-            <aside className="lg:col-span-2 pb-8 sm:px-4 w-full relative">
+            <aside className="lg:col-span-2 pb-8 w-full relative">
               {isMounted && showTOC && (
                 <div className="hidden lg:block pt-16">
                   <div className="lg:fixed lg:w-[calc((100vw-1280px)/2+256px)] lg:max-w-[256px] top-24 pr-4 lg:border-r lg:border-gray-100 h-[calc(100vh-10rem)] overflow-y-auto">

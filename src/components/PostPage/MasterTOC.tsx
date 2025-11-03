@@ -101,7 +101,15 @@ const TOCItemComponent: React.FC<{
     }
   }, [hasActive]);
 
-  const paddingLeft = level * 12;
+  // Responsive padding: smaller increments on smaller screens
+  // Base (mobile): 8px per level, md: 10px per level, lg: 12px, xl: 8px per level
+  const basePadding = level * 8;
+  const mdPadding = level * 10;
+  const lgPadding = level * 12;
+  const xlPadding = level * 8;
+
+  // Create responsive padding classes
+  const paddingClass = `pl-[${basePadding}px] md:pl-[${mdPadding}px] lg:pl-[${lgPadding}px] xl:pl-[${xlPadding}px]`;
 
   return (
     <div>
@@ -121,14 +129,14 @@ const TOCItemComponent: React.FC<{
         {isCurrentArticle ? (
           <button
             onClick={() => handleScrollTo(item.id)}
-            className={`flex-1 text-left py-1 px-3 rounded-md text-sm transition-colors ${
+            className={`flex-1 text-left py-1 rounded-md text-sm transition-colors pr-3 ${
               isActive 
                 ? 'font-medium' 
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
             style={{ 
-              paddingLeft: `${paddingLeft}px`,
-              ...(isActive ? { color: themeColors.cssVars.primary.base } : {})
+              ...(isActive ? { color: themeColors.cssVars.primary.base } : {}),
+              paddingLeft: `${basePadding}px`
             }}
           >
             {item.text}
@@ -137,14 +145,14 @@ const TOCItemComponent: React.FC<{
           <Link
             href={`/${articleSlug}#${item.id}`}
             prefetch={true}
-            className={`flex-1 block py-1 px-3 rounded-md text-sm transition-colors ${
+            className={`flex-1 block py-1 rounded-md text-sm transition-colors pr-3 ${
               isActive 
                 ? 'font-medium' 
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
             style={{ 
-              paddingLeft: `${paddingLeft}px`,
-              ...(isActive ? { color: themeColors.cssVars.primary.base } : {})
+              ...(isActive ? { color: themeColors.cssVars.primary.base } : {}),
+              paddingLeft: `${basePadding}px`
             }}
           >
             {item.text}
@@ -392,23 +400,28 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
 
       {/* Search Input */}
       <div className="relative mb-4">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+          <MagnifyingGlassIcon 
+            className="h-4 w-4" 
+            style={{ color: themeColors.cssVars.primary.base }}
+          />
         </div>
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search articles..."
-          className="block w-full pl-10 pr-10 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-opacity-20 focus:outline-none transition-all"
+          className="block w-full pl-10 pr-10 py-2 text-sm rounded-lg focus:outline-none transition-all backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-0 focus:ring-0 placeholder:text-gray-300 dark:placeholder:text-gray-600"
+          style={{ color: themeColors.cssVars.primary.base }}
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600 transition-colors"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center z-10 transition-colors"
             aria-label="Clear search"
+            style={{ color: themeColors.cssVars.primary.base }}
           >
-            <XMarkIcon className="h-4 w-4 text-gray-400" />
+            <XMarkIcon className="h-4 w-4 hover:opacity-70" />
           </button>
         )}
       </div>
@@ -468,7 +481,7 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
                 <Link
                   href={`/${article.slug}`}
                   prefetch={true}
-                  className={`flex-1 min-w-0 py-2.5 px-3 rounded-lg transition-all relative overflow-hidden ${
+                  className={`flex-1 min-w-0 py-2.5 pl-2 pr-3 rounded-lg transition-all relative overflow-hidden ${
                     isCurrentArticle
                       ? 'font-semibold'
                       : 'font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50'

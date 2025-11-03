@@ -18,29 +18,22 @@ export default function ChatHelpToggleButton({ isOpen, toggleOpen }: ChatHelpTog
         fixed z-[9998]
         flex items-center justify-center
         w-12 h-12 sm:w-14 sm:h-14
-        bottom-4 right-4 sm:bottom-6 sm:right-6
-        text-white
+        bottom-4 right-6 sm:bottom-6 sm:right-8
         rounded-full
-        shadow-xl hover:shadow-2xl
         transform hover:scale-110 active:scale-95
         transition-all duration-300 ease-out
-        focus:outline-none focus:ring-4 focus:ring-opacity-50
+        focus:outline-none focus:ring-0
         group
+        backdrop-blur-xl bg-white/50 dark:bg-gray-900/50
+        shadow-lg hover:shadow-xl
+        border-0
         ${isOpen ? 'rotate-45' : ''}
       `}
-      style={{
-        background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
-        boxShadow: `0 10px 40px ${themeColors.cssVars.primary.base}40`
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = `linear-gradient(135deg, ${themeColors.cssVars.primary.hover}, ${themeColors.cssVars.primary.active})`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`;
-      }}
       aria-label={isOpen ? 'Close help center' : 'Open help center'}
     >
-      <RocketLaunchIcon className="h-6 w-6 transform group-hover:translate-y-[-2px] transition-transform duration-200" />
+      <RocketLaunchIcon 
+        className="h-6 w-6 text-gray-900 dark:text-white transform group-hover:translate-y-[-2px] transition-transform duration-200" 
+      />
     </button>
   );
 }

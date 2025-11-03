@@ -65,24 +65,18 @@ export default function ChatHelpHeader({
 
   return (
     <div 
-      className="flex justify-between items-center px-4 py-3 border-b border-slate-200 rounded-t-2xl shadow-sm"
-      style={{
-        background: `linear-gradient(to right, rgb(248 250 252), ${themeColors.cssVars.primary.lighter})`
-      }}
+      className="flex justify-between items-center px-4 py-3 backdrop-blur-xl bg-white/30 dark:bg-gray-900/30 rounded-t-2xl border-0"
     >
-      {/* Left side - Size control */}
-      <div className="flex items-center gap-2">
+      {/* Left side - Size control (hidden on mobile) */}
+      <div className="hidden sm:flex items-center gap-2">
         <Tooltip variant="right" content={getTooltipContent()}>
           <button
             onClick={toggleSize}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-0 hover:scale-110 active:scale-95"
             aria-label={getTooltipContent()}
-            style={{
-              ['--tw-ring-color' as any]: themeColors.cssVars.primary.base,
-            }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = themeColors.cssVars.primary.hover;
-              e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.lighter;
+              e.currentTarget.style.backgroundColor = `${themeColors.cssVars.primary.lighter}50`;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.color = '';
@@ -98,19 +92,14 @@ export default function ChatHelpHeader({
         </Tooltip>
       </div>
       
-      {/* Center - Title and Language Switcher */}
-      <div className="flex-1 flex flex-col items-center justify-center mx-4">
-        <h2 className="text-sm font-semibold text-slate-700 mb-1">{getHeaderTitle()}</h2>
-        {/* Only show language switcher when not in initial window mode and not in conversation/live-support view */}
-        {size !== 'initial' && currentView !== 'conversation' && currentView !== 'live-support' && (
-          <div className="scale-75 relative z-[200]">
-            <ModernLanguageSwitcher 
-              zIndex={9999} 
-              onLanguageChange={onLanguageChange}
-              preventNavigation={!!onLanguageChange}
-            />
-          </div>
-        )}
+      {/* Mobile spacer */}
+      <div className="sm:hidden w-8"></div>
+      {/* Center - Title */}
+      <div className="flex-1 flex items-center justify-center mx-4">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-5 sm:h-6 rounded-full" style={{ backgroundColor: themeColors.cssVars.primary.base }} />
+          <h2 className="text-base sm:text-lg font-semibold text-slate-700 dark:text-slate-200 tracking-tight">{getHeaderTitle()}</h2>
+        </div>
       </div>
       
       {/* Right side - Close button */}
@@ -118,7 +107,7 @@ export default function ChatHelpHeader({
         <Tooltip content={t.close}>
           <button
             onClick={closeWidget}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-900/20 transition-all duration-200 focus:outline-none focus:ring-0 hover:scale-110 active:scale-95"
             aria-label="Close help center"
           >
             <XMarkIcon className="h-4 w-4" />

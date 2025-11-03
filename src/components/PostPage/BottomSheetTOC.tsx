@@ -92,22 +92,18 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center ${
+        className={`lg:hidden fixed bottom-4 left-6 sm:bottom-6 sm:left-8 z-40 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-300 flex items-center justify-center backdrop-blur-xl bg-white/50 dark:bg-gray-900/50 shadow-lg hover:shadow-xl border-0 focus:outline-none focus:ring-0 transform hover:scale-110 active:scale-95 ${
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
         }`}
-        style={{
-          backgroundColor: themeColors.cssVars.primary.base,
-          color: 'white',
-        }}
         aria-label="Open table of contents"
       >
-        <Bars3Icon className="w-6 h-6" />
+        <Bars3Icon className="w-6 h-6 text-gray-900 dark:text-white" />
       </button>
 
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-50 transition-opacity duration-300"
+          className="lg:hidden fixed inset-0 bg-black/30 z-50 transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
           aria-hidden="true"
         />
@@ -115,7 +111,7 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
 
       {/* Bottom Sheet */}
       <div
-        className={`lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out ${
+        className={`lg:hidden fixed bottom-0 left-4 right-4 z-50 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out border-0 ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{
@@ -123,21 +119,27 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
         }}
       >
         {/* Handle Bar */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        <div className="flex justify-center pt-4 pb-3">
+          <div className="w-12 h-1.5 bg-gray-400/50 dark:bg-gray-500/50 rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 mb-2">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-6 rounded-full" style={{ backgroundColor: themeColors.cssVars.primary.base }} />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">{title}</h2>
+          </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-200 hover:scale-110 active:scale-95"
             aria-label="Close"
           >
-            <XMarkIcon className="w-5 h-5 text-gray-500" />
+            <XMarkIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
+
+        {/* Divider */}
+        <div className="mx-6 h-px bg-gradient-to-r from-transparent via-gray-200/50 dark:via-gray-700/50 to-transparent" />
 
         {/* Content */}
         <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: 'calc(85vh - 120px)' }}>
@@ -146,9 +148,9 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
               <li key={`${item.tag_id}-${index}`}>
                 <button
                   onClick={() => handleItemClick(item.tag_id)}
-                  className={`w-full text-left py-3 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm ${getIndentClass(
+                  className={`w-full text-left py-3 px-3 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors text-sm ${getIndentClass(
                     item.tag_name
-                  )} ${getFontWeight(item.tag_name)} text-gray-700`}
+                  )} ${getFontWeight(item.tag_name)} text-gray-700 dark:text-gray-300`}
                 >
                   {item.tag_text}
                 </button>

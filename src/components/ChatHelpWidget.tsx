@@ -155,9 +155,9 @@ export default function ChatHelpWidget() {
   };
 
   const sizeClasses = {
-    initial: 'w-[400px] h-[750px] bottom-8 right-4',
-    half: isMobile ? styles.mobileHalfContainer : 'w-1/2 h-[750px] bottom-8 right-4',
-    fullscreen: styles.fullscreenContainer,
+    initial: 'w-[400px] h-[750px] bottom-4 right-4 sm:bottom-8 sm:right-8',
+    half: isMobile ? styles.mobileHalfContainer : 'w-1/2 h-[750px] bottom-4 right-4 sm:bottom-8 sm:right-8',
+    fullscreen: isMobile ? 'inset-4 sm:inset-4' : styles.fullscreenContainer,
   };
 
   const handleTabChange = (tab: 'welcome' | 'conversation' | 'ai') => {
@@ -355,7 +355,7 @@ export default function ChatHelpWidget() {
           <ChatHelpToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} />
           {isOpen && (
             <div
-              className={`z-[9999] fixed min-h-[480px] bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col overflow-hidden transition-all duration-300 ease-out ${sizeClasses[size]}`}
+              className={`z-[9999] fixed min-h-[480px] backdrop-blur-2xl bg-white/50 dark:bg-gray-900/50 border-0 rounded-2xl shadow-lg flex flex-col overflow-hidden transition-all duration-300 ease-out ${sizeClasses[size]}`}
               role="dialog"
               aria-labelledby="help-center-title"
               aria-modal="true"
