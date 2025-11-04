@@ -6,6 +6,8 @@ This document describes the visual adjustments made to model cards in the `/acco
 ## Implementation Date
 October 29, 2025
 
+
+
 ## What Was Changed
 
 ### 1. Badge Display - Context-Aware Logic
