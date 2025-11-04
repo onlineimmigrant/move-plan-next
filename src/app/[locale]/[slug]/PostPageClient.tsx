@@ -69,6 +69,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const [hasTemplateSections, setHasTemplateSections] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [tocMaxHeight, setTocMaxHeight] = useState('calc(100vh - 10rem)');
   const contentRef = useRef<HTMLDivElement>(null);
   const themeColors = useThemeColors();
 
@@ -81,6 +82,38 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Dynamically adjust TOC height to stop before footer
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const adjustTocHeight = () => {
+      const footer = document.querySelector('footer');
+      if (footer) {
+        const footerTop = footer.getBoundingClientRect().top;
+        const viewportHeight = window.innerHeight;
+        const tocTop = 96; // top-24 = 96px
+        
+        // Calculate available height: from TOC top to footer top, with some padding
+        const availableHeight = footerTop - tocTop - 24; // 24px padding before footer
+        const maxHeight = Math.min(availableHeight, viewportHeight - tocTop - 24);
+        
+        if (maxHeight > 200) { // Minimum height threshold
+          setTocMaxHeight(`${maxHeight}px`);
+        }
+      }
+    };
+
+    // Run on mount and scroll
+    adjustTocHeight();
+    window.addEventListener('scroll', adjustTocHeight, { passive: true });
+    window.addEventListener('resize', adjustTocHeight, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', adjustTocHeight);
+      window.removeEventListener('resize', adjustTocHeight);
+    };
+  }, [isMounted]);
 
   // Handle hash navigation on page load and slug changes
   useEffect(() => {
@@ -380,7 +413,10 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
             <aside className="lg:col-span-2 pb-8 w-full relative">
               {isMounted && showTOC && (
                 <div className="hidden lg:block pt-16">
-                  <div className="lg:fixed lg:w-[calc((100vw-1280px)/2+256px)] lg:max-w-[256px] top-24 pr-4 lg:border-r lg:border-gray-100 h-[calc(100vh-10rem)] overflow-y-auto">
+                  <div 
+                    className="lg:fixed lg:w-[calc((100vw-1280px)/2+256px)] lg:max-w-[256px] top-24 pr-4 lg:border-r lg:border-gray-100 overflow-y-auto"
+                    style={{ maxHeight: tocMaxHeight }}
+                  >
                     {docSet.showMasterTOC ? (
                       <MasterTOC
                         currentSlug={post.slug}

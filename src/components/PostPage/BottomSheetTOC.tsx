@@ -28,6 +28,8 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const themeColors = useThemeColors();
 
   // Prevent hydration mismatch by only rendering after mount
@@ -35,18 +37,36 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
     setIsMounted(true);
   }, []);
 
-  // Show floating button after scrolling past header
+  // Show floating button after scrolling past header and track scroll direction
   useEffect(() => {
     if (!isMounted) return;
 
+    let ticking = false;
+    
     const handleScroll = () => {
-      setIsVisible(window.scrollY > 300);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          setIsVisible(currentScrollY > 300);
+          
+          // Check if scrolling up and not at the top
+          if (currentScrollY < lastScrollY && currentScrollY > 100) {
+            setIsScrollingUp(true);
+          } else {
+            setIsScrollingUp(false);
+          }
+          
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isMounted]);
+  }, [isMounted, lastScrollY]);
 
   // Prevent body scroll when sheet is open
   useEffect(() => {
@@ -92,12 +112,23 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`lg:hidden fixed bottom-4 left-6 sm:bottom-6 sm:left-8 z-40 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-300 flex items-center justify-center backdrop-blur-xl bg-white/50 dark:bg-gray-900/50 shadow-lg hover:shadow-xl border-0 focus:outline-none focus:ring-0 transform hover:scale-110 active:scale-95 ${
+        className={`lg:hidden fixed bottom-4 left-6 sm:bottom-6 sm:left-8 z-40 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-300 flex items-center justify-center backdrop-blur-xl bg-white/50 dark:bg-gray-900/50 shadow-md hover:shadow-lg border-0 focus:outline-none focus:ring-0 transform hover:scale-110 active:scale-95 group ${
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
-        }`}
+        } ${isScrollingUp ? 'scale-75' : 'scale-100'}`}
         aria-label="Open table of contents"
       >
-        <Bars3Icon className="w-6 h-6 text-gray-900 dark:text-white" />
+        <Bars3Icon 
+          className="w-6 h-6 text-gray-900 dark:text-white transition-all duration-200"
+          style={{
+            color: undefined,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = themeColors.cssVars.primary.base;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '';
+          }}
+        />
       </button>
 
       {/* Backdrop */}
@@ -111,7 +142,7 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
 
       {/* Bottom Sheet */}
       <div
-        className={`lg:hidden fixed bottom-0 left-4 right-4 z-50 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out border-0 ${
+        className={`lg:hidden fixed bottom-0 left-4 right-4 z-50 backdrop-blur-2xl bg-white/50 dark:bg-gray-900/50 rounded-t-3xl shadow-lg transition-transform duration-300 ease-out border-0 ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{
@@ -124,14 +155,14 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 mb-2">
+        <div className="flex items-center justify-between px-6 py-4 mb-2 backdrop-blur-xl bg-white/30 dark:bg-gray-900/30">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-6 rounded-full" style={{ backgroundColor: themeColors.cssVars.primary.base }} />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">{title}</h2>
+            <div className="w-1 h-5 sm:h-6 rounded-full" style={{ backgroundColor: themeColors.cssVars.primary.base }} />
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tracking-tight">{title}</h2>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-200 hover:scale-110 active:scale-95"
+            className="p-2 rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-0"
             aria-label="Close"
           >
             <XMarkIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />

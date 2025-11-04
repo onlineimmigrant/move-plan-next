@@ -7,6 +7,7 @@ import ChatToggleButton from './ChatToggleButton';
 import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
+import FilesModal from './FilesModal';
 import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from './types';
 import styles from './ChatWidget.module.css';
 
@@ -58,6 +59,7 @@ export default function ChatWidget({
   const [modelIcon, setModelIcon] = useState<string | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -553,6 +555,14 @@ const sendMessage = async () => {
     router.push('/account/ai');
   };
 
+  const openFilesModal = () => {
+    setIsFilesModalOpen(true);
+  };
+
+  const closeFilesModal = () => {
+    setIsFilesModalOpen(false);
+  };
+
   const goToAdmin = () => {
     router.push('/admin/ai/management');
   };
@@ -596,11 +606,9 @@ const sendMessage = async () => {
   }, [isOpen, toggleSize]);
 
   const sizeClasses = {
-    initial: 'w-[400px] h-[600px] bottom-6 right-6 sm:w-[450px] sm:h-[650px]',
-    half: isMobile
-      ? 'w-full h-[50vh] bottom-0 right-0 rounded-none'
-      : 'w-1/2 h-[600px] bottom-6 right-6 sm:w-1/2 sm:h-[650px]',
-    fullscreen: 'w-screen h-screen top-0 right-0 bottom-0 left-0 rounded-none',
+    initial: 'w-[400px] h-[750px] bottom-4 right-4 sm:bottom-8 sm:right-8',
+    half: isMobile ? styles.mobileHalfContainer : 'w-1/2 h-[750px] bottom-4 right-4 sm:bottom-8 sm:right-8',
+    fullscreen: isMobile ? 'inset-4 sm:inset-4' : styles.fullscreenContainer,
   };
 
   const handleTasksUpdated = (updatedTasks: Task[]) => {
@@ -628,7 +636,7 @@ const sendMessage = async () => {
       <ChatToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} isModalOpen={isModalOpen} />
       {isOpen && (
         <div
-          className={`${isModalOpen || forceHighZIndex ? "z-[10000002]" : "z-[9999]"} fixed bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col overflow-hidden transition-all duration-300 ease-out ${sizeClasses[size]}`}
+          className={`${isModalOpen || forceHighZIndex ? "z-[10000002]" : "z-[9999]"} fixed min-h-[480px] backdrop-blur-2xl bg-white/50 dark:bg-gray-900/50 border-0 rounded-2xl shadow-lg flex flex-col overflow-hidden transition-all duration-300 ease-out ${sizeClasses[size]}`}
           role="dialog"
           aria-labelledby="chat-widget-title"
           aria-modal="true"
@@ -641,6 +649,7 @@ const sendMessage = async () => {
             models={models}
             selectModel={selectModel}
             goToSettings={goToSettings}
+            onOpenFiles={openFilesModal}
             isMobile={isMobile}
             onReturnToHelpCenter={onReturnToHelpCenter}
           />
@@ -669,7 +678,10 @@ const sendMessage = async () => {
   setError={setError}
   accessToken={accessToken}
   userId={userId}
-  selectedTask={selectedTask} // Add selectedTask
+  selectedTask={selectedTask}
+  onDeleteMessage={(index) => {
+    setMessages(prev => prev.filter((_, i) => i !== index));
+  }}
 />
           <div className={`flex flex-col px-4 pb-4 ${size === 'fullscreen' ? styles.centeredInput : ''}`}>
             <ChatInput
@@ -707,6 +719,11 @@ const sendMessage = async () => {
           </div>
         </div>
       )}
+      <FilesModal
+        isOpen={isFilesModalOpen}
+        onClose={closeFilesModal}
+        userId={userId}
+      />
     </>
   );
 }

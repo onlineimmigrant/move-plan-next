@@ -48,4 +48,5 @@ export interface ChatMessagesProps {
   accessToken: string | null;
   userId: string | null;
   selectedTask: Task | null;
+  onDeleteMessage?: (index: number) => void;
 }

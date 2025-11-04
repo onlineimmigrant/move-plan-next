@@ -1,7 +1,10 @@
 'use client';
 import { useRef, useEffect, useState, useCallback, useMemo, memo } from 'react';
-import { CheckIcon, ClipboardIcon, DocumentArrowDownIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { createPortal } from 'react-dom';
+import { CheckIcon, ClipboardIcon, EyeIcon, PencilIcon, ArrowDownTrayIcon, XMarkIcon, TrashIcon, ArrowDownOnSquareIcon, LinkIcon, ListBulletIcon, CodeBracketIcon, PhotoIcon, Bars3BottomLeftIcon } from '@heroicons/react/24/outline';
+import ReactMarkdown from 'react-markdown';
 import Tooltip from '@/components/Tooltip';
+import { useToast } from '@/components/Shared/ToastContainer';
 import { Message, ChatMessagesProps } from './types';
 import styles from './ChatWidget.module.css';
 import { jsPDF } from 'jspdf';
@@ -35,6 +38,375 @@ const supabase = createClient(
     },
   }
 );
+
+// Helper function to convert hex color to RGB for jsPDF
+const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 240, g: 240, b: 240 }; // default light gray
+};
+
+// Interface for markdown elements
+interface MarkdownElement {
+  text: string;
+  type: 'h1' | 'h2' | 'h3' | 'h4' | 'paragraph' | 'list-item' | 'quote' | 'code-block' | 'horizontal-rule';
+  formatting?: Array<{
+    type: 'bold' | 'italic' | 'code';
+    start: number;
+    end: number;
+  }>;
+}
+
+// Parse markdown text into structured elements for PDF
+const parseMarkdownForPdf = (markdown: string): MarkdownElement[] => {
+  const lines = markdown.split('\n');
+  const elements: MarkdownElement[] = [];
+  let inCodeBlock = false;
+  let codeBlockLines: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Handle code blocks
+    if (line.trim().startsWith('```')) {
+      if (inCodeBlock) {
+        // End code block
+        elements.push({
+          text: codeBlockLines.join('\n'),
+          type: 'code-block',
+        });
+        codeBlockLines = [];
+        inCodeBlock = false;
+      } else {
+        // Start code block
+        inCodeBlock = true;
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeBlockLines.push(line);
+      continue;
+    }
+
+    // Skip empty lines
+    if (!line.trim()) {
+      continue;
+    }
+
+    // Parse horizontal rules (---, ___, ***)
+    if (line.trim().match(/^([-_*]){3,}$/)) {
+      elements.push({
+        text: '',
+        type: 'horizontal-rule',
+      });
+      continue;
+    }
+
+    // Parse headers
+    if (line.startsWith('#### ')) {
+      elements.push({
+        text: line.substring(5).trim(),
+        type: 'h4',
+      });
+    } else if (line.startsWith('### ')) {
+      elements.push({
+        text: line.substring(4).trim(),
+        type: 'h3',
+      });
+    } else if (line.startsWith('## ')) {
+      elements.push({
+        text: line.substring(3).trim(),
+        type: 'h2',
+      });
+    } else if (line.startsWith('# ')) {
+      elements.push({
+        text: line.substring(2).trim(),
+        type: 'h1',
+      });
+    } 
+    // Parse list items
+    else if (line.trim().match(/^[-*+]\s/) || line.trim().match(/^\d+\.\s/)) {
+      const text = line.trim().replace(/^[-*+]\s/, '').replace(/^\d+\.\s/, '');
+      elements.push({
+        text,
+        type: 'list-item',
+        formatting: parseInlineFormatting(text),
+      });
+    }
+    // Parse blockquotes
+    else if (line.trim().startsWith('> ')) {
+      elements.push({
+        text: line.trim().substring(2),
+        type: 'quote',
+        formatting: parseInlineFormatting(line.trim().substring(2)),
+      });
+    }
+    // Regular paragraph
+    else {
+      elements.push({
+        text: line.trim(),
+        type: 'paragraph',
+        formatting: parseInlineFormatting(line.trim()),
+      });
+    }
+  }
+
+  return elements;
+};
+
+// Parse inline markdown formatting (bold, italic, code)
+const parseInlineFormatting = (text: string): Array<{ type: 'bold' | 'italic' | 'code'; start: number; end: number }> => {
+  const formatting: Array<{ type: 'bold' | 'italic' | 'code'; start: number; end: number }> = [];
+  
+  // Find **bold** text
+  let boldRegex = /\*\*(.+?)\*\*/g;
+  let match;
+  while ((match = boldRegex.exec(text)) !== null) {
+    formatting.push({
+      type: 'bold',
+      start: match.index,
+      end: match.index + match[0].length,
+    });
+  }
+
+  // Find *italic* or _italic_ text
+  let italicRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|_(.+?)_/g;
+  while ((match = italicRegex.exec(text)) !== null) {
+    formatting.push({
+      type: 'italic',
+      start: match.index,
+      end: match.index + match[0].length,
+    });
+  }
+
+  // Find `code` text
+  let codeRegex = /`(.+?)`/g;
+  while ((match = codeRegex.exec(text)) !== null) {
+    formatting.push({
+      type: 'code',
+      start: match.index,
+      end: match.index + match[0].length,
+    });
+  }
+
+  return formatting;
+};
+
+// Strip markdown syntax from text
+const stripMarkdownSyntax = (text: string): string => {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1') // Bold
+    .replace(/\*(.+?)\*/g, '$1')     // Italic
+    .replace(/_(.+?)_/g, '$1')       // Italic underscore
+    .replace(/`(.+?)`/g, '$1')       // Code
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1'); // Links
+};
+
+// Render text with inline formatting for preview
+const renderFormattedText = (text: string): JSX.Element[] => {
+  const parts: JSX.Element[] = [];
+  let currentPos = 0;
+  let keyCounter = 0;
+
+  // Process code, bold, and italic text
+  const codeRegex = /`(.+?)`/g;
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  const italicRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g;
+  
+  // Find all markers
+  const markers: Array<{ start: number; end: number; type: 'bold' | 'italic' | 'code'; content: string }> = [];
+  
+  let match: RegExpExecArray | null;
+  
+  // Find code markers first (highest priority)
+  while ((match = codeRegex.exec(text)) !== null) {
+    markers.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      type: 'code',
+      content: match[1]
+    });
+  }
+  
+  // Find bold markers
+  while ((match = boldRegex.exec(text)) !== null) {
+    const isInCode = markers.some(m => 
+      m.type === 'code' && match!.index >= m.start && match!.index < m.end
+    );
+    if (!isInCode) {
+      markers.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        type: 'bold',
+        content: match[1]
+      });
+    }
+  }
+  
+  // Find italic markers (avoiding bold and code regions)
+  while ((match = italicRegex.exec(text)) !== null) {
+    const isInOther = markers.some(m => 
+      (m.type === 'bold' || m.type === 'code') && match!.index >= m.start && match!.index < m.end
+    );
+    if (!isInOther) {
+      markers.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        type: 'italic',
+        content: match[1]
+      });
+    }
+  }
+  
+  // Sort markers by position
+  markers.sort((a, b) => a.start - b.start);
+  
+  // Build the parts array with formatted segments
+  markers.forEach((marker) => {
+    // Add text before this marker
+    if (currentPos < marker.start) {
+      const plainText = text.substring(currentPos, marker.start);
+      if (plainText) {
+        parts.push(<span key={keyCounter++}>{plainText}</span>);
+      }
+    }
+    
+    // Add formatted text
+    if (marker.type === 'code') {
+      parts.push(
+        <code key={keyCounter++} className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs font-mono">
+          {marker.content}
+        </code>
+      );
+    } else if (marker.type === 'bold') {
+      parts.push(<strong key={keyCounter++}>{marker.content}</strong>);
+    } else if (marker.type === 'italic') {
+      parts.push(<em key={keyCounter++}>{marker.content}</em>);
+    }
+    
+    currentPos = marker.end;
+  });
+  
+  // Add remaining text
+  if (currentPos < text.length) {
+    const remainingText = text.substring(currentPos);
+    if (remainingText) {
+      parts.push(<span key={keyCounter++}>{remainingText}</span>);
+    }
+  }
+  
+  return parts.length > 0 ? parts : [<span key={0}>{text}</span>];
+};
+
+// Split text into segments with formatting information for PDF rendering
+interface TextSegment {
+  text: string;
+  style: 'normal' | 'bold' | 'italic' | 'code';
+}
+
+const splitTextByFormatting = (text: string): TextSegment[] => {
+  const segments: TextSegment[] = [];
+  let currentPos = 0;
+  
+  // Find all formatting markers in order
+  const markers: Array<{ pos: number; end: number; type: 'bold' | 'italic' | 'code'; length: number }> = [];
+  
+  // Find `code` text first (highest priority)
+  let codeRegex = /`(.+?)`/g;
+  let match;
+  while ((match = codeRegex.exec(text)) !== null) {
+    markers.push({
+      pos: match.index,
+      end: match.index + match[0].length,
+      type: 'code',
+      length: match[1].length,
+    });
+  }
+  
+  // Find **bold** text
+  let boldRegex = /\*\*(.+?)\*\*/g;
+  while ((match = boldRegex.exec(text)) !== null) {
+    // Check if this overlaps with a code marker
+    const overlaps = markers.some(m => 
+      m.type === 'code' && (
+        (match!.index >= m.pos && match!.index < m.end) ||
+        (match!.index + match![0].length > m.pos && match!.index + match![0].length <= m.end)
+      )
+    );
+    if (!overlaps) {
+      markers.push({
+        pos: match.index,
+        end: match.index + match[0].length,
+        type: 'bold',
+        length: match[1].length,
+      });
+    }
+  }
+  
+  // Find *italic* text
+  let italicRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g;
+  while ((match = italicRegex.exec(text)) !== null) {
+    // Check if this overlaps with a bold or code marker
+    const overlaps = markers.some(m => 
+      (match!.index >= m.pos && match!.index < m.end) ||
+      (match!.index + match![0].length > m.pos && match!.index + match![0].length <= m.end)
+    );
+    if (!overlaps) {
+      markers.push({
+        pos: match.index,
+        end: match.index + match[0].length,
+        type: 'italic',
+        length: match[1].length,
+      });
+    }
+  }
+  
+  // Sort markers by position
+  markers.sort((a, b) => a.pos - b.pos);
+  
+  // Build segments
+  for (const marker of markers) {
+    // Add normal text before this marker
+    if (currentPos < marker.pos) {
+      const normalText = text.substring(currentPos, marker.pos);
+      if (normalText) {
+        segments.push({ text: normalText, style: 'normal' });
+      }
+    }
+    
+    // Add formatted text (strip the markers)
+    let markerLength = 1; // default for italic and code (*, `)
+    if (marker.type === 'bold') {
+      markerLength = 2; // ** on each side
+    }
+    const formattedText = text.substring(
+      marker.pos + markerLength,
+      marker.end - markerLength
+    );
+    segments.push({ text: formattedText, style: marker.type });
+    
+    currentPos = marker.end;
+  }
+  
+  // Add remaining normal text
+  if (currentPos < text.length) {
+    const remainingText = text.substring(currentPos);
+    if (remainingText) {
+      segments.push({ text: remainingText, style: 'normal' });
+    }
+  }
+  
+  // If no formatting found, return the whole text as normal
+  if (segments.length === 0) {
+    segments.push({ text, style: 'normal' });
+  }
+  
+  return segments;
+};
 
 // Optimized HTML parser for PDF with better type safety
 const parseHtmlForPdf = (html: string): HtmlElement[] => {
@@ -208,12 +580,174 @@ const parseHtmlForJson = (html: string): ParsedJsonContent => {
   return { firstH1, content: jsonOutput };
 };
 
-export default function ChatMessages({ messages, isTyping, isFullscreen, setError, accessToken, userId }: ChatMessagesProps) {
+// Parse markdown content for JSON format
+const parseMarkdownForJson = (markdown: string): ParsedJsonContent => {
+  const lines = markdown.split('\n');
+  const jsonOutput: { [key: string]: any } = {};
+  let firstH1: string | null = null;
+  let currentH2: string | null = null;
+  let currentH3: string | null = null;
+  let currentContent: string[] = [];
+
+  const saveCurrentContent = () => {
+    if (currentContent.length === 0) return;
+
+    const content = currentContent.join('\n').trim();
+    if (!content) return;
+
+    if (currentH3 && currentH2) {
+      // Content under H3
+      if (!Array.isArray(jsonOutput[currentH2])) {
+        jsonOutput[currentH2] = [];
+      }
+      
+      // Check if content has key-value pairs
+      const keyValueMatch = content.match(/^(.+?):\s*(.+)$/);
+      if (keyValueMatch) {
+        const [, key, value] = keyValueMatch;
+        jsonOutput[currentH2].push({ [currentH3]: { [key.trim()]: value.trim() } });
+      } else {
+        jsonOutput[currentH2].push({ [currentH3]: content });
+      }
+    } else if (currentH2) {
+      // Content directly under H2
+      if (jsonOutput[currentH2] === undefined) {
+        jsonOutput[currentH2] = content;
+      } else if (typeof jsonOutput[currentH2] === 'string') {
+        jsonOutput[currentH2] = [jsonOutput[currentH2], content];
+      } else if (Array.isArray(jsonOutput[currentH2])) {
+        jsonOutput[currentH2].push(content);
+      }
+    }
+
+    currentContent = [];
+  };
+
+  lines.forEach((line) => {
+    const trimmedLine = line.trim();
+
+    // Check for headers
+    if (trimmedLine.startsWith('# ') && !firstH1) {
+      firstH1 = trimmedLine.substring(2).trim();
+    } else if (trimmedLine.startsWith('## ')) {
+      saveCurrentContent();
+      currentH2 = trimmedLine.substring(3).trim();
+      currentH3 = null;
+      jsonOutput[currentH2] = [];
+    } else if (trimmedLine.startsWith('### ')) {
+      saveCurrentContent();
+      currentH3 = trimmedLine.substring(4).trim();
+    } else if (trimmedLine.startsWith('#### ')) {
+      // Treat H4 as content
+      currentContent.push(trimmedLine.substring(5).trim());
+    } else if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+      // List item
+      currentContent.push(trimmedLine.substring(2).trim());
+    } else if (trimmedLine.startsWith('> ')) {
+      // Quote
+      currentContent.push(trimmedLine.substring(2).trim());
+    } else if (trimmedLine.length > 0) {
+      // Regular content
+      currentContent.push(trimmedLine);
+    }
+  });
+
+  // Save any remaining content
+  saveCurrentContent();
+
+  return { firstH1, content: jsonOutput };
+};
+
+export default function ChatMessages({ messages, isTyping, isFullscreen, setError, accessToken, userId, onDeleteMessage }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const toast = useToast();
   const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
   const [showFilenameForm, setShowFilenameForm] = useState<number | null>(null);
+  const [showDownloadModal, setShowDownloadModal] = useState<number | null>(null);
   const [currentMessageIndex, setCurrentMessageIndex] = useState<number | null>(null);
   const [defaultFilename, setDefaultFilename] = useState<string>('');
+  
+  // New states for different modals
+  const [showPreviewModal, setShowPreviewModal] = useState<number | null>(null);
+  const [showEditModal, setShowEditModal] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState<string>('');
+  const [previewFormat, setPreviewFormat] = useState<'txt' | 'md' | 'pdf' | 'json'>('md');
+  const [previewContent, setPreviewContent] = useState<string>('');
+  
+  // Color customization states
+  const [inlineCodeBgColor, setInlineCodeBgColor] = useState<string>('#f0f0f0'); // light gray
+  const [inlineCodeTextColor, setInlineCodeTextColor] = useState<string>('#000000'); // black
+  const [codeBlockBgColor, setCodeBlockBgColor] = useState<string>('#f0f0f0'); // light gray
+  const [codeBlockTextColor, setCodeBlockTextColor] = useState<string>('#000000'); // black
+
+  // Textarea ref for markdown editor
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Markdown formatting helpers
+  const insertMarkdown = (before: string, after: string = '', placeholder: string = 'text') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = editContent.substring(start, end);
+    const textToInsert = selectedText || placeholder;
+    
+    const newText = 
+      editContent.substring(0, start) + 
+      before + textToInsert + after + 
+      editContent.substring(end);
+    
+    setEditContent(newText);
+    
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + before.length + textToInsert.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  const insertHeading = (level: number) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const lineStart = editContent.lastIndexOf('\n', start - 1) + 1;
+    const prefix = '#'.repeat(level) + ' ';
+    
+    const newText = 
+      editContent.substring(0, lineStart) + 
+      prefix + 
+      editContent.substring(lineStart);
+    
+    setEditContent(newText);
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, start + prefix.length);
+    }, 0);
+  };
+
+  const insertList = (ordered: boolean = false) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const lineStart = editContent.lastIndexOf('\n', start - 1) + 1;
+    const prefix = ordered ? '1. ' : '- ';
+    
+    const newText = 
+      editContent.substring(0, lineStart) + 
+      prefix + 
+      editContent.substring(lineStart);
+    
+    setEditContent(newText);
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, start + prefix.length);
+    }, 0);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -245,27 +779,75 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
       await navigator.clipboard.writeText(textContent);
       setCopiedMessageId(index);
       setError(null);
+      toast.success('Message copied to clipboard!');
       setTimeout(() => setCopiedMessageId(null), 2000);
     } catch (err) {
       console.error('[ChatMessages] Copy error:', err);
-      setError('Failed to copy message');
+      toast.error('Failed to copy message');
     }
   };
 
-  const openFilenameForm = (index: number, format: 'txt' | 'pdf' | 'json') => {
+  const openFilenameForm = (index: number, format: 'txt' | 'pdf' | 'json' | 'md') => {
     const filename = getDefaultFilename(messages[index].content, index);
     setDefaultFilename(filename);
     setCurrentMessageIndex(index);
     setShowFilenameForm(index);
   };
 
-  const handleSaveFile = (filename: string, format: 'txt' | 'pdf' | 'json') => {
+  const openDownloadModal = (index: number) => {
+    const filename = getDefaultFilename(messages[index].content, index);
+    setDefaultFilename(filename);
+    setCurrentMessageIndex(index);
+    setShowDownloadModal(index);
+  };
+
+  const handleSaveFile = (filename: string, format: 'txt' | 'pdf' | 'json' | 'md') => {
     if (currentMessageIndex !== null) {
-      saveFile(messages[currentMessageIndex].content, currentMessageIndex, format, filename);
+      saveFileToDatabase(messages[currentMessageIndex].content, currentMessageIndex, format, filename);
     }
   };
 
-  const saveFile = useCallback(async (content: string, index: number, format: 'txt' | 'pdf' | 'json', customFilename: string) => {
+  const handleDownloadFile = (filename: string, format: 'txt' | 'pdf' | 'json' | 'md') => {
+    if (currentMessageIndex !== null) {
+      downloadFileToLocal(messages[currentMessageIndex].content, currentMessageIndex, format, filename);
+    }
+  };
+
+  // Handler for preview button
+  const openPreviewModal = (index: number) => {
+    const content = messages[index].content.replace(/<[^>]+>/g, '');
+    setPreviewContent(content);
+    setCurrentMessageIndex(index);
+    setShowPreviewModal(index);
+  };
+
+  // Handler for edit button
+  const openEditModal = (index: number) => {
+    const content = messages[index].content.replace(/<[^>]+>/g, '');
+    setEditContent(content);
+    setCurrentMessageIndex(index);
+    setShowEditModal(index);
+  };
+
+  // Handler for saving edited content
+  const handleSaveEdit = () => {
+    if (currentMessageIndex !== null) {
+      // Update the message content
+      messages[currentMessageIndex].content = editContent;
+      setShowEditModal(null);
+      setEditContent('');
+    }
+  };
+
+  // Handler for deleting a message
+  const handleDeleteMessage = (index: number) => {
+    if (window.confirm('Are you sure you want to delete this message?')) {
+      onDeleteMessage?.(index);
+      toast.success('Message deleted successfully!');
+    }
+  };
+
+  const saveFileToDatabase = useCallback(async (content: string, index: number, format: 'txt' | 'pdf' | 'json' | 'md', customFilename: string) => {
     if (!accessToken || !userId) {
       setError('Please log in to save files.');
       return;
@@ -280,15 +862,9 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
       if (format === 'txt') {
         fileContent = taskTitle ? `${taskTitle}\n\n${textContent}` : textContent;
         filename = `${customFilename}.txt`;
-        const blob = new Blob([fileContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+      } else if (format === 'md') {
+        fileContent = taskTitle ? `# ${taskTitle}\n\n${textContent}` : textContent;
+        filename = `${customFilename}.md`;
       } else if (format === 'pdf') {
         const doc = new jsPDF();
         let y = 10;
@@ -304,50 +880,271 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
           y += taskLines.length * 6 + 4;
         }
 
-        const elements = parseHtmlForPdf(content);
+        // Parse markdown content
+        const elements = parseMarkdownForPdf(textContent);
+        
         for (const element of elements) {
-          const fontSize = element.isHeading
-            ? element.level === 1
-              ? 16
-              : element.level === 2
-              ? 14
-              : 12
-            : 12;
-          doc.setFont('Helvetica', element.isHeading ? 'bold' : 'normal');
-          doc.setFontSize(fontSize);
-
-          const lines = doc.splitTextToSize(element.text, maxWidth);
-          for (const line of lines) {
-            if (y + fontSize * 0.6 > pageHeight) {
+          let fontSize = 12;
+          let fontStyle: 'normal' | 'bold' | 'italic' = 'normal';
+          let leftMargin = margin;
+          
+          // Handle horizontal rules
+          if (element.type === 'horizontal-rule') {
+            // Add spacing before the line
+            y += 4;
+            
+            // Check if we need a new page
+            if (y + 2 > pageHeight) {
               doc.addPage();
               y = 10;
             }
-            doc.text(line, margin, y);
-            y += fontSize * 0.6;
+            
+            // Draw horizontal line
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(150, 150, 150); // Gray color
+            doc.line(margin, y, margin + maxWidth, y);
+            
+            // Add spacing after the line
+            y += 6;
+            continue;
           }
-          y += 2;
+          
+          switch (element.type) {
+            case 'h1':
+              fontSize = 18;
+              fontStyle = 'bold';
+              break;
+            case 'h2':
+              fontSize = 16;
+              fontStyle = 'bold';
+              break;
+            case 'h3':
+              fontSize = 14;
+              fontStyle = 'bold';
+              break;
+            case 'h4':
+              fontSize = 13;
+              fontStyle = 'bold';
+              break;
+            case 'list-item':
+              leftMargin = margin + 5;
+              break;
+            case 'quote':
+              leftMargin = margin + 5;
+              fontStyle = 'italic';
+              break;
+            case 'code-block':
+              fontSize = 10;
+              leftMargin = margin + 3;
+              break;
+          }
+
+          doc.setFontSize(fontSize);
+          
+          if (element.type === 'code-block') {
+            const codeLines = element.text.split('\n');
+            const lineHeight = fontSize * 0.5;
+            
+            // Calculate available width for code block
+            const codeBlockWidth = maxWidth - (leftMargin - margin) - 4;
+            
+            // Process each line and wrap if necessary
+            const wrappedLines: string[] = [];
+            doc.setFont('Courier', 'normal');
+            
+            for (const line of codeLines) {
+              const lineWidth = doc.getTextWidth(line);
+              if (lineWidth > codeBlockWidth) {
+                // Line is too long, need to wrap it
+                const wrapped = doc.splitTextToSize(line, codeBlockWidth);
+                wrappedLines.push(...wrapped);
+              } else {
+                wrappedLines.push(line);
+              }
+            }
+            
+            const blockHeight = wrappedLines.length * lineHeight + 4;
+            
+            if (y + blockHeight > pageHeight) {
+              doc.addPage();
+              y = 10;
+            }
+            
+            // Use custom code block background color
+            const codeBlockBg = hexToRgb(codeBlockBgColor);
+            doc.setFillColor(codeBlockBg.r, codeBlockBg.g, codeBlockBg.b);
+            // Use rounded rectangle for code blocks with 1px radius
+            doc.roundedRect(leftMargin - 2, y - 3, codeBlockWidth + 4, blockHeight, 1, 1, 'F');
+            
+            // Use custom code block text color
+            const codeBlockText = hexToRgb(codeBlockTextColor);
+            doc.setTextColor(codeBlockText.r, codeBlockText.g, codeBlockText.b);
+            
+            for (const line of wrappedLines) {
+              doc.text(line, leftMargin, y);
+              y += lineHeight;
+            }
+            
+            // Reset text color to black for other content
+            doc.setTextColor(0, 0, 0);
+            y += 4;
+            continue;
+          }
+          
+          doc.setFont('Helvetica', fontStyle);
+          
+          if (element.type === 'h1') {
+            y += 10;
+          } else if (element.type === 'h2') {
+            y += 8;
+          } else if (element.type === 'h3') {
+            y += 6;
+          } else if (element.type === 'h4') {
+            y += 5;
+          }
+          
+          // Handle text with inline formatting
+          const displayText = element.type === 'list-item' ? `• ${element.text}` : element.text;
+          
+          // Check if element has inline formatting
+          const hasInlineFormatting = element.text.includes('**') || element.text.includes('*') || element.text.includes('`');
+          
+          // Track starting Y position for quote borders
+          let startY = y;
+          
+          if (hasInlineFormatting && element.type !== 'h1' && element.type !== 'h2' && element.type !== 'h3' && element.type !== 'h4') {
+            // Split into segments with formatting
+            const segments = splitTextByFormatting(displayText);
+            let currentX = leftMargin;
+            const lineMaxX = margin + maxWidth;
+            
+            for (const segment of segments) {
+              // Check if we need a new page
+              if (y + fontSize * 0.6 > pageHeight) {
+                doc.addPage();
+                y = 10;
+                currentX = leftMargin;
+              }
+              
+              // Set font for this segment
+              if (segment.style === 'code') {
+                doc.setFont('Courier', 'normal');
+              } else {
+                doc.setFont('Helvetica', segment.style === 'bold' ? 'bold' : segment.style === 'italic' ? 'italic' : 'normal');
+              }
+              
+              // Split segment into words for proper wrapping
+              const words = segment.text.split(' ');
+              
+              for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                const wordWithSpace = i < words.length - 1 ? word + ' ' : word;
+                const wordWidth = doc.getTextWidth(wordWithSpace);
+                
+                // Check if word fits on current line
+                if (currentX + wordWidth > lineMaxX) {
+                  // Word doesn't fit, move to next line
+                  y += fontSize * 0.5;
+                  currentX = leftMargin;
+                  
+                  // Check page overflow
+                  if (y + fontSize * 0.6 > pageHeight) {
+                    doc.addPage();
+                    y = 10;
+                    currentX = leftMargin;
+                  }
+                }
+                
+                // For inline code, draw tight background with rounded corners
+                if (segment.style === 'code') {
+                  const padding = 1;
+                  // Reduced top padding and minimal height
+                  const bgHeight = fontSize * 0.5;
+                  const bgY = y - fontSize * 0.35; // Reduced from 0.4 to 0.35 for less top padding
+                  const bgX = currentX - padding;
+                  const bgWidth = wordWidth + padding * 2;
+                  const radius = 1; // subtle rounded corner radius
+                  
+                  // Use custom inline code background color
+                  const inlineCodeBg = hexToRgb(inlineCodeBgColor);
+                  doc.setFillColor(inlineCodeBg.r, inlineCodeBg.g, inlineCodeBg.b);
+                  // Draw rounded rectangle using lines and arcs
+                  doc.roundedRect(bgX, bgY, bgWidth, bgHeight, radius, radius, 'F');
+                }
+                
+                // Use custom inline code text color if this is code
+                if (segment.style === 'code') {
+                  const inlineCodeText = hexToRgb(inlineCodeTextColor);
+                  doc.setTextColor(inlineCodeText.r, inlineCodeText.g, inlineCodeText.b);
+                }
+                
+                // Render the word
+                doc.text(wordWithSpace, currentX, y);
+                
+                // Reset text color if it was code
+                if (segment.style === 'code') {
+                  doc.setTextColor(0, 0, 0);
+                }
+                currentX += wordWidth;
+              }
+            }
+            
+            // Move to next line after finishing all segments
+            y += fontSize * 0.5;
+            
+            // Draw quote border if element is a quote
+            if (element.type === 'quote') {
+              const quoteHeight = y - startY + 2;
+              doc.setDrawColor(100, 100, 100);
+              doc.setLineWidth(2);
+              doc.line(margin + 2, startY - fontSize * 0.7, margin + 2, startY - fontSize * 0.7 + quoteHeight);
+            }
+          } else {
+            // No inline formatting, use original approach
+            const cleanText = stripMarkdownSyntax(displayText);
+            const lines = doc.splitTextToSize(cleanText, maxWidth - (leftMargin - margin));
+            
+            // Track starting position for quote border
+            startY = y;
+            
+            for (const line of lines) {
+              if (y + fontSize * 0.6 > pageHeight) {
+                doc.addPage();
+                y = 10;
+                startY = y;
+              }
+              
+              doc.text(line, leftMargin, y);
+              y += fontSize * 0.5;
+            }
+            
+            // Draw quote border if element is a quote
+            if (element.type === 'quote') {
+              const quoteHeight = y - startY + 2;
+              doc.setDrawColor(100, 100, 100);
+              doc.setLineWidth(2);
+              doc.line(margin + 2, startY - fontSize * 0.7, margin + 2, startY - fontSize * 0.7 + quoteHeight);
+            }
+          }
+          
+          if (element.type === 'h1' || element.type === 'h2' || element.type === 'h3' || element.type === 'h4') {
+            y += 3;
+          } else {
+            y += 2;
+          }
         }
 
         filename = `${customFilename}.pdf`;
         fileContent = doc.output('datauristring').split(',')[1];
-        doc.save(filename);
       } else if (format === 'json') {
-        const { firstH1, content: parsedContent } = parseHtmlForJson(content);
+        const { firstH1, content: parsedContent } = parseMarkdownForJson(content);
         const jsonContent: { [key: string]: any } = { [taskTitle || 'Document']: firstH1 || 'Untitled' };
         Object.assign(jsonContent, parsedContent);
         fileContent = JSON.stringify(jsonContent, null, 2);
         filename = `${customFilename}.json`;
-        const blob = new Blob([fileContent], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
       }
 
+      // Save to database only
       const data = await supabase
         .from('ai_user_settings')
         .select('files')
@@ -378,14 +1175,329 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
 
       setError(null);
       setShowFilenameForm(null);
+      // Show success message
+      toast.success(`File saved successfully to /account/files!`);
     } catch (err: any) {
       console.error('[ChatMessages] Save file error:', err);
-      setError(err.message || `Failed to save message to ${format} file`);
+      toast.error(err.message || `Failed to save file`);
     }
-  }, [accessToken, userId, messages, setError]);
+  }, [accessToken, userId, messages, toast]);
+
+  const downloadFileToLocal = useCallback(async (content: string, index: number, format: 'txt' | 'pdf' | 'json' | 'md', customFilename: string) => {
+    try {
+      const textContent = content.replace(/<[^>]+>/g, '');
+      const taskTitle = messages[index].taskName || '';
+      let fileContent: string = '';
+      let filename: string = '';
+      let mimeType: string = '';
+
+      if (format === 'txt') {
+        fileContent = taskTitle ? `${taskTitle}\n\n${textContent}` : textContent;
+        filename = `${customFilename}.txt`;
+        mimeType = 'text/plain';
+      } else if (format === 'md') {
+        fileContent = taskTitle ? `# ${taskTitle}\n\n${textContent}` : textContent;
+        filename = `${customFilename}.md`;
+        mimeType = 'text/markdown';
+      } else if (format === 'pdf') {
+        const doc = new jsPDF();
+        let y = 10;
+        const pageHeight = 277;
+        const margin = 10;
+        const maxWidth = 190;
+
+        if (taskTitle) {
+          doc.setFont('Helvetica', 'italic');
+          doc.setFontSize(10);
+          const taskLines = doc.splitTextToSize(taskTitle, maxWidth);
+          doc.text(taskLines, margin, y);
+          y += taskLines.length * 6 + 4;
+        }
+
+        const elements = parseMarkdownForPdf(textContent);
+        
+        for (const element of elements) {
+          let fontSize = 12;
+          let fontStyle: 'normal' | 'bold' | 'italic' = 'normal';
+          let leftMargin = margin;
+          
+          // Handle horizontal rules
+          if (element.type === 'horizontal-rule') {
+            y += 4;
+            
+            if (y + 2 > pageHeight) {
+              doc.addPage();
+              y = 10;
+            }
+            
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(150, 150, 150);
+            doc.line(margin, y, margin + maxWidth, y);
+            
+            y += 6;
+            continue;
+          }
+          
+          switch (element.type) {
+            case 'h1':
+              fontSize = 18;
+              fontStyle = 'bold';
+              break;
+            case 'h2':
+              fontSize = 16;
+              fontStyle = 'bold';
+              break;
+            case 'h3':
+              fontSize = 14;
+              fontStyle = 'bold';
+              break;
+            case 'h4':
+              fontSize = 13;
+              fontStyle = 'bold';
+              break;
+            case 'list-item':
+              leftMargin = margin + 5;
+              break;
+            case 'quote':
+              leftMargin = margin + 5;
+              fontStyle = 'italic';
+              break;
+            case 'code-block':
+              fontSize = 10;
+              leftMargin = margin + 3;
+              break;
+          }
+
+          doc.setFontSize(fontSize);
+          
+          if (element.type === 'code-block') {
+            const codeLines = element.text.split('\n');
+            const lineHeight = fontSize * 0.5;
+            
+            // Calculate available width for code block
+            const codeBlockWidth = maxWidth - (leftMargin - margin) - 4;
+            
+            // Process each line and wrap if necessary
+            const wrappedLines: string[] = [];
+            doc.setFont('Courier', 'normal');
+            
+            for (const line of codeLines) {
+              const lineWidth = doc.getTextWidth(line);
+              if (lineWidth > codeBlockWidth) {
+                // Line is too long, need to wrap it
+                const wrapped = doc.splitTextToSize(line, codeBlockWidth);
+                wrappedLines.push(...wrapped);
+              } else {
+                wrappedLines.push(line);
+              }
+            }
+            
+            const blockHeight = wrappedLines.length * lineHeight + 4;
+            
+            if (y + blockHeight > pageHeight) {
+              doc.addPage();
+              y = 10;
+            }
+            
+            // Use custom code block background color
+            const codeBlockBg = hexToRgb(codeBlockBgColor);
+            doc.setFillColor(codeBlockBg.r, codeBlockBg.g, codeBlockBg.b);
+            // Use rounded rectangle for code blocks with 1px radius
+            doc.roundedRect(leftMargin - 2, y - 3, codeBlockWidth + 4, blockHeight, 1, 1, 'F');
+            
+            // Use custom code block text color
+            const codeBlockText = hexToRgb(codeBlockTextColor);
+            doc.setTextColor(codeBlockText.r, codeBlockText.g, codeBlockText.b);
+            
+            for (const line of wrappedLines) {
+              doc.text(line, leftMargin, y);
+              y += lineHeight;
+            }
+            
+            // Reset text color to black for other content
+            doc.setTextColor(0, 0, 0);
+            y += 4;
+            continue;
+          }
+          
+          doc.setFont('Helvetica', fontStyle);
+          
+          if (element.type === 'h1') {
+            y += 10;
+          } else if (element.type === 'h2') {
+            y += 8;
+          } else if (element.type === 'h3') {
+            y += 6;
+          } else if (element.type === 'h4') {
+            y += 5;
+          }
+          
+          // Handle text with inline formatting
+          const displayText = element.type === 'list-item' ? `• ${element.text}` : element.text;
+          
+          // Check if element has inline formatting
+          const hasInlineFormatting = element.text.includes('**') || element.text.includes('*') || element.text.includes('`');
+          
+          // Track starting Y position for quote borders
+          let startY = y;
+          
+          if (hasInlineFormatting && element.type !== 'h1' && element.type !== 'h2' && element.type !== 'h3' && element.type !== 'h4') {
+            // Split into segments with formatting
+            const segments = splitTextByFormatting(displayText);
+            let currentX = leftMargin;
+            const lineMaxX = margin + maxWidth;
+            
+            for (const segment of segments) {
+              // Check if we need a new page
+              if (y + fontSize * 0.6 > pageHeight) {
+                doc.addPage();
+                y = 10;
+                currentX = leftMargin;
+              }
+              
+              // Set font for this segment
+              if (segment.style === 'code') {
+                doc.setFont('Courier', 'normal');
+              } else {
+                doc.setFont('Helvetica', segment.style === 'bold' ? 'bold' : segment.style === 'italic' ? 'italic' : 'normal');
+              }
+              
+              // Split segment into words for proper wrapping
+              const words = segment.text.split(' ');
+              
+              for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                const wordWithSpace = i < words.length - 1 ? word + ' ' : word;
+                const wordWidth = doc.getTextWidth(wordWithSpace);
+                
+                // Check if word fits on current line
+                if (currentX + wordWidth > lineMaxX) {
+                  // Word doesn't fit, move to next line
+                  y += fontSize * 0.5;
+                  currentX = leftMargin;
+                  
+                  // Check page overflow
+                  if (y + fontSize * 0.6 > pageHeight) {
+                    doc.addPage();
+                    y = 10;
+                    currentX = leftMargin;
+                  }
+                }
+                
+                // For inline code, draw tight background with rounded corners
+                if (segment.style === 'code') {
+                  const padding = 1;
+                  // Reduced top padding and minimal height
+                  const bgHeight = fontSize * 0.5;
+                  const bgY = y - fontSize * 0.35; // Reduced from 0.4 to 0.35 for less top padding
+                  const bgX = currentX - padding;
+                  const bgWidth = wordWidth + padding * 2;
+                  const radius = 1; // subtle rounded corner radius
+                  
+                  // Use custom inline code background color
+                  const inlineCodeBg = hexToRgb(inlineCodeBgColor);
+                  doc.setFillColor(inlineCodeBg.r, inlineCodeBg.g, inlineCodeBg.b);
+                  // Draw rounded rectangle using lines and arcs
+                  doc.roundedRect(bgX, bgY, bgWidth, bgHeight, radius, radius, 'F');
+                }
+                
+                // Use custom inline code text color if this is code
+                if (segment.style === 'code') {
+                  const inlineCodeText = hexToRgb(inlineCodeTextColor);
+                  doc.setTextColor(inlineCodeText.r, inlineCodeText.g, inlineCodeText.b);
+                }
+                
+                // Render the word
+                doc.text(wordWithSpace, currentX, y);
+                
+                // Reset text color if it was code
+                if (segment.style === 'code') {
+                  doc.setTextColor(0, 0, 0);
+                }
+                currentX += wordWidth;
+              }
+            }
+            
+            // Move to next line after finishing all segments
+            y += fontSize * 0.5;
+            
+            // Draw quote border if element is a quote
+            if (element.type === 'quote') {
+              const quoteHeight = y - startY + 2;
+              doc.setDrawColor(100, 100, 100);
+              doc.setLineWidth(2);
+              doc.line(margin + 2, startY - fontSize * 0.7, margin + 2, startY - fontSize * 0.7 + quoteHeight);
+            }
+          } else {
+            // No inline formatting, use original approach
+            const cleanText = stripMarkdownSyntax(displayText);
+            const lines = doc.splitTextToSize(cleanText, maxWidth - (leftMargin - margin));
+            
+            // Track starting position for quote border
+            startY = y;
+            
+            for (const line of lines) {
+              if (y + fontSize * 0.6 > pageHeight) {
+                doc.addPage();
+                y = 10;
+                startY = y;
+              }
+              
+              doc.text(line, leftMargin, y);
+              y += fontSize * 0.5;
+            }
+            
+            // Draw quote border if element is a quote
+            if (element.type === 'quote') {
+              const quoteHeight = y - startY + 2;
+              doc.setDrawColor(100, 100, 100);
+              doc.setLineWidth(2);
+              doc.line(margin + 2, startY - fontSize * 0.7, margin + 2, startY - fontSize * 0.7 + quoteHeight);
+            }
+          }
+          
+          if (element.type === 'h1' || element.type === 'h2' || element.type === 'h3' || element.type === 'h4') {
+            y += 3;
+          } else {
+            y += 2;
+          }
+        }
+
+        filename = `${customFilename}.pdf`;
+        doc.save(filename);
+        setShowDownloadModal(null);
+        toast.success('PDF downloaded successfully!');
+        return;
+      } else if (format === 'json') {
+        const { firstH1, content: parsedContent } = parseMarkdownForJson(content);
+        const jsonContent: { [key: string]: any } = { [taskTitle || 'Document']: firstH1 || 'Untitled' };
+        Object.assign(jsonContent, parsedContent);
+        fileContent = JSON.stringify(jsonContent, null, 2);
+        filename = `${customFilename}.json`;
+        mimeType = 'application/json';
+      }
+
+      // Download for non-PDF formats
+      const blob = new Blob([fileContent], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setShowDownloadModal(null);
+      toast.success(`${format.toUpperCase()} file downloaded successfully!`);
+    } catch (err: any) {
+      console.error('[ChatMessages] Download file error:', err);
+      toast.error(err.message || `Failed to download file`);
+    }
+  }, [messages, toast]);
 
   return (
-    <div className={`flex-1 overflow-y-auto p-6 space-y-4 ${isFullscreen ? styles.centeredMessages : ''}`}>
+    <div className={`flex-1 overflow-y-auto p-2 sm:p-6 space-y-4 ${isFullscreen ? styles.centeredMessages : ''}`}>
       {messages.map((msg, index) => (
         <div
           key={index}
@@ -398,66 +1510,87 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
                 : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3'
             } relative group hover:shadow-lg transition-all duration-200`}
           >
-            <div className="flex mb-2.5 justify-end gap-1">
+            <div className="flex mb-2.5 justify-end gap-1 sticky top-0 z-10 py-1 -mt-1">
               {msg.role === 'assistant' && (
                 <>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <Tooltip variant="info-top" content="Copy Message">
+                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                    <Tooltip variant="info-top" content="Save to Files">
                       <button
-                        onClick={() => copyMessage(msg.content, index)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                        aria-label="Copy message"
+                        onClick={() => openFilenameForm(index, 'md')}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                        aria-label="Save to files"
                       >
-                        {copiedMessageId === index ? (
-                          <CheckIcon className="h-4 w-4" />
-                        ) : (
-                          <ClipboardIcon className="h-4 w-4" />
-                        )}
+                        <ArrowDownOnSquareIcon className="h-4 w-4" />
                       </button>
                     </Tooltip>
-                    <Tooltip variant="info-top" content="Save as Text">
+                    <Tooltip variant="info-top" content="Download to Computer">
                       <button
-                        onClick={() => openFilenameForm(index, 'txt')}
+                        onClick={() => openDownloadModal(index)}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                        aria-label="Save message as text"
+                        aria-label="Download to computer"
                       >
-                        <DocumentTextIcon className="h-4 w-4" />
+                        <ArrowDownTrayIcon className="h-4 w-4" />
                       </button>
                     </Tooltip>
-                    <Tooltip variant="info-top" content="Save as PDF">
+                    <Tooltip variant="info-top" content="Preview">
                       <button
-                        onClick={() => openFilenameForm(index, 'pdf')}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                        aria-label="Save message as PDF"
+                        onClick={() => openPreviewModal(index)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-green-600 hover:bg-green-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                        aria-label="Preview message"
                       >
-                        <DocumentArrowDownIcon className="h-4 w-4" />
+                        <EyeIcon className="h-4 w-4" />
                       </button>
                     </Tooltip>
-                    <Tooltip variant="info-top" content="Save as JSON">
+                    <Tooltip variant="info-top" content="Edit">
                       <button
-                        onClick={() => openFilenameForm(index, 'json')}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                        aria-label="Save message as JSON"
+                        onClick={() => openEditModal(index)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
+                        aria-label="Edit message"
                       >
-                        <DocumentTextIcon className="h-4 w-4" />
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip variant="info-top" content="Delete">
+                      <button
+                        onClick={() => handleDeleteMessage(index)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                        aria-label="Delete message"
+                      >
+                        <TrashIcon className="h-4 w-4" />
                       </button>
                     </Tooltip>
                   </div>
                 </>
               )}
-            </div>
-            <div className="overflow-y-auto prose prose-sm max-w-none">
-              {msg.role === 'assistant' && msg.taskName && (
-                <div className="inline-flex items-center gap-2 mb-3 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full">
-                  <span className="text-xs font-medium text-blue-700">{msg.taskName}</span>
+              {msg.role === 'user' && (
+                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                  <Tooltip variant="info-top" content="Delete">
+                    <button
+                      onClick={() => handleDeleteMessage(index)}
+                      className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-opacity-50"
+                      aria-label="Delete message"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </Tooltip>
                 </div>
               )}
-              <div
-                className={`${msg.role === 'user' ? 'text-white whitespace-pre-wrap leading-relaxed' : 'text-slate-800 leading-relaxed'}`}
-                dangerouslySetInnerHTML={{
-                  __html: msg.role === 'assistant' ? msg.content : msg.content.replace(/\n/g, '<br>'),
-                }}
-              />
+            </div>
+            <div className="overflow-y-auto prose prose-sm max-w-none dark:prose-invert">
+              {msg.role === 'assistant' && msg.taskName && (
+                <div className="inline-flex items-center gap-2 mb-3 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-full">
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{msg.taskName}</span>
+                </div>
+              )}
+              {msg.role === 'assistant' ? (
+                <div className="text-slate-800 dark:text-slate-200 leading-relaxed">
+                  <ReactMarkdown>{msg.content.replace(/<[^>]+>/g, '')}</ReactMarkdown>
+                </div>
+              ) : (
+                <div className="text-white whitespace-pre-wrap leading-relaxed">
+                  {msg.content}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -483,7 +1616,423 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
         onClose={() => setShowFilenameForm(null)}
         onSave={handleSaveFile}
         defaultFilename={defaultFilename}
+        modalType="save"
       />
+
+      {/* Download Modal */}
+      <SaveFileModal
+        isOpen={showDownloadModal !== null}
+        onClose={() => setShowDownloadModal(null)}
+        onSave={handleDownloadFile}
+        defaultFilename={defaultFilename}
+        modalType="download"
+      />
+
+      {/* Preview Modal */}
+      {showPreviewModal !== null && createPortal(
+        <div className={styles.modalOverlay} style={{ zIndex: 10000010 }}>
+          <div 
+            style={{ 
+              zIndex: 10000011, 
+              maxWidth: '800px',
+              width: '95vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              backdropFilter: 'blur(32px)',
+              WebkitBackdropFilter: 'blur(32px)',
+              backgroundColor: 'rgba(255, 255, 255, 0.5)',
+              borderRadius: '1rem',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              overflow: 'hidden'
+            }}
+            className="dark:bg-gray-900/50"
+          >
+            <div 
+              style={{ 
+                flexShrink: 0,
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                background: 'rgba(255, 255, 255, 0.3)',
+                borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '1rem 1rem 0 0'
+              }}
+              className="dark:bg-gray-900/30 dark:border-slate-700/50"
+            >
+              <div className="flex justify-between items-center w-full">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <EyeIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                    <h2 className={styles.modalTitle}>Preview</h2>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setPreviewFormat('md')}
+                      className={`px-2 py-1 text-xs rounded transition-colors ${previewFormat === 'md' ? 'bg-blue-500/30 text-blue-700 dark:text-blue-300' : 'bg-white/20 hover:bg-white/30 text-slate-600 dark:text-slate-300'}`}
+                    >
+                      .md
+                    </button>
+                    <button
+                      onClick={() => setPreviewFormat('txt')}
+                      className={`px-2 py-1 text-xs rounded transition-colors ${previewFormat === 'txt' ? 'bg-blue-500/30 text-blue-700 dark:text-blue-300' : 'bg-white/20 hover:bg-white/30 text-slate-600 dark:text-slate-300'}`}
+                    >
+                      .txt
+                    </button>
+                    <button
+                      onClick={() => setPreviewFormat('pdf')}
+                      className={`px-2 py-1 text-xs rounded transition-colors ${previewFormat === 'pdf' ? 'bg-blue-500/30 text-blue-700 dark:text-blue-300' : 'bg-white/20 hover:bg-white/30 text-slate-600 dark:text-slate-300'}`}
+                    >
+                      .pdf
+                    </button>
+                    <button
+                      onClick={() => setPreviewFormat('json')}
+                      className={`px-2 py-1 text-xs rounded transition-colors ${previewFormat === 'json' ? 'bg-blue-500/30 text-blue-700 dark:text-blue-300' : 'bg-white/20 hover:bg-white/30 text-slate-600 dark:text-slate-300'}`}
+                    >
+                      .json
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPreviewModal(null)}
+                  className={styles.modalCloseButton}
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+              <div className="max-h-full overflow-y-auto bg-white/30 dark:bg-slate-800/30 rounded-lg p-4 backdrop-blur-sm border border-white/20">
+                  {previewFormat === 'md' && (
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown>{previewContent}</ReactMarkdown>
+                    </div>
+                  )}
+                  {previewFormat === 'txt' && (
+                    <pre className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono">
+                      {previewContent}
+                    </pre>
+                  )}
+                  {previewFormat === 'json' && (
+                    <pre className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono">
+                      {(() => {
+                        const { firstH1, content: parsedContent } = parseMarkdownForJson(previewContent);
+                        const taskTitle = showPreviewModal !== null ? messages[showPreviewModal].taskName || '' : '';
+                        const jsonContent: { [key: string]: any } = { [taskTitle || 'Document']: firstH1 || 'Untitled' };
+                        Object.assign(jsonContent, parsedContent);
+                        return JSON.stringify(jsonContent, null, 2);
+                      })()}
+                    </pre>
+                  )}
+                  {previewFormat === 'pdf' && (
+                    <div className="space-y-4">
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        {parseMarkdownForPdf(previewContent).map((element, idx) => {
+                          if (element.type === 'horizontal-rule') {
+                            return (
+                              <hr key={idx} className="my-4 border-t-2 border-slate-300 dark:border-slate-600" />
+                            );
+                          }
+                          
+                          const displayText = element.type === 'list-item' ? element.text : element.text;
+                          const hasInlineFormatting = element.text.includes('**') || element.text.includes('*') || element.text.includes('`');
+                          
+                          return (
+                            <div key={idx} className={`
+                              ${element.type === 'h1' ? 'text-xl font-bold mt-4 mb-2' : ''}
+                              ${element.type === 'h2' ? 'text-lg font-bold mt-6 mb-2' : ''}
+                              ${element.type === 'h3' ? 'text-base font-bold mt-4 mb-2' : ''}
+                              ${element.type === 'h4' ? 'text-sm font-bold mt-3 mb-2' : ''}
+                              ${element.type === 'paragraph' ? 'text-sm mb-2' : ''}
+                              ${element.type === 'list-item' ? 'text-sm ml-4 mb-1' : ''}
+                              ${element.type === 'quote' ? 'text-sm italic ml-4 mb-2 border-l-4 border-slate-400 dark:border-slate-500 pl-3' : ''}
+                              ${element.type === 'code-block' ? 'text-xs font-mono bg-slate-100 dark:bg-slate-700 p-3 rounded mb-2 whitespace-pre-wrap' : ''}
+                            `}>
+                              {element.type === 'list-item' && '• '}
+                              {element.type === 'code-block' ? (
+                                element.text
+                              ) : hasInlineFormatting && element.type !== 'h1' && element.type !== 'h2' && element.type !== 'h3' && element.type !== 'h4' ? (
+                                renderFormattedText(displayText)
+                              ) : (
+                                stripMarkdownSyntax(displayText)
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal !== null && createPortal(
+        <div className={styles.modalOverlay} style={{ zIndex: 10000010 }}>
+          <div 
+            style={{ 
+              zIndex: 10000011, 
+              maxWidth: '1200px', 
+              width: '95vw',
+              height: '90vh', 
+              display: 'flex', 
+              flexDirection: 'column',
+              backdropFilter: 'blur(32px)',
+              WebkitBackdropFilter: 'blur(32px)',
+              backgroundColor: 'rgba(255, 255, 255, 0.5)',
+              borderRadius: '1rem',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              overflow: 'hidden'
+            }}
+            className="dark:bg-gray-900/50"
+          >
+            {/* Fixed Header */}
+            <div 
+              style={{ 
+                flexShrink: 0,
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                background: 'rgba(255, 255, 255, 0.3)',
+                borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '1rem 1rem 0 0'
+              }}
+              className="dark:bg-gray-900/30 dark:border-slate-700/50"
+            >
+              <div className="flex justify-between items-center w-full">
+                <div className="flex items-center gap-2">
+                  <PencilIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                  <h2 className={styles.modalTitle}>Edit</h2>
+                </div>
+                <button
+                  onClick={() => setShowEditModal(null)}
+                  className={styles.modalCloseButton}
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Markdown Toolbar Panel */}
+            <div className="px-4 sm:px-6 pt-4 pb-2 border-b border-white/20" style={{ flexShrink: 0, overflowX: 'auto' }}>
+              <div className="flex flex-wrap gap-1 p-2 backdrop-blur-xl bg-white/30 dark:bg-gray-800/30 rounded-lg border border-slate-300/50 dark:border-slate-600/50 min-w-max sm:min-w-0">
+                {/* Headings */}
+                <button
+                  onClick={() => insertHeading(1)}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Heading 1"
+                >
+                  <span className="font-bold text-sm">H1</span>
+                </button>
+                <button
+                  onClick={() => insertHeading(2)}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Heading 2"
+                >
+                  <span className="font-bold text-sm">H2</span>
+                </button>
+                <button
+                  onClick={() => insertHeading(3)}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Heading 3"
+                >
+                  <span className="font-bold text-sm">H3</span>
+                </button>
+                
+                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1"></div>
+                
+                {/* Text Formatting */}
+                <button
+                  onClick={() => insertMarkdown('**', '**', 'bold text')}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Bold"
+                >
+                  <span className="font-bold">B</span>
+                </button>
+                <button
+                  onClick={() => insertMarkdown('*', '*', 'italic text')}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Italic"
+                >
+                  <span className="italic">I</span>
+                </button>
+                <button
+                  onClick={() => insertMarkdown('~~', '~~', 'strikethrough')}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Strikethrough"
+                >
+                  <span className="line-through">S</span>
+                </button>
+                <button
+                  onClick={() => insertMarkdown('`', '`', 'code')}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Inline Code"
+                >
+                  <CodeBracketIcon className="h-4 w-4" />
+                </button>
+                
+                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1"></div>
+                
+                {/* Lists */}
+                <button
+                  onClick={() => insertList(false)}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Bullet List"
+                >
+                  <ListBulletIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => insertList(true)}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Numbered List"
+                >
+                  <Bars3BottomLeftIcon className="h-4 w-4" />
+                </button>
+                
+                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1"></div>
+                
+                {/* Links & Images */}
+                <button
+                  onClick={() => insertMarkdown('[', '](url)', 'link text')}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Link"
+                >
+                  <LinkIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => insertMarkdown('![', '](url)', 'alt text')}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Image"
+                >
+                  <PhotoIcon className="h-4 w-4" />
+                </button>
+                
+                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1"></div>
+                
+                {/* Quote & Code Block */}
+                <button
+                  onClick={() => insertMarkdown('> ', '', 'quote')}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Quote"
+                >
+                  <span className="font-bold">"</span>
+                </button>
+                <button
+                  onClick={() => insertMarkdown('```\n', '\n```', 'code block')}
+                  className="p-2 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  title="Code Block"
+                >
+                  <CodeBracketIcon className="h-4 w-4" />
+                </button>
+                
+                <div className="hidden sm:block flex-1"></div>
+                
+                {/* Color Pickers */}
+                <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-300 dark:border-slate-600">
+                  <span className="text-xs text-slate-600 dark:text-slate-400 hidden sm:inline">Colors:</span>
+                  <div className="flex gap-1">
+                    <input
+                      type="color"
+                      value={inlineCodeBgColor}
+                      onChange={(e) => setInlineCodeBgColor(e.target.value)}
+                      className="w-6 h-6 rounded cursor-pointer border border-slate-300 dark:border-slate-600"
+                      title="Inline Code Background"
+                    />
+                    <input
+                      type="color"
+                      value={inlineCodeTextColor}
+                      onChange={(e) => setInlineCodeTextColor(e.target.value)}
+                      className="w-6 h-6 rounded cursor-pointer border border-slate-300 dark:border-slate-600"
+                      title="Inline Code Text"
+                    />
+                    <input
+                      type="color"
+                      value={codeBlockBgColor}
+                      onChange={(e) => setCodeBlockBgColor(e.target.value)}
+                      className="w-6 h-6 rounded cursor-pointer border border-slate-300 dark:border-slate-600"
+                      title="Code Block Background"
+                    />
+                    <input
+                      type="color"
+                      value={codeBlockTextColor}
+                      onChange={(e) => setCodeBlockTextColor(e.target.value)}
+                      className="w-6 h-6 rounded cursor-pointer border border-slate-300 dark:border-slate-600"
+                      title="Code Block Text"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Scrollable Body */}
+            <div 
+              className="flex-1 px-4 sm:px-6 py-4" 
+              style={{ 
+                minHeight: 0,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1" style={{ minHeight: 0 }}>
+                <div className="flex flex-col" style={{ minHeight: 0 }}>
+                  <h3 className={styles.modalSectionTitle} style={{ flexShrink: 0, marginBottom: '0.5rem' }}>Editor</h3>
+                  <textarea
+                    ref={textareaRef}
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="flex-1 w-full px-4 py-3 bg-white/30 dark:bg-slate-800/30 backdrop-blur-sm border border-white/20 rounded-lg text-slate-800 dark:text-slate-200 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    placeholder="Edit your markdown content here..."
+                    style={{ minHeight: 0, height: '100%' }}
+                  />
+                </div>
+                
+                <div className="flex flex-col" style={{ minHeight: 0 }}>
+                  <h3 className={styles.modalSectionTitle} style={{ flexShrink: 0, marginBottom: '0.5rem' }}>Preview</h3>
+                  <div 
+                    className="flex-1 overflow-y-auto bg-white/30 dark:bg-slate-800/30 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-3" 
+                    style={{ minHeight: 0, height: '100%' }}
+                  >
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown>{editContent}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Fixed Bottom Panel with Buttons */}
+            <div 
+              className="px-4 sm:px-6 py-4 border-t border-white/20 bg-white/10 dark:bg-slate-800/10" 
+              style={{ 
+                flexShrink: 0,
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)'
+              }}
+            >
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowEditModal(null)}
+                  className={styles.modalBadge}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className={`${styles.modalBadge} ${styles.selected}`}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

@@ -23,6 +23,8 @@ const ContactForm = dynamic(() => import('@/components/contact/ContactForm'));
 const BrandsSection = dynamic(() => import('@/components/TemplateSections/BrandsSection'));
 const FAQSectionWrapper = dynamic(() => import('@/components/TemplateSections/FAQSectionWrapper'));
 const PricingPlansSectionWrapper = dynamic(() => import('@/components/TemplateSections/PricingPlansSectionWrapper'));
+const TeamMember = dynamic(() => import('@/components/TemplateSections/TeamMember'));
+const Testimonials = dynamic(() => import('@/components/TemplateSections/Testimonials'));
 
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
@@ -205,7 +207,7 @@ interface TemplateSectionData {
   is_slider?: boolean;
   
   // New consolidated field
-  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans';
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials';
   
   // DEPRECATED - Keep for backward compatibility
   is_reviews_section: boolean;
@@ -420,10 +422,10 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
         />
       )}
       
-      <div
+        <div
         className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto ${
           // Remove spacing for special sections that manage their own layout
-          ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'help_center', 'real_estate'].includes(section.section_type || '')
+          ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'help_center', 'real_estate', 'team', 'testimonials'].includes(section.section_type || '')
             ? '' 
             : section.is_slider 
             ? 'py-4 space-y-12' 
@@ -456,6 +458,12 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
             
             case 'pricing_plans':
               return <PricingPlansSectionWrapper section={section} />;
+            
+            case 'team':
+              return <TeamMember section={section} />;
+            
+            case 'testimonials':
+              return <Testimonials section={section} />;
             
             case 'general':
             default:

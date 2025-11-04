@@ -22,6 +22,7 @@ import {
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
   StarIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { RadioGroup } from '@headlessui/react';
 import { useTemplateSectionEdit } from './context';
@@ -30,6 +31,7 @@ import EditableGradientPicker from '@/components/Shared/EditableFields/EditableG
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import DeleteSectionModal from './DeleteSectionModal';
 import MetricManager from './MetricManager';
+import ProfileDataManager from './ProfileDataManager';
 import Button from '@/ui/Button';
 import { cn } from '@/lib/utils';
 import { BaseModal } from '../_shared/BaseModal';
@@ -204,6 +206,20 @@ const SECTION_TYPE_OPTIONS = [
     icon: CurrencyDollarIcon,
     color: 'yellow',
   },
+  {
+    value: 'team' as const,
+    label: 'Team Members',
+    description: 'Display team member profiles',
+    icon: UserGroupIcon,
+    color: 'teal',
+  },
+  {
+    value: 'testimonials' as const,
+    label: 'Testimonials',
+    description: 'Customer testimonials and ratings',
+    icon: StarIcon,
+    color: 'rose',
+  },
 ];
 
 interface Metric {
@@ -238,7 +254,7 @@ interface TemplateSectionFormData {
   is_slider: boolean;
   
   // New consolidated field
-  section_type: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans';
+  section_type: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials';
   
   // DEPRECATED - Keep temporarily for backward compat
   is_reviews_section: boolean;
@@ -973,6 +989,122 @@ export default function TemplateSectionEditModal() {
                   )}
                 />
               </div>
+
+              {/* Team Section - Data Management Info */}
+              {formData.section_type === 'team' && (
+                <div className="pt-4 sm:pt-6 mt-3 sm:mt-4">
+                  <div className="rounded-xl border-2 border-teal-200 bg-teal-50/50 p-4 sm:p-6 text-left">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
+                        <UserGroupIcon className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" />
+                      </div>
+                      <div className="flex-grow">
+                        <h4 className="text-sm sm:text-base font-medium text-teal-900 mb-2">
+                          Team Member Data Management
+                        </h4>
+                        <p className="text-xs sm:text-sm text-teal-700 mb-3">
+                          Team members are managed through user profiles. Update the <code className="px-1.5 py-0.5 bg-teal-100 rounded text-teal-800 font-mono text-xs">team</code> JSONB column in the profiles table:
+                        </p>
+                        <div className="bg-teal-900 text-teal-100 p-3 rounded text-xs font-mono overflow-x-auto">
+                          <div>UPDATE profiles SET team = team || &apos;&#123;&apos;</div>
+                          <div className="pl-2">&quot;is_team_member&quot;: true,</div>
+                          <div className="pl-2">&quot;image&quot;: &quot;https://...&quot;,</div>
+                          <div className="pl-2">&quot;job_title&quot;: &quot;Software Engineer&quot;,</div>
+                          <div className="pl-2">&quot;pseudonym&quot;: &quot;Display Name&quot;,</div>
+                          <div className="pl-2">&quot;department&quot;: &quot;Engineering&quot;,</div>
+                          <div className="pl-2">&quot;description&quot;: &quot;Bio text...&quot;,</div>
+                          <div className="pl-2">&quot;experience_years&quot;: 5,</div>
+                          <div className="pl-2">&quot;skills&quot;: [&quot;React&quot;, &quot;Node.js&quot;],</div>
+                          <div className="pl-2">&quot;linkedin_url&quot;: &quot;https://...&quot;,</div>
+                          <div className="pl-2">&quot;twitter_url&quot;: &quot;https://...&quot;,</div>
+                          <div className="pl-2">&quot;github_url&quot;: &quot;https://...&quot;,</div>
+                          <div className="pl-2">&quot;portfolio_url&quot;: &quot;https://...&quot;,</div>
+                          <div className="pl-2">&quot;is_featured&quot;: true,</div>
+                          <div className="pl-2">&quot;display_order&quot;: 1,</div>
+                          <div className="pl-2">&quot;assigned_sections&quot;: [
+                            {mode === 'edit' && editingSection?.id ? editingSection.id : 'SECTION_ID'}
+                          ]</div>
+                          <div>&apos;&#125;&apos;::jsonb WHERE id = &apos;USER_ID&apos;;</div>
+                        </div>
+                        <p className="text-xs text-teal-700 mt-2">
+                          <strong>Available fields:</strong> image, job_title, pseudonym, department, description, experience_years, skills[], linkedin_url, twitter_url, github_url, portfolio_url, is_featured, display_order, assigned_sections[]
+                        </p>
+                        <p className="text-xs text-teal-700 mt-1">
+                          Leave <code className="px-1 py-0.5 bg-teal-100 rounded text-teal-800 font-mono text-[10px]">assigned_sections</code> empty to show in all team sections.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Team Member Management Form */}
+                  {mode === 'edit' && editingSection && (
+                    <div className="mt-6 pt-6 border-t border-teal-200">
+                      <ProfileDataManager 
+                        sectionId={editingSection.id} 
+                        type="team" 
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Testimonials Section - Data Management Info */}
+              {formData.section_type === 'testimonials' && (
+                <div className="pt-4 sm:pt-6 mt-3 sm:mt-4">
+                  <div className="rounded-xl border-2 border-rose-200 bg-rose-50/50 p-4 sm:p-6 text-left">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+                        <StarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600" />
+                      </div>
+                      <div className="flex-grow">
+                        <h4 className="text-sm sm:text-base font-medium text-rose-900 mb-2">
+                          Testimonial Data Management
+                        </h4>
+                        <p className="text-xs sm:text-sm text-rose-700 mb-3">
+                          Testimonials are managed through user profiles. Update the <code className="px-1.5 py-0.5 bg-rose-100 rounded text-rose-800 font-mono text-xs">customer</code> JSONB column in the profiles table:
+                        </p>
+                        <div className="bg-rose-900 text-rose-100 p-3 rounded text-xs font-mono overflow-x-auto">
+                          <div>UPDATE profiles SET customer = customer || &apos;&#123;&apos;</div>
+                          <div className="pl-2">&quot;is_customer&quot;: true,</div>
+                          <div className="pl-2">&quot;image&quot;: &quot;https://...&quot;,</div>
+                          <div className="pl-2">&quot;testimonial_text&quot;: &quot;Great service!&quot;,</div>
+                          <div className="pl-2">&quot;rating&quot;: 5,</div>
+                          <div className="pl-2">&quot;pseudonym&quot;: &quot;Display Name&quot;,</div>
+                          <div className="pl-2">&quot;company&quot;: &quot;Tech Corp&quot;,</div>
+                          <div className="pl-2">&quot;company_logo&quot;: &quot;https://...&quot;,</div>
+                          <div className="pl-2">&quot;job_title&quot;: &quot;CTO&quot;,</div>
+                          <div className="pl-2">&quot;project_type&quot;: &quot;Web Development&quot;,</div>
+                          <div className="pl-2">&quot;description&quot;: &quot;Additional context...&quot;,</div>
+                          <div className="pl-2">&quot;testimonial_date&quot;: &quot;2024-11-01&quot;,</div>
+                          <div className="pl-2">&quot;linkedin_url&quot;: &quot;https://...&quot;,</div>
+                          <div className="pl-2">&quot;is_featured&quot;: true,</div>
+                          <div className="pl-2">&quot;display_order&quot;: 1,</div>
+                          <div className="pl-2">&quot;assigned_sections&quot;: [
+                            {mode === 'edit' && editingSection?.id ? editingSection.id : 'SECTION_ID'}
+                          ]</div>
+                          <div>&apos;&#125;&apos;::jsonb WHERE id = &apos;USER_ID&apos;;</div>
+                        </div>
+                        <p className="text-xs text-rose-700 mt-2">
+                          <strong>Available fields:</strong> image, testimonial_text, rating (1-5), pseudonym, company, company_logo, job_title, project_type, description, testimonial_date, linkedin_url, is_featured, display_order, assigned_sections[]
+                        </p>
+                        <p className="text-xs text-rose-700 mt-1">
+                          Leave <code className="px-1 py-0.5 bg-rose-100 rounded text-rose-800 font-mono text-[10px]">assigned_sections</code> empty to show in all testimonial sections.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Testimonial Management Form */}
+                  {mode === 'edit' && editingSection && (
+                    <div className="mt-6 pt-6 border-t border-rose-200">
+                      <ProfileDataManager 
+                        sectionId={editingSection.id} 
+                        type="testimonials" 
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Metrics Section - Only for general sections */}
               {formData.section_type === 'general' && (

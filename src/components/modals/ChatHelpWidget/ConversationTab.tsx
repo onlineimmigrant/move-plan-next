@@ -227,7 +227,7 @@ export default function ConversationTab({
       </div>
 
       {/* Input Area */}
-      <div className="bg-white px-4 pb-4">
+      <div className="px-4 pb-4">
         {/* Quick Action Badges - Horizontal scrolling like ChatWidget */}
         <div className="mb-3 max-h-16 overflow-x-auto overflow-y-hidden -mx-1 px-1 py-1" 
           style={{

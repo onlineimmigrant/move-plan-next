@@ -3,13 +3,13 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } fro
 import { CheckIcon, RocketLaunchIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import { Model } from './types';
-import Link from 'next/link';
 
 interface ModelSelectorProps {
   selectedModel: Model | null;
   models: Model[];
   selectModel: (model: Model | null) => void;
   goToSettings: () => void;
+  onOpenFiles: () => void;
 }
 
 export default function ModelSelector({
@@ -17,6 +17,7 @@ export default function ModelSelector({
   models,
   selectModel,
   goToSettings,
+  onOpenFiles,
 }: ModelSelectorProps) {
   const sortedModels = selectedModel
     ? [
@@ -28,26 +29,26 @@ export default function ModelSelector({
   return (
     <Listbox value={selectedModel} onChange={selectModel}>
       {({ open }) => (
-        <div>
+        <div className="relative">
           <Tooltip content="Select Model">
-            <ListboxButton className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:border-blue-300 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 min-w-[120px]">
-              <div className="flex items-center gap-2 flex-1">
+            <ListboxButton className="flex items-center gap-2 px-2 py-1 transition-all duration-200 focus:outline-none hover:opacity-70">
+              <div className="flex items-center gap-2">
                 {selectedModel?.icon ? (
                   <img
                     src={selectedModel.icon}
                     alt="Model Icon"
-                    className="h-5 w-5 object-contain rounded"
+                    className="h-5 w-5 sm:h-6 sm:w-6 object-contain"
                     onError={() => selectedModel && selectModel({ ...selectedModel, icon: null })}
                   />
                 ) : (
-                  <RocketLaunchIcon className="h-5 w-5 text-slate-400" />
+                  <RocketLaunchIcon className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 dark:text-slate-500" />
                 )}
-                <span className="text-sm font-medium text-slate-700 truncate">
-                  {selectedModel ? selectedModel.name.split('-')[0] : 'Select Model'}
+                <span className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 truncate">
+                  {selectedModel ? selectedModel.name : 'AI Assistant'}
                 </span>
               </div>
               <ChevronDownIcon
-                className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                className={`h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
               />
             </ListboxButton>
           </Tooltip>
@@ -59,9 +60,9 @@ export default function ModelSelector({
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <ListboxOptions className="absolute z-50 right-0 mt-2 w-64 max-h-80 overflow-auto rounded-xl bg-white py-2 shadow-xl ring-1 ring-slate-200 focus:outline-none border border-slate-100">
+            <ListboxOptions className="absolute z-50 left-1/2 -translate-x-1/2 mt-2 w-64 max-h-80 overflow-auto rounded-xl backdrop-blur-2xl bg-white/50 dark:bg-gray-900/50 py-2 shadow-lg border-0 focus:outline-none">
               {sortedModels.length === 0 ? (
-                <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 text-center">
                   No models available
                 </div>
               ) : (
@@ -70,8 +71,10 @@ export default function ModelSelector({
                     key={`${model.type}-${model.id}`}
                     value={model}
                     className={({ active }) =>
-                      `relative cursor-pointer select-none px-4 py-3 transition-colors duration-150 ${
-                        active ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
+                      `relative cursor-pointer select-none px-4 py-3 mx-2 rounded-lg transition-all duration-200 ${
+                        active 
+                          ? 'bg-blue-500/20 dark:bg-blue-400/20 backdrop-blur-xl scale-[1.02]' 
+                          : 'hover:bg-white/30 dark:hover:bg-gray-800/30'
                       }`
                     }
                   >
@@ -81,37 +84,37 @@ export default function ModelSelector({
                           <img
                             src={model.icon}
                             alt="Model Icon"
-                            className="h-6 w-6 object-contain rounded"
+                            className="h-6 w-6 object-contain"
                           />
                         ) : (
-                          <RocketLaunchIcon className="h-5 w-5 text-slate-400" />
+                          <RocketLaunchIcon className="h-5 w-5 text-slate-400 dark:text-slate-500" />
                         )}
                         <div>
-                          <div className="text-sm font-medium">{model.name}</div>
-                          <div className="text-xs text-slate-500 capitalize">{model.type}</div>
+                          <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{model.name}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">{model.type}</div>
                         </div>
                       </div>
                       {selectedModel?.id === model.id && selectedModel?.type === model.type && (
-                        <CheckIcon className="h-5 w-5 text-blue-600" />
+                        <CheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       )}
                     </div>
                   </ListboxOption>
                 ))
               )}
 
-              <div className="border-t border-slate-200 mt-2 pt-2">
+              <div className="border-t border-slate-300/50 dark:border-slate-600/50 mt-2 pt-2 mx-2">
                 <button
                   onClick={goToSettings}
-                  className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-150"
+                  className="w-full px-4 py-2 rounded-lg text-left text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02]"
                 >
                   Manage Models
                 </button>
-                <Link
-                  href="/account/files"
-                  className="block px-4 py-2 text-left text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-150"
+                <button
+                  onClick={onOpenFiles}
+                  className="w-full px-4 py-2 rounded-lg text-left text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02]"
                 >
                   Manage Files
-                </Link>
+                </button>
               </div>
             </ListboxOptions>
           </Transition>

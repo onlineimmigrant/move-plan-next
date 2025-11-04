@@ -1,5 +1,6 @@
 // components/ChatHelpWidget/ChatHelpToggleButton.tsx
 'use client';
+import { useState, useEffect } from 'react';
 import { RocketLaunchIcon } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -10,6 +11,34 @@ interface ChatHelpToggleButtonProps {
 
 export default function ChatHelpToggleButton({ isOpen, toggleOpen }: ChatHelpToggleButtonProps) {
   const themeColors = useThemeColors();
+  const [isScrollingUp, setIsScrollingUp] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          
+          // Check if scrolling up and not at the top
+          if (currentScrollY < lastScrollY && currentScrollY > 100) {
+            setIsScrollingUp(true);
+          } else {
+            setIsScrollingUp(false);
+          }
+          
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
   
   return (
     <button
@@ -25,14 +54,24 @@ export default function ChatHelpToggleButton({ isOpen, toggleOpen }: ChatHelpTog
         focus:outline-none focus:ring-0
         group
         backdrop-blur-xl bg-white/50 dark:bg-gray-900/50
-        shadow-lg hover:shadow-xl
+        shadow-md hover:shadow-lg
         border-0
         ${isOpen ? 'rotate-45' : ''}
+        ${isScrollingUp ? 'scale-75' : 'scale-100'}
       `}
       aria-label={isOpen ? 'Close help center' : 'Open help center'}
     >
       <RocketLaunchIcon 
-        className="h-6 w-6 text-gray-900 dark:text-white transform group-hover:translate-y-[-2px] transition-transform duration-200" 
+        className="h-6 w-6 text-gray-900 dark:text-white transform group-hover:translate-y-[-2px] transition-all duration-200" 
+        style={{
+          color: undefined,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = themeColors.cssVars.primary.base;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = '';
+        }}
       />
     </button>
   );

@@ -147,6 +147,7 @@ export default function ChatWidgetWrapper({
             models={models}
             selectModel={setSelectedModel}
             goToSettings={() => {}}
+            onOpenFiles={() => {}}
           />
           <button
             onClick={toggleSize}
