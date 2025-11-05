@@ -223,7 +223,12 @@ export default function ChatWidget({
         setError('User settings not found. Using default model.');
       } else {
         const settings = settingsData;
-        setDefaultSettings(settings.default_settings || {});
+        const loadedSettings = settings.default_settings || {};
+        setDefaultSettings(loadedSettings);
+        // Always activate settings if they exist
+        if (Object.keys(loadedSettings).length > 0) {
+          setSelectedSettings(loadedSettings);
+        }
         if (settings.selected_model_type === 'default' && settings.default_model_id) {
           const { data: defaultModel, error: defaultError } = await supabase
             .from('ai_models_default')
@@ -390,10 +395,8 @@ const sendMessage = async () => {
     if (response.data.extractionResult && response.data.extractionResult.updatedSettings) {
       console.log('[ChatWidget] Extraction result received, updating settings:', response.data.extractionResult.updatedSettings);
       setDefaultSettings(response.data.extractionResult.updatedSettings);
-      // If we're using settings mode, update the selected settings too
-      if (selectedSettings) {
-        setSelectedSettings(response.data.extractionResult.updatedSettings);
-      }
+      // Always keep settings active after extraction
+      setSelectedSettings(response.data.extractionResult.updatedSettings);
     }
     
     setMessages((prev) => [
