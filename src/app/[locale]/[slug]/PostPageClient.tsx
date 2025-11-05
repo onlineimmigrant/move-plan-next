@@ -473,7 +473,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                         components={{
                           // Ensure images are responsive
                           img: ({node, ...props}) => (
-                            <img {...props} className="max-w-full h-auto" style={{maxWidth: '100%', height: 'auto'}} />
+                            <img {...props} alt={props.alt || ''} className="max-w-full h-auto" style={{maxWidth: '100%', height: 'auto'}} />
                           ),
                           // Ensure tables are scrollable on mobile
                           table: ({node, ...props}) => (

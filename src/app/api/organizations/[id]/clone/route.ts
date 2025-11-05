@@ -157,7 +157,7 @@ export async function POST(
     console.log('Cloned organization created:', clonedOrg.id);
 
     // Clone related data comprehensively
-    let cloneResults = {
+    const cloneResults = {
       settings: false,
       hero: false,
       menuItems: false,
@@ -182,13 +182,13 @@ export async function POST(
     };
 
     // Initialize ID mappings for cross-table relationships
-    let productSubTypeIdMapping: { [key: number]: number } = {};
-    let productIdMapping: { [key: number]: number } = {};
-    let featureIdMapping: { [key: number]: number } = {};
-    let menuItemIdMapping: { [key: string]: number } = {};
-    let templateSectionIdMapping: { [key: number]: number } = {};
-    let websiteMetricIdMapping: { [key: number]: number } = {};
-    let pricingPlanIdMapping: { [key: number]: number } = {};
+    const productSubTypeIdMapping: { [key: number]: number } = {};
+    const productIdMapping: { [key: number]: number } = {};
+    const featureIdMapping: { [key: number]: number } = {};
+    const menuItemIdMapping: { [key: string]: number } = {};
+    const templateSectionIdMapping: { [key: number]: number } = {};
+    const websiteMetricIdMapping: { [key: number]: number } = {};
+    const pricingPlanIdMapping: { [key: number]: number } = {};
 
     try {
       // 1. Clone settings
@@ -390,7 +390,7 @@ export async function POST(
           const { id, stripe_product_id, ...productWithoutId } = product;
           
           // Handle foreign key constraints
-          let productData = {
+          const productData = {
             ...productWithoutId,
             organization_id: clonedOrg.id,
             stripe_product_id: null, // Clear Stripe ID for new organization
@@ -712,7 +712,7 @@ export async function POST(
 
       console.log('Source pricing plans found:', sourcePricingPlans?.length || 0, 'Error:', pricingPlansError?.message);
 
-      let pricingPlanIdMapping: { [key: string]: string } = {};
+      const pricingPlanIdMapping: { [key: string]: string } = {};
 
       if (sourcePricingPlans && sourcePricingPlans.length > 0 && !pricingPlansError) {
         const pricingPlansToInsert = sourcePricingPlans.map(plan => {

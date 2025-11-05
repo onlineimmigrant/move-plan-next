@@ -51,4 +51,5 @@ export function useGlobalSettingsModal() {
   return context;
 }
 
-export default { GlobalSettingsModalProvider, useGlobalSettingsModal };
+const GlobalSettingsModalModule = { GlobalSettingsModalProvider, useGlobalSettingsModal };
+export default GlobalSettingsModalModule;

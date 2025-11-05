@@ -1,7 +1,10 @@
+import Script from 'next/script';
+
 export function GoogleTagManager({ gtmId }: { gtmId: string }) {
   return (
-    <script
+    <Script
       id="google-tag-manager"
+      strategy="afterInteractive"
       dangerouslySetInnerHTML={{
         __html: `
           (function(w,d,s,l,i){

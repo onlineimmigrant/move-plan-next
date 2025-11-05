@@ -312,7 +312,7 @@ export function countMentions(text: string): number {
   return matches ? matches.length : 0;
 }
 
-export default {
+const mentionUtils = {
   parseMentions,
   extractMentionContext,
   createMentionRecords,
@@ -327,3 +327,5 @@ export default {
   removeMentions,
   countMentions,
 };
+
+export default mentionUtils;

@@ -75,8 +75,8 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot 
         .eq('id', user.id)
         .single();
 
-      let email = profile?.email || user.email;
-      let customerName = profile?.full_name || '';
+      const email = profile?.email || user.email;
+      const customerName = profile?.full_name || '';
 
       console.log('[Customer Modal] Profile data:', { 
         email, 

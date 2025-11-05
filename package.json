@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "NODE_OPTIONS='--no-deprecation' next dev",
+    "build": "NODE_OPTIONS='--no-deprecation' next build",
+    "start": "NODE_OPTIONS='--no-deprecation' next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -146,11 +146,10 @@
     "@types/react-dom": "^18.2.0",
     "@types/react-slick": "^0.23.13",
     "@types/sanitize-html": "^2.16.0",
-    "@types/stripe": "^8.0.417",
     "@types/three": "^0.178.1",
     "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.15",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "^15.3.4",
     "eta": "^2.2.0",
     "flatted": "^3.3.1",
     "postcss": "^8.4.47",

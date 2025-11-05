@@ -163,7 +163,7 @@ const parseInlineFormatting = (text: string): Array<{ type: 'bold' | 'italic' | 
   const formatting: Array<{ type: 'bold' | 'italic' | 'code'; start: number; end: number }> = [];
   
   // Find **bold** text
-  let boldRegex = /\*\*(.+?)\*\*/g;
+  const boldRegex = /\*\*(.+?)\*\*/g;
   let match;
   while ((match = boldRegex.exec(text)) !== null) {
     formatting.push({
@@ -174,7 +174,7 @@ const parseInlineFormatting = (text: string): Array<{ type: 'bold' | 'italic' | 
   }
 
   // Find *italic* or _italic_ text
-  let italicRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|_(.+?)_/g;
+  const italicRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|_(.+?)_/g;
   while ((match = italicRegex.exec(text)) !== null) {
     formatting.push({
       type: 'italic',
@@ -184,7 +184,7 @@ const parseInlineFormatting = (text: string): Array<{ type: 'bold' | 'italic' | 
   }
 
   // Find `code` text
-  let codeRegex = /`(.+?)`/g;
+  const codeRegex = /`(.+?)`/g;
   while ((match = codeRegex.exec(text)) !== null) {
     formatting.push({
       type: 'code',
@@ -316,7 +316,7 @@ const splitTextByFormatting = (text: string): TextSegment[] => {
   const markers: Array<{ pos: number; end: number; type: 'bold' | 'italic' | 'code'; length: number }> = [];
   
   // Find `code` text first (highest priority)
-  let codeRegex = /`(.+?)`/g;
+  const codeRegex = /`(.+?)`/g;
   let match;
   while ((match = codeRegex.exec(text)) !== null) {
     markers.push({
@@ -328,7 +328,7 @@ const splitTextByFormatting = (text: string): TextSegment[] => {
   }
   
   // Find **bold** text
-  let boldRegex = /\*\*(.+?)\*\*/g;
+  const boldRegex = /\*\*(.+?)\*\*/g;
   while ((match = boldRegex.exec(text)) !== null) {
     // Check if this overlaps with a code marker
     const overlaps = markers.some(m => 
@@ -348,7 +348,7 @@ const splitTextByFormatting = (text: string): TextSegment[] => {
   }
   
   // Find *italic* text
-  let italicRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g;
+  const italicRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g;
   while ((match = italicRegex.exec(text)) !== null) {
     // Check if this overlaps with a bold or code marker
     const overlaps = markers.some(m => 

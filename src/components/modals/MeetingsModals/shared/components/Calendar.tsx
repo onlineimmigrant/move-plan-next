@@ -137,7 +137,11 @@ export default function Calendar({
   const handleKeyDown = useCallback((e: React.KeyboardEvent, date: Date, action?: () => void) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      action ? action() : handleDateClick(date);
+      if (action) {
+        action();
+      } else {
+        handleDateClick(date);
+      }
     }
   }, []);
 

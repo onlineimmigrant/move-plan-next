@@ -40,7 +40,7 @@ const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) =>
           components={{
             // Ensure images are responsive
             img: ({node, ...props}) => (
-              <img {...props} className="max-w-full h-auto" />
+              <img {...props} alt={props.alt || ''} className="max-w-full h-auto" />
             ),
             // Ensure tables are scrollable on mobile
             table: ({node, ...props}) => (

@@ -266,10 +266,12 @@ export function escapeHtmlInMarkdown(markdown: string): string {
   return markdown;
 }
 
-export default {
+const converters = {
   htmlToMarkdown,
   markdownToHtml,
   cleanHtml,
   detectContentType,
   escapeHtmlInMarkdown,
 };
+
+export default converters;

@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User settings not found' }, { status: 404 });
     }
 
-    let defaultSettings: Record<string, any> = settingsData.default_settings || {};
+    const defaultSettings: Record<string, any> = settingsData.default_settings || {};
 
     // Handle CRUD actions
     if (action === 'add' || action === 'update') {

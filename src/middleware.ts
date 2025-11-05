@@ -78,7 +78,7 @@ export default async function middleware(request: NextRequest) {
   // Fetch database settings including supported locales
   let defaultLocale = cookieLocale || 'en'; // Use cookie first, then fallback
   let supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl']; // fallback
-  let baseCurrency = 'GBP'; // Use GBP as fallback to match your test data
+  const baseCurrency = 'GBP'; // Use GBP as fallback to match your test data
   let settings: any = null; // Initialize settings variable outside try block
   
   try {

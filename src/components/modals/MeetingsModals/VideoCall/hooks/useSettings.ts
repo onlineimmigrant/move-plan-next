@@ -289,6 +289,7 @@ export function useSettings(): UseSettingsReturn {
     };
 
     // Start periodic stats updates (every 2 seconds)
+    // eslint-disable-next-line prefer-const
     statsInterval = setInterval(updateNetworkStats, 2000);
 
     // Initial update

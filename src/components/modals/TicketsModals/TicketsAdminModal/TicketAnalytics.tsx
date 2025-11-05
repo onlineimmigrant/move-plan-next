@@ -109,7 +109,7 @@ export const TicketAnalytics: React.FC<TicketAnalyticsProps> = ({ tickets, admin
     monthAgo.setMonth(today.getMonth() - 1);
 
     let totalResponseTime = 0;
-    let responseTimes: number[] = [];
+    const responseTimes: number[] = [];
     let totalResolutionTime = 0;
     let resolutionCount = 0;
     let ticketsWithResponse = 0;

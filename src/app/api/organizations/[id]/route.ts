@@ -1910,7 +1910,7 @@ export async function PUT(
           }
         });
 
-        let updatedFeatures = [];
+        const updatedFeatures = [];
 
         // Handle updates
         if (featuresToUpdate.length > 0) {
@@ -2045,7 +2045,7 @@ export async function PUT(
           }
         });
 
-        let processedFaqs = [];
+        const processedFaqs = [];
 
         // Handle updates
         if (faqsToUpdate.length > 0) {
@@ -2205,7 +2205,7 @@ export async function PUT(
           }
         });
 
-        let processedBanners = [];
+        const processedBanners = [];
 
         // Handle updates
         if (bannersToUpdate.length > 0) {
@@ -2370,7 +2370,7 @@ export async function PUT(
           }
         });
 
-        let processedServices: any[] = [];
+        const processedServices: any[] = [];
 
         // Handle updates
         if (servicesToUpdate.length > 0) {

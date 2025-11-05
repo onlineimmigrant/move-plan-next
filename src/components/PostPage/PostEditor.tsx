@@ -1876,7 +1876,6 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, showFindReplace]);
 
   // Track text selection (keeping for future use if needed)

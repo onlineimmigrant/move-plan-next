@@ -240,7 +240,6 @@ export default function PracticeSettings({ courseId, quizId, quizSlug, courseSlu
                   role="tab"
                   aria-selected={examMode === mode.value}
                   aria-label={`Select ${mode.label} Mode`}
-                  aria-pressed={examMode === mode.value}
                 >
                   {mode.label}
                 </button>

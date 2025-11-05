@@ -8,6 +8,9 @@ const nextConfig = {
   experimental: {
     optimizeCss: false,
   },
+  turbopack: {
+    root: __dirname,
+  },
   // Enable geolocation for Vercel deployments
   async headers() {
     return [
@@ -65,6 +68,14 @@ const nextConfig = {
       include: /node_modules/,
       type: 'javascript/auto',
     });
+    
+    // Suppress webpack cache serialization warnings for large strings
+    if (config.infrastructureLogging) {
+      config.infrastructureLogging.level = 'error';
+    } else {
+      config.infrastructureLogging = { level: 'error' };
+    }
+    
     return config;
   },
 };

@@ -440,7 +440,7 @@ export default function PostEditModal() {
       const finalContent = contentToSave !== undefined ? contentToSave : content;
       
       // Build JSONB-structured data for the new API format
-      let postData: any = {
+      const postData: any = {
         title: title.trim(),
         description: description.trim(),
         content: finalContent,

@@ -230,7 +230,7 @@ export default function MemoryHub() {
   const prevCard = useCallback(async () => {
     if (flashcards.length === 0 || selectedCardIndex === null) return;
 
-    let planFlashcardIds: number[] = filteredFlashcardIds.length > 0 ? filteredFlashcardIds : flashcards.map((f) => f.id);
+    const planFlashcardIds: number[] = filteredFlashcardIds.length > 0 ? filteredFlashcardIds : flashcards.map((f) => f.id);
     if (planFlashcardIds.length === 0) return;
 
     const currentFlashcardId = flashcards[selectedCardIndex].id;
@@ -251,7 +251,7 @@ export default function MemoryHub() {
   const nextCard = useCallback(async () => {
     if (flashcards.length === 0 || selectedCardIndex === null) return;
 
-    let planFlashcardIds: number[] = filteredFlashcardIds.length > 0 ? filteredFlashcardIds : flashcards.map((f) => f.id);
+    const planFlashcardIds: number[] = filteredFlashcardIds.length > 0 ? filteredFlashcardIds : flashcards.map((f) => f.id);
     if (planFlashcardIds.length === 0) return;
 
     const currentFlashcardId = flashcards[selectedCardIndex].id;

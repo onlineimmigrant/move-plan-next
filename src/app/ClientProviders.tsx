@@ -269,7 +269,6 @@ export default function ClientProviders({
                                 {/* VideoCall Modal - Renders at root level (z-2000) */}
                                 <ManagedVideoCall />
                                 <BannerAwareContent
-                                  children={children}
                                   showNavbarFooter={showNavbarFooter}
                                   menuItems={menuItems}
                                   loading={loading}
@@ -277,7 +276,9 @@ export default function ClientProviders({
                                   activeLanguages={activeLanguages}
                                   cookieCategories={cookieCategories}
                                   cookieAccepted={cookieAccepted}
-                                />
+                                >
+                                  {children}
+                                </BannerAwareContent>
                               {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
                               {showCookieBanner && (
                                 <Suspense fallback={null}>
