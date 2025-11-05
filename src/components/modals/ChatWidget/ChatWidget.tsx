@@ -385,6 +385,17 @@ const sendMessage = async () => {
       },
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
+    
+    // Handle extraction result if present
+    if (response.data.extractionResult && response.data.extractionResult.updatedSettings) {
+      console.log('[ChatWidget] Extraction result received, updating settings:', response.data.extractionResult.updatedSettings);
+      setDefaultSettings(response.data.extractionResult.updatedSettings);
+      // If we're using settings mode, update the selected settings too
+      if (selectedSettings) {
+        setSelectedSettings(response.data.extractionResult.updatedSettings);
+      }
+    }
+    
     setMessages((prev) => [
       ...prev,
       { role: 'assistant', content: response.data.message, taskName: selectedTask?.name },

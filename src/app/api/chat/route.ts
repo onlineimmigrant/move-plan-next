@@ -39,6 +39,164 @@ interface Task {
   system_message: string;
 }
 
+/**
+ * Auto-extract data from user message and save to ai_user_settings.default_settings
+ *
+ * Prefer using the current chat's model when provided (chatModel). If chatModel is not
+ * provided, fall back to selecting an appropriate active model from the organization.
+ * 
+ * Returns extraction result with extracted data and updated settings.
+ */
+async function autoExtractAndSaveData(
+  userId: string,
+  content: string,
+  existingSettings: Record<string, any>,
+  chatModel?: { name?: string; api_key?: string | null; endpoint?: string | null; max_tokens?: number | null }
+): Promise<{ success: boolean; extracted?: Record<string, any>; updatedSettings?: Record<string, any>; summary?: string; error?: string }> {
+  try {
+    console.log('[AutoExtract] Starting auto-extraction for user:', userId);
+
+    // Get user's organization for model access
+    const { data: profile, error: profileError } = await supabaseService
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !profile?.organization_id) {
+      console.error('[AutoExtract] Profile error:', profileError?.message);
+      return { success: false, error: 'Profile not found' };
+    }
+
+    console.log('[AutoExtract] Organization ID:', profile.organization_id);
+
+    // Determine model to use: prefer provided chatModel
+    let model: any = null;
+    if (chatModel && chatModel.name) {
+      model = chatModel;
+      console.log('[AutoExtract] Using chat model provided by the request:', model.name);
+    } else {
+      // Fallback: find a capable model in ai_models_default
+      const { data: extractionModels, error: modelsError } = await supabaseService
+        .from('ai_models_default')
+        .select('id, name, api_key, endpoint, max_tokens')
+        .eq('organization_id', profile.organization_id)
+        .eq('is_active', true)
+        .limit(1);
+
+      if (modelsError || !extractionModels || extractionModels.length === 0) {
+        console.error('[AutoExtract] No extraction model available:', modelsError?.message);
+        return { success: false, error: 'No extraction model available' };
+      }
+      model = extractionModels[0];
+      console.log('[AutoExtract] Fallback model selected:', model.name);
+    }
+
+    // Build extraction prompt
+    const hints = [
+      'Full Name', 'Education', 'Skills', 'Work Experience', 'Languages',
+      'Certifications', 'Hobbies', 'Location', 'LinkedIn', 'Driving Licence'
+    ];
+
+    const systemPrompt = `Extract structured key-value pairs from the user's message.\n\nRULES:\n1. Extract only factual information\n2. Use clear keys (e.g., \"Full Name\", \"Skills\")\n3. For lists, use comma-separated values\n4. Skip unclear information\n\nEXISTING SETTINGS:\n${Object.keys(existingSettings).length > 0 ? JSON.stringify(existingSettings, null, 2) : 'None'}\n\nSUGGESTED FIELDS: ${hints.join(', ')}\n\nRESPONSE (JSON only):\n{\n  "extracted": { "Key": "value" },\n  "confidence": "high|medium|low",\n  "summary": "What was extracted"\n}`;
+
+    const extractionMessages: Message[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: content }
+    ];
+
+    let extractedData: any = null;
+
+    console.log('[AutoExtract] Using model for extraction:', model.name, 'Endpoint:', model.endpoint);
+
+    try {
+      // Use the appropriate provider interface depending on model name
+      if (model.name && model.name.toLowerCase().includes('gpt')) {
+        console.log('[AutoExtract] Calling GPT model for extraction');
+        const openai = new OpenAI({ apiKey: model.api_key || '' });
+        const response = await openai.chat.completions.create({
+          model: model.name,
+          messages: extractionMessages as any,
+          max_tokens: model.max_tokens || 2000,
+          temperature: 0.3,
+          response_format: { type: 'json_object' },
+        });
+        const responseContent = response.choices?.[0]?.message?.content;
+        extractedData = responseContent ? JSON.parse(responseContent) : null;
+      } else if (model.name && model.name.toLowerCase().includes('grok')) {
+        console.log('[AutoExtract] Calling Grok model for extraction');
+        const response = await axios.post(
+          model.endpoint || '',
+          {
+            model: model.name,
+            messages: extractionMessages,
+            max_tokens: model.max_tokens || 2000,
+            temperature: 0.3,
+          },
+          { headers: { Authorization: `Bearer ${model.api_key}` } }
+        );
+        const responseContent = response.data?.choices?.[0]?.message?.content || response.data?.text;
+        extractedData = responseContent ? JSON.parse(responseContent) : null;
+      } else if (model.name && model.name.toLowerCase().includes('claude')) {
+        console.log('[AutoExtract] Calling Claude model for extraction');
+        const response = await axios.post(
+          model.endpoint || '',
+          { model: model.name, messages: extractionMessages, max_tokens: model.max_tokens || 2000, temperature: 0.3 },
+          { headers: { 'x-api-key': model.api_key } }
+        );
+        const responseContent = response.data?.content?.[0]?.text;
+        extractedData = responseContent ? JSON.parse(responseContent) : null;
+      } else {
+        console.warn('[AutoExtract] Model not supported for extraction, skipping:', model.name);
+        return { success: false, error: 'Model not supported for extraction' };
+      }
+    } catch (aiError: any) {
+      // Handle AI provider errors gracefully (don't block chat)
+      console.error('[AutoExtract] AI extraction error:', aiError?.message || aiError);
+      if (aiError?.response) {
+        console.error('[AutoExtract] AI response status:', aiError.response.status, aiError.response.data);
+      }
+      return { success: false, error: aiError?.message || 'AI extraction failed' };
+    }
+
+    if (extractedData && extractedData.extracted && Object.keys(extractedData.extracted).length > 0) {
+      console.log('[AutoExtract] Extracted fields:', Object.keys(extractedData.extracted));
+
+      // Merge with existing settings
+      const mergedSettings = {
+        ...existingSettings,
+        ...extractedData.extracted
+      };
+
+      // Save to database
+      const { error: updateError } = await supabaseService
+        .from('ai_user_settings')
+        .update({ default_settings: mergedSettings })
+        .eq('user_id', userId);
+
+      if (updateError) {
+        console.error('[AutoExtract] Failed to save:', updateError.message);
+        return { success: false, error: `Failed to save: ${updateError.message}` };
+      } else {
+        console.log('[AutoExtract] Successfully extracted and saved:', Object.keys(extractedData.extracted).length, 'fields');
+        return {
+          success: true,
+          extracted: extractedData.extracted,
+          updatedSettings: mergedSettings,
+          summary: extractedData.summary || `Extracted ${Object.keys(extractedData.extracted).length} fields`
+        };
+      }
+    } else {
+      console.log('[AutoExtract] No data extracted or empty result');
+      return { success: false, error: 'No data extracted' };
+    }
+  } catch (error: any) {
+    console.error('[AutoExtract] Error:', error?.message || error);
+    return { success: false, error: error?.message || 'Unknown error' };
+  }
+}
+
+
 export async function POST(request: Request) {
   try {
     const url = new URL(request.url);
@@ -422,7 +580,23 @@ async function handleChat(request: Request) {
       ? [{ role: 'system', content: fullSystemMessage }, ...filteredMessages]
       : filteredMessages;
 
+    // Check if this is a data extraction task
+    const isDataExtractionTask = task && Array.isArray(task) && task.some((t: Task) => 
+      t.name && t.name.toLowerCase().includes('data for settings') || 
+      (t.system_message && t.system_message.toLowerCase().includes('extract data from the current message'))
+    );
+
+    console.log('[Chat] Data extraction task check:', {
+      hasTask: !!task,
+      isArray: Array.isArray(task),
+      isDataExtractionTask,
+      taskCount: Array.isArray(task) ? task.length : 0
+    });
+
     let response;
+    let aiResponseContent: string = '';
+    let extractionResult: any = null;
+    
     if (name.includes('gpt')) {
       const openai = new OpenAI({ apiKey: api_key });
       response = await openai.chat.completions.create({
@@ -430,28 +604,122 @@ async function handleChat(request: Request) {
         messages: fullMessages,
         max_tokens,
       });
-      return NextResponse.json({ message: response.choices[0].message.content });
+      aiResponseContent = response.choices[0].message.content || '';
+      
+      // Auto-extract data if this is a data extraction task
+      if (isDataExtractionTask && aiResponseContent && filteredMessages.length > 0) {
+        try {
+          extractionResult = await autoExtractAndSaveData(
+            user.id,
+            filteredMessages[filteredMessages.length - 1].content,
+            settings.default_settings || {},
+            { name, api_key, endpoint, max_tokens }
+          );
+          
+          // Append extraction info to the response
+          if (extractionResult.success && extractionResult.extracted) {
+            const extractedFields = Object.entries(extractionResult.extracted)
+              .map(([key, value]) => `  • ${key}: ${value}`)
+              .join('\n');
+            aiResponseContent += `\n\n📝 **Extracted Information:**\n${extractedFields}\n\n✅ Your profile has been updated with this information.`;
+          }
+        } catch (extractError: any) {
+          console.error('[Chat] Auto-extraction failed:', extractError.message);
+          // Don't fail the chat request if extraction fails
+        }
+      }
+      
+      return NextResponse.json({ 
+        message: aiResponseContent,
+        extractionResult: extractionResult?.success ? {
+          extracted: extractionResult.extracted,
+          updatedSettings: extractionResult.updatedSettings
+        } : null
+      });
     } else if (name.includes('grok')) {
       response = await axios.post(
         endpoint,
         { model: name, messages: fullMessages, max_tokens },
         { headers: { Authorization: `Bearer ${api_key}` } }
       );
-      return NextResponse.json({ message: response.data.choices[0].message.content || response.data.text });
+      aiResponseContent = response.data.choices[0].message.content || response.data.text || '';
+      
+      // Auto-extract data if this is a data extraction task
+      if (isDataExtractionTask && aiResponseContent && filteredMessages.length > 0) {
+        try {
+          console.log('[Chat] Triggering auto-extraction (Grok)');
+          extractionResult = await autoExtractAndSaveData(
+            user.id,
+            filteredMessages[filteredMessages.length - 1].content,
+            settings.default_settings || {},
+            { name, api_key, endpoint, max_tokens }
+          );
+          
+          // Append extraction info to the response
+          if (extractionResult.success && extractionResult.extracted) {
+            const extractedFields = Object.entries(extractionResult.extracted)
+              .map(([key, value]) => `  • ${key}: ${value}`)
+              .join('\n');
+            aiResponseContent += `\n\n📝 **Extracted Information:**\n${extractedFields}\n\n✅ Your profile has been updated with this information.`;
+          }
+        } catch (extractError: any) {
+          console.error('[Chat] Auto-extraction failed:', extractError.message);
+        }
+      }
+      
+      return NextResponse.json({ 
+        message: aiResponseContent,
+        extractionResult: extractionResult?.success ? {
+          extracted: extractionResult.extracted,
+          updatedSettings: extractionResult.updatedSettings
+        } : null
+      });
     } else if (name.includes('llama') || name.includes('mixtral')) {
       response = await axios.post(
         endpoint,
         { inputs: filteredMessages[filteredMessages.length - 1].content, parameters: { max_new_tokens: max_tokens } },
         { headers: { Authorization: `Bearer ${api_key}` } }
       );
-      return NextResponse.json({ message: response.data[0].generated_text });
+      aiResponseContent = response.data[0].generated_text || '';
+      return NextResponse.json({ message: aiResponseContent });
     } else if (name.includes('claude')) {
       response = await axios.post(
         endpoint,
         { model: name, messages: fullMessages, max_tokens },
         { headers: { 'x-api-key': api_key } }
       );
-      return NextResponse.json({ message: response.data.content[0].text });
+      aiResponseContent = response.data.content[0].text || '';
+      
+      // Auto-extract data if this is a data extraction task
+      if (isDataExtractionTask && aiResponseContent && filteredMessages.length > 0) {
+        try {
+          console.log('[Chat] Triggering auto-extraction (Claude)');
+          extractionResult = await autoExtractAndSaveData(
+            user.id,
+            filteredMessages[filteredMessages.length - 1].content,
+            settings.default_settings || {},
+            { name, api_key, endpoint, max_tokens }
+          );
+          
+          // Append extraction info to the response
+          if (extractionResult.success && extractionResult.extracted) {
+            const extractedFields = Object.entries(extractionResult.extracted)
+              .map(([key, value]) => `  • ${key}: ${value}`)
+              .join('\n');
+            aiResponseContent += `\n\n📝 **Extracted Information:**\n${extractedFields}\n\n✅ Your profile has been updated with this information.`;
+          }
+        } catch (extractError: any) {
+          console.error('[Chat] Auto-extraction failed:', extractError.message);
+        }
+      }
+      
+      return NextResponse.json({ 
+        message: aiResponseContent,
+        extractionResult: extractionResult?.success ? {
+          extracted: extractionResult.extracted,
+          updatedSettings: extractionResult.updatedSettings
+        } : null
+      });
     } else if (name.includes('deepseek')) {
       response = await axios.post(
         endpoint,
