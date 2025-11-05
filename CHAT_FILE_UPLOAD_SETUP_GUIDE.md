@@ -6,7 +6,9 @@
 
 **Option A: Via Supabase Dashboard**
 1. Go to: https://supabase.com/dashboard/project/rgbmdfaoowqbgshjuwwm/storage/buckets
+ 
 
+ 
 2. Click "New Bucket"
 3. Bucket name: `chat-files`
 4. Public bucket: ✅ Yes
