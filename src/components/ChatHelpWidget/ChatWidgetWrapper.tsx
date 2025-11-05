@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import ChatMessages from '../modals/ChatWidget/ChatMessages';
 import ChatInput from '../modals/ChatWidget/ChatInput';
 import ModelSelector from '../modals/ChatWidget/ModelSelector';
+import ChatFilesList from '../modals/ChatWidget/ChatFilesList';
 import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from '../modals/ChatWidget/types';
 import { useHelpCenterTranslations } from '../modals/ChatHelpWidget/useHelpCenterTranslations';
 import styles from '../modals/ChatWidget/ChatWidget.module.css';
@@ -54,6 +55,12 @@ export default function ChatWidgetWrapper({
   const [defaultSettings, setDefaultSettings] = useState<Record<string, any>>({});
   const [selectedSettings, setSelectedSettings] = useState<Record<string, any> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showFilesList, setShowFilesList] = useState(false);
+  const [attachedFileIds, setAttachedFileIds] = useState<Array<{id: string; name: string; size: number}>>([]);
+  const [chatSessionId] = useState(() => {
+    // Generate a proper UUID v4
+    return crypto.randomUUID();
+  });
 
   // Initialize authentication and models
   useEffect(() => {
@@ -95,10 +102,88 @@ export default function ChatWidgetWrapper({
 
   const showReturnButton = size !== 'initial';
 
-  // Required functions for ChatInput
-  const sendMessage = () => {
-    // TODO: Implement message sending logic
-    console.log('Sending message:', input);
+  // Send message function with file attachment support
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    if (!isAuthenticated || !accessToken) {
+      setError('Please log in to use AI Agent mode.');
+      return;
+    }
+    
+    setError(null);
+    
+    // Capture attached files before clearing
+    const filesToSend = [...attachedFileIds];
+    
+    const newMessage: Message = { 
+      role: 'user', 
+      content: input,
+      attachedFileIds: filesToSend.map(f => f.id) // Store file IDs with message
+    };
+    
+    setMessages((prev) => [...prev, newMessage]);
+    setInput('');
+    setIsTyping(true);
+
+    try {
+      let systemMessage = selectedModel?.system_message || '';
+      if (selectedTask) {
+        systemMessage += systemMessage ? `\nTask: ${selectedTask.system_message}` : `Task: ${selectedTask.system_message}`;
+      }
+      if (selectedSettings) {
+        const settingsText = Object.entries(selectedSettings)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+          .join('\n');
+        systemMessage += systemMessage ? `\n${settingsText}` : settingsText;
+      }
+
+      const messagesToSend: Message[] = systemMessage
+        ? [{ role: 'system', content: systemMessage }, ...messages, newMessage]
+        : [...messages, newMessage];
+
+      console.log('[ChatWidgetWrapper] Sending message with files:', filesToSend);
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          messages: messagesToSend,
+          useSettings: !!selectedSettings,
+          attachedFileIds: filesToSend,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const data = await response.json();
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: data.message, taskName: selectedTask?.name },
+      ]);
+      setIsTyping(false);
+      setSelectedTask(null);
+      setSelectedSettings(null);
+      
+      // Clear attached files after successful send
+      setAttachedFileIds([]);
+      console.log('[ChatWidgetWrapper] Message sent successfully, files cleared');
+    } catch (error: any) {
+      console.error('Chat widget error:', error.message);
+      const errorMsg = error.message || 'Failed to send message';
+      setError(errorMsg);
+      setMessages((prev) => [...prev, { role: 'assistant', content: errorMsg, taskName: selectedTask?.name }]);
+      setIsTyping(false);
+      setSelectedTask(null);
+      setSelectedSettings(null);
+      
+      // Clear files even on error to avoid confusion
+      setAttachedFileIds([]);
+    }
   };
 
   const toggleSearchInput = () => setShowSearchInput(!showSearchInput);
@@ -147,7 +232,7 @@ export default function ChatWidgetWrapper({
             models={models}
             selectModel={setSelectedModel}
             goToSettings={() => {}}
-            onOpenFiles={() => {}}
+            onOpenFiles={() => setShowFilesList(true)}
           />
           <button
             onClick={toggleSize}
@@ -218,8 +303,30 @@ export default function ChatWidgetWrapper({
           onSettingsUpdated={handleSettingsUpdated}
           onModalOpen={() => setIsModalOpen(true)}
           onModalClose={() => setIsModalOpen(false)}
+          userId={userId}
+          chatSessionId={chatSessionId}
+          attachedFiles={attachedFileIds}
+          onFilesAttached={(files) => {
+            setAttachedFileIds(files);
+          }}
+          onFileRemoved={(fileId) => {
+            setAttachedFileIds(prev => prev.filter(f => f.id !== fileId));
+          }}
         />
       </div>
+
+      {/* Files List Modal */}
+      <ChatFilesList
+        isOpen={showFilesList}
+        onClose={() => setShowFilesList(false)}
+        accessToken={accessToken}
+        userId={userId}
+        chatSessionId={chatSessionId}
+        onFilesSelected={(files) => {
+          setAttachedFileIds(files);
+          console.log('Files selected for chat:', files);
+        }}
+      />
     </div>
   );
 }

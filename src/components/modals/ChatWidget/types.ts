@@ -2,6 +2,18 @@ export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   taskName?: string; // Add taskName for assistant messages
+  attachedFileIds?: string[]; // IDs of files attached to this message
+}
+
+export interface ChatFile {
+  id: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  created_at: string;
+  expires_at: string;
+  url: string;
+  content?: string; // Parsed text content for AI
 }
 
 export interface ChatHistory {

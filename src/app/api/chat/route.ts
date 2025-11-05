@@ -2,14 +2,21 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import axios from 'axios';
-import { writeFileSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import path from 'path';
 
 // Fallback logging to file
 function logToFile(message: string, data: any = {}) {
   try {
     const logMessage = `[${new Date().toISOString()}] [API] ${message}: ${JSON.stringify(data, null, 2)}\n`;
-    const logPath = path.join(process.cwd(), 'logs', 'api.log');
+    const logDir = path.join(process.cwd(), 'logs');
+    const logPath = path.join(logDir, 'api.log');
+    
+    // Create logs directory if it doesn't exist
+    if (!existsSync(logDir)) {
+      mkdirSync(logDir, { recursive: true });
+    }
+    
     writeFileSync(logPath, logMessage, { flag: 'a' });
   } catch (error) {
     console.error('[API] Failed to write to log file:', error);
@@ -56,12 +63,15 @@ async function handleChat(request: Request) {
     logToFile('Processing chat request');
     console.log('[Chat] Processing chat request');
 
-    const { messages, useSettings } = await request.json();
+    const { messages, useSettings, attachedFileIds } = await request.json();
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       logToFile('Invalid request', { error: 'Messages array is required' });
       console.error('[Chat] Request error: Messages array is required');
       return NextResponse.json({ error: 'Messages array is required' }, { status: 400 });
     }
+
+    logToFile('Request data', { messagesCount: messages.length, hasFiles: !!attachedFileIds?.length, fileCount: attachedFileIds?.length || 0 });
+    console.log('[Chat] Request data:', { messagesCount: messages.length, hasFiles: !!attachedFileIds?.length, fileCount: attachedFileIds?.length || 0 });
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
@@ -329,6 +339,56 @@ async function handleChat(request: Request) {
     logToFile('Using model', { name, modelId: id, endpoint, modelType });
     console.log('[Chat] Using model:', name, 'Model ID:', id, 'Endpoint:', endpoint, 'Model type:', modelType);
 
+    // Parse attached files if any
+    let fileContext = '';
+    if (attachedFileIds && Array.isArray(attachedFileIds) && attachedFileIds.length > 0) {
+      try {
+        logToFile('Parsing attached files', { fileIds: attachedFileIds });
+        console.log('[Chat] Parsing attached files:', attachedFileIds);
+
+        // Build the full URL for the parse endpoint
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const parseUrl = `${baseUrl}/api/chat/files/parse`;
+        
+        console.log('[Chat] Parse API URL:', parseUrl);
+
+        const parseResponse = await fetch(parseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader || '',
+          },
+          body: JSON.stringify({ 
+            fileIds: attachedFileIds.map((f: any) => typeof f === 'string' ? f : f.id)
+          }),
+        });
+
+        if (!parseResponse.ok) {
+          const errorData = await parseResponse.json();
+          logToFile('Parse API error', { status: parseResponse.status, error: errorData });
+          console.error('[Chat] Parse API error:', parseResponse.status, errorData);
+        } else {
+          const { files } = await parseResponse.json();
+          logToFile('Parsed files', { fileCount: files?.length || 0 });
+          console.log('[Chat] Parsed files:', files?.length || 0);
+
+          if (files && files.length > 0) {
+            const fileContextParts = files.map((file: any) => {
+              const content = file.content || '[No content extracted - file may require additional libraries]';
+              return `--- File: ${file.name} (${file.type}) ---\n${content}\n`;
+            });
+            fileContext = '\n\n📎 Attached Files:\n\n' + fileContextParts.join('\n') + '\n---\n\n';
+            logToFile('File context created', { length: fileContext.length });
+            console.log('[Chat] File context created, length:', fileContext.length);
+          }
+        }
+      } catch (parseError: any) {
+        logToFile('Parse error', { error: parseError.message });
+        console.error('[Chat] Parse error:', parseError.message);
+        // Continue without file context if parsing fails
+      }
+    }
+
     // Construct system message with model system_message, task, and default_settings (if useSettings is true)
     let fullSystemMessage = system_message || '';
     // Check for task in messages (client may send task system_message)
@@ -346,6 +406,18 @@ async function handleChat(request: Request) {
 
     // Filter out any existing system messages from client to avoid duplication
     const filteredMessages = messages.filter((msg: Message) => msg.role !== 'system');
+    
+    // Add file context to the last user message if available
+    if (fileContext && filteredMessages.length > 0) {
+      const lastMessageIndex = filteredMessages.length - 1;
+      filteredMessages[lastMessageIndex] = {
+        ...filteredMessages[lastMessageIndex],
+        content: fileContext + filteredMessages[lastMessageIndex].content,
+      };
+      logToFile('Added file context to message', { messageLength: filteredMessages[lastMessageIndex].content.length });
+      console.log('[Chat] Added file context to last message');
+    }
+    
     const fullMessages: Message[] = fullSystemMessage
       ? [{ role: 'system', content: fullSystemMessage }, ...filteredMessages]
       : filteredMessages;

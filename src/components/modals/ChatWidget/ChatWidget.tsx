@@ -66,6 +66,11 @@ export default function ChatWidget({
   const [userRole, setUserRole] = useState<Role>('user');
   const [defaultSettings, setDefaultSettings] = useState<Record<string, any>>({});
   const [selectedSettings, setSelectedSettings] = useState<Record<string, any> | null>(null);
+  const [attachedFileIds, setAttachedFileIds] = useState<Array<{id: string; name: string; size: number}>>([]);
+  const [chatSessionId] = useState(() => {
+    // Generate a proper UUID v4
+    return crypto.randomUUID();
+  });
   const router = useRouter();
 
   // Detect device type for responsive behavior
@@ -339,11 +344,20 @@ const sendMessage = async () => {
     return;
   }
   setError(null);
-  const newMessage: Message = { role: 'user', content: input }; // Explicitly type as Message
+  
+  // Capture attached files before clearing
+  const filesToSend = [...attachedFileIds];
+  
+  const newMessage: Message = { 
+    role: 'user', 
+    content: input,
+    attachedFileIds: filesToSend.map(f => f.id) // Store file IDs with message
+  };
+  
   setMessages((prev) => [...prev, newMessage]);
   setInput('');
   setIsTyping(true);
-
+  
   try {
     let systemMessage = selectedModel?.system_message || '';
     if (selectedTask) {
@@ -360,11 +374,14 @@ const sendMessage = async () => {
       ? [{ role: 'system', content: systemMessage }, ...messages, newMessage]
       : [...messages, newMessage];
 
+    console.log('[ChatWidget] Sending message with files:', filesToSend);
+
     const response = await axios.post(
       '/api/chat',
       {
         messages: messagesToSend,
         useSettings: !!selectedSettings,
+        attachedFileIds: filesToSend, // Send file IDs to API
       },
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
@@ -375,6 +392,9 @@ const sendMessage = async () => {
     setIsTyping(false);
     setSelectedTask(null);
     setSelectedSettings(null);
+    // Clear attached files after successful send
+    setAttachedFileIds([]);
+    console.log('[ChatWidget] Message sent successfully, files cleared');
   } catch (error: any) {
     console.error('Chat widget error:', error.message, error.response?.data);
     const errorMsg = error.response?.data?.error || 'Failed to send message';
@@ -391,6 +411,8 @@ const sendMessage = async () => {
     setIsTyping(false);
     setSelectedTask(null);
     setSelectedSettings(null);
+    // Clear files even on error to avoid confusion
+    setAttachedFileIds([]);
   }
 };
 
@@ -715,6 +737,15 @@ const sendMessage = async () => {
               onSettingsUpdated={handleSettingsUpdated}
               onModalOpen={() => setIsModalOpen(true)}
               onModalClose={() => setIsModalOpen(false)}
+              userId={userId}
+              chatSessionId={chatSessionId}
+              attachedFiles={attachedFileIds}
+              onFilesAttached={(files) => {
+                setAttachedFileIds(files);
+              }}
+              onFileRemoved={(fileId) => {
+                setAttachedFileIds(prev => prev.filter(f => f.id !== fileId));
+              }}
             />
           </div>
         </div>

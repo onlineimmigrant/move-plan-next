@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useEffect, useState } from 'react';
-import { ArrowUpIcon, MagnifyingGlassIcon, BookmarkIcon, PlusIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { ArrowUpIcon, MagnifyingGlassIcon, BookmarkIcon, PlusIcon, Cog6ToothIcon, PaperClipIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Combobox } from '@headlessui/react';
 import Tooltip from '@/components/Tooltip';
 import TaskManagerModal from './TaskManagerModal';
@@ -40,6 +40,11 @@ interface ChatInputProps {
   onSettingsUpdated: (settings: Record<string, any>) => void;
   onModalOpen: () => void;
   onModalClose: () => void;
+  userId: string | null;
+  chatSessionId: string;
+  attachedFiles: Array<{id: string; name: string; size: number}>;
+  onFilesAttached: (files: Array<{id: string; name: string; size: number}>) => void;
+  onFileRemoved: (fileId: string) => void;
 }
 
 export default function ChatInput({
@@ -73,11 +78,18 @@ export default function ChatInput({
   onSettingsUpdated,
   onModalOpen,
   onModalClose,
+  userId,
+  chatSessionId,
+  attachedFiles,
+  onFilesAttached,
+  onFileRemoved,
 }: ChatInputProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isSettingsInitialized, setIsSettingsInitialized] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Initialize selectedSettings to defaultSettings on mount or when defaultSettings changes
   useEffect(() => {
@@ -100,6 +112,72 @@ export default function ChatInput({
         history.name.toLowerCase().includes(query.toLowerCase())
       )
     : chatHistories;
+
+  // Handle file upload
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !accessToken) return;
+
+    setIsUploading(true);
+
+    try {
+      const uploadedFiles = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+          continue;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('chatSessionId', chatSessionId);
+
+        const response = await fetch('/api/chat/files/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+
+        const data = await response.json();
+        uploadedFiles.push({
+          id: data.file.id,
+          name: data.file.name,
+          size: data.file.size
+        });
+      }
+
+      if (uploadedFiles.length > 0) {
+        onFilesAttached([...attachedFiles, ...uploadedFiles]);
+      }
+
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      alert(`Failed to upload file: ${error.message}`);
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   return (
     <div>
@@ -156,6 +234,33 @@ export default function ChatInput({
         </>
       )}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100 transition-all duration-200">
+        {/* Attached Files Display */}
+        {attachedFiles.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {attachedFiles.map((file) => (
+              <div
+                key={file.id}
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm"
+              >
+                <PaperClipIcon className="h-4 w-4 text-blue-600" />
+                <span className="text-blue-900 font-medium truncate max-w-[150px]">
+                  {file.name}
+                </span>
+                <span className="text-blue-600 text-xs">
+                  {formatFileSize(file.size)}
+                </span>
+                <button
+                  onClick={() => onFileRemoved(file.id)}
+                  className="p-0.5 hover:bg-blue-200 rounded transition-colors"
+                  title="Remove file"
+                >
+                  <XMarkIcon className="h-3.5 w-3.5 text-blue-600" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-end gap-3">
           <div className="flex-1 relative">
             <textarea
@@ -182,6 +287,32 @@ export default function ChatInput({
         </div>
         <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
           <div className="flex items-center gap-2">
+            {/* File Attachment Button */}
+            <Tooltip content="Attach files">
+              <label className="cursor-pointer">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.docx,.doc,.txt,.md,image/*"
+                  onChange={handleFileSelect}
+                  disabled={!isAuthenticated || isUploading}
+                  className="hidden"
+                />
+                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none ${
+                  isUploading
+                    ? 'text-slate-300 cursor-not-allowed'
+                    : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50 cursor-pointer'
+                } ${attachedFiles.length > 0 ? 'text-blue-600 bg-blue-50' : ''}`}>
+                  {isUploading ? (
+                    <div className="w-4 h-4 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <PaperClipIcon className="h-4 w-4" />
+                  )}
+                </div>
+              </label>
+            </Tooltip>
+
             <Tooltip content="Search history">
               <button
                 onClick={toggleSearchInput}

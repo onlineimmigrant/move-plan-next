@@ -1,11 +1,11 @@
 'use client';
 import { useRef, useEffect, useState, useCallback, useMemo, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckIcon, ClipboardIcon, EyeIcon, PencilIcon, ArrowDownTrayIcon, XMarkIcon, TrashIcon, ArrowDownOnSquareIcon, LinkIcon, ListBulletIcon, CodeBracketIcon, PhotoIcon, Bars3BottomLeftIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, ClipboardIcon, EyeIcon, PencilIcon, ArrowDownTrayIcon, XMarkIcon, TrashIcon, ArrowDownOnSquareIcon, LinkIcon, ListBulletIcon, CodeBracketIcon, PhotoIcon, Bars3BottomLeftIcon, DocumentIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import Tooltip from '@/components/Tooltip';
 import { useToast } from '@/components/Shared/ToastContainer';
-import { Message, ChatMessagesProps } from './types';
+import { Message, ChatMessagesProps, ChatFile } from './types';
 import styles from './ChatWidget.module.css';
 import { jsPDF } from 'jspdf';
 import { createClient } from '@supabase/supabase-js';
@@ -680,8 +680,124 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
   const [codeBlockBgColor, setCodeBlockBgColor] = useState<string>('#f0f0f0'); // light gray
   const [codeBlockTextColor, setCodeBlockTextColor] = useState<string>('#000000'); // black
 
+  // File attachment states
+  const [fileDetails, setFileDetails] = useState<{ [key: string]: ChatFile }>({});
+  const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set());
+  const [previewFileIndex, setPreviewFileIndex] = useState<{ [messageIndex: number]: number }>({});
+  const [fullscreenFile, setFullscreenFile] = useState<{ fileId: string; messageIndex: number } | null>(null);
+
   // Textarea ref for markdown editor
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Fetch file details for attached files
+  const fetchFileDetails = useCallback(async (fileId: string) => {
+    if (fileDetails[fileId] || loadingFiles.has(fileId)) return;
+
+    setLoadingFiles(prev => new Set([...prev, fileId]));
+
+    try {
+      const response = await fetch('/api/chat/files/upload', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const file = data.files?.find((f: ChatFile) => f.id === fileId);
+        
+        if (file) {
+          setFileDetails(prev => ({ ...prev, [fileId]: file }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching file details:', error);
+    } finally {
+      setLoadingFiles(prev => {
+        const newSet = new Set([...prev]);
+        newSet.delete(fileId);
+        return newSet;
+      });
+    }
+  }, [fileDetails, loadingFiles, accessToken]);
+
+  // Download file
+  const handleDownloadAttachment = useCallback(async (fileId: string) => {
+    const file = fileDetails[fileId];
+    if (!file) return;
+
+    try {
+      const response = await fetch(file.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.file_name;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('File downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error('Failed to download file');
+    }
+  }, [fileDetails, toast]);
+
+  // Format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Get file icon based on mime type
+  const getFileIcon = (mimeType?: string) => {
+    if (!mimeType) return DocumentIcon;
+    if (mimeType.includes('pdf')) return DocumentIcon;
+    if (mimeType.includes('word') || mimeType.includes('wordprocessingml')) return DocumentIcon;
+    if (mimeType.includes('image')) return PhotoIcon;
+    if (mimeType.includes('text')) return Bars3BottomLeftIcon;
+    return DocumentIcon;
+  };
+
+  // Navigate between attached files
+  const navigateFile = (messageIndex: number, direction: 'prev' | 'next', totalFiles: number) => {
+    setPreviewFileIndex(prev => {
+      const currentIndex = prev[messageIndex] || 0;
+      let newIndex;
+      
+      if (direction === 'prev') {
+        newIndex = currentIndex === 0 ? totalFiles - 1 : currentIndex - 1;
+      } else {
+        newIndex = currentIndex === totalFiles - 1 ? 0 : currentIndex + 1;
+      }
+      
+      return { ...prev, [messageIndex]: newIndex };
+    });
+  };
+
+  // Check if file can be previewed
+  const canPreviewFile = (mimeType?: string) => {
+    if (!mimeType) return false;
+    return mimeType.startsWith('image/') || mimeType === 'application/pdf';
+  };
+
+  // Open fullscreen preview
+  const openFullscreenPreview = (fileId: string, messageIndex: number) => {
+    setFullscreenFile({ fileId, messageIndex });
+  };
+
+  // Close fullscreen preview
+  const closeFullscreenPreview = () => {
+    setFullscreenFile(null);
+  };
+
+  // Navigate in fullscreen mode
+  const navigateFullscreen = (direction: 'prev' | 'next', messageIndex: number, totalFiles: number) => {
+    navigateFile(messageIndex, direction, totalFiles);
+  };
 
   // Markdown formatting helpers
   const insertMarkdown = (before: string, after: string = '', placeholder: string = 'text') => {
@@ -763,6 +879,28 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showFilenameForm]);
+
+  // Keyboard navigation for fullscreen preview
+  useEffect(() => {
+    if (!fullscreenFile) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const messageIndex = fullscreenFile.messageIndex;
+      const message = messages[messageIndex];
+      const fileIds = message.attachedFileIds || [];
+
+      if (e.key === 'Escape') {
+        closeFullscreenPreview();
+      } else if (e.key === 'ArrowLeft' && fileIds.length > 1) {
+        navigateFullscreen('prev', messageIndex, fileIds.length);
+      } else if (e.key === 'ArrowRight' && fileIds.length > 1) {
+        navigateFullscreen('next', messageIndex, fileIds.length);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fullscreenFile, messages]);
 
   const getDefaultFilename = (content: string, index: number) => {
     const textContent = content.replace(/<[^>]+>/g, '');
@@ -1587,8 +1725,178 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
                   <ReactMarkdown>{msg.content.replace(/<[^>]+>/g, '')}</ReactMarkdown>
                 </div>
               ) : (
-                <div className="text-white whitespace-pre-wrap leading-relaxed">
-                  {msg.content}
+                <div>
+                  {/* Display attached files if any */}
+                  {msg.attachedFileIds && msg.attachedFileIds.length > 0 && (
+                    <div className="mb-3 pb-3 border-b border-white/20">
+                      {(() => {
+                        const currentIndex = previewFileIndex[index] || 0;
+                        const currentFileId = msg.attachedFileIds[currentIndex];
+                        const currentFile = fileDetails[currentFileId];
+                        const isLoading = loadingFiles.has(currentFileId);
+
+                        // Fetch file details if not already loaded
+                        if (!currentFile && !isLoading) {
+                          fetchFileDetails(currentFileId);
+                        }
+
+                        // Check if current file can be previewed
+                        const showPreview = currentFile && canPreviewFile(currentFile.mime_type);
+
+                        return (
+                          <div className="space-y-2">
+                            {/* File Preview */}
+                            {showPreview && (
+                              <div 
+                                className="relative bg-black/20 rounded-lg overflow-hidden cursor-pointer group/preview"
+                                onDoubleClick={() => openFullscreenPreview(currentFileId, index)}
+                                title="Double-click to view fullscreen"
+                              >
+                                {currentFile.mime_type?.startsWith('image/') ? (
+                                  <img
+                                    src={currentFile.url}
+                                    alt={currentFile.file_name}
+                                    className="w-full max-h-64 object-contain"
+                                    loading="lazy"
+                                  />
+                                ) : currentFile.mime_type === 'application/pdf' ? (
+                                  <div className="w-full h-64 flex items-center justify-center">
+                                    <iframe
+                                      src={currentFile.url}
+                                      className="w-full h-full"
+                                      title={currentFile.file_name}
+                                    />
+                                  </div>
+                                ) : null}
+                                
+                                {/* Fullscreen button - visible on mobile, hover on desktop */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openFullscreenPreview(currentFileId, index);
+                                  }}
+                                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-lg transition-all z-10 sm:opacity-0 sm:group-hover/preview:opacity-100"
+                                  title="View fullscreen"
+                                >
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                  </svg>
+                                </button>
+                                
+                                {/* Fullscreen hint overlay - desktop only */}
+                                <div className="hidden sm:flex absolute inset-0 bg-black/0 group-hover/preview:bg-black/30 transition-all items-center justify-center opacity-0 group-hover/preview:opacity-100">
+                                  <div className="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-lg text-white text-sm">
+                                    Double-click to enlarge
+                                  </div>
+                                </div>
+                                
+                                {/* Navigation arrows for multiple files */}
+                                {msg.attachedFileIds.length > 1 && (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigateFile(index, 'prev', msg.attachedFileIds!.length);
+                                      }}
+                                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all z-10"
+                                      title="Previous file"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                      </svg>
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigateFile(index, 'next', msg.attachedFileIds!.length);
+                                      }}
+                                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all z-10"
+                                      title="Next file"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                      </svg>
+                                    </button>
+                                    {/* File counter */}
+                                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full z-10">
+                                      {currentIndex + 1} / {msg.attachedFileIds.length}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
+
+                            {/* File Info Bar */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {msg.attachedFileIds.map((fileId, idx) => {
+                                const file = fileDetails[fileId];
+                                const isFileLoading = loadingFiles.has(fileId);
+                                const FileIcon = getFileIcon(file?.mime_type);
+                                const isActive = idx === currentIndex;
+
+                                // Fetch file details if not already loaded
+                                if (!file && !isFileLoading) {
+                                  fetchFileDetails(fileId);
+                                }
+
+                                return (
+                                  <button
+                                    key={idx}
+                                    onClick={() => {
+                                      if (msg.attachedFileIds!.length > 1) {
+                                        setPreviewFileIndex(prev => ({ ...prev, [index]: idx }));
+                                      } else if (file) {
+                                        handleDownloadAttachment(fileId);
+                                      }
+                                    }}
+                                    disabled={!file}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all ${
+                                      isActive 
+                                        ? 'bg-white/30 ring-2 ring-white/40' 
+                                        : 'bg-white/10 hover:bg-white/20'
+                                    } ${
+                                      file 
+                                        ? 'cursor-pointer active:scale-95' 
+                                        : 'opacity-50 cursor-wait'
+                                    }`}
+                                    title={
+                                      msg.attachedFileIds!.length > 1 
+                                        ? `Click to preview ${file?.file_name || 'file'}` 
+                                        : file 
+                                        ? `Click to download ${file.file_name}` 
+                                        : 'Loading file details...'
+                                    }
+                                  >
+                                    <FileIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                                    {isFileLoading ? (
+                                      <span className="opacity-70">Loading...</span>
+                                    ) : file ? (
+                                      <div className="flex items-center gap-2">
+                                        <span className="opacity-90 font-medium truncate max-w-[150px]">
+                                          {file.file_name}
+                                        </span>
+                                        <span className="opacity-60 text-[10px]">
+                                          ({formatFileSize(file.file_size)})
+                                        </span>
+                                        {msg.attachedFileIds!.length === 1 && (
+                                          <ArrowDownTrayIcon className="h-3 w-3 opacity-70" />
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="opacity-70">File attached</span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  <div className="text-white whitespace-pre-wrap leading-relaxed">
+                    {msg.content}
+                  </div>
                 </div>
               )}
             </div>
@@ -2033,6 +2341,114 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
         </div>,
         document.body
       )}
+
+      {/* Fullscreen File Preview Modal */}
+      {fullscreenFile && (() => {
+        const messageIndex = fullscreenFile.messageIndex;
+        const currentIndex = previewFileIndex[messageIndex] || 0;
+        const message = messages[messageIndex];
+        const fileIds = message.attachedFileIds || [];
+        const currentFileId = fileIds[currentIndex];
+        const currentFile = fileDetails[currentFileId];
+
+        return createPortal(
+          <div 
+            className="fixed inset-0 z-[10000003] bg-black/95 flex items-center justify-center"
+            onClick={closeFullscreenPreview}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeFullscreenPreview}
+              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+              title="Close (Esc)"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+
+            {/* Download button */}
+            {currentFile && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownloadAttachment(currentFileId);
+                }}
+                className="absolute top-4 right-16 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+                title="Download"
+              >
+                <ArrowDownTrayIcon className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* File info */}
+            {currentFile && (
+              <div className="absolute top-4 left-4 z-10 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg text-white">
+                <div className="text-sm font-medium">{currentFile.file_name}</div>
+                <div className="text-xs text-white/70">{formatFileSize(currentFile.file_size)}</div>
+              </div>
+            )}
+
+            {/* Navigation arrows for multiple files */}
+            {fileIds.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateFullscreen('prev', messageIndex, fileIds.length);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+                  title="Previous file (←)"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateFullscreen('next', messageIndex, fileIds.length);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+                  title="Next file (→)"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                
+                {/* File counter */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
+                  {currentIndex + 1} / {fileIds.length}
+                </div>
+              </>
+            )}
+
+            {/* Main content */}
+            <div 
+              className="max-w-[95vw] max-h-[95vh] flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {currentFile ? (
+                currentFile.mime_type?.startsWith('image/') ? (
+                  <img
+                    src={currentFile.url}
+                    alt={currentFile.file_name}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                ) : currentFile.mime_type === 'application/pdf' ? (
+                  <iframe
+                    src={currentFile.url}
+                    className="w-[90vw] h-[90vh] bg-white rounded-lg"
+                    title={currentFile.file_name}
+                  />
+                ) : null
+              ) : (
+                <div className="text-white">Loading...</div>
+              )}
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
     </div>
   );
 }
