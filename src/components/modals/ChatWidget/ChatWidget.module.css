@@ -32,9 +32,9 @@
 /* Mobile adjustments for help widget - with margins */
 @media (max-width: 640px) {
   .fullscreenContainer {
-    top: 1rem;
+    top: 1.5rem;
     right: 1rem;
-    bottom: 1rem;
+    bottom: 1.5rem;
     left: 1rem;
     width: auto;
     height: auto;
@@ -44,9 +44,9 @@
 
 .mobileHalfContainer {
   width: calc(100vw - 2rem);
-  height: calc(100vh - 2rem);
-  top: 1rem;
-  bottom: 1rem;
+  height: calc(100vh - 4rem);
+  top: 1.5rem;
+  bottom: 2.5rem;
   left: 1rem;
   right: 1rem;
   border: none;
@@ -54,7 +54,7 @@
 }
 
 .centeredMessages {
-  max-width: 80rem; /* max-w-5xl equivalent */
+  max-width: 48rem; /* max-w-3xl */
   margin-left: auto;
   margin-right: auto;
 }
@@ -107,7 +107,7 @@
   font-weight: 500; /* font-medium */
   color: #4b5563; /* text-gray-600 */
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
   white-space: nowrap;
 }
 
@@ -116,8 +116,8 @@
 }
 
 .taskBadge.selected {
-  background-color: #e0f2fe; /* bg-sky-100 */
-  color: #0284c7; /* text-sky-600 */
+  background-color: var(--color-primary-lighter);
+  color: var(--color-primary-base);
 }
 
 .addTaskButton {

@@ -20,11 +20,15 @@ export interface ChatHistory {
   id: number;
   name: string;
   messages: Message[];
+  bookmarked: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Model {
   id: number;
   name: string;
+  display_name: string;
   api_key: string | null;
   endpoint: string | null;
   max_tokens: number | null;

@@ -13,7 +13,7 @@ export default function ChatToggleButton({ isOpen, toggleOpen, isModalOpen = fal
     <button
       onClick={toggleOpen}
       className={`
-        fixed ${isModalOpen ? 'z-40' : 'z-[9998]'}
+        fixed ${isModalOpen ? 'z-[10000001]' : 'z-[9998]'}
         flex items-center justify-center
         w-12 h-12 sm:w-14 sm:h-14
         bottom-4 right-4 sm:bottom-6 sm:right-6
@@ -28,6 +28,7 @@ export default function ChatToggleButton({ isOpen, toggleOpen, isModalOpen = fal
         group
         ${isOpen ? 'rotate-45' : ''}
       `}
+      style={{ position: 'fixed' }}
       aria-label={isOpen ? 'Close chat' : 'Open chat'}
     >
       <RocketLaunchIcon className="h-6 w-6 transform group-hover:translate-y-[-2px] transition-transform duration-200" />

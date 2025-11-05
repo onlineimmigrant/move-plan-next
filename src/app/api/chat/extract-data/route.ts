@@ -22,12 +22,12 @@ interface ExtractionResult {
 /**
  * POST /api/chat/extract-data
  * 
- * Extracts structured data from user message/document for ai_user_settings.default_settings
+ * Extracts structured data from user message/document for ai_model_settings.settings
  * 
  * Request body:
  * {
  *   content: string,           // Message or document content
- *   existingSettings?: object, // Current default_settings
+ *   existingSettings?: object, // Current model-specific settings
  *   extractionHints?: string[] // Optional: specific fields to extract (e.g., ["name", "skills"])
  * }
  * 

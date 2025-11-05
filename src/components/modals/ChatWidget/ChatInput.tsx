@@ -1,13 +1,12 @@
 'use client';
 import { useRef, useEffect, useState } from 'react';
-import { ArrowUpIcon, MagnifyingGlassIcon, BookmarkIcon, PlusIcon, Cog6ToothIcon, PaperClipIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { Combobox } from '@headlessui/react';
+import { ArrowUpIcon, MagnifyingGlassIcon, BookmarkIcon, PlusIcon, Cog6ToothIcon, PaperClipIcon, XMarkIcon, FolderIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import TaskManagerModal from './TaskManagerModal';
-import SettingsModal from './SettingsModal';
 import { ChatHistory, Task, Role, Model } from './types';
 import styles from './ChatWidget.module.css';
 import Button from '@/ui/Button';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ChatInputProps {
   input: string;
@@ -20,13 +19,13 @@ interface ChatInputProps {
   showSaveInput: boolean;
   toggleSaveInput: () => void;
   historyName: string;
-  setHistoryName: (value: string) => void;
+  setHistoryName: (name: string) => void;
   saveChatHistory: () => void;
-  loadChatHistory: (history: ChatHistory | null) => void;
+  loadChatHistory: (history: ChatHistory) => void;
   isSaving: boolean;
   chatHistories: ChatHistory[];
   query: string;
-  setQuery: (value: string) => void;
+  setQuery: (query: string) => void;
   tasks: Task[];
   selectedTask: Task | null;
   setSelectedTask: (task: Task | null) => void;
@@ -45,6 +44,8 @@ interface ChatInputProps {
   attachedFiles: Array<{id: string; name: string; size: number}>;
   onFilesAttached: (files: Array<{id: string; name: string; size: number}>) => void;
   onFileRemoved: (fileId: string) => void;
+  onOpenFiles: () => void;
+  onOpenSettings: () => void;
 }
 
 export default function ChatInput({
@@ -83,13 +84,15 @@ export default function ChatInput({
   attachedFiles,
   onFilesAttached,
   onFileRemoved,
+  onOpenFiles,
+  onOpenSettings,
 }: ChatInputProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isSettingsInitialized, setIsSettingsInitialized] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const themeColors = useThemeColors();
 
   // Initialize selectedSettings to defaultSettings on mount or when defaultSettings changes
   useEffect(() => {
@@ -106,12 +109,6 @@ export default function ChatInput({
       textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
     }
   }, [input]);
-
-  const filteredHistories = query
-    ? chatHistories.filter((history) =>
-        history.name.toLowerCase().includes(query.toLowerCase())
-      )
-    : chatHistories;
 
   // Handle file upload
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,18 +216,6 @@ export default function ChatInput({
             accessToken={accessToken}
             onTasksUpdated={onTasksUpdated}
           />
-          <SettingsModal
-            isOpen={isSettingsModalOpen}
-            onClose={() => {
-              setIsSettingsModalOpen(false);
-              onModalClose();
-            }}
-            accessToken={accessToken}
-            defaultSettings={defaultSettings}
-            selectedSettings={selectedSettings}
-            setSelectedSettings={setSelectedSettings}
-            onSettingsUpdated={onSettingsUpdated}
-          />
         </>
       )}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100 transition-all duration-200">
@@ -261,15 +246,57 @@ export default function ChatInput({
           </div>
         )}
 
-        <div className="flex items-end gap-3">
-          <div className="flex-1 relative">
+        <div className="flex items-center gap-3">
+          {/* File Attachment Button - visible on both mobile and desktop */}
+          <Tooltip content="Attach files">
+            <label className="cursor-pointer flex-shrink-0">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.docx,.doc,.txt,.md,image/*"
+                onChange={handleFileSelect}
+                disabled={!isAuthenticated || isUploading}
+                className="hidden"
+              />
+              <div className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 focus:outline-none ${
+                isUploading
+                  ? 'text-slate-300 cursor-not-allowed bg-slate-100'
+                  : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50 cursor-pointer'
+              } ${attachedFiles.length > 0 ? 'text-blue-600 bg-blue-50' : ''}`}>
+                {isUploading ? (
+                  <div className="w-4 h-4 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <PaperClipIcon className="h-5 w-5" />
+                )}
+              </div>
+            </label>
+          </Tooltip>
+
+          <div className="flex-1 relative flex flex-col gap-2">
+            {/* Show task badge above input when task is selected */}
+            {selectedTask && (
+              <div className="flex items-center gap-2 px-1">
+                <span 
+                  className={`${styles.taskBadge} ${styles.selected}`}
+                  style={{
+                    backgroundColor: themeColors.cssVars.primary.lighter,
+                    color: themeColors.cssVars.primary.base
+                  }}
+                >
+                  {selectedTask.name}
+                </span>
+              </div>
+            )}
+            
+            {/* Input always available */}
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
-              className="w-full resize-none border-0 bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0 text-base leading-relaxed min-h-[44px] max-h-[120px]"
-              placeholder={selectedTask ? `Ask about "${selectedTask.name}"...` : 'Ask me anything...'}
+              className="w-full resize-none border-0 bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0 text-base leading-relaxed min-h-[40px] max-h-[120px] py-2"
+              placeholder={selectedTask ? `Ask about "${selectedTask.name}"...` : 'Ask anything...'}
               disabled={!isAuthenticated || isTyping}
               rows={1}
             />
@@ -278,41 +305,16 @@ export default function ChatInput({
           <Tooltip content="Send message">
             <button
               onClick={sendMessage}
-              className="flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:cursor-not-allowed"
-              disabled={!isAuthenticated || isTyping || !input.trim()}
+              className="flex items-center justify-center flex-shrink-0 w-10 h-10 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:cursor-not-allowed"
+              disabled={!isAuthenticated || isTyping || (!input.trim() && !selectedTask)}
             >
               <ArrowUpIcon className="h-5 w-5" />
             </button>
           </Tooltip>
         </div>
         <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
-          <div className="flex items-center gap-2">
-            {/* File Attachment Button */}
-            <Tooltip content="Attach files">
-              <label className="cursor-pointer">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.docx,.doc,.txt,.md,image/*"
-                  onChange={handleFileSelect}
-                  disabled={!isAuthenticated || isUploading}
-                  className="hidden"
-                />
-                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none ${
-                  isUploading
-                    ? 'text-slate-300 cursor-not-allowed'
-                    : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50 cursor-pointer'
-                } ${attachedFiles.length > 0 ? 'text-blue-600 bg-blue-50' : ''}`}>
-                  {isUploading ? (
-                    <div className="w-4 h-4 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <PaperClipIcon className="h-4 w-4" />
-                  )}
-                </div>
-              </label>
-            </Tooltip>
-
+          {/* Left side buttons - visible only on mobile */}
+          <div className="flex items-center gap-2 sm:hidden">
             <Tooltip content="Search history">
               <button
                 onClick={toggleSearchInput}
@@ -334,86 +336,39 @@ export default function ChatInput({
             </Tooltip>
           </div>
 
-          <Tooltip content="Settings">
-            <button
-              onClick={() => {
-                setIsSettingsModalOpen(true);
-                onModalOpen();
-              }}
-              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed ${
-                selectedSettings && Object.keys(selectedSettings).length > 0
-                  ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                  : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
-              }`}
-              disabled={!isAuthenticated}
-            >
-              <Cog6ToothIcon className="h-4 w-4" />
-            </button>
-          </Tooltip>
-        </div>
-        {showSearchInput && (
-          <div className="mt-3 relative">
-            <Combobox value={null} onChange={loadChatHistory}>
-              <Combobox.Input
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search chat history..."
-                value={query}
-              />
-              <Combobox.Options className="absolute bottom-full mb-2 max-h-60 w-full overflow-auto rounded-xl bg-white py-2 shadow-xl ring-1 ring-slate-200 focus:outline-none border border-slate-100 z-10">
-                {filteredHistories.length === 0 && query !== '' ? (
-                  <div className="px-4 py-3 text-sm text-slate-500 text-center">
-                    No chat histories found.
-                  </div>
-                ) : (
-                  filteredHistories.map((history) => (
-                    <Combobox.Option
-                      key={history.id}
-                      value={history}
-                      className={({ active }) =>
-                        `relative cursor-pointer select-none px-4 py-3 transition-colors duration-150 ${
-                          active ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
-                        }`
-                      }
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                        <span className="text-sm font-medium truncate">{history.name}</span>
-                      </div>
-                    </Combobox.Option>
-                  ))
-                )}
-              </Combobox.Options>
-            </Combobox>
-          </div>
-        )}
-        {showSaveInput && (
-          <div className="mt-3 flex items-center gap-3">
-            <div className="flex-1">
-              <input
-                type="text"
-                value={historyName}
-                onChange={(e) => setHistoryName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                placeholder="Name your chat..."
-                disabled={!isAuthenticated || isSaving}
-              />
+          {/* Right side buttons - Files and Settings */}
+          <div className="flex items-center gap-2 sm:ml-auto">
+            {/* Files button - visible only on mobile */}
+            <div className="sm:hidden">
+              <Tooltip content="Files">
+                <button
+                  onClick={onOpenFiles}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isAuthenticated}
+                >
+                  <FolderIcon className="h-4 w-4" />
+                </button>
+              </Tooltip>
             </div>
-            <Tooltip content="Save chat">
-              <button
-                onClick={saveChatHistory}
-                className="flex items-center justify-center w-10 h-10 bg-green-500 hover:bg-green-600 disabled:bg-slate-200 text-white rounded-lg shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:cursor-not-allowed"
-                disabled={!isAuthenticated || isSaving}
-              >
-                {isSaving ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <BookmarkIcon className="h-4 w-4" />
-                )}
-              </button>
-            </Tooltip>
+
+            {/* Settings button - visible only on mobile */}
+            <div className="sm:hidden">
+              <Tooltip content="Settings">
+                <button
+                  onClick={onOpenSettings}
+                  className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    selectedSettings && Object.keys(selectedSettings).length > 0
+                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                      : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
+                  }`}
+                  disabled={!isAuthenticated}
+                >
+                  <Cog6ToothIcon className="h-4 w-4" />
+                </button>
+              </Tooltip>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

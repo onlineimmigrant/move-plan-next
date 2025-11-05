@@ -175,7 +175,7 @@ export default function TaskManagerModal({
         <div className={styles.modalContent} style={{ zIndex: 10000011 }}>
           <div className={styles.modalHeader}>
             <div className="flex justify-between items-center w-full">
-              <h2 className={styles.modalTitle}>Manage Tasks for {model.name}</h2>
+              <h2 className={styles.modalTitle}>Manage Tasks for {model.display_name}</h2>
               <button onClick={onClose} className={styles.modalCloseButton}>
                 <XMarkIcon className="h-4 w-4" />
               </button>
@@ -197,7 +197,7 @@ export default function TaskManagerModal({
           <div className="flex justify-between items-center w-full">
             <div>
               <h2 className={styles.modalTitle}>Tasks</h2>
-              <p className={styles.modalSubtitle}>{model.name}</p>
+              <p className={styles.modalSubtitle}>{model.display_name}</p>
             </div>
             <button onClick={onClose} className={styles.modalCloseButton}>
               <XMarkIcon className="h-4 w-4" />

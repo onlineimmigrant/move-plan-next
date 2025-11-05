@@ -49,6 +49,60 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
   } : { r: 240, g: 240, b: 240 }; // default light gray
 };
 
+// Emoji detection and conversion for PDF
+const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2B50}\u{2B55}\u{231A}\u{231B}\u{23E9}-\u{23F3}\u{23F8}-\u{23FA}\u{25AA}\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}\u{2600}-\u{2604}\u{260E}\u{2611}\u{2614}\u{2615}\u{2618}\u{261D}\u{2620}\u{2622}\u{2623}\u{2626}\u{262A}\u{262E}\u{262F}\u{2638}-\u{263A}\u{2640}\u{2642}\u{2648}-\u{2653}\u{2660}\u{2663}\u{2665}\u{2666}\u{2668}\u{267B}\u{267E}\u{267F}\u{2692}-\u{2697}\u{2699}\u{269B}\u{269C}\u{26A0}\u{26A1}\u{26AA}\u{26AB}\u{26B0}\u{26B1}\u{26BD}\u{26BE}\u{26C4}\u{26C5}\u{26C8}\u{26CE}\u{26CF}\u{26D1}\u{26D3}\u{26D4}\u{26E9}\u{26EA}\u{26F0}-\u{26F5}\u{26F7}-\u{26FA}\u{26FD}\u{2702}\u{2705}\u{2708}-\u{270D}\u{270F}\u{2712}\u{2714}\u{2716}\u{271D}\u{2721}\u{2728}\u{2733}\u{2734}\u{2744}\u{2747}\u{274C}\u{274E}\u{2753}-\u{2755}\u{2757}\u{2763}\u{2764}\u{2795}-\u{2797}\u{27A1}\u{27B0}\u{27BF}\u{2934}\u{2935}\u{2B05}-\u{2B07}\u{2B1B}\u{2B1C}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}\u{00A9}\u{00AE}\u{203C}\u{2049}\u{2122}\u{2139}\u{2194}-\u{2199}\u{21A9}\u{21AA}\u{231A}\u{231B}\u{2328}\u{23CF}\u{23E9}-\u{23F3}\u{23F8}-\u{23FA}\u{24C2}\u{25AA}\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}]/gu;
+
+// Get emoji codepoint for Twemoji CDN URL
+const getEmojiCodepoint = (emoji: string): string => {
+  return Array.from(emoji)
+    .map(char => char.codePointAt(0)!.toString(16).padStart(4, '0'))
+    .join('-');
+};
+
+// Common emoji fallback map (for offline or CDN failure)
+const emojiTextMap: Record<string, string> = {
+  '✅': '[✓]',
+  '❌': '[✗]',
+  '⚠️': '[!]',
+  '📝': '[note]',
+  '🎯': '[target]',
+  '💡': '[idea]',
+  '🔥': '[fire]',
+  '⭐': '[star]',
+  '✨': '[sparkle]',
+  '🚀': '[rocket]',
+  '📌': '[pin]',
+  '🔔': '[bell]',
+  '📁': '[folder]',
+  '📄': '[doc]',
+  '💾': '[save]',
+  '🔍': '[search]',
+  '⚙️': '[settings]',
+  '🔗': '[link]',
+  '📊': '[chart]',
+  '📈': '[up]',
+  '📉': '[down]',
+  '✏️': '[edit]',
+  '🗑️': '[delete]',
+  '👤': '[user]',
+  '👥': '[users]',
+  '💬': '[chat]',
+  '📧': '[mail]',
+  '📞': '[phone]',
+  '🏠': '[home]',
+  '🎨': '[art]',
+  '📱': '[mobile]',
+  '💻': '[laptop]',
+  '🖥️': '[desktop]',
+};
+
+// Replace emojis with text equivalents for PDF
+const replaceEmojisForPdf = (text: string): string => {
+  return text.replace(emojiRegex, (emoji) => {
+    return emojiTextMap[emoji] || `[${emoji}]`;
+  });
+};
+
 // Interface for markdown elements
 interface MarkdownElement {
   text: string;
@@ -109,22 +163,22 @@ const parseMarkdownForPdf = (markdown: string): MarkdownElement[] => {
     // Parse headers
     if (line.startsWith('#### ')) {
       elements.push({
-        text: line.substring(5).trim(),
+        text: replaceEmojisForPdf(line.substring(5).trim()),
         type: 'h4',
       });
     } else if (line.startsWith('### ')) {
       elements.push({
-        text: line.substring(4).trim(),
+        text: replaceEmojisForPdf(line.substring(4).trim()),
         type: 'h3',
       });
     } else if (line.startsWith('## ')) {
       elements.push({
-        text: line.substring(3).trim(),
+        text: replaceEmojisForPdf(line.substring(3).trim()),
         type: 'h2',
       });
     } else if (line.startsWith('# ')) {
       elements.push({
-        text: line.substring(2).trim(),
+        text: replaceEmojisForPdf(line.substring(2).trim()),
         type: 'h1',
       });
     } 
@@ -132,23 +186,24 @@ const parseMarkdownForPdf = (markdown: string): MarkdownElement[] => {
     else if (line.trim().match(/^[-*+]\s/) || line.trim().match(/^\d+\.\s/)) {
       const text = line.trim().replace(/^[-*+]\s/, '').replace(/^\d+\.\s/, '');
       elements.push({
-        text,
+        text: replaceEmojisForPdf(text),
         type: 'list-item',
         formatting: parseInlineFormatting(text),
       });
     }
     // Parse blockquotes
     else if (line.trim().startsWith('> ')) {
+      const quoteText = line.trim().substring(2);
       elements.push({
-        text: line.trim().substring(2),
+        text: replaceEmojisForPdf(quoteText),
         type: 'quote',
-        formatting: parseInlineFormatting(line.trim().substring(2)),
+        formatting: parseInlineFormatting(quoteText),
       });
     }
     // Regular paragraph
     else {
       elements.push({
-        text: line.trim(),
+        text: replaceEmojisForPdf(line.trim()),
         type: 'paragraph',
         formatting: parseInlineFormatting(line.trim()),
       });
@@ -1635,91 +1690,85 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
   }, [messages, toast]);
 
   return (
-    <div className={`flex-1 overflow-y-auto p-2 sm:p-6 space-y-4 ${isFullscreen ? styles.centeredMessages : ''}`}>
+    <div className={`p-2 sm:p-6 space-y-4 ${isFullscreen ? styles.centeredMessages : ''}`}>
       {messages.map((msg, index) => (
         <div
           key={index}
           className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
         >
           <div
-            className={`max-w-[85%] sm:max-w-[75%] lg:max-w-[65%] ${
+            className={`${
               msg.role === 'user'
-                ? 'bg-blue-500 text-white rounded-2xl rounded-tr-sm shadow-md px-4 py-3'
-                : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm shadow-sm px-4 py-3'
-            } relative group hover:shadow-lg transition-all duration-200`}
+                ? 'max-w-[85%] sm:max-w-[75%] lg:max-w-[65%] bg-blue-50/80 text-gray-700 rounded-2xl rounded-tr-sm px-4 py-3 hover:bg-blue-100/90'
+                : 'w-full bg-slate-50/80 text-slate-800 rounded-2xl rounded-tl-sm px-4 py-3 hover:bg-slate-100/90'
+            } relative group transition-all duration-200`}
           >
-            <div className="flex mb-2.5 justify-end gap-1 sticky top-0 z-10 py-1 -mt-1">
-              {msg.role === 'assistant' && (
-                <>
-                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
-                    <Tooltip variant="info-top" content="Save to Files">
-                      <button
-                        onClick={() => openFilenameForm(index, 'md')}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
-                        aria-label="Save to files"
-                      >
-                        <ArrowDownOnSquareIcon className="h-4 w-4" />
-                      </button>
-                    </Tooltip>
-                    <Tooltip variant="info-top" content="Download to Computer">
-                      <button
-                        onClick={() => openDownloadModal(index)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                        aria-label="Download to computer"
-                      >
-                        <ArrowDownTrayIcon className="h-4 w-4" />
-                      </button>
-                    </Tooltip>
-                    <Tooltip variant="info-top" content="Preview">
-                      <button
-                        onClick={() => openPreviewModal(index)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-green-600 hover:bg-green-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-                        aria-label="Preview message"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                    </Tooltip>
-                    <Tooltip variant="info-top" content="Edit">
-                      <button
-                        onClick={() => openEditModal(index)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
-                        aria-label="Edit message"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                    </Tooltip>
-                    <Tooltip variant="info-top" content="Delete">
-                      <button
-                        onClick={() => handleDeleteMessage(index)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                        aria-label="Delete message"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </Tooltip>
-                  </div>
-                </>
-              )}
-              {msg.role === 'user' && (
-                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+            {msg.role === 'assistant' && (
+              <div className="flex mb-2.5 justify-between items-center gap-1 sticky top-0 z-10 py-1 -mt-1">
+                {/* Task badge on the left */}
+                {msg.taskName && (
+                  <span 
+                    className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap"
+                    style={{
+                      backgroundColor: 'var(--color-primary-lighter, #dbeafe)',
+                      color: 'var(--color-primary-base, #3b82f6)'
+                    }}
+                  >
+                    {msg.taskName}
+                  </span>
+                )}
+                
+                {/* Action buttons on the right */}
+                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 ml-auto">
+                  <Tooltip variant="info-top" content="Save to Files">
+                    <button
+                      onClick={() => openFilenameForm(index, 'md')}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                      aria-label="Save to files"
+                    >
+                      <ArrowDownOnSquareIcon className="h-4 w-4" />
+                    </button>
+                  </Tooltip>
+                  <Tooltip variant="info-top" content="Download to Computer">
+                    <button
+                      onClick={() => openDownloadModal(index)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                      aria-label="Download to computer"
+                    >
+                      <ArrowDownTrayIcon className="h-4 w-4" />
+                    </button>
+                  </Tooltip>
+                  <Tooltip variant="info-top" content="Preview">
+                    <button
+                      onClick={() => openPreviewModal(index)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-green-600 hover:bg-green-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                      aria-label="Preview message"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </button>
+                  </Tooltip>
+                  <Tooltip variant="info-top" content="Edit">
+                    <button
+                      onClick={() => openEditModal(index)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
+                      aria-label="Edit message"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                  </Tooltip>
                   <Tooltip variant="info-top" content="Delete">
                     <button
                       onClick={() => handleDeleteMessage(index)}
-                      className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-opacity-50"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
                       aria-label="Delete message"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </Tooltip>
                 </div>
-              )}
-            </div>
-            <div className="overflow-y-auto prose prose-sm max-w-none dark:prose-invert">
-              {msg.role === 'assistant' && msg.taskName && (
-                <div className="inline-flex items-center gap-2 mb-3 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-full">
-                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{msg.taskName}</span>
-                </div>
-              )}
+              </div>
+            )}
+            <div className="overflow-y-auto prose prose-sm max-w-none dark:prose-invert font-[family-name:var(--font-inter)] prose-code:font-[family-name:var(--font-jetbrains-mono)]">
               {msg.role === 'assistant' ? (
                 <div className="text-slate-800 dark:text-slate-200 leading-relaxed">
                   <ReactMarkdown>{msg.content.replace(/<[^>]+>/g, '')}</ReactMarkdown>
@@ -1894,8 +1943,19 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
                       })()}
                     </div>
                   )}
-                  <div className="text-white whitespace-pre-wrap leading-relaxed">
-                    {msg.content}
+                  <div className="flex items-start gap-2 font-[family-name:var(--font-inter)]">
+                    <div className="text-gray-700 whitespace-pre-wrap leading-relaxed flex-1">
+                      {msg.content}
+                    </div>
+                    <Tooltip variant="info-top" content="Delete">
+                      <button
+                        onClick={() => handleDeleteMessage(index)}
+                        className="p-1.5 rounded-lg text-blue-600/70 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                        aria-label="Delete message"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               )}
@@ -1913,7 +1973,6 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
               </div>
-              <span className="text-sm text-slate-500 font-medium">Thinking...</span>
             </div>
           </div>
         </div>

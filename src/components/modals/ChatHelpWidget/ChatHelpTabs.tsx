@@ -32,7 +32,7 @@ export default function ChatHelpTabs({
     },
     {
       id: 'conversation' as const,
-      name: 'Live Chat',
+      name: 'Chat',
       icon: ChatBubbleLeftRightIcon,
     },
     {

@@ -8,10 +8,14 @@ const supabaseService = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { action, settingKey, settingValue } = await request.json();
+    const { action, settingKey, settingValue, modelId, modelType } = await request.json();
 
     if (!action) {
       return NextResponse.json({ error: 'Action is required' }, { status: 400 });
+    }
+
+    if (!modelId || !modelType) {
+      return NextResponse.json({ error: 'modelId and modelType are required' }, { status: 400 });
     }
 
     // Authenticate user
@@ -33,47 +37,78 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Authorization header missing' }, { status: 401 });
     }
 
-    // Fetch current settings
-    const { data: settingsData, error: settingsError } = await supabaseService
-      .from('ai_user_settings')
-      .select('default_settings')
+    // Fetch current settings for this user+model combination
+    const { data: modelSettingsData, error: settingsError } = await supabaseService
+      .from('ai_model_settings')
+      .select('settings')
       .eq('user_id', user.id)
+      .eq('model_id', modelId)
+      .eq('model_type', modelType)
       .single();
 
-    if (settingsError || !settingsData) {
-      console.error('Settings fetch error:', settingsError?.message);
-      return NextResponse.json({ error: 'User settings not found' }, { status: 404 });
-    }
+    let currentSettings: Record<string, any> = {};
+    let isNewRecord = false;
 
-    const defaultSettings: Record<string, any> = settingsData.default_settings || {};
+    if (settingsError) {
+      if (settingsError.code === 'PGRST116') {
+        // No record exists yet, will create one
+        isNewRecord = true;
+      } else {
+        console.error('Settings fetch error:', settingsError.message);
+        return NextResponse.json({ error: 'Error fetching settings' }, { status: 500 });
+      }
+    } else {
+      currentSettings = modelSettingsData.settings || {};
+    }
 
     // Handle CRUD actions
     if (action === 'add' || action === 'update') {
       if (!settingKey || settingValue === undefined) {
         return NextResponse.json({ error: 'settingKey and settingValue are required' }, { status: 400 });
       }
-      defaultSettings[settingKey] = settingValue;
+      currentSettings[settingKey] = settingValue;
     } else if (action === 'delete') {
       if (!settingKey) {
         return NextResponse.json({ error: 'settingKey is required' }, { status: 400 });
       }
-      delete defaultSettings[settingKey];
+      delete currentSettings[settingKey];
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    // Update settings in the database
-    const { error: updateError } = await supabaseService
-      .from('ai_user_settings')
-      .update({ default_settings: defaultSettings })
-      .eq('user_id', user.id);
+    // Insert or update settings in the database
+    if (isNewRecord) {
+      const { error: insertError } = await supabaseService
+        .from('ai_model_settings')
+        .insert({
+          user_id: user.id,
+          model_id: modelId,
+          model_type: modelType,
+          settings: currentSettings
+        });
 
-    if (updateError) {
-      console.error('Update settings error:', updateError.message);
-      return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
+      if (insertError) {
+        console.error('Insert settings error:', insertError.message);
+        return NextResponse.json({ error: 'Failed to create settings' }, { status: 500 });
+      }
+    } else {
+      const { error: updateError } = await supabaseService
+        .from('ai_model_settings')
+        .update({ 
+          settings: currentSettings,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id)
+        .eq('model_id', modelId)
+        .eq('model_type', modelType);
+
+      if (updateError) {
+        console.error('Update settings error:', updateError.message);
+        return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
+      }
     }
 
-    return NextResponse.json({ default_settings: defaultSettings });
+    return NextResponse.json({ settings: currentSettings });
   } catch (error: any) {
     console.error('Settings API error:', error.message, error.stack);
     return NextResponse.json({ error: 'Error processing request' }, { status: 500 });

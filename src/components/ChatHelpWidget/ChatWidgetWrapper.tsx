@@ -312,6 +312,8 @@ export default function ChatWidgetWrapper({
           onFileRemoved={(fileId) => {
             setAttachedFileIds(prev => prev.filter(f => f.id !== fileId));
           }}
+          onOpenFiles={() => setShowFilesList(true)}
+          onOpenSettings={() => {}}
         />
       </div>
 

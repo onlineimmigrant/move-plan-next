@@ -157,7 +157,7 @@ export default function ChatHelpWidget() {
   const sizeClasses = {
     initial: 'w-[400px] h-[750px] bottom-4 right-4 sm:bottom-8 sm:right-8',
     half: isMobile ? styles.mobileHalfContainer : 'w-1/2 h-[750px] bottom-4 right-4 sm:bottom-8 sm:right-8',
-    fullscreen: isMobile ? 'inset-4 sm:inset-4' : styles.fullscreenContainer,
+    fullscreen: isMobile ? 'top-6 right-4 bottom-10 left-4' : styles.fullscreenContainer,
   };
 
   const handleTabChange = (tab: 'welcome' | 'conversation' | 'ai') => {
@@ -336,9 +336,7 @@ export default function ChatHelpWidget() {
   };
 
   return (
-    <div className={`${showChatWidget ? 'z-[10000003]' : 'z-[9997]'} transition-opacity duration-300 ${
-      isMobile && !isScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
-    }`}>
+    <div className={`${showChatWidget ? 'z-[10000003]' : 'z-[9997]'} transition-opacity duration-300`}>
       {showChatWidget ? (
         // Show ChatWidget when in AI Agent mode - it manages its own state
         // Use key to force re-initialization when switching

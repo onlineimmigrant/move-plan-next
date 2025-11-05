@@ -1,6 +1,6 @@
 'use client';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from '@headlessui/react';
-import { CheckIcon, RocketLaunchIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, RocketLaunchIcon, ChevronDownIcon, Cog6ToothIcon, FolderIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import { Model } from './types';
 
@@ -44,7 +44,7 @@ export default function ModelSelector({
                   <RocketLaunchIcon className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 dark:text-slate-500" />
                 )}
                 <span className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 truncate">
-                  {selectedModel ? selectedModel.name : 'AI Assistant'}
+                  {selectedModel ? selectedModel.display_name : 'AI Agent'}
                 </span>
               </div>
               <ChevronDownIcon
@@ -60,7 +60,22 @@ export default function ModelSelector({
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <ListboxOptions className="absolute z-50 left-1/2 -translate-x-1/2 mt-2 w-64 max-h-80 overflow-auto rounded-xl backdrop-blur-2xl bg-white/50 dark:bg-gray-900/50 py-2 shadow-lg border-0 focus:outline-none">
+            <ListboxOptions 
+              className="absolute z-[10000005] left-1/2 -translate-x-1/2 mt-2 max-h-80 overflow-auto rounded-xl backdrop-blur-2xl bg-white/95 dark:bg-gray-900/95 py-2 shadow-lg border-0 focus:outline-none"
+              style={{ width: 'min(70vw, 400px)', minWidth: '280px' }}
+            >
+              <div className="border-b border-slate-300/50 dark:border-slate-600/50 mb-2 pb-2 mx-2">
+                <button
+                  onClick={goToSettings}
+                  className="w-full px-4 py-3 rounded-lg text-left transition-all duration-200 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl hover:scale-[1.02]"
+                >
+                  <div className="flex items-center gap-3">
+                    <RocketLaunchIcon className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-200">Manage Models</div>
+                  </div>
+                </button>
+              </div>
+
               {sortedModels.length === 0 ? (
                 <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 text-center">
                   No models available
@@ -90,7 +105,7 @@ export default function ModelSelector({
                           <RocketLaunchIcon className="h-5 w-5 text-slate-400 dark:text-slate-500" />
                         )}
                         <div>
-                          <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{model.name}</div>
+                          <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{model.display_name}</div>
                           <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">{model.type}</div>
                         </div>
                       </div>
@@ -104,16 +119,13 @@ export default function ModelSelector({
 
               <div className="border-t border-slate-300/50 dark:border-slate-600/50 mt-2 pt-2 mx-2">
                 <button
-                  onClick={goToSettings}
-                  className="w-full px-4 py-2 rounded-lg text-left text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02]"
-                >
-                  Manage Models
-                </button>
-                <button
                   onClick={onOpenFiles}
-                  className="w-full px-4 py-2 rounded-lg text-left text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02]"
+                  className="w-full px-4 py-3 rounded-lg text-left transition-all duration-200 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl hover:scale-[1.02]"
                 >
-                  Manage Files
+                  <div className="flex items-center gap-3">
+                    <FolderIcon className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-200">Manage Files</div>
+                  </div>
                 </button>
               </div>
             </ListboxOptions>

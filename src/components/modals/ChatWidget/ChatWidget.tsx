@@ -3,11 +3,16 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { FolderIcon, Cog6ToothIcon, MagnifyingGlassIcon, BookmarkIcon } from '@heroicons/react/24/outline';
+import Tooltip from '@/components/Tooltip';
 import ChatToggleButton from './ChatToggleButton';
 import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import FilesModal from './FilesModal';
+import SettingsModal from './SettingsModal';
+import SearchHistoryModal from './SearchHistoryModal';
+import SaveChatModal from './SaveChatModal';
 import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from './types';
 import styles from './ChatWidget.module.css';
 
@@ -49,6 +54,7 @@ export default function ChatWidget({
   const [size, setSize] = useState<WidgetSize>(initialSize);
   const [historyName, setHistoryName] = useState('');
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<number | null>(null); // Track current chat
   const [isSaving, setIsSaving] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [showSaveInput, setShowSaveInput] = useState(false);
@@ -60,6 +66,9 @@ export default function ChatWidget({
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -162,11 +171,12 @@ export default function ChatWidget({
 
       setUserRole(profile.role as Role);
 
-      // Fetch chat histories
+      // Fetch chat histories with new fields, sorted by updated_at
       const { data: histories, error: historiesError } = await supabase
         .from('ai_chat_histories')
-        .select('id, name, messages')
-        .eq('user_id', profile.id);
+        .select('id, name, messages, bookmarked, created_at, updated_at')
+        .eq('user_id', profile.id)
+        .order('updated_at', { ascending: false });
 
       if (historiesError) {
         console.error('Fetch histories error:', historiesError.message);
@@ -178,7 +188,7 @@ export default function ChatWidget({
       // Fetch default models
       const { data: defaultModels, error: defaultModelsError } = await supabase
         .from('ai_models_default')
-        .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task, organization_id')
+        .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task, organization_id')
         .eq('organization_id', profile.organization_id)
         .eq('is_active', true);
 
@@ -190,7 +200,7 @@ export default function ChatWidget({
       // Fetch user models
       const { data: userModels, error: userModelsError } = await supabase
         .from('ai_models')
-        .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task')
+        .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task')
         .eq('user_id', user.id);
 
       if (userModelsError) {
@@ -214,7 +224,7 @@ export default function ChatWidget({
 
       const { data: settingsData, error: settingsError } = await supabase
         .from('ai_user_settings')
-        .select('default_model_id, user_model_id, selected_model_type, default_settings')
+        .select('default_model_id, user_model_id, selected_model_type')
         .eq('user_id', user.id)
         .single();
 
@@ -223,16 +233,11 @@ export default function ChatWidget({
         setError('User settings not found. Using default model.');
       } else {
         const settings = settingsData;
-        const loadedSettings = settings.default_settings || {};
-        setDefaultSettings(loadedSettings);
-        // Always activate settings if they exist
-        if (Object.keys(loadedSettings).length > 0) {
-          setSelectedSettings(loadedSettings);
-        }
+        
         if (settings.selected_model_type === 'default' && settings.default_model_id) {
           const { data: defaultModel, error: defaultError } = await supabase
             .from('ai_models_default')
-            .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task, organization_id')
+            .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task, organization_id')
             .eq('id', settings.default_model_id)
             .single();
 
@@ -249,7 +254,7 @@ export default function ChatWidget({
         } else if (settings.selected_model_type === 'user' && settings.user_model_id) {
           const { data: userModel, error: userModelError } = await supabase
             .from('ai_models')
-            .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task')
+            .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task')
             .eq('id', settings.user_model_id)
             .eq('user_id', user.id)
             .single();
@@ -265,7 +270,7 @@ export default function ChatWidget({
             setError('User model not found. Switching to default model.');
             const { data: defaultModel, error: defaultModelError } = await supabase
               .from('ai_models_default')
-              .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task, organization_id')
+              .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task, organization_id')
               .eq('organization_id', profile.organization_id)
               .eq('is_active', true)
               .eq('user_role_to_access', 'user')
@@ -341,9 +346,139 @@ export default function ChatWidget({
     return () => subscription.unsubscribe();
   }, []);
 
+  // Load settings for the currently selected model
+  const loadModelSettings = async (modelId: number, modelType: 'default' | 'user') => {
+    if (!isAuthenticated || !userId) return;
+
+    try {
+      const { data: modelSettings, error } = await supabase
+        .from('ai_model_settings')
+        .select('settings')
+        .eq('user_id', userId)
+        .eq('model_id', modelId)
+        .eq('model_type', modelType)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No settings exist for this model yet
+          setDefaultSettings({});
+          setSelectedSettings(null);
+        } else {
+          console.error('Error loading model settings:', error.message);
+        }
+      } else {
+        const loadedSettings = modelSettings.settings || {};
+        setDefaultSettings(loadedSettings);
+        // Always activate settings if they exist
+        if (Object.keys(loadedSettings).length > 0) {
+          setSelectedSettings(loadedSettings);
+        } else {
+          setSelectedSettings(null);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error loading model settings:', error.message);
+    }
+  };
+
+  // Load settings when selected model changes
+  useEffect(() => {
+    if (selectedModel && isAuthenticated && userId) {
+      loadModelSettings(selectedModel.id, selectedModel.type);
+    }
+  }, [selectedModel?.id, selectedModel?.type, isAuthenticated, userId]);
+
+  // Auto-save chat history
+  const autoSaveChatHistory = async (updatedMessages: Message[]) => {
+    if (!isAuthenticated || !accessToken || !userId) return;
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) return;
+
+      // Generate chat name from first user message (truncated to 20 chars) + date
+      const firstUserMessage = updatedMessages.find(m => m.role === 'user');
+      if (!firstUserMessage) return;
+
+      const truncatedContent = firstUserMessage.content.substring(0, 20);
+      const dateStr = new Date().toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      });
+      const autoGeneratedName = `${truncatedContent}... - ${dateStr}`;
+
+      if (currentChatId) {
+        // Update existing chat
+        const { error } = await supabase
+          .from('ai_chat_histories')
+          .update({ 
+            messages: updatedMessages,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentChatId);
+
+        if (error) {
+          console.error('Auto-update chat error:', error.message);
+        } else {
+          console.log('[ChatWidget] Chat auto-updated:', currentChatId);
+          // Refresh chat histories
+          await refreshChatHistories(profile.id);
+        }
+      } else {
+        // Create new chat
+        const { data: newChat, error } = await supabase
+          .from('ai_chat_histories')
+          .insert({
+            user_id: profile.id,
+            name: autoGeneratedName,
+            messages: updatedMessages,
+            bookmarked: false
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Auto-save chat error:', error.message);
+        } else if (newChat) {
+          setCurrentChatId(newChat.id);
+          console.log('[ChatWidget] New chat auto-saved:', newChat.id);
+          // Refresh chat histories
+          await refreshChatHistories(profile.id);
+        }
+      }
+    } catch (error: any) {
+      console.error('Auto-save error:', error.message);
+    }
+  };
+
+  // Refresh chat histories from database
+  const refreshChatHistories = async (profileId: string) => {
+    const { data: histories } = await supabase
+      .from('ai_chat_histories')
+      .select('id, name, messages, bookmarked, created_at, updated_at')
+      .eq('user_id', profileId)
+      .order('updated_at', { ascending: false });
+
+    if (histories) {
+      setChatHistories(histories);
+    }
+  };
 
 const sendMessage = async () => {
-  if (!input.trim()) return;
+  // Allow sending if either input has text OR a task is selected
+  const messageContent = input.trim() || (selectedTask ? selectedTask.name : '');
+  if (!messageContent) return;
+  
   if (!isAuthenticated || !accessToken) {
     setError('Please log in to use the chat.');
     return;
@@ -355,7 +490,7 @@ const sendMessage = async () => {
   
   const newMessage: Message = { 
     role: 'user', 
-    content: input,
+    content: messageContent,
     attachedFileIds: filesToSend.map(f => f.id) // Store file IDs with message
   };
   
@@ -409,6 +544,9 @@ const sendMessage = async () => {
     // Clear attached files after successful send
     setAttachedFileIds([]);
     console.log('[ChatWidget] Message sent successfully, files cleared');
+    
+    // Auto-save chat after first message or update existing chat
+    await autoSaveChatHistory([...messages, newMessage, { role: 'assistant', content: response.data.message }]);
   } catch (error: any) {
     console.error('Chat widget error:', error.message, error.response?.data);
     const errorMsg = error.response?.data?.error || 'Failed to send message';
@@ -430,9 +568,10 @@ const sendMessage = async () => {
   }
 };
 
-  const saveChatHistory = async () => {
-    if (messages.length === 0) {
-      setError('No messages to save.');
+  const saveChatHistory = async (name: string) => {
+    // This function is now used to explicitly bookmark/rename the current chat
+    if (!currentChatId) {
+      setError('No active chat to save.');
       return;
     }
     if (!isAuthenticated || !accessToken) {
@@ -441,8 +580,7 @@ const sendMessage = async () => {
     }
     setError(null);
 
-    if (!historyName.trim()) {
-      setShowSaveInput(false);
+    if (!name.trim()) {
       return;
     }
 
@@ -462,26 +600,25 @@ const sendMessage = async () => {
         return;
       }
 
+      // Update the current chat with new name and bookmark it
       const { error } = await supabase
         .from('ai_chat_histories')
-        .insert({
-          user_id: profile.id,
-          name: historyName,
-          messages,
-        });
+        .update({
+          name: name,
+          bookmarked: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentChatId);
+
       if (error) {
         console.error('Save history error:', error.message);
         setError('Failed to save chat history: ' + error.message);
       } else {
-        const { data: newHistories } = await supabase
-          .from('ai_chat_histories')
-          .select('id, name, messages')
-          .eq('user_id', profile.id);
-        setChatHistories(newHistories || []);
-        setHistoryName('');
-        setShowSaveInput(false);
+        await refreshChatHistories(profile.id);
+        setIsSaveModalOpen(false);
+        setIsModalOpen(false);
         setError(null);
-        alert('Chat history saved successfully!');
+        alert('Chat bookmarked successfully!');
       }
     } catch (error: any) {
       console.error('Save history error:', error.message);
@@ -494,24 +631,96 @@ const sendMessage = async () => {
   const loadChatHistory = (history: ChatHistory | null) => {
     if (history) {
       setMessages(history.messages);
-      setQuery('');
-      setShowSearchInput(false);
+      setCurrentChatId(history.id);
       setError(null);
       setSelectedTask(null);
       setSelectedSettings(null);
     }
   };
 
+  const toggleBookmark = async (historyId: number, bookmarked: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('ai_chat_histories')
+        .update({ 
+          bookmarked,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', historyId);
+
+      if (error) {
+        console.error('Toggle bookmark error:', error.message);
+        setError('Failed to update bookmark');
+      } else {
+        // Refresh histories
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', user.id)
+            .single();
+
+          if (profile) {
+            await refreshChatHistories(profile.id);
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Toggle bookmark error:', error.message);
+    }
+  };
+
+  const renameHistory = async (historyId: number, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('ai_chat_histories')
+        .update({ 
+          name: newName,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', historyId);
+
+      if (error) {
+        console.error('Rename history error:', error.message);
+        setError('Failed to rename chat');
+      } else {
+        // Refresh histories
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', user.id)
+            .single();
+
+          if (profile) {
+            await refreshChatHistories(profile.id);
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Rename history error:', error.message);
+    }
+  };
+
+  const startNewChat = () => {
+    setMessages([]);
+    setCurrentChatId(null);
+    setError(null);
+    setSelectedTask(null);
+    setSelectedSettings(null);
+    setAttachedFileIds([]);
+  };
+
   const toggleSearchInput = () => {
-    setShowSearchInput((prev) => !prev);
-    setShowSaveInput(false);
-    setQuery('');
+    setIsSearchModalOpen(true);
+    setIsModalOpen(true);
   };
 
   const toggleSaveInput = () => {
-    setShowSaveInput((prev) => !prev);
-    setShowSearchInput(false);
-    setHistoryName('');
+    setIsSaveModalOpen(true);
+    setIsModalOpen(true);
   };
 
   const selectModel = async (model: Model | null) => {
@@ -599,6 +808,16 @@ const sendMessage = async () => {
     setIsFilesModalOpen(false);
   };
 
+  const openSettingsModal = () => {
+    setIsSettingsModalOpen(true);
+    setIsModalOpen(true);
+  };
+
+  const closeSettingsModal = () => {
+    setIsSettingsModalOpen(false);
+    setIsModalOpen(false);
+  };
+
   const goToAdmin = () => {
     router.push('/admin/ai/management');
   };
@@ -644,7 +863,7 @@ const sendMessage = async () => {
   const sizeClasses = {
     initial: 'w-[400px] h-[750px] bottom-4 right-4 sm:bottom-8 sm:right-8',
     half: isMobile ? styles.mobileHalfContainer : 'w-1/2 h-[750px] bottom-4 right-4 sm:bottom-8 sm:right-8',
-    fullscreen: isMobile ? 'inset-4 sm:inset-4' : styles.fullscreenContainer,
+    fullscreen: isMobile ? 'top-6 right-4 bottom-10 left-4' : styles.fullscreenContainer,
   };
 
   const handleTasksUpdated = (updatedTasks: Task[]) => {
@@ -689,6 +908,65 @@ const sendMessage = async () => {
             isMobile={isMobile}
             onReturnToHelpCenter={onReturnToHelpCenter}
           />
+          
+          {/* Floating action buttons - visible only on desktop */}
+          <div className="hidden sm:flex absolute top-16 right-4 z-20 gap-2">
+            {/* Files button */}
+            <Tooltip content="Files">
+              <button
+                onClick={openFilesModal}
+                className="flex items-center justify-center w-9 h-9 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hover:scale-110 active:scale-95"
+                aria-label="Open files"
+              >
+                <FolderIcon className="h-5 w-5" />
+              </button>
+            </Tooltip>
+            
+            {/* Settings button */}
+            <Tooltip content="Settings">
+              <button
+                onClick={openSettingsModal}
+                className="flex items-center justify-center w-9 h-9 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hover:scale-110 active:scale-95"
+                aria-label="Settings"
+              >
+                <Cog6ToothIcon className="h-5 w-5" />
+              </button>
+            </Tooltip>
+          </div>
+          
+          {/* Floating action buttons - left side - visible only on desktop */}
+          <div className="hidden sm:flex absolute top-16 left-4 z-20 gap-2">
+            {/* Search button */}
+            <Tooltip content="Search History">
+              <button
+                onClick={toggleSearchInput}
+                className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hover:scale-110 active:scale-95 ${
+                  isSearchModalOpen
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+                }`}
+                aria-label="Search history"
+              >
+                <MagnifyingGlassIcon className="h-5 w-5" />
+              </button>
+            </Tooltip>
+            
+            {/* Bookmark button */}
+            <Tooltip content="Save Chat">
+              <button
+                onClick={toggleSaveInput}
+                className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hover:scale-110 active:scale-95 ${
+                  isSaveModalOpen
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+                }`}
+                aria-label="Save chat"
+              >
+                <BookmarkIcon className="h-5 w-5" />
+              </button>
+            </Tooltip>
+          </div>
+          
           {error && (
             <div className="text-red-500 mb-2 px-4">
               {error}
@@ -707,18 +985,20 @@ const sendMessage = async () => {
           {!isAuthenticated && (
             <div className="text-red-500 mb-2 px-4">Please log in to use the chat.</div>
           )}
-<ChatMessages
-  messages={messages}
-  isTyping={isTyping}
-  isFullscreen={size === 'fullscreen'}
-  setError={setError}
-  accessToken={accessToken}
-  userId={userId}
-  selectedTask={selectedTask}
-  onDeleteMessage={(index) => {
-    setMessages(prev => prev.filter((_, i) => i !== index));
-  }}
-/>
+          <div className="flex-1 overflow-y-auto">
+            <ChatMessages
+              messages={messages}
+              isTyping={isTyping}
+              isFullscreen={size === 'fullscreen'}
+              setError={setError}
+              accessToken={accessToken}
+              userId={userId}
+              selectedTask={selectedTask}
+              onDeleteMessage={(index) => {
+                setMessages(prev => prev.filter((_, i) => i !== index));
+              }}
+            />
+          </div>
           <div className={`flex flex-col px-4 pb-4 ${size === 'fullscreen' ? styles.centeredInput : ''}`}>
             <ChatInput
               input={input}
@@ -732,7 +1012,7 @@ const sendMessage = async () => {
               toggleSaveInput={toggleSaveInput}
               historyName={historyName}
               setHistoryName={setHistoryName}
-              saveChatHistory={saveChatHistory}
+              saveChatHistory={() => saveChatHistory(historyName)}
               loadChatHistory={loadChatHistory}
               isSaving={isSaving}
               chatHistories={chatHistories}
@@ -760,10 +1040,45 @@ const sendMessage = async () => {
               onFileRemoved={(fileId) => {
                 setAttachedFileIds(prev => prev.filter(f => f.id !== fileId));
               }}
+              onOpenFiles={openFilesModal}
+              onOpenSettings={openSettingsModal}
             />
           </div>
         </div>
       )}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={closeSettingsModal}
+        accessToken={accessToken}
+        defaultSettings={defaultSettings}
+        selectedSettings={selectedSettings}
+        setSelectedSettings={setSelectedSettings}
+        onSettingsUpdated={handleSettingsUpdated}
+        selectedModel={selectedModel}
+      />
+      <SearchHistoryModal
+        isOpen={isSearchModalOpen}
+        onClose={() => {
+          setIsSearchModalOpen(false);
+          setIsModalOpen(false);
+        }}
+        chatHistories={chatHistories}
+        onSelectHistory={loadChatHistory}
+        onToggleBookmark={toggleBookmark}
+        onRenameHistory={renameHistory}
+        onNewChat={startNewChat}
+      />
+      <SaveChatModal
+        isOpen={isSaveModalOpen}
+        onClose={() => {
+          setIsSaveModalOpen(false);
+          setIsModalOpen(false);
+        }}
+        onSave={(name) => {
+          saveChatHistory(name);
+        }}
+        isSaving={isSaving}
+      />
       <FilesModal
         isOpen={isFilesModalOpen}
         onClose={closeFilesModal}

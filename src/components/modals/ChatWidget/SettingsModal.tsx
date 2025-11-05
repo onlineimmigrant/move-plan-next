@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { XMarkIcon, PlusIcon, PencilIcon, TrashIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
-import { Role } from './types';
+import { Role, Model } from './types';
 import styles from './ChatWidget.module.css';
 import Button from '@/ui/Button';
 
@@ -14,6 +14,7 @@ interface SettingsModalProps {
   onSettingsUpdated: (settings: Record<string, any>) => void;
   selectedSettings: Record<string, any> | null;
   setSelectedSettings: (settings: Record<string, any> | null) => void;
+  selectedModel: Model | null;
 }
 
 interface AddSettingModalProps {
@@ -265,8 +266,8 @@ function EditSettingModal({ isOpen, onClose, onSave, isSaving, setting }: EditSe
               <textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                rows={6}
                 disabled={isSaving}
               />
             </div>
@@ -313,6 +314,7 @@ export default function SettingsModal({
   onSettingsUpdated,
   selectedSettings,
   setSelectedSettings,
+  selectedModel,
 }: SettingsModalProps) {
   const [editingSetting, setEditingSetting] = useState<{ key: string; value: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -336,6 +338,11 @@ export default function SettingsModal({
       return;
     }
 
+    if (!selectedModel) {
+      setError('No model selected.');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
     try {
@@ -356,6 +363,8 @@ export default function SettingsModal({
           action: 'add',
           settingKey: key,
           settingValue: parsedValue,
+          modelId: selectedModel.id,
+          modelType: selectedModel.type,
         }),
       });
 
@@ -364,8 +373,8 @@ export default function SettingsModal({
         throw new Error(data.error || 'Failed to add setting');
       }
 
-      onSettingsUpdated(data.default_settings);
-      setSelectedSettings(data.default_settings);
+      onSettingsUpdated(data.settings);
+      setSelectedSettings(data.settings);
       setIsAddModalOpen(false);
     } catch (err: any) {
       console.error('[SettingsModal] Add setting error:', err.message);
@@ -382,6 +391,11 @@ export default function SettingsModal({
     }
     if (!newKey.trim() || !newValue.trim()) {
       setError('Setting key and value are required.');
+      return;
+    }
+
+    if (!selectedModel) {
+      setError('No model selected.');
       return;
     }
 
@@ -406,6 +420,8 @@ export default function SettingsModal({
           settingKey: originalKey,
           newKey: newKey !== originalKey ? newKey : undefined,
           settingValue: parsedValue,
+          modelId: selectedModel.id,
+          modelType: selectedModel.type,
         }),
       });
 
@@ -414,11 +430,11 @@ export default function SettingsModal({
         throw new Error(data.error || 'Failed to update setting');
       }
 
-      onSettingsUpdated(data.default_settings);
+      onSettingsUpdated(data.settings);
       setEditingSetting(null);
       setIsEditModalOpen(false);
       if (selectedSettings) {
-        setSelectedSettings(data.default_settings);
+        setSelectedSettings(data.settings);
       }
     } catch (err: any) {
       console.error('[SettingsModal] Update setting error:', err.message);
@@ -434,6 +450,11 @@ export default function SettingsModal({
       return;
     }
 
+    if (!selectedModel) {
+      setError('No model selected.');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
     try {
@@ -446,6 +467,8 @@ export default function SettingsModal({
         body: JSON.stringify({
           action: 'delete',
           settingKey: key,
+          modelId: selectedModel.id,
+          modelType: selectedModel.type,
         }),
       });
 
@@ -454,9 +477,9 @@ export default function SettingsModal({
         throw new Error(data.error || 'Failed to delete setting');
       }
 
-      onSettingsUpdated(data.default_settings);
+      onSettingsUpdated(data.settings);
       // Always keep settings active, just update with new data
-      setSelectedSettings(data.default_settings);
+      setSelectedSettings(data.settings);
     } catch (err: any) {
       console.error('[SettingsModal] Delete setting error:', err.message);
       setError(err.message);

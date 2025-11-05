@@ -40,7 +40,7 @@ interface Task {
 }
 
 /**
- * Auto-extract data from user message and save to ai_model_settings
+ * Auto-extract data from user message and save to ai_user_settings.default_settings
  *
  * Prefer using the current chat's model when provided (chatModel). If chatModel is not
  * provided, fall back to selecting an appropriate active model from the organization.
@@ -51,8 +51,6 @@ async function autoExtractAndSaveData(
   userId: string,
   content: string,
   existingSettings: Record<string, any>,
-  modelId: number,
-  modelType: 'default' | 'user',
   chatModel?: { name?: string; api_key?: string | null; endpoint?: string | null; max_tokens?: number | null }
 ): Promise<{ success: boolean; extracted?: Record<string, any>; updatedSettings?: Record<string, any>; summary?: string; error?: string }> {
   try {
@@ -170,43 +168,11 @@ async function autoExtractAndSaveData(
         ...extractedData.extracted
       };
 
-      // Save to ai_model_settings (per-model settings)
-      // Check if record exists
-      const { data: existingRecord, error: checkError } = await supabaseService
-        .from('ai_model_settings')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('model_id', modelId)
-        .eq('model_type', modelType)
-        .single();
-
-      let updateError;
-      if (checkError && checkError.code === 'PGRST116') {
-        // No record exists, create one
-        const { error: insertError } = await supabaseService
-          .from('ai_model_settings')
-          .insert({
-            user_id: userId,
-            model_id: modelId,
-            model_type: modelType,
-            settings: mergedSettings
-          });
-        updateError = insertError;
-      } else if (existingRecord) {
-        // Record exists, update it
-        const { error: upsertError } = await supabaseService
-          .from('ai_model_settings')
-          .update({ 
-            settings: mergedSettings,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId)
-          .eq('model_id', modelId)
-          .eq('model_type', modelType);
-        updateError = upsertError;
-      } else {
-        updateError = checkError;
-      }
+      // Save to database
+      const { error: updateError } = await supabaseService
+        .from('ai_user_settings')
+        .update({ default_settings: mergedSettings })
+        .eq('user_id', userId);
 
       if (updateError) {
         console.error('[AutoExtract] Failed to save:', updateError.message);
@@ -340,7 +306,7 @@ async function handleChat(request: Request) {
     let settings;
     const { data: settingsData, error: settingsError } = await supabase
       .from('ai_user_settings')
-      .select('default_model_id, user_model_id, selected_model_type')
+      .select('default_model_id, user_model_id, selected_model_type, default_settings')
       .eq('user_id', user.id)
       .single();
 
@@ -371,6 +337,7 @@ async function handleChat(request: Request) {
           default_model_id: defaultModel[0].id,
           user_model_id: null,
           selected_model_type: 'default',
+          default_settings: {},
         });
 
       if (insertError) {
@@ -383,6 +350,7 @@ async function handleChat(request: Request) {
         default_model_id: defaultModel[0].id,
         user_model_id: null,
         selected_model_type: 'default',
+        default_settings: {},
       };
     } else {
       settings = settingsData;
@@ -397,7 +365,7 @@ async function handleChat(request: Request) {
       if (!modelId) {
         const { data: defaultModel, error: defaultModelError } = await supabase
           .from('ai_models_default')
-          .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task')
+          .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task')
           .eq('organization_id', profile.organization_id)
           .eq('is_active', true)
           .eq('user_role_to_access', 'user')
@@ -419,6 +387,7 @@ async function handleChat(request: Request) {
             default_model_id: modelId,
             user_model_id: null,
             selected_model_type: 'default',
+            default_settings: settings.default_settings || {},
           })
           .eq('user_id', user.id);
         if (updateSettingsError) {
@@ -428,7 +397,7 @@ async function handleChat(request: Request) {
       } else {
         model = await supabase
           .from('ai_models_default')
-          .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task')
+          .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task')
           .eq('id', modelId)
           .eq('is_active', true)
           .limit(1);
@@ -439,7 +408,7 @@ async function handleChat(request: Request) {
         modelType = 'default';
         const { data: defaultModel, error: defaultModelError } = await supabase
           .from('ai_models_default')
-          .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task')
+          .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task')
           .eq('organization_id', profile.organization_id)
           .eq('is_active', true)
           .eq('user_role_to_access', 'user')
@@ -461,6 +430,7 @@ async function handleChat(request: Request) {
             default_model_id: modelId,
             user_model_id: null,
             selected_model_type: 'default',
+            default_settings: settings.default_settings || {},
           })
           .eq('user_id', user.id);
         if (updateSettingsError) {
@@ -470,7 +440,7 @@ async function handleChat(request: Request) {
       } else {
         model = await supabaseService
           .from('ai_models')
-          .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task')
+          .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task')
           .eq('id', modelId)
           .eq('user_id', user.id)
           .limit(1);
@@ -484,7 +454,7 @@ async function handleChat(request: Request) {
           modelType = 'default';
           const { data: defaultModel, error: defaultModelError } = await supabase
             .from('ai_models_default')
-            .select('id, name, display_name, api_key, endpoint, max_tokens, system_message, icon, task')
+            .select('id, name, api_key, endpoint, max_tokens, system_message, icon, task')
             .eq('organization_id', profile.organization_id)
             .eq('is_active', true)
             .eq('user_role_to_access', 'user')
@@ -503,6 +473,7 @@ async function handleChat(request: Request) {
               default_model_id: modelId,
               user_model_id: null,
               selected_model_type: 'default',
+              default_settings: settings.default_settings || {},
             })
             .eq('user_id', user.id);
           if (updateSettingsError) {
@@ -525,23 +496,6 @@ async function handleChat(request: Request) {
     const { id, name, api_key, endpoint, max_tokens, system_message, task } = model.data[0];
     logToFile('Using model', { name, modelId: id, endpoint, modelType });
     console.log('[Chat] Using model:', name, 'Model ID:', id, 'Endpoint:', endpoint, 'Model type:', modelType);
-
-    // Load model-specific settings from ai_model_settings
-    let modelSettings: Record<string, any> = {};
-    const { data: modelSettingsData, error: modelSettingsError } = await supabase
-      .from('ai_model_settings')
-      .select('settings')
-      .eq('user_id', user.id)
-      .eq('model_id', id)
-      .eq('model_type', modelType)
-      .single();
-
-    if (!modelSettingsError && modelSettingsData) {
-      modelSettings = modelSettingsData.settings || {};
-      console.log('[Chat] Loaded model-specific settings:', Object.keys(modelSettings).length, 'keys');
-    } else {
-      console.log('[Chat] No model-specific settings found or error:', modelSettingsError?.message);
-    }
 
     // Parse attached files if any
     let fileContext = '';
@@ -593,16 +547,16 @@ async function handleChat(request: Request) {
       }
     }
 
-    // Construct system message with model system_message, task, and modelSettings (if useSettings is true)
+    // Construct system message with model system_message, task, and default_settings (if useSettings is true)
     let fullSystemMessage = system_message || '';
     // Check for task in messages (client may send task system_message)
     const taskMessage = messages.find((msg: Message) => msg.role === 'system' && msg.content.includes('Task:'));
     if (taskMessage) {
       fullSystemMessage += fullSystemMessage ? `\n${taskMessage.content}` : taskMessage.content;
     }
-    // Append modelSettings only if useSettings is true
-    if (useSettings && modelSettings && Object.keys(modelSettings).length > 0) {
-      const settingsText = Object.entries(modelSettings)
+    // Append default_settings only if useSettings is true
+    if (useSettings && settings.default_settings && Object.keys(settings.default_settings).length > 0) {
+      const settingsText = Object.entries(settings.default_settings)
         .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
         .join('\n');
       fullSystemMessage += fullSystemMessage ? `\n${settingsText}` : settingsText;
@@ -658,9 +612,7 @@ async function handleChat(request: Request) {
           extractionResult = await autoExtractAndSaveData(
             user.id,
             filteredMessages[filteredMessages.length - 1].content,
-            modelSettings,
-            modelId,
-            modelType,
+            settings.default_settings || {},
             { name, api_key, endpoint, max_tokens }
           );
           
@@ -699,9 +651,7 @@ async function handleChat(request: Request) {
           extractionResult = await autoExtractAndSaveData(
             user.id,
             filteredMessages[filteredMessages.length - 1].content,
-            modelSettings,
-            modelId,
-            modelType,
+            settings.default_settings || {},
             { name, api_key, endpoint, max_tokens }
           );
           
@@ -747,9 +697,7 @@ async function handleChat(request: Request) {
           extractionResult = await autoExtractAndSaveData(
             user.id,
             filteredMessages[filteredMessages.length - 1].content,
-            modelSettings,
-            modelId,
-            modelType,
+            settings.default_settings || {},
             { name, api_key, endpoint, max_tokens }
           );
           

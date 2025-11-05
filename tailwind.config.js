@@ -59,6 +59,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '414px', // iPhone 14 Plus and larger (targets ~414px width)
+      },
       fontFamily: {
         sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'], // Standard fallback - actual font set via inline style in layout
       },

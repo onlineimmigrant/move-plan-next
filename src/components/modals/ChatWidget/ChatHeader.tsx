@@ -1,6 +1,6 @@
 // components/ChatWidget/ChatHeader.tsx
 'use client';
-import { ArrowsPointingOutIcon, ArrowsPointingInIcon, XMarkIcon, ArrowLeftIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
+import { ArrowsPointingOutIcon, ArrowsPointingInIcon, XMarkIcon, ArrowLeftIcon, RocketLaunchIcon, FolderIcon } from '@heroicons/react/24/outline';
 import Tooltip from '@/components/Tooltip';
 import ModelSelector from './ModelSelector';
 import { WidgetSize, Model } from './types';
@@ -47,7 +47,7 @@ export default function ChatHeader({
   };
 
   return (
-    <div className="flex justify-between items-center px-4 py-3 backdrop-blur-xl bg-white/30 dark:bg-gray-900/30 rounded-t-2xl border-0">
+    <div className="flex justify-between items-center px-4 py-3 backdrop-blur-xl bg-white/30 dark:bg-gray-900/30 rounded-t-2xl border-0 relative z-[10]">
       {/* Left side - Navigation and size controls */}
       <div className="flex items-center gap-2">
         {onReturnToHelpCenter && (
@@ -92,7 +92,7 @@ export default function ChatHeader({
       </div>
 
       {/* Right side - Close button */}
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         <Tooltip content="Close">
           <button
             onClick={closeWidget}
