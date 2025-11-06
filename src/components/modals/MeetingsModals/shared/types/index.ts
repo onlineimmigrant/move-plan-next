@@ -82,6 +82,7 @@ export interface MeetingsBookingModalProps {
   onClose: () => void;
   preselectedSlot?: TimeSlot;
   preselectedMeetingType?: MeetingType;
+  onBookingSuccess?: (booking: any) => void; // Callback when booking is successfully created
 }
 
 export interface MeetingsAdminModalProps {

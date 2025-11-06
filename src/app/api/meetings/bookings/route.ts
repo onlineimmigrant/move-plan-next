@@ -190,10 +190,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createBookingSchema.parse(body);
 
-    // Get organization ID from meeting type
+    // Get organization ID and duration from meeting type
     const { data: meetingType, error: meetingTypeError } = await supabase
       .from('meeting_types')
-      .select('organization_id')
+      .select('organization_id, duration_minutes')
       .eq('id', validatedData.meeting_type_id)
       .single();
 
@@ -201,9 +201,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid meeting type' }, { status: 400 });
     }
 
+    // Use meeting type's duration if not specified in the request
+    const actualDuration = validatedData.duration_minutes || meetingType.duration_minutes || 30;
+
     // Check for scheduling conflicts
     const scheduledTime = new Date(validatedData.scheduled_at);
-    const endTime = new Date(scheduledTime.getTime() + validatedData.duration_minutes * 60000);
+    const endTime = new Date(scheduledTime.getTime() + actualDuration * 60000);
 
     // Fetch all active bookings for the organization to check for overlaps
     const { data: existingBookings, error: conflictError } = await supabase
@@ -247,6 +250,7 @@ export async function POST(request: NextRequest) {
       .from('bookings')
       .insert({
         ...validatedData,
+        duration_minutes: actualDuration,
         organization_id: meetingType.organization_id,
         host_user_id: validatedData.host_user_id || '00000000-0000-0000-0000-000000000001', // Default host for now
         status: 'scheduled',
@@ -296,11 +300,11 @@ export async function POST(request: NextRequest) {
             ? baseUrl
             : `https://${settings.domain}`;
           
-          const meetingLink = `${customerFacingUrl}/account?openMeeting=${booking.id}`;
+          // Format meeting time in user's browser timezone (from booking.timezone)
+          const meetingDate = new Date(booking.scheduled_at);
           
-          // Format meeting time in the booking's timezone
-          const scheduledDate = new Date(booking.scheduled_at);
-          const meetingTime = scheduledDate.toLocaleString('en-US', {
+          // User's local time with timezone abbreviation
+          const userLocalTime = meetingDate.toLocaleString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -311,10 +315,29 @@ export async function POST(request: NextRequest) {
             timeZone: booking.timezone || 'UTC'
           });
 
+          // Extract just the time part for UTC
+          const utcTimeOnly = meetingDate.toLocaleString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZoneName: 'short',
+            timeZone: 'UTC'
+          });
+
+          // Combined time string: User's time as main, UTC in parentheses
+          const meetingTime = `${userLocalTime} (UTC: ${utcTimeOnly})`;
+
+          // Determine the appropriate link based on whether this is a guest or authenticated user
+          // If customer_id is null, it's a guest booking - send them to the video call page
+          const isGuestBooking = !booking.customer_id;
+          const meetingLink = isGuestBooking 
+            ? `${customerFacingUrl}/video-call/${booking.id}`
+            : `${customerFacingUrl}/account?openMeeting=${booking.id}`;
+
           console.log('[bookings] Sending booking confirmation email:', {
             to: validatedData.customer_email,
             bookingId: booking.id,
             meetingLink,
+            isGuestBooking,
             meetingTime,
             organizationId: meetingType.organization_id,
           });
@@ -329,7 +352,7 @@ export async function POST(request: NextRequest) {
               meeting_title: validatedData.title,
               host_name: hostProfile?.full_name || 'Your host',
               meeting_time: meetingTime,
-              duration_minutes: validatedData.duration_minutes.toString(),
+              duration_minutes: actualDuration.toString(),
               meeting_notes: validatedData.description || '',
               meeting_notes_html: validatedData.description 
                 ? `<div class="info-row"><span class="info-label">Notes:</span> ${validatedData.description}</div>` 

@@ -25,6 +25,7 @@ const FAQSectionWrapper = dynamic(() => import('@/components/TemplateSections/FA
 const PricingPlansSectionWrapper = dynamic(() => import('@/components/TemplateSections/PricingPlansSectionWrapper'));
 const TeamMember = dynamic(() => import('@/components/TemplateSections/TeamMember'));
 const Testimonials = dynamic(() => import('@/components/TemplateSections/Testimonials'));
+const AppointmentSection = dynamic(() => import('@/components/TemplateSections/AppointmentSection'));
 
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
@@ -207,7 +208,7 @@ interface TemplateSectionData {
   is_slider?: boolean;
   
   // New consolidated field
-  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials';
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
   
   // DEPRECATED - Keep for backward compatibility
   is_reviews_section: boolean;
@@ -458,6 +459,9 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
             
             case 'pricing_plans':
               return <PricingPlansSectionWrapper section={section} />;
+            
+            case 'appointment':
+              return <AppointmentSection section={section} />;
             
             case 'team':
               return <TeamMember section={section} />;

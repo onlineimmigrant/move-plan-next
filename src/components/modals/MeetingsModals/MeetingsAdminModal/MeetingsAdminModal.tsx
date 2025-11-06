@@ -133,6 +133,22 @@ export default function MeetingsAdminModal({
 
       const bookingsData = await bookingsResponse.json();
 
+      // Helper function to get status color
+      const getStatusColor = (status: string): string => {
+        switch (status) {
+          case 'confirmed': return '#10b981'; // green
+          case 'waiting': return '#f59e0b'; // amber
+          case 'in_progress': return '#8b5cf6'; // purple
+          case 'completed': return '#14b8a6'; // teal
+          case 'cancelled': return '#ef4444'; // red
+          // Legacy statuses (backward compatibility)
+          case 'scheduled': return '#10b981'; // treat as confirmed
+          case 'pending': return '#f59e0b'; // treat as waiting
+          case 'no_show': return '#6b7280'; // gray (legacy, treat as cancelled)
+          default: return '#14b8a6'; // teal fallback
+        }
+      };
+
       // Convert bookings to calendar events
       const calendarEvents: CalendarEvent[] = (bookingsData.bookings || []).map((booking: any) => ({
         id: booking.id,
@@ -142,7 +158,7 @@ export default function MeetingsAdminModal({
         type: 'meeting',
         status: booking.status,
         description: booking.description || booking.notes,
-        backgroundColor: booking.meeting_type?.color || '#14B8A6',
+        backgroundColor: getStatusColor(booking.status),
         extendedProps: {
           booking: {
             customer_name: booking.customer_name,
@@ -620,6 +636,7 @@ export default function MeetingsAdminModal({
       }}
       event={selectedEvent}
       isAdmin={true}
+      use24Hour={use24Hour}
       onEdit={(event: any) => {
         // Close event details and open booking form in edit mode
         setShowEventDetailsModal(false);

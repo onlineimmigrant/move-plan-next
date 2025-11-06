@@ -22,7 +22,7 @@ export const ModalBody: React.FC<ModalBodyProps> = ({
       className={cn(
         'flex-1',
         !scrollable && 'min-h-0',
-        !noPadding && 'p-6',
+        !noPadding && 'px-4 py-6',
         scrollable && 'overflow-y-auto',
         className
       )}

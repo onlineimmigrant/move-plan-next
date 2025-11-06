@@ -29,7 +29,7 @@ interface TemplateHeadingSectionData {
   is_text_link?: boolean;
   image_first?: boolean;
   is_included_templatesection?: boolean;
-  organization_id: string | null; // Added
+  organization_id: string | null;
 }
 
 // Inner component that uses the context

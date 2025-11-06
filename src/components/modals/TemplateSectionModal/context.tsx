@@ -38,7 +38,7 @@ interface TemplateSectionData {
   image_metrics_height?: string;
   is_image_bottom: boolean;
   is_slider?: boolean;
-  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials';
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
   is_reviews_section: boolean;
   is_help_center_section?: boolean;
   is_real_estate_modal?: boolean;

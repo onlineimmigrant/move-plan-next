@@ -36,12 +36,12 @@ interface PostHeaderProps {
     slug?: string;
     section?: string;
     subsection?: string;
-    title: string;
+    title?: string;
     created_on: string;
     is_with_author: boolean;
     is_company_author: boolean;
     author?: { first_name: string; last_name: string };
-    description: string;
+    description?: string;
     content?: string;
   };
   isAdmin?: boolean;
@@ -87,49 +87,57 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
 
   return (
     <div className="post-header relative">
-      {/* Section and Subsection - Hide subsection for minimal */}
+      {/* Section and Subsection - Hide for minimal */}
       {!minimal && (
         <>
-          <div className={`flex justify-between items-center text-${textColorHover} ${textSizeHeadings} font-light tracking-tight`}>
-            <Link href="#">
-              <p>{post.section}</p>
+          {post.section && (
+            <div className={`flex justify-between items-center text-${textColorHover} ${textSizeHeadings} font-light tracking-tight`}>
+              <Link href="#">
+                <p>{post.section}</p>
+              </Link>
+            </div>
+          )}
+          {post.subsection && (
+            <Link href={subsectionUrl}>
+              <span 
+                className="flex transition-all transition-300 group items-center mt-2 font-medium text-xs tracking-widest hover:opacity-90"
+                style={{ color: themeColors.cssVars.primary.base }}
+              >
+                {post.subsection}
+                <RightArrowDynamic />
+              </span>
             </Link>
-          </div>
-          <Link href={subsectionUrl}>
-            <span 
-              className="flex transition-all transition-300 group items-center mt-2 font-medium text-xs tracking-widest hover:opacity-90"
-              style={{ color: themeColors.cssVars.primary.base }}
-            >
-              {post.subsection}
-              <RightArrowDynamic />
-            </span>
-          </Link>
+          )}
         </>
       )}
 
-      {/* Title */}
-      <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl font-nunito">
-        {post.title}
-      </h1>
+      {/* Title - Only show if exists */}
+      {post.title && (
+        <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl font-nunito">
+          {post.title}
+        </h1>
+      )}
 
-      {/* Date and Author Info */}
-      <div className="flex items-center gap-3 text-sm text-gray-500 mb-1">
-        {/* Date */}
-        <time dateTime={post.created_on} className="font-medium">
-          {formattedDate}
-        </time>
-
-        {/* Separator and Author */}
-        {authorDisplay && (
-          <>
-            <span className="text-gray-300">•</span>
-            <span className="font-medium">{authorDisplay}</span>
-          </>
-        )}
-      </div>
-
-      {/* Description - Hide for minimal */}
+      {/* Date and Author Info - Hide for minimal type */}
       {!minimal && (
+        <div className="flex items-center gap-3 text-sm text-gray-500 mb-1">
+          {/* Date */}
+          <time dateTime={post.created_on} className="font-medium">
+            {formattedDate}
+          </time>
+
+          {/* Separator and Author */}
+          {authorDisplay && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span className="font-medium">{authorDisplay}</span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Description - Hide for minimal or if empty */}
+      {!minimal && post.description && (
         <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mt-6 mb-12">{post.description}</p>
       )}
       

@@ -111,10 +111,10 @@ export async function DELETE(
       );
     }
 
-    // Instead of hard delete, soft delete by setting is_active to false
+    // Hard delete - permanently remove the meeting type from database
     const { error } = await supabase
       .from('meeting_types')
-      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .delete()
       .eq('id', id)
       .eq('organization_id', organization_id);
 

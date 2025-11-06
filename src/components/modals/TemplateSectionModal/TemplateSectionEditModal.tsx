@@ -23,6 +23,7 @@ import {
   CurrencyDollarIcon,
   StarIcon,
   UserGroupIcon,
+  CalendarIcon,
 } from '@heroicons/react/24/outline';
 import { RadioGroup } from '@headlessui/react';
 import { useTemplateSectionEdit } from './context';
@@ -220,6 +221,13 @@ const SECTION_TYPE_OPTIONS = [
     icon: StarIcon,
     color: 'rose',
   },
+  {
+    value: 'appointment' as const,
+    label: 'Appointment',
+    description: 'Embedded booking system for appointments',
+    icon: CalendarIcon,
+    color: 'cyan',
+  },
 ];
 
 interface Metric {
@@ -254,7 +262,7 @@ interface TemplateSectionFormData {
   is_slider: boolean;
   
   // New consolidated field
-  section_type: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials';
+  section_type: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
   
   // DEPRECATED - Keep temporarily for backward compat
   is_reviews_section: boolean;

@@ -40,7 +40,7 @@ interface TemplateSectionData {
   is_slider?: boolean;
   
   // New consolidated field
-  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans';
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'appointment';
   
   // DEPRECATED - Keep for backward compatibility
   is_reviews_section: boolean;

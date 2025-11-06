@@ -10,6 +10,7 @@ export const useBookingState = (initialData: Partial<BookingFormData> = {}) => {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const updateFormData = useCallback((updates: Partial<BookingFormData>) => {
@@ -29,6 +30,7 @@ export const useBookingState = (initialData: Partial<BookingFormData> = {}) => {
     setAvailableSlots([]);
     setErrors({});
     setIsSubmitting(false);
+    setIsLoadingSlots(false);
   }, []);
 
   const setFormErrors = useCallback((fieldErrors: Record<string, string>) => {
@@ -65,11 +67,13 @@ export const useBookingState = (initialData: Partial<BookingFormData> = {}) => {
     availableSlots,
     selectedSlot,
     isSubmitting,
+    isLoadingSlots,
     errors,
     updateFormData,
     setAvailableSlots,
     setSelectedSlot,
     setIsSubmitting,
+    setIsLoadingSlots,
     resetForm,
     setFormErrors,
     validateForm,

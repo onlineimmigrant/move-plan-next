@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { createClient } from '@supabase/supabase-js';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -81,7 +81,7 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
   }, [organizationId]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to deactivate this meeting type?')) {
+    if (!confirm('Are you sure you want to permanently delete this meeting type? This action cannot be undone.')) {
       return;
     }
 
@@ -163,42 +163,14 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
 
   return (
     <div className="space-y-4">
-      {/* Info Banner - No top rounded corners */}
-      <div 
-        className="rounded-b-lg p-4"
-        style={{
-          background: `linear-gradient(135deg, ${primary.base}0d, ${primary.base}1a)`,
-          borderBottom: `1px solid ${primary.base}33`,
-          borderLeft: `1px solid ${primary.base}33`,
-          borderRight: `1px solid ${primary.base}33`
-        }}
-      >
-        <div className="flex items-start gap-3">
-          <ClockIcon 
-            className="h-5 w-5 flex-shrink-0 mt-0.5" 
-            style={{ color: primary.base }}
-          />
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900">
-              Meeting Types Management
-            </h3>
-            <p className="text-xs text-gray-600 mt-1">
-              Define different types of meetings with custom durations, colors, and availability. Toggle "Customer Choice" to make types available for customer self-booking.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content with padding */}
-      <div className="px-6 space-y-4">
-        {/* Header with Add Button */}
-        <div className="flex items-center justify-between gap-4">
-          <button
-            onClick={onAddClick}
-            onMouseEnter={(e) => {
-              setIsAddButtonHovered(true);
-              e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.active})`;
-            }}
+      {/* Header with Add Button */}
+      <div className="flex items-center justify-between gap-4">
+        <button
+          onClick={onAddClick}
+          onMouseEnter={(e) => {
+            setIsAddButtonHovered(true);
+            e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.active})`;
+          }}
             onMouseLeave={(e) => {
               setIsAddButtonHovered(false);
               e.currentTarget.style.background = `linear-gradient(135deg, ${primary.base}, ${primary.hover})`;
@@ -245,27 +217,27 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
               key={meetingType.id}
               onMouseEnter={() => setHoveredCard(meetingType.id)}
               onMouseLeave={() => setHoveredCard(null)}
-              className={`p-4 rounded-lg border transition-all ${
+              className={`p-4 rounded-lg border-2 transition-all backdrop-blur-sm ${
                 meetingType.is_active
-                  ? 'bg-white hover:shadow-sm'
-                  : 'bg-gray-50 opacity-60'
+                  ? 'bg-white/60 dark:bg-gray-800/60 hover:shadow-lg'
+                  : 'bg-gray-50/60 dark:bg-gray-700/40 opacity-60'
               }`}
               style={{
-                borderColor: meetingType.is_active && hoveredCard === meetingType.id 
-                  ? `${primary.base}66` 
-                  : '#d1d5db'
+                borderColor: hoveredCard === meetingType.id && meetingType.is_active
+                  ? primary.base
+                  : 'transparent'
               }}
             >
               {/* Header: Name + Color */}
               <div className="flex items-start gap-3 mb-3">
                 {meetingType.color && (
                   <div
-                    className="w-4 h-4 rounded-full flex-shrink-0 mt-1"
+                    className="w-4 h-4 rounded-full flex-shrink-0 mt-1 ring-2 ring-white/50 dark:ring-gray-900/50"
                     style={{ backgroundColor: meetingType.color }}
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-semibold text-gray-900 truncate">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                     {meetingType.name}
                   </h4>
                 </div>
@@ -274,23 +246,23 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
               {/* Badges: Status + Visibility */}
               <div className="flex flex-wrap items-center gap-1.5 mb-2">
                 {!meetingType.is_active && (
-                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-200 rounded-full">
+                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-200/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-full">
                     Inactive
                   </span>
                 )}
                 {!meetingType.is_customer_choice && (
                   <span 
-                    className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
+                    className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full backdrop-blur-sm"
                     style={{
                       color: primary.active,
-                      backgroundColor: `${primary.base}1a`
+                      backgroundColor: `${primary.base}20`
                     }}
                   >
                     Admin Only
                   </span>
                 )}
                 {meetingType.is_customer_choice && meetingType.is_active && (
-                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-green-600 bg-green-100 rounded-full">
+                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-300 bg-green-100/80 dark:bg-green-900/30 backdrop-blur-sm rounded-full">
                     Customer Choice
                   </span>
                 )}
@@ -298,23 +270,23 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
 
               {/* Description */}
               {meetingType.description && (
-                <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                   {meetingType.description}
                 </p>
               )}
 
               {/* Time Details */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-600 mb-3 pb-3 border-b border-gray-200">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-600 dark:text-gray-400 mb-3 pb-3 border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="flex items-center gap-1.5">
-                  <ClockIcon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                  <span className="font-medium">{meetingType.duration_minutes}</span>
-                  <span className="text-gray-500">min</span>
+                  <ClockIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                  <span className="font-medium text-gray-900 dark:text-white">{meetingType.duration_minutes}</span>
+                  <span className="text-gray-500 dark:text-gray-400">min</span>
                 </div>
                 {meetingType.buffer_minutes > 0 && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400">•</span>
-                    <span className="font-medium">{meetingType.buffer_minutes}</span>
-                    <span className="text-gray-500">min buffer</span>
+                    <span className="text-gray-400 dark:text-gray-500">•</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{meetingType.buffer_minutes}</span>
+                    <span className="text-gray-500 dark:text-gray-400">min buffer</span>
                   </div>
                 )}
               </div>
@@ -323,18 +295,12 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <button
                   onClick={() => onEditClick(meetingType)}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm border-2 border-transparent rounded-lg transition-all text-gray-700 dark:text-gray-200"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = primary.base;
-                    e.currentTarget.style.color = primary.active;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#d1d5db';
-                    e.currentTarget.style.color = '#374151';
-                  }}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white border rounded-lg transition-colors"
-                  style={{
-                    borderColor: '#d1d5db',
-                    color: '#374151'
+                    e.currentTarget.style.borderColor = 'transparent';
                   }}
                 >
                   <PencilIcon className="h-3.5 w-3.5" />
@@ -342,27 +308,48 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
                 </button>
                 <button
                   onClick={() => handleToggleActive(meetingType)}
-                  className={`flex-1 sm:flex-initial px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border ${
-                    meetingType.is_active
-                      ? 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-300'
-                      : 'border-gray-300'
-                  }`}
-                  style={!meetingType.is_active ? {
-                    color: primary.active,
-                    backgroundColor: `${primary.base}0d`
-                  } : {}}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg backdrop-blur-sm border-2 border-transparent transition-all"
+                  style={{
+                    backgroundColor: meetingType.is_active 
+                      ? 'rgba(255, 255, 255, 0.6)' 
+                      : `${primary.base}20`,
+                    color: meetingType.is_active 
+                      ? '#374151' 
+                      : primary.active
+                  }}
                   onMouseEnter={(e) => {
                     if (!meetingType.is_active) {
-                      e.currentTarget.style.backgroundColor = `${primary.base}1a`;
+                      e.currentTarget.style.backgroundColor = `${primary.base}30`;
+                    } else {
+                      e.currentTarget.style.backgroundColor = 'rgba(243, 244, 246, 0.8)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!meetingType.is_active) {
-                      e.currentTarget.style.backgroundColor = `${primary.base}0d`;
+                      e.currentTarget.style.backgroundColor = `${primary.base}20`;
+                    } else {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
                     }
                   }}
                 >
-                  {meetingType.is_active ? 'Deactivate' : 'Activate'}
+                  {meetingType.is_active ? (
+                    <>
+                      <XCircleIcon className="h-3.5 w-3.5" />
+                      <span>Deactivate</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircleIcon className="h-3.5 w-3.5" />
+                      <span>Activate</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleDelete(meetingType.id)}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50/60 dark:bg-red-900/20 backdrop-blur-sm hover:bg-red-100/60 dark:hover:bg-red-900/30 border-2 border-transparent hover:border-red-300 dark:hover:border-red-700 rounded-lg transition-all"
+                >
+                  <TrashIcon className="h-3.5 w-3.5" />
+                  <span>Delete</span>
                 </button>
               </div>
             </div>
@@ -399,7 +386,6 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

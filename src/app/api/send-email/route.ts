@@ -277,20 +277,89 @@ const generateDefaultHtmlTemplate = (type: string): string => {
       <a href="{{emailDomainRedirection}}" class="button">Read More</a>
     `,
     meeting_invitation: `
-      <h1>Hi {{name}},</h1>
-      <p>You've been invited to a video meeting!</p>
-      <div class="info-box">
-        <div class="info-row"><span class="info-label">Meeting:</span> {{meeting_title}}</div>
-        <div class="info-row"><span class="info-label">Host:</span> {{host_name}}</div>
-        <div class="info-row"><span class="info-label">Date & Time:</span> {{meeting_time}}</div>
-        <div class="info-row"><span class="info-label">Duration:</span> {{duration_minutes}} minutes</div>
-        {{meeting_notes_html}}
+      <!-- Logo Section -->
+      <div style="text-align: center; padding: 24px 20px; background: transparent;">
+        <img src="{{seo_og_image}}" alt="{{site}}" style="max-width: 200px; height: auto; margin: 0 auto; display: block;" />
       </div>
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="{{emailDomainRedirection}}" class="button" style="font-size: 16px; padding: 15px 30px;">Join Video Meeting</a>
-      </p>
-      <p style="color: #6B7280; font-size: 14px;">Please join at the scheduled time. If this is an instant meeting, you can join now!</p>
-      <p style="color: #6B7280; font-size: 12px;">Meeting Link: <a href="{{emailDomainRedirection}}" style="color: #4F46E5;">{{emailDomainRedirection}}</a></p>
+      
+      <!-- Card Container -->
+      <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 600px; margin: 0 auto;">
+        <!-- Gradient Header -->
+        <div style="background: linear-gradient(135deg, #3B82F6, rgb(147, 51, 234)); padding: 40px 20px; text-align: center;">
+          <svg style="width: 64px; height: 64px; margin: 0 auto 16px; opacity: 0.9;" fill="none" stroke="white" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <h1 style="color: white; margin: 0 0 8px 0; font-size: 28px; font-weight: bold;">Video Meeting Invitation</h1>
+          <p style="color: rgba(255, 255, 255, 0.9); margin: 0; font-size: 16px;">You've been invited to join a video meeting</p>
+        </div>
+        
+        <!-- Card Content -->
+        <div class="card-content" style="padding: 30px 20px;">
+          <p style="font-size: 16px; color: #111827; margin-bottom: 24px;">Hi {{name}},</p>
+          <p style="font-size: 16px; color: #4B5563; margin-bottom: 24px;">You have an upcoming video meeting scheduled. See details below:</p>
+          
+          <div style="background-color: #F9FAFB; border-radius: 12px; padding: 24px; margin: 24px 0;">
+            <div style="margin-bottom: 16px; display: flex; align-items: start;">
+              <svg style="width: 24px; height: 24px; margin-right: 12px; flex-shrink: 0; color: #3B82F6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div>
+                <div style="font-weight: 600; color: #111827; margin-bottom: 4px;">Meeting Title</div>
+                <div style="color: #4B5563;">{{meeting_title}}</div>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 16px; display: flex; align-items: start;">
+              <svg style="width: 24px; height: 24px; margin-right: 12px; flex-shrink: 0; color: #3B82F6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <div>
+                <div style="font-weight: 600; color: #111827; margin-bottom: 4px;">Host</div>
+                <div style="color: #4B5563;">{{host_name}}</div>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 16px; display: flex; align-items: start;">
+              <svg style="width: 24px; height: 24px; margin-right: 12px; flex-shrink: 0; color: #3B82F6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <div style="font-weight: 600; color: #111827; margin-bottom: 4px;">Date & Time</div>
+                <div style="color: #4B5563;">{{meeting_time}}</div>
+              </div>
+            </div>
+            
+            <div style="display: flex; align-items: start;">
+              <svg style="width: 24px; height: 24px; margin-right: 12px; flex-shrink: 0; color: #3B82F6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <div style="font-weight: 600; color: #111827; margin-bottom: 4px;">Duration</div>
+                <div style="color: #4B5563;">{{duration_minutes}} minutes</div>
+              </div>
+            </div>
+            
+            {{meeting_notes_html}}
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #DBEAFE, #EDE9FE); border: 2px solid #BFDBFE; border-radius: 12px; padding: 20px; margin: 24px 0;">
+            <p style="font-weight: 600; color: #1E40AF; margin: 0 0 8px 0; display: flex; align-items: center;">
+              <svg style="width: 20px; height: 20px; margin-right: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Important Information
+            </p>
+            <p style="color: #1E40AF; margin: 0; font-size: 14px;">You can access the video call <strong>15 minutes before</strong> the scheduled meeting time.</p>
+          </div>
+          
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="{{emailDomainRedirection}}" style="display: inline-block; background: linear-gradient(135deg, #3B82F6, rgb(147, 51, 234)); color: white; text-decoration: none; padding: 16px 48px; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">Join Video Meeting</a>
+          </div>
+          
+          <p style="color: #6B7280; font-size: 14px; text-align: center; margin-top: 24px;">Or copy and paste this link into your browser:</p>
+          <p style="color: #3B82F6; font-size: 12px; text-align: center; word-break: break-all;"><a href="{{emailDomainRedirection}}" style="color: #3B82F6;">{{emailDomainRedirection}}</a></p>
+        </div>
+      </div>
     `,
   };
 
@@ -299,6 +368,51 @@ const generateDefaultHtmlTemplate = (type: string): string => {
     <p>You have received a message from {{site}}.</p>
     <a href="{{emailDomainRedirection}}" class="button">View Details</a>
   `;
+
+  // meeting_invitation is a complete standalone HTML, don't wrap it
+  if (type === 'meeting_invitation') {
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{subject}}</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      line-height: 1.6; 
+      color: #333; 
+      background-color: #ffffff; 
+      margin: 0; 
+      padding: 0; 
+    }
+    @media only screen and (max-width: 600px) {
+      .email-container {
+        padding: 8px !important;
+      }
+      .card-content {
+        padding: 20px 12px !important;
+      }
+    }
+  </style>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #ffffff; margin: 0; padding: 0;">
+  <div class="email-container" style="padding: 20px;">
+    ${content}
+  </div>
+  <div style="text-align: center; padding: 20px; font-size: 12px; color: #6B7280; margin-top: 40px;">
+    <p>&copy; 2025 {{site}}. All rights reserved.</p>
+    <p>{{address}}</p>
+    <p>
+      <a href="{{privacyPolicyUrl}}" style="color: #3B82F6; text-decoration: none;">Privacy Policy</a> | 
+      <a href="{{unsubscribeUrl}}" style="color: #3B82F6; text-decoration: none;">Unsubscribe</a>
+    </p>
+  </div>
+</body>
+</html>
+    `.trim();
+  }
 
   return baseTemplate.replace('{{CONTENT}}', content);
 };
@@ -350,7 +464,7 @@ export async function POST(request: Request) {
 
     const { data: settings, error: settingsError } = await supabase
       .from('settings')
-      .select('transactional_email, marketing_email, transactional_email_2, marketing_email_2, domain, address, site')
+      .select('transactional_email, marketing_email, transactional_email_2, marketing_email_2, domain, address, site, seo_og_image')
       .eq('organization_id', organization_id)
       .single();
 
@@ -420,11 +534,13 @@ export async function POST(request: Request) {
     const unsubscribeUrl = `https://${settings.domain}/unsubscribe?user_id=${user_id || ''}&type=${type}`;
     const siteValue = settings.site || 'Metexam';
     const effectiveName = name || profile?.full_name || to.split('@')[0];
+    const seoOgImage = settings.seo_og_image || templateLogo || 'https://via.placeholder.com/200x80?text=Logo';
 
     // Replace standard placeholders
     let emailHtml = htmlCode
       .replace(/{{name}}/g, effectiveName)
       .replace(/{{email_main_logo_image}}/g, templateLogo)
+      .replace(/{{seo_og_image}}/g, seoOgImage)
       .replace(/{{emailDomainRedirection}}/g, effectiveEmailDomainRedirection)
       .replace(/{{privacyPolicyUrl}}/g, privacyPolicyUrl)
       .replace(/{{unsubscribeUrl}}/g, unsubscribeUrl)

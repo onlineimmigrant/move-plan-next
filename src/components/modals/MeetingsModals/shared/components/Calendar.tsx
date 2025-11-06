@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   format,
   startOfMonth,
@@ -22,6 +22,112 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { CalendarEvent, CalendarView } from '@/types/meetings';
 import { useThemeColors } from '@/hooks/useThemeColors';
+
+// Cache for storing fetched month data
+const monthCache = new Map<string, CalendarEvent[]>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  data: CalendarEvent[];
+  timestamp: number;
+}
+
+// Enhanced cache with timestamps
+const enhancedCache = new Map<string, CacheEntry>();
+
+function getCachedData(key: string): CalendarEvent[] | null {
+  const entry = enhancedCache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_DURATION) {
+    return entry.data;
+  }
+  if (entry) {
+    enhancedCache.delete(key); // Remove stale data
+  }
+  return null;
+}
+
+function setCachedData(key: string, data: CalendarEvent[]): void {
+  enhancedCache.set(key, { data, timestamp: Date.now() });
+}
+
+// Custom hook for touch gestures (swipe detection)
+function useSwipeGesture(onSwipeLeft: () => void, onSwipeRight: () => void, enabled: boolean = true) {
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+  const minSwipeDistance = 50;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!enabled) return;
+    touchStartX.current = e.touches[0].clientX;
+  }, [enabled]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!enabled) return;
+    touchEndX.current = e.touches[0].clientX;
+  }, [enabled]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!enabled) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isSwipe = Math.abs(distance) > minSwipeDistance;
+
+    if (isSwipe) {
+      if (distance > 0) {
+        onSwipeLeft();
+      } else {
+        onSwipeRight();
+      }
+    }
+  }, [enabled, onSwipeLeft, onSwipeRight]);
+
+  return { handleTouchStart, handleTouchMove, handleTouchEnd };
+}
+
+// Current time indicator component
+interface CurrentTimeIndicatorProps {
+  primaryColor: string;
+  isToday: boolean;
+}
+
+function CurrentTimeIndicator({ primaryColor, isToday }: CurrentTimeIndicatorProps) {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!isToday) return null;
+
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const topPosition = (hours * 60 + minutes) / (24 * 60) * 100;
+
+  return (
+    <div
+      className="absolute left-0 right-0 z-10 pointer-events-none"
+      style={{ top: `${topPosition}%` }}
+    >
+      <div className="relative">
+        <div
+          className="absolute left-0 w-2 h-2 rounded-full -mt-1"
+          style={{ backgroundColor: '#EF4444' }}
+        />
+        <div
+          className="h-0.5 w-full"
+          style={{ 
+            backgroundColor: '#EF4444',
+            boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)'
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 // Custom hook for hover background management
 function useHoverBackground(hoverColor: string, defaultColor: string = '') {
@@ -60,16 +166,70 @@ export default function Calendar({
   use24Hour = true,
 }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
+  const calendarRef = useRef<HTMLDivElement>(null);
   
-  // Consistent color palette
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if typing in input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case 'n':
+          e.preventDefault();
+          navigateDate('next');
+          break;
+        case 'p':
+          e.preventDefault();
+          navigateDate('prev');
+          break;
+        case 't':
+          e.preventDefault();
+          goToToday();
+          break;
+        case '?':
+          e.preventDefault();
+          setShowKeyboardHelp(!showKeyboardHelp);
+          break;
+        case 'escape':
+          if (showKeyboardHelp) {
+            e.preventDefault();
+            setShowKeyboardHelp(false);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showKeyboardHelp]);
+  
+  // Swipe gesture handlers
+  const handleSwipeLeft = useCallback(() => {
+    navigateDate('next');
+  }, [view, currentDate]);
+
+  const handleSwipeRight = useCallback(() => {
+    navigateDate('prev');
+  }, [view, currentDate]);
+
+  const swipeGesture = useSwipeGesture(handleSwipeLeft, handleSwipeRight, true);
+  
+  // Enhanced color palette with better contrast
   const colors = {
     bg: {
       white: '#ffffff',
       light: '#fafafa',
       lighter: '#f9fafb',
       gray: '#f3f4f6',
+      available: `${primary.lighter}08`, // Very subtle tint for available days
+      hover: `${primary.lighter}20`, // Stronger hover feedback
+      selected: `${primary.lighter}30`, // Clear selection state
     },
     border: {
       light: primary.lighter,
@@ -80,15 +240,24 @@ export default function Calendar({
       primary: '#111827',
       secondary: '#6b7280',
       muted: '#9ca3af',
+      bright: primary.base,
+    },
+    status: {
+      success: '#10B981',
+      warning: '#F59E0B',
+      error: '#EF4444',
+      info: '#3B82F6',
     }
   };
   
-  // Shadow system for depth hierarchy
+  // Enhanced shadow system for depth hierarchy
   const shadows = {
     sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
     xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)', // For pressed states
+    hover: `0 8px 16px -4px ${primary.base}20, 0 4px 8px -2px ${primary.base}15`, // Theme-colored shadow
   };
   
   // Helper to format time based on preference
@@ -96,7 +265,7 @@ export default function Calendar({
     return format(date, use24Hour ? 'HH:mm' : 'h:mm a');
   };
 
-  const navigateDate = (direction: 'prev' | 'next') => {
+  const navigateDate = useCallback((direction: 'prev' | 'next') => {
     let newDate: Date;
 
     switch (view) {
@@ -120,7 +289,7 @@ export default function Calendar({
     }
 
     onDateChange(newDate);
-  };
+  }, [view, currentDate, onDateChange]);
 
   const goToToday = () => {
     onDateChange(new Date());
@@ -147,37 +316,37 @@ export default function Calendar({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden" style={{ boxShadow: shadows.lg }}>
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden w-full" style={{ boxShadow: shadows.lg }}>
         {/* Header Skeleton - Compact */}
         <div 
-          className="px-3 md:px-4 py-2"
+          className="px-2 sm:px-3 md:px-4 py-2"
           style={{ 
             background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})` 
           }}
         >
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-28 bg-white/20 rounded animate-pulse"></div>
-              <div className="h-5 w-32 bg-white/20 rounded animate-pulse"></div>
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <div className="h-9 w-24 sm:w-28 bg-white/20 rounded animate-pulse flex-shrink-0"></div>
+              <div className="h-5 w-24 sm:w-32 bg-white/20 rounded animate-pulse"></div>
             </div>
-            <div className="h-9 w-40 bg-white/20 rounded animate-pulse"></div>
+            <div className="h-9 w-32 sm:w-40 bg-white/20 rounded animate-pulse flex-shrink-0"></div>
           </div>
         </div>
         
         {/* Calendar Skeleton */}
-        <div className="">
+        <div className="w-full p-2">
           <div className="space-y-2">
             {/* Week headers skeleton */}
             <div className="grid grid-cols-7 gap-2">
               {Array.from({ length: 7 }).map((_, i) => (
-                <div key={i} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                <div key={i} className="h-6 sm:h-8 bg-gray-200 rounded animate-pulse"></div>
               ))}
             </div>
             {/* Days skeleton */}
             {Array.from({ length: 5 }).map((_, weekIndex) => (
               <div key={weekIndex} className="grid grid-cols-7 gap-2">
                 {Array.from({ length: 7 }).map((_, dayIndex) => (
-                  <div key={dayIndex} className="h-20 bg-gray-100 rounded animate-pulse"></div>
+                  <div key={dayIndex} className="h-16 sm:h-20 md:h-24 bg-gray-100 rounded animate-pulse"></div>
                 ))}
               </div>
             ))}
@@ -189,58 +358,116 @@ export default function Calendar({
 
   return (
     <div 
-      className="bg-white rounded-xl overflow-hidden"
-      style={{ boxShadow: shadows.lg }}
+      className="bg-white rounded-xl overflow-hidden w-full mx-auto touch-pan-y"
+      style={{ 
+        boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.1)',
+        border: '1px solid rgba(255, 255, 255, 0.8)',
+      }}
+      onTouchStart={swipeGesture.handleTouchStart}
+      onTouchMove={swipeGesture.handleTouchMove}
+      onTouchEnd={swipeGesture.handleTouchEnd}
+      ref={calendarRef}
     >
+      {/* Keyboard shortcuts help modal */}
+      {showKeyboardHelp && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowKeyboardHelp(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Keyboard Shortcuts</h3>
+              <button
+                onClick={() => setShowKeyboardHelp(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                style={{ ['--tw-ring-color' as string]: primary.base }}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Next period</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">N</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Previous period</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">P</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Go to today</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">T</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Toggle shortcuts</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">?</kbd>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header - Compact Design */}
       <div 
-        className="px-3 md:px-4 py-2"
+        className="px-2 sm:px-3 md:px-4 py-2"
         style={{ 
           background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})` 
         }}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           {/* Left: Title and Navigation */}
-          <div className="flex items-center gap-2">
-            {/* Navigation */}
-            <div className="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            {/* Navigation - Enhanced for mobile */}
+            <div className="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-lg flex-shrink-0">
               <button
                 onClick={() => navigateDate('prev')}
-                className="p-1.5 rounded-l-lg text-white hover:bg-white/20 transition-colors duration-200"
-                aria-label="Previous"
+                className="p-2 sm:p-1.5 rounded-l-lg text-white hover:bg-white/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                aria-label="Previous (Press P)"
               >
-                <ChevronLeftIcon className="w-4 h-4" />
+                <ChevronLeftIcon className="w-5 h-5 sm:w-4 sm:h-4" />
               </button>
 
               <button
                 onClick={goToToday}
-                className="px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition-colors duration-200 whitespace-nowrap border-x border-white/10"
+                className="px-4 py-2 sm:px-3 sm:py-1.5 text-xs font-medium text-white hover:bg-white/20 transition-colors duration-200 whitespace-nowrap border-x border-white/10 min-w-[60px] sm:min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                aria-label="Go to today (Press T)"
               >
                 Today
               </button>
 
               <button
                 onClick={() => navigateDate('next')}
-                className="p-1.5 rounded-r-lg text-white hover:bg-white/20 transition-colors duration-200"
-                aria-label="Next"
+                className="p-2 sm:p-1.5 rounded-r-lg text-white hover:bg-white/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                aria-label="Next (Press N)"
               >
-                <ChevronRightIcon className="w-4 h-4" />
+                <ChevronRightIcon className="w-5 h-5 sm:w-4 sm:h-4" />
               </button>
             </div>
             
+            {/* Keyboard shortcuts button */}
+            <button
+              onClick={() => setShowKeyboardHelp(true)}
+              className="p-2 sm:p-1.5 rounded-lg text-white hover:bg-white/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              aria-label="Show keyboard shortcuts (Press ?)"
+              title="Keyboard shortcuts (?)"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            
             {/* Title */}
-            <h2 className="text-sm sm:text-base font-bold text-white">
+            <h2 className="text-xs sm:text-sm md:text-base font-bold text-white truncate" style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.01em' }}>
               {format(currentDate, view === 'month' ? 'MMMM yyyy' : view === 'week' ? "'Week of' MMM d, yyyy" : 'MMMM d, yyyy')}
             </h2>
           </div>
 
-          {/* Right: View Toggle */}
-          <div className="inline-flex rounded-lg bg-white/10 backdrop-blur-sm p-0.5" role="group" aria-label="Calendar view">
+          {/* Right: View Toggle - Enhanced for mobile */}
+          <div className="inline-flex rounded-lg bg-white/10 backdrop-blur-sm p-0.5 sm:p-0.5 flex-shrink-0" role="group" aria-label="Calendar view">
             {(['month', 'week', 'day'] as CalendarView[]).map((viewOption) => (
               <button
                 key={viewOption}
                 onClick={() => onViewChange(viewOption)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
+                className={`px-3 py-2 sm:px-2.5 sm:py-1 text-xs sm:text-xs font-medium rounded-md transition-all duration-200 min-w-[60px] sm:min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${
                   view === viewOption
                     ? 'bg-white shadow-md'
                     : 'text-white hover:bg-white/10'
@@ -257,7 +484,7 @@ export default function Calendar({
       </div>
 
       {/* Calendar Content */}
-      <div className="">
+      <div className="w-full">
         {view === 'month' && (
           <MonthView
             currentDate={currentDate}
@@ -311,23 +538,27 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
   
-  // Consistent color palette
+  // Enhanced color palette
   const colors = {
     bg: {
       white: '#ffffff',
       light: '#fafafa',
       lighter: '#f9fafb',
+      available: `${primary.lighter}08`,
+      hover: `${primary.lighter}25`,
+      selected: `${primary.lighter}35`,
     }
   };
   
-  // Shadow system
+  // Enhanced shadow system
   const shadows = {
     sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    hover: `0 6px 12px -2px ${primary.base}20, 0 3px 6px -1px ${primary.base}15`,
   };
   
   // Hover background hook
-  const hoverBg = useHoverBackground(`${primary.lighter}20`);
+  const hoverBg = useHoverBackground(colors.bg.hover);
   
   // Keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent, date: Date) => {
@@ -372,26 +603,29 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
   }, [events]);
 
   return (
-    <div className="overflow-x-auto -mx-2 sm:-mx-3 md:-mx-4 px-2 sm:px-3 md:px-0 scrollbar-hide">
-      <div className="min-w-[640px] md:min-w-0 w-full">
-        <div className="grid grid-cols-7 gap-px bg-gray-200 md:rounded-lg overflow-hidden">
-          {/* Day headers */}
+    <div className="w-full">
+      <div className="w-full">
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 bg-gray-100/50 rounded-lg overflow-hidden p-1 sm:p-1.5 md:p-2">
+          {/* Day headers - Improved typography */}
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
             <div 
               key={day} 
-              className="p-1 sm:p-2 text-center"
+              className="p-1.5 sm:p-2 text-center rounded-md"
               style={{ background: `linear-gradient(135deg, ${primary.lighter}20, ${primary.lighter}10)` }}
             >
               <span 
-                className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider"
-                style={{ color: primary.base }}
+                className="text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-wide"
+                style={{ 
+                  color: primary.base,
+                  fontVariantNumeric: 'tabular-nums'
+                }}
               >
                 {day}
               </span>
             </div>
           ))}
 
-          {/* Calendar days */}
+          {/* Calendar days - Enhanced spacing and visual feedback */}
           {days.map(day => {
             const dateKey = format(day, 'yyyy-MM-dd');
             const dayEventsList = dayEvents[dateKey] || [];
@@ -399,6 +633,7 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
             const isSelected = selectedDate && isSameDay(day, selectedDate);
             const isTodayDate = isToday(day);
             const isPastDate = day < new Date(new Date().setHours(0, 0, 0, 0));
+            const hasEvents = dayEventsList.length > 0;
 
             return (
               <div
@@ -407,78 +642,96 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                 onKeyDown={(e) => !isPastDate && handleKeyDown(e, day)}
                 tabIndex={!isPastDate && isCurrentMonth ? 0 : -1}
                 role="button"
-                aria-label={`${format(day, 'MMMM d, yyyy')}${isTodayDate ? ' (Today)' : ''}`}
+                aria-label={`${format(day, 'MMMM d, yyyy')}${isTodayDate ? ' (Today)' : ''}${hasEvents ? `, ${dayEventsList.length} appointment${dayEventsList.length > 1 ? 's' : ''}` : ''}`}
                 aria-pressed={isSelected ? 'true' : 'false'}
                 onMouseEnter={(e) => {
                   if (!isPastDate && isCurrentMonth) {
                     if (isTodayDate && !isSelected) {
-                      e.currentTarget.style.background = `linear-gradient(135deg, ${primary.lighter}40, ${primary.lighter}25)`;
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${primary.lighter}45, ${primary.lighter}30)`;
+                      e.currentTarget.style.boxShadow = shadows.hover;
                     } else {
-                      e.currentTarget.style.backgroundColor = `${primary.lighter}20`;
+                      e.currentTarget.style.backgroundColor = colors.bg.hover;
+                      e.currentTarget.style.boxShadow = shadows.md;
                     }
-                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.transform = 'scale(1.03)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isPastDate && isCurrentMonth && !isSelected) {
                     if (isTodayDate) {
-                      e.currentTarget.style.background = `linear-gradient(135deg, ${primary.lighter}30, ${primary.lighter}15)`;
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${primary.lighter}35, ${primary.lighter}20)`;
                     } else {
-                      e.currentTarget.style.backgroundColor = isCurrentMonth ? colors.bg.white : colors.bg.lighter;
+                      e.currentTarget.style.backgroundColor = hasEvents ? colors.bg.available : (isCurrentMonth ? colors.bg.white : colors.bg.lighter);
                     }
                     e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }
                 }}
-                className={`min-h-[60px] sm:min-h-[75px] md:min-h-[90px] p-2 transition-all duration-200 ${
+                className={`aspect-square sm:aspect-auto sm:min-h-[75px] md:min-h-[95px] p-2 sm:p-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-lg ${
                   isPastDate 
                     ? 'cursor-not-allowed' 
                     : isCurrentMonth ? 'cursor-pointer' : 'text-gray-400 cursor-pointer'
                 }`}
                 style={{
                   ...(isTodayDate && !isSelected 
-                    ? { background: `linear-gradient(135deg, ${primary.lighter}30, ${primary.lighter}15)` }
+                    ? { background: `linear-gradient(135deg, ${primary.lighter}35, ${primary.lighter}20)` }
                     : { 
                         backgroundColor: isSelected 
-                          ? `${primary.lighter}20`
+                          ? colors.bg.selected
                           : isPastDate 
                           ? colors.bg.light 
+                          : hasEvents 
+                          ? colors.bg.available
                           : isCurrentMonth 
                           ? colors.bg.white 
                           : colors.bg.lighter
                       }
                   ),
-                  opacity: isPastDate ? 0.7 : 1,
+                  opacity: isPastDate ? 0.6 : 1,
                   ...(isSelected ? { boxShadow: `inset 0 0 0 2px ${primary.base}` } : {}),
+                  ['--tw-ring-color' as string]: primary.base,
                 }}
               >
-                <div className="flex items-center justify-center mb-1">
+                <div className="flex items-center justify-center mb-1 sm:mb-1.5">
                   <div className="relative">
                     <span
-                      className={`inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full text-xs sm:text-sm font-semibold transition-colors ${
+                      className={`inline-flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 md:w-8 md:h-8 rounded-full text-sm sm:text-sm md:text-base font-bold transition-all duration-200 ${
                         isTodayDate || isSelected
-                          ? 'text-white'
+                          ? 'text-white shadow-md'
                           : 'text-gray-900'
                       }`}
-                      style={
-                        isTodayDate
-                          ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})` }
+                      style={{
+                        ...(isTodayDate
+                          ? { 
+                              background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                              fontWeight: 700
+                            }
                           : isSelected
-                          ? { backgroundColor: primary.base }
-                          : {}
-                      }
+                          ? { 
+                              backgroundColor: primary.base,
+                              fontWeight: 700
+                            }
+                          : {}),
+                        fontVariantNumeric: 'tabular-nums'
+                      }}
                     >
                       {format(day, 'd')}
                     </span>
-                    {/* Event density indicator */}
+                    {/* Enhanced event density indicator with color coding */}
                     {dayEventsList.length > 0 && !isPastDate && (
                       <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 flex gap-0.5">
                         {Array.from({ length: Math.min(dayEventsList.length, 3) }).map((_, i) => (
                           <div
                             key={i}
-                            className="w-1 h-1 rounded-full"
+                            className="w-1 h-1 rounded-full shadow-sm transition-all duration-200"
                             style={{ 
-                              backgroundColor: dayEventsList.length >= 3 ? primary.base : primary.light,
-                              opacity: dayEventsList.length >= 3 ? 1 : 0.7
+                              backgroundColor: dayEventsList.length >= 3 
+                                ? '#F59E0B' // Warning color for busy days
+                                : dayEventsList.length === 2
+                                ? primary.hover
+                                : primary.base,
+                              opacity: dayEventsList.length >= 3 ? 1 : 0.8,
+                              ...(isSelected || isTodayDate ? { backgroundColor: 'white' } : {})
                             }}
                           />
                         ))}
@@ -487,35 +740,34 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                   </div>
                 </div>
 
-                {/* Events count button - clickable to switch to day view */}
+                {/* Events count button - Enhanced styling */}
                 {dayEventsList.length > 0 && !isPastDate && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDateChange(day); // Set the current date to the clicked day
-                      onViewChange('day'); // Switch to day view
+                      onDateChange(day);
+                      onViewChange('day');
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = `${primary.base}30`;
-                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.backgroundColor = `${primary.base}35`;
+                      e.currentTarget.style.transform = 'scale(1.08)';
+                      e.currentTarget.style.boxShadow = shadows.sm;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = `${primary.base}15`;
+                      e.currentTarget.style.backgroundColor = `${primary.base}20`;
                       e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
                     }}
-                    className="w-full mt-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-semibold transition-all duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}15`,
-                      color: primary.base
+                    className="w-full px-1.5 py-0.5 text-[10px] sm:text-xs font-bold rounded transition-all duration-200"
+                    style={{
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base,
+                      fontVariantNumeric: 'tabular-nums',
                     }}
-                    title={`View ${dayEventsList.length} appointment${dayEventsList.length > 1 ? 's' : ''} on ${format(day, 'MMM d')}`}
+                    title={`View ${dayEventsList.length} appointment${dayEventsList.length > 1 ? 's' : ''}`}
+                    aria-label={`View ${dayEventsList.length} appointment${dayEventsList.length > 1 ? 's' : ''} on ${format(day, 'MMMM d, yyyy')}`}
                   >
-                    <div className="flex items-center justify-center gap-1">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span>{dayEventsList.length} event{dayEventsList.length > 1 ? 's' : ''}</span>
-                    </div>
+                    {dayEventsList.length} apt{dayEventsList.length > 1 ? 's' : ''}
                   </button>
                 )}
               </div>
@@ -608,8 +860,8 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
   });
 
   return (
-    <div className="overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0 rounded-lg">
-      <div className="min-w-[700px] sm:min-w-[800px]">
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-[600px] sm:min-w-[700px] md:min-w-0 w-full">
         {/* Header */}
         <div 
           className="grid grid-cols-8"
@@ -654,56 +906,67 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
 
         {/* Time slots */}
         <div ref={containerRef} className="relative bg-white">
+          {/* Current time indicator for today */}
+          {weekDays.some(day => isToday(day)) && (
+            <CurrentTimeIndicator primaryColor={primary.base} isToday={true} />
+          )}
+          
           {!hasEvents ? (
-            // Empty week - show + buttons
-            <div 
-              className="grid grid-cols-8 min-h-[200px]"
-              style={{ borderBottom: `1px solid ${primary.lighter}` }}
-            >
+            // Empty week - show + buttons with helpful message
+            <div className="py-6">
+              <div className="text-center mb-6">
+                <p className="text-sm font-medium text-gray-700 mb-1">No appointments this week</p>
+                <p className="text-xs text-gray-500">Click any day below to schedule an appointment</p>
+              </div>
               <div 
-                className="p-4"
-                style={{ 
-                  borderRight: `1px solid ${primary.lighter}`,
-                  background: `linear-gradient(135deg, ${primary.lighter}20, ${primary.lighter}10)` 
-                }}
-              ></div>
-              {weekDays.map((day, index) => {
-                const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
-                return (
-                  <div
-                    key={format(day, 'yyyy-MM-dd')}
-                    className="p-4 flex items-center justify-center"
-                    style={{ 
-                      borderRight: index === weekDays.length - 1 ? 'none' : `1px solid ${primary.lighter}`
-                    }}
-                  >
-                    {!isPast && (
-                      <button
-                        onClick={() => onSlotClick?.(day, 9)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = `${primary.lighter}30`;
-                          e.currentTarget.style.transform = 'scale(1.1)';
-                          e.currentTarget.style.boxShadow = shadows.md;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 flex items-center justify-center transition-all duration-200"
-                        style={{ 
-                          borderColor: primary.base,
-                          color: primary.base 
-                        }}
-                        title="Add event"
-                        aria-label={`Add event on ${format(day, 'MMMM d, yyyy')}`}
-                      >
-                        <span className="text-xl sm:text-2xl font-bold leading-none">+</span>
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+                className="grid grid-cols-8 min-h-[200px]"
+                style={{ borderBottom: `1px solid ${primary.lighter}` }}
+              >
+                <div 
+                  className="p-4"
+                  style={{ 
+                    borderRight: `1px solid ${primary.lighter}`,
+                    background: `linear-gradient(135deg, ${primary.lighter}20, ${primary.lighter}10)` 
+                  }}
+                ></div>
+                {weekDays.map((day, index) => {
+                  const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
+                  return (
+                    <div
+                      key={format(day, 'yyyy-MM-dd')}
+                      className="p-4 flex items-center justify-center"
+                      style={{ 
+                        borderRight: index === weekDays.length - 1 ? 'none' : `1px solid ${primary.lighter}`
+                      }}
+                    >
+                      {!isPast && (
+                        <button
+                          onClick={() => onSlotClick?.(day, 9)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = `${primary.lighter}30`;
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.boxShadow = shadows.md;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 flex items-center justify-center transition-all duration-200"
+                          style={{ 
+                            borderColor: primary.base,
+                            color: primary.base 
+                          }}
+                          title="Schedule appointment"
+                          aria-label={`Schedule appointment on ${format(day, 'MMMM d, yyyy')}`}
+                        >
+                          <span className="text-xl sm:text-2xl font-bold leading-none">+</span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             hours.map(hour => (
@@ -756,7 +1019,7 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
                   <div
                     key={`${dateKey}-${hour}`}
                     onClick={() => !isPast && !hasHourEvents && onSlotClick?.(day, hour)}
-                    className={`p-1 min-h-[45px] sm:min-h-[55px] transition-all duration-200 ${
+                    className={`p-1 min-h-[45px] sm:min-h-[55px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${
                       hasHourEvents
                         ? 'cursor-default'
                         : isPast 
@@ -765,7 +1028,8 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
                     }`}
                     style={{
                       backgroundColor: isPast ? colors.bg.gray : colors.bg.white,
-                      borderRight: day === weekDays[weekDays.length - 1] ? 'none' : `1px solid ${primary.lighter}`
+                      borderRight: day === weekDays[weekDays.length - 1] ? 'none' : `1px solid ${primary.lighter}`,
+                      ['--tw-ring-color' as string]: primary.base,
                     }}
                     onMouseEnter={(e) => {
                       if (!isPast && !hasHourEvents) {
@@ -918,12 +1182,12 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
   const hasEvents = dayEvents.length > 0;
 
   return (
-    <div className="overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
-      <div className="min-w-[280px] sm:min-w-0">
+    <div className="w-full">
+      <div className="w-full">
         {!hasEvents ? (
-          // Empty day - show + button
+          // Empty day - show + button with helpful message
           <div 
-            className="rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center"
+            className="rounded-lg overflow-hidden min-h-[300px] flex flex-col items-center justify-center p-6 text-center"
             style={{ 
               border: `1px solid ${primary.lighter}`,
               background: `linear-gradient(135deg, ${primary.lighter}20, ${primary.lighter}10)` 
@@ -941,7 +1205,7 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
                 e.currentTarget.style.transform = 'scale(1)';
                 e.currentTarget.style.boxShadow = 'none';
               }}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-200"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-200 mb-4"
               style={{ 
                 border: `3px solid ${primary.base}`,
                 color: primary.base 
@@ -951,12 +1215,19 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
             >
               <span className="text-3xl sm:text-4xl font-bold leading-none">+</span>
             </button>
+            <p className="text-sm font-medium text-gray-700 mb-1">No appointments scheduled</p>
+            <p className="text-xs text-gray-500">Click the button above to schedule your first appointment</p>
           </div>
         ) : (
           <div 
-            className="space-y-0 rounded-lg overflow-hidden"
+            className="space-y-0 rounded-lg overflow-hidden relative"
             style={{ border: `1px solid ${primary.lighter}` }}
           >
+            {/* Current time indicator for today */}
+            {isToday(currentDate) && (
+              <CurrentTimeIndicator primaryColor={primary.base} isToday={true} />
+            )}
+            
             {hours.map((hour, index) => {
             const events = hourEvents[hour] || [];
             const isTodayHour = isToday(currentDate) && new Date().getHours() === hour;
@@ -971,7 +1242,7 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
               <div
                 key={hour}
                 onClick={() => !isPast && !hasEvents && onSlotClick?.(currentDate, hour)}
-                className={`flex min-h-[55px] sm:min-h-[65px] transition-all duration-200`}
+                className={`flex min-h-[55px] sm:min-h-[65px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset`}
                 style={{
                   backgroundColor: hasEvents
                     ? 'transparent'
@@ -984,7 +1255,8 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
                     : colors.bg.lighter,
                   borderBottom: index === hours.length - 1 ? 'none' : `1px solid ${primary.lighter}`,
                   cursor: hasEvents ? 'default' : isPast ? 'not-allowed' : 'pointer',
-                  opacity: isPast ? 0.5 : 1
+                  opacity: isPast ? 0.5 : 1,
+                  ['--tw-ring-color' as string]: primary.base,
                 }}
                 onMouseEnter={(e) => {
                   if (!isPast && !hasEvents) {

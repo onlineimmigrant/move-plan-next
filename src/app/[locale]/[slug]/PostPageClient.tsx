@@ -30,9 +30,9 @@ import Loading from '@/ui/Loading';
 interface Post {
   id: string;
   slug: string;
-  title: string;
-  description: string;
-  content: string;
+  title?: string;
+  description?: string;
+  content?: string;
   content_type?: 'html' | 'markdown';
   section?: string;
   subsection?: string;
@@ -368,8 +368,8 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   const docSet = useDocumentSetLogic(post);
   
   const shouldShowMainContent = useMemo(() => 
-    post && post.content?.length > 0,
-    [post]
+    post && ((post.content && post.content.length > 0) || hasTemplateSections),
+    [post, hasTemplateSections]
   );
 
   const shouldShowNoContentMessage = useMemo(() =>
@@ -399,20 +399,95 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
     [postType]
   );
 
+  // Determine if we should show any header content at all (for spacing purposes)
+  const hasHeaderContent = useMemo(() => {
+    if (!post) return false;
+    // For minimal posts, only show header if there's title or description
+    if (isMinimalPost) {
+      return !!(post.title || post.description);
+    }
+    // For other post types, always show header
+    return true;
+  }, [post, isMinimalPost]);
+
+  // Determine section padding based on content presence
+  const sectionPaddingClass = useMemo(() => {
+    // If minimal post with no header content and no post content, remove vertical padding
+    if (isMinimalPost && !hasHeaderContent && !post?.content) {
+      return 'lg:col-span-4 text-base leading-7 text-gray-900 bg-white overflow-hidden';
+    }
+    // Default padding
+    return 'py-16 lg:col-span-4 text-base leading-7 text-gray-900 bg-white overflow-hidden';
+  }, [isMinimalPost, hasHeaderContent, post?.content]);
+
+  // Determine main padding based on content presence
+  const mainPaddingClass = useMemo(() => {
+    // If minimal post with no header content and no post content, remove padding
+    if (isMinimalPost && !hasHeaderContent && !post?.content) {
+      return 'px-4 bg-white w-full max-w-full overflow-x-hidden';
+    }
+    // Default padding
+    return 'px-4 sm:pt-4 sm:pb-16 bg-white w-full max-w-full overflow-x-hidden';
+  }, [isMinimalPost, hasHeaderContent, post?.content]);
+
+  // Determine TOC padding
+  const tocPaddingClass = useMemo(() => {
+    // If minimal post with no header content and no post content, remove top padding
+    if (isMinimalPost && !hasHeaderContent && !post?.content) {
+      return 'hidden lg:block';
+    }
+    // Default padding
+    return 'hidden lg:block pt-16';
+  }, [isMinimalPost, hasHeaderContent, post?.content]);
+
+  // Determine aside padding
+  const asidePaddingClass = useMemo(() => {
+    // If minimal post with no header content and no post content, remove bottom padding
+    if (isMinimalPost && !hasHeaderContent && !post?.content) {
+      return 'lg:col-span-2 w-full relative';
+    }
+    // Default padding
+    return 'lg:col-span-2 pb-8 w-full relative';
+  }, [isMinimalPost, hasHeaderContent, post?.content]);
+
+  // Determine right sidebar padding
+  const rightSidebarOuterClass = useMemo(() => {
+    // If minimal post with no header content and no post content, remove padding
+    if (isMinimalPost && !hasHeaderContent && !post?.content) {
+      return 'lg:col-span-2 space-y-8 sm:px-4';
+    }
+    // Default padding
+    return 'lg:col-span-2 space-y-8 pb-8 sm:px-4';
+  }, [isMinimalPost, hasHeaderContent, post?.content]);
+
+  const rightSidebarInnerClass = useMemo(() => {
+    // If minimal post with no header content and no post content, remove top margin
+    if (isMinimalPost && !hasHeaderContent && !post?.content) {
+      return 'hidden lg:block sticky top-32 pl-4';
+    }
+    // Default padding
+    return 'hidden lg:block mt-16 sticky top-32 pl-4';
+  }, [isMinimalPost, hasHeaderContent, post?.content]);
+
   if (!post) {
     return <PostPageSkeleton />;
   }
 
+  // For minimal posts with no header and no content, return empty fragment
+  if (isMinimalPost && !hasHeaderContent && !post?.content) {
+    return <></>;
+  }
+
   return (
-    <main className="px-4 sm:pt-4 sm:pb-16 bg-white w-full max-w-full overflow-x-hidden">
+    <main className={mainPaddingClass}>
       {!isLandingPost ? (
         // Only render the grid if we have content or need to show the empty message
         (shouldShowMainContent || shouldShowNoContentMessage) ? (
           <div className="grid lg:grid-cols-8 gap-x-4 w-full max-w-full">
             {/* TOC Sidebar - Show Master TOC for document sets, regular TOC otherwise */}
-            <aside className="lg:col-span-2 pb-8 w-full relative">
+            <aside className={asidePaddingClass}>
               {isMounted && showTOC && (
-                <div className="hidden lg:block pt-16">
+                <div className={tocPaddingClass}>
                   <div 
                     className="lg:fixed lg:w-[calc((100vw-1280px)/2+256px)] lg:max-w-[256px] top-24 pr-4 lg:border-r lg:border-gray-100 overflow-y-auto"
                     style={{ maxHeight: tocMaxHeight }}
@@ -438,10 +513,10 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
             </aside>
 
             {/* Main Content */}
-            <section className="py-16 lg:col-span-4 text-base leading-7 text-gray-900 bg-white overflow-hidden">
+            <section className={sectionPaddingClass}>
               {shouldShowMainContent ? (
                 <>
-                  {showPostHeader && (
+                  {showPostHeader && hasHeaderContent && (
                     <div
                       onMouseEnter={() => setIsHeaderHovered(true)}
                       onMouseLeave={() => setIsHeaderHovered(false)}
@@ -456,47 +531,49 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                     </div>
                   )}
                   
-                  <article
-                    ref={contentRef}
-                    className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl font-light text-gray-600 table-scroll-container px-4 sm:px-6 lg:px-0 w-full max-w-full overflow-x-hidden break-words"
-                    onDoubleClick={makeEditable}
-                    style={{
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                      maxWidth: '100%',
-                    }}
-                  >
-                    {post.content_type === 'markdown' ? (
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw, rehypeSanitize]}
-                        components={{
-                          // Ensure images are responsive
-                          img: ({node, ...props}) => (
-                            <img {...props} alt={props.alt || ''} className="max-w-full h-auto" style={{maxWidth: '100%', height: 'auto'}} />
-                          ),
-                          // Ensure tables are scrollable on mobile
-                          table: ({node, ...props}) => (
-                            <div className="overflow-x-auto -mx-4 sm:mx-0">
-                              <table {...props} />
-                            </div>
-                          ),
-                          // Ensure code blocks don't overflow
-                          pre: ({node, ...props}) => (
-                            <pre {...props} className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-6" />
-                          ),
-                          // Ensure long words break properly
-                          p: ({node, ...props}) => (
-                            <p {...props} className="break-words" />
-                          ),
-                        }}
-                      >
-                        {post.content}
-                      </ReactMarkdown>
-                    ) : (
-                      <div dangerouslySetInnerHTML={{ __html: post.content }} />
-                    )}
-                  </article>
+                  {post.content && (
+                    <article
+                      ref={contentRef}
+                      className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl font-light text-gray-600 table-scroll-container px-4 sm:px-6 lg:px-0 w-full max-w-full overflow-x-hidden break-words"
+                      onDoubleClick={makeEditable}
+                      style={{
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        maxWidth: '100%',
+                      }}
+                    >
+                      {post.content_type === 'markdown' ? (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                          components={{
+                            // Ensure images are responsive
+                            img: ({node, ...props}) => (
+                              <img {...props} alt={props.alt || ''} className="max-w-full h-auto" style={{maxWidth: '100%', height: 'auto'}} />
+                            ),
+                            // Ensure tables are scrollable on mobile
+                            table: ({node, ...props}) => (
+                              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                                <table {...props} />
+                              </div>
+                            ),
+                            // Ensure code blocks don't overflow
+                            pre: ({node, ...props}) => (
+                              <pre {...props} className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-6" />
+                            ),
+                            // Ensure long words break properly
+                            p: ({node, ...props}) => (
+                              <p {...props} className="break-words" />
+                            ),
+                          }}
+                        >
+                          {post.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                      )}
+                    </article>
+                  )}
                 
                 {/* Code block copy functionality */}
                 <CodeBlockCopy />
@@ -560,8 +637,8 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           </section>
 
           {/* Right Sidebar */}
-          <aside className="lg:col-span-2 space-y-8 pb-8 sm:px-4">
-            <div className="hidden lg:block mt-16 sticky top-32 pl-4">
+          <aside className={rightSidebarOuterClass}>
+            <div className={rightSidebarInnerClass}>
               {/* TODO: Related articles temporarily disabled - will be activated later */}
               {/* {docSet.showMasterTOC && (
                 <RelatedArticles
@@ -575,16 +652,16 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           </aside>
         </div>
         ) : null
-      ) : post.content ? (
+      ) : (post.content && (
         <div className="relative">
           {isAdmin && (
             <div className="absolute top-4 right-4 z-50">
               <AdminButtons post={post} />
             </div>
           )}
-          <LandingPostContent post={post} />
+          <LandingPostContent post={{ ...post, content: post.content }} />
         </div>
-      ) : null}
+      ))}
 
       {/* Bottom Sheet TOC for Mobile */}
       {showTOC && toc.length > 0 && (
