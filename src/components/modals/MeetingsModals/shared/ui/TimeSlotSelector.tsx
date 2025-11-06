@@ -255,8 +255,8 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
             </div>
           </div>
 
-          {/* Time slots by date */}
-          <div className="max-h-[calc(100vh-400px)] sm:max-h-96 overflow-y-auto">
+          {/* Time slots by date - Full height to show all slots */}
+          <div className="flex-1 overflow-y-auto">
             {Object.entries(slotsByDate).map(([dateKey, dateSlots]) => {
               // Group slots by time of day
               const slotsByTimeOfDay = {

@@ -389,7 +389,7 @@ export default function BookingForm({
                       }
                       setFocusedField(null);
                     }}
-                    className={`w-full pl-10 pr-10 py-3 text-sm sm:text-base border-2 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 ${
+                    className={`w-full pl-10 pr-10 py-3 text-sm sm:text-base border-2 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50 ${
                       errors.customer_name ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
                     style={focusedField === 'customer_name' && !errors.customer_name ? {
@@ -454,7 +454,7 @@ export default function BookingForm({
                         ? 'bg-gray-100 border-gray-300 cursor-not-allowed text-gray-600'
                         : errors.customer_email 
                           ? 'border-red-300 bg-red-50' 
-                          : 'border-gray-300'
+                          : 'border-gray-300 bg-white dark:bg-gray-50'
                     }`}
                     style={!readOnlyEmail && focusedField === 'customer_email' && !errors.customer_email ? {
                       borderColor: primary.base,
@@ -520,7 +520,7 @@ export default function BookingForm({
                     }}
                     onFocus={() => setFocusedField('customer_phone')}
                     onBlur={() => setFocusedField(null)}
-                    className="w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1"
+                    className="w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50"
                     style={focusedField === 'customer_phone' ? {
                       borderColor: primary.base,
                       ['--tw-ring-color' as string]: primary.base,
@@ -550,7 +550,7 @@ export default function BookingForm({
                     onChange={(e) => onChange({ title: e.target.value })}
                     onFocus={() => setFocusedField('title')}
                     onBlur={() => setFocusedField(null)}
-                    className={`w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 ${
+                    className={`w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50 ${
                       errors.title ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
                     style={focusedField === 'title' && !errors.title ? {
@@ -590,7 +590,7 @@ export default function BookingForm({
                     onFocus={() => setFocusedField('description')}
                     onBlur={() => setFocusedField(null)}
                     rows={3}
-                    className="w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:outline-none transition-all duration-200 resize-none focus:ring-2 focus:ring-offset-1"
+                    className="w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:outline-none transition-all duration-200 resize-none focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50"
                     style={focusedField === 'description' ? {
                       borderColor: primary.base,
                       ['--tw-ring-color' as string]: primary.base,
@@ -618,7 +618,7 @@ export default function BookingForm({
       </div>
 
       {/* Fixed Footer with Action Buttons - Absolute positioning */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-2">
+      <div className="absolute bottom-0 left-0 right-0 px-4 py-2">
         {/* Step 1: Back to Calendar, Badge center (if selected), Continue button */}
         {currentStep === 1 && (
           <div className="flex items-center justify-between">
