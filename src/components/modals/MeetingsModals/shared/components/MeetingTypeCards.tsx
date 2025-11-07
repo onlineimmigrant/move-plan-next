@@ -153,7 +153,10 @@ export default function MeetingTypeCards({
                       aria-hidden="true"
                     />
                   )}
-                  <h3 className="text-base font-semibold text-gray-900 truncate">
+                  <h3 
+                    className="text-base font-semibold truncate"
+                    style={{ color: isSelected ? primary.base : '#111827' }}
+                  >
                     {type.name}
                   </h3>
                 </div>

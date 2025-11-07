@@ -397,7 +397,11 @@ export default function Calendar({
                       ? 'bg-white shadow-md'
                       : 'text-white hover:bg-white/10'
                   }`}
-                  style={view === viewOption ? { color: primary.base } : {}}
+                  style={{
+                    ...(view === viewOption ? { color: primary.base } : {}),
+                    touchAction: 'manipulation',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
                   aria-pressed={view === viewOption}
                   aria-label={`${viewOption} view`}
                 >
@@ -409,6 +413,10 @@ export default function Calendar({
               <button
                 onClick={goToToday}
                 className="px-3 py-1.5 text-xs font-medium text-white hover:bg-white/10 transition-colors duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-md"
+                style={{
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
                 aria-label="Go to today"
               >
                 Today
@@ -452,32 +460,6 @@ export default function Calendar({
             use24Hour={use24Hour}
           />
         )}
-      </div>
-
-      {/* Mobile Navigation - Below Calendar Table */}
-      <div className="sm:hidden px-4 py-4 mt-3 flex items-center justify-between">
-        <button
-          onClick={() => navigateDate('prev')}
-          className="p-2 rounded-lg transition-all bg-white border border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2"
-          style={{
-            color: primary.base,
-            ['--tw-ring-color' as string]: primary.base,
-          }}
-          aria-label="Previous period"
-        >
-          <ChevronLeftIcon className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => navigateDate('next')}
-          className="p-2 rounded-lg transition-all bg-white border border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2"
-          style={{
-            color: primary.base,
-            ['--tw-ring-color' as string]: primary.base,
-          }}
-          aria-label="Next period"
-        >
-          <ChevronRightIcon className="w-5 h-5" />
-        </button>
       </div>
     </div>
   );
@@ -628,7 +610,7 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                     e.currentTarget.style.boxShadow = 'none';
                   }
                 }}
-                className={`min-h-[70px] sm:min-h-[75px] md:min-h-[95px] p-1.5 sm:p-2 flex flex-col items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-lg touch-manipulation ${
+                className={`min-h-[70px] sm:min-h-[75px] md:min-h-[95px] p-1.5 sm:p-2 flex flex-col items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-lg ${
                   isPastDate 
                     ? 'cursor-not-allowed' 
                     : isCurrentMonth ? 'cursor-pointer' : 'text-gray-400 cursor-pointer'
@@ -651,6 +633,8 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                   opacity: isPastDate ? 0.6 : 1,
                   ...(isSelected ? { boxShadow: `inset 0 0 0 2px ${primary.base}` } : {}),
                   ['--tw-ring-color' as string]: primary.base,
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent',
                 }}
               >
                 {/* Date number - centered */}
@@ -755,8 +739,12 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
   const formatTime = (date: Date | number) => {
     return format(date, use24Hour ? 'HH:mm' : 'h:mm a');
   };
-  const weekStart = startOfWeek(currentDate);
-  const weekDays = eachDayOfInterval({ start: weekStart, end: endOfWeek(currentDate) });
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Start from Monday
+  const weekDays = eachDayOfInterval({ start: weekStart, end: endOfWeek(currentDate, { weekStartsOn: 1 }) });
+  
+  // Show only 5 days on mobile (Mon-Fri), all 7 on desktop
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const displayDays = isMobile ? weekDays.slice(0, 5) : weekDays;
 
   const weekEvents = useMemo(() => {
     const eventMap: Record<string, CalendarEvent[]> = {};
@@ -804,24 +792,20 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
 
   return (
     <div className="w-full overflow-x-auto">
-      <div className="min-w-[600px] sm:min-w-[700px] md:min-w-0 w-full">
+      <div className="min-w-full w-full">
         {/* Header */}
         <div 
-          className="grid grid-cols-8"
+          className="grid grid-cols-5 sm:grid-cols-7"
           style={{ 
             background: `linear-gradient(135deg, ${primary.lighter}20, ${primary.lighter}10)`,
             borderBottom: `2px solid ${primary.light}`
           }}
         >
-          <div 
-            className="p-1.5 sm:p-2"
-            style={{ borderRight: `1px solid ${primary.lighter}` }}
-          ></div>
-          {weekDays.map(day => (
+          {displayDays.map(day => (
             <div 
               key={day.toISOString()} 
               className="p-1.5 sm:p-2 text-center"
-              style={{ borderRight: day === weekDays[weekDays.length - 1] ? 'none' : `1px solid ${primary.lighter}` }}
+              style={{ borderRight: day === displayDays[displayDays.length - 1] ? 'none' : '1px solid transparent' }}
             >
               <div 
                 className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wide"
@@ -855,50 +839,33 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
           )}
           
           {!hasEvents ? (
-            // Empty week - show + buttons with helpful message
+            // Empty week - show + buttons
             <div className="py-6">
-              <div className="text-center mb-6">
-                <p className="text-sm font-medium text-gray-700 mb-1">No appointments this week</p>
-                <p className="text-xs text-gray-500">Click any day below to schedule an appointment</p>
-              </div>
               <div 
-                className="grid grid-cols-8 min-h-[200px]"
+                className="grid grid-cols-5 sm:grid-cols-7 min-h-[200px]"
                 style={{ borderBottom: `1px solid ${primary.lighter}` }}
               >
-                <div 
-                  className="p-4"
-                  style={{ 
-                    borderRight: `1px solid ${primary.lighter}`,
-                    background: `linear-gradient(135deg, ${primary.lighter}20, ${primary.lighter}10)` 
-                  }}
-                ></div>
-                {weekDays.map((day, index) => {
+                {displayDays.map((day, index) => {
                   const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
                   return (
                     <div
                       key={format(day, 'yyyy-MM-dd')}
                       className="p-4 flex items-center justify-center"
                       style={{ 
-                        borderRight: index === weekDays.length - 1 ? 'none' : `1px solid ${primary.lighter}`
+                        borderRight: index === displayDays.length - 1 ? 'none' : '1px solid transparent',
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'transparent',
                       }}
                     >
                       {!isPast && (
                         <button
                           onClick={() => onSlotClick?.(day, 9)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = `${primary.lighter}30`;
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.boxShadow = shadows.md;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
                           className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 flex items-center justify-center transition-all duration-200"
                           style={{ 
                             borderColor: primary.base,
-                            color: primary.base 
+                            color: primary.base,
+                            touchAction: 'manipulation',
+                            WebkitTapHighlightColor: 'transparent',
                           }}
                           title="Schedule appointment"
                           aria-label={`Schedule appointment on ${format(day, 'MMMM d, yyyy')}`}
@@ -915,29 +882,12 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
             hours.map(hour => (
               <div 
                 key={hour} 
-                className="grid grid-cols-8 transition-colors"
+                className="grid grid-cols-5 sm:grid-cols-7 transition-colors"
                 style={{ 
                   borderBottom: `1px solid ${primary.lighter}`,
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = `${primary.lighter}15`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '';
-                }}
               >
-                <div 
-                  className="p-1.5 sm:p-2 text-[9px] sm:text-[10px] md:text-xs font-medium flex-shrink-0"
-                  style={{
-                    color: primary.active,
-                    borderRight: `1px solid ${primary.lighter}`,
-                    background: `linear-gradient(135deg, ${primary.lighter}20, ${primary.lighter}10)`
-                  }}
-                >
-                  {formatTime(new Date().setHours(hour, 0, 0, 0))}
-                </div>
-
-                {weekDays.map(day => {
+                {displayDays.map(day => {
                   const dateKey = format(day, 'yyyy-MM-dd');
                   const dayEvents = weekEvents[dateKey] || [];
                   
@@ -962,7 +912,7 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
                   <div
                     key={`${dateKey}-${hour}`}
                     onClick={() => !isPast && !hasHourEvents && onSlotClick?.(day, hour)}
-                    className={`p-1 min-h-[45px] sm:min-h-[55px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${
+                    className={`p-1 min-h-[45px] sm:min-h-[55px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset relative ${
                       hasHourEvents
                         ? 'cursor-default'
                         : isPast 
@@ -971,20 +921,10 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
                     }`}
                     style={{
                       backgroundColor: isPast ? colors.bg.gray : colors.bg.white,
-                      borderRight: day === weekDays[weekDays.length - 1] ? 'none' : `1px solid ${primary.lighter}`,
+                      borderRight: day === displayDays[displayDays.length - 1] ? 'none' : '1px solid transparent',
                       ['--tw-ring-color' as string]: primary.base,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isPast && !hasHourEvents) {
-                        e.currentTarget.style.backgroundColor = `${primary.lighter}20`;
-                        e.currentTarget.style.transform = 'scale(1.01)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isPast && !hasHourEvents) {
-                        e.currentTarget.style.backgroundColor = colors.bg.white;
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }
+                      touchAction: 'manipulation',
+                      WebkitTapHighlightColor: 'transparent',
                     }}
                     role={!isPast && !hasHourEvents ? 'button' : undefined}
                     aria-label={!isPast && !hasHourEvents ? `Add event at ${formatTime(new Date(day).setHours(hour, 0))}` : undefined}
@@ -1151,20 +1091,19 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
               className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-200 mb-4"
               style={{ 
                 border: `3px solid ${primary.base}`,
-                color: primary.base 
+                color: primary.base,
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
               }}
               title="Add event"
               aria-label={`Add event on ${format(currentDate, 'MMMM d, yyyy')}`}
             >
               <span className="text-3xl sm:text-4xl font-bold leading-none">+</span>
             </button>
-            <p className="text-sm font-medium text-gray-700 mb-1">No appointments scheduled</p>
-            <p className="text-xs text-gray-500">Click the button above to schedule your first appointment</p>
           </div>
         ) : (
           <div 
             className="space-y-0 rounded-lg overflow-hidden relative"
-            style={{ border: `1px solid ${primary.lighter}` }}
           >
             {/* Current time indicator for today */}
             {isToday(currentDate) && (
@@ -1196,7 +1135,7 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
                     : index % 2 === 0
                     ? colors.bg.white
                     : colors.bg.lighter,
-                  borderBottom: index === hours.length - 1 ? 'none' : `1px solid ${primary.lighter}`,
+                  borderBottom: index === hours.length - 1 ? 'none' : '1px solid transparent',
                   cursor: hasEvents ? 'default' : isPast ? 'not-allowed' : 'pointer',
                   opacity: isPast ? 0.5 : 1,
                   ['--tw-ring-color' as string]: primary.base,
@@ -1225,7 +1164,7 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
                   className="w-14 sm:w-16 md:w-20 p-1.5 sm:p-2 text-[9px] sm:text-[10px] md:text-xs font-medium flex-shrink-0"
                   style={{
                     color: primary.active,
-                    borderRight: `1px solid ${primary.lighter}`,
+                    borderRight: '1px solid transparent',
                     background: `linear-gradient(135deg, ${primary.lighter}20, ${primary.lighter}10)`
                   }}
                 >

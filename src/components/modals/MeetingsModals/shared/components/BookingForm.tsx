@@ -259,7 +259,7 @@ export default function BookingForm({
                         : `0 2px 4px ${primary.base}30`
                     }
                   : {
-                      backgroundColor: step.enabled && isHovered ? `${primary.lighter}33` : 'white',
+                      backgroundColor: 'transparent',
                       color: step.enabled ? (isHovered ? primary.hover : primary.base) : '#9ca3af',
                       borderWidth: '1px',
                       borderStyle: 'solid',
@@ -350,13 +350,9 @@ export default function BookingForm({
 
         {/* Step 3: Customer Details */}
         {currentStep === 3 && (
-          <div className="p-4 space-y-5">
+          <div className="p-4 space-y-4 sm:space-y-5">
             {/* Required Section */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <div className="w-1 h-4 rounded-full" style={{ backgroundColor: primary.base }} />
-                <h3 className="text-sm font-bold text-gray-900">Required</h3>
-              </div>
+            <div className="space-y-2.5 sm:space-y-3">
               
               {/* Two-column grid for Name and Email on desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -408,7 +404,7 @@ export default function BookingForm({
                     />
                   )}
                 </div>
-                <p id="name-help" className="mt-1 text-xs text-gray-500">
+                <p id="name-help" className="mt-1 text-xs text-gray-500 hidden sm:block">
                   Enter your legal name as it appears on documents
                 </p>
                 {!nameValidation.isValid && (
@@ -472,7 +468,7 @@ export default function BookingForm({
                     />
                   )}
                 </div>
-                <p id="email-help" className="mt-1 text-xs text-gray-500">
+                <p id="email-help" className="mt-1 text-xs text-gray-500 hidden sm:block">
                   We'll send booking confirmation to this address
                 </p>
                 {!emailValidation.isValid && (
@@ -490,11 +486,7 @@ export default function BookingForm({
             </div>
 
             {/* Optional Section */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 pb-2">
-                <div className="w-1 h-4 rounded-full" style={{ backgroundColor: primary.base }} />
-                <h3 className="text-sm font-bold text-gray-900">Optional</h3>
-              </div>
+            <div className="space-y-2.5 sm:space-y-3">
 
               {/* Two-column grid for Phone and Title on desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -527,16 +519,18 @@ export default function BookingForm({
                     aria-describedby="phone-help"
                   />
                 </div>
-                <p id="phone-help" className="mt-1 text-xs text-gray-500">
-                  For appointment reminders (SMS optional)
-                </p>
               </div>
 
               {/* Appointment Title */}
               <div>
-                <label htmlFor="appointment-title" className="block text-xs font-semibold text-gray-500 mb-1.5">
-                  Appointment Title
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="appointment-title" className="block text-xs font-semibold text-gray-500">
+                    Appointment Title
+                  </label>
+                  <span className="text-xs text-gray-400 sm:hidden">
+                    {formData.title?.length || 0}/200
+                  </span>
+                </div>
                 <div className="relative">
                   <PencilIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: primary.base }} aria-hidden="true" />
                   <input
@@ -558,7 +552,7 @@ export default function BookingForm({
                     placeholder="Initial consultation"
                   />
                 </div>
-                <div className="flex items-center justify-between mt-1">
+                <div className="hidden sm:flex items-center justify-between mt-1">
                   <span className="text-xs text-gray-400">
                     {formData.title?.length || 0}/200
                   </span>
@@ -573,9 +567,18 @@ export default function BookingForm({
 
               {/* Notes - Full width on all screens */}
               <div>
-                <label htmlFor="appointment-notes" className="block text-xs font-semibold text-gray-500 mb-1.5">
-                  Notes
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="appointment-notes" className="block text-xs font-semibold text-gray-500">
+                    Notes
+                  </label>
+                  <span className={`text-xs sm:hidden ${
+                    (formData.description?.length || 0) > 900 
+                      ? 'text-amber-600 font-semibold' 
+                      : 'text-gray-400'
+                  }`}>
+                    {formData.description?.length || 0}/1000
+                  </span>
+                </div>
                 <div className="relative">
                   <DocumentTextIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: primary.base }} aria-hidden="true" />
                   <textarea
@@ -597,7 +600,7 @@ export default function BookingForm({
                     aria-describedby="notes-help"
                   />
                 </div>
-                <div className="flex items-center justify-between mt-1">
+                <div className="hidden sm:flex items-center justify-between mt-1">
                   <span id="notes-help" className="text-xs text-gray-500">
                     Describe your needs or questions
                   </span>

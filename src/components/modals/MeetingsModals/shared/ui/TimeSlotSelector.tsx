@@ -292,7 +292,7 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                         {/* Section header */}
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-lg sm:text-xl">{styles.icon}</span>
-                          <h3 className="text-sm font-semibold text-gray-700">{styles.label}</h3>
+                          <h3 className="text-sm font-semibold text-gray-400 sm:text-gray-700">{styles.label}</h3>
                         </div>
 
                         {/* Time slots grid */}
@@ -359,7 +359,6 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                                   ['--tw-ring-color' as string]: primary.base
                                 }}
                                 aria-label={`Select ${format(slot.start, timeFormat24 ? 'HH:mm' : 'h:mm a')} time slot. ${styles.label} time.`}
-                                aria-pressed={isSelected}
                                 role="radio"
                                 aria-checked={isSelected}
                                 tabIndex={isFocused ? 0 : -1}

@@ -468,7 +468,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
               {currentView !== MODAL_VIEWS.BOOKING ? (
                 <>
                   {/* Tab Navigation - Only show if not in booking view */}
-                  <div className="px-4 pt-4 pb-2">
+                  <div className="px-4 pt-3 pb-3">
                     <nav className="flex gap-2" aria-label="Tabs">
                       <button
                         onClick={() => setActiveTab('book-new')}
@@ -482,14 +482,18 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                                 color: 'white',
                                 boxShadow: hoveredTab === 'book-new' 
                                   ? `0 4px 12px ${primary.base}40` 
-                                  : `0 2px 4px ${primary.base}30`
+                                  : `0 2px 4px ${primary.base}30`,
+                                touchAction: 'manipulation',
+                                WebkitTapHighlightColor: 'transparent',
                               }
                             : {
-                                backgroundColor: hoveredTab === 'book-new' ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                                backgroundColor: 'transparent',
                                 color: hoveredTab === 'book-new' ? primary.hover : primary.base,
                                 borderWidth: '1px',
                                 borderStyle: 'solid',
-                                borderColor: hoveredTab === 'book-new' ? `${primary.base}80` : `${primary.base}40`
+                                borderColor: hoveredTab === 'book-new' ? `${primary.base}80` : `${primary.base}40`,
+                                touchAction: 'manipulation',
+                                WebkitTapHighlightColor: 'transparent',
                               }
                         }
                       >
@@ -509,14 +513,18 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                                   color: 'white',
                                   boxShadow: hoveredTab === 'my-meetings' 
                                     ? `0 4px 12px ${primary.base}40` 
-                                    : `0 2px 4px ${primary.base}30`
+                                    : `0 2px 4px ${primary.base}30`,
+                                  touchAction: 'manipulation',
+                                  WebkitTapHighlightColor: 'transparent',
                                 }
                               : {
-                                  backgroundColor: hoveredTab === 'my-meetings' ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                                  backgroundColor: 'transparent',
                                   color: hoveredTab === 'my-meetings' ? primary.hover : primary.base,
                                   borderWidth: '1px',
                                   borderStyle: 'solid',
-                                  borderColor: hoveredTab === 'my-meetings' ? `${primary.base}80` : `${primary.base}40`
+                                  borderColor: hoveredTab === 'my-meetings' ? `${primary.base}80` : `${primary.base}40`,
+                                  touchAction: 'manipulation',
+                                  WebkitTapHighlightColor: 'transparent',
                                 }
                           }
                         >
@@ -661,7 +669,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                                     : `0 2px 4px ${primary.base}30`
                                 }
                               : {
-                                  backgroundColor: hoveredTab === 'book-new' ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                                  backgroundColor: 'transparent',
                                   color: hoveredTab === 'book-new' ? primary.hover : primary.base,
                                   borderWidth: '1px',
                                   borderStyle: 'solid',
@@ -689,7 +697,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                                       : `0 2px 4px ${primary.base}30`
                                   }
                                 : {
-                                    backgroundColor: hoveredTab === 'my-meetings' ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                                    backgroundColor: 'transparent',
                                     color: hoveredTab === 'my-meetings' ? primary.hover : primary.base,
                                     borderWidth: '1px',
                                     borderStyle: 'solid',
