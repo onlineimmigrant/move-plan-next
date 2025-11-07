@@ -76,6 +76,7 @@ export default function MeetingsAdminModal({
   // View state
   const [currentView, setCurrentView] = useState<'calendar' | 'booking' | 'manage-bookings'>('calendar');
   const [loading, setLoading] = useState(true);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -95,7 +96,7 @@ export default function MeetingsAdminModal({
 
   // Calendar state
   const [currentDate, setCurrentDate] = useState<Date>(initialDate || new Date());
-  const [calendarView, setCalendarView] = useState<CalendarView>('week');
+  const [calendarView, setCalendarView] = useState<CalendarView>('month');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   // Data state
@@ -244,7 +245,7 @@ export default function MeetingsAdminModal({
     if (!settings?.organization_id) return;
 
     try {
-      setLoading(true);
+      setLoadingSlots(true);
       const now = new Date();
       
       // Format date as YYYY-MM-DD in LOCAL timezone (not UTC)
@@ -308,7 +309,7 @@ export default function MeetingsAdminModal({
       console.error('Error loading available slots:', err);
       setAvailableSlots([]);
     } finally {
-      setLoading(false);
+      setLoadingSlots(false);
     }
   };
 
@@ -412,12 +413,12 @@ export default function MeetingsAdminModal({
 
       // Reload data
       await loadData();
+      await fetchActiveBookingCount();
 
-      // Reset and close
+      // Reset and redirect to manage view
       setBookingFormData({});
       setAvailableSlots([]);
-      setCurrentView('calendar');
-      onClose();
+      setCurrentView('manage-bookings');
     } catch (err) {
       console.error('Error creating booking:', err);
       setError(err instanceof Error ? err.message : 'Failed to create booking');
@@ -503,13 +504,11 @@ export default function MeetingsAdminModal({
         className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-[10001]"
         role="dialog"
         aria-modal="true"
-        style={{ pointerEvents: 'none' }}
       >
         {/* Backdrop */}
         <div 
           className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           onClick={handleClose}
-          style={{ pointerEvents: 'auto' }}
         />
 
         {/* Modal - Responsive: Mobile fullscreen, Desktop draggable */}
@@ -518,7 +517,6 @@ export default function MeetingsAdminModal({
           <div
             className="relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20"
             onClick={(e) => e.stopPropagation()}
-            style={{ pointerEvents: 'auto' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/30 dark:bg-gray-800/30 rounded-t-2xl">
@@ -650,7 +648,7 @@ export default function MeetingsAdminModal({
             )}
 
             {/* Content Area */}
-            <div className="flex-1 overflow-hidden bg-white/20 dark:bg-gray-900/20 min-h-0">
+            <div className="flex-1 flex flex-col bg-white/20 dark:bg-gray-900/20 min-h-0 overflow-hidden">
               {/* Error Message */}
               {error && (
                 <div className="m-4 p-4 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm border border-red-200 dark:border-red-800 rounded-lg">
@@ -659,7 +657,7 @@ export default function MeetingsAdminModal({
               )}
 
               {currentView === 'booking' ? (
-                <div className="p-4">
+                <div className="overflow-y-auto flex-1">
                   <BookingForm
                     formData={bookingFormData}
                     availableSlots={availableSlots}
@@ -669,6 +667,7 @@ export default function MeetingsAdminModal({
                     onCancel={() => setCurrentView('calendar')}
                     onBackToCalendar={() => setCurrentView('calendar')}
                     isSubmitting={submitting}
+                    isLoadingSlots={loadingSlots}
                     errors={{}}
                     isAdmin={true}
                     timeFormat24={use24Hour}
@@ -682,7 +681,7 @@ export default function MeetingsAdminModal({
                   />
                 </div>
               ) : loading ? (
-                <div className="p-4">
+                <div className="overflow-y-auto flex-1">
                   <div className="grid grid-cols-1 gap-4">
                     <BookingCardSkeleton count={3} />
                   </div>
@@ -699,7 +698,7 @@ export default function MeetingsAdminModal({
                     <p className="text-gray-500 dark:text-gray-400">Please create appointment types in organization settings first.</p>
                   </div>
                 ) : (
-                  <div className="p-4">
+                  <div className="p-4 overflow-y-auto flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
                     <Calendar
                       events={events}
                       currentDate={currentDate}
@@ -715,6 +714,64 @@ export default function MeetingsAdminModal({
                 )
               ) : null}
             </div>
+
+            {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
+            {currentView === 'calendar' && (
+              <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => {
+                      const newDate = calendarView === 'month' 
+                        ? new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+                        : calendarView === 'week'
+                        ? new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+                        : new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+                      setCurrentDate(newDate);
+                    }}
+                    className="p-2 rounded-lg transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                    aria-label="Previous"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setCurrentDate(new Date())}
+                    className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newDate = calendarView === 'month' 
+                        ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+                        : calendarView === 'week'
+                        ? new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+                        : new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+                      setCurrentDate(newDate);
+                    }}
+                    className="p-2 rounded-lg transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                    aria-label="Next"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Desktop: Draggable & Resizable */
@@ -876,7 +933,7 @@ export default function MeetingsAdminModal({
             )}
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20 min-h-0">
+            <div className="flex-1 flex flex-col bg-white/20 dark:bg-gray-900/20 min-h-0 overflow-hidden">
               {/* Error Message */}
               {error && (
                 <div className="m-4 p-4 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm border border-red-200 dark:border-red-800 rounded-lg">
@@ -885,7 +942,7 @@ export default function MeetingsAdminModal({
               )}
 
               {currentView === 'booking' ? (
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto flex-1">
                   <BookingForm
                     formData={bookingFormData}
                     availableSlots={availableSlots}
@@ -895,6 +952,7 @@ export default function MeetingsAdminModal({
                     onCancel={() => setCurrentView('calendar')}
                     onBackToCalendar={() => setCurrentView('calendar')}
                     isSubmitting={submitting}
+                    isLoadingSlots={loadingSlots}
                     errors={{}}
                     isAdmin={true}
                     timeFormat24={use24Hour}
@@ -908,7 +966,7 @@ export default function MeetingsAdminModal({
                   />
                 </div>
               ) : loading ? (
-                <div className="p-4">
+                <div className="overflow-y-auto flex-1">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <BookingCardSkeleton count={6} />
                   </div>
@@ -925,7 +983,7 @@ export default function MeetingsAdminModal({
                     <p className="text-gray-500 dark:text-gray-400">Please create appointment types in organization settings first.</p>
                   </div>
                 ) : (
-                  <div className="p-4">
+                  <div className="p-4 overflow-y-auto flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
                     <Calendar
                       events={events}
                       currentDate={currentDate}
@@ -941,6 +999,64 @@ export default function MeetingsAdminModal({
                 )
               ) : null}
             </div>
+
+            {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
+            {currentView === 'calendar' && (
+              <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => {
+                      const newDate = calendarView === 'month' 
+                        ? new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+                        : calendarView === 'week'
+                        ? new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+                        : new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+                      setCurrentDate(newDate);
+                    }}
+                    className="p-2 rounded-lg transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                    aria-label="Previous"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setCurrentDate(new Date())}
+                    className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newDate = calendarView === 'month' 
+                        ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+                        : calendarView === 'week'
+                        ? new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+                        : new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+                      setCurrentDate(newDate);
+                    }}
+                    className="p-2 rounded-lg transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                    aria-label="Next"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </Rnd>
         )}

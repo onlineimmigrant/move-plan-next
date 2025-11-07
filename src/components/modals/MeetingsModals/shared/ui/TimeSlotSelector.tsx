@@ -253,7 +253,7 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                   UTC{tzInfo.offset} • {tzInfo.cityName}
                 </span>
                 {isAdmin && businessHours && (
-                  <span className="whitespace-nowrap">
+                  <span className="hidden sm:inline whitespace-nowrap">
                     Customer: {businessHours.start.slice(0, 5)} - {businessHours.end.slice(0, 5)}
                   </span>
                 )}

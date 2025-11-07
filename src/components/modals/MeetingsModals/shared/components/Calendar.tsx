@@ -487,9 +487,9 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
       white: '#ffffff',
       light: '#fafafa',
       lighter: '#f9fafb',
-      available: `${primary.lighter}08`,
-      hover: `${primary.lighter}25`,
-      selected: `${primary.lighter}35`,
+      available: primary.lighter, // Use the CSS variable directly
+      hover: `${primary.lighter}`,
+      selected: `${primary.lighter}`,
     }
   };
   
@@ -590,10 +590,10 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                 onMouseEnter={(e) => {
                   if (!isPastDate && isCurrentMonth) {
                     if (isTodayDate && !isSelected) {
-                      e.currentTarget.style.background = `linear-gradient(135deg, ${primary.lighter}45, ${primary.lighter}30)`;
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${primary.light}, ${primary.lighter})`;
                       e.currentTarget.style.boxShadow = shadows.hover;
                     } else {
-                      e.currentTarget.style.backgroundColor = colors.bg.hover;
+                      e.currentTarget.style.backgroundColor = primary.light;
                       e.currentTarget.style.boxShadow = shadows.md;
                     }
                     e.currentTarget.style.transform = 'scale(1.03)';
@@ -602,9 +602,9 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                 onMouseLeave={(e) => {
                   if (!isPastDate && isCurrentMonth && !isSelected) {
                     if (isTodayDate) {
-                      e.currentTarget.style.background = `linear-gradient(135deg, ${primary.lighter}35, ${primary.lighter}20)`;
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${primary.lighter}, ${primary.lighter})`;
                     } else {
-                      e.currentTarget.style.backgroundColor = hasEvents ? colors.bg.available : (isCurrentMonth ? colors.bg.white : colors.bg.lighter);
+                      e.currentTarget.style.backgroundColor = hasEvents ? primary.lighter : (isCurrentMonth ? colors.bg.white : colors.bg.lighter);
                     }
                     e.currentTarget.style.transform = 'scale(1)';
                     e.currentTarget.style.boxShadow = 'none';
@@ -617,14 +617,14 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                 }`}
                 style={{
                   ...(isTodayDate && !isSelected 
-                    ? { background: `linear-gradient(135deg, ${primary.lighter}35, ${primary.lighter}20)` }
+                    ? { background: `linear-gradient(135deg, ${primary.lighter}, ${primary.lighter})` }
                     : { 
                         backgroundColor: isSelected 
-                          ? colors.bg.selected
+                          ? primary.lighter
                           : isPastDate 
                           ? colors.bg.light 
                           : hasEvents 
-                          ? colors.bg.available
+                          ? primary.lighter  // Light primary background for dates with appointments
                           : isCurrentMonth 
                           ? colors.bg.white 
                           : colors.bg.lighter
@@ -640,7 +640,7 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                 {/* Date number - centered */}
                 <div className="relative mb-0.5">
                   <span
-                    className={`inline-flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 md:w-8 md:h-8 rounded-full text-base sm:text-sm md:text-base font-bold transition-all duration-200 ${
+                    className={`inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full text-sm sm:text-base md:text-lg font-bold transition-all duration-200 ${
                       isTodayDate || isSelected
                         ? 'text-white shadow-md'
                         : 'text-gray-900'
@@ -662,13 +662,13 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                   >
                     {format(day, 'd')}
                   </span>
-                  {/* Enhanced event density indicator with color coding */}
+                  {/* Enhanced event density indicator with color coding - positioned below date number */}
                   {dayEventsList.length > 0 && !isPastDate && (
-                    <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
                       {Array.from({ length: Math.min(dayEventsList.length, 3) }).map((_, i) => (
                         <div
                           key={i}
-                          className="w-1 h-1 rounded-full shadow-sm transition-all duration-200"
+                          className="w-1.5 h-1.5 rounded-full shadow-sm transition-all duration-200"
                           style={{ 
                             backgroundColor: dayEventsList.length >= 3 
                               ? '#F59E0B' // Warning color for busy days
@@ -684,12 +684,14 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                   )}
                 </div>
 
-                {/* Appointment count badge - always present to maintain alignment */}
-                <div className="min-h-[18px] flex items-center justify-center">
+                {/* Appointment count badge - centered and always present to maintain alignment */}
+                <div className="min-h-[20px] flex items-center justify-center mt-auto mb-1">
                   {dayEventsList.length > 0 && !isPastDate && (
                     <span
-                      className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-gray-600 bg-gray-200 rounded-full"
+                      className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 text-[10px] sm:text-xs font-bold rounded-full shadow-sm"
                       style={{
+                        backgroundColor: isTodayDate || isSelected ? 'white' : `${primary.lighter}40`,
+                        color: isTodayDate || isSelected ? primary.base : primary.base,
                         fontVariantNumeric: 'tabular-nums',
                       }}
                     >
@@ -1161,7 +1163,7 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
                 tabIndex={!isPast && !hasEvents ? 0 : -1}
               >
                 <div 
-                  className="w-14 sm:w-16 md:w-20 p-1.5 sm:p-2 text-[9px] sm:text-[10px] md:text-xs font-medium flex-shrink-0"
+                  className="w-12 sm:w-16 md:w-20 p-1 sm:p-1.5 md:p-2 text-[8px] sm:text-[10px] md:text-xs font-medium flex-shrink-0"
                   style={{
                     color: primary.active,
                     borderRight: '1px solid transparent',
@@ -1173,7 +1175,7 @@ function DayView({ currentDate, events, onEventClick, onSlotClick, use24Hour = t
                   </div>
                 </div>
 
-                <div className="flex-1 p-2">
+                <div className="flex-1">
                   {events.length > 0 && (
                     <div className="space-y-1.5">
                       {events.map(event => {

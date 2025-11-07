@@ -417,13 +417,11 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
         role="dialog"
         aria-modal="true"
         aria-labelledby="booking-modal-title"
-        style={{ pointerEvents: 'none' }}
       >
         {/* Backdrop */}
         <div
           className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           onClick={handleClose}
-          style={{ pointerEvents: 'auto' }}
         />
 
         {/* Modal - Draggable & Resizable on Desktop */}
@@ -433,7 +431,6 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
             ref={modalRef}
             className="relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
             onClick={(e) => e.stopPropagation()}
-            style={{ pointerEvents: 'auto' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-gray-700/50">
@@ -556,16 +553,18 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                         </p>
                       </div>
                     ) : (
-                      <Calendar
-                        events={calendarState.events}
-                        currentDate={calendarState.currentDate}
-                        view={calendarState.calendarView}
-                        onDateChange={calendarState.setCurrentDate}
-                        onViewChange={calendarState.setCalendarView}
-                        onEventClick={handleEventClick}
-                        onSlotClick={handleSlotClick}
-                        loading={false}
-                      />
+                      <div className="overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                        <Calendar
+                          events={calendarState.events}
+                          currentDate={calendarState.currentDate}
+                          view={calendarState.calendarView}
+                          onDateChange={calendarState.setCurrentDate}
+                          onViewChange={calendarState.setCalendarView}
+                          onEventClick={handleEventClick}
+                          onSlotClick={handleSlotClick}
+                          loading={false}
+                        />
+                      </div>
                     )}
                   </div>
                 </>
@@ -590,6 +589,64 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                 />
               )}
             </div>
+
+            {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
+            {currentView === 'calendar' && activeTab === 'book-new' && (
+              <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => {
+                      const newDate = calendarState.calendarView === 'month' 
+                        ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() - 1, 1)
+                        : calendarState.calendarView === 'week'
+                        ? new Date(calendarState.currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+                        : new Date(calendarState.currentDate.getTime() - 24 * 60 * 60 * 1000);
+                      calendarState.setCurrentDate(newDate);
+                    }}
+                    className="p-2 rounded-lg transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                    aria-label="Previous"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => calendarState.setCurrentDate(new Date())}
+                    className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newDate = calendarState.calendarView === 'month' 
+                        ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() + 1, 1)
+                        : calendarState.calendarView === 'week'
+                        ? new Date(calendarState.currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+                        : new Date(calendarState.currentDate.getTime() + 24 * 60 * 60 * 1000);
+                      calendarState.setCurrentDate(newDate);
+                    }}
+                    className="p-2 rounded-lg transition-colors duration-200"
+                    style={{ 
+                      backgroundColor: `${primary.base}20`,
+                      color: primary.base 
+                    }}
+                    aria-label="Next"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Desktop: Draggable & Resizable */
@@ -730,16 +787,18 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                           </p>
                         </div>
                       ) : (
-                        <Calendar
-                          events={calendarState.events}
-                          currentDate={calendarState.currentDate}
-                          view={calendarState.calendarView}
-                          onDateChange={calendarState.setCurrentDate}
-                          onViewChange={calendarState.setCalendarView}
-                          onEventClick={handleEventClick}
-                          onSlotClick={handleSlotClick}
-                          loading={false}
-                        />
+                        <div className="overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                          <Calendar
+                            events={calendarState.events}
+                            currentDate={calendarState.currentDate}
+                            view={calendarState.calendarView}
+                            onDateChange={calendarState.setCurrentDate}
+                            onViewChange={calendarState.setCalendarView}
+                            onEventClick={handleEventClick}
+                            onSlotClick={handleSlotClick}
+                            loading={false}
+                          />
+                        </div>
                       )}
                     </div>
                   </>
@@ -764,6 +823,64 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                   />
                 )}
               </div>
+
+              {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
+              {currentView === 'calendar' && activeTab === 'book-new' && (
+                <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      onClick={() => {
+                        const newDate = calendarState.calendarView === 'month' 
+                          ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() - 1, 1)
+                          : calendarState.calendarView === 'week'
+                          ? new Date(calendarState.currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+                          : new Date(calendarState.currentDate.getTime() - 24 * 60 * 60 * 1000);
+                        calendarState.setCurrentDate(newDate);
+                      }}
+                      className="p-2 rounded-lg transition-colors duration-200"
+                      style={{ 
+                        backgroundColor: `${primary.base}20`,
+                        color: primary.base 
+                      }}
+                      aria-label="Previous"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => calendarState.setCurrentDate(new Date())}
+                      className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                      style={{ 
+                        backgroundColor: `${primary.base}20`,
+                        color: primary.base 
+                      }}
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={() => {
+                        const newDate = calendarState.calendarView === 'month' 
+                          ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() + 1, 1)
+                          : calendarState.calendarView === 'week'
+                          ? new Date(calendarState.currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+                          : new Date(calendarState.currentDate.getTime() + 24 * 60 * 60 * 1000);
+                        calendarState.setCurrentDate(newDate);
+                      }}
+                      className="p-2 rounded-lg transition-colors duration-200"
+                      style={{ 
+                        backgroundColor: `${primary.base}20`,
+                        color: primary.base 
+                      }}
+                      aria-label="Next"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </Rnd>
         )}
