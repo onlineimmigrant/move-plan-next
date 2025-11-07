@@ -9,7 +9,7 @@ import {
   XMarkIcon,
   EyeIcon,
   UsersIcon,
-  PlusIcon
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { useMeetingLauncher } from '@/hooks/useMeetingLauncher';
 import { type Booking } from '@/context/MeetingContext';
@@ -17,8 +17,8 @@ import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/Shared/ToastContainer';
 import WaitingRoomControls from '../WaitingRoom/WaitingRoomControls';
-import InstantMeetingModal from '../InstantMeetingModal';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { BookingCardSkeleton } from '../shared/components';
 
 interface AdminBookingsListProps {
   organizationId?: string;
@@ -32,10 +32,13 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   const [error, setError] = useState<string | null>(null);
   const [joiningBookingId, setJoiningBookingId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [showInstantMeetingModal, setShowInstantMeetingModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
-  const [isCreateHovered, setIsCreateHovered] = useState(false);
+  const [hoveredActionBtn, setHoveredActionBtn] = useState<string | null>(null);
+  const [showPast, setShowPast] = useState(false);
+  const [limit, setLimit] = useState(10);
+  const [activeCount, setActiveCount] = useState(0);
+  const [pastCount, setPastCount] = useState(0);
   
   const { 
     launchFromBooking, 
@@ -91,7 +94,7 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   // Fetch all organization bookings
   useEffect(() => {
     fetchBookings();
-  }, [selectedStatus]);
+  }, [selectedStatus, showPast, limit]);
 
   const fetchBookings = async () => {
     try {
@@ -103,13 +106,8 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
         throw new Error('No authentication session');
       }
 
-      // Build query params
-      const params = new URLSearchParams();
-      if (selectedStatus !== 'all') {
-        params.append('status', selectedStatus);
-      }
-
-      const response = await fetch(`/api/meetings/bookings?${params.toString()}`, {
+      // Fetch all bookings without status filter to get counts
+      const response = await fetch(`/api/meetings/bookings`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
@@ -126,11 +124,33 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
         throw new Error('Invalid response format');
       }
 
-      // Filter for future and current meetings
       const now = new Date();
       
+      // Calculate counts
+      const allBookings = data.bookings;
+      const active = allBookings.filter((b: Booking) => 
+        !['cancelled', 'completed'].includes(b.status)
+      );
+      const past = allBookings.filter((b: Booking) => 
+        ['cancelled', 'completed'].includes(b.status)
+      );
+      
+      setActiveCount(active.length);
+      setPastCount(past.length);
+      
+      // Filter based on showPast
+      let filteredBookings = showPast ? past : active;
+      
+      // Apply status filter if not 'all'
+      if (selectedStatus !== 'all') {
+        filteredBookings = filteredBookings.filter((b: Booking) => b.status === selectedStatus);
+      }
+      
+      // Apply limit
+      filteredBookings = filteredBookings.slice(0, limit);
+      
       // Smart sorting: prioritize by status and time
-      const sortedBookings = data.bookings.sort((a: Booking, b: Booking) => {
+      const sortedBookings = filteredBookings.sort((a: Booking, b: Booking) => {
         const aTime = new Date(a.scheduled_at).getTime();
         const bTime = new Date(b.scheduled_at).getTime();
         const aEndTime = aTime + a.duration_minutes * 60000;
@@ -155,7 +175,7 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
         if (!aIsCancelled && bIsCancelled) return -1;
         
         // Within same category, sort by time (nearest first)
-        return aTime - bTime;
+        return showPast ? bTime - aTime : aTime - bTime; // Reverse for past
       });
 
       setBookings(sortedBookings);
@@ -226,9 +246,12 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
 
   if (loading) {
     return (
-      <div className="p-4 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        <p className="mt-2 text-sm text-gray-600">Loading bookings...</p>
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <BookingCardSkeleton count={6} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -281,7 +304,7 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   }
 
   return (
-    <div className="p-4">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Waiting Room Controls */}
       {currentUserId && (
         <WaitingRoomControls 
@@ -290,108 +313,62 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
         />
       )}
 
-      {/* Header with Filter Controls and Instant Meeting Button */}
-      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Status:</label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="rounded-md border-gray-300 text-sm focus:outline-none"
-              style={{
-                borderColor: undefined,
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = primary.base;
-                e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = '';
-                e.currentTarget.style.boxShadow = '';
-              }}
-            >
-              <option value="all">All</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="waiting">Waiting</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          
-          {/* Booking count - shown on desktop, moved to left */}
-          <div className="hidden sm:block text-sm text-gray-600">
-            <UsersIcon className="inline w-4 h-4 mr-1" />
-            {bookings.length} {bookings.length === 1 ? 'booking' : 'bookings'}
-          </div>
-        </div>
-        
-        {/* Instant Meeting Button - full width on mobile, right side on desktop */}
-        <button
-          onClick={() => setShowInstantMeetingModal(true)}
-          onMouseEnter={() => setIsCreateHovered(true)}
-          onMouseLeave={() => setIsCreateHovered(false)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-md transition-colors"
-          style={{
-            background: isCreateHovered 
-              ? `linear-gradient(135deg, ${primary.hover}, ${primary.active})` 
-              : `linear-gradient(135deg, ${primary.base}, ${primary.hover})`
-          }}
-        >
-          <PlusIcon className="w-4 h-4" />
-          Send Instant Invite
-        </button>
-        
-        {/* Booking count - shown on mobile below button */}
-        <div className="sm:hidden text-sm text-gray-600 w-full text-center">
-          <UsersIcon className="inline w-4 h-4 mr-1" />
-          {bookings.length} {bookings.length === 1 ? 'booking' : 'bookings'}
-        </div>
-      </div>
-
-      {/* Instant Meeting Modal */}
-      <InstantMeetingModal
-        isOpen={showInstantMeetingModal}
-        onClose={() => setShowInstantMeetingModal(false)}
-        onSuccess={() => {
-          fetchBookings(); // Refresh list after creating instant meeting
-        }}
-      />
-
-      {/* Bookings List */}
-      <div className="space-y-3">
+      {/* Bookings Grid - Scrollable */}
+      <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {bookings.map((booking) => {
           const timeInfo = getTimeUntilMeeting(booking);
           const canJoin = booking.status !== 'cancelled' && 
                          booking.status !== 'no_show' && 
                          booking.status !== 'completed';
-          const borderColor = getStatusBorderColor(booking, timeInfo);
+          
           const isCancelled = booking.status === 'cancelled';
           const isCompleted = booking.status === 'completed';
           const isInactive = isCancelled || isCompleted;
 
-          // Calculate time until meeting for countdown
-          const diffMs = new Date(booking.scheduled_at).getTime() - new Date().getTime();
+          // Calculate time until meeting for countdown and urgency colors
+          const now = new Date();
+          const scheduled = new Date(booking.scheduled_at);
+          const diffMs = scheduled.getTime() - now.getTime();
           const diffMins = Math.floor(diffMs / 60000);
           const showCountdown = diffMins > 0 && diffMins <= 30;
+          const isToday = now.toDateString() === scheduled.toDateString();
+          
+          // Color-coded urgency borders
+          let borderColor = 'transparent';
+          let backgroundColor = 'rgba(255, 255, 255, 0.5)';
+          let borderWidth = '1px';
+          
+          if (timeInfo.isInProgress && !isInactive) {
+            borderColor = '#dc2626'; // red-600 - LIVE
+            backgroundColor = '#fee2e2'; // red-50
+            borderWidth = '2px';
+          } else if (diffMins > 0 && diffMins <= 15 && !isInactive) {
+            borderColor = '#16a34a'; // green-600 - SOON
+            backgroundColor = '#dcfce7'; // green-50
+            borderWidth = '2px';
+          } else if (isToday && !isInactive && !timeInfo.isInProgress) {
+            borderColor = '#eab308'; // yellow-500 - TODAY
+            backgroundColor = '#fef9c3'; // yellow-50
+            borderWidth = '2px';
+          }
 
           return (
             <div
               key={booking.id}
-              className="relative rounded-lg p-4 hover:shadow-lg transition-all duration-200 bg-white"
+              className="relative rounded-lg p-4 hover:shadow-lg transition-all duration-200 backdrop-blur-sm"
               style={{
-                border: '1px solid #e5e7eb',
-                borderLeft: `4px solid ${borderColor}`,
+                backgroundColor,
+                border: `${borderWidth} solid ${borderColor}`,
                 opacity: isInactive ? 0.7 : 1
               }}
             >
               {/* Top Section: Title and Status */}
               <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 pr-4">
+                <div className="flex-1 pr-4 min-w-0">
                   <h3 
-                    className={`text-base font-semibold mb-1 ${isInactive ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                    className={`text-base font-semibold mb-1 truncate ${isInactive ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}
+                    title={booking.title}
                   >
                     {booking.title}
                   </h3>
@@ -411,7 +388,7 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
                 </div>
 
                 {/* Status Badge */}
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
                   <span
                     className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
                     style={{
@@ -461,42 +438,42 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
               {/* Middle Section: Meeting Details */}
               <div className="space-y-2 mb-3">
                 {/* Customer Info */}
-                <div className="flex items-center text-sm text-gray-700">
+                <div className="flex items-center text-sm text-gray-700 dark:text-gray-300 min-w-0">
                   <UserIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
-                  <span className="font-medium">{booking.customer_name}</span>
-                  <span className="mx-2 text-gray-400">•</span>
-                  <span className="text-gray-600">{booking.customer_email}</span>
+                  <span className="font-medium truncate">{booking.customer_name}</span>
+                  <span className="mx-2 text-gray-400 flex-shrink-0">•</span>
+                  <span className="text-gray-600 dark:text-gray-400 truncate">{booking.customer_email}</span>
                 </div>
 
                 {/* Date and Time */}
-                <div className="flex items-center text-sm text-gray-700">
+                <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
                   <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
                   <span className="font-medium">
                     {format(new Date(booking.scheduled_at), 'EEEE, MMM dd, yyyy')}
                   </span>
                 </div>
 
-                <div className="flex items-center text-sm text-gray-700">
+                <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
                   <ClockIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
                   <span>
                     {format(new Date(booking.scheduled_at), 'h:mm a')} ({booking.duration_minutes} min)
                   </span>
                   <span className="mx-2 text-gray-400">•</span>
-                  <span className="text-gray-600 font-medium">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">
                     {getRelativeTime(booking.scheduled_at)}
                   </span>
                 </div>
 
                 {/* Notes */}
                 {booking.notes && (
-                  <p className="text-sm text-gray-600 mt-2 pl-6 line-clamp-2 italic">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 pl-6 line-clamp-2 italic">
                     "{booking.notes}"
                   </p>
                 )}
               </div>
 
-              {/* Bottom Section: Action Buttons */}
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              {/* Bottom Section: Action Buttons in Card Footer */}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2">
                   {/* In-Progress Pulsing Indicator */}
                   {timeInfo.isInProgress && !isInactive && (
@@ -517,15 +494,19 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
                     </div>
                   )}
                   
-                  {/* Time Remaining Info */}
-                  {!timeInfo.isInProgress && !isInactive && timeInfo.timeRemaining && (
-                    <span className="text-xs text-gray-500">
-                      Starts {getRelativeTime(booking.scheduled_at)}
-                    </span>
+                  {/* Cancel Button - LEFT SIDE */}
+                  {!isInactive && (
+                    <button
+                      onClick={() => handleCancelBooking(booking.id)}
+                      className="inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                    >
+                      <XMarkIcon className="w-4 h-4 mr-1" />
+                      Cancel
+                    </button>
                   )}
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons - RIGHT SIDE */}
                 <div className="flex gap-2">
                   {canJoin && !isInactive ? (
                     <button
@@ -571,30 +552,83 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
                   ) : isCancelled ? (
                     <span className="text-xs text-gray-400 px-3 py-2">Cancelled</span>
                   ) : null}
-                  
-                  {!isInactive && (
-                    <button
-                      onClick={() => handleCancelBooking(booking.id)}
-                      className="inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
-                    >
-                      <XMarkIcon className="w-4 h-4 mr-1" />
-                      Cancel
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
           );
         })}
+        </div>
       </div>
 
-      {/* Refresh Button */}
-      <button
-        onClick={fetchBookings}
-        className="w-full mt-4 px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-      >
-        🔄 Refresh appointments
-      </button>
+      {/* Fixed Footer Panel with 3 Action Buttons */}
+      <div className="border-t border-white/10 bg-transparent p-4">
+        <div className="grid grid-cols-3 gap-2">
+          {/* Refresh Button */}
+          <button
+            onClick={() => {
+              setShowPast(false);
+              setSelectedStatus('all');
+              setLimit(10);
+              fetchBookings();
+            }}
+            onMouseEnter={() => setHoveredActionBtn('refresh')}
+            onMouseLeave={() => setHoveredActionBtn(null)}
+            className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
+            style={{
+              backgroundColor: primary.base,
+              color: 'white',
+              opacity: hoveredActionBtn === 'refresh' ? 0.9 : 1,
+            }}
+          >
+            <ArrowPathIcon className="w-4 h-4 mr-1.5 hidden sm:inline" style={{ color: 'white' }} />
+            Refresh
+          </button>
+
+          {/* Past Button with Count Badge */}
+          <button
+            onClick={() => {
+              setShowPast(!showPast);
+              setLimit(10);
+            }}
+            onMouseEnter={() => setHoveredActionBtn('past')}
+            onMouseLeave={() => setHoveredActionBtn(null)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative"
+            style={{
+              backgroundColor: primary.base,
+              color: 'white',
+              opacity: hoveredActionBtn === 'past' ? 0.9 : 1,
+            }}
+          >
+            <span>{showPast ? <><span className="sm:hidden">Active</span><span className="hidden sm:inline">← Active</span></> : <><span className="sm:hidden">Past</span><span className="hidden sm:inline">Past →</span></>}</span>
+            <span 
+              className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                color: 'white'
+              }}
+            >
+              {showPast ? activeCount : pastCount}
+            </span>
+          </button>
+
+          {/* More Button */}
+          <button
+            onClick={() => setLimit(limit + 10)}
+            onMouseEnter={() => setHoveredActionBtn('more')}
+            onMouseLeave={() => setHoveredActionBtn(null)}
+            disabled={bookings.length < limit}
+            className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
+            style={{
+              backgroundColor: bookings.length < limit ? '#e5e7eb' : primary.base,
+              color: bookings.length < limit ? '#9ca3af' : 'white',
+              cursor: bookings.length < limit ? 'not-allowed' : 'pointer',
+              opacity: bookings.length < limit ? 0.5 : hoveredActionBtn === 'more' ? 0.9 : 1,
+            }}
+          >
+            Load More
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

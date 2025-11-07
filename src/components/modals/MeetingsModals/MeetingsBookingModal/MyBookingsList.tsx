@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/Shared/ToastContainer';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { BookingCardSkeleton } from '../shared/components';
 
 interface MyBookingsListProps {
   organizationId?: string;
@@ -257,12 +258,10 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
 
   if (loading) {
     return (
-      <div className="p-4 text-center">
-        <div 
-          className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto"
-          style={{ borderColor: primary.base }}
-        ></div>
-        <p className="mt-2 text-sm text-gray-600">Loading your bookings...</p>
+      <div className="relative min-h-0 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-2">
+          <BookingCardSkeleton count={6} />
+        </div>
       </div>
     );
   }

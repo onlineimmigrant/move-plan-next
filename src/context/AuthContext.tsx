@@ -161,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, []); // Remove router dependency to prevent infinite loops
 
   async function login(email: string, password: string) {
     setIsLoading(true);
