@@ -1,0 +1,1 @@
+export { AdminModalHeader } from './AdminModalHeader';

@@ -3,10 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { Rnd } from 'react-rnd';
-import { CalendarIcon, UserGroupIcon, ArrowLeftIcon, Cog6ToothIcon, ClockIcon, UsersIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon, UserGroupIcon, ArrowLeftIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { supabase } from '@/lib/supabase';
 import { Calendar, BookingForm, BookingCardSkeleton } from '@/components/modals/MeetingsModals/shared/components';
 import { CalendarEvent, CalendarView, BookingFormData, MeetingType, TimeSlot } from '../shared/types';
 import MeetingsSettingsModal from '../MeetingsSettingsModal';
@@ -14,6 +13,8 @@ import MeetingTypesModal from '../MeetingTypesModal';
 import { EventDetailsModal } from '../EventDetailsModal';
 import InstantMeetingModal from '../InstantMeetingModal';
 import AdminBookingsList from './AdminBookingsList';
+import { useAdminModalState, useAdminBookings, useMeetingTypesData } from './hooks';
+import { AdminModalHeader } from './components';
 
 interface MeetingsAdminModalProps {
   /**
@@ -73,172 +74,109 @@ export default function MeetingsAdminModal({
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
 
-  // View state
-  const [currentView, setCurrentView] = useState<'calendar' | 'booking' | 'manage-bookings'>('calendar');
-  const [loading, setLoading] = useState(true);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showTypesModal, setShowTypesModal] = useState(false);
-  const [showInstantMeetingModal, setShowInstantMeetingModal] = useState(false);
-  const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [loadingEventDetails, setLoadingEventDetails] = useState(false);
-  const [use24Hour, setUse24Hour] = useState<boolean>(true);
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-  const [activeBookingCount, setActiveBookingCount] = useState(0);
-  const [meetingSettings, setMeetingSettings] = useState<{
-    business_hours_start?: string;
-    business_hours_end?: string;
-    is_24_hours?: boolean;
-  }>({});
-
-  // Calendar state
+  // Calendar state (must be defined before hooks that use it)
   const [currentDate, setCurrentDate] = useState<Date>(initialDate || new Date());
   const [calendarView, setCalendarView] = useState<CalendarView>('month');
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-
-  // Data state
-  const [meetingTypes, setMeetingTypes] = useState<MeetingType[]>([]);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-
-  // Form state
   const [bookingFormData, setBookingFormData] = useState<Partial<BookingFormData>>({});
 
-  // Fetch active booking count
-  const fetchActiveBookingCount = useCallback(async () => {
-    if (!settings?.organization_id) return;
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
+  // Custom hooks for state management
+  const {
+    currentView,
+    setCurrentView,
+    loading,
+    setLoading,
+    loadingSlots,
+    setLoadingSlots,
+    submitting,
+    setSubmitting,
+    error,
+    setError,
+    showSettingsModal,
+    showTypesModal,
+    showInstantMeetingModal,
+    showEventDetailsModal,
+    selectedEvent,
+    setSelectedEvent,
+    loadingEventDetails,
+    setLoadingEventDetails,
+    use24Hour,
+    setUse24Hour,
+    hoveredTab,
+    setHoveredTab,
+    toggleSettingsModal,
+    toggleTypesModal,
+    toggleInstantMeetingModal,
+    toggleEventDetailsModal,
+    resetState,
+  } = useAdminModalState();
 
-      const response = await fetch(`/api/meetings/bookings`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+  const {
+    events,
+    setEvents,
+    loadBookings,
+    fetchActiveBookingCount,
+    activeBookingCount,
+    setActiveBookingCount,
+  } = useAdminBookings(settings?.organization_id, currentDate, isOpen);
 
-      if (response.ok) {
-        const data = await response.json();
-        const activeBookings = (data.bookings || []).filter((b: any) => 
-          !['cancelled', 'completed'].includes(b.status)
-        );
-        setActiveBookingCount(activeBookings.length);
-      }
-    } catch (err) {
-      console.error('Error fetching booking count:', err);
-    }
-  }, [settings?.organization_id]);
+  const {
+    meetingTypes,
+    meetingSettings,
+    loadMeetingTypes,
+  } = useMeetingTypesData(settings?.organization_id, isOpen);
 
-  // Load meeting types and events
-  const loadData = useCallback(async () => {
+  // Load data on mount and when dependencies change
+  useEffect(() => {
     if (!isOpen || !settings?.organization_id) return;
 
-    try {
+    const loadData = async () => {
       setLoading(true);
       setError(null);
-
-      // Load meeting types via new API (shows all types for admin, only active ones)
-      const typesResponse = await fetch(`/api/meetings/types?organization_id=${settings.organization_id}`);
-      if (!typesResponse.ok) {
-        throw new Error('Failed to load meeting types');
-      }
-      const typesData = await typesResponse.json();
-      // For admin view, show all active meeting types
-      const activeMeetingTypes = (typesData.meeting_types || []).filter((mt: MeetingType) => mt.is_active);
-      setMeetingTypes(activeMeetingTypes);
-
-      // Load existing bookings via API
-      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
-      const bookingsResponse = await fetch(
-        `/api/meetings/bookings?organization_id=${settings.organization_id}&start_date=${format(startOfMonth, 'yyyy-MM-dd')}&end_date=${format(endOfMonth, 'yyyy-MM-dd')}`
-      );
-
-      if (!bookingsResponse.ok) {
-        throw new Error('Failed to load bookings');
-      }
-
-      const bookingsData = await bookingsResponse.json();
-
-      // Helper function to get status color
-      const getStatusColor = (status: string): string => {
-        switch (status) {
-          case 'confirmed': return '#10b981'; // green
-          case 'waiting': return '#f59e0b'; // amber
-          case 'in_progress': return '#8b5cf6'; // purple
-          case 'completed': return '#14b8a6'; // teal
-          case 'cancelled': return '#ef4444'; // red
-          // Legacy statuses (backward compatibility)
-          case 'scheduled': return '#10b981'; // treat as confirmed
-          case 'pending': return '#f59e0b'; // treat as waiting
-          case 'no_show': return '#6b7280'; // gray (legacy, treat as cancelled)
-          default: return '#14b8a6'; // teal fallback
+      try {
+        await Promise.all([
+          loadMeetingTypes(),
+          loadBookings(),
+          fetchActiveBookingCount(),
+        ]);
+        
+        // Update 24-hour format preference from settings
+        if (meetingSettings.is_24_hours !== undefined) {
+          setUse24Hour(meetingSettings.is_24_hours);
         }
-      };
-
-      // Convert bookings to calendar events
-      const calendarEvents: CalendarEvent[] = (bookingsData.bookings || []).map((booking: any) => ({
-        id: booking.id,
-        title: booking.title,
-        start: new Date(booking.scheduled_at),
-        end: new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000),
-        type: 'meeting',
-        status: booking.status,
-        description: booking.description || booking.notes,
-        backgroundColor: getStatusColor(booking.status),
-        extendedProps: {
-          booking: {
-            customer_name: booking.customer_name,
-            customer_email: booking.customer_email,
-            customer_phone: booking.customer_phone,
-            meeting_type_id: booking.meeting_type_id,
-            meeting_type_name: booking.meeting_type?.name,
-            meeting_type_color: booking.meeting_type?.color,
-          },
-        },
-      }));
-
-      setEvents(calendarEvents);
-
-      // Load meeting settings (including is_24_hours preference)
-      const settingsResponse = await fetch(`/api/meetings/settings?organization_id=${settings.organization_id}`);
-      if (settingsResponse.ok) {
-        const settingsData = await settingsResponse.json();
-        setMeetingSettings({
-          business_hours_start: settingsData.business_hours_start,
-          business_hours_end: settingsData.business_hours_end,
-          is_24_hours: settingsData.is_24_hours ?? true,
-        });
-        setUse24Hour(settingsData.is_24_hours ?? true);
+      } catch (err) {
+        console.error('Error loading meeting data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load meeting data');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error loading meeting data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load meeting data');
-    } finally {
-      setLoading(false);
-    }
-  }, [isOpen, settings?.organization_id, currentDate]);
+    };
 
-  useEffect(() => {
     loadData();
-    fetchActiveBookingCount();
-  }, [loadData, fetchActiveBookingCount]);
+  }, [isOpen, settings?.organization_id, currentDate, loadMeetingTypes, loadBookings, fetchActiveBookingCount, meetingSettings.is_24_hours, setLoading, setError, setUse24Hour]);
 
   // Listen for meeting types changes (when user edits them in settings)
   useEffect(() => {
     const handleRefresh = () => {
-      loadData();
-      fetchActiveBookingCount();
+      if (settings?.organization_id) {
+        loadMeetingTypes();
+        loadBookings();
+        fetchActiveBookingCount();
+      }
     };
     
     window.addEventListener('refreshMeetingTypes', handleRefresh);
     return () => window.removeEventListener('refreshMeetingTypes', handleRefresh);
-  }, [loadData, fetchActiveBookingCount]);
+  }, [settings?.organization_id, loadMeetingTypes, loadBookings, fetchActiveBookingCount]);
+
+  // Reload data helper function
+  const reloadData = useCallback(async () => {
+    await Promise.all([
+      loadMeetingTypes(),
+      loadBookings(),
+      fetchActiveBookingCount(),
+    ]);
+  }, [loadMeetingTypes, loadBookings, fetchActiveBookingCount]);
 
   // Load available slots when needed
   const loadAvailableSlots = async (date: Date) => {
@@ -362,7 +300,7 @@ export default function MeetingsAdminModal({
       };
       
       setSelectedEvent(eventDetails);
-      setShowEventDetailsModal(true);
+      toggleEventDetailsModal();
     } catch (err) {
       console.error('Error loading event details:', err);
       setError('Failed to load event details');
@@ -412,8 +350,11 @@ export default function MeetingsAdminModal({
       }
 
       // Reload data
-      await loadData();
-      await fetchActiveBookingCount();
+      await Promise.all([
+        loadMeetingTypes(),
+        loadBookings(),
+        fetchActiveBookingCount(),
+      ]);
 
       // Reset and redirect to manage view
       setBookingFormData({});
@@ -428,69 +369,22 @@ export default function MeetingsAdminModal({
   }, [
     settings?.organization_id,
     onBookingSuccess,
-    loadData,
-    onClose,
+    loadMeetingTypes,
+    loadBookings,
+    fetchActiveBookingCount,
+    currentDate,
+    setError,
+    setSubmitting,
+    setCurrentView,
   ]);
 
   // Handle modal close
   const handleClose = useCallback(() => {
-    setCurrentView('calendar');
+    resetState();
     setBookingFormData({});
     setAvailableSlots([]);
-    setError(null);
     onClose();
-  }, [onClose]);
-
-  // Get modal title with icon
-  const getModalTitle = () => {
-    // Return simple "Appointments" string - BaseModal will add Admin badge
-    return 'Appointments';
-  };
-
-  // Get subtitle
-  const getSubtitle = () => {
-    if (currentView === 'calendar') {
-      return 'Calendar';
-    }
-    if (currentView === 'manage-bookings') {
-      return 'Manage Bookings';
-    }
-    return 'New Booking';
-  };
-
-  // Header actions for calendar view only
-  const headerActions = currentView === 'booking' ? null : (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => setShowTypesModal(true)}
-        onMouseEnter={() => setHoveredTab('types')}
-        onMouseLeave={() => setHoveredTab(null)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors"
-        style={{
-          color: hoveredTab === 'types' ? primary.hover : primary.base,
-          backgroundColor: hoveredTab === 'types' ? `${primary.base}1a` : 'transparent'
-        }}
-        title="Manage appointment types"
-      >
-        <ClockIcon className="w-4 h-4" />
-        Types
-      </button>
-      <button
-        onClick={() => setShowSettingsModal(true)}
-        onMouseEnter={() => setHoveredTab('settings')}
-        onMouseLeave={() => setHoveredTab(null)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors"
-        style={{
-          color: hoveredTab === 'settings' ? primary.hover : primary.base,
-          backgroundColor: hoveredTab === 'settings' ? `${primary.base}1a` : 'transparent'
-        }}
-        title="Configure appointment settings (including 24-hour format preference)"
-      >
-        <Cog6ToothIcon className="w-4 h-4" />
-        Settings
-      </button>
-    </div>
-  );
+  }, [onClose, resetState]);
 
   if (!isOpen) return null;
 
@@ -518,134 +412,19 @@ export default function MeetingsAdminModal({
             className="relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/30 dark:bg-gray-800/30 rounded-t-2xl">
-              <div className="flex items-center gap-2 min-w-0">
-                <CalendarIcon className="w-5 h-5 flex-shrink-0" style={{ color: primary.base }} />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                  Appointments
-                </h2>
-              </div>
-              
-              {/* Header Actions */}
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {currentView !== 'booking' && (
-                  <>
-                    <button
-                      onClick={() => setShowTypesModal(true)}
-                      className="p-2 rounded-md transition-colors"
-                      style={{ color: primary.base }}
-                      title="Manage appointment types"
-                    >
-                      <ClockIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setShowSettingsModal(true)}
-                      className="p-2 rounded-md transition-colors"
-                      style={{ color: primary.base }}
-                      title="Configure appointment settings"
-                    >
-                      <Cog6ToothIcon className="w-5 h-5" />
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={handleClose}
-                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  aria-label="Close modal"
-                >
-                  <XMarkIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                </button>
-              </div>
-            </div>
-
-            {/* Tab Navigation */}
-            {currentView !== 'booking' && (
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/20 dark:bg-gray-900/20">
-                <button
-                  onClick={() => setCurrentView('calendar')}
-                  onMouseEnter={() => setHoveredTab('create')}
-                  onMouseLeave={() => setHoveredTab(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                  style={
-                    currentView === 'calendar'
-                      ? {
-                          background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                          color: 'white',
-                          boxShadow: hoveredTab === 'create' 
-                            ? `0 4px 12px ${primary.base}40` 
-                            : `0 2px 4px ${primary.base}30`
-                        }
-                      : {
-                          backgroundColor: 'transparent',
-                          color: hoveredTab === 'create' ? primary.hover : primary.base,
-                          borderWidth: '1px',
-                          borderStyle: 'solid',
-                          borderColor: hoveredTab === 'create' ? `${primary.base}80` : `${primary.base}40`
-                        }
-                  }
-                >
-                  <CalendarIcon className="w-4 h-4" />
-                  Book
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentView('manage-bookings');
-                    fetchActiveBookingCount();
-                  }}
-                  onMouseEnter={() => setHoveredTab('manage')}
-                  onMouseLeave={() => setHoveredTab(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                  style={
-                    currentView === 'manage-bookings'
-                    ? {
-                        background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                        color: 'white',
-                        boxShadow: hoveredTab === 'manage' 
-                          ? `0 4px 12px ${primary.base}40` 
-                          : `0 2px 4px ${primary.base}30`
-                      }
-                    : {
-                        backgroundColor: 'transparent',
-                        color: hoveredTab === 'manage' ? primary.hover : primary.base,
-                        borderWidth: '1px',
-                        borderStyle: 'solid',
-                        borderColor: hoveredTab === 'manage' ? `${primary.base}80` : `${primary.base}40`
-                      }
-                  }
-                >
-                  <UsersIcon className="w-4 h-4" />
-                  <span>Manage</span>
-                  {activeBookingCount > 0 && (
-                    <span 
-                      className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full"
-                      style={{
-                        backgroundColor: currentView === 'manage-bookings' ? 'rgba(255, 255, 255, 0.25)' : primary.base,
-                        color: 'white'
-                      }}
-                    >
-                      {activeBookingCount}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowInstantMeetingModal(true)}
-                  onMouseEnter={() => setHoveredTab('invite')}
-                  onMouseLeave={() => setHoveredTab(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: hoveredTab === 'invite' ? primary.hover : primary.base,
-                    borderWidth: '1px',
-                    borderStyle: 'solid',
-                    borderColor: hoveredTab === 'invite' ? `${primary.base}80` : `${primary.base}40`
-                  }}
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  Invite
-                </button>
-              </div>
-            )}
+            <AdminModalHeader
+              currentView={currentView}
+              setCurrentView={setCurrentView}
+              hoveredTab={hoveredTab}
+              setHoveredTab={setHoveredTab}
+              showTypesModal={toggleTypesModal}
+              showSettingsModal={toggleSettingsModal}
+              onClose={handleClose}
+              activeBookingCount={activeBookingCount}
+              fetchActiveBookingCount={fetchActiveBookingCount}
+              primary={primary}
+              isMobile={true}
+            />
 
             {/* Content Area */}
             <div className="flex-1 flex flex-col bg-white/20 dark:bg-gray-900/20 min-h-0 overflow-hidden">
@@ -791,146 +570,19 @@ export default function MeetingsAdminModal({
         >
           <div className="relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20">
             
-            {/* Header - Draggable */}
-            <div className="modal-drag-handle flex items-center justify-between p-6 border-b border-white/10 bg-white/30 dark:bg-gray-800/30 rounded-t-2xl cursor-move">
-              <div className="flex items-center gap-3 min-w-0">
-                <CalendarIcon className="w-6 h-6 flex-shrink-0" style={{ color: primary.base }} />
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                  Appointments
-                </h2>
-              </div>
-              
-              {/* Header Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {currentView !== 'booking' && (
-                  <>
-                    <button
-                      onClick={() => setShowTypesModal(true)}
-                      onMouseEnter={() => setHoveredTab('types')}
-                      onMouseLeave={() => setHoveredTab(null)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors"
-                      style={{
-                        color: hoveredTab === 'types' ? primary.hover : primary.base,
-                        backgroundColor: hoveredTab === 'types' ? `${primary.base}1a` : 'transparent'
-                      }}
-                      title="Manage appointment types"
-                    >
-                      <ClockIcon className="w-4 h-4" />
-                      Types
-                    </button>
-                    <button
-                      onClick={() => setShowSettingsModal(true)}
-                      onMouseEnter={() => setHoveredTab('settings')}
-                      onMouseLeave={() => setHoveredTab(null)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors"
-                      style={{
-                        color: hoveredTab === 'settings' ? primary.hover : primary.base,
-                        backgroundColor: hoveredTab === 'settings' ? `${primary.base}1a` : 'transparent'
-                      }}
-                      title="Configure appointment settings"
-                    >
-                      <Cog6ToothIcon className="w-4 h-4" />
-                      Settings
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={handleClose}
-                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors ml-2"
-                  aria-label="Close modal"
-                >
-                  <XMarkIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                </button>
-              </div>
-            </div>
-
-            {/* Tab Navigation */}
-            {currentView !== 'booking' && (
-              <div className="flex items-center gap-2 px-6 py-4 border-b border-white/10 bg-white/20 dark:bg-gray-900/20">
-                <button
-                  onClick={() => setCurrentView('calendar')}
-                  onMouseEnter={() => setHoveredTab('create')}
-                  onMouseLeave={() => setHoveredTab(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                  style={
-                    currentView === 'calendar'
-                      ? {
-                          background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                          color: 'white',
-                          boxShadow: hoveredTab === 'create' 
-                            ? `0 4px 12px ${primary.base}40` 
-                            : `0 2px 4px ${primary.base}30`
-                        }
-                      : {
-                          backgroundColor: 'transparent',
-                          color: hoveredTab === 'create' ? primary.hover : primary.base,
-                          borderWidth: '1px',
-                          borderStyle: 'solid',
-                          borderColor: hoveredTab === 'create' ? `${primary.base}80` : `${primary.base}40`
-                        }
-                  }
-                >
-                  <CalendarIcon className="w-4 h-4" />
-                  Book
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentView('manage-bookings');
-                    fetchActiveBookingCount();
-                  }}
-                  onMouseEnter={() => setHoveredTab('manage')}
-                  onMouseLeave={() => setHoveredTab(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                  style={
-                    currentView === 'manage-bookings'
-                    ? {
-                        background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                        color: 'white',
-                        boxShadow: hoveredTab === 'manage' 
-                          ? `0 4px 12px ${primary.base}40` 
-                          : `0 2px 4px ${primary.base}30`
-                      }
-                    : {
-                        backgroundColor: 'transparent',
-                        color: hoveredTab === 'manage' ? primary.hover : primary.base,
-                        borderWidth: '1px',
-                        borderStyle: 'solid',
-                        borderColor: hoveredTab === 'manage' ? `${primary.base}80` : `${primary.base}40`
-                      }
-                  }
-                >
-                  <UsersIcon className="w-4 h-4" />
-                  <span>Manage</span>
-                  {activeBookingCount > 0 && (
-                    <span 
-                      className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full"
-                      style={{
-                        backgroundColor: currentView === 'manage-bookings' ? 'rgba(255, 255, 255, 0.25)' : primary.base,
-                        color: 'white'
-                      }}
-                    >
-                      {activeBookingCount}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowInstantMeetingModal(true)}
-                  onMouseEnter={() => setHoveredTab('invite')}
-                  onMouseLeave={() => setHoveredTab(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: hoveredTab === 'invite' ? primary.hover : primary.base,
-                    borderWidth: '1px',
-                    borderStyle: 'solid',
-                    borderColor: hoveredTab === 'invite' ? `${primary.base}80` : `${primary.base}40`
-                  }}
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  Invite
-                </button>
-              </div>
-            )}
+            <AdminModalHeader
+              currentView={currentView}
+              setCurrentView={setCurrentView}
+              hoveredTab={hoveredTab}
+              setHoveredTab={setHoveredTab}
+              showTypesModal={toggleTypesModal}
+              showSettingsModal={toggleSettingsModal}
+              onClose={handleClose}
+              activeBookingCount={activeBookingCount}
+              fetchActiveBookingCount={fetchActiveBookingCount}
+              primary={primary}
+              isMobile={false}
+            />
 
             {/* Content Area */}
             <div className="flex-1 flex flex-col bg-white/20 dark:bg-gray-900/20 min-h-0 overflow-hidden">
@@ -1066,20 +718,20 @@ export default function MeetingsAdminModal({
     {/* Instant Meeting Modal */}
     <InstantMeetingModal
       isOpen={showInstantMeetingModal}
-      onClose={() => setShowInstantMeetingModal(false)}
+      onClose={toggleInstantMeetingModal}
       onSuccess={() => {
         // AdminBookingsList will handle its own refresh via realtime subscriptions
-        setShowInstantMeetingModal(false);
+        toggleInstantMeetingModal();
       }}
     />
     
     {/* Settings Modal */}
     <MeetingsSettingsModal
       isOpen={showSettingsModal}
-      onClose={() => {
-        setShowSettingsModal(false);
+      onClose={async () => {
+        toggleSettingsModal();
         // Reload settings to update 24h format preference
-        loadData();
+        await reloadData();
       }}
     />
     
@@ -1087,10 +739,10 @@ export default function MeetingsAdminModal({
     {settings?.organization_id && (
       <MeetingTypesModal
         isOpen={showTypesModal}
-        onClose={() => {
-          setShowTypesModal(false);
+        onClose={async () => {
+          toggleTypesModal();
           // Reload meeting types after changes
-          loadData();
+          await reloadData();
         }}
         organizationId={settings.organization_id}
       />
@@ -1100,7 +752,7 @@ export default function MeetingsAdminModal({
     <EventDetailsModal
       isOpen={showEventDetailsModal}
       onClose={() => {
-        setShowEventDetailsModal(false);
+        toggleEventDetailsModal();
         setSelectedEvent(null);
       }}
       event={selectedEvent}
@@ -1108,7 +760,7 @@ export default function MeetingsAdminModal({
       use24Hour={use24Hour}
       onEdit={(event: any) => {
         // Close event details and open booking form in edit mode
-        setShowEventDetailsModal(false);
+        toggleEventDetailsModal();
         // TODO: Populate form with event data for editing
         console.log('Edit event:', event);
       }}
@@ -1128,8 +780,8 @@ export default function MeetingsAdminModal({
           if (!response.ok) throw new Error('Failed to cancel event');
           
           // Reload calendar events
-          await loadData();
-          setShowEventDetailsModal(false);
+          await reloadData();
+          toggleEventDetailsModal();
           setSelectedEvent(null);
         } catch (err) {
           console.error('Error canceling event:', err);
@@ -1154,8 +806,8 @@ export default function MeetingsAdminModal({
           }
           
           // Reload calendar events
-          await loadData();
-          setShowEventDetailsModal(false);
+          await reloadData();
+          toggleEventDetailsModal();
           setSelectedEvent(null);
         } catch (err) {
           console.error('Error deleting event:', err);
@@ -1178,7 +830,7 @@ export default function MeetingsAdminModal({
           if (!response.ok) throw new Error('Failed to update status');
           
           // Reload calendar events
-          await loadData();
+          await reloadData();
           
           // Update selected event in modal
           if (selectedEvent) {

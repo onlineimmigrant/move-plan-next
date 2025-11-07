@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import { Rnd } from 'react-rnd';
 import { ArrowLeftIcon, CalendarIcon, UserGroupIcon, ListBulletIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { Calendar, BookingForm } from '@/components/modals/MeetingsModals/shared/components';
+import { Calendar, BookingForm, AriaLiveRegion, useAriaLiveAnnouncer } from '@/components/modals/MeetingsModals/shared/components';
 import MyBookingsList from './MyBookingsList';
 import {
   MeetingsBookingModalProps,
@@ -13,7 +13,8 @@ import {
 import {
   useBookingState,
   useCalendarState,
-  useMeetingTypes
+  useMeetingTypes,
+  useKeyboardShortcuts
 } from '../shared/hooks';
 import {
   CALENDAR_VIEWS,
@@ -26,7 +27,29 @@ import { MeetingsErrorBoundary } from '../shared/ui';
 import { useSettings } from '@/context/SettingsContext';
 import { supabase } from '@/lib/supabase';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { logError } from '../shared/utils/errorHandling';
 
+/**
+ * Customer-facing booking modal for scheduling meetings
+ * 
+ * Features:
+ * - Calendar view for selecting dates
+ * - Time slot selection
+ * - Booking form with validation
+ * - My bookings list
+ * - Guest booking support
+ * - Keyboard shortcuts (ESC to close)
+ * - Screen reader announcements
+ * 
+ * @example
+ * ```tsx
+ * <MeetingsBookingModal
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   onBookingSuccess={(id) => console.log('Booked:', id)}
+ * />
+ * ```
+ */
 export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot, onBookingSuccess }: MeetingsBookingModalProps) {
   const { settings } = useSettings();
   const themeColors = useThemeColors();
@@ -55,6 +78,9 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     false // isAdmin = false for customer modal
   );
 
+  // Accessibility features
+  const { announce, announcement } = useAriaLiveAnnouncer();
+  
   // Focus trap implementation
   useEffect(() => {
     if (!isOpen) return;
@@ -100,7 +126,6 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         // No authenticated user - allow guest booking (for public appointment pages)
-        console.log('[Customer Modal] No authenticated user - guest booking mode enabled');
         setLoadingCustomerData(false);
         return;
       }
@@ -115,15 +140,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
       const email = profile?.email || user.email;
       const customerName = profile?.full_name || '';
 
-      console.log('[Customer Modal] Profile data:', { 
-        email, 
-        customerName, 
-        hasProfile: !!profile,
-        fullNameInProfile: profile?.full_name 
-      });
-
       if (!email) {
-        console.log('[Customer Modal] No email found - guest booking mode enabled');
         setLoadingCustomerData(false);
         return;
       }
@@ -138,7 +155,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
         customer_name: customerName || bookingState.formData.customer_name || ''
       });
     } catch (err) {
-      console.error('Error loading customer email:', err);
+      logError(err, { context: 'Error loading customer email' });
     } finally {
       setLoadingCustomerData(false);
     }
@@ -162,7 +179,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
 
   const loadEvents = async () => {
     if (!settings?.organization_id) {
-      console.error('Organization ID not available');
+      logError(new Error('Organization ID not available'), { context: 'loadEvents' });
       return;
     }
 
@@ -235,7 +252,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
         calendarState.setEvents(calendarEvents);
       }
     } catch (err) {
-      console.error('Error loading events:', err);
+      logError(err, { context: 'Error loading events' });
       setError(UI_CONSTANTS.ERROR_MESSAGES.SERVER_ERROR);
     } finally {
       calendarState.setIsLoading(false);
@@ -254,8 +271,6 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
-
-      console.log('[Customer Modal] Loading slots for date:', formattedDate, 'from Date object:', date.toLocaleString());
 
       // Fetch available slots from API (customers see business hours only)
       const response = await fetch(
@@ -280,15 +295,9 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
           return slot.start.getTime() >= now.getTime();
         });
 
-      console.log(`[Customer Modal] Loaded ${slots.length} future slots for ${formattedDate}`);
-      if (slots.length > 0) {
-        console.log('[Customer Modal] First slot:', format(slots[0].start, 'yyyy-MM-dd HH:mm'));
-        console.log('[Customer Modal] Last slot:', format(slots[slots.length - 1].start, 'yyyy-MM-dd HH:mm'));
-      }
-
       bookingState.setAvailableSlots(slots);
     } catch (err) {
-      console.error('Error loading available slots:', err);
+      logError(err, { context: 'Error loading available slots' });
       bookingState.setAvailableSlots([]);
     } finally {
       bookingState.setIsLoadingSlots(false);
@@ -335,6 +344,9 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
         const booking = result.booking || result;
         const bookingId = booking.id || result.id || result.booking_id;
 
+        // Announce success to screen readers
+        announce('Booking created successfully', 'polite');
+
         // Check if user is authenticated
         const { data: { user } } = await supabase.auth.getUser();
         
@@ -365,11 +377,17 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
         }
       } else {
         const errorData = await response.json();
-        setError(errorData.error || UI_CONSTANTS.ERROR_MESSAGES.VALIDATION_ERROR);
+        const errorMessage = errorData.error || UI_CONSTANTS.ERROR_MESSAGES.VALIDATION_ERROR;
+        setError(errorMessage);
+        // Announce error to screen readers
+        announce(`Booking error: ${errorMessage}`, 'assertive');
       }
     } catch (err) {
-      console.error('Error creating booking:', err);
-      setError(UI_CONSTANTS.ERROR_MESSAGES.SERVER_ERROR);
+      logError(err, { context: 'Error creating booking' });
+      const errorMessage = UI_CONSTANTS.ERROR_MESSAGES.SERVER_ERROR;
+      setError(errorMessage);
+      // Announce error to screen readers
+      announce(`Booking error: ${errorMessage}`, 'assertive');
     } finally {
       bookingState.setIsSubmitting(false);
     }
@@ -377,7 +395,6 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
 
   const handleEventClick = (event: any) => {
     // TODO: Open booking details modal
-    console.log('Event clicked:', event);
   };
 
   const handleBookingFormChange = useCallback((data: Partial<any>) => {
@@ -405,6 +422,12 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     onClose();
   };
 
+  // Keyboard shortcuts - defined after handleClose
+  useKeyboardShortcuts({
+    onEscape: handleClose,
+    enabled: isOpen,
+  });
+
   if (!isOpen) return null;
 
   // Check if mobile
@@ -412,6 +435,13 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
 
   return (
     <MeetingsErrorBoundary>
+      {/* ARIA live region for screen reader announcements */}
+      <AriaLiveRegion
+        message={announcement.message}
+        politeness={announcement.politeness}
+        clearAfter={5000}
+      />
+      
       <div
         className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-[10002]"
         role="dialog"

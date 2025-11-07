@@ -1,28 +1,70 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { CalendarDaysIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { TimeSlot } from '../types';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { logError } from '../utils/errorHandling';
 
 interface TimeSlotSelectorProps {
+  /** Array of available time slots to display */
   availableSlots: TimeSlot[];
+  /** Currently selected time slot */
   selectedSlot: TimeSlot | null;
+  /** Callback when a slot is selected */
   onSlotSelect: (slot: TimeSlot) => void;
+  /** Use 24-hour time format (default: true) */
   timeFormat24?: boolean;
+  /** Admin mode with additional features (default: false) */
   isAdmin?: boolean;
+  /** Business hours configuration */
   businessHours?: { start: string; end: string };
+  /** Timezone information for display */
   timezoneInfo?: {
     abbreviation: string;
     offset: string;
     cityName: string;
   };
+  /** Validation errors to display */
   errors?: Record<string, string>;
+  /** Additional CSS classes */
   className?: string;
+  /** Loading state */
+  isLoading?: boolean;
+  /** Error state */
+  error?: string | null;
+  /** Callback when retry is clicked */
+  onRetry?: () => void;
 }
 
 /**
- * TimeSlotSelector - A reusable component for selecting time slots
- * Used in booking forms to display and select available time slots
+ * TimeSlotSelector Component
+ * 
+ * A sophisticated time slot selection component with keyboard navigation,
+ * accessibility features, and time-of-day visual styling.
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <TimeSlotSelector
+ *   availableSlots={slots}
+ *   selectedSlot={selectedSlot}
+ *   onSlotSelect={(slot) => setSelectedSlot(slot)}
+ *   timeFormat24={false}
+ *   timezoneInfo={{
+ *     abbreviation: 'PST',
+ *     offset: '-08:00',
+ *     cityName: 'Los Angeles'
+ *   }}
+ * />
+ * ```
+ * 
+ * Features:
+ * - Keyboard navigation (Arrow keys, Enter, Space)
+ * - Accessibility (ARIA labels, keyboard hints)
+ * - Time-of-day visual styling (morning/afternoon/evening)
+ * - Timezone display
+ * - Error handling and loading states
+ * - Focus management
  */
 export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
   availableSlots,
@@ -34,6 +76,9 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
   timezoneInfo,
   errors = {},
   className = '',
+  isLoading = false,
+  error = null,
+  onRetry,
 }) => {
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
@@ -49,17 +94,34 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
 
   const tzInfo = timezoneInfo || defaultTimezoneInfo;
 
-  // Group slots by date
-  const slotsByDate = availableSlots.reduce((acc, slot) => {
-    const dateKey = format(slot.start, 'yyyy-MM-dd');
-    if (!acc[dateKey]) {
-      acc[dateKey] = [];
+  /**
+   * Groups time slots by date for organized display
+   */
+  const slotsByDate = useCallback(() => {
+    try {
+      return availableSlots.reduce((acc, slot) => {
+        if (!slot?.start) {
+          logError(new Error('Invalid slot: missing start time'), { slot });
+          return acc;
+        }
+        const dateKey = format(slot.start, 'yyyy-MM-dd');
+        if (!acc[dateKey]) {
+          acc[dateKey] = [];
+        }
+        acc[dateKey].push(slot);
+        return acc;
+      }, {} as Record<string, TimeSlot[]>);
+    } catch (err) {
+      logError(err, { component: 'TimeSlotSelector', action: 'slotsByDate' });
+      return {};
     }
-    acc[dateKey].push(slot);
-    return acc;
-  }, {} as Record<string, TimeSlot[]>);
+  }, [availableSlots]);
 
-  // Helper to get time of day
+  /**
+   * Determines time of day based on hour
+   * @param date - Date to check
+   * @returns Time of day category
+   */
   const getTimeOfDay = (date: Date): 'morning' | 'afternoon' | 'evening' => {
     const hour = date.getHours();
     if (hour < 12) return 'morning';
@@ -263,12 +325,12 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
 
           {/* Time slots by date - Full height to show all slots */}
           <div className="flex-1 overflow-y-auto">
-            {Object.entries(slotsByDate).map(([dateKey, dateSlots]) => {
+            {Object.entries(slotsByDate()).map(([dateKey, dateSlots]) => {
               // Group slots by time of day
               const slotsByTimeOfDay = {
-                morning: dateSlots.filter(s => getTimeOfDay(s.start) === 'morning'),
-                afternoon: dateSlots.filter(s => getTimeOfDay(s.start) === 'afternoon'),
-                evening: dateSlots.filter(s => getTimeOfDay(s.start) === 'evening')
+                morning: dateSlots.filter((s: TimeSlot) => getTimeOfDay(s.start) === 'morning'),
+                afternoon: dateSlots.filter((s: TimeSlot) => getTimeOfDay(s.start) === 'afternoon'),
+                evening: dateSlots.filter((s: TimeSlot) => getTimeOfDay(s.start) === 'evening')
               };
 
               let globalIndex = 0; // Track global index for keyboard navigation
@@ -281,7 +343,7 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                     if (slots.length === 0) return null;
 
                     const styles = timeOfDayStyles[timeOfDay];
-                    const availableCount = slots.filter(s => {
+                    const availableCount = slots.filter((s: TimeSlot) => {
                       const isPast = s.start.getTime() < new Date().getTime();
                       const isBooked = s.available === false;
                       return !isPast && !isBooked;
@@ -297,7 +359,7 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
 
                         {/* Time slots grid */}
                         <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 sm:gap-2.5 md:gap-3">
-                          {slots.map((slot, index) => {
+                          {slots.map((slot: TimeSlot, index: number) => {
                             const isBusinessHour = slot.isBusinessHours;
                             const isSelected = selectedSlot === slot;
 
