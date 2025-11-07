@@ -22,7 +22,7 @@ export default function MinimizedVideoCallButton({
   const [isHovered, setIsHovered] = React.useState(false);
 
   return (
-    <div className={`fixed z-[10000] ${isMobile ? 'bottom-6 right-4' : 'bottom-6 right-4'}`}>
+    <div className={`fixed z-[10004] ${isMobile ? 'bottom-6 right-4' : 'bottom-6 right-4'}`}>
       <button
         onClick={onRestore}
         onMouseEnter={() => setIsHovered(true)}

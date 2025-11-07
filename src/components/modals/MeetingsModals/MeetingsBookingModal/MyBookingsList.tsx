@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { VideoCameraIcon, ClockIcon, CalendarIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { VideoCameraIcon, ClockIcon, CalendarIcon, UserIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useMeetingLauncher } from '@/hooks/useMeetingLauncher';
 import { type Booking } from '@/context/MeetingContext';
 import { format } from 'date-fns';
@@ -24,6 +24,9 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
   const [userRole, setUserRole] = useState<string | null>(null);
   const [joiningBookingId, setJoiningBookingId] = useState<string | null>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [showPast, setShowPast] = useState(false);
+  const [limit, setLimit] = useState(10);
+  const [hoveredActionBtn, setHoveredActionBtn] = useState<string | null>(null);
   
   const { 
     launchFromBooking, 
@@ -93,7 +96,7 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
     if (userEmail) {
       fetchBookings();
     }
-  }, [organizationId, userEmail]);
+  }, [organizationId, userEmail, showPast, limit]);
 
   const fetchBookings = async () => {
     if (!userEmail) return;
@@ -127,11 +130,32 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
       // Smart sorting: prioritize by status and time
       const now = new Date();
       
-      const sortedBookings = (data.bookings || []).sort((a: Booking, b: Booking) => {
+      // Filter based on showPast
+      let filteredBookings = data.bookings || [];
+      if (showPast) {
+        // Show only past meetings (completed, cancelled, or ended)
+        filteredBookings = filteredBookings.filter((booking: Booking) => {
+          const endTime = new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000;
+          return endTime < now.getTime() || ['completed', 'cancelled'].includes(booking.status);
+        });
+      } else {
+        // Show only upcoming/active meetings
+        filteredBookings = filteredBookings.filter((booking: Booking) => {
+          const endTime = new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000;
+          return endTime >= now.getTime() && !['completed'].includes(booking.status);
+        });
+      }
+      
+      const sortedBookings = filteredBookings.sort((a: Booking, b: Booking) => {
         const aTime = new Date(a.scheduled_at).getTime();
         const bTime = new Date(b.scheduled_at).getTime();
         const aEndTime = aTime + a.duration_minutes * 60000;
         const bEndTime = bTime + b.duration_minutes * 60000;
+        
+        if (showPast) {
+          // For past meetings, show most recent first
+          return bTime - aTime;
+        }
         
         // Priority 1: In-progress meetings (highest)
         const aInProgress = a.status === 'in_progress';
@@ -155,7 +179,8 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
         return aTime - bTime;
       });
 
-      setBookings(sortedBookings);
+      // Apply limit
+      setBookings(sortedBookings.slice(0, limit));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load bookings';
       setError(errorMessage);
@@ -258,7 +283,7 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
 
   if (bookings.length === 0) {
     return (
-      <div className="p-8 text-center bg-gray-50 rounded-lg">
+      <div className="p-8 text-center bg-white/30 backdrop-blur-sm rounded-lg border border-white/20">
         <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
         <p className="text-gray-600">No upcoming meetings</p>
         <p className="text-sm text-gray-500 mt-1">Book a meeting to get started</p>
@@ -267,14 +292,16 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
   }
 
   return (
-    <div className="space-y-3">
-      {bookings.map((booking) => {
+    <div className="relative h-full flex flex-col">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pb-20 pt-4 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {bookings.map((booking) => {
         const timeInfo = getTimeUntilMeeting(booking);
         const isAdmin = userRole === 'admin';
         const isHost = userId === booking.host_user_id;
         const isAdminOrHost = isAdmin || isHost;
         const canJoin = canJoinMeeting(booking, isAdminOrHost);
-        const borderColor = getStatusBorderColor(booking, timeInfo);
         const isCancelled = booking.status === 'cancelled';
         const isCompleted = booking.status === 'completed';
         const isInactive = isCancelled || isCompleted;
@@ -284,21 +311,52 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
         const diffMins = Math.floor(diffMs / 60000);
         const showCountdown = diffMins > 0 && diffMins <= 30;
 
+        // Determine border and background based on meeting urgency
+        let borderColor = 'transparent';
+        let backgroundColor = 'rgba(255, 255, 255, 0.5)';
+        let borderWidth = '1px';
+
+        if (!isInactive) {
+          if (timeInfo.isInProgress) {
+            // Live meeting - Red theme
+            borderColor = '#dc2626'; // red-600
+            backgroundColor = '#fee2e2'; // red-50
+            borderWidth = '2px';
+          } else if (diffMins > 0 && diffMins <= 15) {
+            // Starting soon (<15 min) - Green theme
+            borderColor = '#16a34a'; // green-600
+            backgroundColor = '#dcfce7'; // green-50
+            borderWidth = '2px';
+          } else if (diffMins > 15) {
+            // Check if meeting is today
+            const meetingDate = new Date(booking.scheduled_at);
+            const today = new Date();
+            const isToday = meetingDate.toDateString() === today.toDateString();
+            
+            if (isToday) {
+              // Starting today - Yellow theme
+              borderColor = '#eab308'; // yellow-500
+              backgroundColor = '#fef9c3'; // yellow-50
+              borderWidth = '2px';
+            }
+          }
+        }
+
         return (
           <div
             key={booking.id}
-            className="relative rounded-lg p-4 hover:shadow-lg transition-all duration-200 bg-white"
+            className="relative rounded-lg px-5 sm:px-5 py-5 hover:shadow-lg transition-all duration-200 backdrop-blur-sm"
             style={{
-              border: '1px solid #e5e7eb',
-              borderLeft: `4px solid ${borderColor}`,
+              border: `${borderWidth} solid ${borderColor}`,
+              backgroundColor: backgroundColor,
               opacity: isInactive ? 0.7 : 1
             }}
           >
             {/* Top Section: Title and Status */}
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1 pr-4">
+              <div className="flex-1 min-w-0 pr-4">
                 <h4 
-                  className={`text-base font-semibold mb-1 ${isInactive ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                  className={`text-base font-semibold mb-1 truncate ${isInactive ? 'line-through text-gray-500' : 'text-gray-900'}`}
                 >
                   {booking.title}
                 </h4>
@@ -306,9 +364,9 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
                 {/* Meeting Type Badge */}
                 {booking.meeting_type && (
                   <span 
-                    className="inline-block px-2 py-0.5 rounded text-xs font-medium mb-2"
+                    className="inline-block px-2 py-0.5 rounded text-xs sm:text-sm font-medium mb-2"
                     style={{
-                      backgroundColor: `${primary.base}15`,
+                      backgroundColor: `${primary.base}10`,
                       color: primary.base
                     }}
                   >
@@ -318,7 +376,7 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
               </div>
 
               {/* Status Badge */}
-              <div className="flex flex-col items-end gap-1">
+              <div className="flex flex-col items-end gap-1 flex-shrink-0">
                 <span
                   className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
                   style={{
@@ -381,8 +439,8 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
               </div>
 
               {/* Host */}
-              <div className="flex items-center text-sm text-gray-600">
-                <UserIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+              <div className="flex items-center text-sm text-gray-400 sm:text-gray-600">
+                <UserIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
                 <span>Host: {(booking as any).host?.full_name || 'Not specified'}</span>
               </div>
 
@@ -396,35 +454,35 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
 
             {/* Bottom Section: Action Buttons */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-              <div className="flex items-center gap-2">
-                {/* In-Progress Pulsing Indicator */}
-                {timeInfo.isInProgress && !isInactive && (
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-3 w-3">
-                      <span 
-                        className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                        style={{ backgroundColor: primary.base }}
-                      ></span>
-                      <span 
-                        className="relative inline-flex rounded-full h-3 w-3"
-                        style={{ backgroundColor: primary.base }}
-                      ></span>
-                    </span>
-                    <span className="text-xs font-semibold" style={{ color: primary.base }}>
-                      Live now
-                    </span>
-                  </div>
-                )}
-                
-                {/* Time Remaining Info */}
-                {!timeInfo.isInProgress && !isInactive && timeInfo.timeRemaining && (
-                  <span className="text-xs text-gray-500">
-                    Starts {getRelativeTime(booking.scheduled_at)}
-                  </span>
+              {/* Cancel Button - Left Side */}
+              <div>
+                {!isInactive && (
+                  <button
+                    onClick={() => handleCancelBooking(booking.id)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#dc262615';
+                      e.currentTarget.style.borderColor = '#dc262680';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.borderColor = '#dc262640';
+                    }}
+                    className="inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm transition-colors"
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: '#dc2626',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      borderColor: '#dc262640',
+                    }}
+                  >
+                    <XMarkIcon className="w-4 h-4 mr-1" />
+                    Cancel
+                  </button>
                 )}
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons - Right Side */}
               <div className="flex gap-2">
                 {canJoin && !isInactive ? (
                   <button
@@ -460,7 +518,7 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
                     ) : (
                       <>
                         <VideoCameraIcon className="w-4 h-4 mr-1" />
-                        Join
+                        Join Meeting
                       </>
                     )}
                   </button>
@@ -471,35 +529,88 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
                 ) : !canJoin && !isInactive ? (
                   <button
                     disabled
-                    className="inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+                    className="inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm cursor-not-allowed"
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: '#9ca3af',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      borderColor: '#e5e7eb',
+                    }}
                   >
                     <ClockIcon className="w-4 h-4 mr-1" />
                     Not available
                   </button>
                 ) : null}
-                
-                {!isInactive && (
-                  <button
-                    onClick={() => handleCancelBooking(booking.id)}
-                    className="inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
-                  >
-                    <XMarkIcon className="w-4 h-4 mr-1" />
-                    Cancel
-                  </button>
-                )}
               </div>
             </div>
           </div>
         );
       })}
+        </div>
+      </div>
 
-      {/* Refresh Button */}
-      <button
-        onClick={fetchBookings}
-        className="w-full mt-4 px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+      {/* Fixed Footer Panel */}
+      <div 
+        className="absolute bottom-0 left-0 right-0"
       >
-        🔄 Refresh appointments
-      </button>
+        <div className="grid grid-cols-3 gap-2 p-4">
+          {/* Refresh Button */}
+          <button
+            onClick={() => {
+              setShowPast(false);
+              setLimit(10);
+              fetchBookings();
+            }}
+            onMouseEnter={() => setHoveredActionBtn('refresh')}
+            onMouseLeave={() => setHoveredActionBtn(null)}
+            className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
+            style={{
+              backgroundColor: primary.base,
+              color: 'white',
+              opacity: hoveredActionBtn === 'refresh' ? 0.9 : 1,
+            }}
+          >
+            <ArrowPathIcon className="w-4 h-4 mr-1.5 hidden sm:inline" style={{ color: 'white' }} />
+            Refresh
+          </button>
+
+          {/* Past Button */}
+          <button
+            onClick={() => {
+              setShowPast(!showPast);
+              setLimit(10);
+            }}
+            onMouseEnter={() => setHoveredActionBtn('past')}
+            onMouseLeave={() => setHoveredActionBtn(null)}
+            className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
+            style={{
+              backgroundColor: primary.base,
+              color: 'white',
+              opacity: hoveredActionBtn === 'past' ? 0.9 : 1,
+            }}
+          >
+            {showPast ? <><span className="sm:hidden">Upcoming</span><span className="hidden sm:inline">← Upcoming</span></> : <><span className="sm:hidden">Past</span><span className="hidden sm:inline">Past →</span></>}
+          </button>
+
+          {/* More Button */}
+          <button
+            onClick={() => setLimit(limit + 10)}
+            onMouseEnter={() => setHoveredActionBtn('more')}
+            onMouseLeave={() => setHoveredActionBtn(null)}
+            disabled={bookings.length < limit}
+            className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
+            style={{
+              backgroundColor: bookings.length < limit ? '#e5e7eb' : primary.base,
+              color: bookings.length < limit ? '#9ca3af' : 'white',
+              cursor: bookings.length < limit ? 'not-allowed' : 'pointer',
+              opacity: bookings.length < limit ? 0.5 : hoveredActionBtn === 'more' ? 0.9 : 1,
+            }}
+          >
+            Load More
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

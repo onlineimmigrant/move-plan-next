@@ -748,7 +748,7 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
       <div
         className="shadow-2xl rounded-lg overflow-hidden fixed bg-red-50"
         style={{ 
-          zIndex: 9999,
+          zIndex: 10003,
           left: window.innerWidth / 2 - 200,
           top: window.innerHeight / 2 - 150,
           width: 400,
@@ -777,7 +777,7 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
       <div
         className="shadow-2xl rounded-lg overflow-hidden fixed bg-gray-900"
         style={{ 
-          zIndex: 9999,
+          zIndex: 10003,
           left: window.innerWidth / 2 - 200,
           top: window.innerHeight / 2 - 150,
           width: 400,
@@ -811,7 +811,7 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
     <div
       className={`shadow-2xl ${isMobile ? 'fixed inset-0' : 'fixed'}`}
       style={{
-        zIndex: 9999,
+        zIndex: 10003,
         width: isMobile ? '100vw' : (isFullscreen ? '100vw' : width),
         height: isMobile ? '100vh' : (isFullscreen ? '100vh' : height),
         left: isMobile ? 0 : x,

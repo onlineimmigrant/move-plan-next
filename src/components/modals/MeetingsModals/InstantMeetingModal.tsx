@@ -101,11 +101,12 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
         if (error) throw error;
         setMeetingTypes(data || []);
 
-        // Set default meeting type
+        // Set default meeting type and title
         if (data && data.length > 0) {
           setFormData(prev => ({
             ...prev,
             meeting_type_id: data[0].id,
+            title: data[0].name,
             duration_minutes: data[0].duration_minutes,
           }));
         }
@@ -131,7 +132,9 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
         duration_minutes: selectedType.duration_minutes
       });
     }
-  };  const handleSubmit = async (e: React.FormEvent) => {
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.meeting_type_id || !formData.customer_email || !formData.customer_name || !formData.title) {
@@ -186,7 +189,7 @@ export default function InstantMeetingModal({ isOpen, onClose, onSuccess }: Inst
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10005] p-4 animate-in fade-in duration-200"
       onClick={onClose}
       role="presentation"
     >

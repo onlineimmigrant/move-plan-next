@@ -350,10 +350,12 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
             onClose();
           }
         } else {
-          // For authenticated users, use the existing flow
-          // Refresh events
+          // For authenticated users, refresh events and switch to Manage tab
           await loadEvents();
 
+          // Switch to "Manage" tab to show the newly created booking
+          setActiveTab('my-meetings');
+          
           // Reset form and go back to calendar
           setCurrentView(MODAL_VIEWS.CALENDAR);
           bookingState.resetForm({
@@ -415,11 +417,13 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
         role="dialog"
         aria-modal="true"
         aria-labelledby="booking-modal-title"
+        style={{ pointerEvents: 'none' }}
       >
         {/* Backdrop */}
         <div
           className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           onClick={handleClose}
+          style={{ pointerEvents: 'auto' }}
         />
 
         {/* Modal - Draggable & Resizable on Desktop */}
@@ -429,28 +433,22 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
             ref={modalRef}
             className="relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
             onClick={(e) => e.stopPropagation()}
+            style={{ pointerEvents: 'auto' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div className="flex flex-col">
-                <div className="flex items-center gap-3">
-                  {activeTab === 'my-meetings' ? (
-                    <UserGroupIcon className="w-6 h-6" style={{ color: primary.base }} />
-                  ) : (
-                    <CalendarIcon className="w-6 h-6" style={{ color: primary.base }} />
-                  )}
-                  <h2
-                    id="booking-modal-title"
-                    className="text-xl font-semibold text-gray-900 dark:text-white"
-                  >
-                    Appointments
-                  </h2>
-                </div>
-                {activeTab === 'my-meetings' && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 ml-9">
-                    Manage
-                  </p>
+              <div className="flex items-center gap-3">
+                {activeTab === 'my-meetings' ? (
+                  <UserGroupIcon className="w-6 h-6" style={{ color: primary.base }} />
+                ) : (
+                  <CalendarIcon className="w-6 h-6" style={{ color: primary.base }} />
                 )}
+                <h2
+                  id="booking-modal-title"
+                  className="text-xl font-semibold text-gray-900 dark:text-white"
+                >
+                  Appointments
+                </h2>
               </div>
               <button
                 ref={firstFocusableRef}
@@ -616,25 +614,18 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
             >
               {/* Header - Draggable */}
               <div className="modal-drag-handle cursor-move flex items-center justify-between p-4 sm:p-6 border-b border-gray-200/50 dark:border-gray-700/50">
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-3">
-                    {activeTab === 'my-meetings' ? (
-                      <UserGroupIcon className="w-6 h-6" style={{ color: primary.base }} />
-                    ) : (
-                      <CalendarIcon className="w-6 h-6" style={{ color: primary.base }} />
-                    )}
-                    <h2
-                      id="booking-modal-title"
-                      className="text-xl font-semibold text-gray-900 dark:text-white"
-                    >
-                      Appointments
-                    </h2>
-                  </div>
-                  {activeTab === 'my-meetings' && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 ml-9">
-                      Manage
-                    </p>
+                <div className="flex items-center gap-3">
+                  {activeTab === 'my-meetings' ? (
+                    <UserGroupIcon className="w-6 h-6" style={{ color: primary.base }} />
+                  ) : (
+                    <CalendarIcon className="w-6 h-6" style={{ color: primary.base }} />
                   )}
+                  <h2
+                    id="booking-modal-title"
+                    className="text-xl font-semibold text-gray-900 dark:text-white"
+                  >
+                    Appointments
+                  </h2>
                 </div>
                 <button
                   ref={firstFocusableRef}

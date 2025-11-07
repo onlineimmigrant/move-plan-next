@@ -7,12 +7,17 @@ import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { MenuItem, SubMenuItem } from '@/types/menu';
-import ModernLanguageSwitcher from './ModernLanguageSwitcher';
 import LocalizedLink from './LocalizedLink';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import { FooterType } from '@/types/settings';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
+
+// Dynamically import ModernLanguageSwitcher to prevent hydration issues
+const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'), {
+  ssr: false,
+  loading: () => null
+});
 import { isAdminClient } from '@/lib/auth';
 
 const ContactModal = dynamic(() => import('./contact/ContactModal'), { 

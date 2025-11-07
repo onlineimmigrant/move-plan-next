@@ -187,40 +187,19 @@ export default function ManagedVideoCall() {
   console.log('[ManagedVideoCall] ✅ Has token/room - rendering VideoCallModal');
 
   const handleLeave = async () => {
-    try {
-      // Get current session token
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session && activeMeeting.id) {
-        // Update booking status to completed using PUT endpoint
-        const response = await fetch(`/api/meetings/bookings/${activeMeeting.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            status: 'completed',
-          }),
-        });
-
-        if (!response.ok) {
-          console.error('Failed to update booking status:', await response.text());
-        } else {
-          console.log('✅ Booking marked as completed');
-        }
-      }
-    } catch (error) {
-      console.error('Error updating booking on leave:', error);
-    } finally {
-      // Always close the video call
-      endVideoCall();
-    }
+    // Don't mark as completed or end video call
+    // This allows users to rejoin during the meeting time
+    // The meeting will auto-complete after scheduled end time
+    console.log('👋 User left video call but can rejoin');
+    
+    // Just close the modal, but keep meeting active in context
+    // User can click "Join Meeting" again to rejoin
+    endVideoCall();
   };
 
   return (
     <div
-      className="fixed inset-0 z-[2000]"
+      className="fixed inset-0 z-[10003]"
       style={{
         pointerEvents: videoCallOpen ? 'auto' : 'none',
       }}

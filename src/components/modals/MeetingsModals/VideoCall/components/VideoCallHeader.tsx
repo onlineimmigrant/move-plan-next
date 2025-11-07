@@ -71,7 +71,7 @@ export default function VideoCallHeader({
                 onToggleMinimized();
               }}
               className={`${isMobile ? 'p-3' : 'p-2'} hover:bg-slate-600/80 hover:shadow-lg rounded-lg transition-all duration-200 flex-shrink-0 group`}
-              style={{ zIndex: 10000 }}
+              style={{ zIndex: 10004 }}
               title={isMinimized ? "Restore" : "Minimize"}
             >
               {isMinimized ? (
