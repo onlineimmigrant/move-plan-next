@@ -5,12 +5,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ClockIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { MeetingType } from '@/types/meetings';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { format } from 'date-fns';
+
+interface TimeSlot {
+  start: Date;
+  end: Date;
+  available: boolean;
+  isBusinessHours?: boolean;
+}
 
 interface MeetingTypeCardsProps {
   meetingTypes: MeetingType[];
   selectedId: string | null;
   onSelect: (typeId: string) => void;
   error?: string;
+  selectedSlot?: TimeSlot | null;
+  timeFormat24?: boolean;
 }
 
 export default function MeetingTypeCards({
@@ -18,6 +28,8 @@ export default function MeetingTypeCards({
   selectedId,
   onSelect,
   error,
+  selectedSlot,
+  timeFormat24 = true,
 }: MeetingTypeCardsProps) {
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
@@ -131,7 +143,7 @@ export default function MeetingTypeCards({
                 }
               }}
             >
-              {/* Header: Color dot + Name + Checkmark */}
+              {/* Header: Color dot + Name + Checkmark/Date Badge */}
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {type.color && (
@@ -145,13 +157,28 @@ export default function MeetingTypeCards({
                     {type.name}
                   </h3>
                 </div>
-                {isSelected && (
-                  <CheckCircleIcon 
-                    className="w-6 h-6 flex-shrink-0" 
-                    style={{ color: primary.base }}
-                    aria-hidden="true"
-                  />
-                )}
+                {isSelected ? (
+                  selectedSlot ? (
+                    <div 
+                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-semibold whitespace-nowrap"
+                      style={{ 
+                        borderColor: primary.base,
+                        color: primary.base,
+                        backgroundColor: `${primary.base}15`
+                      }}
+                    >
+                      <span>
+                        {format(selectedSlot.start, timeFormat24 ? 'MMM d, HH:mm' : 'MMM d, h:mm a')}
+                      </span>
+                    </div>
+                  ) : (
+                    <CheckCircleIcon 
+                      className="w-6 h-6 flex-shrink-0" 
+                      style={{ color: primary.base }}
+                      aria-hidden="true"
+                    />
+                  )
+                ) : null}
               </div>
 
               {/* Description */}

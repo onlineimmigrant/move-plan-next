@@ -527,7 +527,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                     </nav>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto px-4 pb-4">
+                  <div className="flex-1 overflow-y-auto px-2 pb-4">
                     {error && (
                       <div className="mb-4 p-4 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm border border-red-200 dark:border-red-800 rounded-lg">
                         <p className="text-sm text-red-800 dark:text-red-200">{error}</p>

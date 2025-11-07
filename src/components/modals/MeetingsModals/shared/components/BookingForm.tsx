@@ -237,7 +237,7 @@ export default function BookingForm({
       <div className="flex-shrink-0 px-4 py-3">
         <nav className="flex gap-3" aria-label="Booking steps">
           {[
-            { num: 1, label: 'Slot', enabled: true },
+            { num: 1, label: 'Time', enabled: true },
             { num: 2, label: 'Type', enabled: canProceedToStep2 },
             { num: 3, label: 'Details', enabled: canProceedToStep3 }
           ].map((step) => (
@@ -314,14 +314,13 @@ export default function BookingForm({
         {currentStep === 2 && (
           <div className="p-4 space-y-4">
             <div>
-              <label id="meeting-type-label" className="block text-xs font-semibold text-gray-700 mb-3">
-                Appointment Type *
-              </label>
               <MeetingTypeCards
                 meetingTypes={meetingTypes}
                 selectedId={formData.meeting_type_id || null}
                 onSelect={(typeId) => onChange({ meeting_type_id: typeId })}
                 error={errors.meeting_type_id}
+                selectedSlot={selectedSlot}
+                timeFormat24={effective24}
               />
             </div>
 
@@ -356,14 +355,14 @@ export default function BookingForm({
             <div className="space-y-3">
               <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
                 <div className="w-1 h-4 rounded-full" style={{ backgroundColor: primary.base }} />
-                <h3 className="text-sm font-bold text-gray-900">Required Information</h3>
+                <h3 className="text-sm font-bold text-gray-900">Required</h3>
               </div>
               
               {/* Two-column grid for Name and Email on desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Full Name */}
                 <div>
-                <label htmlFor="customer-name" className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label htmlFor="customer-name" className="block text-xs font-semibold text-gray-500 mb-1.5">
                   Full Name *
                 </label>
                 <div className="relative">
@@ -426,8 +425,8 @@ export default function BookingForm({
 
               {/* Email Address */}
               <div>
-                <label htmlFor="customer-email" className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Email Address * {readOnlyEmail && <span className="text-xs font-normal text-gray-500">(Your email)</span>}
+                <label htmlFor="customer-email" className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  Email
                 </label>
                 <div className="relative">
                   <ChatBubbleLeftIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: primary.base }} aria-hidden="true" />
@@ -493,17 +492,16 @@ export default function BookingForm({
             {/* Optional Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 pb-2">
-                <h3 className="text-sm font-semibold text-gray-600">
-                  Additional Details <span className="font-normal">(Optional)</span>
-                </h3>
+                <div className="w-1 h-4 rounded-full" style={{ backgroundColor: primary.base }} />
+                <h3 className="text-sm font-bold text-gray-900">Optional</h3>
               </div>
 
               {/* Two-column grid for Phone and Title on desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Phone Number */}
                 <div>
-                <label htmlFor="customer-phone" className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Phone Number <span className="text-xs text-gray-500 font-normal">(optional)</span>
+                <label htmlFor="customer-phone" className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  Phone Number
                 </label>
                 <div className="relative">
                   <PhoneIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: primary.base }} aria-hidden="true" />
@@ -536,8 +534,8 @@ export default function BookingForm({
 
               {/* Appointment Title */}
               <div>
-                <label htmlFor="appointment-title" className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Appointment Title <span className="text-xs text-gray-500 font-normal">(optional)</span>
+                <label htmlFor="appointment-title" className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  Appointment Title
                 </label>
                 <div className="relative">
                   <PencilIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: primary.base }} aria-hidden="true" />
@@ -575,8 +573,8 @@ export default function BookingForm({
 
               {/* Notes - Full width on all screens */}
               <div>
-                <label htmlFor="appointment-notes" className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Notes <span className="text-xs text-gray-500 font-normal">(optional)</span>
+                <label htmlFor="appointment-notes" className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  Notes
                 </label>
                 <div className="relative">
                   <DocumentTextIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: primary.base }} aria-hidden="true" />
@@ -626,35 +624,21 @@ export default function BookingForm({
             {onBackToCalendar ? (
               <button
                 type="button"
-                onClick={onBackToCalendar}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onBackToCalendar();
+                }}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
               >
                 <ChevronLeftIcon className="w-4 h-4" />
-                <span>Calendar</span>
+                <span>Back</span>
               </button>
             ) : (
               <div style={{ width: '100px' }}></div>
             )}
 
-            {/* Center: Selected Date/Time Badge (only if slot selected) */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              {selectedSlot && (
-                <div 
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 text-xs font-semibold transition-all"
-                  style={{ 
-                    borderColor: primary.base,
-                    color: primary.base,
-                    backgroundColor: '#ffffff'
-                  }}
-                >
-                  <span>
-                    {format(selectedSlot.start, effective24 ? 'MMM d, HH:mm' : 'MMM d, h:mm a')}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Continue button (only if slot selected) */}
+            {/* Right: Next button (only if slot selected) */}
             <div style={{ width: '100px' }} className="flex justify-end">
               {selectedSlot && (
                 <button
@@ -667,7 +651,7 @@ export default function BookingForm({
                   onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
                   onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
-                  <span>Continue</span>
+                  <span>Next</span>
                   <ArrowRightIcon className="w-4 h-4" />
                 </button>
               )}
@@ -687,22 +671,6 @@ export default function BookingForm({
               <span>Back</span>
             </button>
 
-            {/* Selected Date/Time Badge - Centered */}
-            {selectedSlot && (
-              <div 
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 text-xs font-semibold transition-all"
-                style={{ 
-                  borderColor: primary.base,
-                  color: primary.base,
-                  backgroundColor: '#ffffff'
-                }}
-              >
-                <span>
-                  {format(selectedSlot.start, effective24 ? 'MMM d, HH:mm' : 'MMM d, h:mm a')}
-                </span>
-              </div>
-            )}
-
             <button
               type="button"
               onClick={() => setCurrentStep(3)}
@@ -716,7 +684,7 @@ export default function BookingForm({
               onMouseEnter={(e) => formData.meeting_type_id && (e.currentTarget.style.transform = 'translateY(-1px)')}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              <span>Continue</span>
+              <span>Next</span>
               <ArrowRightIcon className="w-4 h-4" />
             </button>
           </div>
@@ -734,28 +702,12 @@ export default function BookingForm({
               <span>Back</span>
             </button>
 
-            {/* Selected Date/Time Badge - Centered */}
-            {selectedSlot && (
-              <div 
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 text-xs font-semibold transition-all"
-                style={{ 
-                  borderColor: primary.base,
-                  color: primary.base,
-                  backgroundColor: '#ffffff'
-                }}
-              >
-                <span>
-                  {format(selectedSlot.start, effective24 ? 'MMM d, HH:mm' : 'MMM d, h:mm a')}
-                </span>
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={isSubmitting || !canSubmit}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: isSubmitting || !canSubmit 
                   ? undefined 
@@ -768,7 +720,7 @@ export default function BookingForm({
             >
               {isSubmitting ? (
                 <>
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
@@ -776,8 +728,10 @@ export default function BookingForm({
                 </>
               ) : (
                 <>
-                  <CheckIcon className="w-4 h-4" />
-                  <span>Book</span>
+                  <CheckIcon className="w-5 h-5" />
+                  <span>
+                    Book - {selectedSlot ? format(selectedSlot.start, effective24 ? 'MMM d, HH:mm' : 'MMM d, h:mm a') : ''}
+                  </span>
                 </>
               )}
             </button>

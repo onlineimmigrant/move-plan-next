@@ -166,7 +166,6 @@ export default function Calendar({
   use24Hour = true,
 }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -192,22 +191,12 @@ export default function Calendar({
           e.preventDefault();
           goToToday();
           break;
-        case '?':
-          e.preventDefault();
-          setShowKeyboardHelp(!showKeyboardHelp);
-          break;
-        case 'escape':
-          if (showKeyboardHelp) {
-            e.preventDefault();
-            setShowKeyboardHelp(false);
-          }
-          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [showKeyboardHelp]);
+  }, []);
   
   // Swipe gesture handlers
   const handleSwipeLeft = useCallback(() => {
@@ -316,7 +305,7 @@ export default function Calendar({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden w-full" style={{ boxShadow: shadows.lg }}>
+      <div className="rounded-xl overflow-hidden w-full">
         {/* Header Skeleton - Compact */}
         <div 
           className="px-2 sm:px-3 md:px-4 py-2"
@@ -358,127 +347,73 @@ export default function Calendar({
 
   return (
     <div 
-      className="bg-white rounded-xl overflow-hidden w-full mx-auto touch-pan-y"
-      style={{ 
-        boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.1)',
-        border: '1px solid rgba(255, 255, 255, 0.8)',
-      }}
+      className="rounded-xl overflow-hidden w-full mx-auto touch-pan-y"
       onTouchStart={swipeGesture.handleTouchStart}
       onTouchMove={swipeGesture.handleTouchMove}
       onTouchEnd={swipeGesture.handleTouchEnd}
       ref={calendarRef}
     >
-      {/* Keyboard shortcuts help modal */}
-      {showKeyboardHelp && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowKeyboardHelp(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Keyboard Shortcuts</h3>
-              <button
-                onClick={() => setShowKeyboardHelp(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                style={{ ['--tw-ring-color' as string]: primary.base }}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Next period</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">N</kbd>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Previous period</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">P</kbd>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Go to today</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">T</kbd>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Toggle shortcuts</span>
-                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">?</kbd>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header - Compact Design */}
+      {/* Header - Simplified Design */}
       <div 
-        className="px-2 sm:px-3 md:px-4 py-2"
+        className="px-3 sm:px-4 md:px-5 py-3"
         style={{ 
           background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})` 
         }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          {/* Left: Title and Navigation */}
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            {/* Navigation - Enhanced for mobile */}
-            <div className="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-lg flex-shrink-0">
+        <div className="flex items-center justify-between gap-3">
+          {/* Left: Date/Title */}
+          <h2 className="text-sm sm:text-base font-bold text-white truncate" style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.01em' }}>
+            {format(currentDate, view === 'month' ? 'MMM yyyy' : view === 'week' ? "'Week of' MMM d" : 'MMM d')}
+          </h2>
+
+          {/* Right: View Toggle + Today Button (Desktop: + Navigation) */}
+          <div className="flex items-center gap-2">
+            {/* Navigation Buttons - Desktop Only */}
+            <div className="hidden sm:inline-flex items-center gap-1">
               <button
                 onClick={() => navigateDate('prev')}
-                className="p-2 sm:p-1.5 rounded-l-lg text-white hover:bg-white/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                aria-label="Previous (Press P)"
+                className="p-1.5 text-white bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                aria-label="Previous period"
               >
-                <ChevronLeftIcon className="w-5 h-5 sm:w-4 sm:h-4" />
+                <ChevronLeftIcon className="w-4 h-4" />
               </button>
+              <button
+                onClick={() => navigateDate('next')}
+                className="p-1.5 text-white bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                aria-label="Next period"
+              >
+                <ChevronRightIcon className="w-4 h-4" />
+              </button>
+            </div>
 
+            {/* View Toggle + Today Button Combined */}
+            <div className="inline-flex items-center rounded-lg bg-white/10 backdrop-blur-sm p-0.5" role="group" aria-label="Calendar controls">
+              {(['month', 'week', 'day'] as CalendarView[]).map((viewOption) => (
+                <button
+                  key={viewOption}
+                  onClick={() => onViewChange(viewOption)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${
+                    view === viewOption
+                      ? 'bg-white shadow-md'
+                      : 'text-white hover:bg-white/10'
+                  }`}
+                  style={view === viewOption ? { color: primary.base } : {}}
+                  aria-pressed={view === viewOption}
+                  aria-label={`${viewOption} view`}
+                >
+                  {viewOption.charAt(0).toUpperCase() + viewOption.slice(1)}
+                </button>
+              ))}
+              
+              {/* Today Button */}
               <button
                 onClick={goToToday}
-                className="px-4 py-2 sm:px-3 sm:py-1.5 text-xs font-medium text-white hover:bg-white/20 transition-colors duration-200 whitespace-nowrap border-x border-white/10 min-w-[60px] sm:min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                aria-label="Go to today (Press T)"
+                className="px-3 py-1.5 text-xs font-medium text-white hover:bg-white/10 transition-colors duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-md"
+                aria-label="Go to today"
               >
                 Today
               </button>
-
-              <button
-                onClick={() => navigateDate('next')}
-                className="p-2 sm:p-1.5 rounded-r-lg text-white hover:bg-white/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                aria-label="Next (Press N)"
-              >
-                <ChevronRightIcon className="w-5 h-5 sm:w-4 sm:h-4" />
-              </button>
             </div>
-            
-            {/* Keyboard shortcuts button */}
-            <button
-              onClick={() => setShowKeyboardHelp(true)}
-              className="p-2 sm:p-1.5 rounded-lg text-white hover:bg-white/20 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-              aria-label="Show keyboard shortcuts (Press ?)"
-              title="Keyboard shortcuts (?)"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-            
-            {/* Title */}
-            <h2 className="text-xs sm:text-sm md:text-base font-bold text-white truncate" style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.01em' }}>
-              {format(currentDate, view === 'month' ? 'MMMM yyyy' : view === 'week' ? "'Week of' MMM d, yyyy" : 'MMMM d, yyyy')}
-            </h2>
-          </div>
-
-          {/* Right: View Toggle - Enhanced for mobile */}
-          <div className="inline-flex rounded-lg bg-white/10 backdrop-blur-sm p-0.5 sm:p-0.5 flex-shrink-0" role="group" aria-label="Calendar view">
-            {(['month', 'week', 'day'] as CalendarView[]).map((viewOption) => (
-              <button
-                key={viewOption}
-                onClick={() => onViewChange(viewOption)}
-                className={`px-3 py-2 sm:px-2.5 sm:py-1 text-xs sm:text-xs font-medium rounded-md transition-all duration-200 min-w-[60px] sm:min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${
-                  view === viewOption
-                    ? 'bg-white shadow-md'
-                    : 'text-white hover:bg-white/10'
-                }`}
-                style={view === viewOption ? { color: primary.base } : {}}
-                aria-pressed={view === viewOption}
-                aria-label={`${viewOption} view`}
-              >
-                {viewOption.charAt(0).toUpperCase() + viewOption.slice(1)}
-              </button>
-            ))}
           </div>
         </div>
       </div>
@@ -517,6 +452,32 @@ export default function Calendar({
             use24Hour={use24Hour}
           />
         )}
+      </div>
+
+      {/* Mobile Navigation - Below Calendar Table */}
+      <div className="sm:hidden px-4 py-4 mt-3 flex items-center justify-between">
+        <button
+          onClick={() => navigateDate('prev')}
+          className="p-2 rounded-lg transition-all bg-white border border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2"
+          style={{
+            color: primary.base,
+            ['--tw-ring-color' as string]: primary.base,
+          }}
+          aria-label="Previous period"
+        >
+          <ChevronLeftIcon className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => navigateDate('next')}
+          className="p-2 rounded-lg transition-all bg-white border border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2"
+          style={{
+            color: primary.base,
+            ['--tw-ring-color' as string]: primary.base,
+          }}
+          aria-label="Next period"
+        >
+          <ChevronRightIcon className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );
@@ -605,7 +566,7 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
   return (
     <div className="w-full">
       <div className="w-full">
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 bg-gray-100/50 rounded-lg overflow-hidden p-1 sm:p-1.5 md:p-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 rounded-lg overflow-hidden p-1 sm:p-1.5 md:p-2">
           {/* Day headers - Improved typography */}
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
             <div 
@@ -667,7 +628,7 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                     e.currentTarget.style.boxShadow = 'none';
                   }
                 }}
-                className={`aspect-square sm:aspect-auto sm:min-h-[75px] md:min-h-[95px] p-2 sm:p-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-lg ${
+                className={`min-h-[70px] sm:min-h-[75px] md:min-h-[95px] p-1.5 sm:p-2 flex flex-col items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-lg touch-manipulation ${
                   isPastDate 
                     ? 'cursor-not-allowed' 
                     : isCurrentMonth ? 'cursor-pointer' : 'text-gray-400 cursor-pointer'
@@ -692,84 +653,66 @@ function MonthView({ currentDate, events, onDateClick, onEventClick, onViewChang
                   ['--tw-ring-color' as string]: primary.base,
                 }}
               >
-                <div className="flex items-center justify-center mb-1 sm:mb-1.5">
-                  <div className="relative">
-                    <span
-                      className={`inline-flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 md:w-8 md:h-8 rounded-full text-sm sm:text-sm md:text-base font-bold transition-all duration-200 ${
-                        isTodayDate || isSelected
-                          ? 'text-white shadow-md'
-                          : 'text-gray-900'
-                      }`}
-                      style={{
-                        ...(isTodayDate
-                          ? { 
-                              background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                              fontWeight: 700
-                            }
-                          : isSelected
-                          ? { 
-                              backgroundColor: primary.base,
-                              fontWeight: 700
-                            }
-                          : {}),
-                        fontVariantNumeric: 'tabular-nums'
-                      }}
-                    >
-                      {format(day, 'd')}
-                    </span>
-                    {/* Enhanced event density indicator with color coding */}
-                    {dayEventsList.length > 0 && !isPastDate && (
-                      <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 flex gap-0.5">
-                        {Array.from({ length: Math.min(dayEventsList.length, 3) }).map((_, i) => (
-                          <div
-                            key={i}
-                            className="w-1 h-1 rounded-full shadow-sm transition-all duration-200"
-                            style={{ 
-                              backgroundColor: dayEventsList.length >= 3 
-                                ? '#F59E0B' // Warning color for busy days
-                                : dayEventsList.length === 2
-                                ? primary.hover
-                                : primary.base,
-                              opacity: dayEventsList.length >= 3 ? 1 : 0.8,
-                              ...(isSelected || isTodayDate ? { backgroundColor: 'white' } : {})
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                {/* Date number - centered */}
+                <div className="relative mb-0.5">
+                  <span
+                    className={`inline-flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 md:w-8 md:h-8 rounded-full text-base sm:text-sm md:text-base font-bold transition-all duration-200 ${
+                      isTodayDate || isSelected
+                        ? 'text-white shadow-md'
+                        : 'text-gray-900'
+                    }`}
+                    style={{
+                      ...(isTodayDate
+                        ? { 
+                            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                            fontWeight: 700
+                          }
+                        : isSelected
+                        ? { 
+                            backgroundColor: primary.base,
+                            fontWeight: 700
+                          }
+                        : {}),
+                      fontVariantNumeric: 'tabular-nums'
+                    }}
+                  >
+                    {format(day, 'd')}
+                  </span>
+                  {/* Enhanced event density indicator with color coding */}
+                  {dayEventsList.length > 0 && !isPastDate && (
+                    <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                      {Array.from({ length: Math.min(dayEventsList.length, 3) }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-1 h-1 rounded-full shadow-sm transition-all duration-200"
+                          style={{ 
+                            backgroundColor: dayEventsList.length >= 3 
+                              ? '#F59E0B' // Warning color for busy days
+                              : dayEventsList.length === 2
+                              ? primary.hover
+                              : primary.base,
+                            opacity: dayEventsList.length >= 3 ? 1 : 0.8,
+                            ...(isSelected || isTodayDate ? { backgroundColor: 'white' } : {})
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Events count button - Enhanced styling */}
-                {dayEventsList.length > 0 && !isPastDate && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDateChange(day);
-                      onViewChange('day');
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = `${primary.base}35`;
-                      e.currentTarget.style.transform = 'scale(1.08)';
-                      e.currentTarget.style.boxShadow = shadows.sm;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = `${primary.base}20`;
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                    className="w-full px-1.5 py-0.5 text-[10px] sm:text-xs font-bold rounded transition-all duration-200"
-                    style={{
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                    title={`View ${dayEventsList.length} appointment${dayEventsList.length > 1 ? 's' : ''}`}
-                    aria-label={`View ${dayEventsList.length} appointment${dayEventsList.length > 1 ? 's' : ''} on ${format(day, 'MMMM d, yyyy')}`}
-                  >
-                    {dayEventsList.length} apt{dayEventsList.length > 1 ? 's' : ''}
-                  </button>
-                )}
+                {/* Appointment count badge - always present to maintain alignment */}
+                <div className="min-h-[18px] flex items-center justify-center">
+                  {dayEventsList.length > 0 && !isPastDate && (
+                    <span
+                      className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-gray-600 bg-gray-200 rounded-full"
+                      style={{
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {dayEventsList.length}
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -905,7 +848,7 @@ function WeekView({ currentDate, events, onEventClick, onSlotClick, use24Hour = 
         </div>
 
         {/* Time slots */}
-        <div ref={containerRef} className="relative bg-white">
+        <div ref={containerRef} className="relative">
           {/* Current time indicator for today */}
           {weekDays.some(day => isToday(day)) && (
             <CurrentTimeIndicator primaryColor={primary.base} isToday={true} />

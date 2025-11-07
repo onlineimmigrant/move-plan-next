@@ -199,7 +199,7 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
           <p className="text-xs text-gray-500 mt-1">Try selecting a different date or time.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border-0 overflow-hidden">
+        <div className="rounded-lg overflow-hidden">
           {/* Header with title and timezone info */}
           <div 
             className="px-3 py-2 border-b"
@@ -209,23 +209,28 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
             }}
           >
             <div className="flex items-center justify-between gap-3">
+              {/* Left: Clock icon + Date on mobile */}
               <div className="flex items-center gap-2">
-                <ClockIcon className="w-4 h-4 text-white flex-shrink-0" />
-                <span className="text-sm font-semibold text-white">
-                  Select Time *
-                </span>
-                <button
-                  onClick={() => setShowKeyboardHelp(true)}
-                  className="p-1 hover:bg-white/20 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                  aria-label="Show keyboard shortcuts (Press ?)"
-                  title="Keyboard shortcuts (?)"
-                >
-                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
+                <ClockIcon className="w-5 h-5 text-white flex-shrink-0" />
+                {/* Date label - shown on mobile only */}
+                {Object.keys(slotsByDate).length > 0 && (() => {
+                  const firstDateKey = Object.keys(slotsByDate)[0];
+                  const date = new Date(firstDateKey);
+                  const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                  const isTomorrow = format(date, 'yyyy-MM-dd') === format(new Date(Date.now() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+                  
+                  let dateLabel = format(date, 'EEE, MMM d');
+                  if (isToday) dateLabel = 'Today';
+                  else if (isTomorrow) dateLabel = 'Tomorrow';
+                  
+                  return (
+                    <span className="sm:hidden text-sm font-semibold text-white">
+                      {dateLabel}
+                    </span>
+                  );
+                })()}
               </div>
-              {/* Center: Date label for first date */}
+              {/* Center: Date label - shown on desktop */}
               {Object.keys(slotsByDate).length > 0 && (() => {
                 const firstDateKey = Object.keys(slotsByDate)[0];
                 const date = new Date(firstDateKey);
@@ -237,11 +242,12 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                 else if (isTomorrow) dateLabel = 'Tomorrow';
                 
                 return (
-                  <span className="text-xs font-medium text-white/95">
+                  <span className="hidden sm:block text-sm font-semibold text-white">
                     {dateLabel}
                   </span>
                 );
               })()}
+              {/* Right: Timezone info */}
               <div className="flex items-center gap-3 text-xs text-white/90 font-medium">
                 <span className="truncate">
                   UTC{tzInfo.offset} • {tzInfo.cityName}
@@ -287,7 +293,6 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-lg sm:text-xl">{styles.icon}</span>
                           <h3 className="text-sm font-semibold text-gray-700">{styles.label}</h3>
-                          <span className="text-xs text-gray-500">({availableCount} available)</span>
                         </div>
 
                         {/* Time slots grid */}
