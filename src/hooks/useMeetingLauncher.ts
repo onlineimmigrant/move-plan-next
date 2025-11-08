@@ -55,16 +55,24 @@ export function useMeetingLauncher() {
       const isHost = booking.host_user_id === user.id;
 
       // Check if customer should enter waiting room
-      // Customers (non-admin, non-host) always enter waiting room unless meeting is already in progress
+      // Customers (non-admin, non-host) enter waiting room unless:
+      // 1. Meeting is already in progress (host has approved and started)
+      // 2. Booking has been pre-approved (approved_at is set)
+      // 3. It's an instant meeting (created within 5 min of scheduled time)
       const now = new Date();
       const startTime = new Date(booking.scheduled_at);
+      const createdTime = new Date(booking.created_at);
       const isCustomer = !isAdmin && !isHost;
-      const isMeetingNotStarted = booking.status !== 'in_progress' && booking.status !== 'completed';
+      const isMeetingInProgress = booking.status === 'in_progress';
+      const isPreApproved = booking.approved_at != null;
+      const isInstantMeeting = Math.abs((startTime.getTime() - createdTime.getTime()) / 60000) < 5;
       
       // Customer enters waiting room if:
       // 1. They're a customer (not admin or host)
-      // 2. Meeting hasn't started yet (status not 'in_progress' or 'completed')
-      const shouldEnterWaitingRoom = isCustomer && isMeetingNotStarted;
+      // 2. Meeting is NOT in progress
+      // 3. Meeting has NOT been pre-approved
+      // 4. It's NOT an instant meeting
+      const shouldEnterWaitingRoom = isCustomer && !isMeetingInProgress && !isPreApproved && !isInstantMeeting;
 
       console.log('[useMeetingLauncher] Waiting room check:', {
         isAdmin,
@@ -72,8 +80,11 @@ export function useMeetingLauncher() {
         isCustomer,
         now: now.toISOString(),
         startTime: startTime.toISOString(),
+        createdTime: createdTime.toISOString(),
         currentStatus: booking.status,
-        isMeetingNotStarted,
+        isMeetingInProgress,
+        isPreApproved,
+        isInstantMeeting,
         shouldEnterWaitingRoom
       });
 

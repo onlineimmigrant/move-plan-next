@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarIcon, ClockIcon, Cog6ToothIcon, XMarkIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon, ClockIcon, Cog6ToothIcon, XMarkIcon, UsersIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import type { AdminView } from '../hooks';
 
 interface AdminModalHeaderProps {
@@ -9,6 +9,7 @@ interface AdminModalHeaderProps {
   setHoveredTab: (tab: string | null) => void;
   showTypesModal: () => void;
   showSettingsModal: () => void;
+  showInstantMeetingModal?: () => void;
   onClose: () => void;
   activeBookingCount: number;
   fetchActiveBookingCount: () => void;
@@ -37,6 +38,7 @@ export const AdminModalHeader = React.memo<AdminModalHeaderProps>(({
   setHoveredTab,
   showTypesModal,
   showSettingsModal,
+  showInstantMeetingModal,
   onClose,
   activeBookingCount,
   fetchActiveBookingCount,
@@ -152,6 +154,24 @@ export const AdminModalHeader = React.memo<AdminModalHeaderProps>(({
             <CalendarIcon className="w-4 h-4" />
             Book
           </button>
+          {showInstantMeetingModal && (
+            <button
+              onClick={showInstantMeetingModal}
+              onMouseEnter={() => setHoveredTab('invite')}
+              onMouseLeave={() => setHoveredTab(null)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
+              style={{
+                backgroundColor: 'transparent',
+                color: hoveredTab === 'invite' ? primary.hover : primary.base,
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: hoveredTab === 'invite' ? `${primary.base}80` : `${primary.base}40`
+              }}
+            >
+              <PaperAirplaneIcon className="w-4 h-4" />
+              Invite
+            </button>
+          )}
           <button
             onClick={() => {
               setCurrentView('manage-bookings');

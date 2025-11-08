@@ -70,11 +70,11 @@ export function BookingCard({
                 title={(booking.meeting_type as any)?.name || 'Meeting'}
               />
               <h3 
-                className={`text-base font-semibold ${
+                className={`text-base font-semibold truncate ${
                   isInactive ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'
                 }`}
               >
-                {booking.title}
+                {(booking.meeting_type as any)?.name || booking.title}
               </h3>
               
               {/* Live Indicator */}
@@ -110,11 +110,11 @@ export function BookingCard({
             
             {/* Date, time and relative time */}
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {format(startDate, 'EEEE, MMMM d, yyyy')} • {format(startDate, 'h:mm a')}
+              {format(startDate, 'EEEE, MMM d, yyyy')} • {format(startDate, 'h:mm a')}
               {!isInactive && (
                 <span 
                   className="ml-1 font-semibold"
-                  style={{ color: isLive ? '#dc2626' : meetingTypeColor }}
+                  style={{ color: meetingTypeColor }}
                 >
                   • {getRelativeTime(booking.scheduled_at)}
                 </span>

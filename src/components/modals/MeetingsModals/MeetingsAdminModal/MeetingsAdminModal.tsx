@@ -349,6 +349,7 @@ export default function MeetingsAdminModal({
               setHoveredTab={setHoveredTab}
               showTypesModal={toggleTypesModal}
               showSettingsModal={toggleSettingsModal}
+              showInstantMeetingModal={toggleInstantMeetingModal}
               onClose={handleClose}
               activeBookingCount={activeBookingCount}
               fetchActiveBookingCount={fetchActiveBookingCount}
@@ -458,6 +459,7 @@ export default function MeetingsAdminModal({
               setHoveredTab={setHoveredTab}
               showTypesModal={toggleTypesModal}
               showSettingsModal={toggleSettingsModal}
+              showInstantMeetingModal={toggleInstantMeetingModal}
               onClose={handleClose}
               activeBookingCount={activeBookingCount}
               fetchActiveBookingCount={fetchActiveBookingCount}

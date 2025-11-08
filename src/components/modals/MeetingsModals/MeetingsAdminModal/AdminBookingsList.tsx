@@ -15,6 +15,7 @@ import { BookingCardSkeleton, BookingCard } from '../shared/components';
 
 interface AdminBookingsListProps {
   organizationId?: string;
+  onInviteClick?: () => void;
 }
 
 export default function AdminBookingsList({ organizationId }: AdminBookingsListProps) {
@@ -86,8 +87,19 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
 
       const now = new Date();
       
+      // Auto-complete past meetings
+      const allBookings = data.bookings.map((booking: Booking) => {
+        const endTime = new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000;
+        
+        // If meeting has ended and status is not cancelled, mark as completed
+        if (endTime < now.getTime() && !['cancelled', 'completed'].includes(booking.status)) {
+          return { ...booking, status: 'completed' as const };
+        }
+        
+        return booking;
+      });
+      
       // Calculate counts
-      const allBookings = data.bookings;
       const active = allBookings.filter((b: Booking) => 
         !['cancelled', 'completed'].includes(b.status)
       );
@@ -321,22 +333,22 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
             Refresh
           </button>
 
-          {/* Past Button with Count Badge */}
+          {/* Active/Inactive Toggle Button with Count Badge */}
           <button
             onClick={() => {
               setShowPast(!showPast);
               setLimit(10);
             }}
-            onMouseEnter={() => setHoveredActionBtn('past')}
+            onMouseEnter={() => setHoveredActionBtn('toggle')}
             onMouseLeave={() => setHoveredActionBtn(null)}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative"
             style={{
               backgroundColor: primary.base,
               color: 'white',
-              opacity: hoveredActionBtn === 'past' ? 0.9 : 1,
+              opacity: hoveredActionBtn === 'toggle' ? 0.9 : 1,
             }}
           >
-            <span>{showPast ? <><span className="sm:hidden">Active</span><span className="hidden sm:inline">← Active</span></> : <><span className="sm:hidden">Past</span><span className="hidden sm:inline">Past →</span></>}</span>
+            <span>{showPast ? 'Active' : 'Inactive'}</span>
             <span 
               className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full"
               style={{
@@ -362,7 +374,7 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
               opacity: bookings.length < limit ? 0.5 : hoveredActionBtn === 'more' ? 0.9 : 1,
             }}
           >
-            Load More
+            More
           </button>
         </div>
       </div>
