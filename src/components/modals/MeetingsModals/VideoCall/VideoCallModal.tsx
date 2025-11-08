@@ -28,16 +28,7 @@ import {
   StopCircleIcon,
   VideoCameraIcon as VideoCameraIconSolid
 } from '@heroicons/react/24/outline';
-import { useTwilioRoom } from './hooks/useTwilioRoom';
-import { useChat } from './hooks/useChat';
-import { useBackgroundProcessing } from './hooks/useBackgroundProcessing';
-import { useRecording } from './hooks/useRecording';
-import { useVideoCallUI } from './hooks/useVideoCallUI';
-import { useParticipantManagement } from './hooks/useParticipantManagement';
-import { useSettings } from './hooks/useSettings';
-import { useTranscription } from './hooks/useTranscription';
-import { useMeetingAIModels } from './hooks/useMeetingAIModels';
-import { useAIAnalysis } from './hooks/useAIAnalysis';
+import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState } from './hooks';
 import RemoteParticipantVideo from './components/RemoteParticipantVideo';
 import ChatPanel from './components/ChatPanel';
 import ParticipantsPanel from './components/ParticipantsPanel';
@@ -53,7 +44,6 @@ import MinimizedVideoCallButton from './components/MinimizedVideoCallButton';
 import WaitingRoomControls from '../WaitingRoom/WaitingRoomControls';
 import TranscriptionPanel from './components/TranscriptionPanel';
 import AIAnalysisPanel from './components/AIAnalysisPanel';
-import { usePanelManagement } from './hooks/usePanelManagement';
 
 interface VideoCallProps {
   token: string;
@@ -73,41 +63,8 @@ interface Participant {
 }
 
 export default function VideoCallModal({ token, roomName, onLeave, participantName, meetingTitle, userIsHost = false }: VideoCallProps) {
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
-
-  // Get current user ID for waiting room
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setCurrentUserId(user.id);
-          
-          // Get user's organization
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('organization_id')
-            .eq('id', user.id)
-            .single();
-          
-          if (profile) {
-            setCurrentOrgId(profile.organization_id);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching current user:', error);
-      }
-    };
-    
-    fetchCurrentUser();
-  }, []);
+  // Use custom hook for current user data
+  const { currentUserId, currentOrgId } = useCurrentUser();
 
   // Use the Twilio room hook
   const {
@@ -468,12 +425,26 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
     }
   }, [isConnected, stopNetworkMonitoring]);
 
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showNotes, setShowNotes] = useState(false);
-  const [meetingNotes, setMeetingNotes] = useState('');
-  const [showTranscription, setShowTranscription] = useState(false);
-  const [showAnalysis, setShowAnalysis] = useState(false);
+  // Use custom hooks for state management
+  const {
+    isScreenSharing,
+    error,
+    startScreenSharing,
+    stopScreenSharing,
+    setErrorMessage,
+    clearError,
+  } = useScreenShareState();
+
+  const {
+    showNotes,
+    meetingNotes,
+    showTranscription,
+    showAnalysis,
+    setShowNotes,
+    setShowTranscription,
+    setShowAnalysis,
+    updateNotes,
+  } = useMeetingNotesState();
 
   // Register panels when they become visible
   useEffect(() => {
@@ -525,14 +496,14 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
         screenTrackRef.current.stop();
         screenTrackRef.current = null;
       }
-      setIsScreenSharing(false);
+      stopScreenSharing();
     } else {
       try {
         const screenTrack = await navigator.mediaDevices.getDisplayMedia({ video: true })
           .then(stream => new LocalVideoTrack(stream.getVideoTracks()[0]));
         screenTrackRef.current = screenTrack;
         room?.localParticipant.publishTrack(screenTrack);
-        setIsScreenSharing(true);
+        startScreenSharing();
       } catch (err) {
         console.error('Error starting screen share:', err);
       }
@@ -993,7 +964,7 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
         isMobile={isMobile}
         meetingNotes={meetingNotes}
         roomName={roomName}
-        setMeetingNotes={setMeetingNotes}
+        setMeetingNotes={updateNotes}
         panelManagement={panelManagement}
         onClose={() => setShowNotes(false)}
       />
