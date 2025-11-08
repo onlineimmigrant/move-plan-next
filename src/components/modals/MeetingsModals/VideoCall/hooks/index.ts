@@ -23,3 +23,4 @@ export { usePanelRegistration } from './usePanelRegistration';
 export { useChatHistory } from './useChatHistory';
 export { useBackgroundEffect } from './useBackgroundEffect';
 export { useDragHandler } from './useDragHandler';
+export { useVideoCallActions } from './useVideoCallActions';

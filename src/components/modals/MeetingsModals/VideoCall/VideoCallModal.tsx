@@ -28,7 +28,7 @@ import {
   StopCircleIcon,
   VideoCameraIcon as VideoCameraIconSolid
 } from '@heroicons/react/24/outline';
-import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState, useVideoAttachment, useNetworkMonitoring, usePanelRegistration, useChatHistory, useBackgroundEffect, useDragHandler } from './hooks';
+import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState, useVideoAttachment, useNetworkMonitoring, usePanelRegistration, useChatHistory, useBackgroundEffect, useDragHandler, useVideoCallActions } from './hooks';
 import RemoteParticipantVideo from './components/RemoteParticipantVideo';
 import ChatPanel from './components/ChatPanel';
 import ParticipantsPanel from './components/ParticipantsPanel';
@@ -309,7 +309,6 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const localVideoRefSpotlight = useRef<HTMLVideoElement>(null);
   const localVideoRefThumbnail = useRef<HTMLVideoElement>(null);
-  const screenTrackRef = useRef<LocalVideoTrack | null>(null);
 
   // Use custom hooks for state management
   const {
@@ -331,6 +330,33 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
     setShowAnalysis,
     updateNotes,
   } = useMeetingNotesState();
+
+  // Use video call actions hook for action handlers
+  const {
+    toggleScreenShare,
+    toggleTranscription,
+    toggleAnalysis,
+    runAnalysis,
+    exportTranscript,
+    leaveCall,
+    screenTrackRef,
+  } = useVideoCallActions(
+    room,
+    roomName,
+    isScreenSharing,
+    startScreenSharing,
+    stopScreenSharing,
+    isTranscribing,
+    startTranscription,
+    stopTranscription,
+    setShowTranscription,
+    showAnalysis,
+    setShowAnalysis,
+    selectedModel,
+    transcript,
+    analyzeConversation,
+    onLeave
+  );
 
   // Use video attachment hook to manage video track attachment
   useVideoAttachment(
@@ -371,103 +397,7 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
   // Use drag handler hook for modal dragging
   const { handleMouseDown, isDraggingRef } = useDragHandler(isFullscreen, isMinimized, isMobile, x, y, setX, setY);
 
-  const toggleScreenShare = async () => {
-    if (isScreenSharing) {
-      if (screenTrackRef.current) {
-        room?.localParticipant.unpublishTrack(screenTrackRef.current);
-        screenTrackRef.current.stop();
-        screenTrackRef.current = null;
-      }
-      stopScreenSharing();
-    } else {
-      try {
-        const screenTrack = await navigator.mediaDevices.getDisplayMedia({ video: true })
-          .then(stream => new LocalVideoTrack(stream.getVideoTracks()[0]));
-        screenTrackRef.current = screenTrack;
-        room?.localParticipant.publishTrack(screenTrack);
-        startScreenSharing();
-      } catch (err) {
-        console.error('Error starting screen share:', err);
-      }
-    }
-  };
-
-  // Toggle transcription
-  const toggleTranscription = async () => {
-    if (isTranscribing) {
-      stopTranscription();
-      setShowTranscription(false);
-    } else {
-      setShowTranscription(true);
-      await startTranscription();
-    }
-  };
-
-  // Toggle AI analysis
-  const toggleAnalysis = () => {
-    setShowAnalysis(!showAnalysis);
-  };
-
-  // Run AI analysis
-  const runAnalysis = async () => {
-    if (!selectedModel) {
-      console.warn('⚠️ No AI model selected');
-      return;
-    }
-
-    if (transcript.length === 0) {
-      console.warn('⚠️ No transcript available for analysis');
-      return;
-    }
-
-    await analyzeConversation(transcript, selectedModel);
-  };
-
-  // Export transcript
-  const exportTranscript = () => {
-    if (transcript.length === 0) return;
-
-    const textContent = transcript
-      .map(
-        (segment) =>
-          `[${segment.timestamp.toLocaleTimeString()}] ${segment.speaker}: ${segment.text}`
-      )
-      .join('\n');
-
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transcript-${roomName}-${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   // Copy to clipboard helper
-  
-  // Copy to clipboard helper
-  
-  // Copy to clipboard helper
-  
-  // Copy to clipboard helper
-  
-  // Copy to clipboard helper
-  
-  // Copy to clipboard helper
-  
-  // Copy to clipboard helper
-  
-  // Copy to clipboard helper
-  
-  const leaveCall = () => {
-    if (room) {
-      room.disconnect();
-    }
-    onLeave();
-  };
-
   // Copy to clipboard helper
   const copyToClipboard = async (text: string, field: string) => {
     try {
