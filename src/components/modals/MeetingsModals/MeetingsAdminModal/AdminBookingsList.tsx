@@ -2,23 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-  VideoCameraIcon, 
-  ClockIcon, 
-  CalendarIcon, 
-  UserIcon,
-  XMarkIcon,
-  EyeIcon,
-  UsersIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 import { useMeetingLauncher } from '@/hooks/useMeetingLauncher';
 import { type Booking } from '@/context/MeetingContext';
-import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/Shared/ToastContainer';
 import WaitingRoomControls from '../WaitingRoom/WaitingRoomControls';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { BookingCardSkeleton } from '../shared/components';
+import { BookingCardSkeleton, BookingCard } from '../shared/components';
 
 interface AdminBookingsListProps {
   organizationId?: string;
@@ -33,7 +26,6 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   const [joiningBookingId, setJoiningBookingId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [hoveredActionBtn, setHoveredActionBtn] = useState<string | null>(null);
   const [showPast, setShowPast] = useState(false);
   const [limit, setLimit] = useState(10);
@@ -47,38 +39,6 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   } = useMeetingLauncher();
   
   const { success: showSuccess, error: showError, info: showInfo } = useToast();
-
-  // Helper function for relative time display
-  const getRelativeTime = (scheduledAt: string) => {
-    const now = new Date();
-    const scheduled = new Date(scheduledAt);
-    const diffMs = scheduled.getTime() - now.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 0) return 'Started';
-    if (diffMins < 1) return 'Starting now';
-    if (diffMins < 60) return `in ${diffMins} min`;
-    if (diffHours < 24) return `in ${diffHours} hr${diffHours > 1 ? 's' : ''}`;
-    if (diffDays === 1) return 'tomorrow';
-    if (diffDays < 7) return `in ${diffDays} days`;
-    return format(scheduled, 'MMM d');
-  };
-
-  // Helper function to get status border color
-  const getStatusBorderColor = (booking: Booking, timeInfo: any) => {
-    if (booking.status === 'cancelled') return '#ef4444'; // red
-    if (booking.status === 'completed') return '#6b7280'; // gray
-    if (timeInfo.isInProgress) return primary.base; // primary
-    
-    // Urgent warning for meetings starting soon
-    const diffMs = new Date(booking.scheduled_at).getTime() - new Date().getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins > 0 && diffMins <= 15) return '#f59e0b'; // amber
-    
-    return '#10b981'; // green for upcoming
-  };
 
   // Get current user for waiting room controls
   useEffect(() => {
@@ -316,247 +276,20 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
       {/* Bookings Grid - Scrollable */}
       <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {bookings.map((booking) => {
-          const timeInfo = getTimeUntilMeeting(booking);
-          const canJoin = booking.status !== 'cancelled' && 
-                         booking.status !== 'no_show' && 
-                         booking.status !== 'completed';
-          
-          const isCancelled = booking.status === 'cancelled';
-          const isCompleted = booking.status === 'completed';
-          const isInactive = isCancelled || isCompleted;
-
-          // Calculate time until meeting for countdown and urgency colors
-          const now = new Date();
-          const scheduled = new Date(booking.scheduled_at);
-          const diffMs = scheduled.getTime() - now.getTime();
-          const diffMins = Math.floor(diffMs / 60000);
-          const showCountdown = diffMins > 0 && diffMins <= 30;
-          const isToday = now.toDateString() === scheduled.toDateString();
-          
-          // Color-coded urgency borders
-          let borderColor = 'transparent';
-          let backgroundColor = 'rgba(255, 255, 255, 0.5)';
-          let borderWidth = '1px';
-          
-          if (timeInfo.isInProgress && !isInactive) {
-            borderColor = '#dc2626'; // red-600 - LIVE
-            backgroundColor = '#fee2e2'; // red-50
-            borderWidth = '2px';
-          } else if (diffMins > 0 && diffMins <= 15 && !isInactive) {
-            borderColor = '#16a34a'; // green-600 - SOON
-            backgroundColor = '#dcfce7'; // green-50
-            borderWidth = '2px';
-          } else if (isToday && !isInactive && !timeInfo.isInProgress) {
-            borderColor = '#eab308'; // yellow-500 - TODAY
-            backgroundColor = '#fef9c3'; // yellow-50
-            borderWidth = '2px';
-          }
-
-          return (
-            <div
+          {bookings.map((booking) => (
+            <BookingCard
               key={booking.id}
-              className="relative rounded-lg p-4 hover:shadow-lg transition-all duration-200 backdrop-blur-sm"
-              style={{
-                backgroundColor,
-                border: `${borderWidth} solid ${borderColor}`,
-                opacity: isInactive ? 0.7 : 1
-              }}
-            >
-              {/* Top Section: Title and Status */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 pr-4 min-w-0">
-                  <h3 
-                    className={`text-base font-semibold mb-1 truncate ${isInactive ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}
-                    title={booking.title}
-                  >
-                    {booking.title}
-                  </h3>
-
-                  {/* Meeting Type Badge */}
-                  {booking.meeting_type && (
-                    <span 
-                      className="inline-block px-2 py-0.5 rounded text-xs font-medium mb-2"
-                      style={{
-                        backgroundColor: `${primary.base}15`,
-                        color: primary.base
-                      }}
-                    >
-                      {(booking.meeting_type as any).name}
-                    </span>
-                  )}
-                </div>
-
-                {/* Status Badge */}
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span
-                    className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
-                    style={{
-                      backgroundColor: isCancelled
-                        ? '#fee2e2'
-                        : isCompleted
-                        ? '#f3f4f6'
-                        : timeInfo.isInProgress
-                        ? `${primary.base}20`
-                        : booking.status === 'waiting'
-                        ? '#fef3c7'
-                        : '#d1fae5',
-                      color: isCancelled
-                        ? '#991b1b'
-                        : isCompleted
-                        ? '#4b5563'
-                        : timeInfo.isInProgress
-                        ? primary.active
-                        : booking.status === 'waiting'
-                        ? '#92400e'
-                        : '#065f46'
-                    }}
-                  >
-                    {isCancelled && '✕ Cancelled'}
-                    {isCompleted && '✓ Completed'}
-                    {!isInactive && booking.status === 'waiting' && '⏳ Waiting'}
-                    {!isInactive && timeInfo.isInProgress && '● In Progress'}
-                    {!isInactive && booking.status === 'confirmed' && '✓ Confirmed'}
-                    {!isInactive && booking.status === 'scheduled' && '📅 Scheduled'}
-                  </span>
-                  
-                  {/* Countdown for meetings starting soon */}
-                  {showCountdown && !isInactive && !timeInfo.isInProgress && (
-                    <span 
-                      className="text-xs font-bold px-2 py-0.5 rounded animate-pulse"
-                      style={{
-                        backgroundColor: diffMins <= 5 ? '#fef3c7' : '#fef3c7',
-                        color: diffMins <= 5 ? '#92400e' : '#92400e'
-                      }}
-                    >
-                      ⏰ {diffMins} min
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Middle Section: Meeting Details */}
-              <div className="space-y-2 mb-3">
-                {/* Customer Info */}
-                <div className="flex items-center text-sm text-gray-700 dark:text-gray-300 min-w-0">
-                  <UserIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
-                  <span className="font-medium truncate">{booking.customer_name}</span>
-                  <span className="mx-2 text-gray-400 flex-shrink-0">•</span>
-                  <span className="text-gray-600 dark:text-gray-400 truncate">{booking.customer_email}</span>
-                </div>
-
-                {/* Date and Time */}
-                <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
-                  <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
-                  <span className="font-medium">
-                    {format(new Date(booking.scheduled_at), 'EEEE, MMM dd, yyyy')}
-                  </span>
-                </div>
-
-                <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
-                  <ClockIcon className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: primary.base }} />
-                  <span>
-                    {format(new Date(booking.scheduled_at), 'h:mm a')} ({booking.duration_minutes} min)
-                  </span>
-                  <span className="mx-2 text-gray-400">•</span>
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">
-                    {getRelativeTime(booking.scheduled_at)}
-                  </span>
-                </div>
-
-                {/* Notes */}
-                {booking.notes && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 pl-6 line-clamp-2 italic">
-                    "{booking.notes}"
-                  </p>
-                )}
-              </div>
-
-              {/* Bottom Section: Action Buttons in Card Footer */}
-              <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2">
-                  {/* In-Progress Pulsing Indicator */}
-                  {timeInfo.isInProgress && !isInactive && (
-                    <div className="flex items-center gap-2">
-                      <span className="relative flex h-3 w-3">
-                        <span 
-                          className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                          style={{ backgroundColor: primary.base }}
-                        ></span>
-                        <span 
-                          className="relative inline-flex rounded-full h-3 w-3"
-                          style={{ backgroundColor: primary.base }}
-                        ></span>
-                      </span>
-                      <span className="text-xs font-semibold" style={{ color: primary.base }}>
-                        Live now
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Cancel Button - LEFT SIDE */}
-                  {!isInactive && (
-                    <button
-                      onClick={() => handleCancelBooking(booking.id)}
-                      className="inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
-                    >
-                      <XMarkIcon className="w-4 h-4 mr-1" />
-                      Cancel
-                    </button>
-                  )}
-                </div>
-
-                {/* Action Buttons - RIGHT SIDE */}
-                <div className="flex gap-2">
-                  {canJoin && !isInactive ? (
-                    <button
-                      onClick={() => handleJoinCall(booking)}
-                      onMouseEnter={() => setHoveredButton(booking.id)}
-                      onMouseLeave={() => setHoveredButton(null)}
-                      disabled={joiningBookingId === booking.id}
-                      className={`inline-flex items-center px-3 py-2 rounded-lg font-medium text-sm transition-all ${
-                        joiningBookingId === booking.id
-                          ? 'bg-gray-400 text-white cursor-wait'
-                          : ''
-                      }`}
-                      style={
-                        joiningBookingId === booking.id
-                          ? undefined
-                          : {
-                              background: hoveredButton === booking.id
-                                ? `linear-gradient(135deg, ${primary.hover}, ${primary.active})`
-                                : `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                              color: 'white',
-                              boxShadow: hoveredButton === booking.id ? `0 4px 12px ${primary.base}40` : 'none'
-                            }
-                      }
-                      title="Join as admin (bypass time restrictions)"
-                    >
-                      {joiningBookingId === booking.id ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Joining...
-                        </>
-                      ) : (
-                        <>
-                          <VideoCameraIcon className="w-4 h-4 mr-1" />
-                          Join
-                        </>
-                      )}
-                    </button>
-                  ) : isCompleted ? (
-                    <span className="text-xs text-gray-400 px-3 py-2">Meeting ended</span>
-                  ) : isCancelled ? (
-                    <span className="text-xs text-gray-400 px-3 py-2">Cancelled</span>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+              booking={booking}
+              variant="admin"
+              onJoin={handleJoinCall}
+              onCancel={handleCancelBooking}
+              isJoining={joiningBookingId === booking.id}
+              currentUserId={currentUserId || undefined}
+              userRole="admin"
+              showWaitingRoomControls={false}
+              organizationId={organizationId}
+            />
+          ))}
         </div>
       </div>
 
