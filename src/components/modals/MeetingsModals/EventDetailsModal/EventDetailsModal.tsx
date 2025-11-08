@@ -44,6 +44,8 @@ interface EventDetailsModalProps {
   onCancel?: (eventId: string) => void;
   onDelete?: (eventId: string) => void;
   onStatusChange?: (eventId: string, status: EventDetails['status']) => void;
+  onJoin?: (event: EventDetails) => void;
+  isJoining?: boolean;
   isAdmin?: boolean;
   use24Hour?: boolean; // Time format preference from settings
 }
@@ -87,6 +89,8 @@ export default function EventDetailsModal({
   onCancel,
   onDelete,
   onStatusChange,
+  onJoin,
+  isJoining = false,
   isAdmin = false,
   use24Hour = true, // Default to 24-hour format
 }: EventDetailsModalProps) {
@@ -161,6 +165,13 @@ export default function EventDetailsModal({
   };
 
   const handleStatusChange = (newStatus: EventDetails['status']) => {
+    // If changing to cancelled, show confirmation dialog
+    if (newStatus === 'cancelled') {
+      setShowCancelConfirm(true);
+      return;
+    }
+    
+    // For other status changes, update directly
     if (onStatusChange) {
       onStatusChange(event.id, newStatus);
     }
@@ -320,6 +331,25 @@ export default function EventDetailsModal({
             </div>
           </div>
         </div>
+
+        {/* Join Meeting Button */}
+        {onJoin && !['cancelled', 'completed', 'no_show'].includes(event.status) && (
+          <div className="border-t border-gray-200/50 dark:border-gray-700/50 pt-4">
+            <button
+              onClick={() => onJoin(event)}
+              disabled={isJoining}
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              style={{ 
+                backgroundColor: primary.base,
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span>{isJoining ? 'Joining Meeting...' : 'Join Meeting'}</span>
+            </button>
+          </div>
+        )}
 
         {/* Customer Information */}
         <div className="border-t border-gray-200/50 dark:border-gray-700/50 pt-4">

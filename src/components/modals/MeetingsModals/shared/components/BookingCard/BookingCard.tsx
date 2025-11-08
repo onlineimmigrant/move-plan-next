@@ -2,11 +2,6 @@
 
 import React, { useState, lazy, Suspense } from 'react';
 import { format } from 'date-fns';
-import { 
-  XMarkIcon,
-  ArrowRightCircleIcon,
-  ClockIcon,
-} from '@heroicons/react/24/outline';
 import { type BookingCardProps } from './types';
 import { getCardStyles, getTimeUntilMeeting, getRelativeTime, shouldShowCountdown } from './utils';
 
@@ -27,7 +22,6 @@ export function BookingCard({
 
   // Theme color - extract from meeting type or use default
   const meetingTypeColor = (booking.meeting_type as any)?.color || '#3b82f6';
-  const primaryColor = '#3b82f6'; // Primary blue color for Join button
 
   // Calculate styles and states
   const cardStyles = getCardStyles(booking, meetingTypeColor);
@@ -37,26 +31,9 @@ export function BookingCard({
   const isCancelled = booking.status === 'cancelled';
   const isCompleted = booking.status === 'completed';
   const isInactive = isCancelled || isCompleted;
-  
-  // Determine if user can join
-  const isAdmin = userRole === 'admin';
-  const isHost = currentUserId === booking.host_user_id;
-  const isAdminOrHost = isAdmin || isHost;
-  
-  const canJoinNow = 
-    !['cancelled', 'completed', 'no_show'].includes(booking.status) &&
-    (isAdminOrHost || timeInfo.isInProgress || timeInfo.diffMins <= 15);
 
   const handleViewDetails = () => {
     setShowDetailsModal(true);
-  };
-
-  const handleJoin = () => {
-    onJoin(booking);
-  };
-
-  const handleCancel = () => {
-    onCancel(booking.id);
   };
 
   // Convert booking to EventDetails format for modal
@@ -144,28 +121,6 @@ export function BookingCard({
               )}
             </p>
           </div>
-
-          {/* Right: Action buttons (matching modal close button position) */}
-          <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-            {/* Join Meeting Button */}
-            {canJoinNow && !isInactive && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleJoin();
-                }}
-                disabled={isJoining}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-white transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
-                style={{ 
-                  backgroundColor: primaryColor,
-                }}
-                title="Join Meeting"
-              >
-                <ArrowRightCircleIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">{isJoining ? 'Joining...' : 'Join'}</span>
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
@@ -177,6 +132,11 @@ export function BookingCard({
             onClose={() => setShowDetailsModal(false)}
             event={eventDetails}
             isAdmin={variant === 'admin'}
+            onJoin={(event) => {
+              onJoin(event as any);
+              setShowDetailsModal(false);
+            }}
+            isJoining={isJoining}
             onCancel={(eventId: string) => {
               onCancel(eventId);
               setShowDetailsModal(false);
