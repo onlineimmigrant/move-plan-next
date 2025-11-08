@@ -17,3 +17,5 @@ export { useScreenShareState } from './useScreenShareState';
 export type { UseScreenShareStateReturn } from './useScreenShareState';
 export { useMeetingNotesState } from './useMeetingNotesState';
 export type { UseMeetingNotesStateReturn } from './useMeetingNotesState';
+export { useVideoAttachment } from './useVideoAttachment';
+export { useNetworkMonitoring } from './useNetworkMonitoring';

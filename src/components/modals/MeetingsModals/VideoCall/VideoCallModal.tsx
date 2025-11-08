@@ -28,7 +28,7 @@ import {
   StopCircleIcon,
   VideoCameraIcon as VideoCameraIconSolid
 } from '@heroicons/react/24/outline';
-import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState } from './hooks';
+import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState, useVideoAttachment, useNetworkMonitoring } from './hooks';
 import RemoteParticipantVideo from './components/RemoteParticipantVideo';
 import ChatPanel from './components/ChatPanel';
 import ParticipantsPanel from './components/ParticipantsPanel';
@@ -238,103 +238,6 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
     stopRecording,
   } = useRecording();
   
-  // Attach local video track to video elements
-  useEffect(() => {
-    if (!localVideoTrack) {
-      console.log('📹 No local video track available to attach');
-      return;
-    }
-
-    let retryCount = 0;
-    const maxRetries = 10; // Try for 1 second total
-    
-    const attemptAttach = () => {
-      console.log(`📹 Attempting to attach video (attempt ${retryCount + 1}/${maxRetries})`);
-      console.log('📹 Track state:', {
-        kind: localVideoTrack.kind,
-        id: localVideoTrack.id,
-        enabled: localVideoTrack.isEnabled,
-        started: localVideoTrack.mediaStreamTrack?.readyState,
-        mediaStreamTrack: !!localVideoTrack.mediaStreamTrack
-      });
-      
-      const videoTrack = localVideoTrack;
-      const refs = [
-        { ref: localVideoRef, name: 'grid' },
-        { ref: localVideoRefSpotlight, name: 'spotlight' },
-        { ref: localVideoRefThumbnail, name: 'thumbnail' }
-      ];
-
-      let attachedCount = 0;
-      refs.forEach(({ ref, name }) => {
-        if (ref.current) {
-          console.log(`📹 Attaching video track to ${name} ref`);
-          
-          // Detach first to avoid duplicates
-          try {
-            videoTrack.detach(ref.current);
-          } catch (e) {
-            // Ignore detach errors
-          }
-          
-          try {
-            const attachedElement = videoTrack.attach(ref.current);
-            
-            // Force video element to play
-            if (attachedElement instanceof HTMLVideoElement) {
-              attachedElement.play().catch(e => {
-                console.warn(`⚠️ Failed to play video on ${name}:`, e);
-              });
-            }
-            
-            console.log(`✅ Track attached to ${name}:`, {
-              hasSrcObject: !!attachedElement?.srcObject,
-              videoWidth: (attachedElement as HTMLVideoElement)?.videoWidth,
-              videoHeight: (attachedElement as HTMLVideoElement)?.videoHeight,
-              paused: (attachedElement as HTMLVideoElement)?.paused,
-              readyState: (attachedElement as HTMLVideoElement)?.readyState
-            });
-            
-            attachedCount++;
-          } catch (e) {
-            console.error(`❌ Failed to attach to ${name}:`, e);
-          }
-        } else {
-          console.log(`⏳ ${name} ref not ready yet`);
-        }
-      });
-      
-      console.log(`📹 Successfully attached to ${attachedCount}/${refs.length} video elements`);
-      
-      // If no refs were ready and we have retries left, try again
-      if (attachedCount === 0 && retryCount < maxRetries) {
-        retryCount++;
-        setTimeout(attemptAttach, 100);
-      } else if (attachedCount > 0) {
-        console.log('✅ Video attachment complete!');
-      } else {
-        console.warn('⚠️ Could not attach video to any refs after all retries');
-      }
-    };
-
-    // Start attempting after a short delay
-    const timer = setTimeout(attemptAttach, 100);
-
-    return () => {
-      clearTimeout(timer);
-      const refs = [localVideoRef, localVideoRefSpotlight, localVideoRefThumbnail];
-      refs.forEach(ref => {
-        if (ref.current) {
-          try {
-            localVideoTrack.detach(ref.current);
-          } catch (e) {
-            // Ignore detach errors on cleanup
-          }
-        }
-      });
-    };
-  }, [localVideoTrack, viewMode, pinnedParticipant, showSelfView, isMinimized, isConnected]);
-  
   // Use the participant management hook
   const {
     isHost,
@@ -408,23 +311,6 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
   const localVideoRefThumbnail = useRef<HTMLVideoElement>(null);
   const screenTrackRef = useRef<LocalVideoTrack | null>(null);
 
-  // Start network monitoring when connected
-  useEffect(() => {
-    if (isConnected && room) {
-      console.log('🌐 Starting network monitoring');
-      const cleanup = startNetworkMonitoring(room);
-      return cleanup;
-    }
-  }, [isConnected, room, startNetworkMonitoring]);
-
-  // Stop network monitoring when disconnected
-  useEffect(() => {
-    if (!isConnected) {
-      console.log('🌐 Stopping network monitoring');
-      stopNetworkMonitoring();
-    }
-  }, [isConnected, stopNetworkMonitoring]);
-
   // Use custom hooks for state management
   const {
     isScreenSharing,
@@ -445,6 +331,16 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
     setShowAnalysis,
     updateNotes,
   } = useMeetingNotesState();
+
+  // Use video attachment hook to manage video track attachment
+  useVideoAttachment(
+    localVideoTrack,
+    { localVideoRef, localVideoRefSpotlight, localVideoRefThumbnail },
+    { viewMode, pinnedParticipant, showSelfView, isMinimized, isConnected }
+  );
+
+  // Use network monitoring hook to manage monitoring lifecycle
+  useNetworkMonitoring(isConnected, room, startNetworkMonitoring, stopNetworkMonitoring);
 
   // Register panels when they become visible
   useEffect(() => {
