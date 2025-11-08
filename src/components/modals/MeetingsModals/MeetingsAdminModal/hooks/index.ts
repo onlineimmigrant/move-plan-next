@@ -12,3 +12,6 @@ export type { UseAdminBookingsReturn } from './useAdminBookings';
 
 export { useMeetingTypesData } from './useMeetingTypesData';
 export type { UseMeetingTypesDataReturn, MeetingSettings } from './useMeetingTypesData';
+
+export { useBookingForm } from './useBookingForm';
+export type { UseBookingFormReturn } from './useBookingForm';

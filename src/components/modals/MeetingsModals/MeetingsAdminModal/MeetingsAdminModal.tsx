@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { format } from 'date-fns';
 import { Rnd } from 'react-rnd';
 import { CalendarIcon, UserGroupIcon, ArrowLeftIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -8,13 +8,15 @@ import { useSettings } from '@/context/SettingsContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Calendar, BookingForm, BookingCardSkeleton } from '@/components/modals/MeetingsModals/shared/components';
 import { CalendarEvent, CalendarView, BookingFormData, MeetingType, TimeSlot } from '../shared/types';
-import MeetingsSettingsModal from '../MeetingsSettingsModal';
-import MeetingTypesModal from '../MeetingTypesModal';
-import { EventDetailsModal } from '../EventDetailsModal';
-import InstantMeetingModal from '../InstantMeetingModal';
 import AdminBookingsList from './AdminBookingsList';
-import { useAdminModalState, useAdminBookings, useMeetingTypesData } from './hooks';
-import { AdminModalHeader } from './components';
+import { useAdminModalState, useAdminBookings, useMeetingTypesData, useBookingForm } from './hooks';
+import { AdminModalHeader, AdminModalFooter } from './components';
+
+// Lazy load child modals for better performance
+const MeetingsSettingsModal = lazy(() => import('../MeetingsSettingsModal'));
+const MeetingTypesModal = lazy(() => import('../MeetingTypesModal'));
+const EventDetailsModal = lazy(() => import('../EventDetailsModal').then(m => ({ default: m.EventDetailsModal })));
+const InstantMeetingModal = lazy(() => import('../InstantMeetingModal'));
 
 interface MeetingsAdminModalProps {
   /**
@@ -74,11 +76,9 @@ export default function MeetingsAdminModal({
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
 
-  // Calendar state (must be defined before hooks that use it)
+  // Calendar state
   const [currentDate, setCurrentDate] = useState<Date>(initialDate || new Date());
   const [calendarView, setCalendarView] = useState<CalendarView>('month');
-  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-  const [bookingFormData, setBookingFormData] = useState<Partial<BookingFormData>>({});
 
   // Custom hooks for state management
   const {
@@ -86,8 +86,6 @@ export default function MeetingsAdminModal({
     setCurrentView,
     loading,
     setLoading,
-    loadingSlots,
-    setLoadingSlots,
     submitting,
     setSubmitting,
     error,
@@ -125,6 +123,16 @@ export default function MeetingsAdminModal({
     meetingSettings,
     loadMeetingTypes,
   } = useMeetingTypesData(settings?.organization_id, isOpen);
+
+  const {
+    bookingFormData,
+    availableSlots,
+    loadingSlots,
+    setLoadingSlots,
+    handleFormChange,
+    loadAvailableSlots,
+    resetForm,
+  } = useBookingForm();
 
   // Load data on mount and when dependencies change
   useEffect(() => {
@@ -178,86 +186,15 @@ export default function MeetingsAdminModal({
     ]);
   }, [loadMeetingTypes, loadBookings, fetchActiveBookingCount]);
 
-  // Load available slots when needed
-  const loadAvailableSlots = async (date: Date) => {
-    if (!settings?.organization_id) return;
-
-    try {
-      setLoadingSlots(true);
-      const now = new Date();
-      
-      // Format date as YYYY-MM-DD in LOCAL timezone (not UTC)
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-      
-      console.log('[Admin Modal] Loading slots for date:', formattedDate, 'from Date object:', date.toLocaleString());
-      
-      // Fetch available slots from API (admins get 24-hour access if enabled)
-      const response = await fetch(
-        `/api/meetings/available-slots?organization_id=${settings.organization_id}&date=${formattedDate}&is_admin=true`,
-        {
-          // Add caching headers for better performance
-          headers: {
-            'Cache-Control': 'max-age=60', // Cache for 1 minute
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch available slots');
-      }
-
-      const data = await response.json();
-      
-      // Convert ISO string dates back to Date objects and filter past times
-      const slots: TimeSlot[] = data.slots
-        .map((slot: { 
-          start: string; 
-          end: string; 
-          available: boolean;
-          // API might return snake_case or camelCase
-          is_business_hours?: boolean;
-          isBusinessHours?: boolean;
-        }) => ({
-          start: new Date(slot.start),
-          end: new Date(slot.end),
-          available: slot.available,
-          isBusinessHours: slot.isBusinessHours ?? slot.is_business_hours ?? false,
-        }))
-        .filter((slot: TimeSlot) => {
-          // Filter out past time slots (use getTime() for accurate comparison)
-          return slot.start.getTime() >= now.getTime();
-        });
-
-      console.log(`[Admin Modal] Loaded ${slots.length} future slots for ${formattedDate}`);
-      if (slots.length > 0) {
-        console.log('[Admin Modal] First slot:', format(slots[0].start, 'yyyy-MM-dd HH:mm'));
-        console.log('[Admin Modal] Last slot:', format(slots[slots.length - 1].start, 'yyyy-MM-dd HH:mm'));
-      }
-      
-      setAvailableSlots(slots);
-      
-      // Log settings info for debugging
-      if (data.settings?.is_admin_mode) {
-        console.log('✨ 24-hour admin scheduling enabled:', data.settings);
-      }
-    } catch (err) {
-      console.error('Error loading available slots:', err);
-      setAvailableSlots([]);
-    } finally {
-      setLoadingSlots(false);
-    }
-  };
-
   // Handle slot click (admin can select any slot)
   const handleSlotClick = useCallback((date: Date, hour?: number) => {
     // Load available slots for the selected date
-    loadAvailableSlots(date);
+    if (settings?.organization_id) {
+      loadAvailableSlots(date, settings.organization_id);
+    }
     // Switch to booking view
     setCurrentView('booking');
-  }, []);
+  }, [settings?.organization_id, loadAvailableSlots, setCurrentView]);
 
   // Handle event click
   const handleEventClick = useCallback(async (event: CalendarEvent) => {
@@ -309,11 +246,6 @@ export default function MeetingsAdminModal({
     }
   }, [settings?.organization_id]);
 
-  // Handle form changes
-  const handleBookingFormChange = useCallback((data: Partial<BookingFormData>) => {
-    setBookingFormData(prev => ({ ...prev, ...data }));
-  }, []);
-
   // Handle booking submission
   const handleBookingSubmit = useCallback(async (data: BookingFormData) => {
     if (!settings?.organization_id) {
@@ -357,8 +289,7 @@ export default function MeetingsAdminModal({
       ]);
 
       // Reset and redirect to manage view
-      setBookingFormData({});
-      setAvailableSlots([]);
+      resetForm();
       setCurrentView('manage-bookings');
     } catch (err) {
       console.error('Error creating booking:', err);
@@ -372,19 +303,18 @@ export default function MeetingsAdminModal({
     loadMeetingTypes,
     loadBookings,
     fetchActiveBookingCount,
-    currentDate,
     setError,
     setSubmitting,
     setCurrentView,
+    resetForm,
   ]);
 
   // Handle modal close
   const handleClose = useCallback(() => {
     resetState();
-    setBookingFormData({});
-    setAvailableSlots([]);
+    resetForm();
     onClose();
-  }, [onClose, resetState]);
+  }, [onClose, resetState, resetForm]);
 
   if (!isOpen) return null;
 
@@ -441,7 +371,7 @@ export default function MeetingsAdminModal({
                     formData={bookingFormData}
                     availableSlots={availableSlots}
                     meetingTypes={meetingTypes}
-                    onChange={handleBookingFormChange}
+                    onChange={handleFormChange}
                     onSubmit={handleBookingSubmit}
                     onCancel={() => setCurrentView('calendar')}
                     onBackToCalendar={() => setCurrentView('calendar')}
@@ -495,62 +425,13 @@ export default function MeetingsAdminModal({
             </div>
 
             {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
-            {currentView === 'calendar' && (
-              <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    onClick={() => {
-                      const newDate = calendarView === 'month' 
-                        ? new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
-                        : calendarView === 'week'
-                        ? new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
-                        : new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
-                      setCurrentDate(newDate);
-                    }}
-                    className="p-2 rounded-lg transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
-                    }}
-                    aria-label="Previous"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setCurrentDate(new Date())}
-                    className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
-                    }}
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={() => {
-                      const newDate = calendarView === 'month' 
-                        ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
-                        : calendarView === 'week'
-                        ? new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-                        : new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
-                      setCurrentDate(newDate);
-                    }}
-                    className="p-2 rounded-lg transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
-                    }}
-                    aria-label="Next"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
+            <AdminModalFooter
+              currentView={currentView}
+              calendarView={calendarView}
+              currentDate={currentDate}
+              setCurrentDate={setCurrentDate}
+              primary={primary}
+            />
           </div>
         ) : (
           /* Desktop: Draggable & Resizable */
@@ -599,7 +480,7 @@ export default function MeetingsAdminModal({
                     formData={bookingFormData}
                     availableSlots={availableSlots}
                     meetingTypes={meetingTypes}
-                    onChange={handleBookingFormChange}
+                    onChange={handleFormChange}
                     onSubmit={handleBookingSubmit}
                     onCancel={() => setCurrentView('calendar')}
                     onBackToCalendar={() => setCurrentView('calendar')}
@@ -653,70 +534,23 @@ export default function MeetingsAdminModal({
             </div>
 
             {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
-            {currentView === 'calendar' && (
-              <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    onClick={() => {
-                      const newDate = calendarView === 'month' 
-                        ? new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
-                        : calendarView === 'week'
-                        ? new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
-                        : new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
-                      setCurrentDate(newDate);
-                    }}
-                    className="p-2 rounded-lg transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
-                    }}
-                    aria-label="Previous"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setCurrentDate(new Date())}
-                    className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
-                    }}
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={() => {
-                      const newDate = calendarView === 'month' 
-                        ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
-                        : calendarView === 'week'
-                        ? new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-                        : new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
-                      setCurrentDate(newDate);
-                    }}
-                    className="p-2 rounded-lg transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
-                    }}
-                    aria-label="Next"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
+            <AdminModalFooter
+              currentView={currentView}
+              calendarView={calendarView}
+              currentDate={currentDate}
+              setCurrentDate={setCurrentDate}
+              primary={primary}
+            />
           </div>
         </Rnd>
         )}
       </div>
     )}
     
-    {/* Instant Meeting Modal */}
-    <InstantMeetingModal
+    {/* Lazy-loaded Child Modals with Suspense */}
+    <Suspense fallback={null}>
+      {/* Instant Meeting Modal */}
+      <InstantMeetingModal
       isOpen={showInstantMeetingModal}
       onClose={toggleInstantMeetingModal}
       onSuccess={() => {
@@ -842,6 +676,8 @@ export default function MeetingsAdminModal({
         }
       }}
     />
+    </Suspense>
     </>
   );
 }
+

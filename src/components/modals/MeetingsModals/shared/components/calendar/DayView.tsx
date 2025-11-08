@@ -18,6 +18,8 @@ export interface DayViewProps {
   onEventClick: (event: CalendarEvent) => void;
   /** Callback when an empty slot is clicked */
   onSlotClick?: (date: Date, hour?: number) => void;
+  /** Date to highlight with primary color (for mobile date selection) */
+  highlightedDate?: Date | null;
   /** Whether to use 24-hour time format */
   use24Hour?: boolean;
 }

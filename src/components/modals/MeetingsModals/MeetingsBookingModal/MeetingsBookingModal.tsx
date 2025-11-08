@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import { format } from 'date-fns';
 import { Rnd } from 'react-rnd';
 import { ArrowLeftIcon, CalendarIcon, UserGroupIcon, ListBulletIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -16,6 +16,7 @@ import {
   useMeetingTypes,
   useKeyboardShortcuts
 } from '../shared/hooks';
+import { useCustomerBookingData } from './hooks';
 import {
   CALENDAR_VIEWS,
   MODAL_VIEWS,
@@ -27,6 +28,9 @@ import { MeetingsErrorBoundary } from '../shared/ui';
 import { useSettings } from '@/context/SettingsContext';
 import { supabase } from '@/lib/supabase';
 import { useThemeColors } from '@/hooks/useThemeColors';
+
+// Lazy load EventDetailsModal
+const EventDetailsModal = lazy(() => import('../EventDetailsModal').then(m => ({ default: m.EventDetailsModal })));
 import { logError } from '../shared/utils/errorHandling';
 
 /**
@@ -67,8 +71,10 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
   // View state
   const [currentView, setCurrentView] = useState<'calendar' | 'booking'>(MODAL_VIEWS.CALENDAR);
   const [error, setError] = useState<string | null>(null);
-  const [customerEmail, setCustomerEmail] = useState<string | null>(null);
-  const [loadingCustomerData, setLoadingCustomerData] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Custom hooks for state management
   const bookingState = useBookingState();
@@ -77,6 +83,20 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     settings?.organization_id,
     false // isAdmin = false for customer modal
   );
+
+  // Customer booking data hook
+  const {
+    customerEmail,
+    loadingCustomerData,
+    loadCustomerEmail,
+    loadEvents,
+    loadAvailableSlots,
+  } = useCustomerBookingData({
+    organizationId: settings?.organization_id,
+    bookingState,
+    calendarState,
+    onError: setError,
+  });
 
   // Accessibility features
   const { announce, announcement } = useAriaLiveAnnouncer();
@@ -117,204 +137,74 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     if (isOpen) {
       loadCustomerEmail();
     }
-  }, [isOpen]);
+  }, [isOpen, loadCustomerEmail]);
 
-  const loadCustomerEmail = async () => {
-    setLoadingCustomerData(true);
-    try {
-      // Get authenticated user (optional for public booking pages)
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        // No authenticated user - allow guest booking (for public appointment pages)
-        setLoadingCustomerData(false);
-        return;
-      }
-
-      // Try to get email from profiles table first (more reliable)
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('email, full_name')
-        .eq('id', user.id)
-        .single();
-
-      const email = profile?.email || user.email;
-      const customerName = profile?.full_name || '';
-
-      if (!email) {
-        setLoadingCustomerData(false);
-        return;
-      }
-
-      setCustomerEmail(email);
-      
-      // Pre-fill the email and name in booking form
-      // If customerName exists in profile, always use it (overwrite any previous value)
-      // This ensures the profile data is the source of truth
-      bookingState.updateFormData({
-        customer_email: email,
-        customer_name: customerName || bookingState.formData.customer_name || ''
-      });
-    } catch (err) {
-      logError(err, { context: 'Error loading customer email' });
-    } finally {
-      setLoadingCustomerData(false);
-    }
-  };
-
-
-  // Load events when date or view changes
+  // Initial data loading - matches MeetingsAdminModal pattern exactly
   useEffect(() => {
-    if (isOpen && currentView === MODAL_VIEWS.CALENDAR) {
-      loadEvents();
+    if (!isOpen) {
+      setInitialLoading(true);
+      return;
     }
-  }, [isOpen, calendarState.currentDate, calendarState.calendarView, currentView]);
+    
+    if (!settings?.organization_id) return;
+
+    const loadData = async () => {
+      setInitialLoading(true);
+      setError(null);
+      try {
+        // Just wait for events to load - meeting types load automatically via useMeetingTypes hook
+        await loadEvents();
+      } catch (err) {
+        console.error('Error loading meeting data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load meeting data');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadData();
+  }, [isOpen, settings?.organization_id, calendarState.currentDate, calendarState.calendarView]);
 
   // Load available slots when a slot is selected
   useEffect(() => {
     if (bookingState.selectedSlot) {
       loadAvailableSlots(bookingState.selectedSlot.start);
     }
-  }, [bookingState.selectedSlot]);
-
-
-  const loadEvents = async () => {
-    if (!settings?.organization_id) {
-      logError(new Error('Organization ID not available'), { context: 'loadEvents' });
-      return;
-    }
-
-    calendarState.setIsLoading(true);
-    try {
-      // Get date range based on view
-      let startDate: Date;
-      let endDate: Date;
-
-      switch (calendarState.calendarView) {
-        case CALENDAR_VIEWS.MONTH:
-          startDate = new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth(), 1);
-          endDate = new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() + 1, 0);
-          break;
-        case CALENDAR_VIEWS.WEEK:
-          const weekStart = new Date(calendarState.currentDate);
-          weekStart.setDate(calendarState.currentDate.getDate() - calendarState.currentDate.getDay());
-          startDate = weekStart;
-          endDate = new Date(weekStart);
-          endDate.setDate(weekStart.getDate() + 6);
-          break;
-        case CALENDAR_VIEWS.DAY:
-          startDate = calendarState.currentDate;
-          endDate = calendarState.currentDate;
-          break;
-        default:
-          startDate = calendarState.currentDate;
-          endDate = calendarState.currentDate;
-      }
-
-      const response = await fetch(
-        `${API_ENDPOINTS.MEETINGS.BOOKINGS}?organization_id=${settings.organization_id}&start_date=${format(startDate, 'yyyy-MM-dd')}&end_date=${format(endDate, 'yyyy-MM-dd')}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        // Filter bookings to show only this customer's bookings
-        const customerBookings = customerEmail
-          ? (data.bookings || []).filter((booking: any) => booking.customer_email === customerEmail)
-          : [];
-
-        // Helper function to get status color
-        const getStatusColor = (status: string): string => {
-          switch (status) {
-            case 'confirmed': return '#10b981'; // green
-            case 'waiting': return '#f59e0b'; // amber
-            case 'in_progress': return '#8b5cf6'; // purple
-            case 'completed': return '#14b8a6'; // teal
-            case 'cancelled': return '#ef4444'; // red
-            // Legacy statuses (backward compatibility)
-            case 'scheduled': return '#10b981'; // treat as confirmed
-            case 'pending': return '#f59e0b'; // treat as waiting
-            case 'no_show': return '#6b7280'; // gray (legacy, treat as cancelled)
-            default: return '#14b8a6'; // teal fallback
-          }
-        };
-
-        // Convert bookings to calendar events
-        const calendarEvents: any[] = customerBookings.map((booking: any) => ({
-          id: booking.id,
-          title: booking.title,
-          start: new Date(booking.scheduled_at),
-          end: new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000),
-          backgroundColor: getStatusColor(booking.status),
-          extendedProps: {
-            booking,
-            meetingType: booking.meeting_type,
-          },
-        }));
-        calendarState.setEvents(calendarEvents);
-      }
-    } catch (err) {
-      logError(err, { context: 'Error loading events' });
-      setError(UI_CONSTANTS.ERROR_MESSAGES.SERVER_ERROR);
-    } finally {
-      calendarState.setIsLoading(false);
-    }
-  };
-
-  const loadAvailableSlots = async (date: Date) => {
-    if (!settings?.organization_id) return;
-
-    try {
-      bookingState.setIsLoadingSlots(true);
-      const now = new Date();
-
-      // Format date as YYYY-MM-DD in LOCAL timezone (not UTC)
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-
-      // Fetch available slots from API (customers see business hours only)
-      const response = await fetch(
-        `${API_ENDPOINTS.MEETINGS.AVAILABILITY}?organization_id=${settings.organization_id}&date=${formattedDate}&is_admin=false`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch available slots');
-      }
-
-      const data = await response.json();
-
-      // Convert ISO string dates back to Date objects and filter past times
-      const slots: TimeSlot[] = data.slots
-        .map((slot: { start: string; end: string; available: boolean }) => ({
-          start: new Date(slot.start),
-          end: new Date(slot.end),
-          available: slot.available,
-        }))
-        .filter((slot: TimeSlot) => {
-          // Filter out past time slots (use getTime() for accurate comparison)
-          return slot.start.getTime() >= now.getTime();
-        });
-
-      bookingState.setAvailableSlots(slots);
-    } catch (err) {
-      logError(err, { context: 'Error loading available slots' });
-      bookingState.setAvailableSlots([]);
-    } finally {
-      bookingState.setIsLoadingSlots(false);
-    }
-  };
+  }, [bookingState.selectedSlot, loadAvailableSlots]);
 
   const handleSlotClick = async (date: Date, hour?: number) => {
+    setSelectedDate(date);
+    
+    // On desktop (screen width >= 640px), immediately proceed to booking
+    // On mobile, just select the date and show "Continue" button
+    if (window.innerWidth >= 640) {
+      // Desktop: immediate navigation
+      loadAvailableSlots(date);
+      setCurrentView(MODAL_VIEWS.BOOKING);
+      
+      if (!customerEmail || !bookingState.formData.customer_email) {
+        loadCustomerEmail();
+      }
+    }
+  };
+
+  const handleCalendarBackgroundClick = () => {
+    // Deselect date to allow exploration (mobile only)
+    setSelectedDate(null);
+  };
+
+  const handleProceedToBooking = async () => {
+    if (!selectedDate) return;
+    
     // Load available slots for the selected date
-    loadAvailableSlots(date);
+    loadAvailableSlots(selectedDate);
 
     // Switch to booking view immediately (slots will load in background)
     setCurrentView(MODAL_VIEWS.BOOKING);
 
-    // Only load customer email if authenticated and we don't already have it
-    if (customerEmail && !bookingState.formData.customer_email) {
-      setLoadingCustomerData(true);
-      await loadCustomerEmail();
+    // Load customer email in background if we don't have it (don't await - non-blocking)
+    if (!customerEmail || !bookingState.formData.customer_email) {
+      loadCustomerEmail(); // Don't await - let it load in background
     }
   };
 
@@ -394,7 +284,29 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
   };
 
   const handleEventClick = (event: any) => {
-    // TODO: Open booking details modal
+    // Convert CalendarEvent to EventDetails format
+    const eventDetails = {
+      id: event.id,
+      title: event.title,
+      scheduled_at: event.start instanceof Date ? event.start.toISOString() : event.start,
+      duration_minutes: event.extendedProps?.booking?.duration_minutes || 
+                        event.extendedProps?.meetingType?.duration_minutes || 60,
+      customer_name: event.extendedProps?.booking?.customer_name || 'Unknown',
+      customer_email: event.extendedProps?.booking?.customer_email || '',
+      customer_phone: event.extendedProps?.booking?.customer_phone,
+      notes: event.extendedProps?.booking?.notes || event.description,
+      status: event.status || 'confirmed',
+      meeting_type: event.extendedProps?.meetingType ? {
+        id: event.extendedProps.meetingType.id,
+        name: event.extendedProps.meetingType.name,
+        color: event.extendedProps.meetingType.color,
+        duration_minutes: event.extendedProps.meetingType.duration_minutes,
+      } : undefined,
+      created_at: event.extendedProps?.booking?.created_at || new Date().toISOString(),
+      updated_at: event.extendedProps?.booking?.updated_at || new Date().toISOString(),
+    };
+    setSelectedEvent(eventDetails);
+    setShowEventDetailsModal(true);
   };
 
   const handleBookingFormChange = useCallback((data: Partial<any>) => {
@@ -410,6 +322,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     bookingState.resetForm(customerData);
     setCurrentView(MODAL_VIEWS.CALENDAR);
     setActiveTab('book-new'); // Stay on book-new tab
+    setSelectedDate(null); // Reset selected date
   };
 
   const handleClose = () => {
@@ -583,7 +496,16 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                         </p>
                       </div>
                     ) : (
-                      <div className="overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                      <div 
+                        className="overflow-y-auto" 
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                        onClick={(e) => {
+                          // If clicking on the background (not a date), deselect
+                          if (e.target === e.currentTarget) {
+                            handleCalendarBackgroundClick();
+                          }
+                        }}
+                      >
                         <Calendar
                           events={calendarState.events}
                           currentDate={calendarState.currentDate}
@@ -593,15 +515,13 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                           onEventClick={handleEventClick}
                           onSlotClick={handleSlotClick}
                           loading={false}
+                          disableSwipe={true}
+                          highlightedDate={selectedDate}
                         />
                       </div>
                     )}
                   </div>
                 </>
-              ) : loadingCustomerData ? (
-                <div className="p-6">
-                  <CustomerDataLoading />
-                </div>
               ) : (
                 <BookingForm
                   formData={bookingState.formData}
@@ -623,58 +543,75 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
             {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
             {currentView === 'calendar' && activeTab === 'book-new' && (
               <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
-                <div className="flex items-center justify-center gap-4">
+                {selectedDate ? (
+                  /* Show Next Button when date is selected */
                   <button
-                    onClick={() => {
-                      const newDate = calendarState.calendarView === 'month' 
-                        ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() - 1, 1)
-                        : calendarState.calendarView === 'week'
-                        ? new Date(calendarState.currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
-                        : new Date(calendarState.currentDate.getTime() - 24 * 60 * 60 * 1000);
-                      calendarState.setCurrentDate(newDate);
-                    }}
-                    className="p-2 rounded-lg transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
-                    }}
-                    aria-label="Previous"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => calendarState.setCurrentDate(new Date())}
-                    className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
+                    onClick={handleProceedToBooking}
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all shadow-md hover:shadow-lg"
+                    style={{
+                      background: `linear-gradient(to right, ${primary.base}, ${primary.hover})`
                     }}
                   >
-                    Today
-                  </button>
-                  <button
-                    onClick={() => {
-                      const newDate = calendarState.calendarView === 'month' 
-                        ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() + 1, 1)
-                        : calendarState.calendarView === 'week'
-                        ? new Date(calendarState.currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-                        : new Date(calendarState.currentDate.getTime() + 24 * 60 * 60 * 1000);
-                      calendarState.setCurrentDate(newDate);
-                    }}
-                    className="p-2 rounded-lg transition-colors duration-200"
-                    style={{ 
-                      backgroundColor: `${primary.base}20`,
-                      color: primary.base 
-                    }}
-                    aria-label="Next"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span>Continue with {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
-                </div>
+                ) : (
+                  /* Show calendar navigation when no date selected */
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      onClick={() => {
+                        const newDate = calendarState.calendarView === 'month' 
+                          ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() - 1, 1)
+                          : calendarState.calendarView === 'week'
+                          ? new Date(calendarState.currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+                          : new Date(calendarState.currentDate.getTime() - 24 * 60 * 60 * 1000);
+                        calendarState.setCurrentDate(newDate);
+                      }}
+                      className="p-2 rounded-lg transition-colors duration-200"
+                      style={{ 
+                        backgroundColor: `${primary.base}20`,
+                        color: primary.base 
+                      }}
+                      aria-label="Previous"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => calendarState.setCurrentDate(new Date())}
+                      className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                      style={{ 
+                        backgroundColor: `${primary.base}20`,
+                        color: primary.base 
+                      }}
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={() => {
+                        const newDate = calendarState.calendarView === 'month' 
+                          ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() + 1, 1)
+                          : calendarState.calendarView === 'week'
+                          ? new Date(calendarState.currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+                          : new Date(calendarState.currentDate.getTime() + 24 * 60 * 60 * 1000);
+                        calendarState.setCurrentDate(newDate);
+                      }}
+                      className="p-2 rounded-lg transition-colors duration-200"
+                      style={{ 
+                        backgroundColor: `${primary.base}20`,
+                        color: primary.base 
+                      }}
+                      aria-label="Next"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -802,7 +739,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                       {/* Content */}
                       {activeTab === 'my-meetings' ? (
                         <MyBookingsList organizationId={settings?.organization_id} />
-                      ) : calendarState.isLoading ? (
+                      ) : initialLoading || calendarState.isLoading ? (
                         <CalendarLoading />
                       ) : meetingTypes.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -817,7 +754,16 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                           </p>
                         </div>
                       ) : (
-                        <div className="overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                        <div 
+                          className="overflow-y-auto" 
+                          style={{ WebkitOverflowScrolling: 'touch' }}
+                          onClick={(e) => {
+                            // If clicking on the background (not a date), deselect
+                            if (e.target === e.currentTarget) {
+                              handleCalendarBackgroundClick();
+                            }
+                          }}
+                        >
                           <Calendar
                             events={calendarState.events}
                             currentDate={calendarState.currentDate}
@@ -827,15 +773,14 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                             onEventClick={handleEventClick}
                             onSlotClick={handleSlotClick}
                             loading={false}
+                            use24Hour={true}
+                            disableSwipe={true}
+                            highlightedDate={selectedDate}
                           />
                         </div>
                       )}
                     </div>
                   </>
-                ) : loadingCustomerData ? (
-                  <div className="p-6">
-                    <CustomerDataLoading />
-                  </div>
                 ) : (
                   <BookingForm
                     formData={bookingState.formData}
@@ -915,6 +860,21 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
           </Rnd>
         )}
       </div>
+
+      {/* Event Details Modal */}
+      {showEventDetailsModal && selectedEvent && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <EventDetailsModal
+            isOpen={showEventDetailsModal}
+            onClose={() => {
+              setShowEventDetailsModal(false);
+              setSelectedEvent(null);
+            }}
+            event={selectedEvent}
+            isAdmin={false}
+          />
+        </Suspense>
+      )}
     </MeetingsErrorBoundary>
   );
 }

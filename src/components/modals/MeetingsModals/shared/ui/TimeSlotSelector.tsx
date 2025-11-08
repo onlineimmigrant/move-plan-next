@@ -271,12 +271,12 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
             }}
           >
             <div className="flex items-center justify-between gap-3">
-              {/* Left: Clock icon + Date on mobile */}
+              {/* Left: Clock icon + Date (always visible) */}
               <div className="flex items-center gap-2">
                 <ClockIcon className="w-5 h-5 text-white flex-shrink-0" />
-                {/* Date label - shown on mobile only */}
-                {Object.keys(slotsByDate).length > 0 && (() => {
-                  const firstDateKey = Object.keys(slotsByDate)[0];
+                {/* Date label - shown on all screen sizes */}
+                {Object.keys(slotsByDate()).length > 0 && (() => {
+                  const firstDateKey = Object.keys(slotsByDate())[0];
                   const date = new Date(firstDateKey);
                   const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
                   const isTomorrow = format(date, 'yyyy-MM-dd') === format(new Date(Date.now() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
@@ -286,29 +286,12 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                   else if (isTomorrow) dateLabel = 'Tomorrow';
                   
                   return (
-                    <span className="sm:hidden text-sm font-semibold text-white">
+                    <span className="text-sm font-semibold text-white">
                       {dateLabel}
                     </span>
                   );
                 })()}
               </div>
-              {/* Center: Date label - shown on desktop */}
-              {Object.keys(slotsByDate).length > 0 && (() => {
-                const firstDateKey = Object.keys(slotsByDate)[0];
-                const date = new Date(firstDateKey);
-                const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-                const isTomorrow = format(date, 'yyyy-MM-dd') === format(new Date(Date.now() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
-                
-                let dateLabel = format(date, 'EEE, MMM d');
-                if (isToday) dateLabel = 'Today';
-                else if (isTomorrow) dateLabel = 'Tomorrow';
-                
-                return (
-                  <span className="hidden sm:block text-sm font-semibold text-white">
-                    {dateLabel}
-                  </span>
-                );
-              })()}
               {/* Right: Timezone info */}
               <div className="flex items-center gap-3 text-xs text-white/90 font-medium">
                 <span className="truncate">

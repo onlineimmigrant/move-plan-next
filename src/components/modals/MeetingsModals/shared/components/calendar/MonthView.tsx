@@ -34,6 +34,8 @@ export interface MonthViewProps {
   onDateChange: (date: Date) => void;
   /** Currently selected date */
   selectedDate: Date | null;
+  /** Date to highlight with primary color (for mobile date selection) */
+  highlightedDate?: Date | null;
   /** Whether to use 24-hour time format */
   use24Hour?: boolean;
 }
@@ -66,7 +68,8 @@ export function MonthView({
   onEventClick, 
   onViewChange, 
   onDateChange, 
-  selectedDate, 
+  selectedDate,
+  highlightedDate = null,
   use24Hour = true 
 }: MonthViewProps) {
   const themeColors = useThemeColors();
@@ -166,6 +169,7 @@ export function MonthView({
             const dayEventsList = dayEvents[dateKey] || [];
             const isCurrentMonth = isSameMonth(day, currentDate);
             const isSelected = selectedDate && isSameDay(day, selectedDate);
+            const isHighlighted = highlightedDate && isSameDay(day, highlightedDate);
             const isTodayDate = isToday(day);
             const isPastDate = day < new Date(new Date().setHours(0, 0, 0, 0));
             const hasEvents = dayEventsList.length > 0;
@@ -180,7 +184,7 @@ export function MonthView({
                 aria-label={`${format(day, 'MMMM d, yyyy')}${isTodayDate ? ' (Today)' : ''}${hasEvents ? `, ${dayEventsList.length} appointment${dayEventsList.length > 1 ? 's' : ''}` : ''}`}
                 aria-pressed={isSelected ? 'true' : 'false'}
                 onMouseEnter={(e) => {
-                  if (!isPastDate && isCurrentMonth) {
+                  if (!isPastDate && isCurrentMonth && !isHighlighted) {
                     if (isTodayDate && !isSelected) {
                       e.currentTarget.style.background = `linear-gradient(135deg, ${primary.light}, ${primary.lighter})`;
                       e.currentTarget.style.boxShadow = shadows.hover;
@@ -192,7 +196,7 @@ export function MonthView({
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isPastDate && isCurrentMonth && !isSelected) {
+                  if (!isPastDate && isCurrentMonth && !isSelected && !isHighlighted) {
                     if (isTodayDate) {
                       e.currentTarget.style.background = `linear-gradient(135deg, ${primary.lighter}, ${primary.lighter})`;
                     } else {
@@ -208,7 +212,13 @@ export function MonthView({
                     : isCurrentMonth ? 'cursor-pointer' : 'text-gray-400 cursor-pointer'
                 }`}
                 style={{
-                  ...(isTodayDate && !isSelected 
+                  ...(isHighlighted 
+                    ? { 
+                        backgroundColor: primary.base,
+                        color: 'white',
+                        boxShadow: `0 0 0 3px ${primary.base}40`
+                      }
+                    : isTodayDate && !isSelected 
                     ? { background: `linear-gradient(135deg, ${primary.lighter}, ${primary.lighter})` }
                     : { 
                         backgroundColor: isSelected 
@@ -223,7 +233,7 @@ export function MonthView({
                       }
                   ),
                   opacity: isPastDate ? 0.6 : 1,
-                  ...(isSelected ? { boxShadow: `inset 0 0 0 2px ${primary.base}` } : {}),
+                  ...(isSelected && !isHighlighted ? { boxShadow: `inset 0 0 0 2px ${primary.base}` } : {}),
                   ['--tw-ring-color' as string]: primary.base,
                   touchAction: 'manipulation',
                   WebkitTapHighlightColor: 'transparent',

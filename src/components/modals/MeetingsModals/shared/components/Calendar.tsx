@@ -39,6 +39,8 @@ interface CalendarProps {
   onSlotClick?: (date: Date, hour?: number) => void;
   loading?: boolean;
   use24Hour?: boolean; // Time format preference from organization settings
+  disableSwipe?: boolean; // Disable swipe gestures for navigation
+  highlightedDate?: Date | null; // Date to highlight with primary color
 }
 
 export default function Calendar({
@@ -51,6 +53,8 @@ export default function Calendar({
   onSlotClick,
   loading = false,
   use24Hour = true,
+  disableSwipe = false,
+  highlightedDate = null,
 }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const themeColors = useThemeColors();
@@ -87,14 +91,18 @@ export default function Calendar({
   
   // Swipe gesture handlers
   const handleSwipeLeft = useCallback(() => {
-    navigateDate('next');
-  }, [view, currentDate]);
+    if (!disableSwipe) {
+      navigateDate('next');
+    }
+  }, [view, currentDate, disableSwipe]);
 
   const handleSwipeRight = useCallback(() => {
-    navigateDate('prev');
-  }, [view, currentDate]);
+    if (!disableSwipe) {
+      navigateDate('prev');
+    }
+  }, [view, currentDate, disableSwipe]);
 
-  const swipeGesture = useSwipeGesture(handleSwipeLeft, handleSwipeRight, true);
+  const swipeGesture = useSwipeGesture(handleSwipeLeft, handleSwipeRight, !disableSwipe);
   
   // Enhanced color palette with better contrast
   const colors = {
@@ -324,6 +332,7 @@ export default function Calendar({
             onViewChange={onViewChange}
             onDateChange={onDateChange}
             selectedDate={selectedDate}
+            highlightedDate={highlightedDate}
             use24Hour={use24Hour}
           />
         )}
@@ -334,6 +343,7 @@ export default function Calendar({
             events={events}
             onEventClick={onEventClick}
             onSlotClick={onSlotClick}
+            highlightedDate={highlightedDate}
             use24Hour={use24Hour}
           />
         )}
@@ -344,6 +354,7 @@ export default function Calendar({
             events={events}
             onEventClick={onEventClick}
             onSlotClick={onSlotClick}
+            highlightedDate={highlightedDate}
             use24Hour={use24Hour}
           />
         )}

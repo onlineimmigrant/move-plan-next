@@ -30,7 +30,7 @@ interface AdminModalHeaderProps {
  * 
  * Has separate rendering for mobile and desktop layouts.
  */
-export function AdminModalHeader({
+export const AdminModalHeader = React.memo<AdminModalHeaderProps>(({
   currentView,
   setCurrentView,
   hoveredTab,
@@ -42,7 +42,7 @@ export function AdminModalHeader({
   fetchActiveBookingCount,
   primary,
   isMobile
-}: AdminModalHeaderProps) {
+}) => {
   return (
     <>
       {/* Header */}
@@ -196,4 +196,6 @@ export function AdminModalHeader({
       )}
     </>
   );
-}
+});
+
+AdminModalHeader.displayName = 'AdminModalHeader';
