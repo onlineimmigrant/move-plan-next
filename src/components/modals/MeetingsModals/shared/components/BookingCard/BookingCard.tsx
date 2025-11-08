@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { type BookingCardProps } from './types';
-import { getCardStyles, getExpansionPriority, getTimeUntilMeeting } from './utils';
+import { getCardStyles, getTimeUntilMeeting } from './utils';
 import { BookingCardHeader } from './BookingCardHeader';
-import { BookingCardDetails } from './BookingCardDetails';
 import { BookingCardActions } from './BookingCardActions';
-import { ExpansionPriority } from './types';
+
+// Lazy load EventDetailsModal
+const EventDetailsModal = lazy(() => import('../../../EventDetailsModal/EventDetailsModal'));
 
 export function BookingCard({
   booking,
@@ -16,18 +17,9 @@ export function BookingCard({
   isJoining = false,
   currentUserId,
   userRole,
-  defaultExpanded,
-  showWaitingRoomControls = false,
   organizationId,
 }: BookingCardProps) {
-  // Determine if should auto-expand
-  const shouldAutoExpand = useMemo(() => {
-    if (defaultExpanded !== undefined) return defaultExpanded;
-    const priority = getExpansionPriority(booking);
-    return priority >= ExpansionPriority.URGENT; // Auto-expand LIVE and URGENT
-  }, [booking, defaultExpanded]);
-
-  const [isExpanded, setIsExpanded] = useState(shouldAutoExpand);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
   // Theme color - extract from props or use default
@@ -47,8 +39,8 @@ export function BookingCard({
     !['cancelled', 'completed', 'no_show'].includes(booking.status) &&
     (isAdminOrHost || timeInfo.isInProgress || timeInfo.diffMins <= 15);
 
-  const handleToggle = () => {
-    setIsExpanded(!isExpanded);
+  const handleViewDetails = () => {
+    setShowDetailsModal(true);
   };
 
   const handleJoin = () => {
@@ -59,52 +51,66 @@ export function BookingCard({
     onCancel(booking.id);
   };
 
-  return (
-    <div
-      className="relative rounded-lg p-4 hover:shadow-lg transition-all duration-200 backdrop-blur-sm"
-      style={{
-        backgroundColor: cardStyles.backgroundColor,
-        border: `${cardStyles.borderWidth} solid ${cardStyles.borderColor}`,
-        opacity: cardStyles.opacity || 1,
-      }}
-    >
-      {/* Header - Always Visible */}
-      <BookingCardHeader
-        booking={booking}
-        variant={variant}
-        isExpanded={isExpanded}
-        isLive={isLive}
-        primaryColor={primaryColor}
-        onToggle={handleToggle}
-      />
+  // Convert booking to EventDetails format for modal
+  const eventDetails = {
+    ...booking,
+    status: booking.status as 'confirmed' | 'waiting' | 'in_progress' | 'completed' | 'cancelled',
+    customer_name: booking.customer_name || '',
+    customer_email: booking.customer_email || '',
+  };
 
-      {/* Details - Collapsible */}
-      {isExpanded && (
-        <BookingCardDetails
+  return (
+    <>
+      <div
+        className="relative rounded-lg p-4 hover:shadow-lg transition-all duration-200 backdrop-blur-sm"
+        style={{
+          backgroundColor: cardStyles.backgroundColor,
+          border: `${cardStyles.borderWidth} solid ${cardStyles.borderColor}`,
+          opacity: cardStyles.opacity || 1,
+        }}
+      >
+        {/* Header - Clickable to open modal */}
+        <BookingCardHeader
           booking={booking}
           variant={variant}
-          primaryColor={primaryColor}
-          showWaitingRoomControls={showWaitingRoomControls}
-          currentUserId={currentUserId}
-          organizationId={organizationId}
-        />
-      )}
-
-      {/* Actions - Always Visible */}
-      <div className="mt-3">
-        <BookingCardActions
-          booking={booking}
-          canJoin={canJoinNow}
-          isJoining={isJoining}
           isLive={isLive}
           primaryColor={primaryColor}
-          hoveredButton={hoveredButton}
-          onJoin={handleJoin}
-          onCancel={handleCancel}
-          onHoverStart={() => setHoveredButton(booking.id)}
-          onHoverEnd={() => setHoveredButton(null)}
+          onClick={handleViewDetails}
         />
+
+        {/* Actions - Always Visible */}
+        <div className="mt-3">
+          <BookingCardActions
+            booking={booking}
+            canJoin={canJoinNow}
+            isJoining={isJoining}
+            isLive={isLive}
+            primaryColor={primaryColor}
+            hoveredButton={hoveredButton}
+            onJoin={handleJoin}
+            onCancel={handleCancel}
+            onHoverStart={() => setHoveredButton(booking.id)}
+            onHoverEnd={() => setHoveredButton(null)}
+          />
+        </div>
       </div>
-    </div>
+
+      {/* Event Details Modal - Lazy Loaded */}
+      {showDetailsModal && (
+        <Suspense fallback={null}>
+          <EventDetailsModal
+            isOpen={showDetailsModal}
+            onClose={() => setShowDetailsModal(false)}
+            event={eventDetails}
+            isAdmin={variant === 'admin'}
+            onCancel={(eventId: string) => {
+              onCancel(eventId);
+              setShowDetailsModal(false);
+            }}
+            use24Hour={true}
+          />
+        </Suspense>
+      )}
+    </>
   );
 }

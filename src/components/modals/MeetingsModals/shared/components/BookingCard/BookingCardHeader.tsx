@@ -6,7 +6,7 @@ import {
   CalendarIcon, 
   ClockIcon, 
   UserIcon,
-  ChevronDownIcon
+  ArrowRightIcon
 } from '@heroicons/react/24/outline';
 import { type Booking } from '@/context/MeetingContext';
 import { getRelativeTime, getTimeUntilMeeting, shouldShowCountdown } from './utils';
@@ -14,19 +14,17 @@ import { getRelativeTime, getTimeUntilMeeting, shouldShowCountdown } from './uti
 interface BookingCardHeaderProps {
   booking: Booking;
   variant: 'admin' | 'customer';
-  isExpanded: boolean;
   isLive: boolean;
   primaryColor: string;
-  onToggle: () => void;
+  onClick: () => void;
 }
 
 export function BookingCardHeader({
   booking,
   variant,
-  isExpanded,
   isLive,
   primaryColor,
-  onToggle,
+  onClick,
 }: BookingCardHeaderProps) {
   const timeInfo = getTimeUntilMeeting(booking);
   const diffMins = timeInfo.diffMins;
@@ -37,10 +35,10 @@ export function BookingCardHeader({
 
   return (
     <div 
-      className="cursor-pointer select-none"
-      onClick={onToggle}
+      className="cursor-pointer select-none group"
+      onClick={onClick}
     >
-      {/* Row 1: Title + Status + Toggle */}
+      {/* Row 1: Title + Status + View Details Icon */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0 pr-4">
           <h4 
@@ -128,12 +126,11 @@ export function BookingCardHeader({
             </span>
           )}
           
-          {/* Expand/Collapse Icon */}
-          <ChevronDownIcon 
-            className={`w-5 h-5 transition-transform duration-200 ${
-              isExpanded ? 'rotate-180' : ''
-            }`}
+          {/* View Details Icon */}
+          <ArrowRightIcon 
+            className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1"
             style={{ color: primaryColor }}
+            title="View Details"
           />
         </div>
       </div>

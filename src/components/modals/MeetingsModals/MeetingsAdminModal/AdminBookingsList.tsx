@@ -286,7 +286,6 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
               isJoining={joiningBookingId === booking.id}
               currentUserId={currentUserId || undefined}
               userRole="admin"
-              showWaitingRoomControls={false}
               organizationId={organizationId}
             />
           ))}

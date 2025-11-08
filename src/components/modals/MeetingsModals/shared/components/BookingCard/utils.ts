@@ -1,6 +1,6 @@
 import { type Booking } from '@/context/MeetingContext';
 import { format } from 'date-fns';
-import { CardStyles, ExpansionPriority } from './types';
+import { CardStyles } from './types';
 
 /**
  * Calculate relative time display
@@ -41,37 +41,6 @@ export const getTimeUntilMeeting = (booking: Booking) => {
     scheduled,
     endTime,
   };
-};
-
-/**
- * Determine expansion priority based on meeting state
- */
-export const getExpansionPriority = (booking: Booking): ExpansionPriority => {
-  const timeInfo = getTimeUntilMeeting(booking);
-  const diffMins = timeInfo.diffMins;
-  
-  // Inactive meetings always collapsed
-  if (['cancelled', 'completed'].includes(booking.status)) {
-    return ExpansionPriority.PAST;
-  }
-  
-  // Live meetings always expanded
-  if (timeInfo.isInProgress) {
-    return ExpansionPriority.LIVE;
-  }
-  
-  // Starting soon - auto-expand
-  if (diffMins > 0 && diffMins <= 15) {
-    return ExpansionPriority.URGENT;
-  }
-  
-  // Today but not urgent
-  const isToday = new Date(booking.scheduled_at).toDateString() === new Date().toDateString();
-  if (isToday) {
-    return ExpansionPriority.TODAY;
-  }
-  
-  return ExpansionPriority.FUTURE;
 };
 
 /**

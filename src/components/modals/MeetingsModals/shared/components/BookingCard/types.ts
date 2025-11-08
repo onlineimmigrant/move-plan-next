@@ -14,8 +14,6 @@ export interface BookingCardProps {
   userRole?: string;
   
   // Optional overrides
-  defaultExpanded?: boolean;
-  showWaitingRoomControls?: boolean;
   organizationId?: string;
 }
 
@@ -31,12 +29,4 @@ export interface CardStyles {
   backgroundColor: string;
   borderWidth: string;
   opacity?: number;
-}
-
-export enum ExpansionPriority {
-  LIVE = 3,           // Currently in progress → ALWAYS expanded
-  URGENT = 2,         // Starting ≤15 min → AUTO expanded
-  TODAY = 1,          // Starting today → CLOSED but highlighted
-  FUTURE = 0,         // Future meetings → CLOSED
-  PAST = -1           // Completed/Cancelled → CLOSED
 }
