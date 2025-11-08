@@ -1,35 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Room, LocalVideoTrack, LocalAudioTrack, RemoteParticipant, RemoteVideoTrack, RemoteAudioTrack, LocalDataTrack } from 'twilio-video';
-import { 
-  VideoCameraIcon, 
-  VideoCameraSlashIcon, 
-  MicrophoneIcon, 
-  PhoneXMarkIcon, 
-  ComputerDesktopIcon,
-  ArrowsPointingOutIcon,
-  ArrowsPointingInIcon,
-  MinusIcon,
-  XMarkIcon,
-  ChevronUpIcon,
-  InformationCircleIcon,
-  ClipboardDocumentIcon,
-  ChatBubbleLeftRightIcon,
-  PaperAirplaneIcon,
-  HandRaisedIcon,
-  UserGroupIcon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
-  PaperClipIcon,
-  ArrowDownTrayIcon,
-  SignalIcon,
-  FaceSmileIcon,
-  StopCircleIcon,
-  VideoCameraIcon as VideoCameraIconSolid
-} from '@heroicons/react/24/outline';
+import React, { useRef } from 'react';
 import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState, useVideoAttachment, useNetworkMonitoring, usePanelRegistration, useChatHistory, useBackgroundEffect, useDragHandler, useVideoCallActions } from './hooks';
-import RemoteParticipantVideo from './components/RemoteParticipantVideo';
 import ChatPanel from './components/ChatPanel';
 import ParticipantsPanel from './components/ParticipantsPanel';
 import SettingsPanel from './components/SettingsPanel';
@@ -54,14 +26,6 @@ interface VideoCallProps {
   participantName?: string;
   meetingTitle?: string;
   userIsHost?: boolean;
-}
-
-interface Participant {
-  identity: string;
-  videoTrack?: RemoteVideoTrack;
-  audioTrack?: RemoteAudioTrack;
-  isVideoEnabled: boolean;
-  isAudioEnabled: boolean;
 }
 
 export default function VideoCallModal({ token, roomName, onLeave, participantName, meetingTitle, userIsHost = false }: VideoCallProps) {
