@@ -20,3 +20,6 @@ export type { UseMeetingNotesStateReturn } from './useMeetingNotesState';
 export { useVideoAttachment } from './useVideoAttachment';
 export { useNetworkMonitoring } from './useNetworkMonitoring';
 export { usePanelRegistration } from './usePanelRegistration';
+export { useChatHistory } from './useChatHistory';
+export { useBackgroundEffect } from './useBackgroundEffect';
+export { useDragHandler } from './useDragHandler';

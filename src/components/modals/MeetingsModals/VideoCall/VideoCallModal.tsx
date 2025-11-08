@@ -28,7 +28,7 @@ import {
   StopCircleIcon,
   VideoCameraIcon as VideoCameraIconSolid
 } from '@heroicons/react/24/outline';
-import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState, useVideoAttachment, useNetworkMonitoring, usePanelRegistration } from './hooks';
+import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState, useVideoAttachment, useNetworkMonitoring, usePanelRegistration, useChatHistory, useBackgroundEffect, useDragHandler } from './hooks';
 import RemoteParticipantVideo from './components/RemoteParticipantVideo';
 import ChatPanel from './components/ChatPanel';
 import ParticipantsPanel from './components/ParticipantsPanel';
@@ -353,6 +353,24 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
     showAnalysis,
   });
 
+  // Use chat history hook to manage persistence and auto-scroll
+  useChatHistory(chatMessages, roomName, isConnected, localDataTrack, participantName, chatContainerRef);
+
+  // Use background effect hook to manage background mode changes
+  useBackgroundEffect(
+    backgroundMode,
+    backgroundColor,
+    backgroundImage,
+    room,
+    localVideoTrack,
+    startBackgroundProcessing,
+    stopBackgroundProcessing,
+    restoreOriginalVideoTrack
+  );
+
+  // Use drag handler hook for modal dragging
+  const { handleMouseDown, isDraggingRef } = useDragHandler(isFullscreen, isMinimized, isMobile, x, y, setX, setY);
+
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
       if (screenTrackRef.current) {
@@ -437,83 +455,12 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
   
   // Copy to clipboard helper
   
-  // Save chat history to localStorage whenever it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined' && chatMessages.length > 0) {
-      localStorage.setItem(`chat-history-${roomName}`, JSON.stringify(chatMessages));
-    }
-  }, [chatMessages, roomName]);
+  // Copy to clipboard helper
   
-  // Request chat history when joining room
-  useEffect(() => {
-    if (isConnected && localDataTrack) {
-      // Wait a bit for others to connect
-      const timer = setTimeout(() => {
-        if (localDataTrack) {
-          const message = {
-            type: 'requestChatHistory',
-            requester: participantName || 'Anonymous'
-          };
-          localDataTrack.send(JSON.stringify(message));
-          console.log('📜 Requested chat history');
-        }
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isConnected, participantName]);
+  // Copy to clipboard helper
   
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatMessages]);
-
-  // Handle background mode changes
-  useEffect(() => {
-    console.log('🎨 Background mode changed to:', backgroundMode, 'Color:', backgroundColor, 'Image:', backgroundImage);
-    console.log('🎨 Current room state:', !!room, 'Local track:', !!localVideoTrack);
-
-    const applyBackgroundEffect = async () => {
-      if (!localVideoTrack) {
-        console.log('❌ No local video track available');
-        return;
-      }
-
-      if (!room) {
-        console.log('❌ No room connection available');
-        return;
-      }
-
-      try {
-        // Stop any existing processing
-        stopBackgroundProcessing();
-
-        if (backgroundMode === 'none') {
-          // Restore original video track
-          console.log('🔄 Background effect: None - restoring original track');
-          await restoreOriginalVideoTrack();
-          return;
-        }
-
-        // For any background effect, we need to process the video
-        console.log('🚀 Starting background processing for mode:', backgroundMode);
-        await startBackgroundProcessing();
-
-      } catch (error) {
-        console.error('❌ Failed to apply background effect:', error);
-      }
-    };
-
-    applyBackgroundEffect();
-
-    // Cleanup on unmount
-    return () => {
-      console.log('🧹 Cleaning up background processing');
-      stopBackgroundProcessing();
-    };
-  }, [backgroundMode, backgroundColor, backgroundImage, room]); // Added room dependency
-
+  // Copy to clipboard helper
+  
   const leaveCall = () => {
     if (room) {
       room.disconnect();
@@ -531,52 +478,6 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
       console.error('Failed to copy:', err);
     }
   };
-
-  // Handle dragging
-  const isDraggingRef = useRef(false);
-  const dragStartRef = useRef({ x: 0, y: 0, initialX: 0, initialY: 0 });
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isFullscreen || isMinimized || isMobile) return;
-    
-    const target = e.target as HTMLElement;
-    if (!target.closest('.drag-handle')) return;
-    
-    isDraggingRef.current = true;
-    dragStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      initialX: x,
-      initialY: y
-    };
-    e.preventDefault();
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      
-      const deltaX = e.clientX - dragStartRef.current.x;
-      const deltaY = e.clientY - dragStartRef.current.y;
-      
-      setX(dragStartRef.current.initialX + deltaX);
-      setY(dragStartRef.current.initialY + deltaY);
-    };
-
-    const handleMouseUp = () => {
-      isDraggingRef.current = false;
-    };
-
-    if (isDraggingRef.current) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, []);
 
   if (error) {
     return (
