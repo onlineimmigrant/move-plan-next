@@ -208,7 +208,16 @@ export default function EventDetailsModal({
           <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/30 dark:bg-gray-800/30">
             <div>
               <div className="flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5" style={{ color: primary.base }} />
+                {/* Colored circle for meeting type */}
+                {event.meeting_type?.color ? (
+                  <div
+                    className="w-5 h-5 rounded-full ring-2 ring-white/50 dark:ring-gray-700/50 flex-shrink-0"
+                    style={{ backgroundColor: event.meeting_type.color }}
+                    title={event.meeting_type.name}
+                  />
+                ) : (
+                  <CalendarIcon className="w-5 h-5" style={{ color: primary.base }} />
+                )}
                 <h2 
                   id="event-details-modal-title"
                   className="text-xl font-semibold text-gray-900 dark:text-white"
