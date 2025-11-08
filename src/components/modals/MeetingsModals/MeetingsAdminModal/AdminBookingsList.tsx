@@ -276,7 +276,12 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
       {/* Bookings Grid - Scrollable */}
       <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {bookings.map((booking) => (
+          {bookings
+            .sort((a, b) => {
+              // Sort by scheduled_at ascending (nearest first)
+              return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
+            })
+            .map((booking) => (
             <BookingCard
               key={booking.id}
               booking={booking}

@@ -27,6 +27,7 @@ export function BookingCard({
 
   // Theme color - extract from meeting type or use default
   const meetingTypeColor = (booking.meeting_type as any)?.color || '#3b82f6';
+  const primaryColor = '#3b82f6'; // Primary blue color for Join button
 
   // Calculate styles and states
   const cardStyles = getCardStyles(booking, meetingTypeColor);
@@ -156,26 +157,12 @@ export function BookingCard({
                 disabled={isJoining}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-white transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 style={{ 
-                  backgroundColor: isLive ? '#dc2626' : meetingTypeColor,
+                  backgroundColor: primaryColor,
                 }}
                 title="Join Meeting"
               >
                 <ArrowRightCircleIcon className="w-4 h-4" />
                 <span className="hidden sm:inline">{isJoining ? 'Joining...' : 'Join'}</span>
-              </button>
-            )}
-
-            {/* Cancel Button */}
-            {!isInactive && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCancel();
-                }}
-                className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                title="Cancel Meeting"
-              >
-                <XMarkIcon className="w-5 h-5" />
               </button>
             )}
           </div>

@@ -259,9 +259,13 @@ export default function EventDetailsModal({
                     <span>{currentStatusConfig.label}</span>
                   </div>
 
-                  {/* Other Statuses - Only show for future/current events and if admin */}
-                  {!isEventInPast && isAdmin && Object.keys(statusConfig).filter(s => s !== event.status).map((statusKey) => {
+                  {/* Other Statuses - Show for future/current events */}
+                  {/* Admins can change to any status, customers can only cancel */}
+                  {!isEventInPast && Object.keys(statusConfig).filter(s => s !== event.status).map((statusKey) => {
                     const status = statusKey as EventDetails['status'];
+                    // For non-admins (customers), only show "cancelled" status
+                    if (!isAdmin && status !== 'cancelled') return null;
+                    
                     const config = statusConfig[status];
                     const Icon = config.icon;
                     return (
