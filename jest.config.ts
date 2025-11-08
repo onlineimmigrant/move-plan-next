@@ -44,6 +44,11 @@ const config: Config = {
     '<rootDir>/.next/',
   ],
   
+  // Transform node_modules ESM packages
+  transformIgnorePatterns: [
+    'node_modules/(?!(@supabase|isows)/)',
+  ],
+  
   // Transform files
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['@swc/jest', {
