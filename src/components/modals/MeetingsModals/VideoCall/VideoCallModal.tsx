@@ -28,7 +28,7 @@ import {
   StopCircleIcon,
   VideoCameraIcon as VideoCameraIconSolid
 } from '@heroicons/react/24/outline';
-import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState, useVideoAttachment, useNetworkMonitoring } from './hooks';
+import { useTwilioRoom, useChat, useBackgroundProcessing, useRecording, useVideoCallUI, useParticipantManagement, useSettings, useTranscription, useMeetingAIModels, useAIAnalysis, usePanelManagement, useCurrentUser, useScreenShareState, useMeetingNotesState, useVideoAttachment, useNetworkMonitoring, usePanelRegistration } from './hooks';
 import RemoteParticipantVideo from './components/RemoteParticipantVideo';
 import ChatPanel from './components/ChatPanel';
 import ParticipantsPanel from './components/ParticipantsPanel';
@@ -342,48 +342,16 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
   // Use network monitoring hook to manage monitoring lifecycle
   useNetworkMonitoring(isConnected, room, startNetworkMonitoring, stopNetworkMonitoring);
 
-  // Register panels when they become visible
-  useEffect(() => {
-    if (showSettings) {
-      panelManagement.registerPanel('settings', { x: 16, y: 80 });
-    }
-  }, [showSettings]);
-
-  useEffect(() => {
-    if (showParticipants) {
-      panelManagement.registerPanel('participants', { x: 336, y: 120 });
-    }
-  }, [showParticipants]);
-
-  useEffect(() => {
-    if (showInfoMenu) {
-      panelManagement.registerPanel('info', { x: 656, y: 160 });
-    }
-  }, [showInfoMenu]);
-
-  useEffect(() => {
-    if (showNotes) {
-      panelManagement.registerPanel('notes', { x: 16, y: 200 });
-    }
-  }, [showNotes]);
-
-  useEffect(() => {
-    if (showChat) {
-      panelManagement.registerPanel('chat', { x: 336, y: 240 });
-    }
-  }, [showChat]);
-
-  useEffect(() => {
-    if (showTranscription) {
-      panelManagement.registerPanel('transcription', { x: 16, y: 280 });
-    }
-  }, [showTranscription]);
-
-  useEffect(() => {
-    if (showAnalysis) {
-      panelManagement.registerPanel('analysis', { x: 432, y: 280 });
-    }
-  }, [showAnalysis]);
+  // Use panel registration hook to manage panel lifecycle
+  usePanelRegistration(panelManagement, {
+    showSettings,
+    showParticipants,
+    showInfoMenu,
+    showNotes,
+    showChat,
+    showTranscription,
+    showAnalysis,
+  });
 
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
