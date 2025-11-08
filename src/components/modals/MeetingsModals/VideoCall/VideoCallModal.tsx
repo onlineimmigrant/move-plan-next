@@ -44,6 +44,8 @@ import MinimizedVideoCallButton from './components/MinimizedVideoCallButton';
 import WaitingRoomControls from '../WaitingRoom/WaitingRoomControls';
 import TranscriptionPanel from './components/TranscriptionPanel';
 import AIAnalysisPanel from './components/AIAnalysisPanel';
+import ConnectionError from './components/ConnectionError';
+import ConnectingState from './components/ConnectingState';
 
 interface VideoCallProps {
   token: string;
@@ -410,55 +412,12 @@ export default function VideoCallModal({ token, roomName, onLeave, participantNa
   };
 
   if (error) {
-    return (
-      <div
-        className="shadow-2xl rounded-lg overflow-hidden fixed bg-red-50"
-        style={{ 
-          zIndex: 10003,
-          left: window.innerWidth / 2 - 200,
-          top: window.innerHeight / 2 - 150,
-          width: 400,
-          height: 300
-        }}
-      >
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="text-red-600 text-lg font-semibold mb-2">Connection Error</div>
-            <div className="text-red-500">{error}</div>
-            <button
-              onClick={onLeave}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <ConnectionError error={error} onClose={onLeave} />;
   }
 
   // Show connecting state
   if (isConnecting || !isConnected) {
-    return (
-      <div
-        className="shadow-2xl rounded-lg overflow-hidden fixed bg-gray-900"
-        style={{ 
-          zIndex: 10003,
-          left: window.innerWidth / 2 - 200,
-          top: window.innerHeight / 2 - 150,
-          width: 400,
-          height: 300
-        }}
-      >
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center text-white">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <div className="text-lg font-semibold mb-2">Connecting to meeting...</div>
-            <div className="text-sm text-gray-400">Please wait</div>
-          </div>
-        </div>
-      </div>
-    );
+    return <ConnectingState />;
   }
 
   // Show minimized camera button when minimized
