@@ -758,6 +758,14 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
         size={size}
         onClose={onClose}
       >
+        {/* Skip Link for Keyboard Users */}
+        <a
+          href="#ticket-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:shadow-lg"
+        >
+          Skip to {selectedTicket ? 'ticket content' : 'ticket list'}
+        </a>
+
         {/* Header */}
         <TicketModalHeader
           selectedTicket={selectedTicket}
@@ -777,7 +785,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div id="ticket-content" className="flex-1 flex flex-col overflow-hidden" role="main" aria-label="Ticket management content">
           {selectedTicket ? (
             <TicketDetailView
               selectedTicket={selectedTicket}
