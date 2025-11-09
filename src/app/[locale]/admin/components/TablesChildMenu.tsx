@@ -295,13 +295,10 @@ export default function TablesChildMenu({
     );
 
   return (
-    <div 
-      className="relative group"
-      onMouseEnter={() => setIsSidebarOpen(true)}
-    >
+    <div className="relative group">
       {/* Collapsed sidebar (mobile + desktop) */}
       <div 
-        className="pt-6 z-48 fixed inset-y-0 left-14 w-12 bg-white border-gray-200 flex flex-col items-center py-4 gap-6 border-r"
+        className="pt-20 z-30 fixed inset-y-0 left-14 w-14 bg-white border-gray-200 flex flex-col items-center py-4 gap-6 border-r"
       >
         <button onClick={() => setIsSidebarOpen(true)} className="p-1 rounded-md hover:bg-gray-50">
           <MagnifyingGlassIcon className="h-3 w-3 text-gray-600" />
@@ -326,8 +323,9 @@ export default function TablesChildMenu({
       {/* Expanded sidebar */}
       <aside
         className={cn(
-          "z-50 fixed inset-y-0 w-full px-8 sm:px-0 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-300 ease-in-out",
-          "left-14", // Always align to collapsed ParentMenu position
+          "z-35 fixed w-full px-8 sm:px-0 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-200 ease-in-out",
+          "top-16 bottom-0", // Start below navbar (h-16 = 64px), extend to bottom
+          "left-28", // Align to expanded ParentMenu position (w-14 + w-14 = w-28)
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

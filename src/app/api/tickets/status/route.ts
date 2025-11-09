@@ -70,7 +70,7 @@ export async function PATCH(request: Request) {
         .single();
 
       if (!settingsError && settings) {
-        const ticketUrl = `https://${settings.domain}/account/profile/tickets/${ticket_id}`;
+        const ticketUrl = `https://${settings.domain}/account/tickets/${ticket_id}`;
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
 
         if (baseUrl) {

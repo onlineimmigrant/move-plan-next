@@ -94,7 +94,7 @@ export default function StudyBooks({ courseId }: StudyBooksProps) {
           {resources.map((resource) => (
             <Link
               key={resource.id}
-              href={'/account/purchases'} // Fallback to /account/purchases if url is null
+              href={'/account/profile/purchases'} // Fallback to /account/profile/purchases if url is null
               target="_blank"
               rel="noopener noreferrer"
               className="block " // Ensure the link takes up the full space of the li

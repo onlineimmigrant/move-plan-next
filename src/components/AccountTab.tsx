@@ -27,7 +27,7 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
   const tabs: Tab[] = [
     ...(isStudent ? [{ label: t.student, href: '/account/edupro' }] : []),
     { label: t.profile, href: '/account/profile' },
-    { label: t.purchases, href: '/account/purchases' },
+    { label: t.purchases, href: '/account/profile/purchases' },
   ];
 
   // Calculate slider position and width based on actual tab dimensions

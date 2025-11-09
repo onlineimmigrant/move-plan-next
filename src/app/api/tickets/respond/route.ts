@@ -98,7 +98,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const ticketUrl = `https://${settings.domain}/account/profile/tickets/${ticket_id}`;
+    const ticketUrl = `https://${settings.domain}/account/tickets/${ticket_id}`;
 
     const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-email`, {
       method: 'POST',

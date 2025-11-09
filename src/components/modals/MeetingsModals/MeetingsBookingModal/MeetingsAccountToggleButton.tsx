@@ -78,7 +78,8 @@ export default function MeetingsAccountToggleButton() {
   }, [searchParams, launchFromBooking]);
 
   // Hide on admin routes - admins use MeetingsAdminToggleButton instead
-  if (pathname?.startsWith('/admin')) {
+  // Hide on account routes - account page has integrated modal button
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/account')) {
     return null;
   }
 

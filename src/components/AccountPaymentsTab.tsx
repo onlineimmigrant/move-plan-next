@@ -27,9 +27,9 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   const tabs: Tab[] = [
-    ...(isStudent ? [{ label: t.purchases, href: '/account/purchases' }] : []),
-     { label: t.payments, href: '/account/payments' },
-    { label: t.billing, href: '/account/payments/billing' }
+    ...(isStudent ? [{ label: t.purchases, href: '/account/profile/purchases' }] : []),
+     { label: t.payments, href: '/account/profile/payments' },
+    { label: t.billing, href: '/account/profile/payments/billing' }
    
   ];
 

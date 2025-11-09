@@ -9,6 +9,7 @@ import Loading from '@/ui/Loading';
 import { useSettings } from '@/context/SettingsContext';
 import { Settings } from '@/types/settings';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Define the context type
 interface SettingsContextType {
@@ -50,6 +51,7 @@ function ReceiptContent() {
   const { t } = useAccountTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { cssVars } = useThemeColors();
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -190,8 +192,9 @@ function ReceiptContent() {
         <div className="bg-white p-6 rounded-lg shadow-lg text-center">
           <p className="text-red-600 font-medium">{error || 'Transaction not found'}</p>
           <button
-            onClick={() => router.push('/account/payments')}
-            className="mt-4 text-sky-600 hover:text-sky-800 underline"
+            onClick={() => router.push('/account/profile/payments')}
+            className="mt-4 underline"
+            style={{ color: cssVars.primary.base }}
           >
             Back to Payments
           </button>
@@ -304,8 +307,9 @@ function ReceiptContent() {
         {/* Back Button */}
         <div className="text-center">
           <button
-            onClick={() => router.push('/account/payments')}
-            className="inline-flex items-center px-6 py-3 text-sky-600 hover:text-sky-800 font-medium transition duration-200"
+            onClick={() => router.push('/account/profile/payments')}
+            className="inline-flex items-center px-6 py-3 font-medium transition duration-200"
+            style={{ color: cssVars.primary.base }}
           >
             <svg
               className="w-5 h-5 mr-2"

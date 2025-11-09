@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch organization settings' }, { status: 500 });
     }
 
-    const ticketUrl = `https://${settings.domain}/account/profile/tickets/${ticket.id}`;
+    const ticketUrl = `https://${settings.domain}/account/tickets/${ticket.id}`;
 
     // Validate BASE URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';

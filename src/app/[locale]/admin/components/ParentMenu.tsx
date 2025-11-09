@@ -81,19 +81,21 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
   return (
     <div
       className={cn(
-        "z-50 h-screen flex flex-col transition-all duration-300 text-base",
+        "z-40 flex flex-col transition-all duration-200 ease-in-out",
+        "fixed top-16 bottom-0 left-0", // Start below navbar, extend to bottom, align left
         "bg-gradient-to-b from-white via-gray-50/80 to-gray-100/60",
         "border-r border-gray-200/80 backdrop-blur-sm",
         "shadow-lg shadow-gray-200/50",
+        "overflow-hidden",
         isCollapsed ? "w-14" : "w-48 pl-6",
       )}
-      onMouseEnter={() => {
-        // Don't auto-expand when TablesChildMenu might be shown
-        // Individual menu items handle their own hover logic
+      onMouseEnter={() => setIsCollapsed(false)}
+      onMouseLeave={() => {
+        // Delay collapse to prevent flickering when moving to child menu
+        setTimeout(() => setIsCollapsed(true), 200);
       }}
-      onMouseLeave={() => setIsCollapsed(true)}
     >
-      <nav className="fixed flex-1 flex flex-col px-2 pt-6">
+      <nav className="flex-1 flex flex-col px-2 pt-6 overflow-y-auto">{/* Main Navigation */}
         <div className="flex flex-col gap-6">
           <div
             className={cn(
@@ -145,14 +147,12 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
                   onMouseEnter={() => {
                     if (item.label === "Tables") {
                       setIsTablesHovered(true);
-                      setIsCollapsed(true); // Keep ParentMenu collapsed when Tables is hovered
                     } else {
-                      setIsCollapsed(false); // Expand for other items
-                      setIsTablesHovered(false); // Close Tables menu when hovering other items
+                      setIsTablesHovered(false);
                     }
                   }}
                   className={cn(
-                    "group relative grid grid-cols-[auto_1fr] items-center p-2.5 text-xs font-medium rounded-xl transition-all duration-200",
+                    "group relative grid grid-cols-[auto_1fr] items-center p-2.5 text-xs font-medium rounded-xl transition-all duration-200 ease-in-out",
                     "hover:shadow-md hover:shadow-gray-200/50 hover:-translate-y-0.5",
                     // Only apply active styles when pathname exactly matches
                     pathname === item.href && pathname !== ""
