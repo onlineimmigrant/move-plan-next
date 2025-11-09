@@ -7,6 +7,7 @@ export { TicketSearchBar } from './TicketSearchBar';
 export { TicketFilterBar } from './TicketFilterBar';
 export { TicketList } from './TicketList';
 export { TicketListItem } from './TicketListItem';
+export { TicketListView } from './TicketListView';
 
 // Detail View Components
 export { TicketHeader } from './TicketHeader';
@@ -21,6 +22,7 @@ export { TicketTagManager } from './TicketTagManager';
 
 // Modal Components
 export { InternalNotesPanel } from './InternalNotesPanel';
+export { PinnedNotesBanner } from './PinnedNotesBanner';
 export { ConfirmationDialog } from './ConfirmationDialog';
 export { TagEditorModal } from './TagEditorModal';
 export { MessageInputArea } from './MessageInputArea';

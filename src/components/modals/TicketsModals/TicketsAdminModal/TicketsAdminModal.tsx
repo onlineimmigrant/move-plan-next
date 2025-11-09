@@ -18,7 +18,7 @@ import { TicketAnalytics } from './TicketAnalytics';
 import AssignmentRulesModal from '@/components/modals/AssignmentRulesModal/AssignmentRulesModal';
 
 // Import extracted Phase 3 components
-import { ConfirmationDialog, TicketList, MessageInputArea, BottomFilters, Messages, TicketModalHeader } from './components';
+import { ConfirmationDialog, TicketList, MessageInputArea, BottomFilters, Messages, TicketModalHeader, PinnedNotesBanner, InternalNotesPanel, TicketListView } from './components';
 
 // Import Phase 1 types
 import type {
@@ -957,42 +957,12 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedTicket ? (
             <>
-              {/* Pinned Notes Banner - Right below header */}
-              {internalNotes.filter(note => note.is_pinned).length > 0 && (
-                <div className="bg-amber-50/90 dark:bg-amber-900/20 backdrop-blur-sm border-b-2 border-amber-300 dark:border-amber-700 px-4 py-3">
-                  <div className="max-w-3xl mx-auto">
-                    <div className="flex items-start gap-2">
-                      <Pin className="h-4 w-4 text-amber-600 dark:text-amber-400 fill-amber-600 dark:fill-amber-400 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 space-y-2">
-                        {internalNotes.filter(note => note.is_pinned).map((note) => (
-                          <div key={note.id} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-2 text-sm">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-amber-900 dark:text-amber-100">
-                                  📌 {note.admin_full_name || note.admin_email || 'Admin'}
-                                </span>
-                                <span className="text-xs text-amber-700 dark:text-amber-300">
-                                  {formatNoteDate(note.created_at)}
-                                </span>
-                              </div>
-                              {note.admin_id === currentUserId && (
-                                <button
-                                  onClick={() => handleTogglePinNoteWrapper(note.id, note.is_pinned)}
-                                  className="text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
-                                  title="Unpin note"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              )}
-                            </div>
-                            <p className="text-slate-800 dark:text-slate-100 whitespace-pre-wrap leading-relaxed">{note.note_text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Pinned Notes Banner */}
+              <PinnedNotesBanner
+                internalNotes={internalNotes}
+                currentUserId={currentUserId}
+                onTogglePinNote={handleTogglePinNoteWrapper}
+              />
 
               {/* Messages */}
               <Messages
@@ -1034,362 +1004,78 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
                 onSetSelectedAvatar={setSelectedAvatar}
               />
 
-
               {/* Internal Notes Section */}
-              <div className="bg-amber-50 border-t border-amber-200">
-                <div className={`${size === 'fullscreen' || size === 'half' ? 'max-w-2xl mx-auto' : ''}`}>
-                  {/* Toggle Header */}
-                  <button
-                    onClick={() => setShowInternalNotes(!showInternalNotes)}
-                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-amber-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <svg className="h-4 w-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      <span className="text-sm font-medium text-amber-900">
-                        Internal Notes 
-                        {internalNotes.length > 0 && (
-                          <span className="ml-2 text-xs text-amber-700">({internalNotes.length})</span>
-                        )}
-                      </span>
-                    </div>
-                    <svg 
-                      className={`h-5 w-5 text-amber-700 transition-transform ${showInternalNotes ? 'rotate-180' : ''}`}
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {/* Notes Content */}
-                  {showInternalNotes && (
-                    <div className="px-4 pb-4 space-y-3 max-h-64 overflow-y-auto">
-                      {/* Help Text */}
-                      <p className="text-xs text-amber-700 italic">
-                        🔒 Internal notes are only visible to admins. Use them for coordination, handoff notes, and context.
-                      </p>
-
-                      {/* Notes List */}
-                      {internalNotes.length > 0 ? (
-                        <div className="space-y-2">
-                          {internalNotes.map((note) => (
-                            <div 
-                              key={note.id} 
-                              className={`bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 shadow-sm ${
-                                note.is_pinned 
-                                  ? 'border-2 border-amber-400 dark:border-amber-500 bg-amber-50/50 dark:bg-amber-900/20' 
-                                  : 'border border-amber-200 dark:border-amber-700'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    {note.is_pinned && (
-                                      <Pin className="h-3 w-3 text-amber-600 fill-amber-600" />
-                                    )}
-                                    <span className="text-xs font-medium text-slate-700">
-                                      {note.admin_full_name || note.admin_email || 'Admin'}
-                                    </span>
-                                    <span className="text-xs text-slate-400">
-                                      {new Date(note.created_at).toLocaleString([], {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-slate-800 whitespace-pre-wrap">{note.note_text}</p>
-                                </div>
-                                {note.admin_id === currentUserId && (
-                                  <div className="flex items-center gap-1 ml-2">
-                                    <button
-                                      onClick={() => handleTogglePinNoteWrapper(note.id, note.is_pinned)}
-                                      className={`p-1 rounded transition-colors ${
-                                        note.is_pinned
-                                          ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-100'
-                                          : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'
-                                      }`}
-                                      title={note.is_pinned ? 'Unpin note' : 'Pin to top'}
-                                    >
-                                      <Pin className={`h-4 w-4 ${note.is_pinned ? 'fill-amber-600' : ''}`} />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteInternalNote(note.id)}
-                                      className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                      title="Delete note"
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-amber-700 italic text-center py-4">
-                          No internal notes yet. Add one below to coordinate with your team.
-                        </p>
-                      )}
-
-                      {/* Add Note Input */}
-                      <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-amber-300 dark:border-amber-700 rounded-lg p-3 shadow-sm">
-                        <textarea
-                          ref={noteInputRef}
-                          value={noteText}
-                          onChange={(e) => setNoteText(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleAddInternalNoteWrapper())}
-                          placeholder="Add an internal note (only visible to admins)..."
-                          className="w-full resize-none border-0 bg-transparent text-slate-800 dark:text-slate-100 placeholder-amber-600/50 dark:placeholder-amber-400/50 focus:outline-none focus:ring-0 text-sm leading-relaxed min-h-[60px] max-h-[120px]"
-                          rows={2}
-                          disabled={isAddingNote}
-                        />
-                        <div className="flex justify-end mt-2">
-                          <button
-                            onClick={handleAddInternalNoteWrapper}
-                            disabled={!noteText.trim() || isAddingNote}
-                            className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 disabled:from-slate-200 disabled:to-slate-300 dark:disabled:from-gray-700 dark:disabled:to-gray-800 text-white disabled:text-slate-400 dark:disabled:text-gray-500 text-sm font-medium rounded-lg shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed"
-                          >
-                            {isAddingNote ? 'Adding...' : 'Add Note'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <InternalNotesPanel
+                notes={internalNotes}
+                noteText={noteText}
+                onNoteTextChange={setNoteText}
+                onAddNote={handleAddInternalNoteWrapper}
+                onTogglePin={handleTogglePinNoteWrapper}
+                onDeleteNote={handleDeleteInternalNote}
+                currentUserId={currentUserId}
+                isAddingNote={isAddingNote}
+                isExpanded={showInternalNotes}
+                onToggleExpand={() => setShowInternalNotes(!showInternalNotes)}
+                noteInputRef={noteInputRef}
+              />
             </>
           ) : (
-            <>
-              {/* Ticket List */}
-              <div className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20">
-                {/* Active Filters & Search Statistics */}
-                {(searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || showAdvancedFilters) && (
-                  <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700 p-3 space-y-2">
-                    {/* Search Statistics */}
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-600 dark:text-slate-300">
-                          Showing <span className="font-semibold text-slate-900 dark:text-white">{groupedTickets[activeTab].length}</span> of <span className="font-semibold text-slate-900 dark:text-white">{tickets.length}</span> tickets
-                        </span>
-                        {searchQuery && (
-                          <span className="text-slate-500 dark:text-slate-400">
-                            • Searching in messages, responses, and tags
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => {
-                          setSearchQuery('');
-                          setAssignmentFilter('all');
-                          setPriorityFilter('all');
-                          setTagFilter('all');
-                          setDateRangeStart('');
-                          setDateRangeEnd('');
-                          setMultiSelectStatuses([]);
-                          setMultiSelectPriorities([]);
-                          setMultiSelectTags([]);
-                          setMultiSelectAssignees([]);
-                        }}
-                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
-                      >
-                        Clear all filters
-                      </button>
-                    </div>
-                    
-                    {/* Active Filter Pills */}
-                    <div className="flex flex-wrap gap-2">
-                      {searchQuery && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
-                          Search: "{searchQuery}"
-                          <button
-                            onClick={() => setSearchQuery('')}
-                            className="hover:bg-blue-200 rounded-full p-0.5"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      )}
-                      
-                      {assignmentFilter !== 'all' && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                          <User className="h-3 w-3" />
-                          {assignmentFilter === 'my' ? 'Assigned to me' : 'Unassigned'}
-                          <button
-                            onClick={() => setAssignmentFilter('all')}
-                            className="hover:bg-purple-200 rounded-full p-0.5"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      )}
-                      
-                      {priorityFilter !== 'all' && (
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                          priorityFilter === 'high' ? 'bg-red-100 text-red-700' :
-                          priorityFilter === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
-                        }`}>
-                          Priority: {getPriorityLabel(priorityFilter)}
-                          <button
-                            onClick={() => setPriorityFilter('all')}
-                            className={`rounded-full p-0.5 ${
-                              priorityFilter === 'high' ? 'hover:bg-red-200' :
-                              priorityFilter === 'medium' ? 'hover:bg-yellow-200' :
-                              'hover:bg-green-200'
-                            }`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      )}
-                      
-                      {tagFilter !== 'all' && (
-                        <span 
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
-                          style={{
-                            backgroundColor: `${availableTags.find(t => t.id === tagFilter)?.color}15`,
-                            borderColor: `${availableTags.find(t => t.id === tagFilter)?.color}40`,
-                            color: availableTags.find(t => t.id === tagFilter)?.color
-                          }}
-                        >
-                          Tag: {availableTags.find(t => t.id === tagFilter)?.name}
-                          <button
-                            onClick={() => setTagFilter('all')}
-                            className="rounded-full p-0.5"
-                            style={{ backgroundColor: `${availableTags.find(t => t.id === tagFilter)?.color}20` }}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      )}
-                      
-                      {/* Advanced filter pills */}
-                      {showAdvancedFilters && (
-                        <>
-                          {dateRangeStart && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
-                              From: {new Date(dateRangeStart).toLocaleDateString()}
-                              <button onClick={() => setDateRangeStart('')} className="hover:bg-indigo-200 rounded-full p-0.5">
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          )}
-                          
-                          {dateRangeEnd && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
-                              To: {new Date(dateRangeEnd).toLocaleDateString()}
-                              <button onClick={() => setDateRangeEnd('')} className="hover:bg-indigo-200 rounded-full p-0.5">
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          )}
-                          
-                          {multiSelectStatuses.map(status => (
-                            <span key={status} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-cyan-100 text-cyan-700 rounded-full text-xs font-medium">
-                              Status: {status}
-                              <button onClick={() => setMultiSelectStatuses(prev => prev.filter(s => s !== status))} className="hover:bg-cyan-200 rounded-full p-0.5">
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                          
-                          {multiSelectPriorities.map(priority => (
-                            <span key={priority} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                              priority === 'high' ? 'bg-red-100 text-red-700' :
-                              priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              Priority: {getPriorityLabel(priority)}
-                              <button onClick={() => setMultiSelectPriorities(prev => prev.filter(p => p !== priority))} className={`rounded-full p-0.5 ${
-                                priority === 'high' ? 'hover:bg-red-200' :
-                                priority === 'medium' ? 'hover:bg-yellow-200' :
-                                'hover:bg-green-200'
-                              }`}>
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                          
-                          {multiSelectTags.map(tagId => {
-                            const tag = availableTags.find(t => t.id === tagId);
-                            return tag ? (
-                              <span 
-                                key={tagId}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
-                                style={{
-                                  backgroundColor: `${tag.color}15`,
-                                  borderColor: `${tag.color}40`,
-                                  color: tag.color
-                                }}
-                              >
-                                Tag: {tag.name}
-                                <button onClick={() => setMultiSelectTags(prev => prev.filter(t => t !== tagId))} className="rounded-full p-0.5" style={{ backgroundColor: `${tag.color}20` }}>
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </span>
-                            ) : null;
-                          })}
-                          
-                          {multiSelectAssignees.map(assigneeId => {
-                            const user = assigneeId === 'unassigned' ? { id: 'unassigned', full_name: 'Unassigned', email: '' } : adminUsers.find(u => u.id === assigneeId);
-                            return user ? (
-                              <span key={assigneeId} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                                {assigneeId === 'unassigned' ? 'Unassigned' : (user.full_name || user.email)}
-                                <button onClick={() => setMultiSelectAssignees(prev => prev.filter(a => a !== assigneeId))} className="hover:bg-purple-200 rounded-full p-0.5">
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </span>
-                            ) : null;
-                          })}
-                          
-                          {filterLogic === 'OR' && (multiSelectStatuses.length > 0 || multiSelectPriorities.length > 0 || multiSelectTags.length > 0 || multiSelectAssignees.length > 0) && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
-                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                              </svg>
-                              OR Logic (Any match)
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                <TicketList
-                  tickets={groupedTickets[activeTab]}
-                  selectedTicketId={null}
-                  onTicketSelect={handleTicketSelect}
-                  searchQuery={searchQuery}
-                  isLoading={isLoadingTickets}
-                  hasMore={hasMoreTickets[activeTab]}
-                  onLoadMore={loadMoreTickets}
-                  loadingMore={loadingMore}
-                  ticketsWithPinnedNotes={ticketsWithPinnedNotes}
-                  ticketNoteCounts={ticketNoteCounts}
-                  adminUsers={adminUsers}
-                  getUnreadCount={getUnreadCount}
-                  isWaitingForResponse={isWaitingForResponse}
-                  assignmentFilter={assignmentFilter}
-                  priorityFilter={priorityFilter}
-                  tagFilter={tagFilter}
-                  onAssignTicket={handleAssignTicket}
-                  onPriorityChange={handlePriorityChange}
-                  onStatusChange={handleTicketListStatusChange}
-                  isAssigning={isAssigning}
-                  isChangingPriority={isChangingPriority}
-                  isChangingStatus={isChangingStatus}
-                />
-              </div>
-            </>
+            <TicketListView
+              tickets={tickets}
+              groupedTickets={groupedTickets}
+              activeTab={activeTab}
+              searchQuery={searchQuery}
+              assignmentFilter={assignmentFilter}
+              priorityFilter={priorityFilter}
+              tagFilter={tagFilter}
+              showAdvancedFilters={showAdvancedFilters}
+              dateRangeStart={dateRangeStart}
+              dateRangeEnd={dateRangeEnd}
+              multiSelectStatuses={multiSelectStatuses}
+              multiSelectPriorities={multiSelectPriorities}
+              multiSelectTags={multiSelectTags}
+              multiSelectAssignees={multiSelectAssignees}
+              filterLogic={filterLogic}
+              availableTags={availableTags}
+              adminUsers={adminUsers}
+              ticketsWithPinnedNotes={ticketsWithPinnedNotes}
+              ticketNoteCounts={ticketNoteCounts}
+              isLoadingTickets={isLoadingTickets}
+              hasMoreTickets={hasMoreTickets[activeTab]}
+              loadingMore={loadingMore}
+              isAssigning={isAssigning}
+              isChangingPriority={isChangingPriority}
+              isChangingStatus={isChangingStatus}
+              onTicketSelect={handleTicketSelect}
+              onLoadMore={loadMoreTickets}
+              onClearAllFilters={() => {
+                setSearchQuery('');
+                setAssignmentFilter('all');
+                setPriorityFilter('all');
+                setTagFilter('all');
+                setDateRangeStart('');
+                setDateRangeEnd('');
+                setMultiSelectStatuses([]);
+                setMultiSelectPriorities([]);
+                setMultiSelectTags([]);
+                setMultiSelectAssignees([]);
+              }}
+              onClearSearchQuery={() => setSearchQuery('')}
+              onClearAssignmentFilter={() => setAssignmentFilter('all')}
+              onClearPriorityFilter={() => setPriorityFilter('all')}
+              onClearTagFilter={() => setTagFilter('all')}
+              onClearDateRangeStart={() => setDateRangeStart('')}
+              onClearDateRangeEnd={() => setDateRangeEnd('')}
+              onRemoveStatus={(status) => setMultiSelectStatuses(prev => prev.filter(s => s !== status))}
+              onRemovePriority={(priority) => setMultiSelectPriorities(prev => prev.filter(p => p !== priority))}
+              onRemoveTag={(tagId) => setMultiSelectTags(prev => prev.filter(t => t !== tagId))}
+              onRemoveAssignee={(assigneeId) => setMultiSelectAssignees(prev => prev.filter(a => a !== assigneeId))}
+              onAssignTicket={handleAssignTicket}
+              onPriorityChange={handlePriorityChange}
+              onStatusChange={handleTicketListStatusChange}
+              getUnreadCount={getUnreadCount}
+              isWaitingForResponse={isWaitingForResponse}
+            />
           )}
 
           {/* Bottom Tabs - Only show when no ticket selected */}
