@@ -1,5 +1,38 @@
 'use client';
 
+/**
+ * useGroupedTickets Hook
+ * 
+ * High-performance hook for filtering, sorting, and grouping tickets by status.
+ * Uses useMemo to prevent unnecessary recalculations and optimize rendering.
+ * 
+ * @module hooks/useGroupedTickets
+ * @example
+ * ```typescript
+ * const groupedTickets = useGroupedTickets({
+ *   tickets: allTickets,
+ *   statuses: ['all', 'open', 'in progress', 'closed'],
+ *   debouncedSearchQuery: 'urgent',
+ *   priorityFilter: 'high',
+ *   assignmentFilter: 'my',
+ *   tagFilter: 'all',
+ *   sortBy: 'date-newest',
+ *   showAdvancedFilters: false,
+ *   dateRangeStart: '',
+ *   dateRangeEnd: '',
+ *   multiSelectStatuses: [],
+ *   multiSelectPriorities: [],
+ *   multiSelectTags: [],
+ *   multiSelectAssignees: [],
+ *   filterLogic: 'AND',
+ *   currentUserId: 'user-123'
+ * });
+ * 
+ * // Result: { all: [...], open: [...], 'in progress': [...], closed: [...] }
+ * const openTickets = groupedTickets.open; // Filtered & sorted
+ * ```
+ */
+
 import { useMemo } from 'react';
 import type { Ticket } from '../types';
 import {
@@ -8,6 +41,27 @@ import {
 } from '../utils/ticketFiltering';
 import { sortTickets } from '../utils/ticketSorting';
 
+/**
+ * Parameters for useGroupedTickets hook
+ * 
+ * @interface UseGroupedTicketsParams
+ * @property {Ticket[]} tickets - Array of all tickets to process
+ * @property {string[]} statuses - Status categories to group by
+ * @property {string} debouncedSearchQuery - Debounced search text (300ms delay)
+ * @property {'all' | 'high' | 'medium' | 'low'} priorityFilter - Priority filter
+ * @property {'all' | 'my' | 'unassigned'} assignmentFilter - Assignment filter
+ * @property {string} tagFilter - Tag filter ('all' or tag_id)
+ * @property {string} sortBy - Sort order for tickets
+ * @property {boolean} showAdvancedFilters - Whether advanced filters are active
+ * @property {string} dateRangeStart - Start date for date range filter
+ * @property {string} dateRangeEnd - End date for date range filter
+ * @property {string[]} multiSelectStatuses - Multiple status selections
+ * @property {string[]} multiSelectPriorities - Multiple priority selections
+ * @property {string[]} multiSelectTags - Multiple tag selections
+ * @property {string[]} multiSelectAssignees - Multiple assignee selections
+ * @property {'AND' | 'OR'} filterLogic - Logic for combining filters
+ * @property {string} currentUserId - Current user ID for 'my' filter
+ */
 interface UseGroupedTicketsParams {
   tickets: Ticket[];
   statuses: string[];
@@ -27,6 +81,21 @@ interface UseGroupedTicketsParams {
   currentUserId: string;
 }
 
+/**
+ * Groups, filters, and sorts tickets by status
+ * 
+ * Memoized for performance - only recalculates when dependencies change.
+ * 
+ * Processing Steps:
+ * 1. Filter by status
+ * 2. Apply basic filters (search, priority, assignment, tag)
+ * 3. Apply advanced filters (if enabled)
+ * 4. Sort tickets
+ * 5. Group by status
+ * 
+ * @param {UseGroupedTicketsParams} params - Hook parameters
+ * @returns {Record<string, Ticket[]>} Object with status keys and filtered/sorted ticket arrays
+ */
 export function useGroupedTickets({
   tickets,
   statuses,

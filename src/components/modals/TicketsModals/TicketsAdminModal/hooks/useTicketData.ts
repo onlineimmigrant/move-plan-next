@@ -2,6 +2,16 @@ import { useState, useCallback } from 'react';
 import * as TicketAPI from '../utils/ticketApi';
 import type { Ticket, Avatar, AdminUser } from '../types';
 
+/**
+ * Props for useTicketData hook
+ * 
+ * @interface UseTicketDataProps
+ * @property {string} organizationId - Current organization ID for filtering tickets
+ * @property {number} ticketsPerPage - Number of tickets to fetch per page (pagination)
+ * @property {string[]} statuses - List of status filters to apply
+ * @property {Avatar | null} selectedAvatar - Initially selected avatar for responses
+ * @property {(message: string, type: 'success' | 'error') => void} onToast - Toast notification callback
+ */
 interface UseTicketDataProps {
   organizationId: string;
   ticketsPerPage: number;
@@ -10,6 +20,26 @@ interface UseTicketDataProps {
   onToast: (message: string, type: 'success' | 'error') => void;
 }
 
+/**
+ * Return type for useTicketData hook
+ * 
+ * @interface UseTicketDataReturn
+ * @property {Ticket[]} tickets - Array of fetched tickets
+ * @property {boolean} isLoadingTickets - Loading state for initial ticket fetch
+ * @property {boolean} loadingMore - Loading state for pagination (load more)
+ * @property {{ [key: string]: boolean }} hasMoreTickets - Map of status to hasMore boolean
+ * @property {Avatar[]} avatars - Available support avatars for admin responses
+ * @property {Avatar | null} selectedAvatar - Currently selected avatar
+ * @property {AdminUser[]} adminUsers - List of admin users for assignment
+ * @property {string} currentUserId - Current logged-in user ID
+ * @property {React.Dispatch<React.SetStateAction<Ticket[]>>} setTickets - State setter for tickets
+ * @property {React.Dispatch<React.SetStateAction<Avatar | null>>} setSelectedAvatar - State setter for avatar
+ * @property {(loadMore?: boolean) => Promise<void>} fetchTickets - Fetch tickets from API
+ * @property {() => Promise<void>} loadMoreTickets - Load next page of tickets
+ * @property {() => Promise<void>} fetchAvatars - Fetch available avatars
+ * @property {() => Promise<void>} fetchAdminUsers - Fetch admin users list
+ * @property {() => Promise<void>} fetchCurrentUser - Fetch current user info
+ */
 interface UseTicketDataReturn {
   tickets: Ticket[];
   isLoadingTickets: boolean;
@@ -29,8 +59,52 @@ interface UseTicketDataReturn {
 }
 
 /**
- * Custom hook for managing ticket data fetching
- * Handles tickets, avatars, admin users, and current user data
+ * useTicketData Hook
+ * 
+ * Manages all ticket-related data fetching and state management for the admin modal.
+ * Handles tickets, avatars, admin users, and current user data with pagination support.
+ * 
+ * @hook
+ * @param {UseTicketDataProps} props - Hook configuration
+ * @returns {UseTicketDataReturn} Ticket data and management functions
+ * 
+ * @example
+ * ```typescript
+ * const {
+ *   tickets,
+ *   isLoadingTickets,
+ *   avatars,
+ *   adminUsers,
+ *   fetchTickets,
+ *   loadMoreTickets
+ * } = useTicketData({
+ *   organizationId: 'org-123',
+ *   ticketsPerPage: 20,
+ *   statuses: ['open', 'in progress'],
+ *   selectedAvatar: null,
+ *   onToast: showToast
+ * });
+ * 
+ * // Fetch initial tickets
+ * useEffect(() => {
+ *   fetchTickets();
+ * }, [fetchTickets]);
+ * 
+ * // Load more on scroll
+ * <button onClick={loadMoreTickets}>Load More</button>
+ * ```
+ * 
+ * Features:
+ * - Pagination with load more functionality
+ * - Status-based filtering
+ * - Avatar management for admin responses
+ * - Admin user list for ticket assignment
+ * - Current user identification
+ * 
+ * Performance:
+ * - Memoized fetch functions with useCallback
+ * - Optimistic UI updates
+ * - Error handling with toast notifications
  */
 export const useTicketData = ({
   organizationId,
@@ -50,7 +124,12 @@ export const useTicketData = ({
 
   /**
    * Fetch tickets from API
-   * @param loadMore - Whether to append to existing tickets or replace
+   * 
+   * Fetches tickets based on current organization and status filters.
+   * Supports pagination via loadMore parameter.
+   * 
+   * @param {boolean} loadMore - Whether to append to existing tickets or replace
+   * @returns {Promise<void>}
    */
   const fetchTickets = useCallback(async (loadMore: boolean = false) => {
     if (!loadMore) {
