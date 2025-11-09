@@ -36,5 +36,10 @@ export { default as Messages } from './Messages';
 // Header Components
 export { default as TicketModalHeader } from './TicketModalHeader';
 
+// Layout Components
+export { default as TicketDetailView } from './TicketDetailView';
+export { default as ModalContainer } from './ModalContainer';
+export { default as AuxiliaryModals } from './AuxiliaryModals';
+
 // Re-export shared components
 export { TypingIndicator, AvatarChangeIndicator, ReadReceipts } from '../../shared/components';

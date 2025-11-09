@@ -22,3 +22,4 @@ export { useTicketOperations } from './useTicketOperations';
 export { useMessageHandling } from './useMessageHandling';
 export { useFileUpload } from './useFileUpload';
 export { usePredefinedResponses } from './usePredefinedResponses';
+export { useGroupedTickets } from './useGroupedTickets';

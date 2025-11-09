@@ -1,24 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { Rnd } from 'react-rnd';
-import { XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon, PlusIcon, UserCircleIcon, Cog6ToothIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Listbox, Popover, Transition } from '@headlessui/react';
 import { supabase } from '@/lib/supabase';
 import { useSettings } from '@/context/SettingsContext';
-import Button from '@/ui/Button';
-import Toast from '@/components/Toast';
-import Tooltip from '@/components/Tooltip';
-import { Menu, X, User, Users, Check, ChevronDown, Pin, AlertTriangle, BarChart3, Zap } from 'lucide-react';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
-import AvatarManagementModal from '@/components/modals/AvatarManagementModal/AvatarManagementModal';
-import { TicketAttachment, FileUploadProgress, ALLOWED_MIME_TYPES, validateFile, uploadFileOnly, downloadAttachment, getAttachmentUrl, deleteAttachment, isImageFile, isPdfFile, getFileIcon, formatFileSize, createLocalPreviewUrl } from '@/lib/fileUpload';
-import { TicketAnalytics } from './TicketAnalytics';
-import AssignmentRulesModal from '@/components/modals/AssignmentRulesModal/AssignmentRulesModal';
+import { getAttachmentUrl, isImageFile } from '@/lib/fileUpload';
 
 // Import extracted Phase 3 components
-import { ConfirmationDialog, TicketList, MessageInputArea, BottomFilters, Messages, TicketModalHeader, PinnedNotesBanner, InternalNotesPanel, TicketListView } from './components';
+import { 
+  TicketList, 
+  BottomFilters, 
+  TicketModalHeader, 
+  TicketListView,
+  TicketDetailView,
+  ModalContainer,
+  AuxiliaryModals,
+} from './components';
 
 // Import Phase 1 types
 import type {
@@ -33,55 +31,18 @@ import type {
 
 // Import Phase 1 utility functions
 import {
-  filterTicketsByStatus,
-  filterTicketsByPriority,
-  filterTicketsByAssignment,
-  filterTicketsByTag,
-  filterTicketsBySearch,
-  filterTicketsByDateRange,
-  filterTicketsByMultipleStatuses,
-  filterTicketsByMultiplePriorities,
-  filterTicketsByMultipleTags,
-  filterTicketsByMultipleAssignees,
-  applyAdvancedFilters,
-  applyAllFilters,
-} from './utils/ticketFiltering';
+  setupRealtimeSubscription,
+  cleanupRealtimeSubscription,
+  refreshSelectedTicket as refreshSelectedTicketUtil,
+} from './utils/realtimeSetup';
 
 import {
-  sortByDateNewest,
-  sortByDateOldest,
-  sortByPriority,
-  sortByResponseCount,
-  sortByRecentlyUpdated,
-  sortTickets,
-} from './utils/ticketSorting';
-
-import {
-  groupTicketsByStatus,
-} from './utils/ticketGrouping';
-
-import {
-  isWaitingForResponse,
-  getUnreadCount,
-  getPriorityBadgeClass,
   getPriorityLabel,
-  getStatusBadgeClass,
-  getInitials,
-  getHighlightedParts,
-  formatFullDate,
-  formatTimeOnly,
   getCurrentISOString,
-  formatNoteDate,
-  getAvatarForResponse,
-  getAvatarClasses,
-  getContainerClasses,
-  getStatusTextClass,
-  getPriorityTextClass,
-  getDisplayName,
-  getAvatarDisplayName,
   highlightText,
-  renderAvatar,
   processTicketResponses,
+  getUnreadCount,
+  isWaitingForResponse,
 } from './utils/ticketHelpers';
 
 // Import API functions
@@ -109,6 +70,7 @@ import {
   useMessageHandling,
   useFileUpload,
   usePredefinedResponses,
+  useGroupedTickets,
 } from './hooks';
 
 interface TicketsAdminModalProps {
@@ -295,17 +257,20 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
       if (process.env.NODE_ENV === 'development') {
         console.log('🚀 Admin modal opened - setting up realtime');
       }
-      setupRealtimeSubscription();
+      setupRealtimeSubscription({
+        selectedTicket,
+        selectedTicketRef,
+        realtimeChannelRef,
+        fetchTickets,
+        refreshSelectedTicket,
+        fetchInternalNotes,
+        fetchTicketsWithPinnedNotes,
+        fetchTicketNoteCounts,
+      });
     }
 
     return () => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔌 Unsubscribing from realtime (admin modal cleanup)');
-      }
-      if (realtimeChannelRef.current) {
-        realtimeChannelRef.current.unsubscribe();
-        realtimeChannelRef.current = null;
-      }
+      cleanupRealtimeSubscription(realtimeChannelRef);
     };
   }, [isOpen]);
 
@@ -518,171 +483,16 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   });
 
   const refreshSelectedTicket = async () => {
-    const currentTicket = selectedTicketRef.current;
-
-    if (!currentTicket) {
-      console.log('⚠️ No selected ticket to refresh');
-      return;
-    }
-
-    console.log('🔍 Starting refresh for ticket:', currentTicket.id);
-
-    try {
-      // Fetch the specific ticket with updated data
-      const { data: ticketData, error: ticketError } = await supabase
-        .from('tickets')
-        .select('*')
-        .eq('id', currentTicket.id)
-        .single();
-      
-      if (ticketError) {
-        console.error('❌ Error fetching ticket:', ticketError);
-        throw ticketError;
-      }
-      
-      console.log('✅ Ticket data fetched (admin)');
-      
-      // Fetch responses separately with proper ordering and attachments
-      const { data: responsesData, error: responsesError } = await supabase
-        .from('ticket_responses')
-        .select(`
-          *,
-          ticket_attachments(*)
-        `)
-        .eq('ticket_id', currentTicket.id)
-        .order('created_at', { ascending: true });
-      
-      if (responsesError) {
-        console.error('❌ Error fetching responses:', responsesError);
-        throw responsesError;
-      }
-      
-      console.log('✅ Responses fetched (admin):', responsesData?.length);
-      
-      // Process responses to flatten attachments
-      const processedResponses = processTicketResponses(responsesData || []);
-      
-      const updatedTicket = {
-        ...ticketData,
-        ticket_responses: processedResponses
-      };
-      
-      console.log('🔄 Selected ticket refreshed (admin) - responses:', updatedTicket.ticket_responses.length, 'Previous:', currentTicket.ticket_responses?.length);
-      setSelectedTicket(updatedTicket);
-      
-      // Also refresh the tickets list in background
-      fetchTickets();
-      
-      // Load attachment URLs for any new images
-      if (updatedTicket.ticket_responses && updatedTicket.ticket_responses.length > 0) {
-        loadAttachmentUrls(updatedTicket.ticket_responses);
-      }
-      
-      // Force scroll after state update
-      setTimeout(() => scrollToBottom(), 100);
-    } catch (err) {
-      console.error('❌ Error refreshing selected ticket:', err);
-    }
+    await refreshSelectedTicketUtil({
+      selectedTicketRef,
+      setSelectedTicket,
+      fetchTickets,
+      loadAttachmentUrls,
+      scrollToBottom: scrollToBottomFromHook,
+    });
   };
 
-  const setupRealtimeSubscription = () => {
-    try {
-      // Unsubscribe from any existing channel first
-      if (realtimeChannelRef.current) {
-        console.log('🔌 Cleaning up existing realtime channel (admin)');
-        realtimeChannelRef.current.unsubscribe();
-        realtimeChannelRef.current = null;
-      }
-      
-      console.log('🔄 Setting up realtime subscription (admin)');
-      
-      // Create channel with direct inline subscription (like TicketsAccountModal)
-      const channel = supabase
-        .channel('tickets-admin-channel', {
-          config: {
-            broadcast: { self: true },
-            presence: { key: selectedTicket?.id || 'admin' },
-          },
-        })
-        .on(
-          'postgres_changes',
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'tickets'
-          },
-          (payload) => {
-            console.log('✅ Realtime (Admin): Ticket change', payload);
-            fetchTickets();
-            refreshSelectedTicket();
-          }
-        )
-        .on(
-          'postgres_changes',
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'ticket_responses'
-          },
-          (payload) => {
-            console.log('✅ Realtime (Admin): Response change', payload);
-            console.log('📊 Payload details:', {
-              eventType: payload.eventType,
-              table: payload.table,
-              schema: payload.schema,
-              new: payload.new,
-              old: payload.old
-            });
-            fetchTickets();
-            refreshSelectedTicket();
-          }
-        )
-        .on(
-          'postgres_changes',
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'ticket_notes'
-          },
-          (payload) => {
-            console.log('✅ Realtime (Admin): Note change', payload);
-            const currentTicket = selectedTicketRef.current;
-            if (currentTicket) {
-              fetchInternalNotes(currentTicket.id);
-            }
-            // Refresh the list of tickets with pinned notes and note counts
-            fetchTicketsWithPinnedNotes();
-            fetchTicketNoteCounts();
-          }
-        )
-        .subscribe((status, err) => {
-          console.log('📡 Realtime subscription status (Admin):', status);
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ Successfully subscribed to realtime updates (Admin)');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('❌ Realtime channel error (Admin):', err);
-          } else if (status === 'TIMED_OUT') {
-            console.error('⏱️ Realtime subscription timed out (Admin)');
-          } else if (status === 'CLOSED') {
-            console.log('🔌 Realtime channel closed (Admin)');
-          }
-        });
-      
-      // Store the channel reference for cleanup
-      realtimeChannelRef.current = channel;
-      console.log('✅ Realtime channel created and stored (admin)');
-      
-      return channel;
-    } catch (err) {
-      console.error('❌ Error setting up realtime subscription (Admin):', err);
-    }
-  };
-
-  // ==== DATA FETCHING FUNCTIONS ====
-  // Using useTicketData hook - functions available via hook destructuring
-  // fetchTickets, loadMoreTickets, fetchAvatars, fetchAdminUsers, fetchCurrentUser
-
-  // Auto-scroll to bottom when ticket changes or new messages arrive
+  // Realtime subscription effect - direct implementation like TicketsAccountModal
   useAutoScroll({
     selectedTicketId: selectedTicket?.id,
     responseCount: selectedTicket?.ticket_responses?.length || 0,
@@ -823,44 +633,24 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   };
 
   // Use Phase 1 utilities for filtering, sorting, and grouping
-  const groupedTickets = statuses.reduce(
-    (acc, status) => {
-      // Start with all tickets or filter by status
-      let filteredTickets = status === 'all' ? tickets : filterTicketsByStatus(tickets, status);
-      
-      // Apply all filters using Phase 1 utilities
-      const filters = {
-        searchQuery: debouncedSearchQuery,
-        activeTab: status as any, // status comes from statuses array which matches TicketStatus
-        priorityFilter,
-        assignmentFilter,
-        tagFilter,
-        sortBy,
-      };
-
-      const advancedFilters = {
-        showAdvancedFilters,
-        dateRangeStart,
-        dateRangeEnd,
-        multiSelectStatuses,
-        multiSelectPriorities,
-        multiSelectTags,
-        multiSelectAssignees,
-        filterLogic,
-      };
-
-      filteredTickets = applyAllFilters(filteredTickets, filters, advancedFilters, currentUserId);
-      
-      // Apply sorting using Phase 1 utility
-      filteredTickets = sortTickets(filteredTickets, sortBy);
-      
-      return {
-        ...acc,
-        [status]: filteredTickets,
-      };
-    },
-    {} as Record<string, Ticket[]>
-  );
+  const groupedTickets = useGroupedTickets({
+    tickets,
+    statuses,
+    debouncedSearchQuery,
+    priorityFilter,
+    assignmentFilter,
+    tagFilter,
+    sortBy,
+    showAdvancedFilters,
+    dateRangeStart,
+    dateRangeEnd,
+    multiSelectStatuses,
+    multiSelectPriorities,
+    multiSelectTags,
+    multiSelectAssignees,
+    filterLogic,
+    currentUserId,
+  });
 
   // ========================================
   // HELPER FUNCTIONS
@@ -914,29 +704,16 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     setToast({ message: successMessage, type: 'success' });
   };
 
-  if (!isOpen) return null;
-
-  const modalContent = (
+  // Render the modal
+  return (
     <>
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000]"
-        onClick={onClose}
-      />
-      
-      {/* Draggable & Resizable Modal Container */}
-      <Rnd
-        default={getRndConfig()}
-        minWidth={400}
-        minHeight={600}
-        bounds="window"
-        dragHandleClassName="modal-drag-handle"
-        enableResizing={size !== 'fullscreen'}
-        className="pointer-events-auto z-[10001]"
+      <ModalContainer
+        isOpen={isOpen}
+        size={size}
+        onClose={onClose}
       >
-        <div className="relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20">
-          {/* Header */}
-          <TicketModalHeader
+        {/* Header */}
+        <TicketModalHeader
           selectedTicket={selectedTicket}
           size={size}
           searchQuery={searchQuery}
@@ -956,69 +733,49 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedTicket ? (
-            <>
-              {/* Pinned Notes Banner */}
-              <PinnedNotesBanner
-                internalNotes={internalNotes}
-                currentUserId={currentUserId}
-                onTogglePinNote={handleTogglePinNoteWrapper}
-              />
-
-              {/* Messages */}
-              <Messages
-                selectedTicket={selectedTicket}
-                searchQuery={searchQuery}
-                avatars={avatars}
-                selectedAvatar={selectedAvatar}
-                attachmentUrls={attachmentUrls}
-                isCustomerTyping={isCustomerTyping}
-                messagesContainerRef={messagesContainerRef}
-                messagesEndRef={messagesEndRef}
-              />
-
-              <MessageInputArea
-                size={size}
-                predefinedResponses={predefinedResponses}
-                searchQuery={searchQuery}
-                selectedFiles={selectedFiles}
-                uploadProgress={uploadProgress}
-                isDragging={isDragging}
-                responseMessage={responseMessage}
-                isSending={isSending}
-                showSearch={showSearch}
-                avatars={avatars}
-                selectedAvatar={selectedAvatar}
-                inputRef={inputRef}
-                fileInputRef={fileInputRef}
-                onUsePredefinedResponse={usePredefinedResponse}
-                onClearFiles={clearFiles}
-                onRemoveFile={removeFile}
-                onHandleDragOver={handleDragOver}
-                onHandleDragLeave={handleDragLeave}
-                onHandleDrop={handleDrop}
-                onHandleMessageChange={handleMessageChange}
-                onHandleFileSelect={handleFileSelect}
-                onHandleAdminRespond={handleAdminRespond}
-                onSetShowSearch={setShowSearch}
-                onSetSearchQuery={setSearchQuery}
-                onSetSelectedAvatar={setSelectedAvatar}
-              />
-
-              {/* Internal Notes Section */}
-              <InternalNotesPanel
-                notes={internalNotes}
-                noteText={noteText}
-                onNoteTextChange={setNoteText}
-                onAddNote={handleAddInternalNoteWrapper}
-                onTogglePin={handleTogglePinNoteWrapper}
-                onDeleteNote={handleDeleteInternalNote}
-                currentUserId={currentUserId}
-                isAddingNote={isAddingNote}
-                isExpanded={showInternalNotes}
-                onToggleExpand={() => setShowInternalNotes(!showInternalNotes)}
-                noteInputRef={noteInputRef}
-              />
-            </>
+            <TicketDetailView
+              selectedTicket={selectedTicket}
+              size={size}
+              searchQuery={searchQuery}
+              showSearch={showSearch}
+              isDragging={isDragging}
+              isSending={isSending}
+              isAddingNote={isAddingNote}
+              isCustomerTyping={isCustomerTyping}
+              showInternalNotes={showInternalNotes}
+              responseMessage={responseMessage}
+              noteText={noteText}
+              selectedFiles={selectedFiles}
+              uploadProgress={uploadProgress}
+              avatars={avatars}
+              selectedAvatar={selectedAvatar}
+              predefinedResponses={predefinedResponses}
+              internalNotes={internalNotes}
+              attachmentUrls={attachmentUrls}
+              messagesContainerRef={messagesContainerRef}
+              messagesEndRef={messagesEndRef}
+              inputRef={inputRef}
+              noteInputRef={noteInputRef}
+              fileInputRef={fileInputRef}
+              currentUserId={currentUserId}
+              onUsePredefinedResponse={usePredefinedResponse}
+              onClearFiles={clearFiles}
+              onRemoveFile={removeFile}
+              onHandleDragOver={handleDragOver}
+              onHandleDragLeave={handleDragLeave}
+              onHandleDrop={handleDrop}
+              onHandleMessageChange={handleMessageChange}
+              onHandleFileSelect={handleFileSelect}
+              onHandleAdminRespond={handleAdminRespond}
+              onSetShowSearch={setShowSearch}
+              onSetSearchQuery={setSearchQuery}
+              onSetSelectedAvatar={setSelectedAvatar}
+              onNoteTextChange={setNoteText}
+              onAddNote={handleAddInternalNoteWrapper}
+              onTogglePin={handleTogglePinNoteWrapper}
+              onDeleteNote={handleDeleteInternalNote}
+              onToggleExpand={() => setShowInternalNotes(!showInternalNotes)}
+            />
           ) : (
             <TicketListView
               tickets={tickets}
@@ -1116,72 +873,31 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
             />
           )}
         </div>
-        </div>
-      </Rnd>
+      </ModalContainer>
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
-      {/* Close Ticket Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={showCloseConfirmation && !!ticketToClose}
-        title="Close Ticket?"
-        message="Are you sure you want to close this ticket?"
-        details={ticketToClose ? {
-          label: 'Ticket Subject',
-          value: ticketToClose.subject
-        } : undefined}
-        consequences={[
-          'Mark the ticket as resolved',
-          'Send a notification to the customer',
-          'Move the ticket to the closed section'
-        ]}
-        confirmText="Close Ticket"
-        cancelText="Cancel"
-        variant="danger"
-        onConfirm={confirmCloseTicketWrapper}
-        onCancel={cancelCloseTicket}
+      {/* Auxiliary Modals */}
+      <AuxiliaryModals
+        toast={toast}
+        onCloseToast={() => setToast(null)}
+        showCloseConfirmation={showCloseConfirmation}
+        ticketToClose={ticketToClose}
+        onConfirmClose={confirmCloseTicketWrapper}
+        onCancelClose={cancelCloseTicket}
+        showAvatarManagement={showAvatarManagement}
+        avatarManagementCreateMode={avatarManagementCreateMode}
+        onCloseAvatarManagement={() => {
+          setShowAvatarManagement(false);
+          setAvatarManagementCreateMode(false);
+        }}
+        onAvatarUpdated={fetchAvatars}
+        organizationId={settings?.organization_id}
+        showAnalytics={showAnalytics}
+        tickets={tickets}
+        adminUsers={adminUsers}
+        onCloseAnalytics={() => setShowAnalytics(false)}
+        showAssignmentRules={showAssignmentRules}
+        onCloseAssignmentRules={() => setShowAssignmentRules(false)}
       />
-
-      {/* Avatar Management Modal */}
-      {showAvatarManagement && (
-        <AvatarManagementModal
-          isOpen={showAvatarManagement}
-          onClose={() => {
-            setShowAvatarManagement(false);
-            setAvatarManagementCreateMode(false);
-          }}
-          onAvatarUpdated={() => {
-            fetchAvatars();
-          }}
-          startInCreateMode={avatarManagementCreateMode}
-          organizationId={settings?.organization_id}
-        />
-      )}
-
-      {/* Analytics Dashboard */}
-      {showAnalytics && (
-        <TicketAnalytics
-          tickets={tickets}
-          adminUsers={adminUsers}
-          onClose={() => setShowAnalytics(false)}
-        />
-      )}
-
-      {/* Assignment Rules & Automation */}
-      {showAssignmentRules && (
-        <AssignmentRulesModal
-          isOpen={showAssignmentRules}
-          onClose={() => setShowAssignmentRules(false)}
-        />
-      )}
     </>
   );
-
-  return createPortal(modalContent, document.body);
 }
