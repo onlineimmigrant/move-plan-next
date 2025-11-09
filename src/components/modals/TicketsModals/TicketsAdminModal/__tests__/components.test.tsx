@@ -1,9 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
-import { LiveRegion } from '../components/LiveRegion';
-import { KeyboardShortcutsModal } from '../components/KeyboardShortcutsModal';
-import { ModalContainer } from '../components/ModalContainer';
+import LiveRegion from '../components/LiveRegion';
+import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
+import ModalContainer from '../components/ModalContainer';
 
 describe('LiveRegion', () => {
   it('should render with message', () => {

@@ -3,6 +3,11 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 
+// Mock Next.js navigation
+jest.mock('next/navigation', () => ({
+  usePathname: () => '/en/account',
+}));
+
 // Mock all dependencies before importing component
 jest.mock('@/lib/supabase', () => ({
   supabase: {
