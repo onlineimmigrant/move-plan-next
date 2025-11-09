@@ -585,8 +585,8 @@ export async function removeTagFromTicket(ticketId: string, tagId: string) {
 export async function sendAdminResponse(params: {
   ticketId: string;
   message: string;
-  avatarId: string;
-  userId: string;
+  avatarId: string | null;
+  userId: string | null;
   attachmentData?: Array<{ path: string; name: string; type: string; size: number }>;
 }) {
   const { ticketId, message, avatarId, userId, attachmentData = [] } = params;

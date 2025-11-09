@@ -175,8 +175,8 @@ export function useMessageHandling({
       const responseData = await TicketAPI.sendAdminResponse({
         ticketId: selectedTicket.id,
         message: tempMessage,
-        avatarId: selectedAvatar.id !== 'default' ? selectedAvatar.id : '',
-        userId: user?.id || '',
+        avatarId: selectedAvatar.id !== 'default' ? selectedAvatar.id : null,
+        userId: user?.id || null,
         attachmentData: uploadedFileData
       });
 
