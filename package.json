@@ -50,6 +50,7 @@
     "@tiptap/starter-kit": "^2.11.7",
     "@twilio/conversations": "^2.6.2",
     "@types/jsdom": "^27.0.0",
+    "@types/react-rnd": "^7.4.4",
     "@types/turndown": "^5.0.6",
     "@xmldom/xmldom": "^0.9.8",
     "apify-client": "^2.12.6",
