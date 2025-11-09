@@ -41,6 +41,17 @@ jest.mock('@/context/SettingsContext', () => ({
   }),
 }));
 
+// Mock TicketAPI
+jest.mock('../utils/ticketApi', () => ({
+  addTagToTicket: jest.fn().mockResolvedValue(undefined),
+  removeTagFromTicket: jest.fn().mockResolvedValue(undefined),
+  updateTicketStatus: jest.fn().mockResolvedValue(undefined),
+  updateTicketPriority: jest.fn().mockResolvedValue(undefined),
+  assignTicket: jest.fn().mockResolvedValue(undefined),
+  saveInternalNote: jest.fn().mockResolvedValue({ id: 'note-1' }),
+  deleteInternalNote: jest.fn().mockResolvedValue(undefined),
+}));
+
 // Import hooks after mocks
 import { useTicketOperations } from '../hooks/useTicketOperations';
 import { useMessageHandling } from '../hooks/useMessageHandling';
@@ -267,14 +278,41 @@ describe('useTagManagement', () => {
     const mockUpdateTickets = jest.fn();
     const mockUpdateSelectedTicket = jest.fn();
     
+    // Mock Supabase to return tags when fetching
+    const { supabase } = require('@/lib/supabase');
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'ticket_tags') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          order: jest.fn().mockReturnThis(),
+          then: jest.fn((fn) => Promise.resolve({ 
+            data: [{ id: 'tag-1', name: 'Test Tag', color: 'blue' }], 
+            error: null 
+          }).then(fn)),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      };
+    });
+    
     const { result } = renderHook(() => useTagManagement(mockProps));
     
+    // First fetch tags so availableTags is populated
+    await act(async () => {
+      await result.current.fetchTags();
+    });
+    
+    // Now assign the tag
     await act(async () => {
       await result.current.handleAssignTag('ticket-1', 'tag-1', mockUpdateTickets, mockUpdateSelectedTicket);
     });
     
-    // Should call toast on success
-    expect(mockProps.onToast).toHaveBeenCalled();
+    // Should update tickets
+    expect(mockUpdateTickets).toHaveBeenCalled();
   });
 
   it('should remove tag from ticket', async () => {
