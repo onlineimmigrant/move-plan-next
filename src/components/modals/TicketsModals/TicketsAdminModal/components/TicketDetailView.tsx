@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { PinnedNotesBanner, InternalNotesPanel, Messages, MessageInputArea } from './index';
 import type { Ticket, Avatar, PredefinedResponse, TicketNote } from '../types';
 
@@ -63,7 +63,7 @@ interface TicketDetailViewProps {
   onToggleExpand: () => void;
 }
 
-export default function TicketDetailView({
+const TicketDetailViewComponent = ({
   // Ticket data
   selectedTicket,
   
@@ -120,7 +120,7 @@ export default function TicketDetailView({
   onTogglePin,
   onDeleteNote,
   onToggleExpand,
-}: TicketDetailViewProps) {
+}: TicketDetailViewProps) => {
   return (
     <>
       {/* Pinned Notes Banner */}
@@ -187,4 +187,43 @@ export default function TicketDetailView({
       />
     </>
   );
-}
+};
+
+/**
+ * Memoized TicketDetailView to prevent unnecessary re-renders
+ */
+const TicketDetailView = memo(TicketDetailViewComponent, (prevProps, nextProps) => {
+  // Check ticket changes
+  if (prevProps.selectedTicket.id !== nextProps.selectedTicket.id) return false;
+  if (prevProps.selectedTicket.status !== nextProps.selectedTicket.status) return false;
+  if (prevProps.selectedTicket.priority !== nextProps.selectedTicket.priority) return false;
+  
+  // Check UI state
+  if (prevProps.size !== nextProps.size) return false;
+  if (prevProps.searchQuery !== nextProps.searchQuery) return false;
+  if (prevProps.showSearch !== nextProps.showSearch) return false;
+  if (prevProps.isDragging !== nextProps.isDragging) return false;
+  if (prevProps.isSending !== nextProps.isSending) return false;
+  if (prevProps.isAddingNote !== nextProps.isAddingNote) return false;
+  if (prevProps.isCustomerTyping !== nextProps.isCustomerTyping) return false;
+  if (prevProps.showInternalNotes !== nextProps.showInternalNotes) return false;
+  
+  // Check message state
+  if (prevProps.responseMessage !== nextProps.responseMessage) return false;
+  if (prevProps.noteText !== nextProps.noteText) return false;
+  if (prevProps.selectedFiles.length !== nextProps.selectedFiles.length) return false;
+  
+  // Check selected avatar
+  if (prevProps.selectedAvatar?.id !== nextProps.selectedAvatar?.id) return false;
+  
+  // Check internal notes count (detailed comparison in InternalNotesPanel)
+  if (prevProps.internalNotes.length !== nextProps.internalNotes.length) return false;
+  
+  // Check ticket responses count (detailed comparison in Messages)
+  if (prevProps.selectedTicket.ticket_responses.length !== nextProps.selectedTicket.ticket_responses.length) return false;
+  
+  // All critical props are equal
+  return true;
+});
+
+export default TicketDetailView;

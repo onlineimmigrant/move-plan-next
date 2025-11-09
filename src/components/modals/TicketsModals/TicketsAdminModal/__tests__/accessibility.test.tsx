@@ -124,13 +124,17 @@ describe('Accessibility - WCAG 2.1 AA Compliance', () => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
 
-      // Tab multiple times
+      // Tab a few times - we're just checking it doesn't trap focus
       await user.tab();
-      await user.tab();
-      await user.tab();
+      const firstElement = document.activeElement;
+      expect(firstElement).toBeTruthy();
       
-      // Should be able to continue tabbing (no trap)
-      expect(document.activeElement).toBeTruthy();
+      await user.tab();
+      const secondElement = document.activeElement;
+      expect(secondElement).toBeTruthy();
+      
+      // Focus should have moved
+      expect(secondElement).not.toBe(firstElement);
     });
 
     it('2.4.3 Focus Order: Logical tab order maintained', async () => {

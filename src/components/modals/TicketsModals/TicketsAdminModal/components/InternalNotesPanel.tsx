@@ -3,9 +3,10 @@
  * 
  * Collapsible panel for managing admin-only internal notes on tickets.
  * Supports creating, pinning, and deleting notes with realtime updates.
+ * Memoized for performance optimization.
  */
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Pin, X, ChevronDown } from 'lucide-react';
 import { TicketNote } from '../types';
 
@@ -34,7 +35,7 @@ interface InternalNotesPanelProps {
   noteInputRef?: React.RefObject<HTMLTextAreaElement>;
 }
 
-export const InternalNotesPanel: React.FC<InternalNotesPanelProps> = ({
+const InternalNotesPanelComponent: React.FC<InternalNotesPanelProps> = ({
   notes,
   noteText,
   onNoteTextChange,
@@ -179,3 +180,34 @@ export const InternalNotesPanel: React.FC<InternalNotesPanelProps> = ({
     </div>
   );
 };
+
+/**
+ * Memoized InternalNotesPanel to prevent unnecessary re-renders
+ */
+export const InternalNotesPanel = memo(InternalNotesPanelComponent, (prevProps, nextProps) => {
+  // Check notes array changes
+  if (prevProps.notes.length !== nextProps.notes.length) return false;
+  
+  // Deep compare notes (check IDs, content, and pin status)
+  for (let i = 0; i < prevProps.notes.length; i++) {
+    const prevNote = prevProps.notes[i];
+    const nextNote = nextProps.notes[i];
+    if (
+      prevNote.id !== nextNote.id ||
+      prevNote.note_text !== nextNote.note_text ||
+      prevNote.is_pinned !== nextNote.is_pinned ||
+      prevNote.created_at !== nextNote.created_at
+    ) {
+      return false;
+    }
+  }
+  
+  // Check input state
+  if (prevProps.noteText !== nextProps.noteText) return false;
+  if (prevProps.isAddingNote !== nextProps.isAddingNote) return false;
+  if (prevProps.isExpanded !== nextProps.isExpanded) return false;
+  if (prevProps.currentUserId !== nextProps.currentUserId) return false;
+  
+  // All critical props are equal
+  return true;
+});

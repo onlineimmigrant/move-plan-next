@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense, memo, useCallback, useMemo } from 'react';
 import { Listbox, Popover, Transition } from '@headlessui/react';
 import { supabase } from '@/lib/supabase';
 import { useSettings } from '@/context/SettingsContext';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 import { getAttachmentUrl, isImageFile } from '@/lib/fileUpload';
 
-// Import extracted Phase 3 components
+// Import critical components (needed immediately)
 import { 
   TicketList, 
   BottomFilters, 
@@ -15,10 +15,12 @@ import {
   TicketListView,
   TicketDetailView,
   ModalContainer,
-  AuxiliaryModals,
   LiveRegion,
-  KeyboardShortcutsModal,
 } from './components';
+
+// Lazy load non-critical components
+const AuxiliaryModals = lazy(() => import('./components').then(module => ({ default: module.AuxiliaryModals })));
+const KeyboardShortcutsModal = lazy(() => import('./components').then(module => ({ default: module.KeyboardShortcutsModal })));
 
 // Import Phase 1 types
 import type {
@@ -543,37 +545,37 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // fetchTicketsWithPinnedNotes, fetchTicketNoteCounts
 
   // Wrapper for handleAddInternalNote to work with existing UI
-  const handleAddInternalNoteWrapper = async () => {
+  const handleAddInternalNoteWrapper = useCallback(async () => {
     if (!noteText.trim() || !selectedTicket) return;
     
     await handleAddInternalNote(selectedTicket.id, noteText, () => {
       setNoteText('');
     });
     setAnnouncement('Internal note added');
-  };
+  }, [noteText, selectedTicket, handleAddInternalNote]);
 
   // Wrapper for handleTogglePinNote to work with existing UI
-  const handleTogglePinNoteWrapper = async (noteId: string, currentPinStatus: boolean) => {
+  const handleTogglePinNoteWrapper = useCallback(async (noteId: string, currentPinStatus: boolean) => {
     await handleTogglePinNote(noteId, currentPinStatus, selectedTicket?.id);
     setAnnouncement(currentPinStatus ? 'Note unpinned' : 'Note pinned');
-  };
+  }, [handleTogglePinNote, selectedTicket?.id]);
 
   // ==== TICKET OPERATIONS FUNCTIONS ====
   // Using useTicketOperations hook - functions available via hook destructuring
   
   // Wrappers to add screen reader announcements
-  const handleAssignTicketWrapper = async (ticketId: string, adminId: string | null) => {
+  const handleAssignTicketWrapper = useCallback(async (ticketId: string, adminId: string | null) => {
     await handleAssignTicket(ticketId, adminId);
     setAnnouncement(adminId ? 'Ticket assigned' : 'Ticket unassigned');
-  };
+  }, [handleAssignTicket]);
 
-  const handlePriorityChangeWrapper = async (ticketId: string, newPriority: string | null) => {
+  const handlePriorityChangeWrapper = useCallback(async (ticketId: string, newPriority: string | null) => {
     await handlePriorityChange(ticketId, newPriority);
     setAnnouncement(`Priority changed to ${newPriority || 'none'}`);
-  };
+  }, [handlePriorityChange]);
   
   // Wrappers for status change functions to pass state updaters
-  const handleStatusChangeWrapper = async (ticketId: string, newStatus: string) => {
+  const handleStatusChangeWrapper = useCallback(async (ticketId: string, newStatus: string) => {
     await handleStatusChange(
       ticketId,
       newStatus,
@@ -583,15 +585,15 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
       selectedTicket?.id
     );
     setAnnouncement(`Ticket status changed to ${newStatus}`);
-  };
+  }, [handleStatusChange, tickets, selectedTicket?.id]);
 
-  const confirmCloseTicketWrapper = async () => {
+  const confirmCloseTicketWrapper = useCallback(async () => {
     await confirmCloseTicket(setTickets, setSelectedTicket, selectedTicket?.id);
     setAnnouncement('Ticket closed');
-  };
+  }, [confirmCloseTicket, selectedTicket?.id]);
 
   // Wrappers for ticket list badge interactions (no selectedTicket context needed)
-  const handleTicketListStatusChange = async (ticketId: string, newStatus: string) => {
+  const handleTicketListStatusChange = useCallback(async (ticketId: string, newStatus: string) => {
     await handleStatusChange(
       ticketId,
       newStatus,
@@ -600,7 +602,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
       setSelectedTicket
     );
     setAnnouncement(`Ticket status changed to ${newStatus}`);
-  };
+  }, [handleStatusChange, tickets]);
 
   // ==== TAG MANAGEMENT FUNCTIONS ====
   // Using useTagManagement hook - creating wrapper functions for compatibility
@@ -611,30 +613,30 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   
   const handleUpdateTag = tagManagement.handleUpdateTag;
   
-  const handleDeleteTag = (tagId: string) => {
+  const handleDeleteTag = useCallback((tagId: string) => {
     return tagManagement.handleDeleteTag(tagId, setTickets, setSelectedTicket);
-  };
+  }, [tagManagement.handleDeleteTag]);
   
-  const handleAssignTag = async (ticketId: string, tagId: string) => {
+  const handleAssignTag = useCallback(async (ticketId: string, tagId: string) => {
     await tagManagement.handleAssignTag(ticketId, tagId, setTickets, setSelectedTicket);
     setAnnouncement('Tag added');
-  };
+  }, [tagManagement.handleAssignTag]);
   
-  const handleRemoveTag = async (ticketId: string, tagId: string) => {
+  const handleRemoveTag = useCallback(async (ticketId: string, tagId: string) => {
     await tagManagement.handleRemoveTag(ticketId, tagId, setTickets, setSelectedTicket);
     setAnnouncement('Tag removed');
-  };
+  }, [tagManagement.handleRemoveTag]);
 
   // fetchPredefinedResponses - Now using hook version from usePredefinedResponses
 
   // scrollToBottom - Now using hook version (scrollToBottomFromHook)
-  const scrollToBottom = () => scrollToBottomFromHook();
+  const scrollToBottom = useCallback(() => scrollToBottomFromHook(), [scrollToBottomFromHook]);
 
   // broadcastTyping - Now using hook version (broadcastTypingFromHook)
-  const broadcastTyping = () => broadcastTypingFromHook();
+  const broadcastTyping = useCallback(() => broadcastTypingFromHook(), [broadcastTypingFromHook]);
 
   // handleMessageChange - Now using hook version (handleMessageChangeFromHook)
-  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => handleMessageChangeFromHook(e);
+  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => handleMessageChangeFromHook(e), [handleMessageChangeFromHook]);
 
   // File handling functions - Now using hook versions (from useFileUpload)
   // handleFileSelect, handleDragOver, handleDragLeave, handleDrop, removeFile, clearFiles
@@ -929,35 +931,39 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
         </div>
       </ModalContainer>
 
-      {/* Auxiliary Modals */}
-      <AuxiliaryModals
-        toast={toast}
-        onCloseToast={() => setToast(null)}
-        showCloseConfirmation={showCloseConfirmation}
-        ticketToClose={ticketToClose}
-        onConfirmClose={confirmCloseTicketWrapper}
-        onCancelClose={cancelCloseTicket}
-        showAvatarManagement={showAvatarManagement}
-        avatarManagementCreateMode={avatarManagementCreateMode}
-        onCloseAvatarManagement={() => {
-          setShowAvatarManagement(false);
-          setAvatarManagementCreateMode(false);
-        }}
-        onAvatarUpdated={fetchAvatars}
-        organizationId={settings?.organization_id}
-        showAnalytics={showAnalytics}
-        tickets={tickets}
-        adminUsers={adminUsers}
-        onCloseAnalytics={() => setShowAnalytics(false)}
-        showAssignmentRules={showAssignmentRules}
-        onCloseAssignmentRules={() => setShowAssignmentRules(false)}
-      />
+      {/* Auxiliary Modals - Lazy Loaded */}
+      <Suspense fallback={null}>
+        <AuxiliaryModals
+          toast={toast}
+          onCloseToast={() => setToast(null)}
+          showCloseConfirmation={showCloseConfirmation}
+          ticketToClose={ticketToClose}
+          onConfirmClose={confirmCloseTicketWrapper}
+          onCancelClose={cancelCloseTicket}
+          showAvatarManagement={showAvatarManagement}
+          avatarManagementCreateMode={avatarManagementCreateMode}
+          onCloseAvatarManagement={() => {
+            setShowAvatarManagement(false);
+            setAvatarManagementCreateMode(false);
+          }}
+          onAvatarUpdated={fetchAvatars}
+          organizationId={settings?.organization_id}
+          showAnalytics={showAnalytics}
+          tickets={tickets}
+          adminUsers={adminUsers}
+          onCloseAnalytics={() => setShowAnalytics(false)}
+          showAssignmentRules={showAssignmentRules}
+          onCloseAssignmentRules={() => setShowAssignmentRules(false)}
+        />
+      </Suspense>
 
-      {/* Keyboard Shortcuts Modal */}
-      <KeyboardShortcutsModal
-        isOpen={showKeyboardShortcuts}
-        onClose={() => setShowKeyboardShortcuts(false)}
-      />
+      {/* Keyboard Shortcuts Modal - Lazy Loaded */}
+      <Suspense fallback={null}>
+        <KeyboardShortcutsModal
+          isOpen={showKeyboardShortcuts}
+          onClose={() => setShowKeyboardShortcuts(false)}
+        />
+      </Suspense>
 
       {/* Live Region for Screen Reader Announcements */}
       <LiveRegion message={announcement} />

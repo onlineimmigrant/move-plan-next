@@ -1,9 +1,10 @@
 /**
  * TicketMessages Component
  * Displays the conversation thread with all messages
+ * Memoized for performance optimization
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import { MessageItem } from './MessageItem';
 import type { Ticket, TicketResponse, Avatar } from '../types';
 
@@ -23,7 +24,7 @@ interface TicketMessagesProps {
   formatFileSize: (size: number) => string;
 }
 
-export function TicketMessages({
+const TicketMessagesComponent = ({
   ticket,
   avatars,
   selectedAvatar,
@@ -37,7 +38,7 @@ export function TicketMessages({
   isImageFile,
   getFileIcon,
   formatFileSize,
-}: TicketMessagesProps) {
+}: TicketMessagesProps) => {
   /**
    * Check if avatar changed from previous admin message
    */
@@ -130,4 +131,48 @@ export function TicketMessages({
       <div ref={messagesEndRef} />
     </div>
   );
-}
+};
+
+/**
+ * Memoized TicketMessages to prevent unnecessary re-renders
+ */
+export const TicketMessages = memo(TicketMessagesComponent, (prevProps, nextProps) => {
+  // Check ticket changes
+  if (prevProps.ticket.id !== nextProps.ticket.id) return false;
+  
+  // Check if messages array changed
+  if (prevProps.ticket.ticket_responses.length !== nextProps.ticket.ticket_responses.length) return false;
+  
+  // Check if any message content changed (compare IDs and created_at)
+  for (let i = 0; i < prevProps.ticket.ticket_responses.length; i++) {
+    const prevResp = prevProps.ticket.ticket_responses[i];
+    const nextResp = nextProps.ticket.ticket_responses[i];
+    if (prevResp.id !== nextResp.id || prevResp.created_at !== nextResp.created_at) {
+      return false;
+    }
+  }
+  
+  // Check selected avatar
+  if (prevProps.selectedAvatar?.id !== nextProps.selectedAvatar?.id) return false;
+  
+  // Check search query
+  if (prevProps.searchQuery !== nextProps.searchQuery) return false;
+  
+  // Check typing indicator
+  if (prevProps.isCustomerTyping !== nextProps.isCustomerTyping) return false;
+  
+  // Check attachment URLs (only for current ticket's responses)
+  const prevResponseIds = prevProps.ticket.ticket_responses
+    .flatMap(r => r.attachments?.map(a => a.file_path) || []);
+  const nextResponseIds = nextProps.ticket.ticket_responses
+    .flatMap(r => r.attachments?.map(a => a.file_path) || []);
+  
+  for (const filePath of prevResponseIds) {
+    if (prevProps.attachmentUrls[filePath] !== nextProps.attachmentUrls[filePath]) {
+      return false;
+    }
+  }
+  
+  // All critical props are equal
+  return true;
+});

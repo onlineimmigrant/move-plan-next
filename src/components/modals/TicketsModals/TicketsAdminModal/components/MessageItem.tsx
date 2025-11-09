@@ -1,9 +1,10 @@
 /**
  * MessageItem Component
  * Displays a single message/response in the conversation
+ * Memoized for performance optimization
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Check } from 'lucide-react';
 import type { TicketResponse, Avatar } from '../types';
 import type { TicketAttachment } from '@/lib/fileUpload';
@@ -23,7 +24,7 @@ interface MessageItemProps {
   formatFileSize: (size: number) => string;
 }
 
-export function MessageItem({
+const MessageItemComponent = ({
   response,
   avatar,
   displayName,
@@ -36,7 +37,7 @@ export function MessageItem({
   isImageFile,
   getFileIcon,
   formatFileSize,
-}: MessageItemProps) {
+}: MessageItemProps) => {
   /**
    * Highlight search text
    */
@@ -208,4 +209,40 @@ export function MessageItem({
       </div>
     </>
   );
-}
+};
+
+/**
+ * Memoized MessageItem to prevent unnecessary re-renders
+ * Only re-renders when critical props change
+ */
+export const MessageItem = memo(MessageItemComponent, (prevProps, nextProps) => {
+  // Check if response has changed
+  if (prevProps.response.id !== nextProps.response.id) return false;
+  if (prevProps.response.message !== nextProps.response.message) return false;
+  if (prevProps.response.created_at !== nextProps.response.created_at) return false;
+  if (prevProps.response.is_admin !== nextProps.response.is_admin) return false;
+  
+  // Check avatar changes
+  if (prevProps.avatar?.id !== nextProps.avatar?.id) return false;
+  if (prevProps.displayName !== nextProps.displayName) return false;
+  if (prevProps.isCurrentAvatar !== nextProps.isCurrentAvatar) return false;
+  if (prevProps.showAvatarChange !== nextProps.showAvatarChange) return false;
+  
+  // Check search query
+  if (prevProps.searchQuery !== nextProps.searchQuery) return false;
+  
+  // Check attachments
+  const prevAttachments = prevProps.response.attachments || [];
+  const nextAttachments = nextProps.response.attachments || [];
+  if (prevAttachments.length !== nextAttachments.length) return false;
+  
+  // Check attachment URLs for this response's attachments
+  for (const attachment of prevAttachments) {
+    const prevUrl = prevProps.attachmentUrls[attachment.file_path];
+    const nextUrl = nextProps.attachmentUrls[attachment.file_path];
+    if (prevUrl !== nextUrl) return false;
+  }
+  
+  // All critical props are equal, skip re-render
+  return true;
+});

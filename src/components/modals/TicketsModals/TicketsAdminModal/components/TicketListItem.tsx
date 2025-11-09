@@ -1,9 +1,10 @@
 /**
  * TicketListItem Component
  * Displays a single ticket in the sidebar list
+ * Memoized for performance optimization
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { Pin, User, ChevronDown, X } from 'lucide-react';
 import type { Ticket, AdminUser } from '../types';
 
@@ -25,7 +26,7 @@ interface TicketListItemProps {
   isChangingStatus?: boolean;
 }
 
-export function TicketListItem({
+const TicketListItemComponent = ({
   ticket,
   isSelected = false,
   unreadCount,
@@ -41,7 +42,7 @@ export function TicketListItem({
   isAssigning = false,
   isChangingPriority = false,
   isChangingStatus = false,
-}: TicketListItemProps) {
+}: TicketListItemProps) => {
   // Dropdown states
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -399,4 +400,23 @@ export function TicketListItem({
       </p>
     </div>
   );
-}
+};
+
+// Export memoized version with custom comparison
+export const TicketListItem = memo(TicketListItemComponent, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.ticket.id === nextProps.ticket.id &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.unreadCount === nextProps.unreadCount &&
+    prevProps.hasPinnedNotes === nextProps.hasPinnedNotes &&
+    prevProps.noteCount === nextProps.noteCount &&
+    prevProps.isWaitingForResponse === nextProps.isWaitingForResponse &&
+    prevProps.isAssigning === nextProps.isAssigning &&
+    prevProps.isChangingPriority === nextProps.isChangingPriority &&
+    prevProps.isChangingStatus === nextProps.isChangingStatus &&
+    prevProps.searchQuery === nextProps.searchQuery &&
+    prevProps.ticket.status === nextProps.ticket.status &&
+    prevProps.ticket.priority === nextProps.ticket.priority
+  );
+});
