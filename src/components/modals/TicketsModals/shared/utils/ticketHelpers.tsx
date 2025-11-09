@@ -206,10 +206,11 @@ export function getAvatarClasses(isAdmin: boolean): string {
 }
 
 /**
- * Get modal container classes based on size
+ * Get container classes based on widget size
+ * Updated with glass morphism and dark mode support matching MeetingsModals
  */
 export function getContainerClasses(size: 'initial' | 'half' | 'fullscreen'): string {
-  const baseClasses = 'fixed bg-white border border-slate-200 shadow-xl transition-all duration-300 ease-in-out flex flex-col overflow-hidden';
+  const baseClasses = 'fixed bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl border border-white/20 shadow-2xl transition-all duration-300 ease-in-out flex flex-col overflow-hidden';
   
   switch (size) {
     case 'initial':
@@ -217,7 +218,7 @@ export function getContainerClasses(size: 'initial' | 'half' | 'fullscreen'): st
     case 'half':
       return `${baseClasses} bottom-0 right-0 w-full md:w-2/3 lg:w-1/2 h-screen md:h-5/6 md:bottom-4 md:right-4 md:rounded-2xl`;
     case 'fullscreen':
-      return `${baseClasses} inset-0 w-full h-full rounded-none`;
+      return `${baseClasses} inset-0 w-full h-full rounded-2xl md:rounded-3xl`;
     default:
       return baseClasses;
   }

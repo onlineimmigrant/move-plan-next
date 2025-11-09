@@ -88,7 +88,7 @@ export function TicketListItem({
       <>
         {parts.map((part, i) => 
           part.toLowerCase() === query.toLowerCase() ? (
-            <mark key={i} className="bg-yellow-200 text-slate-900 px-0.5 rounded">
+            <mark key={i} className="bg-yellow-200 dark:bg-yellow-700 text-slate-900 dark:text-white px-0.5 rounded">
               {part}
             </mark>
           ) : (
@@ -137,25 +137,25 @@ export function TicketListItem({
   return (
     <div
       onClick={() => onClick(ticket)}
-      className={`w-full p-4 text-left bg-white border rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] cursor-pointer ${
+      className={`w-full p-4 text-left bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border rounded-xl hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] cursor-pointer ${
         unreadCount > 0 
-          ? 'border-blue-400 bg-blue-50' 
+          ? 'border-blue-400 dark:border-blue-500 bg-blue-50/90 dark:bg-blue-900/30' 
           : isSelected 
-          ? 'border-blue-500 shadow-md' 
-          : 'border-slate-200'
+          ? 'border-blue-500 dark:border-blue-400 shadow-md' 
+          : 'border-slate-200 dark:border-gray-700'
       }`}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1">
           {/* Title with unread badge and pin indicator */}
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-medium text-slate-900 text-sm">
+            <h3 className="font-medium text-slate-900 dark:text-slate-100 text-sm">
               {searchQuery ? highlightText(ticket.subject, searchQuery) : ticket.subject}
             </h3>
             
             {/* Unread count badge */}
             {unreadCount > 0 && (
-              <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-blue-500 text-white text-[10px] font-bold rounded-full">
+              <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-blue-500 dark:bg-blue-600 text-white text-[10px] font-bold rounded-full">
                 {unreadCount}
               </span>
             )}
@@ -202,7 +202,7 @@ export function TicketListItem({
 
               {/* Assignment Dropdown */}
               {showAssignDropdown && onAssignTicket && (
-                <div className="absolute z-50 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute z-50 mt-1 w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-slate-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   <div className="p-1">
                     {/* Unassign option */}
                     <button
@@ -211,13 +211,13 @@ export function TicketListItem({
                         await onAssignTicket(ticket.id, null);
                         setShowAssignDropdown(false);
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-gray-700 rounded flex items-center gap-2"
                     >
                       <X className="h-4 w-4" />
                       <span>Unassigned</span>
                     </button>
                     
-                    <div className="border-t border-slate-200 my-1"></div>
+                    <div className="border-t border-slate-200 dark:border-gray-700 my-1"></div>
                     
                     {/* Admin users */}
                     {adminUsers.map((admin) => (
@@ -228,8 +228,8 @@ export function TicketListItem({
                           await onAssignTicket(ticket.id, admin.id);
                           setShowAssignDropdown(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 rounded flex items-center gap-2 ${
-                          ticket.assigned_to === admin.id ? 'bg-purple-50 text-purple-700 font-medium' : 'text-slate-700'
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-gray-700 rounded flex items-center gap-2 ${
+                          ticket.assigned_to === admin.id ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium' : 'text-slate-700 dark:text-slate-200'
                         }`}
                       >
                         <User className="h-4 w-4" />
@@ -265,7 +265,7 @@ export function TicketListItem({
 
                 {/* Priority Dropdown */}
               {showPriorityDropdown && onPriorityChange && (
-                <div className="absolute z-50 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg">
+                <div className="absolute z-50 mt-1 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-slate-200 dark:border-gray-700 rounded-lg shadow-lg">
                   <div className="p-1">
                     {/* Priority options */}
                     {priorities.map((priority) => (
@@ -276,8 +276,8 @@ export function TicketListItem({
                           await onPriorityChange(ticket.id, priority.value);
                           setShowPriorityDropdown(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 rounded ${
-                          ticket.priority === priority.value ? `${priority.color} font-medium bg-slate-50` : 'text-slate-700'
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-gray-700 rounded ${
+                          ticket.priority === priority.value ? `${priority.color} dark:text-${priority.value === 'high' ? 'red' : priority.value === 'medium' ? 'yellow' : 'green'}-300 font-medium bg-slate-50 dark:bg-gray-700/50` : 'text-slate-700 dark:text-slate-200'
                         }`}
                       >
                         {priority.label}
@@ -317,7 +317,7 @@ export function TicketListItem({
 
               {/* Status Dropdown */}
               {showStatusDropdown && onStatusChange && (
-                <div className="absolute z-50 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg">
+                <div className="absolute z-50 mt-1 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-slate-200 dark:border-gray-700 rounded-lg shadow-lg">
                   <div className="p-1">
                     {statuses.map((status) => (
                       <button
@@ -327,8 +327,8 @@ export function TicketListItem({
                           await onStatusChange(ticket.id, status);
                           setShowStatusDropdown(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 rounded capitalize ${
-                          ticket.status === status ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700'
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-gray-700 rounded capitalize ${
+                          ticket.status === status ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium' : 'text-slate-700 dark:text-slate-200'
                         }`}
                       >
                         {status}
@@ -356,7 +356,7 @@ export function TicketListItem({
                   </span>
                 ))}
                 {ticket.tags.length > 2 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 border border-slate-300 text-slate-600">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-600 dark:text-slate-300">
                     +{ticket.tags.length - 2}
                   </span>
                 )}
@@ -365,9 +365,9 @@ export function TicketListItem({
             
             {/* Note count */}
             {noteCount > 0 && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200">
-                <span className="text-[10px] font-medium text-slate-600">Notes</span>
-                <span className="flex items-center justify-center min-w-[16px] h-4 px-1 bg-slate-200 text-slate-700 text-[9px] font-semibold rounded-full">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600">
+                <span className="text-[10px] font-medium text-slate-600 dark:text-slate-300">Notes</span>
+                <span className="flex items-center justify-center min-w-[16px] h-4 px-1 bg-slate-200 dark:bg-gray-600 text-slate-700 dark:text-slate-200 text-[9px] font-semibold rounded-full">
                   {noteCount}
                 </span>
               </div>

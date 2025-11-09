@@ -138,9 +138,9 @@ export function MessageItem({
                             }
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors rounded-lg flex items-center justify-center">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-2">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full p-2">
                               <svg
-                                className="w-5 h-5 text-slate-700"
+                                className="w-5 h-5 text-slate-700 dark:text-slate-200"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"

@@ -882,7 +882,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[10000]"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000]"
         onClick={onClose}
       />
       
@@ -912,33 +912,33 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
             <>
               {/* Pinned Notes Banner - Right below header */}
               {internalNotes.filter(note => note.is_pinned).length > 0 && (
-                <div className="bg-amber-50 border-b-2 border-amber-300 px-4 py-3">
+                <div className="bg-amber-50/90 dark:bg-amber-900/20 backdrop-blur-sm border-b-2 border-amber-300 dark:border-amber-700 px-4 py-3">
                   <div className="max-w-3xl mx-auto">
                     <div className="flex items-start gap-2">
-                      <Pin className="h-4 w-4 text-amber-600 fill-amber-600 flex-shrink-0 mt-0.5" />
+                      <Pin className="h-4 w-4 text-amber-600 dark:text-amber-400 fill-amber-600 dark:fill-amber-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1 space-y-2">
                         {internalNotes.filter(note => note.is_pinned).map((note) => (
-                          <div key={note.id} className="bg-white/80 border border-amber-300 rounded-lg px-3 py-2 text-sm">
+                          <div key={note.id} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-2 text-sm">
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-amber-900">
+                                <span className="text-xs font-medium text-amber-900 dark:text-amber-100">
                                   📌 {note.admin_full_name || note.admin_email || 'Admin'}
                                 </span>
-                                <span className="text-xs text-amber-700">
+                                <span className="text-xs text-amber-700 dark:text-amber-300">
                                   {formatNoteDate(note.created_at)}
                                 </span>
                               </div>
                               {note.admin_id === currentUserId && (
                                 <button
                                   onClick={() => handleTogglePinNoteWrapper(note.id, note.is_pinned)}
-                                  className="text-amber-600 hover:text-amber-700 transition-colors"
+                                  className="text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
                                   title="Unpin note"
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
                               )}
                             </div>
-                            <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">{note.note_text}</p>
+                            <p className="text-slate-800 dark:text-slate-100 whitespace-pre-wrap leading-relaxed">{note.note_text}</p>
                           </div>
                         ))}
                       </div>
@@ -1031,10 +1031,10 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
                           {internalNotes.map((note) => (
                             <div 
                               key={note.id} 
-                              className={`bg-white rounded-lg p-3 shadow-sm ${
+                              className={`bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 shadow-sm ${
                                 note.is_pinned 
-                                  ? 'border-2 border-amber-400 bg-amber-50/50' 
-                                  : 'border border-amber-200'
+                                  ? 'border-2 border-amber-400 dark:border-amber-500 bg-amber-50/50 dark:bg-amber-900/20' 
+                                  : 'border border-amber-200 dark:border-amber-700'
                               }`}
                             >
                               <div className="flex items-start justify-between mb-2">
@@ -1090,14 +1090,14 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
                       )}
 
                       {/* Add Note Input */}
-                      <div className="bg-white border border-amber-300 rounded-lg p-3 shadow-sm">
+                      <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-amber-300 dark:border-amber-700 rounded-lg p-3 shadow-sm">
                         <textarea
                           ref={noteInputRef}
                           value={noteText}
                           onChange={(e) => setNoteText(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleAddInternalNoteWrapper())}
                           placeholder="Add an internal note (only visible to admins)..."
-                          className="w-full resize-none border-0 bg-transparent text-slate-800 placeholder-amber-600/50 focus:outline-none focus:ring-0 text-sm leading-relaxed min-h-[60px] max-h-[120px]"
+                          className="w-full resize-none border-0 bg-transparent text-slate-800 dark:text-slate-100 placeholder-amber-600/50 dark:placeholder-amber-400/50 focus:outline-none focus:ring-0 text-sm leading-relaxed min-h-[60px] max-h-[120px]"
                           rows={2}
                           disabled={isAddingNote}
                         />
@@ -1105,7 +1105,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
                           <button
                             onClick={handleAddInternalNoteWrapper}
                             disabled={!noteText.trim() || isAddingNote}
-                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 disabled:from-slate-200 disabled:to-slate-300 dark:disabled:from-gray-700 dark:disabled:to-gray-800 text-white disabled:text-slate-400 dark:disabled:text-gray-500 text-sm font-medium rounded-lg shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed"
                           >
                             {isAddingNote ? 'Adding...' : 'Add Note'}
                           </button>
@@ -1119,18 +1119,18 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
           ) : (
             <>
               {/* Ticket List */}
-              <div className="flex-1 overflow-y-auto bg-slate-50">
+              <div className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20">
                 {/* Active Filters & Search Statistics */}
                 {(searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || showAdvancedFilters) && (
-                  <div className="sticky top-0 z-10 bg-white border-b border-slate-200 p-3 space-y-2">
+                  <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700 p-3 space-y-2">
                     {/* Search Statistics */}
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="text-slate-600">
-                          Showing <span className="font-semibold text-slate-900">{groupedTickets[activeTab].length}</span> of <span className="font-semibold text-slate-900">{tickets.length}</span> tickets
+                        <span className="text-slate-600 dark:text-slate-300">
+                          Showing <span className="font-semibold text-slate-900 dark:text-white">{groupedTickets[activeTab].length}</span> of <span className="font-semibold text-slate-900 dark:text-white">{tickets.length}</span> tickets
                         </span>
                         {searchQuery && (
-                          <span className="text-slate-500">
+                          <span className="text-slate-500 dark:text-slate-400">
                             • Searching in messages, responses, and tags
                           </span>
                         )}
@@ -1148,7 +1148,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
                           setMultiSelectTags([]);
                           setMultiSelectAssignees([]);
                         }}
-                        className="text-blue-600 hover:text-blue-700 font-medium"
+                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
                       >
                         Clear all filters
                       </button>

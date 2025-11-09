@@ -31,17 +31,17 @@ export function TicketFilterBar({
   const hasActiveFilters = priorityFilter !== 'all' || tagFilter !== 'all';
 
   return (
-    <div className="p-4 border-b border-slate-200 bg-slate-50 space-y-3">
+    <div className="p-4 border-b border-slate-200 dark:border-gray-700 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm space-y-3">
       {/* Priority Filter */}
       <div>
-        <label className="flex items-center gap-1 text-xs font-medium text-slate-700 mb-2">
+        <label className="flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
           <Filter className="h-3 w-3" />
           Priority
         </label>
         <select
           value={priorityFilter}
           onChange={(e) => onPriorityChange(e.target.value as any)}
-          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-slate-900 dark:text-slate-100"
         >
           <option value="all">All Priorities</option>
           <option value="critical">Critical</option>
@@ -54,13 +54,13 @@ export function TicketFilterBar({
       {/* Tag Filter */}
       {availableTags.length > 0 && (
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-2">
+          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
             Tags
           </label>
           <select
             value={tagFilter}
             onChange={(e) => onTagChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-slate-900 dark:text-slate-100"
           >
             <option value="all">All Tags</option>
             {availableTags.map(tag => (
@@ -74,14 +74,14 @@ export function TicketFilterBar({
 
       {/* Sort By */}
       <div>
-        <label className="flex items-center gap-1 text-xs font-medium text-slate-700 mb-2">
+        <label className="flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
           <SortAsc className="h-3 w-3" />
           Sort By
         </label>
         <select
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value as SortBy)}
-          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-slate-900 dark:text-slate-100"
         >
           <option value="date-newest">Newest First</option>
           <option value="date-oldest">Oldest First</option>
@@ -95,7 +95,7 @@ export function TicketFilterBar({
       {hasActiveFilters && onClearFilters && (
         <button
           onClick={onClearFilters}
-          className="w-full px-3 py-2 text-sm text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+          className="w-full px-3 py-2 text-sm text-slate-600 dark:text-slate-300 bg-white dark:bg-gray-800 border border-slate-300 dark:border-gray-600 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors"
         >
           Clear Filters
         </button>

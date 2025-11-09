@@ -8,3 +8,4 @@ export * from './attachmentHelpers';
 export * from './typingHelpers';
 export * from './responseHelpers';
 export * from './scrollHelpers';
+export * from './errorHandling';

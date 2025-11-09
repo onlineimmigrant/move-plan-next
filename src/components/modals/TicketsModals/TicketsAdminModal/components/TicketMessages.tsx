@@ -75,7 +75,7 @@ export function TicketMessages({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+    <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white/10 dark:bg-gray-900/10">
       {ticket.ticket_responses.map((response, index) => {
         const avatar = getAvatarForResponse(response);
         const displayName = getDisplayName(response);
@@ -104,23 +104,23 @@ export function TicketMessages({
       {/* Typing Indicator */}
       {isCustomerTyping && (
         <div className="flex justify-start mb-3 fade-in">
-          <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm max-w-xs">
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-slate-200 dark:border-gray-700 rounded-2xl px-4 py-3 shadow-sm max-w-xs">
             <div className="flex items-center gap-2">
               <div className="flex gap-1">
                 <span
-                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"
                   style={{ animationDelay: '0ms' }}
                 />
                 <span
-                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"
                   style={{ animationDelay: '150ms' }}
                 />
                 <span
-                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"
                   style={{ animationDelay: '300ms' }}
                 />
               </div>
-              <span className="text-xs text-slate-500">Customer is typing...</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Customer is typing...</span>
             </div>
           </div>
         </div>

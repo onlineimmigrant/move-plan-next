@@ -61,18 +61,18 @@ export function TicketList({
     return (
       <div className="p-4 space-y-3">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="animate-pulse bg-white border border-slate-200 rounded-xl p-4">
+          <div key={i} className="animate-pulse bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-slate-200 dark:border-gray-700 rounded-xl p-4">
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
-                <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                <div className="h-4 bg-slate-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-slate-200 dark:bg-gray-700 rounded w-1/2"></div>
               </div>
               <div className="flex gap-2">
-                <div className="h-5 bg-slate-200 rounded-full w-20"></div>
-                <div className="h-5 bg-slate-200 rounded-full w-16"></div>
+                <div className="h-5 bg-slate-200 dark:bg-gray-700 rounded-full w-20"></div>
+                <div className="h-5 bg-slate-200 dark:bg-gray-700 rounded-full w-16"></div>
               </div>
             </div>
-            <div className="h-3 bg-slate-200 rounded w-24"></div>
+            <div className="h-3 bg-slate-200 dark:bg-gray-700 rounded w-24"></div>
           </div>
         ))}
       </div>
@@ -84,9 +84,9 @@ export function TicketList({
     const hasActiveFilters = searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
     
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8">
+      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 p-8">
         <svg 
-          className="h-16 w-16 mb-4 text-slate-300" 
+          className="h-16 w-16 mb-4 text-slate-300 dark:text-slate-600" 
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"
@@ -98,9 +98,9 @@ export function TicketList({
             d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" 
           />
         </svg>
-        <p className="text-lg font-medium mb-1">No tickets found</p>
+        <p className="text-lg font-medium mb-1 text-slate-600 dark:text-slate-300">No tickets found</p>
         {hasActiveFilters && (
-          <p className="text-sm text-slate-500">Try adjusting your filters to see more results</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Try adjusting your filters to see more results</p>
         )}
       </div>
     );
@@ -135,7 +135,7 @@ export function TicketList({
         <button
           onClick={onLoadMore}
           disabled={loadingMore}
-          className="w-full p-3 mt-4 text-sm text-blue-600 bg-white border border-blue-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full p-3 mt-4 text-sm text-blue-600 dark:text-blue-400 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-blue-200 dark:border-blue-700 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loadingMore ? 'Loading...' : 'Load More Tickets'}
         </button>

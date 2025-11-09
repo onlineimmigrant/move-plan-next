@@ -230,7 +230,7 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[10000]"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000]"
         onClick={onClose}
       />
       
@@ -262,7 +262,7 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
               />
 
               {/* Input Area */}
-              <div className="p-4 bg-white border-t border-slate-200">
+              <div className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
                 <MessageInput
                   size={size}
                   responseMessage={responseMessage}
@@ -299,7 +299,7 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
 
           {/* Bottom Tabs - Only show when no ticket selected */}
           {!selectedTicket && (
-            <div className="flex justify-center px-2 py-2 bg-white border-t border-slate-200">
+            <div className="flex justify-center px-2 py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
               <BottomTabs
                 statuses={statuses}
                 activeTab={activeTab}
