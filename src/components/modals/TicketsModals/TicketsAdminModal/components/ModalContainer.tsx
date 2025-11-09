@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 
@@ -19,6 +19,41 @@ export default function ModalContainer({
   onClose,
   children,
 }: ModalContainerProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Focus management
+  useEffect(() => {
+    if (isOpen) {
+      // Store the currently focused element
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      
+      // Focus the modal after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        modalRef.current?.focus();
+      }, 100);
+    } else {
+      // Restore focus when modal closes
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
+    }
+  }, [isOpen]);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   // Get Rnd configuration based on modal size
@@ -64,6 +99,7 @@ export default function ModalContainer({
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000]"
         onClick={onClose}
+        aria-hidden="true"
       />
       
       {/* Draggable & Resizable Modal Container */}
@@ -76,7 +112,14 @@ export default function ModalContainer({
         enableResizing={size !== 'fullscreen'}
         className="pointer-events-auto z-[10001]"
       >
-        <div className="relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20">
+        <div 
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Ticket Management Modal"
+          tabIndex={-1}
+          className="relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+        >
           {children}
         </div>
       </Rnd>

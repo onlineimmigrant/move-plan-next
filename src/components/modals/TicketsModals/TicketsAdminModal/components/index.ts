@@ -40,6 +40,8 @@ export { default as TicketModalHeader } from './TicketModalHeader';
 export { default as TicketDetailView } from './TicketDetailView';
 export { default as ModalContainer } from './ModalContainer';
 export { default as AuxiliaryModals } from './AuxiliaryModals';
+export { default as LiveRegion } from './LiveRegion';
+export { default as KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 
 // Re-export shared components
 export { TypingIndicator, AvatarChangeIndicator, ReadReceipts } from '../../shared/components';

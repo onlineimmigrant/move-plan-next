@@ -73,52 +73,61 @@ export default function TicketModalHeader({
   };
 
   return (
-    <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-white/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700 rounded-t-2xl shadow-sm">
+    <div 
+      className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-white/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700 rounded-t-2xl shadow-sm modal-drag-handle"
+      role="banner"
+      aria-label="Modal header"
+    >
       {/* Left Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" role="group" aria-label="Navigation controls">
         {selectedTicket && (
           <button
             onClick={onBack}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
-            aria-label="Back to list"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            aria-label="Back to ticket list"
+            title="Back to ticket list"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
         )}
         <button
           onClick={onToggleSize}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
+          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+          aria-label={size === 'fullscreen' ? 'Exit fullscreen' : size === 'half' ? 'Enter fullscreen' : 'Expand to half screen'}
+          title={size === 'fullscreen' ? 'Exit fullscreen' : size === 'half' ? 'Enter fullscreen' : 'Expand to half screen'}
         >
           {size === 'fullscreen' ? (
-            <ArrowsPointingInIcon className="h-4 w-4" />
+            <ArrowsPointingInIcon className="h-4 w-4" aria-hidden="true" />
           ) : (
-            <ArrowsPointingOutIcon className="h-4 w-4" />
+            <ArrowsPointingOutIcon className="h-4 w-4" aria-hidden="true" />
           )}
         </button>
         <button
           onClick={onShowAnalytics}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200"
+          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+          aria-label="View analytics dashboard"
           title="View Analytics"
         >
-          <BarChart3 className="h-4 w-4" />
+          <BarChart3 className="h-4 w-4" aria-hidden="true" />
         </button>
         <button
           onClick={onShowAssignmentRules}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200"
+          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+          aria-label="Manage assignment rules and automation"
           title="Assignment Rules & Automation"
         >
-          <Zap className="h-4 w-4" />
+          <Zap className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
       
       {/* Center Title - Show "Ticket" with tooltip and admin avatars */}
-      <div className="flex-1 flex items-center justify-center mx-4 gap-3">
+      <div className="flex-1 flex items-center justify-center mx-4 gap-3" role="region" aria-label="Ticket information">
         {selectedTicket ? (
           <>
             <Popover className="relative">
-              <Popover.Button className="text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+              <Popover.Button className="text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded px-2 py-1">
                 Ticket
               </Popover.Button>
               <Transition
@@ -326,16 +335,18 @@ export default function TicketModalHeader({
             </div>
           </>
         ) : (
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Support Tickets</h2>
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200" id="modal-title">Support Tickets</h2>
         )}
       </div>
       
       {/* Right Actions - Close Button */}
       <button
         onClick={onClose}
-        className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+        className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400"
+        aria-label="Close modal"
+        title="Close (Esc)"
       >
-        <XMarkIcon className="h-4 w-4" />
+        <XMarkIcon className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   );

@@ -16,6 +16,8 @@ import {
   TicketDetailView,
   ModalContainer,
   AuxiliaryModals,
+  LiveRegion,
+  KeyboardShortcutsModal,
 } from './components';
 
 // Import Phase 1 types
@@ -235,6 +237,10 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // Automation state
   const [showAssignmentRules, setShowAssignmentRules] = useState(false);
   
+  // Accessibility state
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -272,6 +278,26 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     return () => {
       cleanupRealtimeSubscription(realtimeChannelRef);
     };
+  }, [isOpen]);
+
+  // Keyboard shortcut for help modal (? key)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Show keyboard shortcuts modal on ? key
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Don't trigger if user is typing in an input/textarea
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        
+        e.preventDefault();
+        setShowKeyboardShortcuts(true);
+      }
+    };
+
+    document.addEventListener('keypress', handleKeyPress);
+    return () => document.removeEventListener('keypress', handleKeyPress);
   }, [isOpen]);
 
   // Fetch data when modal opens and cleanup on close
@@ -597,7 +623,10 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // handleFileSelect, handleDragOver, handleDragLeave, handleDrop, removeFile, clearFiles
 
   // handleAdminRespond - Now using hook version (handleAdminRespondFromHook)
-  const handleAdminRespond = () => handleAdminRespondFromHook();
+  const handleAdminRespond = () => {
+    handleAdminRespondFromHook();
+    setAnnouncement('Message sent');
+  };
 
   // Keyboard shortcuts for navigation and actions
   useTicketKeyboardShortcuts({
@@ -898,6 +927,15 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
         showAssignmentRules={showAssignmentRules}
         onCloseAssignmentRules={() => setShowAssignmentRules(false)}
       />
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal
+        isOpen={showKeyboardShortcuts}
+        onClose={() => setShowKeyboardShortcuts(false)}
+      />
+
+      {/* Live Region for Screen Reader Announcements */}
+      <LiveRegion message={announcement} />
     </>
   );
 }

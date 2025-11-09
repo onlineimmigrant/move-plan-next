@@ -61,11 +61,19 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
   onSetSelectedAvatar,
 }) => {
   return (
-    <div className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
+    <div 
+      className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700"
+      role="region"
+      aria-label="Message composition"
+    >
       <div className={`${size === 'fullscreen' || size === 'half' ? 'max-w-2xl mx-auto' : ''}`}>
         {/* Predefined Responses Badges - Horizontal Scroll (matching ChatWidget task badges) */}
         {predefinedResponses.length > 0 && (
-          <div className="mb-3 max-h-16 overflow-x-auto overflow-y-hidden" style={{
+          <div 
+            className="mb-3 max-h-16 overflow-x-auto overflow-y-hidden"
+            role="group"
+            aria-label="Quick response templates"
+            style={{
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'thin',
             scrollbarColor: 'rgba(156, 163, 175, 0.5) rgba(241, 245, 249, 0.3)',
@@ -213,7 +221,12 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                 className="w-full resize-none border-0 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-0 text-base leading-relaxed min-h-[44px] max-h-[120px]"
                 rows={1}
                 disabled={isSending}
+                aria-label="Message content"
+                aria-describedby="message-help"
               />
+              <span id="message-help" className="sr-only">
+                Press Enter to send, Shift+Enter for new line
+              </span>
             </div>
 
             {/* File attachment button */}
@@ -224,14 +237,16 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
               accept={ALLOWED_MIME_TYPES.join(',')}
               onChange={onHandleFileSelect}
               className="hidden"
+              aria-label="Attach files"
             />
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isSending}
-              className="flex items-center justify-center w-10 h-10 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center w-10 h-10 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              aria-label="Attach files"
               title="Attach files"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
             </button>
@@ -239,15 +254,17 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
             <button
               onClick={onHandleAdminRespond}
               disabled={(!responseMessage.trim() && selectedFiles.length === 0) || isSending}
-              className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-slate-200 disabled:to-slate-300 dark:disabled:from-gray-700 dark:disabled:to-gray-800 text-white disabled:text-slate-400 dark:disabled:text-gray-500 rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed"
+              className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-slate-200 disabled:to-slate-300 dark:disabled:from-gray-700 dark:disabled:to-gray-800 text-white disabled:text-slate-400 dark:disabled:text-gray-500 rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2"
+              aria-label={isSending ? "Sending message" : "Send message"}
+              title={isSending ? "Sending..." : "Send (Enter)"}
             >
               {isSending ? (
-                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               ) : (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                 </svg>
               )}
