@@ -61,7 +61,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
   onSetSelectedAvatar,
 }) => {
   return (
-    <div className="p-4 bg-white border-t border-slate-200">
+    <div className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
       <div className={`${size === 'fullscreen' || size === 'half' ? 'max-w-2xl mx-auto' : ''}`}>
         {/* Predefined Responses Badges - Horizontal Scroll (matching ChatWidget task badges) */}
         {predefinedResponses.length > 0 && (
@@ -91,7 +91,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
             <div className="flex items-center gap-2 px-1 py-1">
               <button
                 onClick={() => {/* TODO: Open create predefined response modal */}}
-                className="inline-flex items-center p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors flex-shrink-0"
+                className="inline-flex items-center p-2 bg-slate-100 dark:bg-gray-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-gray-600 transition-colors flex-shrink-0"
                 title="Add predefined response"
               >
                 <PlusIcon className="h-5 w-5" />
@@ -102,7 +102,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                 <button
                   key={response.id}
                   onClick={() => onUsePredefinedResponse(response)}
-                  className="flex-shrink-0 inline-flex items-center px-4 py-2 bg-slate-100 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap"
+                  className="flex-shrink-0 inline-flex items-center px-4 py-2 bg-slate-100 dark:bg-gray-700 rounded-full text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
                 >
                   {response.subject}
                 </button>
@@ -112,12 +112,12 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
         )}
 
         {/* Message Input */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100 transition-all duration-200">
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-slate-200 dark:border-gray-700 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 dark:focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all duration-200">
           {/* File Preview Area */}
           {selectedFiles.length > 0 && (
-            <div className="mb-3 pb-3 border-b border-slate-200">
+            <div className="mb-3 pb-3 border-b border-slate-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-slate-700">
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
                 </span>
                 <button
@@ -145,12 +145,12 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                       </div>
                     ) : (
                       // File icon preview
-                      <div className="h-24 bg-slate-50 border border-slate-200 rounded-lg flex flex-col items-center justify-center p-2">
+                      <div className="h-24 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center p-2">
                         <span className="text-2xl mb-1">{getFileIcon(file.type)}</span>
-                        <p className="text-[10px] text-slate-600 text-center truncate w-full px-1">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-300 text-center truncate w-full px-1">
                           {file.name}
                         </p>
-                        <p className="text-[9px] text-slate-500">{formatFileSize(file.size)}</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400">{formatFileSize(file.size)}</p>
                       </div>
                     )}
 
@@ -161,9 +161,9 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                           <div className="text-xs font-medium mb-1">
                             {uploadProgress[file.name as keyof typeof uploadProgress]}%
                           </div>
-                          <div className="w-20 h-1 bg-white/30 rounded-full overflow-hidden">
+                          <div className="w-20 h-1 bg-white/30 dark:bg-gray-700/50 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-white transition-all duration-300"
+                              className="h-full bg-white dark:bg-blue-400 transition-all duration-300"
                               style={{ width: `${uploadProgress[file.name as keyof typeof uploadProgress]}%` }}
                             />
                           </div>
@@ -174,7 +174,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                     {/* Remove button */}
                     <button
                       onClick={() => onRemoveFile(index)}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -188,12 +188,12 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
 
           {/* Drag and Drop Zone */}
           {isDragging && (
-            <div className="mb-3 border-2 border-dashed border-blue-400 bg-blue-50 rounded-lg p-6 text-center">
+            <div className="mb-3 border-2 border-dashed border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 text-center">
               <div className="flex flex-col items-center gap-2">
-                <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-10 h-10 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p className="text-sm font-medium text-blue-700">Drop files here</p>
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Drop files here</p>
               </div>
             </div>
           )}
@@ -210,7 +210,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                 onChange={onHandleMessageChange}
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), onHandleAdminRespond())}
                 placeholder="Type your message..."
-                className="w-full resize-none border-0 bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0 text-base leading-relaxed min-h-[44px] max-h-[120px]"
+                className="w-full resize-none border-0 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-0 text-base leading-relaxed min-h-[44px] max-h-[120px]"
                 rows={1}
                 disabled={isSending}
               />
@@ -228,7 +228,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isSending}
-              className="flex items-center justify-center w-10 h-10 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center w-10 h-10 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Attach files"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,7 +239,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
             <button
               onClick={onHandleAdminRespond}
               disabled={(!responseMessage.trim() && selectedFiles.length === 0) || isSending}
-              className="flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed"
+              className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-slate-200 disabled:to-slate-300 dark:disabled:from-gray-700 dark:disabled:to-gray-800 text-white disabled:text-slate-400 dark:disabled:text-gray-500 rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed"
             >
               {isSending ? (
                 <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -255,7 +255,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
           </div>
 
           {/* Bottom row with search and avatar selector */}
-          <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100 dark:border-gray-700">
             <div className="flex items-center gap-2 flex-1">
               <button
                 onClick={() => {
@@ -264,10 +264,10 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                     onSetSearchQuery('');
                   }
                 }}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-opacity-50 ${
                   showSearch
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                    : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                 }`}
                 title="Search predefined responses"
               >
@@ -282,7 +282,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                     value={searchQuery}
                     onChange={(e) => onSetSearchQuery(e.target.value)}
                     placeholder="Search predefined responses..."
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                    className="w-full px-3 py-1.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
                     autoFocus
                   />
                 </div>
@@ -294,7 +294,7 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
               {avatars.length > 1 && (
                 <Listbox value={selectedAvatar} onChange={onSetSelectedAvatar}>
                   <div className="relative">
-                    <Listbox.Button className="flex items-center gap-2 px-2 py-1.5 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200">
+                    <Listbox.Button className="flex items-center gap-2 px-2 py-1.5 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200">
                       {/* Avatar Image/Initials */}
                       {selectedAvatar && renderAvatar(selectedAvatar, selectedAvatar.full_name || selectedAvatar.title, true)}
                       {/* Avatar Name */}
@@ -307,14 +307,14 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
                       leaveFrom="opacity-100"
                       leaveTo="opacity-0"
                     >
-                      <Listbox.Options className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 max-h-60 overflow-auto focus:outline-none text-sm z-50">
+                      <Listbox.Options className="absolute bottom-full right-0 mb-2 w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-lg shadow-lg border border-slate-200 dark:border-gray-700 py-1 max-h-60 overflow-auto focus:outline-none text-sm z-50">
                         {avatars.map((avatar) => (
                           <Listbox.Option
                             key={avatar.id}
                             value={avatar}
                             className={({ active }) =>
                               `relative cursor-pointer select-none py-2 pl-3 pr-9 ${
-                                active ? 'bg-blue-50 text-blue-900' : 'text-slate-900'
+                                active ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : 'text-slate-900 dark:text-slate-100'
                               }`
                             }
                           >

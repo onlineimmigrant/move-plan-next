@@ -90,11 +90,11 @@ export default function BottomFilters({
   return (
     <>
       {/* Assignment Filter */}
-      <div className="flex justify-center px-2 py-2 bg-slate-50 border-t border-slate-200">
-        <div className="relative bg-white/80 backdrop-blur-2xl p-1 rounded-2xl border border-gray-200/50 w-full">
+      <div className="flex justify-center px-2 py-2 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
+        <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl p-1 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 w-full">
           {/* Background slider */}
           <div 
-            className={`absolute top-1 h-[calc(100%-8px)] bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-150 ease-out ${
+            className={`absolute top-1 h-[calc(100%-8px)] bg-white dark:bg-gray-700 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 transition-all duration-150 ease-out ${
               assignmentFilter === 'all' 
                 ? 'left-1 w-[calc(33.333%-4px)]' 
                 : assignmentFilter === 'my'
