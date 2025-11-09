@@ -27,12 +27,12 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   onClose,
 }) => {
   return (
-    <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200 rounded-t-2xl shadow-sm">
+    <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-white/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700 rounded-t-2xl shadow-sm">
       <div className="flex items-center gap-2">
         {selectedTicket && (
           <button
             onClick={onBack}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
             aria-label="Back to list"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,7 +42,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
         )}
         <button
           onClick={onToggleSize}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
         >
           {size === 'fullscreen' ? (
             <ArrowsPointingInIcon className="h-4 w-4" />
@@ -56,7 +56,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
       <div className="flex-1 flex items-center justify-center mx-4 gap-3">
         {selectedTicket ? (
           <>
-            <span className="text-sm font-semibold text-slate-700">Ticket</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Ticket</span>
             {/* Show stacked admin avatars */}
             <div className="flex items-center -space-x-2">
               {(() => {
@@ -83,21 +83,21 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
                     </Tooltip>
                   ))
                 ) : (
-                  <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center">
-                    <span className="text-[9px] text-slate-500">?</span>
+                  <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-gray-700 flex items-center justify-center">
+                    <span className="text-[9px] text-slate-500 dark:text-slate-400">?</span>
                   </div>
                 );
               })()}
             </div>
           </>
         ) : (
-          <h2 className="text-sm font-semibold text-slate-700">Support Tickets</h2>
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Support Tickets</h2>
         )}
       </div>
       
       <button
         onClick={onClose}
-        className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+        className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
       >
         <XMarkIcon className="h-4 w-4" />
       </button>
