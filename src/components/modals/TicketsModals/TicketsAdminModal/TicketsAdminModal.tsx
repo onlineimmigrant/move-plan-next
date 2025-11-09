@@ -549,16 +549,28 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     await handleAddInternalNote(selectedTicket.id, noteText, () => {
       setNoteText('');
     });
+    setAnnouncement('Internal note added');
   };
 
   // Wrapper for handleTogglePinNote to work with existing UI
   const handleTogglePinNoteWrapper = async (noteId: string, currentPinStatus: boolean) => {
     await handleTogglePinNote(noteId, currentPinStatus, selectedTicket?.id);
+    setAnnouncement(currentPinStatus ? 'Note unpinned' : 'Note pinned');
   };
 
   // ==== TICKET OPERATIONS FUNCTIONS ====
   // Using useTicketOperations hook - functions available via hook destructuring
-  // handleAssignTicket, handlePriorityChange (already work directly)
+  
+  // Wrappers to add screen reader announcements
+  const handleAssignTicketWrapper = async (ticketId: string, adminId: string | null) => {
+    await handleAssignTicket(ticketId, adminId);
+    setAnnouncement(adminId ? 'Ticket assigned' : 'Ticket unassigned');
+  };
+
+  const handlePriorityChangeWrapper = async (ticketId: string, newPriority: string | null) => {
+    await handlePriorityChange(ticketId, newPriority);
+    setAnnouncement(`Priority changed to ${newPriority || 'none'}`);
+  };
   
   // Wrappers for status change functions to pass state updaters
   const handleStatusChangeWrapper = async (ticketId: string, newStatus: string) => {
@@ -570,10 +582,12 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
       setSelectedTicket,
       selectedTicket?.id
     );
+    setAnnouncement(`Ticket status changed to ${newStatus}`);
   };
 
   const confirmCloseTicketWrapper = async () => {
     await confirmCloseTicket(setTickets, setSelectedTicket, selectedTicket?.id);
+    setAnnouncement('Ticket closed');
   };
 
   // Wrappers for ticket list badge interactions (no selectedTicket context needed)
@@ -585,6 +599,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
       setTickets,
       setSelectedTicket
     );
+    setAnnouncement(`Ticket status changed to ${newStatus}`);
   };
 
   // ==== TAG MANAGEMENT FUNCTIONS ====
@@ -600,12 +615,14 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     return tagManagement.handleDeleteTag(tagId, setTickets, setSelectedTicket);
   };
   
-  const handleAssignTag = (ticketId: string, tagId: string) => {
-    return tagManagement.handleAssignTag(ticketId, tagId, setTickets, setSelectedTicket);
+  const handleAssignTag = async (ticketId: string, tagId: string) => {
+    await tagManagement.handleAssignTag(ticketId, tagId, setTickets, setSelectedTicket);
+    setAnnouncement('Tag added');
   };
   
-  const handleRemoveTag = (ticketId: string, tagId: string) => {
-    return tagManagement.handleRemoveTag(ticketId, tagId, setTickets, setSelectedTicket);
+  const handleRemoveTag = async (ticketId: string, tagId: string) => {
+    await tagManagement.handleRemoveTag(ticketId, tagId, setTickets, setSelectedTicket);
+    setAnnouncement('Tag removed');
   };
 
   // fetchPredefinedResponses - Now using hook version from usePredefinedResponses
@@ -856,8 +873,8 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               onRemovePriority={(priority) => setMultiSelectPriorities(prev => prev.filter(p => p !== priority))}
               onRemoveTag={(tagId) => setMultiSelectTags(prev => prev.filter(t => t !== tagId))}
               onRemoveAssignee={(assigneeId) => setMultiSelectAssignees(prev => prev.filter(a => a !== assigneeId))}
-              onAssignTicket={handleAssignTicket}
-              onPriorityChange={handlePriorityChange}
+              onAssignTicket={handleAssignTicketWrapper}
+              onPriorityChange={handlePriorityChangeWrapper}
               onStatusChange={handleTicketListStatusChange}
               getUnreadCount={getUnreadCount}
               isWaitingForResponse={isWaitingForResponse}

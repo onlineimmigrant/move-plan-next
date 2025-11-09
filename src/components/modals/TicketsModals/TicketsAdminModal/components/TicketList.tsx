@@ -59,9 +59,9 @@ export function TicketList({
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3" role="status" aria-label="Loading tickets" aria-live="polite">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="animate-pulse bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-slate-200 dark:border-gray-700 rounded-xl p-4">
+          <div key={i} className="animate-pulse bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-slate-200 dark:border-gray-700 rounded-xl p-4" aria-hidden="true">
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
                 <div className="h-4 bg-slate-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
@@ -84,12 +84,13 @@ export function TicketList({
     const hasActiveFilters = searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
     
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 p-8">
+      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 p-8" role="status" aria-label="No tickets found">
         <svg 
           className="h-16 w-16 mb-4 text-slate-300 dark:text-slate-600" 
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"
+          aria-hidden="true"
         >
           <path 
             strokeLinecap="round" 
@@ -108,7 +109,7 @@ export function TicketList({
 
   // Ticket list
   return (
-    <div className="p-4 space-y-2">
+    <div className="p-4 space-y-2" role="list" aria-label={`${tickets.length} ticket${tickets.length === 1 ? '' : 's'}`}>
       {tickets.map((ticket) => (
         <TicketListItem
           key={ticket.id}
@@ -135,7 +136,8 @@ export function TicketList({
         <button
           onClick={onLoadMore}
           disabled={loadingMore}
-          className="w-full p-3 mt-4 text-sm text-blue-600 dark:text-blue-400 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-blue-200 dark:border-blue-700 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full p-3 mt-4 text-sm text-blue-600 dark:text-blue-400 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-blue-200 dark:border-blue-700 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+          aria-label={loadingMore ? 'Loading more tickets' : `Load more tickets (${tickets.length} currently shown)`}
         >
           {loadingMore ? 'Loading...' : 'Load More Tickets'}
         </button>

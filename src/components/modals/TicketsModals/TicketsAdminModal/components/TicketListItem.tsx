@@ -136,8 +136,17 @@ export function TicketListItem({
 
   return (
     <div
+      role="listitem"
       onClick={() => onClick(ticket)}
-      className={`w-full p-4 text-left bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border rounded-xl hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] cursor-pointer ${
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(ticket);
+        }
+      }}
+      tabIndex={0}
+      aria-label={`Ticket ${ticket.subject}, status ${ticket.status}, priority ${ticket.priority || 'none'}, ${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`}
+      className={`w-full p-4 text-left bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border rounded-xl hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
         unreadCount > 0 
           ? 'border-blue-400 dark:border-blue-500 bg-blue-50/90 dark:bg-blue-900/30' 
           : isSelected 
@@ -155,15 +164,18 @@ export function TicketListItem({
             
             {/* Unread count badge */}
             {unreadCount > 0 && (
-              <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-blue-500 dark:bg-blue-600 text-white text-[10px] font-bold rounded-full">
+              <span 
+                className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-blue-500 dark:bg-blue-600 text-white text-[10px] font-bold rounded-full"
+                aria-label={`${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`}
+              >
                 {unreadCount}
               </span>
             )}
             
             {/* Pinned notes indicator */}
             {hasPinnedNotes && (
-              <span title="Has pinned notes">
-                <Pin className="h-3 w-3 text-amber-600 fill-amber-600 flex-shrink-0" />
+              <span title="Has pinned notes" aria-label="Has pinned notes">
+                <Pin className="h-3 w-3 text-amber-600 fill-amber-600 flex-shrink-0" aria-hidden="true" />
               </span>
             )}
           </div>
