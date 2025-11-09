@@ -28,13 +28,15 @@ interface ChatWidgetProps {
   initialSize?: WidgetSize;
   initialOpen?: boolean;
   forceHighZIndex?: boolean;
+  inNavbar?: boolean;
 }
 
 export default function ChatWidget({ 
   onReturnToHelpCenter, 
   initialSize = 'initial', 
   initialOpen = false,
-  forceHighZIndex = false
+  forceHighZIndex = false,
+  inNavbar = false
 }: ChatWidgetProps = {}) {
   // Check localStorage for saved open state, fallback to initialOpen
   const [isOpen, setIsOpen] = useState(() => {
@@ -888,7 +890,7 @@ const sendMessage = async () => {
 
   return (
     <>
-      <ChatToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} isModalOpen={isModalOpen} />
+      <ChatToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} isModalOpen={isModalOpen} inNavbar={inNavbar} />
       {isOpen && (
         <div
           className={`${isModalOpen || forceHighZIndex ? "z-[10000002]" : "z-[9999]"} fixed min-h-[480px] backdrop-blur-2xl bg-white/50 dark:bg-gray-900/50 border-0 rounded-2xl shadow-lg flex flex-col overflow-hidden transition-all duration-300 ease-out ${sizeClasses[size]}`}

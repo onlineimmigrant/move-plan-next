@@ -15,6 +15,7 @@ import {
   ChatBubbleLeftIcon, 
   ArrowsRightLeftIcon,
   RocketLaunchIcon,
+  CheckBadgeIcon,
   VideoCameraIcon,
   CommandLineIcon
 } from '@heroicons/react/24/outline';
@@ -80,7 +81,7 @@ export default function AdminDashboardPage() {
     } as AdminModalCardItem,
     //{ href: '/admin/reports/custom', label: 'Reports', icon: ChartBarIcon, tooltip: 'Standard and Custom' },
     { href: '/admin/ai/management', label: 'AI', icon: RocketLaunchIcon, tooltip: 'AI Models' },
-    { href: '/admin/site-management', label: 'Settings', icon: Cog6ToothIcon, tooltip:'Website Management' },
+    { href: '/admin/site-management', label: 'Cookies', icon: CheckBadgeIcon, tooltip:'Consent Management' },
     { href: '/admin/tickets/management', label: 'Tickets', icon: ChatBubbleLeftIcon, tooltip: 'Contact Management' },
     { href: '/account', label: 'Account', icon: ArrowsRightLeftIcon, tooltip: 'Personal' },
   ], [handleOpenMeetingsModal]);

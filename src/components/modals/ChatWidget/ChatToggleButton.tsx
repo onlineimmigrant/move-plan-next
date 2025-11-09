@@ -6,17 +6,17 @@ interface ChatToggleButtonProps {
   isOpen: boolean;
   toggleOpen: () => void;
   isModalOpen?: boolean;
+  inNavbar?: boolean;
 }
 
-export default function ChatToggleButton({ isOpen, toggleOpen, isModalOpen = false }: ChatToggleButtonProps) {
+export default function ChatToggleButton({ isOpen, toggleOpen, isModalOpen = false, inNavbar = false }: ChatToggleButtonProps) {
   return (
     <button
       onClick={toggleOpen}
       className={`
-        fixed ${isModalOpen ? 'z-[10000001]' : 'z-[9998]'}
+        ${inNavbar ? 'fixed top-[4.5rem] left-4 sm:left-6 lg:left-8 z-[52]' : `fixed ${isModalOpen ? 'z-[10000001]' : 'z-[9998]'} bottom-4 right-4 sm:bottom-6 sm:right-6`}
         flex items-center justify-center
-        w-12 h-12 sm:w-14 sm:h-14
-        bottom-4 right-4 sm:bottom-6 sm:right-6
+        ${inNavbar ? 'w-10 h-10 sm:w-11 sm:h-11 p-2.5' : 'w-12 h-12 sm:w-14 sm:h-14'}
         bg-gradient-to-br from-gray-600 via-gray-700 to-gray-800
         hover:from-gray-700 hover:via-gray-800 hover:to-gray-900
         text-white
@@ -31,7 +31,7 @@ export default function ChatToggleButton({ isOpen, toggleOpen, isModalOpen = fal
       style={{ position: 'fixed' }}
       aria-label={isOpen ? 'Close chat' : 'Open chat'}
     >
-      <RocketLaunchIcon className="h-6 w-6 transform group-hover:translate-y-[-2px] transition-transform duration-200" />
+      <RocketLaunchIcon className={`${inNavbar ? 'h-5 w-5' : 'h-6 w-6'} transform group-hover:translate-y-[-2px] transition-transform duration-200`} />
     </button>
   );
 }

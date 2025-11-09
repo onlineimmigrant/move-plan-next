@@ -27,7 +27,11 @@ interface MenuCategory {
   items: MenuItem[];
 }
 
-const UniversalNewButton: React.FC = () => {
+interface UniversalNewButtonProps {
+  inNavbar?: boolean; // When true, uses relative positioning for navbar integration
+}
+
+const UniversalNewButton: React.FC<UniversalNewButtonProps> = ({ inNavbar = false }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -307,23 +311,30 @@ const UniversalNewButton: React.FC = () => {
   return (
     <div 
       ref={dropdownRef}
-      className="fixed bottom-32 right-4 z-[55]"
+      className={inNavbar 
+        ? "relative z-[51]" 
+        : "fixed bottom-32 right-4 z-[55]"
+      }
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Main Button - Neomorphic style matching "+ New" buttons */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative overflow-hidden font-medium text-gray-700 bg-gradient-to-br from-sky-50 via-white to-sky-50 
-                   rounded-full p-4 shadow-[4px_4px_8px_rgba(125,211,252,0.3),-4px_-4px_8px_rgba(255,255,255,0.9)] 
+        className={`relative overflow-hidden font-medium text-gray-700 bg-gradient-to-br from-sky-50 via-white to-sky-50 
+                   rounded-full shadow-[4px_4px_8px_rgba(125,211,252,0.3),-4px_-4px_8px_rgba(255,255,255,0.9)] 
                    hover:shadow-[2px_2px_4px_rgba(125,211,252,0.25),-2px_-2px_4px_rgba(255,255,255,0.95),inset_1px_1px_2px_rgba(125,211,252,0.12),inset_-1px_-1px_2px_rgba(255,255,255,0.9)] 
                    hover:text-sky-700 hover:-translate-y-0.5 
                    active:shadow-[inset_2px_2px_4px_rgba(125,211,252,0.3),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] 
                    active:translate-y-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-                   focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 group"
+                   focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 group ${
+                     inNavbar ? 'p-2.5' : 'p-4'
+                   }`}
         aria-label="Create new content"
       >
-        <PlusIcon className={`w-6 h-6 transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`} />
+        <PlusIcon className={`transition-transform duration-200 ${isOpen ? 'rotate-45' : ''} ${
+          inNavbar ? 'w-5 h-5' : 'w-6 h-6'
+        }`} />
         
         {/* Glow overlay effect */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-200/20 via-transparent to-transparent 
@@ -343,13 +354,10 @@ const UniversalNewButton: React.FC = () => {
 
       {/* Dropdown Menu - Sky theme, full page on mobile */}
       {isOpen && (
-        <div className="fixed md:absolute inset-0 md:inset-auto md:bottom-full md:right-0 md:mb-3 
-                       md:w-80 md:max-h-[calc(100vh-200px)] 
-                       bg-gradient-to-br from-sky-50 via-white to-sky-50
-                       border border-sky-200/60
-                       md:rounded-2xl md:shadow-[8px_8px_16px_rgba(125,211,252,0.3),-8px_-8px_16px_rgba(255,255,255,0.9)] 
-                       overflow-y-auto z-[56]
-                       animate-in md:slide-in-from-bottom-4 fade-in duration-200">
+        <div className={inNavbar
+          ? "fixed inset-0 md:inset-auto md:absolute md:top-full md:left-0 md:mt-2 md:w-80 md:max-h-[calc(100vh-200px)] bg-gradient-to-br from-sky-50 via-white to-sky-50 border border-sky-200/60 md:rounded-2xl md:shadow-[8px_8px_16px_rgba(125,211,252,0.3),-8px_-8px_16px_rgba(255,255,255,0.9)] overflow-y-auto z-[9999] animate-in md:slide-in-from-top-4 fade-in duration-200"
+          : "fixed md:absolute inset-0 md:inset-auto md:bottom-full md:right-0 md:mb-3 md:w-80 md:max-h-[calc(100vh-200px)] bg-gradient-to-br from-sky-50 via-white to-sky-50 border border-sky-200/60 md:rounded-2xl md:shadow-[8px_8px_16px_rgba(125,211,252,0.3),-8px_-8px_16px_rgba(255,255,255,0.9)] overflow-y-auto z-[56] animate-in md:slide-in-from-bottom-4 fade-in duration-200"
+        }>
           {/* Header - Enhanced with sky theme */}
           <div className="sticky top-0 bg-gradient-to-br from-sky-50 via-white to-sky-50 
                          px-4 md:px-6 py-5 md:py-4 z-10 border-b border-sky-200/50

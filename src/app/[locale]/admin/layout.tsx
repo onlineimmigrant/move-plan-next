@@ -1,7 +1,7 @@
 'use client';
 
-import { ReactNode, useState, useEffect, useMemo, useCallback, useRef, useReducer, Suspense, lazy, Component, ErrorInfo } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useMemo, useCallback, useRef, Suspense, lazy, Component, ErrorInfo } from 'react';
+import { usePathname } from 'next/navigation';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { BasketProvider } from '@/context/BasketContext';
 import { ModalProvider } from '@/context/ModalContext';
@@ -10,14 +10,16 @@ import AccountTopBar from '@/components/AccountTopBar';
 import ParentMenu from './components/ParentMenu';
 import TicketsAdminToggleButton from '@/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminToggleButton';
 import Loading from '@/ui/Loading';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useSidebarState } from '@/hooks/useSidebarState';
+import { useMenuVisibility } from '@/hooks/useMenuVisibility';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { getFilteredSidebarLinks, DisclosureKey as TablesDisclosureKey } from '@/lib/sidebarLinks';
+import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib/reportSidebarLinks';
+import { sidebarLinks } from '@/lib/sidebarLinks';
 
 // Lazy load sidebar menus for better initial load performance
 const TablesChildMenu = lazy(() => import('./components/TablesChildMenu'));
 const ReportsChildMenu = lazy(() => import('./components/ReportsChildMenu'));
-
-import { sidebarLinks, getFilteredSidebarLinks, DisclosureKey as TablesDisclosureKey } from '@/lib/sidebarLinks';
-import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib/reportSidebarLinks';
 
 // Error Boundary Component for sidebar menus
 class SidebarErrorBoundary extends Component<
@@ -61,109 +63,22 @@ const MenuLoadingFallback = () => (
   </div>
 );
 
-// Constants moved outside component to prevent recreation on every render
-const EXCLUDED_PATHS = [
-  '/admin',
-  '/admin/tickets',
-  '/admin/products/management',
-  '/admin/pricingplans/management',
-  '/admin/ai/management',
-  '/admin/miners/management',
-] as const;
-
-const INITIAL_TABLES_SECTIONS: Record<TablesDisclosureKey, boolean> = {
-  users: false,
-  sell: false,
-  booking: false,
-  app: false,
-  consent_management: false,
-  blog: false,
-  edupro: false,
-  quiz: false,
-  feedback: false,
-  ai: false,
-  datacollection: false,
-  website: false,
-  email: false,
-  settings: false,
-};
-
-const INITIAL_REPORTS_SECTIONS: Record<ReportsDisclosureKey, boolean> = {
-  tables: false,
-  custom: false,
-};
-
-// State management types for useReducer
-type SidebarState = {
-  isSidebarOpen: boolean;
-  isParentMenuOpen: boolean;
-  isParentMenuCollapsed: boolean;
-  activeSection: string;
-  openTablesSections: Record<TablesDisclosureKey, boolean>;
-  openReportsSections: Record<ReportsDisclosureKey, boolean>;
-  searchQuery: string;
-  isTablesHovered: boolean;
-};
-
-type SidebarAction =
-  | { type: 'TOGGLE_SIDEBAR' }
-  | { type: 'SET_SIDEBAR_OPEN'; payload: boolean }
-  | { type: 'TOGGLE_PARENT_MENU' }
-  | { type: 'SET_PARENT_MENU_OPEN'; payload: boolean }
-  | { type: 'SET_PARENT_MENU_COLLAPSED'; payload: boolean }
-  | { type: 'SET_ACTIVE_SECTION'; payload: string }
-  | { type: 'SET_TABLES_SECTIONS'; payload: Record<TablesDisclosureKey, boolean> }
-  | { type: 'SET_REPORTS_SECTIONS'; payload: Record<ReportsDisclosureKey, boolean> }
-  | { type: 'SET_SEARCH_QUERY'; payload: string }
-  | { type: 'SET_TABLES_HOVERED'; payload: boolean };
-
-const initialSidebarState: SidebarState = {
-  isSidebarOpen: false,
-  isParentMenuOpen: false,
-  isParentMenuCollapsed: true,
-  activeSection: '',
-  openTablesSections: INITIAL_TABLES_SECTIONS,
-  openReportsSections: INITIAL_REPORTS_SECTIONS,
-  searchQuery: '',
-  isTablesHovered: false,
-};
-
-function sidebarReducer(state: SidebarState, action: SidebarAction): SidebarState {
-  switch (action.type) {
-    case 'TOGGLE_SIDEBAR':
-      return { ...state, isSidebarOpen: !state.isSidebarOpen };
-    case 'SET_SIDEBAR_OPEN':
-      return { ...state, isSidebarOpen: action.payload };
-    case 'TOGGLE_PARENT_MENU':
-      return { ...state, isParentMenuOpen: !state.isParentMenuOpen };
-    case 'SET_PARENT_MENU_OPEN':
-      return { ...state, isParentMenuOpen: action.payload };
-    case 'SET_PARENT_MENU_COLLAPSED':
-      return { ...state, isParentMenuCollapsed: action.payload };
-    case 'SET_ACTIVE_SECTION':
-      return { ...state, activeSection: action.payload };
-    case 'SET_TABLES_SECTIONS':
-      return { ...state, openTablesSections: action.payload };
-    case 'SET_REPORTS_SECTIONS':
-      return { ...state, openReportsSections: action.payload };
-    case 'SET_SEARCH_QUERY':
-      return { ...state, searchQuery: action.payload };
-    case 'SET_TABLES_HOVERED':
-      return { ...state, isTablesHovered: action.payload };
-    default:
-      return state;
-  }
-}
-
 // Inner component that uses auth context
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { isAdmin, isSuperadmin, isInGeneralOrganization, isLoading } = useAuth();
-  const { isMobileMenuOpen, setIsMobileMenuOpen } = useSidebar();
+  const { isMobileMenuOpen } = useSidebar();
 
-  // Use reducer for complex sidebar state management
-  const [sidebarState, dispatch] = useReducer(sidebarReducer, initialSidebarState);
-  const [isDesktop, setIsDesktop] = useState(false);
+  // Use custom hooks for state management and visibility logic
+  const { state: sidebarState, actions } = useSidebarState();
+  const isDesktop = useIsDesktop();
+  const { shouldShowTablesChildMenu, shouldShowReportsChildMenu } = useMenuVisibility({
+    pathname,
+    activeSection: sidebarState.activeSection,
+    isTablesHovered: sidebarState.isTablesHovered,
+    isParentMenuOpen: sidebarState.isParentMenuOpen,
+    isDesktop,
+  });
   
   // Ref to track hover timeout for cleanup
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -176,35 +91,19 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   // Sync ParentMenu open state with navbar hamburger button
   useEffect(() => {
-    dispatch({ type: 'SET_PARENT_MENU_OPEN', payload: isMobileMenuOpen });
-  }, [isMobileMenuOpen]);
+    actions.setParentMenuOpen(isMobileMenuOpen);
+  }, [isMobileMenuOpen, actions]);
 
-  // Optimized resize listener with debouncing to prevent excessive re-renders
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 768px)');
-    const currentMatches = mediaQuery.matches;
-    setIsDesktop(currentMatches);
-
-    // Only update state if the value actually changes
-    const handleResize = (e: MediaQueryListEvent) => {
-      if (e.matches !== isDesktop) {
-        setIsDesktop(e.matches);
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleResize);
-    return () => mediaQuery.removeEventListener('change', handleResize);
-  }, [isDesktop]); // Add isDesktop to prevent unnecessary updates
-
+  // Update active section based on pathname
   useEffect(() => {
     if (pathname.startsWith('/admin/reports')) {
-      dispatch({ type: 'SET_ACTIVE_SECTION', payload: 'reports' });
+      actions.setActiveSection('reports');
     } else if (pathname.startsWith('/admin/tables')) {
-      dispatch({ type: 'SET_ACTIVE_SECTION', payload: 'tables' });
+      actions.setActiveSection('tables');
     } else {
-      dispatch({ type: 'SET_ACTIVE_SECTION', payload: '' });
+      actions.setActiveSection('');
     }
-  }, [pathname]);
+  }, [pathname, actions]);
 
   // Cleanup hover timeout on unmount
   useEffect(() => {
@@ -215,64 +114,45 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Memoize shouldShowTablesChildMenu calculation
-  // Keep it open once triggered, only close via navbar close button
-  const shouldShowTablesChildMenu = useMemo(
-    () =>
-      sidebarState.isParentMenuOpen &&
-      ((isDesktop &&
-        !EXCLUDED_PATHS.includes(pathname as any) &&
-        !pathname.startsWith('/admin/reports') &&
-        sidebarState.isTablesHovered) ||
-      (!isDesktop && sidebarState.activeSection === 'tables')),
-    [isDesktop, pathname, sidebarState.isTablesHovered, sidebarState.activeSection, sidebarState.isParentMenuOpen]
-  );
-
-  // Memoize shouldShowReportsChildMenu calculation
-  const shouldShowReportsChildMenu = useMemo(
-    () => sidebarState.isParentMenuOpen && sidebarState.activeSection === 'reports',
-    [sidebarState.isParentMenuOpen, sidebarState.activeSection]
-  );
-
   // Auto-expand child menus when they should be visible
   useEffect(() => {
     if (shouldShowTablesChildMenu || shouldShowReportsChildMenu) {
       if (!sidebarState.isSidebarOpen) {
-        dispatch({ type: 'SET_SIDEBAR_OPEN', payload: true });
+        actions.setSidebarOpen(true);
       }
     }
-  }, [shouldShowTablesChildMenu, shouldShowReportsChildMenu, sidebarState.isSidebarOpen]);
+  }, [shouldShowTablesChildMenu, shouldShowReportsChildMenu, sidebarState.isSidebarOpen, actions]);
 
   // Wrapper functions for setting state that handle both values and callbacks
   const setOpenTablesSections = useCallback((value: React.SetStateAction<Record<TablesDisclosureKey, boolean>>) => {
     if (typeof value === 'function') {
-      dispatch({ type: 'SET_TABLES_SECTIONS', payload: value(sidebarState.openTablesSections) });
+      actions.setTablesSections(value(sidebarState.openTablesSections));
     } else {
-      dispatch({ type: 'SET_TABLES_SECTIONS', payload: value });
+      actions.setTablesSections(value);
     }
-  }, [sidebarState.openTablesSections]);
+  }, [sidebarState.openTablesSections, actions]);
 
   const setOpenReportsSections = useCallback((value: React.SetStateAction<Record<ReportsDisclosureKey, boolean>>) => {
     if (typeof value === 'function') {
-      dispatch({ type: 'SET_REPORTS_SECTIONS', payload: value(sidebarState.openReportsSections) });
+      actions.setReportsSections(value(sidebarState.openReportsSections));
     } else {
-      dispatch({ type: 'SET_REPORTS_SECTIONS', payload: value });
+      actions.setReportsSections(value);
     }
-  }, [sidebarState.openReportsSections]);
+  }, [sidebarState.openReportsSections, actions]);
 
   // Memoize callback for toggling sidebar expansion
   const toggleSidebarExpansion = useCallback(() => {
-    dispatch({ type: 'TOGGLE_SIDEBAR' });
-  }, []);
+    actions.toggleSidebar();
+  }, [actions]);
 
   // When ParentMenu closes via navbar, also close child menus
   useEffect(() => {
     if (!sidebarState.isParentMenuOpen) {
-      dispatch({ type: 'SET_TABLES_HOVERED', payload: false });
-      dispatch({ type: 'SET_ACTIVE_SECTION', payload: '' });
-      dispatch({ type: 'SET_SIDEBAR_OPEN', payload: false });
+      actions.setTablesHovered(false);
+      actions.setActiveSection('');
+      actions.setSidebarOpen(false);
     }
-  }, [sidebarState.isParentMenuOpen]);
+  }, [sidebarState.isParentMenuOpen, actions]);
 
   // Early return for loading/unauthorized - after all hooks
   if (isLoading) {
@@ -303,9 +183,9 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
                 <div className="relative flex">
                   <ParentMenu
                     isCollapsed={sidebarState.isParentMenuCollapsed}
-                    setIsCollapsed={(collapsed) => dispatch({ type: 'SET_PARENT_MENU_COLLAPSED', payload: collapsed })}
-                    setActiveSection={(section) => dispatch({ type: 'SET_ACTIVE_SECTION', payload: section })}
-                    setIsTablesHovered={(hovered) => dispatch({ type: 'SET_TABLES_HOVERED', payload: hovered })}
+                    setIsCollapsed={actions.setParentMenuCollapsed}
+                    setActiveSection={actions.setActiveSection}
+                    setIsTablesHovered={actions.setTablesHovered}
                   />
                   {shouldShowTablesChildMenu && (
                     <SidebarErrorBoundary>
@@ -317,7 +197,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
                           openSections={sidebarState.openTablesSections}
                           setOpenSections={setOpenTablesSections}
                           searchQuery={sidebarState.searchQuery}
-                          setSearchQuery={(query) => dispatch({ type: 'SET_SEARCH_QUERY', payload: query })}
+                          setSearchQuery={actions.setSearchQuery}
                         />
                       </Suspense>
                     </SidebarErrorBoundary>
@@ -336,7 +216,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
                       openSections={sidebarState.openReportsSections}
                       setOpenSections={setOpenReportsSections}
                       searchQuery={sidebarState.searchQuery}
-                      setSearchQuery={(query) => dispatch({ type: 'SET_SEARCH_QUERY', payload: query })}
+                      setSearchQuery={actions.setSearchQuery}
                     />
                   </Suspense>
                 </SidebarErrorBoundary>

@@ -276,6 +276,7 @@ export default function ClientProviders({
                                   activeLanguages={activeLanguages}
                                   cookieCategories={cookieCategories}
                                   cookieAccepted={cookieAccepted}
+                                  pathname={pathname}
                                 >
                                   {children}
                                 </BannerAwareContent>
@@ -338,6 +339,7 @@ function BannerAwareContent({
   activeLanguages,
   cookieCategories,
   cookieAccepted,
+  pathname,
 }: {
   children: React.ReactNode;
   showNavbarFooter: boolean;
@@ -347,6 +349,7 @@ function BannerAwareContent({
   activeLanguages: string[];
   cookieCategories: any[];
   cookieAccepted: boolean;
+  pathname: string;
 }) {
   const { banners, getFixedBannersHeight } = useBanner() || { banners: [], getFixedBannersHeight: () => 0 }; // Fallback for null context
   const fixedBanners = useMemo(
@@ -388,8 +391,14 @@ function BannerAwareContent({
             <BannerContainer banners={nonFixedBanners} />
           </main>
         )}
-        <ChatHelpWidget />
-        <UniversalNewButton />
+        {/* ChatHelpWidget and UniversalNewButton moved to AccountTopBar for admin/account pages */}
+        {/* Only show globally for non-admin/account pages */}
+        {!pathname.startsWith('/admin') && !pathname.startsWith('/account') && (
+          <>
+            <ChatHelpWidget />
+            <UniversalNewButton />
+          </>
+        )}
         <CommandPalette />
         <MeetingsAccountToggleButton />
       </div>

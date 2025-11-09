@@ -25,7 +25,11 @@ const supabase = createClient(
 const WIDGET_STATE_KEY = 'chatHelpWidget_state';
 const WIDGET_MODE_KEY = 'chatWidget_mode'; // 'help' or 'chat'
 
-export default function ChatHelpWidget() {
+interface ChatHelpWidgetProps {
+  inNavbar?: boolean;
+}
+
+export default function ChatHelpWidget({ inNavbar = false }: ChatHelpWidgetProps) {
   const { t, getSafeTranslation } = useHelpCenterTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'welcome' | 'conversation' | 'ai'>('welcome');
@@ -346,11 +350,16 @@ export default function ChatHelpWidget() {
           initialSize={chatWidgetSize}
           initialOpen={true}
           forceHighZIndex={true}
+          inNavbar={inNavbar}
         />
       ) : (
         // Show ChatHelpWidget normally
         <>
-          <ChatHelpToggleButton isOpen={isOpen} toggleOpen={() => setIsOpen(!isOpen)} />
+          <ChatHelpToggleButton 
+            isOpen={isOpen} 
+            toggleOpen={() => setIsOpen(!isOpen)} 
+            inNavbar={inNavbar}
+          />
           {isOpen && (
             <div
               className={`z-[9999] fixed min-h-[480px] backdrop-blur-2xl bg-white/50 dark:bg-gray-900/50 border-0 rounded-2xl shadow-lg flex flex-col overflow-hidden transition-all duration-300 ease-out ${sizeClasses[size]}`}

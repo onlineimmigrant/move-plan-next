@@ -2,6 +2,9 @@ import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// Default neutral color for non-hovered state
+const NEUTRAL_COLOR = 'rgb(75, 85, 99)'; // gray-600
+
 // TypeScript interfaces
 interface DashboardLinkItem {
   label: string;
@@ -32,7 +35,7 @@ export const AccountModalCard = React.memo<{ item: DashboardLinkItem; primary: P
   return (
     <button
       onClick={item.onClick}
-      className="w-full group flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 transition-all duration-300"
+      className="w-full group flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 transition-all duration-200 ease-in-out"
       style={{
         backgroundColor: isHovered ? `${primary.lighter}80` : undefined
       }}
@@ -45,7 +48,7 @@ export const AccountModalCard = React.memo<{ item: DashboardLinkItem; primary: P
         <div className="transform group-hover:scale-110 transition-transform">
           <item.icon
             className="h-10 w-10 transition-colors"
-            style={{ color: isHovered ? primary.base : '#4b5563' }}
+            style={{ color: isHovered ? primary.base : NEUTRAL_COLOR }}
             aria-hidden="true"
           />
         </div>
@@ -82,7 +85,7 @@ export const AccountLinkCard = React.memo<AccountLinkCardProps>(({ item, pathnam
     <Link
       href={item.href!}
       prefetch={true}
-      className="group flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 transition-all duration-200"
+      className="group flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 transition-all duration-200 ease-in-out"
       style={{
         backgroundColor: isActive ? `${primary.lighter}80` : (isHovered ? `${primary.lighter}80` : undefined)
       }}
@@ -96,7 +99,7 @@ export const AccountLinkCard = React.memo<AccountLinkCardProps>(({ item, pathnam
           <item.icon
             className="h-10 w-10 transition-colors"
             style={{
-              color: (isAdminPage || isHovered) ? primary.base : '#4b5563'
+              color: (isAdminPage || isHovered) ? primary.base : NEUTRAL_COLOR
             }}
             aria-hidden="true"
           />

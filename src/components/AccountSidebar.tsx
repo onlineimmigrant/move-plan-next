@@ -261,7 +261,7 @@ export default function AccountSidebar() {
 
       {/* Mobile Drawer */}
       <aside
-        className={`lg:hidden fixed top-16 left-0 z-40 w-64 h-[calc(100vh-4rem)] bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-r border-white/20 dark:border-gray-700/30 transition-transform duration-300 ${
+        className={`lg:hidden fixed top-16 left-0 z-40 w-64 h-[calc(100vh-4rem)] bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-r border-white/20 dark:border-gray-700/30 transition-transform duration-200 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

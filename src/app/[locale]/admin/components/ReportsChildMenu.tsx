@@ -70,7 +70,7 @@ const MenuItem = ({
     : null;
 
   const linkClasses = cn(
-    "flex items-center gap-2.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all hover:bg-gray-100",
+    "flex items-center gap-2.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ease-in-out hover:bg-gray-100",
     isActive ? "bg-gray-50" : "text-gray-600",
     isTopLevel && "px-6"
   );
@@ -89,7 +89,7 @@ const MenuItem = ({
     <div className="flex flex-col">
       <button
         className={cn(
-          "flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium rounded-md transition-all hover:bg-gray-50",
+          "flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ease-in-out hover:bg-gray-50",
           effectiveIsOpen ? "bg-gray-50" : "text-gray-600",
           isTopLevel
             ? "text-gray-900 font-semibold py-1 focus:outline-none focus:ring-1 focus:ring-gray-300"
@@ -105,7 +105,7 @@ const MenuItem = ({
         <span
           className={cn(
             "text-gray-400",
-            isTopLevel && "h-3 w-3 transition-transform",
+            isTopLevel && "h-3 w-3 transition-transform duration-200 ease-in-out",
             effectiveIsOpen && "rotate-180"
           )}
         >
@@ -275,7 +275,7 @@ export default function ReportsChildMenu({
       {/* Main sidebar */}
       <aside
         className={cn(
-          "z-50 fixed left-0 w-54 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-300 ease-in-out",
+          "z-50 fixed left-0 w-54 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-200 ease-in-out",
           "top-16 bottom-0", // Start below navbar (h-16 = 64px), extend to bottom
           isSidebarOpen ? "translate-x-0 sm:ml-8" : "-translate-x-full",
           "md:static md:w-56 md:min-h-screen md:ml-0 md:translate-x-0 md:transition-none"

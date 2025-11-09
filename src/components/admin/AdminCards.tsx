@@ -2,6 +2,9 @@ import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// Default neutral color for non-hovered state
+const NEUTRAL_COLOR = 'rgb(75, 85, 99)'; // gray-600
+
 // TypeScript interfaces
 interface CardItem {
   label: string;
@@ -35,7 +38,7 @@ export const AdminModalCard = React.memo<{ item: ModalCardItem; primary: Primary
   return (
     <button
       onClick={item.onClick}
-      className="w-full group flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 transition-all duration-300"
+      className="w-full group flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 transition-all duration-200 ease-in-out"
       style={{
         backgroundColor: isHovered ? `${primary.lighter}80` : undefined
       }}
@@ -48,7 +51,7 @@ export const AdminModalCard = React.memo<{ item: ModalCardItem; primary: Primary
         <div className="transform group-hover:scale-110 transition-transform" aria-hidden="true">
           <item.icon
             className="h-10 w-10 transition-colors"
-            style={{ color: isHovered ? primary.base : '#4b5563' }}
+            style={{ color: isHovered ? primary.base : NEUTRAL_COLOR }}
           />
         </div>
         <span 
@@ -80,7 +83,7 @@ export const AdminLinkCard = React.memo<{ item: NavigationCardItem; pathname: st
   return (
     <Link
       href={item.href}
-      className="group flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 transition-all duration-300"
+      className="group flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 transition-all duration-200 ease-in-out"
       style={{
         backgroundColor: isActive ? `${primary.lighter}80` : (isHovered ? `${primary.lighter}80` : undefined)
       }}
@@ -94,7 +97,7 @@ export const AdminLinkCard = React.memo<{ item: NavigationCardItem; pathname: st
           <item.icon
             className="h-10 w-10 transition-colors"
             style={{
-              color: (isActive || isHovered) ? primary.base : '#4b5563'
+              color: (isActive || isHovered) ? primary.base : NEUTRAL_COLOR
             }}
           />
         </div>

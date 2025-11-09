@@ -25,7 +25,7 @@ interface ProfileEditModalProps {
 
 // Reusable Input component - Memoized for performance
 const Input = React.memo<InputHTMLAttributes<HTMLInputElement> & RefAttributes<HTMLInputElement> & { focusRingColor?: string }>(
-  ({ className = '', focusRingColor = '#0ea5e9', ...props }, ref) => (
+  ({ className = '', focusRingColor, ...props }, ref) => (
     <input
       ref={ref}
       className={`block w-full border border-gray-200 dark:border-gray-600 rounded-md py-3 px-4 text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:ring-1 transition duration-150 ease-in-out placeholder-gray-400 dark:placeholder-gray-500 text-sm ${className}`}
@@ -116,6 +116,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                   onChange={(e) => onFieldValueChange(e.target.value)}
                   placeholder={`Enter ${FIELD_LABELS[editingField] || editingField}...`}
                   ref={inputRef}
+                  focusRingColor={primary.base}
                   style={{
                     borderColor: primary.lighter,
                     outlineColor: primary.base

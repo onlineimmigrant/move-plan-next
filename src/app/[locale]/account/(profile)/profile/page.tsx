@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, Component, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Toast from '@/components/Toast';
 import { supabase } from '@/lib/supabaseClient';
@@ -13,147 +13,12 @@ import TableSkeleton from '@/components/skeletons/TableSkeleton';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { ProfileTable } from '@/components/account/ProfileTable';
 import { ProfileEditModal } from '@/components/account/ProfileEditModal';
+import { ProfileErrorBoundary } from '@/components/account/ProfileErrorBoundary';
+import { useProfile, type Profile } from '@/hooks/useProfile';
+import { useProfileModal } from '@/hooks/useProfileModal';
 
 // Constants
 import { FIELD_LABELS, EDITABLE_FIELDS } from '@/components/constants/profile';
-
-// Error Boundary Component for profile page
-class ProfileErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: { children: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Profile Error Boundary caught error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
-          <div className="max-w-md w-full p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl border border-white/20 dark:border-gray-700/30 shadow-xl">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 mb-6 bg-red-100/80 dark:bg-red-900/30 backdrop-blur-sm rounded-full flex items-center justify-center border border-red-200/50 dark:border-red-700/50">
-                <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                Something went wrong
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                We encountered an error loading your profile. Please try refreshing the page.
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full px-6 py-3 bg-blue-600/90 hover:bg-blue-700/90 dark:bg-blue-500/90 dark:hover:bg-blue-600/90 backdrop-blur-sm text-white font-medium rounded-xl border border-blue-500/20 transition-all duration-300 hover:scale-105 hover:shadow-lg"
-              >
-                Refresh Page
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-// Types
-interface Profile {
-  id: string;
-  uuid: string;
-  username: string;
-  full_name: string | null;
-  created_at: string;
-  email: string | null;
-  city: string | null;
-  postal_code: string | null;
-  country: string | null;
-  role: string | null;
-  updated_at: string;
-}
-
-// Custom Hook for Profile
-const useProfile = (accessToken: string | null) => {
-  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchProfile = useCallback(async () => {
-    if (!accessToken) return;
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/profiles', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch profile');
-      }
-      const data: Profile = await response.json();
-      setProfile(data);
-    } catch (error) {
-      setError((error as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (accessToken) fetchProfile();
-  }, [accessToken, fetchProfile]);
-
-  return { profile, setProfile, fetchProfile, isLoading, error };
-};
-
-// Custom Hook for Modal State Management
-const useModal = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [fieldValue, setFieldValue] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const openModal = (field: string, value: string | null) => {
-    setEditingField(field);
-    setFieldValue(value || '');
-    setIsModalOpen(true);
-    setFormError(null);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingField(null);
-    setFieldValue('');
-    setFormError(null);
-    setIsSubmitting(false);
-  };
-
-  return {
-    isModalOpen,
-    editingField,
-    fieldValue,
-    setFieldValue,
-    formError,
-    setFormError,
-    isSubmitting,
-    setIsSubmitting,
-    openModal,
-    closeModal,
-  };
-};
 
 // Validation Function with proper typing
 const validateField = (
@@ -195,7 +60,7 @@ function ProfilePageContent() {
     setIsSubmitting,
     openModal,
     closeModal,
-  } = useModal();
+  } = useProfileModal();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const router = useRouter();
 

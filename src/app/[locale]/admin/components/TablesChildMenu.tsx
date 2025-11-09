@@ -109,7 +109,7 @@ const MenuItem = ({
     : null;
 
   const linkClasses = cn(
-    "flex items-center gap-2.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all hover:bg-gray-100",
+    "flex items-center gap-2.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ease-in-out hover:bg-gray-100",
     isActive ? "bg-gray-50" : "text-gray-600",
     isTopLevel && "px-6"
   );
@@ -130,7 +130,7 @@ const MenuItem = ({
     <div className="flex flex-col">
       <button
         className={cn(
-          "cursor-pointer flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium rounded-md transition-all hover:bg-gray-50",
+          "cursor-pointer flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ease-in-out hover:bg-gray-50",
           effectiveIsOpen ? "bg-gray-50" : "text-gray-600",
           isTopLevel
             ? "text-gray-900 font-semibold py-1 focus:outline-none focus:ring-1 focus:ring-gray-300"
@@ -146,7 +146,7 @@ const MenuItem = ({
         <span
           className={cn(
             "text-gray-400",
-            isTopLevel && "h-3 w-3 transition-transform",
+            isTopLevel && "h-3 w-3 transition-transform duration-200 ease-in-out",
             effectiveIsOpen && "rotate-180"
           )}
         >

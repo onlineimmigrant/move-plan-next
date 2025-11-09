@@ -1,6 +1,9 @@
 import React from 'react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
+// Default neutral color for disabled/inactive state
+const NEUTRAL_COLOR = 'rgb(156, 163, 175)'; // gray-400
+
 interface PaginationProps {
   currentPage: number;
   totalCount: number;
@@ -78,7 +81,7 @@ export function AccountPagination({
           className="relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           style={{
             backgroundColor: currentPage === 1 ? 'transparent' : `${cssVars.primary.lighter}40`,
-            color: currentPage === 1 ? '#9ca3af' : cssVars.primary.base,
+            color: currentPage === 1 ? NEUTRAL_COLOR : cssVars.primary.base,
           }}
           aria-label="Go to previous page"
         >
@@ -91,7 +94,7 @@ export function AccountPagination({
           className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           style={{
             backgroundColor: currentPage === totalPages ? 'transparent' : `${cssVars.primary.lighter}40`,
-            color: currentPage === totalPages ? '#9ca3af' : cssVars.primary.base,
+            color: currentPage === totalPages ? NEUTRAL_COLOR : cssVars.primary.base,
           }}
           aria-label="Go to next page"
         >
