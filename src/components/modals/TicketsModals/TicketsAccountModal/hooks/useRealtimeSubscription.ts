@@ -27,6 +27,13 @@ export const useRealtimeSubscription = ({
   setAttachmentUrls,
   fetchTickets,
 }: UseRealtimeSubscriptionProps) => {
+  // Use a ref to always get the latest fetchTickets function
+  const fetchTicketsRef = useRef(fetchTickets);
+  
+  // Update ref when fetchTickets changes
+  useEffect(() => {
+    fetchTicketsRef.current = fetchTickets;
+  }, [fetchTickets]);
   
   /**
    * Refresh the currently selected ticket with latest data from database
@@ -125,7 +132,7 @@ export const useRealtimeSubscription = ({
             filter: `customer_id=eq.${user.id}`
           },
           () => {
-            fetchTickets();
+            fetchTicketsRef.current();
             refreshSelectedTicket();
           }
         )
@@ -140,7 +147,7 @@ export const useRealtimeSubscription = ({
           () => {
             // Add small delay to ensure attachments are saved before fetching
             setTimeout(() => {
-              fetchTickets();
+              fetchTicketsRef.current();
               refreshSelectedTicket();
             }, 500); // 500ms delay to ensure attachments are committed
           }

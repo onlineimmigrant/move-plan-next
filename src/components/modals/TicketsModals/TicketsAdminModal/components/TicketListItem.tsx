@@ -250,12 +250,57 @@ const TicketListItemComponent = ({
           </div>
           
           {/* Customer name */}
-          <p className="text-xs text-slate-600 mt-1">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
             {searchQuery 
               ? highlightText(ticket.full_name || 'Anonymous', searchQuery) 
               : (ticket.full_name || 'Anonymous')
             }
           </p>
+          
+          {/* Last message preview */}
+          {(() => {
+            // Get the last message from responses or initial message
+            let lastMessage = '';
+            let messagePrefix = '';
+            let messageTime = '';
+            
+            if (ticket.ticket_responses && Array.isArray(ticket.ticket_responses) && ticket.ticket_responses.length > 0) {
+              const lastResponse = ticket.ticket_responses[ticket.ticket_responses.length - 1];
+              lastMessage = lastResponse?.message || '';
+              messagePrefix = lastResponse?.is_admin ? 'You: ' : '';
+              
+              // Format time (e.g., "2:30 PM" or "Nov 10, 2:30 PM" if not today)
+              if (lastResponse?.created_at) {
+                const msgDate = new Date(lastResponse.created_at);
+                const now = new Date();
+                const isToday = msgDate.toDateString() === now.toDateString();
+                
+                if (isToday) {
+                  messageTime = msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                } else {
+                  messageTime = msgDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + 
+                                msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                }
+              }
+            } else {
+              lastMessage = ticket.message || '';
+              messageTime = new Date(ticket.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+            
+            return lastMessage ? (
+              <div className="flex items-center gap-1 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate flex-1" title={lastMessage}>
+                  {messagePrefix && <span className="font-medium">{messagePrefix}</span>}
+                  {lastMessage}
+                </p>
+                {messageTime && (
+                  <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                    {messageTime}
+                  </span>
+                )}
+              </div>
+            ) : null;
+          })()}
           
           {/* Assignment, Priority, Tags, and Notes badges */}
           <div className="flex items-center gap-2 mt-1 flex-wrap">

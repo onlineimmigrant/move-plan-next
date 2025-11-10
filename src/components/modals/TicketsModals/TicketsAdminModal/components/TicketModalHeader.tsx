@@ -23,6 +23,7 @@ interface TicketModalHeaderProps {
   searchQuery: string;
   avatars: Avatar[];
   availableTags: TicketTag[];
+  totalUnreadCount?: number;
   onClose: () => void;
   onBack: () => void;
   onToggleSize: () => void;
@@ -40,6 +41,7 @@ export default function TicketModalHeader({
   searchQuery,
   avatars,
   availableTags,
+  totalUnreadCount = 0,
   onClose,
   onBack,
   onToggleSize,
@@ -335,7 +337,17 @@ export default function TicketModalHeader({
             </div>
           </>
         ) : (
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200" id="modal-title">Support Tickets</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200" id="modal-title">Support Tickets</h2>
+            {totalUnreadCount > 0 && (
+              <span 
+                className="flex items-center justify-center min-w-[22px] h-5 px-2 text-xs font-semibold text-white bg-blue-500 rounded-full"
+                aria-label={`${totalUnreadCount} total unread message${totalUnreadCount === 1 ? '' : 's'}`}
+              >
+                {totalUnreadCount}
+              </span>
+            )}
+          </div>
         )}
       </div>
       

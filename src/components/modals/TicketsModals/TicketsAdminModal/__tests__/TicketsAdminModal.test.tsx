@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
+import * as SupabaseModule from '@/lib/supabase';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -290,8 +291,8 @@ describe('TicketsAdminModal - Error Handling', () => {
 
   it('should handle errors gracefully when failing to load tickets', async () => {
     // Mock Supabase error
-    const { supabase } = require('@/lib/supabase');
-    supabase.from.mockImplementation(() => ({
+    const supabaseMock = SupabaseModule.supabase as any;
+    supabaseMock.from.mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),

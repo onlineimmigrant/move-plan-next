@@ -211,6 +211,14 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     }
   };
 
+  // Calculate total unread messages across all tickets
+  const totalUnreadCount = React.useMemo(() => {
+    return tickets.reduce((total, ticket) => {
+      const unreadInTicket = ticket.ticket_responses.filter(r => r.is_admin && !r.is_read).length;
+      return total + unreadInTicket;
+    }, 0);
+  }, [tickets]);
+
   const toggleSize = () => {
     setSize((prev) => {
       if (prev === 'initial') return 'half';
@@ -288,6 +296,7 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
           selectedTicket={selectedTicket}
           size={size}
           avatars={avatars}
+          totalUnreadCount={totalUnreadCount}
           onBack={() => setSelectedTicket(null)}
           onToggleSize={toggleSize}
           onClose={onClose}

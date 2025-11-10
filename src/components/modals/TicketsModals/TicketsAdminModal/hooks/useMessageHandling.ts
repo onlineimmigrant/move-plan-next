@@ -26,7 +26,7 @@ interface UseMessageHandlingReturn {
   isSending: boolean;
   markMessagesAsRead: (ticketId: string) => Promise<void>;
   handleAdminRespond: () => Promise<void>;
-  handleTicketSelect: (ticket: Ticket) => void;
+  handleTicketSelect: (ticket: Ticket) => Promise<void>;
   broadcastTyping: () => void;
   handleMessageChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   scrollToBottom: () => void;
@@ -229,17 +229,46 @@ export function useMessageHandling({
     loadAttachmentUrls,
   ]);
 
-  const handleTicketSelect = useCallback((ticket: Ticket) => {
+  /**
+   * Handle ticket selection
+   * Fetches fresh ticket data to ensure all messages are loaded
+   */
+  const handleTicketSelect = useCallback(async (ticket: Ticket) => {
+    // Immediately set the ticket for responsive UI
     setSelectedTicket(ticket);
     setShowInternalNotes(false); // Reset notes visibility when switching tickets
     setInternalNotes([]); // Clear previous notes
-    fetchInternalNotes(ticket.id); // Fetch notes for the selected ticket
+    
+    try {
+      // Fetch fresh ticket data with all messages to prevent stale data
+      const freshTicket = await TicketAPI.refreshSelectedTicket(ticket.id);
+      
+      if (freshTicket) {
+        // Update with fresh data including latest messages
+        setSelectedTicket(freshTicket);
+        
+        // Load attachment URLs for any images
+        if (freshTicket.ticket_responses && freshTicket.ticket_responses.length > 0) {
+          loadAttachmentUrls(freshTicket.ticket_responses);
+        }
+        
+        // Scroll to bottom after messages load (use setTimeout to ensure DOM is updated)
+        setTimeout(() => scrollToBottom(), 100);
+      }
+    } catch (error) {
+      console.error('Failed to fetch fresh ticket data:', error);
+      // Continue with original ticket data rather than breaking the UI
+      if (ticket.ticket_responses) {
+        loadAttachmentUrls(ticket.ticket_responses);
+      }
+      // Still try to scroll even with error
+      setTimeout(() => scrollToBottom(), 100);
+    }
+    
+    // Fetch notes for the selected ticket
+    fetchInternalNotes(ticket.id);
     // Mark customer messages as read when admin opens the ticket
     markMessagesAsRead(ticket.id);
-    // Load attachment URLs for image previews
-    if (ticket.ticket_responses) {
-      loadAttachmentUrls(ticket.ticket_responses);
-    }
   }, [
     setSelectedTicket,
     setShowInternalNotes,

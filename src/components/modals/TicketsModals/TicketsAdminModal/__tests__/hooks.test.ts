@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
+import * as SupabaseModule from '@/lib/supabase';
 
 // Mock Supabase
 jest.mock('@/lib/supabase', () => ({
@@ -279,8 +280,8 @@ describe('useTagManagement', () => {
     const mockUpdateSelectedTicket = jest.fn();
     
     // Mock Supabase to return tags when fetching
-    const { supabase } = require('@/lib/supabase');
-    supabase.from.mockImplementation((table: string) => {
+    const supabaseMock = SupabaseModule.supabase as any;
+    supabaseMock.from.mockImplementation((table: string) => {
       if (table === 'ticket_tags') {
         return {
           select: jest.fn().mockReturnThis(),

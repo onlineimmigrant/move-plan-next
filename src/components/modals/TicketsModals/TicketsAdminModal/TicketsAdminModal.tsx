@@ -326,7 +326,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   const [showTagManagement, setShowTagManagement] = useState(false);
   
   // Sorting state
-  const [sortBy, setSortBy] = useState<'date-newest' | 'date-oldest' | 'priority' | 'responses' | 'updated'>('date-newest');
+  const [sortBy, setSortBy] = useState<'date-newest' | 'date-oldest' | 'priority' | 'responses' | 'updated'>('updated');
   
   // Advanced filters state
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -805,6 +805,14 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     currentUserId,
   });
 
+  // Calculate total unread messages across all tickets (customer messages that admin hasn't read)
+  const totalUnreadCount = React.useMemo(() => {
+    return tickets.reduce((total, ticket) => {
+      const unreadInTicket = ticket.ticket_responses.filter(r => !r.is_admin && !r.is_read).length;
+      return total + unreadInTicket;
+    }, 0);
+  }, [tickets]);
+
   // ========================================
   // HELPER FUNCTIONS
   // ========================================
@@ -880,6 +888,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
           searchQuery={searchQuery}
           avatars={avatars}
           availableTags={availableTags}
+          totalUnreadCount={totalUnreadCount}
           onClose={onClose}
           onBack={() => setSelectedTicket(null)}
           onToggleSize={toggleSize}

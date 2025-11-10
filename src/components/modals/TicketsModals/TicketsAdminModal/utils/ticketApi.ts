@@ -41,7 +41,8 @@ export async function fetchTickets(params: {
         subject, 
         status, 
         customer_id, 
-        created_at, 
+        created_at,
+        updated_at,
         message, 
         preferred_contact_method, 
         email, 
@@ -68,6 +69,7 @@ export async function fetchTickets(params: {
       `)
       .eq('organization_id', organizationId)
       .order('created_at', { ascending: false })
+      .order('created_at', { foreignTable: 'ticket_responses', ascending: true })
       .range(startIndex, startIndex + fetchCount - 1);
 
     if (ticketsError) {
@@ -96,8 +98,30 @@ export async function fetchTickets(params: {
       };
     });
 
+    // Sort tickets by latest activity (most recent first)
+    const sortedTickets = processedTickets.sort((a, b) => {
+      const getLatestTimestamp = (ticket: any) => {
+        // First try to use the last response timestamp
+        if (ticket.ticket_responses && Array.isArray(ticket.ticket_responses) && ticket.ticket_responses.length > 0) {
+          const lastResponse = ticket.ticket_responses[ticket.ticket_responses.length - 1];
+          return new Date(lastResponse.created_at).getTime();
+        }
+        // Fall back to ticket updated_at (updated when messages are sent)
+        if (ticket.updated_at) {
+          return new Date(ticket.updated_at).getTime();
+        }
+        // Last resort: use ticket creation time
+        return new Date(ticket.created_at).getTime();
+      };
+      
+      const timeB = getLatestTimestamp(b);
+      const timeA = getLatestTimestamp(a);
+      
+      return timeB - timeA; // Most recent first
+    });
+
     return {
-      tickets: processedTickets,
+      tickets: sortedTickets,
       hasMore: ticketsData && ticketsData.length === fetchCount
     };
   } catch (err) {
@@ -601,8 +625,8 @@ export async function sendAdminResponse(params: {
         is_admin: true,
         avatar_id: avatarId,
         user_id: userId,
-        is_read: true,
-        read_at: getCurrentISOString(),
+        is_read: false, // Customer hasn't read this yet
+        read_at: null,
         created_at: getCurrentISOString()
       })
       .select()

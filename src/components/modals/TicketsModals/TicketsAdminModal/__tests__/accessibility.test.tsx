@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import * as SupabaseModule from '@/lib/supabase';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -272,12 +273,12 @@ describe('Accessibility - Keyboard Shortcuts', () => {
   });
 
   it('should support Enter key on ticket list items', async () => {
-    const { supabase } = require('@/lib/supabase');
+    const supabaseMock = SupabaseModule.supabase as any;
     const mockTickets = [
       { id: 'ticket-1', subject: 'Test Ticket', status: 'open' },
     ];
     
-    supabase.from.mockImplementation(() => ({
+    supabaseMock.from.mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),
@@ -297,12 +298,12 @@ describe('Accessibility - Keyboard Shortcuts', () => {
   });
 
   it('should support Space key on ticket list items', async () => {
-    const { supabase } = require('@/lib/supabase');
+    const supabaseMock = SupabaseModule.supabase as any;
     const mockTickets = [
       { id: 'ticket-1', subject: 'Test Ticket', status: 'open' },
     ];
     
-    supabase.from.mockImplementation(() => ({
+    supabaseMock.from.mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),
@@ -360,7 +361,7 @@ describe('Accessibility - Screen Reader Support', () => {
   });
 
   it('should have descriptive aria-labels on ticket list items', async () => {
-    const { supabase } = require('@/lib/supabase');
+    const supabaseMock = SupabaseModule.supabase as any;
     const mockTickets = [
       { 
         id: 'ticket-1', 
@@ -370,7 +371,7 @@ describe('Accessibility - Screen Reader Support', () => {
       },
     ];
     
-    supabase.from.mockImplementation(() => ({
+    supabaseMock.from.mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),

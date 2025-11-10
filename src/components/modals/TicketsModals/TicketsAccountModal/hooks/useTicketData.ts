@@ -104,10 +104,23 @@ export const useTicketData = ({
         ticket_responses: processTicketResponses(ticket.ticket_responses)
       }));
 
+      // Sort tickets by latest message timestamp (most recent first)
+      const sortedTickets = processedTickets.sort((a, b) => {
+        const getLatestTimestamp = (ticket: any) => {
+          if (ticket.ticket_responses && ticket.ticket_responses.length > 0) {
+            const lastResponse = ticket.ticket_responses[ticket.ticket_responses.length - 1];
+            return new Date(lastResponse.created_at).getTime();
+          }
+          return new Date(ticket.created_at).getTime();
+        };
+        
+        return getLatestTimestamp(b) - getLatestTimestamp(a);
+      });
+
       if (loadMore) {
-        setTickets(prev => [...prev, ...processedTickets]);
+        setTickets(prev => [...prev, ...sortedTickets]);
       } else {
-        setTickets(processedTickets);
+        setTickets(sortedTickets);
       }
 
       // Check if there are more tickets for each status

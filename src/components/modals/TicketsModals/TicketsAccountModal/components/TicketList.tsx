@@ -2,6 +2,14 @@ import React from 'react';
 import type { Ticket } from '../../shared/types';
 import { isWaitingForResponse } from '../utils';
 
+/**
+ * Get count of unread admin messages for customer
+ * (Messages from admin that customer hasn't read yet)
+ */
+function getUnreadCount(ticket: Ticket): number {
+  return ticket.ticket_responses.filter(r => r.is_admin && !r.is_read).length;
+}
+
 interface TicketListProps {
   tickets: Ticket[];
   activeTab: string;
@@ -46,23 +54,77 @@ export default function TicketList({
         </div>
       ) : (
         <div className="p-4 space-y-2">
-          {tickets.map((ticket) => (
-            <button
-              key={ticket.id}
-              onClick={() => onTicketSelect(ticket)}
-              className="w-full p-4 text-left bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01]"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-medium text-slate-900 text-sm">{ticket.subject}</h3>
-                {isWaitingForResponse(ticket) && (
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+          {tickets.map((ticket) => {
+            const unreadCount = getUnreadCount(ticket);
+            const hasUnread = unreadCount > 0;
+            
+            // Get last message for preview with prefix and time
+            let lastMessage = '';
+            let messagePrefix = '';
+            let messageTime = '';
+            
+            if (ticket.ticket_responses && ticket.ticket_responses.length > 0) {
+              const lastResponse = ticket.ticket_responses[ticket.ticket_responses.length - 1];
+              lastMessage = lastResponse.message;
+              messagePrefix = lastResponse.is_admin ? '' : 'You: '; // Customer sees "You:" for their own messages
+              
+              // Format time
+              const msgDate = new Date(lastResponse.created_at);
+              const now = new Date();
+              const isToday = msgDate.toDateString() === now.toDateString();
+              
+              if (isToday) {
+                messageTime = msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+              } else {
+                messageTime = msgDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + 
+                              msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+              }
+            } else {
+              lastMessage = ticket.message;
+              messageTime = new Date(ticket.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+            
+            return (
+              <button
+                key={ticket.id}
+                onClick={() => onTicketSelect(ticket)}
+                className="w-full p-4 text-left bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01]"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1 flex items-center gap-2">
+                    <h3 className="font-medium text-slate-900 text-sm">{ticket.subject}</h3>
+                    {hasUnread && (
+                      <span 
+                        className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold text-white bg-red-500 rounded-full"
+                        aria-label={`${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`}
+                      >
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  {isWaitingForResponse(ticket) && (
+                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  )}
+                </div>
+                {lastMessage && (
+                  <div className="flex items-center gap-1 mb-1">
+                    <p className="text-xs text-slate-500 truncate flex-1">
+                      {messagePrefix && <span className="font-medium">{messagePrefix}</span>}
+                      {lastMessage}
+                    </p>
+                    {messageTime && (
+                      <span className="text-xs text-slate-400 whitespace-nowrap">
+                        {messageTime}
+                      </span>
+                    )}
+                  </div>
                 )}
-              </div>
-              <p className="text-xs text-slate-500">
-                {new Date(ticket.created_at).toLocaleDateString()}
-              </p>
-            </button>
-          ))}
+                <p className="text-xs text-slate-400">
+                  {new Date(ticket.created_at).toLocaleDateString()}
+                </p>
+              </button>
+            );
+          })}
           
           {/* Load More Button */}
           {hasMoreTickets[activeTab] && (

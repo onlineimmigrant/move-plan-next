@@ -13,6 +13,7 @@ interface ModalHeaderProps {
   selectedTicket: Ticket | null;
   size: WidgetSize;
   avatars: Avatar[];
+  totalUnreadCount?: number;
   onBack: () => void;
   onToggleSize: () => void;
   onClose: () => void;
@@ -22,6 +23,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   selectedTicket,
   size,
   avatars,
+  totalUnreadCount = 0,
   onBack,
   onToggleSize,
   onClose,
@@ -91,7 +93,17 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
             </div>
           </>
         ) : (
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Support Tickets</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Support Tickets</h2>
+            {totalUnreadCount > 0 && (
+              <span 
+                className="flex items-center justify-center min-w-[22px] h-5 px-2 text-xs font-semibold text-white bg-red-500 rounded-full"
+                aria-label={`${totalUnreadCount} total unread message${totalUnreadCount === 1 ? '' : 's'}`}
+              >
+                {totalUnreadCount}
+              </span>
+            )}
+          </div>
         )}
       </div>
       
