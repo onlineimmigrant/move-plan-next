@@ -216,7 +216,9 @@ export default function AccountPage() {
               </div>
             )}
           </div>
+        </div>
         
+        {/* Modals - Outside container for proper z-index positioning */}
         <MeetingsBookingModal 
           isOpen={isMeetingsModalOpen} 
           onClose={handleCloseMeetingsModal}
@@ -225,7 +227,6 @@ export default function AccountPage() {
           isOpen={isTicketsModalOpen} 
           onClose={handleCloseTicketsModal}
         />
-      </div>
     </main>
     </SidebarProvider>
   );

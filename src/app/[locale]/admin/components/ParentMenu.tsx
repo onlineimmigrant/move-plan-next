@@ -81,7 +81,7 @@ const ParentMenu: React.FC<ParentMenuProps> = ({
   return (
     <div
       className={cn(
-        "z-40 flex flex-col transition-all duration-200 ease-in-out",
+        "z-0 flex flex-col transition-all duration-200 ease-in-out",
         "fixed top-16 bottom-0 left-0", // Start below navbar, extend to bottom, align left
         "bg-gradient-to-b from-white via-gray-50/80 to-gray-100/60",
         "border-r border-gray-200/80 backdrop-blur-sm",

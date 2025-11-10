@@ -251,7 +251,7 @@ export default function ReportsChildMenu({
   return (
     <>
       {/* Mobile narrow bar */}
-      <div className="pt-20 z-48 md:hidden inset-y-0 left-14 w-12 bg-white border-gray-200 flex flex-col items-center py-4 gap-6">
+      <div className="pt-20 z-0 md:hidden inset-y-0 left-14 w-12 bg-white border-gray-200 flex flex-col items-center py-4 gap-6">
         <button onClick={() => setIsSidebarOpen(true)} className="p-1 rounded-md hover:bg-gray-50">
           <MagnifyingGlassIcon className="h-3 w-3 text-gray-600" />
         </button>
@@ -275,7 +275,7 @@ export default function ReportsChildMenu({
       {/* Main sidebar */}
       <aside
         className={cn(
-          "z-50 fixed left-0 w-54 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-200 ease-in-out",
+          "z-0 fixed left-0 w-54 sm:w-72 bg-white border-r border-gray-100 transition-transform duration-200 ease-in-out",
           "top-16 bottom-0", // Start below navbar (h-16 = 64px), extend to bottom
           isSidebarOpen ? "translate-x-0 sm:ml-8" : "-translate-x-full",
           "md:static md:w-56 md:min-h-screen md:ml-0 md:translate-x-0 md:transition-none"

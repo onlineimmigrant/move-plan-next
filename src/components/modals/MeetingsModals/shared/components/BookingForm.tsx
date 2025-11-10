@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { 
   CalendarDaysIcon, 
@@ -158,6 +158,24 @@ export default function BookingForm({
       .join(' ');
   };
 
+  // Detect if selected meeting type is "Blocked Time" (system type)
+  const isBlockedTimeType = useMemo(() => {
+    if (!formData.meeting_type_id) return false;
+    const selectedType = meetingTypes.find(mt => mt.id === formData.meeting_type_id);
+    return selectedType?.is_system_type === true || selectedType?.name === 'Blocked Time';
+  }, [formData.meeting_type_id, meetingTypes]);
+
+  // Auto-fill customer fields when "Blocked Time" is selected (admin only)
+  useEffect(() => {
+    if (isBlockedTimeType && isAdmin) {
+      onChange({
+        customer_email: 'system-blocked@internal.local',
+        customer_name: 'Blocked Time',
+        title: 'Blocked Time - Unavailable',
+      });
+    }
+  }, [isBlockedTimeType, isAdmin, onChange]);
+
   // Update form data when slot is selected
   useEffect(() => {
     if (selectedSlot) {
@@ -181,8 +199,11 @@ export default function BookingForm({
     // Validate required fields
     const missingFields: string[] = [];
     if (!formData.meeting_type_id) missingFields.push('Appointment Type');
-    if (!formData.customer_name) missingFields.push('Name');
-    if (!formData.customer_email) missingFields.push('Email');
+    // For blocked time, customer fields are auto-filled, so skip validation
+    if (!isBlockedTimeType) {
+      if (!formData.customer_name) missingFields.push('Name');
+      if (!formData.customer_email) missingFields.push('Email');
+    }
     if (!formData.scheduled_at) missingFields.push('Date & Time');
     
     if (missingFields.length > 0) {
@@ -220,7 +241,9 @@ export default function BookingForm({
   // Step validation
   const canProceedToStep2 = selectedSlot !== null;
   const canProceedToStep3 = canProceedToStep2 && formData.meeting_type_id !== undefined;
-  const canSubmit = canProceedToStep3 && formData.customer_name && formData.customer_email;
+  const canSubmit = canProceedToStep3 && (
+    isBlockedTimeType || (formData.customer_name && formData.customer_email)
+  );
 
   // Show booking submission skeleton when submitting
   if (isSubmitting) {
@@ -351,10 +374,30 @@ export default function BookingForm({
         {/* Step 3: Customer Details */}
         {currentStep === 3 && (
           <div className="p-4 space-y-4 sm:space-y-5">
+            {/* Blocked Time Info Message */}
+            {isBlockedTimeType && isAdmin && (
+              <div 
+                className="p-3 rounded-lg border flex items-start gap-2"
+                style={{ 
+                  borderColor: primary.base,
+                  backgroundColor: `${primary.base}10`
+                }}
+              >
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: primary.base }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-sm">
+                  <p className="font-medium" style={{ color: primary.base }}>Blocking Time Slot</p>
+                  <p className="text-xs text-gray-600 mt-0.5">This will block the selected time from customer bookings. Customer fields are auto-filled with system values.</p>
+                </div>
+              </div>
+            )}
+
             {/* Required Section */}
             <div className="space-y-2.5 sm:space-y-3">
               
               {/* Two-column grid for Name and Email on desktop */}
+              {!isBlockedTimeType && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Full Name */}
                 <div>
@@ -483,6 +526,7 @@ export default function BookingForm({
                 )}
               </div>
               </div>
+              )}
             </div>
 
             {/* Optional Section */}

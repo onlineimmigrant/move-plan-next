@@ -12,6 +12,7 @@ export interface MeetingType {
   color?: string;
   icon?: string;
   is_customer_choice: boolean; // Whether customers can select this type when booking
+  is_system_type?: boolean; // System-level types like "Blocked Time" that can't be deleted
   created_at: string;
   updated_at: string;
 }

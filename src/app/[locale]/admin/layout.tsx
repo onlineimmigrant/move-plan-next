@@ -230,7 +230,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
             {isSuperadmin && (
               <a
                 href="/superadmin"
-                className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="fixed bottom-6 right-6 z-[9998] flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
                 title="Go to Superadmin Portal"
               >
                 <span className="text-xl">👑</span>

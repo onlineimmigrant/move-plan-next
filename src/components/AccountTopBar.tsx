@@ -41,7 +41,7 @@ export default function AccountTopBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-white/20 dark:border-gray-700/30">
+      <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-white/20 dark:border-gray-700/30">
         <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
           {/* Left: Menu Toggle & Action Widgets */}
           <div className="flex items-center gap-2">

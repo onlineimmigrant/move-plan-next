@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { isAdminClient } from '@/lib/auth';
@@ -35,6 +36,7 @@ const UniversalNewButton: React.FC<UniversalNewButtonProps> = ({ inNavbar = fals
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   
@@ -47,6 +49,11 @@ const UniversalNewButton: React.FC<UniversalNewButtonProps> = ({ inNavbar = fals
   const { openModal: openLayoutManagerModal } = useLayoutManager();
   const { openModal: openHeaderEditModal } = useHeaderEdit();
   const { openModal: openFooterEditModal } = useFooterEdit();
+
+  // Check if mounted (for portal)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Check admin status
   useEffect(() => {
@@ -353,11 +360,18 @@ const UniversalNewButton: React.FC<UniversalNewButtonProps> = ({ inNavbar = fals
       </button>
 
       {/* Dropdown Menu - Sky theme, full page on mobile */}
-      {isOpen && (
-        <div className={inNavbar
-          ? "fixed inset-0 md:inset-auto md:absolute md:top-full md:left-0 md:mt-2 md:w-80 md:max-h-[calc(100vh-200px)] bg-gradient-to-br from-sky-50 via-white to-sky-50 border border-sky-200/60 md:rounded-2xl md:shadow-[8px_8px_16px_rgba(125,211,252,0.3),-8px_-8px_16px_rgba(255,255,255,0.9)] overflow-y-auto z-[9999] animate-in md:slide-in-from-top-4 fade-in duration-200"
-          : "fixed md:absolute inset-0 md:inset-auto md:bottom-full md:right-0 md:mb-3 md:w-80 md:max-h-[calc(100vh-200px)] bg-gradient-to-br from-sky-50 via-white to-sky-50 border border-sky-200/60 md:rounded-2xl md:shadow-[8px_8px_16px_rgba(125,211,252,0.3),-8px_-8px_16px_rgba(255,255,255,0.9)] overflow-y-auto z-[56] animate-in md:slide-in-from-bottom-4 fade-in duration-200"
-        }>
+      {/* Use portal on mobile to escape navbar container */}
+      {isOpen && (() => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        const shouldUsePortal = inNavbar && isMobile && isMounted;
+        
+        const dropdownContent = (
+          <div 
+            className={inNavbar
+              ? "fixed inset-0 md:inset-auto md:absolute md:top-full md:left-0 md:mt-2 md:w-80 md:max-h-[calc(100vh-200px)] bg-gradient-to-br from-sky-50 via-white to-sky-50 border border-sky-200/60 md:rounded-2xl md:shadow-[8px_8px_16px_rgba(125,211,252,0.3),-8px_-8px_16px_rgba(255,255,255,0.9)] overflow-y-auto z-[9999] animate-in md:slide-in-from-top-4 fade-in duration-200"
+              : "fixed md:absolute inset-0 md:inset-auto md:bottom-full md:right-0 md:mb-3 md:w-80 md:max-h-[calc(100vh-200px)] bg-gradient-to-br from-sky-50 via-white to-sky-50 border border-sky-200/60 md:rounded-2xl md:shadow-[8px_8px_16px_rgba(125,211,252,0.3),-8px_-8px_16px_rgba(255,255,255,0.9)] overflow-y-auto z-[56] animate-in md:slide-in-from-bottom-4 fade-in duration-200"
+            }
+          >
           {/* Header - Enhanced with sky theme */}
           <div className="sticky top-0 bg-gradient-to-br from-sky-50 via-white to-sky-50 
                          px-4 md:px-6 py-5 md:py-4 z-10 border-b border-sky-200/50
@@ -477,7 +491,13 @@ const UniversalNewButton: React.FC<UniversalNewButtonProps> = ({ inNavbar = fals
             </p>
           </div>
         </div>
-      )}
+        );
+
+        // Use portal on mobile to escape navbar stacking context, regular render otherwise
+        return shouldUsePortal && typeof document !== 'undefined' 
+          ? createPortal(dropdownContent, document.body)
+          : dropdownContent;
+      })()}
     </div>
   );
 };
