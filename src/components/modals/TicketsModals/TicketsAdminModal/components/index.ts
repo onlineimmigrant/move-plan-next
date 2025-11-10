@@ -29,6 +29,7 @@ export { MessageInputArea } from './MessageInputArea';
 
 // Filter Components
 export { default as BottomFilters } from './BottomFilters';
+export { default as TicketListToolbar } from './TicketListToolbar';
 
 // Message Components
 export { default as Messages } from './Messages';

@@ -106,22 +106,6 @@ export default function TicketModalHeader({
             <ArrowsPointingOutIcon className="h-4 w-4" aria-hidden="true" />
           )}
         </button>
-        <button
-          onClick={onShowAnalytics}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
-          aria-label="View analytics dashboard"
-          title="View Analytics"
-        >
-          <BarChart3 className="h-4 w-4" aria-hidden="true" />
-        </button>
-        <button
-          onClick={onShowAssignmentRules}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-          aria-label="Manage assignment rules and automation"
-          title="Assignment Rules & Automation"
-        >
-          <Zap className="h-4 w-4" aria-hidden="true" />
-        </button>
       </div>
       
       {/* Center Title - Show "Ticket" with tooltip and admin avatars */}

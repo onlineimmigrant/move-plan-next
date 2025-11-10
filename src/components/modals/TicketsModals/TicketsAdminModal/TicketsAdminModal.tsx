@@ -71,6 +71,7 @@ import {
   TicketDetailView,
   ModalContainer,
   LiveRegion,
+  TicketListToolbar,
 } from './components';
 
 // Lazy load non-critical components
@@ -1005,40 +1006,33 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
             />
           )}
 
+          {/* Bottom Toolbar - Only show when no ticket selected */}
+          {!selectedTicket && (
+            <TicketListToolbar
+              onViewAnalytics={() => setShowAnalytics(true)}
+              onViewAssignmentRules={() => setShowAssignmentRules(true)}
+              availableTags={availableTags}
+              selectedTags={tagFilter === 'all' ? [] : [tagFilter]}
+              onTagSelect={(tagId) => setTagFilter(tagFilter === tagId ? 'all' : tagId)}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              showAdvancedFilters={showAdvancedFilters}
+              onToggleAdvancedFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            />
+          )}
+
           {/* Bottom Tabs - Only show when no ticket selected */}
           {!selectedTicket && (
             <BottomFilters
               assignmentFilter={assignmentFilter}
               priorityFilter={priorityFilter}
-              tagFilter={tagFilter}
-              sortBy={sortBy}
-              showAdvancedFilters={showAdvancedFilters}
-              filterLogic={filterLogic}
-              dateRangeStart={dateRangeStart}
-              dateRangeEnd={dateRangeEnd}
-              multiSelectStatuses={multiSelectStatuses}
-              multiSelectPriorities={multiSelectPriorities}
-              multiSelectTags={multiSelectTags}
-              multiSelectAssignees={multiSelectAssignees}
               tickets={tickets}
-              availableTags={availableTags}
-              adminUsers={adminUsers}
               currentUserId={currentUserId}
               activeTab={activeTab}
               groupedTickets={groupedTickets}
               statuses={statuses}
               setAssignmentFilter={setAssignmentFilter}
               setPriorityFilter={setPriorityFilter}
-              setTagFilter={setTagFilter}
-              setSortBy={setSortBy}
-              setShowAdvancedFilters={setShowAdvancedFilters}
-              setFilterLogic={setFilterLogic}
-              setDateRangeStart={setDateRangeStart}
-              setDateRangeEnd={setDateRangeEnd}
-              setMultiSelectStatuses={setMultiSelectStatuses}
-              setMultiSelectPriorities={setMultiSelectPriorities}
-              setMultiSelectTags={setMultiSelectTags}
-              setMultiSelectAssignees={setMultiSelectAssignees}
               setActiveTab={setActiveTab}
             />
           )}

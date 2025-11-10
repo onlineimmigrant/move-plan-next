@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@supabase/supabase-js';
-import { XMarkIcon, TrashIcon, DocumentArrowDownIcon, PencilIcon, ChevronDownIcon, DocumentTextIcon, FolderIcon, FolderPlusIcon, ArrowLeftIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, TrashIcon, DocumentArrowDownIcon, PencilIcon, ChevronDownIcon, DocumentTextIcon, FolderIcon, FolderPlusIcon, ArrowLeftIcon, ArrowUpTrayIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { 
   DocumentIcon, 
   FolderIcon as FolderIconSolid,
@@ -15,6 +15,7 @@ import {
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from '@headlessui/react';
 import ReactMarkdown from 'react-markdown';
 import Button from '@/ui/Button';
+import ShareFileModal from './ShareFileModal';
 import styles from './ChatWidget.module.css';
 
 const supabase = createClient(
@@ -30,6 +31,27 @@ interface File {
   content: string; // Base64 for binary files, plain text for text files
   created_at: string;
   folder?: string; // Folder path, undefined means root
+}
+
+interface SharedFile {
+  id: string;
+  file_path: string;
+  file_name: string;
+  is_folder: boolean;
+  permission_type: 'view' | 'edit';
+  created_at: string;
+  shared_by?: {
+    id: string;
+    email: string;
+    display_name?: string;
+    full_name?: string;
+  };
+  shared_with?: {
+    id: string;
+    email: string;
+    display_name?: string;
+    full_name?: string;
+  };
 }
 
 type SortKey = 'filename' | 'format' | 'created_at';
@@ -62,6 +84,11 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSavingContent, setIsSavingContent] = useState(false);
+  const [sharingFile, setSharingFile] = useState<File | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'my-files' | 'shared-with-me' | 'shared-by-me'>('my-files');
+  const [sharedFiles, setSharedFiles] = useState<SharedFile[]>([]);
+  const [sharedByMeFiles, setSharedByMeFiles] = useState<SharedFile[]>([]);
 
   // Fetch files
   useEffect(() => {
@@ -92,6 +119,79 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
     };
 
     fetchFiles();
+  }, [userId, isOpen]);
+
+  // Fetch user role for sharing permissions
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!userId) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (!error && data) {
+        setCurrentUserRole(data.role);
+      }
+    };
+
+    fetchUserRole();
+  }, [userId]);
+
+  // Fetch shared files
+  useEffect(() => {
+    const fetchSharedFiles = async () => {
+      if (!userId || !isOpen) return;
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const response = await fetch('/api/files/share?view=shared-with-me', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+
+        if (response.ok) {
+          const { shares } = await response.json();
+          setSharedFiles(shares || []);
+        }
+      } catch (err) {
+        console.error('Error fetching shared files:', err);
+      }
+    };
+
+    fetchSharedFiles();
+  }, [userId, isOpen]);
+
+  // Fetch files shared by me
+  useEffect(() => {
+    const fetchSharedByMeFiles = async () => {
+      if (!userId || !isOpen) return;
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const response = await fetch('/api/files/share?view=shared-by-me', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+
+        if (response.ok) {
+          const { shares } = await response.json();
+          setSharedByMeFiles(shares || []);
+        }
+      } catch (err) {
+        console.error('Error fetching shared by me files:', err);
+      }
+    };
+
+    fetchSharedByMeFiles();
   }, [userId, isOpen]);
 
   // Sort files
@@ -644,18 +744,22 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
             <div className="flex-1">
               <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Manage Files</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {currentFolder ? (
+                {activeTab === 'my-files' && currentFolder ? (
                   <>
                     <span className="text-amber-600 dark:text-amber-400">{currentFolder}</span>
                     <span className="mx-1.5">•</span>
                     <span>{currentFiles.length} {currentFiles.length === 1 ? 'file' : 'files'}</span>
                   </>
-                ) : (
+                ) : activeTab === 'my-files' ? (
                   <>
                     <span>{totalFolders} {totalFolders === 1 ? 'folder' : 'folders'}</span>
                     <span className="mx-1.5">•</span>
                     <span>{totalFiles} {totalFiles === 1 ? 'file' : 'files'}</span>
                   </>
+                ) : activeTab === 'shared-with-me' ? (
+                  <span>{sharedFiles.length} {sharedFiles.length === 1 ? 'file' : 'files'} shared with you</span>
+                ) : (
+                  <span>{sharedByMeFiles.length} {sharedByMeFiles.length === 1 ? 'file' : 'files'} you shared</span>
                 )}
               </p>
             </div>
@@ -664,6 +768,40 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
               className="ml-4 p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-gray-800/50 transition-all duration-200"
             >
               <XMarkIcon className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setActiveTab('my-files')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'my-files'
+                  ? 'bg-blue-500/20 dark:bg-blue-400/20 text-blue-700 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-gray-800/50'
+              }`}
+            >
+              My Files
+            </button>
+            <button
+              onClick={() => setActiveTab('shared-with-me')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'shared-with-me'
+                  ? 'bg-blue-500/20 dark:bg-blue-400/20 text-blue-700 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-gray-800/50'
+              }`}
+            >
+              Shared with me {sharedFiles.length > 0 && `(${sharedFiles.length})`}
+            </button>
+            <button
+              onClick={() => setActiveTab('shared-by-me')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'shared-by-me'
+                  ? 'bg-blue-500/20 dark:bg-blue-400/20 text-blue-700 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-gray-800/50'
+              }`}
+            >
+              Shared by me {sharedByMeFiles.length > 0 && `(${sharedByMeFiles.length})`}
             </button>
           </div>
         </div>
@@ -677,28 +815,30 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
           )}
 
           {/* Breadcrumb Navigation */}
-          <div className="flex items-center gap-2 mb-4">
-            <button
-              onClick={() => setCurrentFolder(null)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                currentFolder === null
-                  ? 'bg-blue-500/20 dark:bg-blue-400/20 text-blue-700 dark:text-blue-300'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-gray-800/50'
-              }`}
-            >
-              <FolderIcon className="h-4 w-4" />
-              All Files
-            </button>
-            {currentFolder && (
-              <>
-                <span className="text-slate-400 dark:text-slate-600">/</span>
-                <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 dark:bg-blue-400/20 text-blue-700 dark:text-blue-300">
-                  <FolderIconSolid className="h-4 w-4" />
-                  {currentFolder}
-                </div>
-              </>
-            )}
-          </div>
+          {activeTab === 'my-files' && (
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => setCurrentFolder(null)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  currentFolder === null
+                    ? 'bg-blue-500/20 dark:bg-blue-400/20 text-blue-700 dark:text-blue-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-gray-800/50'
+                }`}
+              >
+                <FolderIcon className="h-4 w-4" />
+                All Files
+              </button>
+              {currentFolder && (
+                <>
+                  <span className="text-slate-400 dark:text-slate-600">/</span>
+                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 dark:bg-blue-400/20 text-blue-700 dark:text-blue-300">
+                    <FolderIconSolid className="h-4 w-4" />
+                    {currentFolder}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Search and Sort Controls */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -791,16 +931,20 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
           {/* Folders and Files List */}
           {(() => {
             // Filter files based on search query and current folder
-            const filteredFiles = searchQuery
-              ? files.filter((file) =>
-                  file.filename.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-              : currentFiles;
+            const filteredFiles = activeTab === 'my-files' 
+              ? (searchQuery
+                  ? files.filter((file) =>
+                      file.filename.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                  : currentFiles)
+              : activeTab === 'shared-with-me'
+              ? sharedFiles
+              : sharedByMeFiles; // Show files shared by me
 
             return (
               <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
-                {/* Show folders when at root level */}
-                {!currentFolder && !searchQuery && folders.length > 0 && (
+                {/* Show folders when at root level and on My Files tab */}
+                {activeTab === 'my-files' && !currentFolder && !searchQuery && folders.length > 0 && (
                   <div className="mb-3">
                     <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1">
                       Folders
@@ -815,16 +959,30 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
                             className="group flex flex-col items-center gap-2 p-4 backdrop-blur-xl bg-amber-500/10 dark:bg-amber-400/10 rounded-lg hover:bg-amber-500/20 dark:hover:bg-amber-400/20 transition-all duration-200 hover:scale-[1.02] cursor-pointer relative"
                             onClick={() => setCurrentFolder(folder)}
                           >
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteFolder(folder);
-                              }}
-                              className="absolute top-2 right-2 p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95 opacity-0 group-hover:opacity-100"
-                              title="Delete Folder"
-                            >
-                              <TrashIcon className="h-3.5 w-3.5" />
-                            </button>
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100">
+                              {(currentUserRole === 'admin' || currentUserRole === 'superadmin') && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSharingFile({ filename: folder, format: 'txt' as const, folder: '', created_at: new Date().toISOString(), content: '' });
+                                  }}
+                                  className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                                  title="Share Folder"
+                                >
+                                  <ShareIcon className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteFolder(folder);
+                                }}
+                                className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                                title="Delete Folder"
+                              >
+                                <TrashIcon className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                             <FolderIconSolid className="h-12 w-12 text-amber-500 dark:text-amber-400 flex-shrink-0" />
                             <div className="text-center w-full">
                               <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
@@ -844,12 +1002,351 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
                 {/* Files section */}
                 {filteredFiles.length > 0 && (
                   <>
-                    {!currentFolder && !searchQuery && folders.length > 0 && (
+                    {activeTab === 'my-files' && !currentFolder && !searchQuery && folders.length > 0 && (
                       <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 px-1 mt-4">
                         Files
                       </h3>
                     )}
-                    {filteredFiles.map((file, index) => (
+                    
+                    {activeTab === 'shared-with-me' ? (
+                      // Render shared files
+                      (filteredFiles as SharedFile[]).map((share, index) => (
+                        <div
+                          key={`shared-${share.id}-${index}`}
+                          className="group flex items-center gap-3 p-3 backdrop-blur-xl bg-purple-500/10 dark:bg-purple-400/10 rounded-lg hover:bg-purple-500/20 dark:hover:bg-purple-400/20 transition-all duration-200 hover:scale-[1.01] border border-purple-500/20"
+                        >
+                          {/* Left: File Type Icon */}
+                          <div className="flex-shrink-0">
+                            {share.is_folder ? (
+                              <FolderIconSolid className="h-8 w-8 text-purple-500 dark:text-purple-400" />
+                            ) : (
+                              getFileIcon(share.file_name.split('.').pop() || 'txt')
+                            )}
+                          </div>
+
+                          {/* Center: Filename and share info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                              {share.file_name}
+                            </p>
+                            <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5">
+                              Shared by {share.shared_by?.display_name || share.shared_by?.email || 'Unknown'} • {share.permission_type}
+                            </p>
+                          </div>
+
+                          {/* Right: Date */}
+                          <div className="flex-shrink-0 text-right hidden sm:block">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
+                              {new Date(share.created_at).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5 whitespace-nowrap">
+                              {new Date(share.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            {!share.is_folder && (
+                              <>
+                                {/* View/Download button - available for both view and edit */}
+                                <button
+                                  onClick={async () => {
+                                    // Download or view shared file
+                                    try {
+                                      console.log('Attempting to access shared file:', share);
+                                      const { data: { session } } = await supabase.auth.getSession();
+                                      if (!session) {
+                                        alert('Not authenticated. Please log in again.');
+                                        return;
+                                      }
+                                      
+                                      // Files are stored in ai_user_settings, not in storage bucket
+                                      // We need to fetch from the owner's ai_user_settings
+                                      const ownerId = share.shared_by?.id;
+                                      if (!ownerId) {
+                                        throw new Error('Owner information not available');
+                                      }
+                                      
+                                      const { data: ownerSettings, error: settingsError } = await supabase
+                                        .from('ai_user_settings')
+                                        .select('files')
+                                        .eq('user_id', ownerId)
+                                        .single();
+                                      
+                                      if (settingsError || !ownerSettings) {
+                                        throw new Error('Could not access owner files');
+                                      }
+                                      
+                                      const ownerFiles = ownerSettings.files || [];
+                                      const fileData = ownerFiles.find((f: any) => f.filename === share.file_name);
+                                      
+                                      if (!fileData) {
+                                        throw new Error(`File "${share.file_name}" not found`);
+                                      }
+                                      
+                                      // Try to view if text-based format
+                                      const format = share.file_name.split('.').pop()?.toLowerCase();
+                                      if (format && ['txt', 'md', 'json'].includes(format)) {
+                                        setViewingFile({
+                                          filename: share.file_name,
+                                          format: format as 'txt' | 'md' | 'json',
+                                          content: fileData.content,
+                                          created_at: share.created_at,
+                                          folder: ''
+                                        });
+                                      } else {
+                                        // Download binary files
+                                        const blob = await fetch(`data:application/octet-stream;base64,${fileData.content}`).then(r => r.blob());
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = share.file_name;
+                                        a.click();
+                                        URL.revokeObjectURL(url);
+                                      }
+                                    } catch (err: any) {
+                                      console.error('Error accessing shared file:', err);
+                                      alert(`Error accessing file: ${err.message || JSON.stringify(err)}`);
+                                    }
+                                  }}
+                                  className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                                  title={share.permission_type === 'edit' ? 'View File' : 'Download File'}
+                                >
+                                  <DocumentTextIcon className="h-4 w-4" />
+                                </button>
+
+                                {/* Download button - always available */}
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const { data: { session } } = await supabase.auth.getSession();
+                                      if (!session) {
+                                        alert('Not authenticated. Please log in again.');
+                                        return;
+                                      }
+                                      
+                                      // Get file from owner's ai_user_settings
+                                      const ownerId = share.shared_by?.id;
+                                      if (!ownerId) {
+                                        throw new Error('Owner information not available');
+                                      }
+                                      
+                                      const { data: ownerSettings, error: settingsError } = await supabase
+                                        .from('ai_user_settings')
+                                        .select('files')
+                                        .eq('user_id', ownerId)
+                                        .single();
+                                      
+                                      if (settingsError || !ownerSettings) {
+                                        throw new Error('Could not access owner files');
+                                      }
+                                      
+                                      const ownerFiles = ownerSettings.files || [];
+                                      const fileData = ownerFiles.find((f: any) => f.filename === share.file_name);
+                                      
+                                      if (!fileData) {
+                                        throw new Error(`File "${share.file_name}" not found`);
+                                      }
+                                      
+                                      // Download the file
+                                      const blob = await fetch(`data:application/octet-stream;base64,${fileData.content}`).then(r => r.blob());
+                                      const url = URL.createObjectURL(blob);
+                                      const a = document.createElement('a');
+                                      a.href = url;
+                                      a.download = share.file_name;
+                                      a.click();
+                                      URL.revokeObjectURL(url);
+                                    } catch (err: any) {
+                                      console.error('Error downloading shared file:', err);
+                                      alert(`Error downloading file: ${err.message || JSON.stringify(err)}`);
+                                    }
+                                  }}
+                                  className="p-2 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-500/20 dark:hover:bg-green-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                                  title="Download"
+                                >
+                                  <DocumentArrowDownIcon className="h-4 w-4" />
+                                </button>
+
+                                {/* Edit operations - only for edit permission */}
+                                {share.permission_type === 'edit' && (
+                                  <>
+                                    <button
+                                      onClick={async () => {
+                                        // Load file for editing
+                                        try {
+                                          const { data: { session } } = await supabase.auth.getSession();
+                                          if (!session) {
+                                            alert('Not authenticated. Please log in again.');
+                                            return;
+                                          }
+                                          
+                                          // Get file from owner's ai_user_settings
+                                          const ownerId = share.shared_by?.id;
+                                          if (!ownerId) {
+                                            throw new Error('Owner information not available');
+                                          }
+                                          
+                                          const { data: ownerSettings, error: settingsError } = await supabase
+                                            .from('ai_user_settings')
+                                            .select('files')
+                                            .eq('user_id', ownerId)
+                                            .single();
+                                          
+                                          if (settingsError || !ownerSettings) {
+                                            throw new Error('Could not access owner files');
+                                          }
+                                          
+                                          const ownerFiles = ownerSettings.files || [];
+                                          const fileData = ownerFiles.find((f: any) => f.filename === share.file_name);
+                                          
+                                          if (!fileData) {
+                                            throw new Error(`File "${share.file_name}" not found`);
+                                          }
+                                          
+                                          const format = share.file_name.split('.').pop()?.toLowerCase();
+                                          if (format && ['txt', 'md', 'json'].includes(format)) {
+                                            const fileObj = {
+                                              filename: share.file_name,
+                                              format: format as 'txt' | 'md' | 'json',
+                                              content: fileData.content,
+                                              created_at: share.created_at,
+                                              folder: ''
+                                            };
+                                            setEditingFile(fileObj);
+                                            setNewFilename(share.file_name.replace(`.${format}`, ''));
+                                          } else {
+                                            throw new Error('This file format cannot be edited');
+                                          }
+                                        } catch (err: any) {
+                                          console.error('Error loading file for edit:', err);
+                                          alert(`Error loading file: ${err.message || JSON.stringify(err)}`);
+                                        }
+                                      }}
+                                      className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                                      title="Edit Filename"
+                                    >
+                                      <PencilIcon className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Unshare button - always available for recipient */}
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const { data: { session } } = await supabase.auth.getSession();
+                                      if (!session) {
+                                        alert('Not authenticated. Please log in again.');
+                                        return;
+                                      }
+
+                                      const response = await fetch(`/api/files/share?id=${share.id}`, {
+                                        method: 'DELETE',
+                                        headers: {
+                                          'Authorization': `Bearer ${session.access_token}`
+                                        }
+                                      });
+
+                                      if (!response.ok) {
+                                        const errorData = await response.json();
+                                        throw new Error(errorData.error || 'Failed to unshare file');
+                                      }
+
+                                      // Refresh shared files list
+                                      setSharedFiles(sharedFiles.filter(s => s.id !== share.id));
+                                    } catch (err: any) {
+                                      console.error('Error unsharing file:', err);
+                                      alert(`Error unsharing file: ${err.message}`);
+                                    }
+                                  }}
+                                  className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                                  title="Unshare (Remove from my shared files)"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : activeTab === 'shared-by-me' ? (
+                      // Render files shared by me
+                      sharedByMeFiles.map((share, index) => (
+                        <div
+                          key={`shared-by-me-${share.id}-${index}`}
+                          className="group flex items-center gap-3 p-3 backdrop-blur-xl bg-green-500/10 dark:bg-green-400/10 rounded-lg hover:bg-green-500/20 dark:hover:bg-green-400/20 transition-all duration-200 hover:scale-[1.01] border border-green-500/20"
+                        >
+                          {/* Left: File Type Icon */}
+                          <div className="flex-shrink-0">
+                            {share.is_folder ? (
+                              <FolderIconSolid className="h-8 w-8 text-green-500 dark:text-green-400" />
+                            ) : (
+                              getFileIcon(share.file_name.split('.').pop() || 'txt')
+                            )}
+                          </div>
+
+                          {/* Center: Filename and share info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                              {share.file_name}
+                            </p>
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                              Shared with {share.shared_with?.display_name || share.shared_with?.full_name || share.shared_with?.email || 'Unknown'} • {share.permission_type}
+                            </p>
+                          </div>
+
+                          {/* Right: Date */}
+                          <div className="flex-shrink-0 text-right hidden sm:block">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
+                              {new Date(share.created_at).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5 whitespace-nowrap">
+                              {new Date(share.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            {/* Revoke/Unshare button */}
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const { data: { session } } = await supabase.auth.getSession();
+                                  if (!session) {
+                                    alert('Not authenticated. Please log in again.');
+                                    return;
+                                  }
+
+                                  const response = await fetch(`/api/files/share?id=${share.id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      'Authorization': `Bearer ${session.access_token}`
+                                    }
+                                  });
+
+                                  if (!response.ok) {
+                                    const errorData = await response.json();
+                                    throw new Error(errorData.error || 'Failed to revoke share');
+                                  }
+
+                                  // Refresh shared by me files list
+                                  setSharedByMeFiles(sharedByMeFiles.filter(s => s.id !== share.id));
+                                } catch (err: any) {
+                                  console.error('Error revoking share:', err);
+                                  alert(`Error revoking share: ${err.message}`);
+                                }
+                              }}
+                              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                              title="Revoke Share"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      // Render my files
+                      (filteredFiles as File[]).map((file, index) => (
                   <div
                     key={`${file.folder || 'root'}-${file.filename}-${file.created_at}-${index}`}
                     className="group flex items-center gap-3 p-3 backdrop-blur-xl bg-white/30 dark:bg-gray-800/30 rounded-lg hover:bg-white/50 dark:hover:bg-gray-800/50 transition-all duration-200 hover:scale-[1.01]"
@@ -908,6 +1405,15 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
                       >
                         <DocumentArrowDownIcon className="h-4 w-4" />
                       </button>
+                      {(currentUserRole === 'admin' || currentUserRole === 'superadmin') && (
+                        <button
+                          onClick={() => setSharingFile(file)}
+                          className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                          title="Share File"
+                        >
+                          <ShareIcon className="h-4 w-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => deleteFile(file.filename)}
                         className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-400/20 backdrop-blur-xl transition-all duration-200 hover:scale-110 active:scale-95"
@@ -917,14 +1423,20 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
                       </button>
                     </div>
                   </div>
-                ))}
+                ))
+                    )}
                   </>
                 )}
 
                 {/* No files message */}
-                {filteredFiles.length === 0 && (currentFolder || searchQuery || folders.length === 0) && (
+                {filteredFiles.length === 0 && (
                   <p className="text-slate-500 dark:text-slate-400 text-center py-8">
-                    {searchQuery ? 'No files match your search.' : 'No files found.'}
+                    {activeTab === 'shared-with-me' 
+                      ? 'No files have been shared with you yet.' 
+                      : activeTab === 'shared-by-me'
+                      ? 'You haven\'t shared any files yet.'
+                      : (searchQuery ? 'No files match your search.' : 'No files found.')
+                    }
                   </p>
                 )}
               </div>
@@ -1285,6 +1797,18 @@ export default function FilesModal({ isOpen, onClose, userId }: FilesModalProps)
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share File Modal */}
+      {sharingFile && (
+        <ShareFileModal
+          isOpen={true}
+          onClose={() => setSharingFile(null)}
+          filePath={userId ? `${userId}/${sharingFile.folder || ''}${sharingFile.filename}`.replace('//', '/') : ''}
+          fileName={sharingFile.filename}
+          isFolder={sharingFile.format === 'txt' && sharingFile.content === ''}
+          userId={userId}
+        />
       )}
     </div>,
     document.body
