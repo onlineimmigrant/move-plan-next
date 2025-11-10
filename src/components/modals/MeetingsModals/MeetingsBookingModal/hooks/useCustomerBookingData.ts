@@ -95,7 +95,7 @@ export function useCustomerBookingData({
 
   /**
    * Load calendar events for the current view
-   * Filters to show only customer's bookings
+   * Filters to show only customer's bookings (or no bookings for guests)
    */
   const loadEvents = useCallback(async () => {
     if (!organizationId) {
@@ -106,6 +106,26 @@ export function useCustomerBookingData({
 
     calendarState.setIsLoading(true);
     try {
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // If no authenticated user, show no bookings (only available slots will be shown)
+      if (!user) {
+        calendarState.setEvents([]);
+        calendarState.setIsLoading(false);
+        return;
+      }
+
+      // Get customer email for filtering
+      const userEmail = customerEmail || user.email;
+      
+      // If still no email, show no bookings
+      if (!userEmail) {
+        calendarState.setEvents([]);
+        calendarState.setIsLoading(false);
+        return;
+      }
+
       // Get date range based on view
       let startDate: Date;
       let endDate: Date;
@@ -139,16 +159,17 @@ export function useCustomerBookingData({
           endDate = calendarState.currentDate;
       }
 
+      // Fetch bookings filtered by customer email (only show customer's own bookings)
       const response = await fetch(
-        `${API_ENDPOINTS.MEETINGS.BOOKINGS}?organization_id=${organizationId}&start_date=${format(startDate, 'yyyy-MM-dd')}&end_date=${format(endDate, 'yyyy-MM-dd')}`
+        `${API_ENDPOINTS.MEETINGS.BOOKINGS}?organization_id=${organizationId}&customer_email=${encodeURIComponent(userEmail)}&start_date=${format(startDate, 'yyyy-MM-dd')}&end_date=${format(endDate, 'yyyy-MM-dd')}`
       );
 
       if (response.ok) {
         const data = await response.json();
         
-        // For booking modal calendar view: show all bookings so customers can see occupied slots
-        // Filtering by customer email is only done in MyBookingsList component
-        const allBookings = data.bookings || [];
+        // For booking modal calendar view: show only customer's own bookings
+        // Unregistered users will see no bookings (empty array above)
+        const customerBookings = data.bookings || [];
 
         // Helper function to get status color
         const getStatusColor = (status: string): string => {
@@ -176,7 +197,7 @@ export function useCustomerBookingData({
         };
 
         // Convert bookings to calendar events
-        const calendarEvents: any[] = allBookings.map((booking: any) => ({
+        const calendarEvents: any[] = customerBookings.map((booking: any) => ({
           id: booking.id,
           title: booking.title,
           start: new Date(booking.scheduled_at),
