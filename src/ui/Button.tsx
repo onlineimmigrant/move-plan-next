@@ -49,8 +49,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       'light-outline': 'shadow-sm bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
       danger: 'shadow-lg bg-red-600 text-white hover:bg-red-700 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 focus:ring-red-500',
       manage: 'btn-primary relative w-full py-3.5 px-4 text-white font-medium rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-200/50 hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0 disabled:transform-none disabled:shadow-none transition-all duration-300 ease-out',
-      edit_plus: 'relative overflow-hidden font-medium text-gray-700 bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.4),-4px_-4px_8px_rgba(255,255,255,0.8),inset_0_0_0_rgba(163,177,198,0.1)] hover:shadow-[2px_2px_4px_rgba(163,177,198,0.3),-2px_-2px_4px_rgba(255,255,255,0.9),inset_1px_1px_2px_rgba(163,177,198,0.15),inset_-1px_-1px_2px_rgba(255,255,255,0.9)] hover:text-blue-700 hover:-translate-y-0.5 active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] active:translate-y-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
-      new_plus: 'relative overflow-hidden font-medium text-gray-700 bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.4),-4px_-4px_8px_rgba(255,255,255,0.8),inset_0_0_0_rgba(163,177,198,0.1)] hover:shadow-[2px_2px_4px_rgba(163,177,198,0.3),-2px_-2px_4px_rgba(255,255,255,0.9),inset_1px_1px_2px_rgba(163,177,198,0.15),inset_-1px_-1px_2px_rgba(255,255,255,0.9)] hover:text-green-700 hover:-translate-y-0.5 active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] active:translate-y-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+      edit_plus: 'relative overflow-hidden font-medium bg-white/30 dark:bg-gray-900/30 backdrop-blur-3xl border border-white/10 dark:border-gray-700/10 rounded-xl shadow-xl hover:bg-white/40 dark:hover:bg-gray-900/40 hover:shadow-2xl hover:-translate-y-0.5 active:bg-white/50 dark:active:bg-gray-900/50 active:translate-y-0 transition-all duration-300 ease-out',
+      new_plus: 'relative overflow-hidden font-medium bg-white/30 dark:bg-gray-900/30 backdrop-blur-3xl border border-white/10 dark:border-gray-700/10 rounded-xl shadow-xl hover:bg-white/40 dark:hover:bg-gray-900/40 hover:shadow-2xl hover:-translate-y-0.5 active:bg-white/50 dark:active:bg-gray-900/50 active:translate-y-0 transition-all duration-300 ease-out',
     };
 
     // Inline styles for dynamic colors (using CSS variables)
@@ -68,6 +68,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         case 'manage':
           return {
             backgroundImage: `linear-gradient(to right, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+          } as React.CSSProperties;
+        case 'edit_plus':
+        case 'new_plus':
+          return {
+            color: themeColors.cssVars.primary.base,
           } as React.CSSProperties;
         default:
           return {};
@@ -108,8 +113,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ) : (variant === 'edit_plus' || variant === 'new_plus') ? (
           <>
             {children}
-            {/* Glow overlay effect for neomorphic buttons */}
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out pointer-events-none"></div>
+            {/* Subtle shimmer effect for glass morphism buttons */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none"></div>
           </>
         ) : (
           children
@@ -137,6 +142,9 @@ export const HoverEditButtons = ({
   className,
   children,
 }: HoverEditButtonsProps) => {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+
   const positionClasses = {
     'top-right': 'top-4 right-4',
     'top-left': 'top-4 left-4',
@@ -161,7 +169,7 @@ export const HoverEditButtons = ({
           e.stopPropagation();
           onEdit();
         }}
-        className="flex items-center gap-1.5"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm"
       >
         <PencilIcon className="w-4 h-4" />
         <span>Edit</span>
@@ -174,7 +182,7 @@ export const HoverEditButtons = ({
             e.stopPropagation();
             onNew();
           }}
-          className="flex items-center gap-1.5"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm"
         >
           <PlusIcon className="w-4 h-4" />
           <span>New</span>

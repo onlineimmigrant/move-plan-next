@@ -1,10 +1,11 @@
 'use client';
 
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
+import { useRef, useEffect } from 'react';
+import { XMarkIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import ContactForm from './ContactForm';
 import { useSettings } from '@/context/SettingsContext';
 import { useContactTranslations } from './useContactTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -14,93 +15,83 @@ interface ContactModalProps {
 export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const { settings } = useSettings();
   const { t } = useContactTranslations();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+  
+  const modalRef = useRef<HTMLDivElement>(null);
+  const firstFocusableRef = useRef<HTMLButtonElement>(null);
+
+  // Focus trap and ESC key handling
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  // Check if mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        {/* Apple-style backdrop with glass blur */}
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-500"
-          enterFrom="opacity-0 backdrop-blur-0"
-          enterTo="opacity-100 backdrop-blur-md"
-          leave="ease-in duration-300"
-          leaveFrom="opacity-100 backdrop-blur-md"
-          leaveTo="opacity-0 backdrop-blur-0"
-        >
-          <div className="fixed inset-0 bg-black/20 backdrop-blur-md" 
-               style={{
-                 backdropFilter: 'blur(16px) saturate(180%)',
-                 WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-               }} />
-        </Transition.Child>
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-[10002]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="contact-modal-title"
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
-        <div className="fixed inset-0 overflow-y-auto p-4 sm:p-6 md:p-20">
-          <div className="flex min-h-full items-center justify-center">
-            {/* Apple-style Modal Content */}
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-500 transform"
-              enterFrom="opacity-0 scale-90 translate-y-4"
-              enterTo="opacity-100 scale-100 translate-y-0"
-              leave="ease-in duration-300 transform"
-              leaveFrom="opacity-100 scale-100 translate-y-0"
-              leaveTo="opacity-0 scale-95 translate-y-2"
+      {/* Modal */}
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-2xl h-auto max-h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-gray-700/50 shrink-0">
+          <div className="flex items-center gap-3">
+            <EnvelopeIcon className="w-6 h-6" style={{ color: primary.base }} />
+            <h2
+              id="contact-modal-title"
+              className="text-xl font-semibold text-gray-900 dark:text-white"
             >
-              <Dialog.Panel className="relative bg-white/95 backdrop-blur-3xl border border-black/8 rounded-3xl p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-[0_25px_80px_rgba(0,0,0,0.15)] antialiased"
-                style={{
-                  backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-                  WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-                }}
-              >
-                {/* Subtle top highlight */}
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
-                
-                {/* Inner glow for depth */}
-                <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none"></div>
-                
-                <div className="relative z-10">
-                  <div className="flex justify-between items-start mb-8">
-                    <div>
-                      <Dialog.Title
-                        as="h2"
-                        className="text-[24px] font-semibold text-gray-900 mb-2 tracking-[-0.02em] antialiased"
-                      >
-                        {t.modalTitle}
-                      </Dialog.Title>
-                      <p className="text-[15px] text-gray-600 antialiased opacity-90">{t.modalSubtitle}</p>
-                    </div>
-                    <button
-                      onClick={onClose}
-                      className="group cursor-pointer flex items-center justify-center w-10 h-10 text-gray-500 hover:text-gray-700 hover:bg-gray-100/60 backdrop-blur-sm rounded-full focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:ring-offset-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] antialiased ml-4"
-                      aria-label={t.closeModal}
-                    >
-                      <svg
-                        className="h-5 w-5 transition-all duration-300 group-hover:scale-105"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <ContactForm onSuccess={onClose} />
-                </div>
-                
-                {/* Bottom accent */}
-                <div className="absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-black/6 to-transparent"></div>
-              </Dialog.Panel>
-            </Transition.Child>
+              {t.modalTitle}
+            </h2>
+          </div>
+
+          {/* Close Button */}
+          <button
+            ref={firstFocusableRef}
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 rounded-lg"
+            aria-label="Close contact modal"
+          >
+            <XMarkIcon className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20">
+          <div className="p-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              {t.modalSubtitle}
+            </p>
+            <ContactForm onSuccess={onClose} />
           </div>
         </div>
-      </Dialog>
-    </Transition>
+      </div>
+    </div>
   );
 }

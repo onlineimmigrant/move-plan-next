@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { UnifiedMenu } from './UnifiedMenu';
 import { getMenuItemsForUser } from './config/menuItems';
 import { MenuItemConfig } from './types';
+import { SiteActionsModal } from './SiteActionsModal';
 
 // Lazy load modals for better performance
 const MeetingsBookingModal = dynamic(
@@ -39,8 +40,18 @@ const ChatHelpWidget = dynamic(
   { ssr: false }
 );
 
-const UniversalNewButton = dynamic(
-  () => import('../../AdminQuickActions/UniversalNewButton'),
+const ContactModal = dynamic(
+  () => import('../../contact/ContactModal'),
+  { ssr: false }
+);
+
+const LoginModal = dynamic(
+  () => import('../../LoginRegistration/LoginModal').then(m => ({ default: m.default })),
+  { ssr: false }
+);
+
+const RegisterModal = dynamic(
+  () => import('../../LoginRegistration/RegisterModal').then(m => ({ default: m.default })),
   { ssr: false }
 );
 
@@ -53,7 +64,7 @@ const UniversalNewButton = dynamic(
  * Handles role-based menu items:
  * - Admin: Admin page, Site quick actions, Appointments (admin modal), AI Agent (chat widget), Support (admin modal)
  * - Authenticated: Help Center, Account, Appointments (account modal), AI Agent (chat widget), Support (account modal)
- * - Unauthenticated: Help Center, Chat widget, Contact
+ * - Unauthenticated: Help Center, Sign In, Chat widget, Contact
  * 
  * @example
  * ```tsx
@@ -111,6 +122,9 @@ export function UnifiedModalManager() {
           break;
         case 'help-center':
           setOpenModal('help');
+          break;
+        case 'sign-in':
+          setOpenModal('login');
           break;
         case 'chat':
           setOpenModal('chat');
@@ -176,33 +190,40 @@ export function UnifiedModalManager() {
 
       {/* Admin Quick Actions */}
       {openModal === 'site-actions' && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
-            onClick={() => setOpenModal(null)}
-          />
-          {/* Button positioned in bottom-right */}
-          <div className="fixed bottom-20 right-4 z-[9999]">
-            <UniversalNewButton />
-          </div>
-        </>
+        <SiteActionsModal
+          isOpen={true}
+          onClose={() => setOpenModal(null)}
+        />
       )}
 
-      {/* TODO: Add Contact modal when verified */}
+      {/* Contact Modal */}
       {openModal === 'contact' && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h2 className="text-xl font-semibold mb-4">Contact Us</h2>
-            <p className="text-gray-600 mb-4">Contact modal - to be implemented</p>
-            <button
-              onClick={() => setOpenModal(null)}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <ContactModal
+          isOpen={true}
+          onClose={() => setOpenModal(null)}
+        />
+      )}
+
+      {/* Login Modal */}
+      {openModal === 'login' && (
+        <LoginModal
+          isOpen={true}
+          onClose={() => setOpenModal(null)}
+          onSwitchToRegister={() => {
+            setOpenModal('register');
+          }}
+        />
+      )}
+
+      {/* Register Modal */}
+      {openModal === 'register' && (
+        <RegisterModal
+          isOpen={true}
+          onClose={() => setOpenModal(null)}
+          onSwitchToLogin={() => {
+            setOpenModal('login');
+          }}
+        />
       )}
     </>
   );

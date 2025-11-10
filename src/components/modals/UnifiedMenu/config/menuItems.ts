@@ -13,6 +13,7 @@ import {
   PhoneIcon,
   Cog6ToothIcon,
   GlobeAltIcon,
+  ArrowLeftOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { MenuItemConfig } from '../types';
 
@@ -119,14 +120,22 @@ export const AUTHENTICATED_MENU_ITEMS: MenuItemConfig[] = [
 
 /**
  * Menu items for UNAUTHENTICATED users
- * Visual order (top to bottom): Help Center → (Chat + Contact in one row)
- * Array order: Help Center, Chat, Contact (last 2 = bottom row)
+ * Visual order (top to bottom): Help Center → Sign In → (Chat + Contact in one row)
+ * Array order: Help Center, Sign In, Chat, Contact (last 2 = bottom row)
  */
 export const UNAUTHENTICATED_MENU_ITEMS: MenuItemConfig[] = [
   {
     id: 'help-center',
     label: 'Help Center',
     icon: QuestionMarkCircleIcon,
+    action: () => {},
+    requireAuth: false,
+    requireAdmin: false,
+  },
+  {
+    id: 'sign-in',
+    label: 'Sign In',
+    icon: ArrowLeftOnRectangleIcon,
     action: () => {},
     requireAuth: false,
     requireAdmin: false,
