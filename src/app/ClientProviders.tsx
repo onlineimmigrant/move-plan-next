@@ -57,6 +57,7 @@ import { useBanner } from '@/context/BannerContext';
 import { Banner } from '@/components/banners/types';
 import { MenuItem } from '@/types/menu';
 import { MeetingsAccountToggleButton } from '@/components/modals/MeetingsModals';
+import { UnifiedModalManager } from '@/components/modals/UnifiedMenu';
 
 // Wrapper component for standalone CookieSettings modal (opened from Footer)
 function StandaloneCookieSettings({ 
@@ -391,16 +392,12 @@ function BannerAwareContent({
             <BannerContainer banners={nonFixedBanners} />
           </main>
         )}
-        {/* ChatHelpWidget and UniversalNewButton moved to AccountTopBar for admin/account pages */}
-        {/* Only show globally for non-admin/account pages */}
+        {/* UnifiedMenu replaces: ChatHelpWidget, UniversalNewButton, MeetingsAccountToggleButton */}
+        {/* Only show globally for non-admin/account pages (they have their own navigation) */}
         {!pathname.startsWith('/admin') && !pathname.startsWith('/account') && (
-          <>
-            <ChatHelpWidget />
-            <UniversalNewButton />
-          </>
+          <UnifiedModalManager />
         )}
         <CommandPalette />
-        <MeetingsAccountToggleButton />
       </div>
     </>
   );
