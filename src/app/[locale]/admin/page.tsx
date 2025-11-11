@@ -39,7 +39,7 @@ interface PrimaryColors {
 export default function AdminDashboardPage() {
   const pathname = usePathname();
   const [isMeetingsModalOpen, setIsMeetingsModalOpen] = useState(false);
-  const { session, isLoading } = useAuth();
+  const { session } = useAuth();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
 
@@ -54,19 +54,7 @@ export default function AdminDashboardPage() {
     setIsMeetingsModalOpen(false);
   }, []);
 
-  // The layout already handles auth checks, no need to duplicate
-  // Just show loading while AuthContext is initializing
-  if (isLoading) {
-    logger.debug('Admin page loading - waiting for auth');
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" role="status" aria-label="Loading admin dashboard">
-        <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg rounded-2xl p-12 shadow-2xl border border-white/30 dark:border-gray-700/30">
-          <Loading />
-        </div>
-      </div>
-    );
-  }
-
+  // Layout handles auth checks, page just renders
   const dashboardLinks: (AdminNavigationCardItem | AdminModalCardItem)[] = useMemo(() => [
     { href: '/admin/site/management', label: 'Site', icon: DevicePhoneMobileIcon, tooltip: 'Site Management' },
     { href: '/admin/products/management', label: 'Products', icon: ArchiveBoxIcon, tooltip: 'Product Management' },

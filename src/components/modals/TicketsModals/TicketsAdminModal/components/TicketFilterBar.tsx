@@ -31,7 +31,7 @@ export function TicketFilterBar({
   const hasActiveFilters = priorityFilter !== 'all' || tagFilter !== 'all';
 
   return (
-    <div className="p-4 border-b border-slate-200 dark:border-gray-700 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm space-y-3">
+    <div className="p-4 border-b border-slate-200 dark:border-gray-700 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm space-y-3 rounded-b-2xl">
       {/* Priority Filter */}
       <div>
         <label className="flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">

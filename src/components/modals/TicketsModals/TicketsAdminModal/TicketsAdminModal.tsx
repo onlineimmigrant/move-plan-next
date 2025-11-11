@@ -156,16 +156,6 @@ interface TicketsAdminModalProps {
 }
 
 /**
- * Widget size states for responsive modal layout
- * - 'initial': Default size (1200px wide)
- * - 'half': Half screen width
- * - 'fullscreen': Full screen coverage
- * 
- * Persisted to localStorage for user preference
- */
-type WidgetSize = 'initial' | 'half' | 'fullscreen';
-
-/**
  * Available ticket statuses
  * Used for filtering and status management
  */
@@ -283,20 +273,6 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     cancelCloseTicket,
   } = ticketOperations;
   
-  // Load saved modal size from localStorage on mount
-  const [size, setSize] = useState<WidgetSize>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('ticketsModalSize');
-      if (saved && ['initial', 'half', 'fullscreen'].includes(saved)) {
-        return saved as WidgetSize;
-      }
-    }
-    return 'initial';
-  });
-  
-  // Save modal size to localStorage
-  useModalSizePersistence(size);
-  
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   // responseMessage, setResponseMessage now come from useMessageHandling hook
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -323,7 +299,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // Tag management state (from useTagManagement hook)
   // Destructure from hook for use throughout the component
   const { availableTags, isLoadingTags } = tagManagement;
-  const [tagFilter, setTagFilter] = useState<string>('all'); // 'all' or tag_id
+  const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]); // Array of tag_ids (empty = show all)
   const [showTagManagement, setShowTagManagement] = useState(false);
   
   // Sorting state
@@ -435,7 +411,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     searchQuery?: string;
     assignmentFilter?: 'all' | 'my' | 'unassigned';
     priorityFilter?: 'all' | 'high' | 'medium' | 'low';
-    tagFilter?: string;
+    selectedTagFilters?: string[];
     sortBy?: 'date-newest' | 'date-oldest' | 'priority' | 'updated' | 'responses';
     advancedFilters?: {
       showAdvancedFilters?: boolean;
@@ -455,7 +431,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
       setSearchQuery(filters.searchQuery || '');
       setAssignmentFilter(filters.assignmentFilter || 'all');
       setPriorityFilter(filters.priorityFilter || 'all');
-      setTagFilter(filters.tagFilter || 'all');
+      setSelectedTagFilters(filters.selectedTagFilters || []);
       setSortBy(filters.sortBy || 'date-newest');
       
       if (filters.advancedFilters) {
@@ -480,7 +456,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
       searchQuery,
       assignmentFilter,
       priorityFilter,
-      tagFilter,
+      selectedTagFilters,
       sortBy,
       advancedFilters: {
         showAdvancedFilters,
@@ -767,7 +743,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     activeTab,
     assignmentFilter,
     priorityFilter,
-    tagFilter,
+    selectedTagFilters,
     searchQuery: debouncedSearchQuery,
     currentUserId,
     onClose,
@@ -778,14 +754,6 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // Status change functions now use wrappers from useTicketOperations hook
   // Old implementations removed - using handleStatusChangeWrapper, confirmCloseTicketWrapper, cancelCloseTicket
 
-  const toggleSize = () => {
-    setSize((prev) => {
-      if (prev === 'initial') return 'half';
-      if (prev === 'half') return 'fullscreen';
-      return 'initial'; // fullscreen → initial
-    });
-  };
-
   // Use Phase 1 utilities for filtering, sorting, and grouping
   const groupedTickets = useGroupedTickets({
     tickets,
@@ -793,7 +761,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     debouncedSearchQuery,
     priorityFilter,
     assignmentFilter,
-    tagFilter,
+    selectedTagFilters,
     sortBy,
     showAdvancedFilters,
     dateRangeStart,
@@ -819,43 +787,6 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // ========================================
   // Note: highlightText and renderAvatar are imported from utils/ticketHelpers
 
-  // Get Rnd configuration based on modal size
-  const getRndConfig = () => {
-    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
-    const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 900;
-
-    switch (size) {
-      case 'initial':
-        return {
-          x: windowWidth - 420,
-          y: windowHeight - 780,
-          width: 400,
-          height: 750,
-        };
-      case 'half':
-        return {
-          x: windowWidth / 2,
-          y: windowHeight * 0.1,
-          width: Math.min(windowWidth * 0.5, 800),
-          height: windowHeight * 0.85,
-        };
-      case 'fullscreen':
-        return {
-          x: 20,
-          y: 20,
-          width: windowWidth - 40,
-          height: windowHeight - 40,
-        };
-      default:
-        return {
-          x: windowWidth - 420,
-          y: windowHeight - 780,
-          width: 400,
-          height: 750,
-        };
-    }
-  };
-
   const usePredefinedResponse = (response: PredefinedResponse) => {
     setResponseMessage(response.text);
     inputRef.current?.focus();
@@ -871,7 +802,6 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     <>
       <ModalContainer
         isOpen={isOpen}
-        size={size}
         onClose={onClose}
       >
         {/* Skip Link for Keyboard Users */}
@@ -885,14 +815,12 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
         {/* Header */}
         <TicketModalHeader
           selectedTicket={selectedTicket}
-          size={size}
           searchQuery={searchQuery}
           avatars={avatars}
           availableTags={availableTags}
           totalUnreadCount={totalUnreadCount}
           onClose={onClose}
           onBack={() => setSelectedTicket(null)}
-          onToggleSize={toggleSize}
           onShowAnalytics={() => setShowAnalytics(true)}
           onShowAssignmentRules={() => setShowAssignmentRules(true)}
           onRemoveTag={handleRemoveTag}
@@ -906,7 +834,6 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
           {selectedTicket ? (
             <TicketDetailView
               selectedTicket={selectedTicket}
-              size={size}
               searchQuery={searchQuery}
               showSearch={showSearch}
               isDragging={isDragging}
@@ -955,7 +882,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               searchQuery={searchQuery}
               assignmentFilter={assignmentFilter}
               priorityFilter={priorityFilter}
-              tagFilter={tagFilter}
+              selectedTagFilters={selectedTagFilters}
               showAdvancedFilters={showAdvancedFilters}
               dateRangeStart={dateRangeStart}
               dateRangeEnd={dateRangeEnd}
@@ -980,7 +907,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
                 setSearchQuery('');
                 setAssignmentFilter('all');
                 setPriorityFilter('all');
-                setTagFilter('all');
+                setSelectedTagFilters([]);
                 setDateRangeStart('');
                 setDateRangeEnd('');
                 setMultiSelectStatuses([]);
@@ -991,7 +918,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               onClearSearchQuery={() => setSearchQuery('')}
               onClearAssignmentFilter={() => setAssignmentFilter('all')}
               onClearPriorityFilter={() => setPriorityFilter('all')}
-              onClearTagFilter={() => setTagFilter('all')}
+              onClearTagFilter={() => setSelectedTagFilters([])}
               onClearDateRangeStart={() => setDateRangeStart('')}
               onClearDateRangeEnd={() => setDateRangeEnd('')}
               onRemoveStatus={(status) => setMultiSelectStatuses(prev => prev.filter(s => s !== status))}
@@ -1012,23 +939,21 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               onViewAnalytics={() => setShowAnalytics(true)}
               onViewAssignmentRules={() => setShowAssignmentRules(true)}
               availableTags={availableTags}
-              selectedTags={tagFilter === 'all' ? [] : [tagFilter]}
-              onTagSelect={(tagId) => setTagFilter(tagFilter === tagId ? 'all' : tagId)}
+              selectedTags={selectedTagFilters}
+              onTagSelect={(tagId) => {
+                setSelectedTagFilters(prev => 
+                  prev.includes(tagId) 
+                    ? prev.filter(id => id !== tagId) 
+                    : [...prev, tagId]
+                );
+              }}
               sortBy={sortBy}
               onSortChange={setSortBy}
-              showAdvancedFilters={showAdvancedFilters}
-              onToggleAdvancedFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            />
-          )}
-
-          {/* Bottom Tabs - Only show when no ticket selected */}
-          {!selectedTicket && (
-            <BottomFilters
               assignmentFilter={assignmentFilter}
               priorityFilter={priorityFilter}
+              activeTab={activeTab}
               tickets={tickets}
               currentUserId={currentUserId}
-              activeTab={activeTab}
               groupedTickets={groupedTickets}
               statuses={statuses}
               setAssignmentFilter={setAssignmentFilter}

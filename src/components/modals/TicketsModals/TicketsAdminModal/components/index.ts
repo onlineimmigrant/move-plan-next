@@ -25,7 +25,7 @@ export { InternalNotesPanel } from './InternalNotesPanel';
 export { PinnedNotesBanner } from './PinnedNotesBanner';
 export { ConfirmationDialog } from './ConfirmationDialog';
 export { TagEditorModal } from './TagEditorModal';
-export { MessageInputArea } from './MessageInputArea';
+export { default as MessageInputArea } from './MessageInputArea';
 
 // Filter Components
 export { default as BottomFilters } from './BottomFilters';

@@ -1,9 +1,10 @@
 import React from 'react';
-import { XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, TicketIcon } from '@heroicons/react/24/outline';
 import { Popover, Transition } from '@headlessui/react';
 import { X, BarChart3, Zap } from 'lucide-react';
 import Tooltip from '@/components/Tooltip';
 import { Ticket, Avatar, TicketTag } from '../types';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import {
   formatFullDate,
   getStatusTextClass,
@@ -15,18 +16,14 @@ import {
   getAvatarClasses,
 } from '../utils/ticketHelpers';
 
-type WidgetSize = 'initial' | 'half' | 'fullscreen';
-
 interface TicketModalHeaderProps {
   selectedTicket: Ticket | null;
-  size: WidgetSize;
   searchQuery: string;
   avatars: Avatar[];
   availableTags: TicketTag[];
   totalUnreadCount?: number;
   onClose: () => void;
   onBack: () => void;
-  onToggleSize: () => void;
   onShowAnalytics: () => void;
   onShowAssignmentRules: () => void;
   onRemoveTag: (ticketId: string, tagId: string) => void;
@@ -37,14 +34,12 @@ interface TicketModalHeaderProps {
 
 export default function TicketModalHeader({
   selectedTicket,
-  size,
   searchQuery,
   avatars,
   availableTags,
   totalUnreadCount = 0,
   onClose,
   onBack,
-  onToggleSize,
   onShowAnalytics,
   onShowAssignmentRules,
   onRemoveTag,
@@ -52,6 +47,10 @@ export default function TicketModalHeader({
   onCopyToClipboard,
   highlightText,
 }: TicketModalHeaderProps) {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  
   // Helper function to render avatar
   const renderAvatar = (avatar: Avatar | null, displayName: string, isAdmin: boolean) => {
     const name = avatar?.full_name || avatar?.title || displayName;
@@ -74,37 +73,55 @@ export default function TicketModalHeader({
     );
   };
 
+  // If no ticket selected, show simple list header matching MeetingsModals style
+  if (!selectedTicket) {
+    return (
+      <div 
+        className={`modal-drag-handle flex items-center justify-between ${isMobile ? 'p-4' : 'p-6'} border-b border-white/10 bg-white/30 dark:bg-gray-800/30 rounded-t-2xl ${!isMobile ? 'cursor-move' : ''}`}
+        role="banner"
+        aria-label="Modal header"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <TicketIcon 
+            className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} flex-shrink-0`} 
+            style={{ color: primary.base }} 
+          />
+          <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-900 dark:text-white truncate`}>
+            Support
+          </h2>
+        </div>
+        <div className={`flex items-center ${isMobile ? 'gap-1' : 'gap-2'} flex-shrink-0`}>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-md transition-colors text-gray-700 dark:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50"
+            aria-label="Close modal"
+            title="Close"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show detailed header for ticket detail view
   return (
     <div 
-      className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-white/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700 rounded-t-2xl shadow-sm modal-drag-handle"
+      className="modal-drag-handle flex justify-between items-center px-4 py-3 bg-gradient-to-r from-white/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700 rounded-t-2xl shadow-sm cursor-move"
       role="banner"
       aria-label="Modal header"
     >
       {/* Left Actions */}
       <div className="flex items-center gap-2" role="group" aria-label="Navigation controls">
-        {selectedTicket && (
-          <button
-            onClick={onBack}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-            aria-label="Back to ticket list"
-            title="Back to ticket list"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-        )}
         <button
-          onClick={onToggleSize}
+          onClick={onBack}
           className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-          aria-label={size === 'fullscreen' ? 'Exit fullscreen' : size === 'half' ? 'Enter fullscreen' : 'Expand to half screen'}
-          title={size === 'fullscreen' ? 'Exit fullscreen' : size === 'half' ? 'Enter fullscreen' : 'Expand to half screen'}
+          aria-label="Back to ticket list"
+          title="Back to ticket list"
         >
-          {size === 'fullscreen' ? (
-            <ArrowsPointingInIcon className="h-4 w-4" aria-hidden="true" />
-          ) : (
-            <ArrowsPointingOutIcon className="h-4 w-4" aria-hidden="true" />
-          )}
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
         </button>
       </div>
       

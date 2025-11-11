@@ -84,16 +84,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrganizationId(null);
         setOrganizationType(null);
         setFullName(null);
+        setProfileFetched(null);
         return false;
       }
       console.log('Profile fetched:', { role: data.role, organization_id: data.organization_id, full_name: data.full_name, is_site_creator: data.is_site_creator, organization_type: (data.organizations as any)?.type });
-      setIsAdmin(data.role === 'admin' || data.role === 'superadmin');
-      setIsSuperadmin(data.role === 'superadmin');
+      const isAdminRole = data.role === 'admin' || data.role === 'superadmin';
+      const isSuperadminRole = data.role === 'superadmin';
+      
+      setIsAdmin(isAdminRole);
+      setIsSuperadmin(isSuperadminRole);
       setOrganizationId(data.organization_id || null);
       setOrganizationType((data.organizations as any)?.type || null);
       setFullName(data.full_name || null);
       setProfileFetched(userId); // Mark as fetched
-      return data.role === 'admin' || data.role === 'superadmin';
+      return isAdminRole;
     } catch (err: unknown) {
       const errorMessage = (err as Error).message;
       // Only log unexpected errors (ignore network timeouts during dev)
@@ -144,6 +148,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, newSession) => {
+      // Skip INITIAL_SESSION since we handle that in initializeSession
+      if (event === 'INITIAL_SESSION') {
+        return;
+      }
+      
       setSession(newSession);
       console.log('Auth state changed:', event, newSession?.user?.email);
       if (newSession?.user?.id) {

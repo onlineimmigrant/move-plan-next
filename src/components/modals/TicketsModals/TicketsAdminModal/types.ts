@@ -21,7 +21,7 @@
  *   activeTab: 'open',
  *   priorityFilter: 'high',
  *   assignmentFilter: 'my',
- *   tagFilter: 'all',
+ *   selectedTagFilters: ['tag-id-1', 'tag-id-2'],
  *   sortBy: 'date-newest'
  * };
  * ```
@@ -115,7 +115,7 @@ export type FilterLogic = 'AND' | 'OR';
  *   activeTab: 'all',
  *   priorityFilter: 'all',
  *   assignmentFilter: 'all',
- *   tagFilter: 'all',
+ *   selectedTagFilters: [],
  *   sortBy: 'date-newest'
  * };
  * ```
@@ -129,8 +129,8 @@ export interface TicketFilters {
   priorityFilter: TicketPriority;
   /** Assignment status filter */
   assignmentFilter: AssignmentFilter;
-  /** Tag filter ('all' or specific tag_id) */
-  tagFilter: string;
+  /** Array of selected tag IDs (empty array = show all) */
+  selectedTagFilters: string[];
   /** Sort order for ticket list */
   sortBy: SortBy;
 }

@@ -33,8 +33,18 @@ export function useMenuPosition(
       setPosition(newPosition);
     };
 
-    // Calculate immediately
+    // Calculate immediately without affecting scroll
+    const scrollX = window.scrollX || window.pageXOffset;
+    const scrollY = window.scrollY || window.pageYOffset;
+    
     updatePosition();
+    
+    // Restore scroll position if it changed
+    requestAnimationFrame(() => {
+      if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
+        window.scrollTo(scrollX, scrollY);
+      }
+    });
 
     // Recalculate on resize with debounce
     let timeoutId: NodeJS.Timeout;
@@ -43,12 +53,22 @@ export function useMenuPosition(
       timeoutId = setTimeout(updatePosition, 100);
     };
 
+    const handleScroll = () => {
+      const currentScrollX = window.scrollX || window.pageXOffset;
+      const currentScrollY = window.scrollY || window.pageYOffset;
+      updatePosition();
+      // Prevent menu opening from causing scroll
+      requestAnimationFrame(() => {
+        window.scrollTo(currentScrollX, currentScrollY);
+      });
+    };
+
     window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', updatePosition, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', updatePosition);
+      window.removeEventListener('scroll', handleScroll);
       clearTimeout(timeoutId);
     };
   }, [isOpen, buttonRef, menuWidth, menuHeight]);

@@ -13,7 +13,7 @@ interface TicketKeyboardShortcutsConfig {
   activeTab: string;
   assignmentFilter: string;
   priorityFilter: string;
-  tagFilter: string;
+  selectedTagFilters: string[];
   searchQuery: string;
   currentUserId: string | null;
   onClose: () => void;
@@ -39,7 +39,7 @@ export function useTicketKeyboardShortcuts(config: TicketKeyboardShortcutsConfig
     activeTab,
     assignmentFilter,
     priorityFilter,
-    tagFilter,
+    selectedTagFilters,
     searchQuery,
     currentUserId,
     onClose,
@@ -87,11 +87,11 @@ export function useTicketKeyboardShortcuts(config: TicketKeyboardShortcutsConfig
             currentTickets = currentTickets.filter((ticket: any) => ticket.priority === priorityFilter);
           }
           
-          // Apply tag filter
-          if (tagFilter !== 'all') {
+          // Apply tag filter - check if ticket has ANY of the selected tags
+          if (selectedTagFilters.length > 0) {
             currentTickets = currentTickets.filter((ticket: any) => {
               const ticketTags = ticket.tags || [];
-              return ticketTags.some((tag: any) => tag.id === tagFilter);
+              return ticketTags.some((tag: any) => selectedTagFilters.includes(tag.id));
             });
           }
           
@@ -135,7 +135,7 @@ export function useTicketKeyboardShortcuts(config: TicketKeyboardShortcutsConfig
     tickets,
     assignmentFilter,
     priorityFilter,
-    tagFilter,
+    selectedTagFilters,
     searchQuery,
     currentUserId,
     onClose,

@@ -29,10 +29,17 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
     const positionStyles = getButtonPositionStyles(position);
     const showBadge = badgeCount !== null && badgeCount !== undefined && badgeCount !== '';
 
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    };
+
     return (
       <button
         ref={ref}
-        onClick={onClick}
+        onClick={handleClick}
+        onMouseDown={(e) => e.preventDefault()}
         className={`
           w-14 h-14
           rounded-full
@@ -45,12 +52,18 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
           transition-all duration-300
           flex items-center justify-center
           group
+          outline-none focus:outline-none focus-visible:outline-none
+          focus:ring-0 focus-visible:ring-0
           ${className}
         `}
-        style={positionStyles}
+        style={{
+          ...positionStyles,
+          WebkitTapHighlightColor: 'transparent',
+        }}
         aria-label={isOpen ? 'Close menu' : 'Open menu'}
         aria-expanded={isOpen}
         aria-haspopup="menu"
+        type="button"
       >
         {/* Settings Icon */}
         <Cog6ToothIcon

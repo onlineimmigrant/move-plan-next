@@ -17,7 +17,7 @@ interface TicketListProps {
   searchQuery?: string;
   assignmentFilter?: string;
   priorityFilter?: string;
-  tagFilter?: string;
+  selectedTagFilters?: string[];
   ticketsWithPinnedNotes: Set<string>;
   ticketNoteCounts: Map<string, number>;
   getUnreadCount: (ticket: Ticket) => number;
@@ -42,7 +42,7 @@ export function TicketList({
   searchQuery = '',
   assignmentFilter = 'all',
   priorityFilter = 'all',
-  tagFilter = 'all',
+  selectedTagFilters = [],
   ticketsWithPinnedNotes,
   ticketNoteCounts,
   getUnreadCount,
@@ -81,7 +81,7 @@ export function TicketList({
 
   // Empty state
   if (tickets.length === 0) {
-    const hasActiveFilters = searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
+    const hasActiveFilters = searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || selectedTagFilters.length > 0;
     
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 p-8" role="status" aria-label="No tickets found">

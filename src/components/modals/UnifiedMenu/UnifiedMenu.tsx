@@ -73,6 +73,20 @@ export function UnifiedMenu({
     setHoveredIndex(null);
   };
 
+  // Handle button toggle with scroll prevention
+  const handleToggle = () => {
+    // Prevent any scroll behavior
+    const scrollX = window.scrollX || window.pageXOffset;
+    const scrollY = window.scrollY || window.pageYOffset;
+    
+    setIsOpen(!isOpen);
+    
+    // Restore scroll position immediately
+    requestAnimationFrame(() => {
+      window.scrollTo(scrollX, scrollY);
+    });
+  };
+
   // Keyboard navigation
   useMenuKeyboard({
     isOpen,
@@ -108,7 +122,7 @@ export function UnifiedMenu({
       <UnifiedMenuButton
         ref={buttonRef}
         isOpen={isOpen}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         position={position}
         badgeCount={totalBadgeCount}
         className={className}

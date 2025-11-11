@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -73,6 +73,7 @@ const RegisterModal = dynamic(
  */
 export function UnifiedModalManager() {
   const [openModal, setOpenModal] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
   const router = useRouter();
   const { session, isAdmin, isSuperadmin } = useAuth();
@@ -107,14 +108,22 @@ export function UnifiedModalManager() {
           setOpenModal(isAdminUser ? 'meetings-admin' : 'meetings-account');
           break;
         case 'admin':
-          router.push('/admin');
+          // Prefetch admin route for faster navigation
+          router.prefetch('/admin');
+          startTransition(() => {
+            router.push('/admin');
+          });
           break;
         case 'site':
           // Open UniversalNewButton modal
           setOpenModal('site-actions');
           break;
         case 'account':
-          router.push('/account');
+          // Prefetch account route for faster navigation
+          router.prefetch('/account');
+          startTransition(() => {
+            router.push('/account');
+          });
           break;
         case 'contact':
           // TODO: Verify contact modal exists
@@ -137,6 +146,37 @@ export function UnifiedModalManager() {
 
   return (
     <>
+      {/* Loading skeleton during navigation */}
+      {isPending && (
+        <div className="fixed inset-0 z-[10001] bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-in fade-in duration-200">
+          <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl border border-white/20">
+              
+              {/* Header Skeleton */}
+              <div className="flex items-center gap-3 p-4 sm:p-6 border-b border-white/10 bg-white/30 dark:bg-gray-800/30 rounded-t-2xl">
+                <div className="w-6 h-6 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="h-7 w-48 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
+              </div>
+
+              {/* Content Skeleton */}
+              <div className="p-4 sm:p-6 bg-white/20 dark:bg-gray-800/20">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                  {[...Array(8)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="aspect-square bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-center justify-center gap-3 animate-pulse"
+                    >
+                      <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+                      <div className="h-4 w-20 bg-gray-300 dark:bg-gray-700 rounded" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Unified Menu */}
       <UnifiedMenu
         items={menuItems}

@@ -63,8 +63,13 @@ export function UnifiedMenuDropdown({
       {/* Backdrop for mobile */}
       {isMobile && (
         <div
-          className="fixed inset-0 z-[9999] animate-in fade-in duration-200"
-          onClick={onClose}
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9999] animate-in fade-in duration-200"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }}
+          onTouchStart={(e) => e.preventDefault()}
           aria-hidden="true"
         />
       )}
@@ -80,12 +85,14 @@ export function UnifiedMenuDropdown({
           shadow-2xl
           overflow-hidden
           rounded-xl
+          outline-none focus:outline-none
           ${animationClasses}
         `}
         style={position.style}
         role="menu"
         aria-label="Unified menu"
         tabIndex={-1}
+        onMouseDown={(e) => e.preventDefault()}
       >
         {/* Menu Items Container */}
         <div className={isMobile ? 'max-h-[70vh] overflow-y-auto p-4' : 'p-3'}>

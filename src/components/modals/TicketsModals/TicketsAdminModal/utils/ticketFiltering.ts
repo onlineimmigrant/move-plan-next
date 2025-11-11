@@ -76,15 +76,15 @@ export function filterTicketsByAssignment(
 }
 
 /**
- * Filter tickets by tag
+ * Filter tickets by tag - supports multiple selected tags
  */
-export function filterTicketsByTag(tickets: Ticket[], tagFilter: string): Ticket[] {
-  if (tagFilter === 'all') {
+export function filterTicketsByTag(tickets: Ticket[], selectedTagFilters: string[]): Ticket[] {
+  if (selectedTagFilters.length === 0) {
     return tickets;
   }
 
   return tickets.filter((ticket) => {
-    return ticket.tags?.some((tag) => tag.id === tagFilter);
+    return ticket.tags?.some((tag) => selectedTagFilters.includes(tag.id));
   });
 }
 
@@ -308,7 +308,7 @@ export function applyAllFilters(
 
   // Apply tag filter (unless using advanced multi-select)
   if (advancedFilters.multiSelectTags.length === 0) {
-    filtered = filterTicketsByTag(filtered, filters.tagFilter);
+    filtered = filterTicketsByTag(filtered, filters.selectedTagFilters);
   }
 
   // Apply advanced filters
@@ -329,7 +329,7 @@ export function hasActiveFilters(
     filters.activeTab !== 'all' ||
     filters.priorityFilter !== 'all' ||
     filters.assignmentFilter !== 'all' ||
-    filters.tagFilter !== 'all' ||
+    filters.selectedTagFilters.length > 0 ||
     advancedFilters.showAdvancedFilters
   );
 }

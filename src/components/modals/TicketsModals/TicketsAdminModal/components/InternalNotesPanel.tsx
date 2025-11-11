@@ -59,7 +59,7 @@ const InternalNotesPanelComponent: React.FC<InternalNotesPanelProps> = ({
   };
 
   return (
-    <div className="bg-amber-50 border-t border-amber-200">
+    <div className="bg-amber-50 border-t border-amber-200 rounded-b-2xl">
       {/* Toggle Header */}
       <button
         onClick={onToggleExpand}

@@ -9,7 +9,6 @@ interface TicketDetailViewProps {
   selectedTicket: Ticket;
   
   // UI state
-  size: 'initial' | 'half' | 'fullscreen';
   searchQuery: string;
   showSearch: boolean;
   isDragging: boolean;
@@ -68,7 +67,6 @@ const TicketDetailViewComponent = ({
   selectedTicket,
   
   // UI state
-  size,
   searchQuery,
   showSearch,
   isDragging,
@@ -144,7 +142,6 @@ const TicketDetailViewComponent = ({
 
       {/* Message Input Area */}
       <MessageInputArea
-        size={size}
         predefinedResponses={predefinedResponses}
         searchQuery={searchQuery}
         selectedFiles={selectedFiles}
@@ -199,7 +196,6 @@ const TicketDetailView = memo(TicketDetailViewComponent, (prevProps, nextProps) 
   if (prevProps.selectedTicket.priority !== nextProps.selectedTicket.priority) return false;
   
   // Check UI state
-  if (prevProps.size !== nextProps.size) return false;
   if (prevProps.searchQuery !== nextProps.searchQuery) return false;
   if (prevProps.showSearch !== nextProps.showSearch) return false;
   if (prevProps.isDragging !== nextProps.isDragging) return false;

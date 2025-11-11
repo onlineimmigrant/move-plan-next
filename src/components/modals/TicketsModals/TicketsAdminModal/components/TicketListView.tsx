@@ -21,7 +21,7 @@ interface TicketListViewProps {
   searchQuery: string;
   assignmentFilter: 'all' | 'my' | 'unassigned';
   priorityFilter: 'all' | 'high' | 'medium' | 'low';
-  tagFilter: string;
+  selectedTagFilters: string[];
   showAdvancedFilters: boolean;
   dateRangeStart: string;
   dateRangeEnd: string;
@@ -75,7 +75,7 @@ export const TicketListView: React.FC<TicketListViewProps> = ({
   searchQuery,
   assignmentFilter,
   priorityFilter,
-  tagFilter,
+  selectedTagFilters,
   showAdvancedFilters,
   dateRangeStart,
   dateRangeEnd,
@@ -113,7 +113,7 @@ export const TicketListView: React.FC<TicketListViewProps> = ({
   getUnreadCount,
   isWaitingForResponse,
 }) => {
-  const hasActiveFilters = searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || showAdvancedFilters;
+  const hasActiveFilters = searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || selectedTagFilters.length > 0 || showAdvancedFilters;
 
   return (
     <div className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20">
@@ -190,25 +190,30 @@ export const TicketListView: React.FC<TicketListViewProps> = ({
               </span>
             )}
             
-            {tagFilter !== 'all' && (
-              <span 
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
-                style={{
-                  backgroundColor: `${availableTags.find(t => t.id === tagFilter)?.color}15`,
-                  borderColor: `${availableTags.find(t => t.id === tagFilter)?.color}40`,
-                  color: availableTags.find(t => t.id === tagFilter)?.color
-                }}
-              >
-                Tag: {availableTags.find(t => t.id === tagFilter)?.name}
-                <button
-                  onClick={onClearTagFilter}
-                  className="rounded-full p-0.5"
-                  style={{ backgroundColor: `${availableTags.find(t => t.id === tagFilter)?.color}20` }}
+            {selectedTagFilters.map(tagId => {
+              const tag = availableTags.find(t => t.id === tagId);
+              if (!tag) return null;
+              return (
+                <span 
+                  key={tagId}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                  style={{
+                    backgroundColor: `${tag.color}15`,
+                    borderColor: `${tag.color}40`,
+                    color: tag.color
+                  }}
                 >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
+                  Tag: {tag.name}
+                  <button
+                    onClick={() => onRemoveTag(tagId)}
+                    className="rounded-full p-0.5"
+                    style={{ backgroundColor: `${tag.color}20` }}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              );
+            })}
             
             {/* Advanced filter pills */}
             {showAdvancedFilters && (
@@ -319,7 +324,7 @@ export const TicketListView: React.FC<TicketListViewProps> = ({
         isWaitingForResponse={isWaitingForResponse}
         assignmentFilter={assignmentFilter}
         priorityFilter={priorityFilter}
-        tagFilter={tagFilter}
+        selectedTagFilters={selectedTagFilters}
         onAssignTicket={onAssignTicket}
         onPriorityChange={onPriorityChange}
         onStatusChange={onStatusChange}

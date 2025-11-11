@@ -6,7 +6,6 @@ import { PredefinedResponse, Avatar } from '../types';
 import { renderAvatar, getAvatarDisplayName } from '../utils/ticketHelpers';
 
 interface MessageInputAreaProps {
-  size: 'initial' | 'half' | 'fullscreen';
   predefinedResponses: PredefinedResponse[];
   searchQuery: string;
   selectedFiles: File[];
@@ -33,8 +32,7 @@ interface MessageInputAreaProps {
   onSetSelectedAvatar: (avatar: Avatar | null) => void;
 }
 
-export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
-  size,
+export default function MessageInputArea({
   predefinedResponses,
   searchQuery,
   selectedFiles,
@@ -59,14 +57,14 @@ export const MessageInputArea: React.FC<MessageInputAreaProps> = ({
   onSetShowSearch,
   onSetSearchQuery,
   onSetSelectedAvatar,
-}) => {
+}: MessageInputAreaProps) {
   return (
     <div 
       className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700"
       role="region"
       aria-label="Message composition"
     >
-      <div className={`${size === 'fullscreen' || size === 'half' ? 'max-w-2xl mx-auto' : ''}`}>
+      <div className="max-w-2xl mx-auto">
         {/* Predefined Responses Badges - Horizontal Scroll (matching ChatWidget task badges) */}
         {predefinedResponses.length > 0 && (
           <div 

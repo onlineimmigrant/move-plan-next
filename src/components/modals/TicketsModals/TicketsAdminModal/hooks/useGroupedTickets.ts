@@ -50,7 +50,7 @@ import { sortTickets } from '../utils/ticketSorting';
  * @property {string} debouncedSearchQuery - Debounced search text (300ms delay)
  * @property {'all' | 'high' | 'medium' | 'low'} priorityFilter - Priority filter
  * @property {'all' | 'my' | 'unassigned'} assignmentFilter - Assignment filter
- * @property {string} tagFilter - Tag filter ('all' or tag_id)
+ * @property {string[]} selectedTagFilters - Array of selected tag IDs (empty = show all)
  * @property {string} sortBy - Sort order for tickets
  * @property {boolean} showAdvancedFilters - Whether advanced filters are active
  * @property {string} dateRangeStart - Start date for date range filter
@@ -68,7 +68,7 @@ interface UseGroupedTicketsParams {
   debouncedSearchQuery: string;
   priorityFilter: 'all' | 'high' | 'medium' | 'low';
   assignmentFilter: 'all' | 'my' | 'unassigned';
-  tagFilter: string;
+  selectedTagFilters: string[];
   sortBy: 'date-newest' | 'date-oldest' | 'priority' | 'responses' | 'updated';
   showAdvancedFilters: boolean;
   dateRangeStart: string;
@@ -102,7 +102,7 @@ export function useGroupedTickets({
   debouncedSearchQuery,
   priorityFilter,
   assignmentFilter,
-  tagFilter,
+  selectedTagFilters,
   sortBy,
   showAdvancedFilters,
   dateRangeStart,
@@ -126,7 +126,7 @@ export function useGroupedTickets({
           activeTab: status as any, // status comes from statuses array which matches TicketStatus
           priorityFilter,
           assignmentFilter,
-          tagFilter,
+          selectedTagFilters,
           sortBy,
         };
 
@@ -159,7 +159,7 @@ export function useGroupedTickets({
     debouncedSearchQuery,
     priorityFilter,
     assignmentFilter,
-    tagFilter,
+    selectedTagFilters,
     sortBy,
     showAdvancedFilters,
     dateRangeStart,
