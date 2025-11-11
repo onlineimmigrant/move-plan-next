@@ -60,7 +60,7 @@ export default function MessageInputArea({
 }: MessageInputAreaProps) {
   return (
     <div 
-      className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700"
+      className="p-4 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md border-t border-white/20 dark:border-gray-700/20"
       role="region"
       aria-label="Message composition"
     >
@@ -97,7 +97,7 @@ export default function MessageInputArea({
             <div className="flex items-center gap-2 px-1 py-1">
               <button
                 onClick={() => {/* TODO: Open create predefined response modal */}}
-                className="inline-flex items-center p-2 bg-slate-100 dark:bg-gray-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-gray-600 transition-colors flex-shrink-0"
+                className="inline-flex items-center p-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-full text-slate-700 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors flex-shrink-0"
                 title="Add predefined response"
               >
                 <PlusIcon className="h-5 w-5" />
@@ -108,7 +108,7 @@ export default function MessageInputArea({
                 <button
                   key={response.id}
                   onClick={() => onUsePredefinedResponse(response)}
-                  className="flex-shrink-0 inline-flex items-center px-4 py-2 bg-slate-100 dark:bg-gray-700 rounded-full text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
+                  className="flex-shrink-0 inline-flex items-center px-4 py-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors whitespace-nowrap"
                 >
                   {response.subject}
                 </button>
@@ -118,10 +118,10 @@ export default function MessageInputArea({
         )}
 
         {/* Message Input */}
-        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-slate-200 dark:border-gray-700 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 dark:focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all duration-200">
+        <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-sm p-4 focus-within:border-blue-500/40 dark:focus-within:border-blue-400/40 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all duration-200">
           {/* File Preview Area */}
           {selectedFiles.length > 0 && (
-            <div className="mb-3 pb-3 border-b border-slate-200 dark:border-gray-700">
+            <div className="mb-3 pb-3 border-b border-white/20 dark:border-gray-700/20">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
@@ -151,9 +151,9 @@ export default function MessageInputArea({
                       </div>
                     ) : (
                       // File icon preview
-                      <div className="h-24 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center p-2">
+                      <div className="h-24 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-lg flex flex-col items-center justify-center p-2">
                         <span className="text-2xl mb-1">{getFileIcon(file.type)}</span>
-                        <p className="text-[10px] text-slate-600 dark:text-slate-300 text-center truncate w-full px-1">
+                        <p className="text-[10px] text-slate-700 dark:text-slate-200 text-center truncate w-full px-1">
                           {file.name}
                         </p>
                         <p className="text-[9px] text-slate-500 dark:text-slate-400">{formatFileSize(file.size)}</p>
@@ -240,7 +240,7 @@ export default function MessageInputArea({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isSending}
-              className="flex items-center justify-center w-10 h-10 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="flex items-center justify-center w-10 h-10 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 dark:hover:bg-blue-400/10 rounded-xl transition-all duration-200 motion-reduce:transition-none disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-blue-400/40 border border-white/10 dark:border-gray-700/20"
               aria-label="Attach files"
               title="Attach files"
             >
@@ -252,7 +252,7 @@ export default function MessageInputArea({
             <button
               onClick={onHandleAdminRespond}
               disabled={(!responseMessage.trim() && selectedFiles.length === 0) || isSending}
-              className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-slate-200 disabled:to-slate-300 dark:disabled:from-gray-700 dark:disabled:to-gray-800 text-white disabled:text-slate-400 dark:disabled:text-gray-500 rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2"
+              className="flex items-center justify-center w-10 h-10 bg-blue-600/90 dark:bg-blue-500/90 hover:bg-blue-600 dark:hover:bg-blue-500 text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 motion-reduce:transition-none disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-blue-400/40 focus-visible:ring-offset-2 border border-white/10 dark:border-gray-700/20"
               aria-label={isSending ? "Sending message" : "Send message"}
               title={isSending ? "Sending..." : "Send (Enter)"}
             >
@@ -270,7 +270,7 @@ export default function MessageInputArea({
           </div>
 
           {/* Bottom row with search and avatar selector */}
-          <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100 dark:border-gray-700">
+          <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/20 dark:border-gray-700/20">
             <div className="flex items-center gap-2 flex-1">
               <button
                 onClick={() => {
@@ -279,10 +279,10 @@ export default function MessageInputArea({
                     onSetSearchQuery('');
                   }
                 }}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-opacity-50 ${
+                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-blue-400/40 ${
                   showSearch
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    ? 'text-blue-600 dark:text-blue-400 bg-white/30 dark:bg-gray-700/30 hover:bg-white/40 dark:hover:bg-gray-700/40'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white/20 dark:hover:bg-gray-700/20'
                 }`}
                 title="Search predefined responses"
               >
@@ -297,7 +297,7 @@ export default function MessageInputArea({
                     value={searchQuery}
                     onChange={(e) => onSetSearchQuery(e.target.value)}
                     placeholder="Search predefined responses..."
-                    className="w-full px-3 py-1.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+                    className="w-full px-3 py-1.5 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:focus-visible:ring-blue-400/30 focus:border-transparent transition-all duration-200 motion-reduce:transition-none text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
                     autoFocus
                   />
                 </div>
@@ -309,7 +309,7 @@ export default function MessageInputArea({
               {avatars.length > 1 && (
                 <Listbox value={selectedAvatar} onChange={onSetSelectedAvatar}>
                   <div className="relative">
-                    <Listbox.Button className="flex items-center gap-2 px-2 py-1.5 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200">
+                    <Listbox.Button className="flex items-center gap-2 px-2 py-1.5 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white/20 dark:hover:bg-gray-700/20 rounded-lg transition-all duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-blue-400/40">
                       {/* Avatar Image/Initials */}
                       {selectedAvatar && renderAvatar(selectedAvatar, selectedAvatar.full_name || selectedAvatar.title, true)}
                       {/* Avatar Name */}
@@ -322,7 +322,7 @@ export default function MessageInputArea({
                       leaveFrom="opacity-100"
                       leaveTo="opacity-0"
                     >
-                      <Listbox.Options className="absolute bottom-full right-0 mb-2 w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-lg shadow-lg border border-slate-200 dark:border-gray-700 py-1 max-h-60 overflow-auto focus:outline-none text-sm z-50">
+                      <Listbox.Options className="absolute bottom-full right-0 mb-2 w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-lg shadow-lg border border-white/20 dark:border-gray-700/20 py-1 max-h-60 overflow-auto focus:outline-none text-sm z-50">
                         {avatars.map((avatar) => (
                           <Listbox.Option
                             key={avatar.id}
@@ -353,7 +353,7 @@ export default function MessageInputArea({
                         ))}
 
                         {/* Divider */}
-                        <div className="my-1 border-t border-slate-200" />
+                        <div className="my-1 border-t border-white/20 dark:border-gray-700/20" />
 
                         {/* Add Avatar Button */}
                         <button
@@ -362,7 +362,7 @@ export default function MessageInputArea({
                             e.stopPropagation();
                             // TODO: Open create avatar modal
                           }}
-                          className="w-full text-left px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 transition-colors flex items-center gap-2"
+                          className="w-full text-left px-3 py-2 text-sm text-purple-600 hover:bg-purple-500/10 transition-colors flex items-center gap-2"
                         >
                           <PlusIcon className="h-4 w-4" />
                           Add Avatar

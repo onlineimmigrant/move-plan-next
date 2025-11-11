@@ -15,8 +15,8 @@ interface TicketListProps {
   loadingMore: boolean;
   adminUsers: AdminUser[];
   searchQuery?: string;
-  assignmentFilter?: string;
-  priorityFilter?: string;
+  selectedAssignmentFilters?: string[];
+  selectedPriorityFilters?: string[];
   selectedTagFilters?: string[];
   ticketsWithPinnedNotes: Set<string>;
   ticketNoteCounts: Map<string, number>;
@@ -40,8 +40,8 @@ export function TicketList({
   loadingMore,
   adminUsers,
   searchQuery = '',
-  assignmentFilter = 'all',
-  priorityFilter = 'all',
+  selectedAssignmentFilters = [],
+  selectedPriorityFilters = [],
   selectedTagFilters = [],
   ticketsWithPinnedNotes,
   ticketNoteCounts,
@@ -81,7 +81,7 @@ export function TicketList({
 
   // Empty state
   if (tickets.length === 0) {
-    const hasActiveFilters = searchQuery || assignmentFilter !== 'all' || priorityFilter !== 'all' || selectedTagFilters.length > 0;
+    const hasActiveFilters = searchQuery || selectedAssignmentFilters.length > 0 || selectedPriorityFilters.length > 0 || selectedTagFilters.length > 0;
     
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 p-8" role="status" aria-label="No tickets found">

@@ -7,7 +7,8 @@
  */
 
 import React, { useState, memo } from 'react';
-import { Pin, X, ChevronDown } from 'lucide-react';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { Pin, X, ChevronDown, Send } from 'lucide-react';
 import { TicketNote } from '../types';
 
 interface InternalNotesPanelProps {
@@ -58,59 +59,126 @@ const InternalNotesPanelComponent: React.FC<InternalNotesPanelProps> = ({
     }
   };
 
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+
   return (
-    <div className="bg-amber-50 border-t border-amber-200 rounded-b-2xl">
+    <div
+      className="rounded-b-2xl backdrop-blur-sm bg-white/30 dark:bg-gray-800/30 border-t border-white/10 dark:border-gray-700/20"
+      style={{ '--accent-color': primary.base } as React.CSSProperties}
+    >
       {/* Toggle Header */}
       <button
         onClick={onToggleExpand}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-amber-100 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between transition-colors"
+        style={{
+          color: 'var(--accent-color)',
+          background: isExpanded ? 'color-mix(in srgb, var(--accent-color) 12%, transparent)' : 'transparent'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'color-mix(in srgb, var(--accent-color) 10%, transparent)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = isExpanded ? 'color-mix(in srgb, var(--accent-color) 12%, transparent)' : 'transparent';
+        }}
       >
-        <div className="flex items-center gap-2">
-          <svg className="h-4 w-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex max-w-5xl mx-auto items-center gap-2">
+          <svg className="h-4 w-4" style={{ color: primary.base }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
-          <span className="text-sm font-medium text-amber-900">
+          <span className="text-sm font-medium" style={{ color: primary.base }}>
             Internal Notes 
             {notes.length > 0 && (
-              <span className="ml-2 text-xs text-amber-700">({notes.length})</span>
+              <span className="ml-2 text-xs" style={{ color: primary.base }}>({notes.length})</span>
             )}
           </span>
         </div>
-        <ChevronDown 
-          className={`h-5 w-5 text-amber-700 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+        <ChevronDown
+          className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          style={{ color: primary.base }}
         />
       </button>
 
       {/* Notes Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 space-y-3 max-h-64 overflow-y-auto">
+        <div className="mx-auto max-w-3xl px-4 pb-4 space-y-3 max-h-64 overflow-y-auto">
           {/* Help Text */}
-          <p className="text-xs text-amber-700 italic">
-            🔒 Internal notes are only visible to admins. Use them for coordination, handoff notes, and context.
+          <p className="text-xs italic" style={{ color: primary.base }}>
+            Admin-only notes for coordination.
           </p>
+
+          {/* Add Note Input (moved above list to mirror message input placement) */}
+          <div
+            className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-sm p-4 focus-within:border-blue-500/40 dark:focus-within:border-blue-400/40 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all duration-200"
+          >
+            <div className="flex items-end gap-3">
+              <div className="flex-1 relative">
+                <textarea
+                  ref={noteInputRef}
+                  value={noteText}
+                  onChange={(e) => onNoteTextChange(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (noteText.trim()) onAddNote();
+                    }
+                  }}
+                  placeholder="Add internal note..."
+                  className="w-full resize-none border-0 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-0 text-base leading-relaxed min-h-[44px] max-h-[120px]"
+                  rows={1}
+                  disabled={isAddingNote}
+                  aria-label="Internal note content"
+                />
+              </div>
+              <button
+                onClick={onAddNote}
+                disabled={!noteText.trim() || isAddingNote}
+                className="flex items-center justify-center w-10 h-10 text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-blue-400/40 border border-white/10 dark:border-gray-700/20"
+                style={{ background: 'var(--accent-color)' }}
+                aria-label={isAddingNote ? 'Adding note' : 'Add note'}
+                title={isAddingNote ? 'Adding...' : 'Add note (Enter)'}
+              >
+                {isAddingNote ? (
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                ) : (
+                  // simple send glyph
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M5 12l14-7-7 14-1.5-5.5L5 12z" fill="currentColor"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
 
           {/* Notes List */}
           {notes.length > 0 ? (
             <div className="space-y-2">
               {notes.map((note) => (
-                <div 
-                  key={note.id} 
-                  className={`bg-white rounded-lg p-3 shadow-sm ${
-                    note.is_pinned 
-                      ? 'border-2 border-amber-400 bg-amber-50/50' 
-                      : 'border border-amber-200'
-                  }`}
+                <div
+                  key={note.id}
+                  className={"group relative rounded-xl p-3 shadow-sm transition-colors backdrop-blur-md border " + (note.is_pinned ? 'ring-1 ring-[color-mix(in_srgb,var(--accent-color)_50%,transparent)]' : '')}
+                  style={{
+                    border: note.is_pinned
+                      ? '2px solid color-mix(in srgb, var(--accent-color) 42%, transparent)'
+                      : '1px solid color-mix(in srgb, var(--accent-color) 28%, transparent)',
+                    background: note.is_pinned
+                      ? 'color-mix(in srgb, var(--accent-color) 11%, rgba(255,255,255,0.55))'
+                      : 'color-mix(in srgb, var(--accent-color) 6%, rgba(255,255,255,0.55))'
+                  }}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
+                  <div className="flex items-start justify-between mb-1.5">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         {note.is_pinned && (
-                          <Pin className="h-3 w-3 text-amber-600 fill-amber-600" />
+                          <Pin className="h-3 w-3" style={{ color: primary.base }} />
                         )}
-                        <span className="text-xs font-medium text-slate-700">
+                        <span className="text-xs font-medium text-slate-700 truncate max-w-[120px]">
                           {note.admin_full_name || note.admin_email || 'Admin'}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-[10px] text-slate-400">
                           {new Date(note.created_at).toLocaleString([], {
                             month: 'short',
                             day: 'numeric',
@@ -119,24 +187,23 @@ const InternalNotesPanelComponent: React.FC<InternalNotesPanelProps> = ({
                           })}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-800 whitespace-pre-wrap">{note.note_text}</p>
+                      <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                        {note.note_text}
+                      </p>
                     </div>
                     {note.admin_id === currentUserId && (
-                      <div className="flex items-center gap-1 ml-2">
+                      <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => onTogglePin(note.id, note.is_pinned)}
-                          className={`p-1 rounded transition-colors ${
-                            note.is_pinned
-                              ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-100'
-                              : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'
-                          }`}
-                          title={note.is_pinned ? 'Unpin note' : 'Pin to top'}
+                          className="p-1 rounded hover:bg-[color-mix(in_srgb,var(--accent-color)_12%,transparent)] transition-colors"
+                          style={{ color: primary.base }}
+                          title={note.is_pinned ? 'Unpin note' : 'Pin note'}
                         >
-                          <Pin className={`h-4 w-4 ${note.is_pinned ? 'fill-amber-600' : ''}`} />
+                          <Pin className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => onDeleteNote(note.id)}
-                          className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                           title="Delete note"
                         >
                           <X className="h-4 w-4" />
@@ -148,33 +215,12 @@ const InternalNotesPanelComponent: React.FC<InternalNotesPanelProps> = ({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-amber-700 italic text-center py-4">
+            <p className="text-sm italic text-center py-4" style={{ color: primary.base }}>
               No internal notes yet. Add one below to coordinate with your team.
             </p>
           )}
 
-          {/* Add Note Input */}
-          <div className="bg-white border border-amber-300 rounded-lg p-3 shadow-sm">
-            <textarea
-              ref={noteInputRef}
-              value={noteText}
-              onChange={(e) => onNoteTextChange(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Add an internal note (only visible to admins)..."
-              className="w-full resize-none border-0 bg-transparent text-slate-800 placeholder-amber-600/50 focus:outline-none focus:ring-0 text-sm leading-relaxed min-h-[60px] max-h-[120px]"
-              rows={2}
-              disabled={isAddingNote}
-            />
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={onAddNote}
-                disabled={!noteText.trim() || isAddingNote}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed"
-              >
-                {isAddingNote ? 'Adding...' : 'Add Note'}
-              </button>
-            </div>
-          </div>
+          {/* End Add Note Input moved above */}
         </div>
       )}
     </div>

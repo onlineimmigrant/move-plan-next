@@ -47,8 +47,10 @@
  */
 
 import React, { useState, useRef, useEffect, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { Pin, User, ChevronDown, X } from 'lucide-react';
 import type { Ticket, AdminUser } from '../types';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 /**
  * Props for TicketListItem component
@@ -115,29 +117,99 @@ const TicketListItemComponent = ({
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [dropdownPositions, setDropdownPositions] = useState({ assign: { top: 0, left: 0 }, priority: { top: 0, left: 0 }, status: { top: 0, left: 0 } });
+  
+  // Theme colors
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   
   // Refs for click-outside detection
   const assignDropdownRef = useRef<HTMLDivElement>(null);
   const priorityDropdownRef = useRef<HTMLDivElement>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
+  // Refs to dropdown content (portaled)
+  const assignDropdownContentRef = useRef<HTMLDivElement>(null);
+  const priorityDropdownContentRef = useRef<HTMLDivElement>(null);
+  const statusDropdownContentRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns when clicking outside
+  // Close dropdowns when clicking outside (checks trigger and dropdown content)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (assignDropdownRef.current && !assignDropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // Assignment
+      if (
+        showAssignDropdown &&
+        assignDropdownRef.current &&
+        assignDropdownContentRef.current &&
+        !assignDropdownRef.current.contains(target) &&
+        !assignDropdownContentRef.current.contains(target)
+      ) {
         setShowAssignDropdown(false);
       }
-      if (priorityDropdownRef.current && !priorityDropdownRef.current.contains(event.target as Node)) {
+      // Priority
+      if (
+        showPriorityDropdown &&
+        priorityDropdownRef.current &&
+        priorityDropdownContentRef.current &&
+        !priorityDropdownRef.current.contains(target) &&
+        !priorityDropdownContentRef.current.contains(target)
+      ) {
         setShowPriorityDropdown(false);
       }
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+      // Status
+      if (
+        showStatusDropdown &&
+        statusDropdownRef.current &&
+        statusDropdownContentRef.current &&
+        !statusDropdownRef.current.contains(target) &&
+        !statusDropdownContentRef.current.contains(target)
+      ) {
         setShowStatusDropdown(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowAssignDropdown(false);
+        setShowPriorityDropdown(false);
+        setShowStatusDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('keydown', handleKeydown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('keydown', handleKeydown);
+    };
+  }, [showAssignDropdown, showPriorityDropdown, showStatusDropdown]);
+
+  // Recalculate dropdown positions on scroll/resize to keep aligned
+  useEffect(() => {
+    const recalc = () => {
+      if (assignDropdownRef.current && showAssignDropdown) {
+        const rect = assignDropdownRef.current.getBoundingClientRect();
+        setDropdownPositions(prev => ({ ...prev, assign: { top: rect.bottom, left: rect.left } }));
+      }
+      if (priorityDropdownRef.current && showPriorityDropdown) {
+        const rect = priorityDropdownRef.current.getBoundingClientRect();
+        setDropdownPositions(prev => ({ ...prev, priority: { top: rect.bottom, left: rect.left } }));
+      }
+      if (statusDropdownRef.current && showStatusDropdown) {
+        const rect = statusDropdownRef.current.getBoundingClientRect();
+        setDropdownPositions(prev => ({ ...prev, status: { top: rect.bottom, left: rect.left } }));
+      }
+    };
+    if (showAssignDropdown || showPriorityDropdown || showStatusDropdown) {
+      window.addEventListener('resize', recalc);
+      // Capture scroll on any ancestor
+      window.addEventListener('scroll', recalc, true);
+      return () => {
+        window.removeEventListener('resize', recalc);
+        window.removeEventListener('scroll', recalc, true);
+      };
+    }
+  }, [showAssignDropdown, showPriorityDropdown, showStatusDropdown]);
 
   const statuses = ['open', 'in progress', 'closed'];
   const priorities = [
@@ -215,120 +287,88 @@ const TicketListItemComponent = ({
       }}
       tabIndex={0}
       aria-label={`Ticket ${ticket.subject}, status ${ticket.status}, priority ${ticket.priority || 'none'}, ${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`}
-      className={`w-full p-4 text-left bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border rounded-xl hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+      className={`w-full p-4 text-left backdrop-blur-sm border rounded-xl hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
         unreadCount > 0 
           ? 'border-blue-400 dark:border-blue-500 bg-blue-50/90 dark:bg-blue-900/30' 
           : isSelected 
-          ? 'border-blue-500 dark:border-blue-400 shadow-md' 
-          : 'border-slate-200 dark:border-gray-700'
+          ? 'border-blue-500 dark:border-blue-400 shadow-md bg-white/90 dark:bg-gray-800/90' 
+          : ticket.priority === 'high'
+          ? `border-slate-200 dark:border-gray-700 bg-gradient-to-br from-purple-50/60 to-white/90 dark:from-purple-900/20 dark:to-gray-800/90`
+          : 'border-slate-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90'
       }`}
     >
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1">
-          {/* Title with unread badge and pin indicator */}
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-medium text-slate-900 dark:text-slate-100 text-sm">
-              {searchQuery ? highlightText(ticket.subject, searchQuery) : ticket.subject}
-            </h3>
-            
-            {/* Unread count badge */}
-            {unreadCount > 0 && (
-              <span 
-                className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-blue-500 dark:bg-blue-600 text-white text-[10px] font-bold rounded-full"
-                aria-label={`${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`}
-              >
-                {unreadCount}
-              </span>
-            )}
-            
-            {/* Pinned notes indicator */}
-            {hasPinnedNotes && (
-              <span title="Has pinned notes" aria-label="Has pinned notes">
-                <Pin className="h-3 w-3 text-amber-600 fill-amber-600 flex-shrink-0" aria-hidden="true" />
-              </span>
-            )}
-          </div>
-          
-          {/* Customer name */}
-          <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-            {searchQuery 
-              ? highlightText(ticket.full_name || 'Anonymous', searchQuery) 
-              : (ticket.full_name || 'Anonymous')
-            }
-          </p>
-          
-          {/* Last message preview */}
-          {(() => {
-            // Get the last message from responses or initial message
-            let lastMessage = '';
-            let messagePrefix = '';
-            let messageTime = '';
-            
-            if (ticket.ticket_responses && Array.isArray(ticket.ticket_responses) && ticket.ticket_responses.length > 0) {
-              const lastResponse = ticket.ticket_responses[ticket.ticket_responses.length - 1];
-              lastMessage = lastResponse?.message || '';
-              messagePrefix = lastResponse?.is_admin ? 'You: ' : '';
-              
-              // Format time (e.g., "2:30 PM" or "Nov 10, 2:30 PM" if not today)
-              if (lastResponse?.created_at) {
-                const msgDate = new Date(lastResponse.created_at);
-                const now = new Date();
-                const isToday = msgDate.toDateString() === now.toDateString();
-                
-                if (isToday) {
-                  messageTime = msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-                } else {
-                  messageTime = msgDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + 
-                                msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-                }
+      {/* Title with unread badge and pin indicator */}
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <h3 className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+          {searchQuery ? highlightText(ticket.subject, searchQuery) : ticket.subject}
+        </h3>
+        
+        {/* Unread count badge */}
+        {unreadCount > 0 && (
+          <span 
+            className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-blue-500 dark:bg-blue-600 text-white text-[10px] font-bold rounded-full"
+            aria-label={`${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`}
+          >
+            {unreadCount}
+          </span>
+        )}
+        
+        {/* Pinned notes indicator */}
+        {hasPinnedNotes && (
+          <span title="Has pinned notes" aria-label="Has pinned notes">
+            <Pin className="h-3 w-3 flex-shrink-0" aria-hidden="true" style={{ color: 'var(--color-primary-base)' }} />
+          </span>
+        )}
+      </div>
+      
+      {/* Assignment, Priority, Status badges - Now at top */}
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        {/* Assigned admin - Now clickable with dropdown */}
+        <div className="relative z-[100]" ref={assignDropdownRef}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onAssignTicket && assignDropdownRef.current) {
+                const rect = assignDropdownRef.current.getBoundingClientRect();
+                setDropdownPositions(prev => ({
+                  ...prev,
+                  assign: { top: rect.bottom, left: rect.left }
+                }));
+                setShowAssignDropdown(!showAssignDropdown);
               }
-            } else {
-              lastMessage = ticket.message || '';
-              messageTime = new Date(ticket.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            }
-            
-            return lastMessage ? (
-              <div className="flex items-center gap-1 mt-1">
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate flex-1" title={lastMessage}>
-                  {messagePrefix && <span className="font-medium">{messagePrefix}</span>}
-                  {lastMessage}
-                </p>
-                {messageTime && (
-                  <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
-                    {messageTime}
-                  </span>
-                )}
-              </div>
-            ) : null;
-          })()}
-          
-          {/* Assignment, Priority, Tags, and Notes badges */}
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {/* Assigned admin - Now clickable with dropdown */}
-            <div className="relative" ref={assignDropdownRef}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onAssignTicket) {
-                    setShowAssignDropdown(!showAssignDropdown);
+            }}
+            disabled={isAssigning || !onAssignTicket}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0"
+            style={
+              ticket.assigned_to || !onAssignTicket
+                ? {
+                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 2px 4px ${primary.base}30`,
+                    opacity: isAssigning ? 0.5 : 1,
                   }
-                }}
-                disabled={isAssigning || !onAssignTicket}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all ${
-                  ticket.assigned_to
-                    ? 'bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100'
-                    : 'bg-slate-50 border-slate-300 text-slate-500 hover:bg-slate-100'
-                } ${onAssignTicket ? 'cursor-pointer' : 'cursor-default'} ${isAssigning ? 'opacity-50' : ''}`}
-                title={onAssignTicket ? 'Click to change assignment' : undefined}
-              >
-                <User className="h-3 w-3" />
-                <span>{ticket.assigned_to ? getAssignedAdminName() : 'Unassigned'}</span>
-                {onAssignTicket && <ChevronDown className="h-3 w-3" />}
-              </button>
+                : {
+                    backgroundColor: 'transparent',
+                    color: primary.base,
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: `${primary.base}40`,
+                    opacity: isAssigning ? 0.5 : 1,
+                  }
+            }
+            title={onAssignTicket ? 'Click to change assignment' : undefined}
+          >
+            <span>{ticket.assigned_to ? getAssignedAdminName() : 'Unassigned'}</span>
+            {onAssignTicket && <ChevronDown className="h-4 w-4" />}
+          </button>
 
-              {/* Assignment Dropdown */}
-              {showAssignDropdown && onAssignTicket && (
-                <div className="absolute z-50 mt-1 w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-slate-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {/* Assignment Dropdown */}
+          {showAssignDropdown && onAssignTicket && createPortal(
+            <div 
+              ref={assignDropdownContentRef}
+              className="fixed z-[11000] w-48 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 rounded-lg shadow-2xl max-h-60 overflow-y-auto"
+              style={{ top: `${dropdownPositions.assign.top}px`, left: `${dropdownPositions.assign.left}px` }}
+              onMouseDown={(e) => e.stopPropagation()}>
                   <div className="p-1">
                     {/* Unassign option */}
                     <button
@@ -363,36 +403,47 @@ const TicketListItemComponent = ({
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
+                </div>,
+            document.body
+          )}
             </div>
             
             {/* Priority badge - Now clickable with dropdown, only shows if priority is set */}
             {ticket.priority && (
-              <div className="relative" ref={priorityDropdownRef}>
+              <div className="relative z-[100]" ref={priorityDropdownRef}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onPriorityChange) {
+                    if (onPriorityChange && priorityDropdownRef.current) {
+                      const rect = priorityDropdownRef.current.getBoundingClientRect();
+                      setDropdownPositions(prev => ({
+                        ...prev,
+                        priority: { top: rect.bottom, left: rect.left }
+                      }));
                       setShowPriorityDropdown(!showPriorityDropdown);
                     }
                   }}
                   disabled={isChangingPriority || !onPriorityChange}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all ${getPriorityBadgeClass(ticket.priority)} ${
-                    onPriorityChange ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
-                  } ${isChangingPriority ? 'opacity-50' : ''}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 2px 4px ${primary.base}30`,
+                    opacity: isChangingPriority ? 0.5 : 1,
+                  }}
                   title={onPriorityChange ? 'Click to change priority' : undefined}
                 >
-                  <span className="flex items-center gap-1">
-                    {getPriorityLabel(ticket.priority)}
-                    {onPriorityChange && <ChevronDown className="h-3 w-3" />}
-                  </span>
+                  <span>{getPriorityLabel(ticket.priority)}</span>
+                  {onPriorityChange && <ChevronDown className="h-4 w-4" />}
                 </button>
 
                 {/* Priority Dropdown */}
-              {showPriorityDropdown && onPriorityChange && (
-                <div className="absolute z-50 mt-1 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-slate-200 dark:border-gray-700 rounded-lg shadow-lg">
-                  <div className="p-1">
+                {showPriorityDropdown && onPriorityChange && createPortal(
+                  <div 
+                    ref={priorityDropdownContentRef}
+                    className="fixed z-[11000] w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 rounded-lg shadow-2xl"
+                    style={{ top: `${dropdownPositions.priority.top}px`, left: `${dropdownPositions.priority.left}px` }}>
+                    <div className="p-1">
                     {/* Priority options */}
                     {priorities.map((priority) => (
                       <button
@@ -410,40 +461,46 @@ const TicketListItemComponent = ({
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>,
+              document.body
               )}
               </div>
             )}
             
             {/* Status badge - Now clickable with dropdown */}
-            <div className="relative" ref={statusDropdownRef}>
+            <div className="relative z-[100]" ref={statusDropdownRef}>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (onStatusChange) {
+                  if (onStatusChange && statusDropdownRef.current) {
+                    const rect = statusDropdownRef.current.getBoundingClientRect();
+                    setDropdownPositions(prev => ({
+                      ...prev,
+                      status: { top: rect.bottom, left: rect.left }
+                    }));
                     setShowStatusDropdown(!showStatusDropdown);
                   }
                 }}
                 disabled={isChangingStatus || !onStatusChange}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all ${
-                  ticket.status === 'open' ? 'bg-blue-50 border-blue-300 text-blue-700' :
-                  ticket.status === 'in progress' ? 'bg-amber-50 border-amber-300 text-amber-700' :
-                  ticket.status === 'closed' ? 'bg-green-50 border-green-300 text-green-700' :
-                  'bg-slate-50 border-slate-300 text-slate-700'
-                } ${
-                  onStatusChange ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
-                } ${isChangingStatus ? 'opacity-50' : ''}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0 capitalize"
+                style={{
+                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                  color: 'white',
+                  boxShadow: `0 2px 4px ${primary.base}30`,
+                  opacity: isChangingStatus ? 0.5 : 1,
+                }}
                 title={onStatusChange ? 'Click to change status' : undefined}
               >
-                <span className="flex items-center gap-1 capitalize">
-                  {ticket.status || 'Open'}
-                  {onStatusChange && <ChevronDown className="h-3 w-3" />}
-                </span>
+                <span>{ticket.status || 'Open'}</span>
+                {onStatusChange && <ChevronDown className="h-4 w-4" />}
               </button>
 
               {/* Status Dropdown */}
-              {showStatusDropdown && onStatusChange && (
-                <div className="absolute z-50 mt-1 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-slate-200 dark:border-gray-700 rounded-lg shadow-lg">
+              {showStatusDropdown && onStatusChange && createPortal(
+                <div 
+                  ref={statusDropdownContentRef}
+                  className="fixed z-[11000] w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 rounded-lg shadow-2xl"
+                  style={{ top: `${dropdownPositions.status.top}px`, left: `${dropdownPositions.status.left}px` }}>
                   <div className="p-1">
                     {statuses.map((status) => (
                       <button
@@ -461,7 +518,8 @@ const TicketListItemComponent = ({
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>,
+              document.body
               )}
             </div>
             
@@ -499,17 +557,73 @@ const TicketListItemComponent = ({
               </div>
             )}
           </div>
-        </div>
-        
-        {/* Waiting for response indicator */}
-        {isWaitingForResponse && (
-          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-        )}
-      </div>
-      
-      {/* Created date */}
-      <p className="text-xs text-slate-500">
-        {new Date(ticket.created_at).toLocaleDateString()}
+          
+          {/* Content Section */}
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              {/* Customer name */}
+              <p className="text-xs text-slate-600 dark:text-slate-300 mb-1">
+                {searchQuery 
+                  ? highlightText(ticket.full_name || 'Anonymous', searchQuery) 
+                  : (ticket.full_name || 'Anonymous')
+                }
+              </p>
+          
+          {/* Last message preview */}
+          {(() => {
+            // Get the last message from responses or initial message
+            let lastMessage = '';
+            let messagePrefix = '';
+            let messageTime = '';
+            
+            if (ticket.ticket_responses && Array.isArray(ticket.ticket_responses) && ticket.ticket_responses.length > 0) {
+              const lastResponse = ticket.ticket_responses[ticket.ticket_responses.length - 1];
+              lastMessage = lastResponse?.message || '';
+              messagePrefix = lastResponse?.is_admin ? 'You: ' : '';
+              
+              // Format time (e.g., "2:30 PM" or "Nov 10, 2:30 PM" if not today)
+              if (lastResponse?.created_at) {
+                const msgDate = new Date(lastResponse.created_at);
+                const now = new Date();
+                const isToday = msgDate.toDateString() === now.toDateString();
+                
+                if (isToday) {
+                  messageTime = msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                } else {
+                  messageTime = msgDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + 
+                                msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                }
+              }
+            } else {
+              lastMessage = ticket.message || '';
+              messageTime = new Date(ticket.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+            
+            return lastMessage ? (
+              <div className="flex items-center gap-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate flex-1" title={lastMessage}>
+                  {messagePrefix && <span className="font-medium">{messagePrefix}</span>}
+                  {lastMessage}
+                </p>
+                {messageTime && (
+                  <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                    {messageTime}
+                  </span>
+                )}
+                </div>
+              ) : null;
+            })()}
+            </div>
+            
+            {/* Waiting for response indicator */}
+            {isWaitingForResponse && (
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            )}
+          </div>
+          
+          {/* Created date */}
+          <p className="text-xs text-slate-500 mt-2">
+            {new Date(ticket.created_at).toLocaleDateString()}
       </p>
     </div>
   );

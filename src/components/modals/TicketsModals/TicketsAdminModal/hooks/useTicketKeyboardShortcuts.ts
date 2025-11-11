@@ -10,9 +10,9 @@ interface TicketKeyboardShortcutsConfig {
   selectedAvatar: any;
   isSending: boolean;
   tickets: any[];
-  activeTab: string;
-  assignmentFilter: string;
-  priorityFilter: string;
+  activeTab: string[];
+  selectedAssignmentFilters: string[];
+  selectedPriorityFilters: string[];
   selectedTagFilters: string[];
   searchQuery: string;
   currentUserId: string | null;
@@ -37,8 +37,8 @@ export function useTicketKeyboardShortcuts(config: TicketKeyboardShortcutsConfig
     isSending,
     tickets,
     activeTab,
-    assignmentFilter,
-    priorityFilter,
+    selectedAssignmentFilters,
+    selectedPriorityFilters,
     selectedTagFilters,
     searchQuery,
     currentUserId,
@@ -70,21 +70,28 @@ export function useTicketKeyboardShortcuts(config: TicketKeyboardShortcutsConfig
         const isInInput = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
         
         if (!isInInput && tickets.length > 0) {
-          // Filter tickets by active tab
-          let currentTickets = activeTab === 'all' 
+          // Filter tickets by active tab statuses
+          let currentTickets = activeTab.length === 0
             ? tickets 
-            : tickets.filter((ticket: any) => ticket.status === activeTab);
+            : tickets.filter((ticket: any) => activeTab.includes(ticket.status));
           
-          // Apply assignment filter
-          if (assignmentFilter === 'my' && currentUserId) {
-            currentTickets = currentTickets.filter((ticket: any) => ticket.assigned_to === currentUserId);
-          } else if (assignmentFilter === 'unassigned') {
-            currentTickets = currentTickets.filter((ticket: any) => !ticket.assigned_to);
+          // Apply assignment filter - show tickets matching ANY selected assignment
+          if (selectedAssignmentFilters.length > 0) {
+            currentTickets = currentTickets.filter((ticket: any) => {
+              return selectedAssignmentFilters.some(filter => {
+                if (filter === 'my') return ticket.assigned_to === currentUserId;
+                if (filter === 'unassigned') return !ticket.assigned_to;
+                if (filter === 'others') return ticket.assigned_to && ticket.assigned_to !== currentUserId;
+                return false;
+              });
+            });
           }
           
-          // Apply priority filter
-          if (priorityFilter !== 'all') {
-            currentTickets = currentTickets.filter((ticket: any) => ticket.priority === priorityFilter);
+          // Apply priority filter - show tickets matching ANY selected priority
+          if (selectedPriorityFilters.length > 0) {
+            currentTickets = currentTickets.filter((ticket: any) => 
+              selectedPriorityFilters.includes(ticket.priority)
+            );
           }
           
           // Apply tag filter - check if ticket has ANY of the selected tags
@@ -133,8 +140,8 @@ export function useTicketKeyboardShortcuts(config: TicketKeyboardShortcutsConfig
     showInternalNotes,
     activeTab,
     tickets,
-    assignmentFilter,
-    priorityFilter,
+    selectedAssignmentFilters,
+    selectedPriorityFilters,
     selectedTagFilters,
     searchQuery,
     currentUserId,

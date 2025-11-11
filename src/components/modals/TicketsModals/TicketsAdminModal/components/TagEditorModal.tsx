@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Tag, Check } from 'lucide-react';
 import { TicketTag } from '../types';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface TagEditorModalProps {
   /** Whether the modal is visible */
@@ -47,6 +48,8 @@ export const TagEditorModal: React.FC<TagEditorModalProps> = ({
   existingTag,
   isSaving = false
 }) => {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [name, setName] = useState('');
   const [color, setColor] = useState(COLOR_PALETTE[0]);
   const [icon, setIcon] = useState<string | undefined>();
@@ -81,22 +84,22 @@ export const TagEditorModal: React.FC<TagEditorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[10004] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+      <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20 max-w-md w-full mx-4 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+        <div className="border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <Tag className="h-5 w-5 text-white" />
+              <div className="w-10 h-10 bg-white/20 dark:bg-gray-700/20 rounded-full flex items-center justify-center">
+                <Tag className="h-5 w-5" style={{ color: primary.base }} />
               </div>
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {existingTag ? 'Edit Tag' : 'Create New Tag'}
               </h3>
             </div>
             <button
               onClick={onClose}
               disabled={isSaving}
-              className="text-white/80 hover:text-white transition-colors disabled:opacity-50"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
             >
               <X className="h-5 w-5" />
             </button>
@@ -104,10 +107,10 @@ export const TagEditorModal: React.FC<TagEditorModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 bg-white/20 dark:bg-gray-900/20">
           {/* Tag Name Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Tag Name
             </label>
             <input
@@ -116,7 +119,8 @@ export const TagEditorModal: React.FC<TagEditorModalProps> = ({
               onChange={(e) => setName(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="e.g., Bug, Feature Request, Urgent"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-white/20 dark:border-gray-700/20 rounded-lg focus:outline-none focus:ring-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm"
+              style={{ '--focus-ring-color': primary.base } as React.CSSProperties}
               disabled={isSaving}
               autoFocus
             />
@@ -124,7 +128,7 @@ export const TagEditorModal: React.FC<TagEditorModalProps> = ({
 
           {/* Color Picker */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Tag Color
             </label>
             <div className="grid grid-cols-7 gap-2">
@@ -133,8 +137,11 @@ export const TagEditorModal: React.FC<TagEditorModalProps> = ({
                   key={paletteColor}
                   onClick={() => setColor(paletteColor)}
                   disabled={isSaving}
-                  className="relative w-full aspect-square rounded-lg transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:hover:scale-100"
-                  style={{ backgroundColor: paletteColor }}
+                  className="relative w-full aspect-square rounded-lg transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:hover:scale-100"
+                  style={{ 
+                    backgroundColor: paletteColor,
+                    '--focus-ring-color': primary.base 
+                  } as React.CSSProperties}
                   title={paletteColor}
                 >
                   {color === paletteColor && (
@@ -172,7 +179,7 @@ export const TagEditorModal: React.FC<TagEditorModalProps> = ({
 
           {/* Icon Input (Optional) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Icon (Optional)
             </label>
             <input
@@ -180,29 +187,33 @@ export const TagEditorModal: React.FC<TagEditorModalProps> = ({
               value={icon || ''}
               onChange={(e) => setIcon(e.target.value || undefined)}
               placeholder="e.g., 🐛 🚀 ⚡ (emoji or text)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-white/20 dark:border-gray-700/20 rounded-lg focus:outline-none focus:ring-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm"
+              style={{ '--focus-ring-color': primary.base } as React.CSSProperties}
               disabled={isSaving}
               maxLength={2}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Add an emoji or short icon to make your tag more recognizable
             </p>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200">
+        <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-md px-6 py-4 flex items-center justify-end gap-3 border-t border-white/10 dark:border-gray-700/20">
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-lg hover:bg-white/80 dark:hover:bg-gray-800/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!name.trim() || isSaving}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ 
+              background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+            }}
           >
             {isSaving ? 'Saving...' : existingTag ? 'Update Tag' : 'Create Tag'}
           </button>

@@ -61,6 +61,7 @@ import { supabase } from '@/lib/supabase';
 import { useSettings } from '@/context/SettingsContext';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 import { getAttachmentUrl, isImageFile } from '@/lib/fileUpload';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Import critical components (needed immediately)
 import { 
@@ -185,6 +186,8 @@ const statuses = ['all', 'in progress', 'open', 'closed'];
 export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModalProps) {
   const { t } = useAccountTranslations();
   const { settings } = useSettings();
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   
   // Toast state (needed for tag management and other operations)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -276,12 +279,12 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   // responseMessage, setResponseMessage now come from useMessageHandling hook
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState(statuses[0]);
+  const [activeTab, setActiveTab] = useState<string[]>(['in_progress', 'open']); // Default: In Progress + Open
   // predefinedResponses now comes from usePredefinedResponses hook
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'my' | 'unassigned'>('all');
-  const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [selectedAssignmentFilters, setSelectedAssignmentFilters] = useState<string[]>(['my', 'unassigned']); // Default: My + Unassigned
+  const [selectedPriorityFilters, setSelectedPriorityFilters] = useState<string[]>([]); // Default: All (empty array)
   // internalNotes, isAddingNote, ticketsWithPinnedNotes, ticketNoteCounts now come from useInternalNotes hook
   const [noteText, setNoteText] = useState('');
   const [showInternalNotes, setShowInternalNotes] = useState(false);
@@ -324,6 +327,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // Accessibility state
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  const [hoveredStatusTab, setHoveredStatusTab] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -409,9 +413,10 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
   // Restore filters from localStorage on mount
   useRestoreFiltersFromLocalStorage<{
     searchQuery?: string;
-    assignmentFilter?: 'all' | 'my' | 'unassigned';
-    priorityFilter?: 'all' | 'high' | 'medium' | 'low';
+    selectedAssignmentFilters?: string[];
+    selectedPriorityFilters?: string[];
     selectedTagFilters?: string[];
+    activeTab?: string[];
     sortBy?: 'date-newest' | 'date-oldest' | 'priority' | 'updated' | 'responses';
     advancedFilters?: {
       showAdvancedFilters?: boolean;
@@ -429,10 +434,11 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     'ticket-filters',
     (filters) => {
       setSearchQuery(filters.searchQuery || '');
-      setAssignmentFilter(filters.assignmentFilter || 'all');
-      setPriorityFilter(filters.priorityFilter || 'all');
+      setSelectedAssignmentFilters(filters.selectedAssignmentFilters || ['my', 'unassigned']);
+      setSelectedPriorityFilters(filters.selectedPriorityFilters || []);
       setSelectedTagFilters(filters.selectedTagFilters || []);
-      setSortBy(filters.sortBy || 'date-newest');
+      setActiveTab(filters.activeTab || ['in_progress', 'open']);
+      setSortBy(filters.sortBy || 'updated');
       
       if (filters.advancedFilters) {
         setShowAdvancedFilters(filters.advancedFilters.showAdvancedFilters || false);
@@ -454,9 +460,10 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     storageKey: 'ticket-filters',
     filters: {
       searchQuery,
-      assignmentFilter,
-      priorityFilter,
+      selectedAssignmentFilters,
+      selectedPriorityFilters,
       selectedTagFilters,
+      activeTab,
       sortBy,
       advancedFilters: {
         showAdvancedFilters,
@@ -741,8 +748,8 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     isSending,
     tickets,
     activeTab,
-    assignmentFilter,
-    priorityFilter,
+    selectedAssignmentFilters,
+    selectedPriorityFilters,
     selectedTagFilters,
     searchQuery: debouncedSearchQuery,
     currentUserId,
@@ -759,8 +766,8 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     tickets,
     statuses,
     debouncedSearchQuery,
-    priorityFilter,
-    assignmentFilter,
+    selectedPriorityFilters,
+    selectedAssignmentFilters,
     selectedTagFilters,
     sortBy,
     showAdvancedFilters,
@@ -875,13 +882,72 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               onToggleExpand={() => setShowInternalNotes(!showInternalNotes)}
             />
           ) : (
-            <TicketListView
+            <>
+              {/* Status Tab Navigation */}
+              <div className="px-4 pt-3 pb-3 border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30">
+                <nav className="flex gap-2 overflow-x-auto scrollbar-hide" aria-label="Status filters" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  {['open', 'in progress', 'closed', 'all'].map(status => {
+                    const isActive = status === 'all' ? activeTab.length === 0 || activeTab.length === statuses.length : activeTab.includes(status);
+                    const ticketCount = status === 'all' 
+                      ? tickets.length 
+                      : groupedTickets[status]?.length || 0;
+                    
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          if (status === 'all') {
+                            setActiveTab([]);
+                          } else {
+                            setActiveTab(prev =>
+                              prev.includes(status)
+                                ? prev.filter(s => s !== status)
+                                : [...prev, status]
+                            );
+                          }
+                        }}
+                        onMouseEnter={() => setHoveredStatusTab(status)}
+                        onMouseLeave={() => setHoveredStatusTab(null)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0 capitalize"
+                        style={
+                          isActive
+                            ? {
+                                background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                                color: 'white',
+                                boxShadow: hoveredStatusTab === status 
+                                  ? `0 4px 12px ${primary.base}40` 
+                                  : `0 2px 4px ${primary.base}30`,
+                              }
+                            : {
+                                backgroundColor: 'transparent',
+                                color: hoveredStatusTab === status ? primary.hover : primary.base,
+                                borderWidth: '1px',
+                                borderStyle: 'solid',
+                                borderColor: hoveredStatusTab === status ? `${primary.base}80` : `${primary.base}40`,
+                              }
+                        }
+                      >
+                        <span>{status}</span>
+                        <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-semibold ${
+                          isActive
+                            ? 'bg-white/25 text-white'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        }`}>
+                          {ticketCount}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+              
+              <TicketListView
               tickets={tickets}
               groupedTickets={groupedTickets}
               activeTab={activeTab}
               searchQuery={searchQuery}
-              assignmentFilter={assignmentFilter}
-              priorityFilter={priorityFilter}
+              selectedAssignmentFilters={selectedAssignmentFilters}
+              selectedPriorityFilters={selectedPriorityFilters}
               selectedTagFilters={selectedTagFilters}
               showAdvancedFilters={showAdvancedFilters}
               dateRangeStart={dateRangeStart}
@@ -896,7 +962,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               ticketsWithPinnedNotes={ticketsWithPinnedNotes}
               ticketNoteCounts={ticketNoteCounts}
               isLoadingTickets={isLoadingTickets}
-              hasMoreTickets={hasMoreTickets[activeTab]}
+              hasMoreTickets={hasMoreTickets['all'] || false}
               loadingMore={loadingMore}
               isAssigning={isAssigning}
               isChangingPriority={isChangingPriority}
@@ -905,9 +971,10 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               onLoadMore={loadMoreTickets}
               onClearAllFilters={() => {
                 setSearchQuery('');
-                setAssignmentFilter('all');
-                setPriorityFilter('all');
+                setSelectedAssignmentFilters(['my', 'unassigned']);
+                setSelectedPriorityFilters([]);
                 setSelectedTagFilters([]);
+                setActiveTab(['in_progress', 'open']);
                 setDateRangeStart('');
                 setDateRangeEnd('');
                 setMultiSelectStatuses([]);
@@ -916,8 +983,8 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
                 setMultiSelectAssignees([]);
               }}
               onClearSearchQuery={() => setSearchQuery('')}
-              onClearAssignmentFilter={() => setAssignmentFilter('all')}
-              onClearPriorityFilter={() => setPriorityFilter('all')}
+              onClearAssignmentFilter={() => setSelectedAssignmentFilters([])}
+              onClearPriorityFilter={() => setSelectedPriorityFilters([])}
               onClearTagFilter={() => setSelectedTagFilters([])}
               onClearDateRangeStart={() => setDateRangeStart('')}
               onClearDateRangeEnd={() => setDateRangeEnd('')}
@@ -931,6 +998,7 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               getUnreadCount={getUnreadCount}
               isWaitingForResponse={isWaitingForResponse}
             />
+            </>
           )}
 
           {/* Bottom Toolbar - Only show when no ticket selected */}
@@ -949,15 +1017,15 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
               }}
               sortBy={sortBy}
               onSortChange={setSortBy}
-              assignmentFilter={assignmentFilter}
-              priorityFilter={priorityFilter}
+              selectedAssignmentFilters={selectedAssignmentFilters}
+              selectedPriorityFilters={selectedPriorityFilters}
               activeTab={activeTab}
               tickets={tickets}
               currentUserId={currentUserId}
               groupedTickets={groupedTickets}
               statuses={statuses}
-              setAssignmentFilter={setAssignmentFilter}
-              setPriorityFilter={setPriorityFilter}
+              setSelectedAssignmentFilters={setSelectedAssignmentFilters}
+              setSelectedPriorityFilters={setSelectedPriorityFilters}
               setActiveTab={setActiveTab}
             />
           )}

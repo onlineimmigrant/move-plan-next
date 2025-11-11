@@ -42,37 +42,36 @@ export function filterTicketsByStatus(tickets: Ticket[], status: string): Ticket
 }
 
 /**
- * Filter tickets by priority
+ * Filter tickets by priority - supports multiple selected priorities
  */
-export function filterTicketsByPriority(tickets: Ticket[], priority: TicketPriority): Ticket[] {
-  if (priority === 'all') {
+export function filterTicketsByPriority(tickets: Ticket[], selectedPriorities: string[]): Ticket[] {
+  if (selectedPriorities.length === 0) {
     return tickets;
   }
 
-  return tickets.filter((ticket) => ticket.priority === priority);
+  return tickets.filter((ticket) => ticket.priority && selectedPriorities.includes(ticket.priority));
 }
 
 /**
- * Filter tickets by assignment
+ * Filter tickets by assignment - supports multiple selected assignments
  */
 export function filterTicketsByAssignment(
   tickets: Ticket[],
-  assignmentFilter: AssignmentFilter,
+  selectedAssignments: string[],
   currentUserId: string | null
 ): Ticket[] {
-  if (assignmentFilter === 'all') {
+  if (selectedAssignments.length === 0) {
     return tickets;
   }
 
-  if (assignmentFilter === 'my') {
-    return tickets.filter((ticket) => ticket.assigned_to === currentUserId);
-  }
-
-  if (assignmentFilter === 'unassigned') {
-    return tickets.filter((ticket) => !ticket.assigned_to);
-  }
-
-  return tickets;
+  return tickets.filter((ticket) => {
+    return selectedAssignments.some(filter => {
+      if (filter === 'my') return ticket.assigned_to === currentUserId;
+      if (filter === 'unassigned') return !ticket.assigned_to;
+      if (filter === 'others') return ticket.assigned_to && ticket.assigned_to !== currentUserId;
+      return false;
+    });
+  });
 }
 
 /**
@@ -292,18 +291,18 @@ export function applyAllFilters(
   filtered = filterTicketsBySearch(filtered, filters.searchQuery);
 
   // Apply status filter (unless using advanced multi-select)
-  if (advancedFilters.multiSelectStatuses.length === 0) {
-    filtered = filterTicketsByStatus(filtered, filters.activeTab);
+  if (advancedFilters.multiSelectStatuses.length === 0 && filters.activeTab.length > 0) {
+    filtered = tickets.filter(ticket => filters.activeTab.includes(ticket.status));
   }
 
   // Apply priority filter (unless using advanced multi-select)
   if (advancedFilters.multiSelectPriorities.length === 0) {
-    filtered = filterTicketsByPriority(filtered, filters.priorityFilter);
+    filtered = filterTicketsByPriority(filtered, filters.selectedPriorityFilters);
   }
 
   // Apply assignment filter (unless using advanced multi-select)
   if (advancedFilters.multiSelectAssignees.length === 0) {
-    filtered = filterTicketsByAssignment(filtered, filters.assignmentFilter, currentUserId);
+    filtered = filterTicketsByAssignment(filtered, filters.selectedAssignmentFilters, currentUserId);
   }
 
   // Apply tag filter (unless using advanced multi-select)
@@ -326,9 +325,9 @@ export function hasActiveFilters(
 ): boolean {
   return (
     filters.searchQuery.trim() !== '' ||
-    filters.activeTab !== 'all' ||
-    filters.priorityFilter !== 'all' ||
-    filters.assignmentFilter !== 'all' ||
+    filters.activeTab.length > 0 ||
+    filters.selectedPriorityFilters.length > 0 ||
+    filters.selectedAssignmentFilters.length > 0 ||
     filters.selectedTagFilters.length > 0 ||
     advancedFilters.showAdvancedFilters
   );

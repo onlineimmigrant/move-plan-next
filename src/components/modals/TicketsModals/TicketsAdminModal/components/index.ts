@@ -11,7 +11,6 @@ export { TicketListView } from './TicketListView';
 
 // Detail View Components
 export { TicketHeader } from './TicketHeader';
-export { TicketMessages } from './TicketMessages';
 export { MessageItem } from './MessageItem';
 
 // Action Components

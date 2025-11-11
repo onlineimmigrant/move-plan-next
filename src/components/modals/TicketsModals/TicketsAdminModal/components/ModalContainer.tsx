@@ -78,7 +78,7 @@ export default function ModalContainer({
           aria-modal="true"
           aria-label="Ticket Management Modal"
           tabIndex={-1}
-          className="relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+          className="ticket-admin-modal-root relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
           onClick={(e) => e.stopPropagation()}
         >
           {children}
@@ -105,7 +105,7 @@ export default function ModalContainer({
             aria-modal="true"
             aria-label="Ticket Management Modal"
             tabIndex={-1}
-            className="relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+            className="ticket-admin-modal-root relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
             onClick={(e) => e.stopPropagation()}
           >
             {children}

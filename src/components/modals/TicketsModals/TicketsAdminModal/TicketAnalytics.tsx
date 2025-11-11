@@ -11,8 +11,9 @@ import {
   Download,
   RefreshCw,
   BarChart3,
-  PieChart as PieChartIcon
+  PieChartIcon
 } from 'lucide-react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Ticket {
   id: string;
@@ -73,6 +74,8 @@ interface AdminPerformance {
 }
 
 export const TicketAnalytics: React.FC<TicketAnalyticsProps> = ({ tickets, adminUsers, onClose }) => {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [selectedTab, setSelectedTab] = useState<'overview' | 'performance' | 'trends'>('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -279,56 +282,26 @@ export const TicketAnalytics: React.FC<TicketAnalyticsProps> = ({ tickets, admin
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10002] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20 w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+        <div className="flex items-center justify-between p-6 border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <BarChart3 className="h-6 w-6 text-blue-600" />
+            <div className="p-2">
+              <BarChart3 className="h-6 w-6" style={{ color: primary.base }} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Ticket Analytics</h2>
-              <p className="text-sm text-slate-500">Insights and performance metrics</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Ticket Analytics</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Insights and performance metrics</p>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-            {/* Date Range Selector */}
-            <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-              <option value="90d">Last 90 Days</option>
-              <option value="all">All Time</option>
-            </select>
-
-            {/* Refresh Button */}
-            <button
-              onClick={handleRefresh}
-              className={`p-2 hover:bg-slate-100 rounded-lg transition-colors ${isRefreshing ? 'animate-spin' : ''}`}
-              title="Refresh"
-            >
-              <RefreshCw className="h-5 w-5 text-slate-600" />
-            </button>
-
-            {/* Export Button */}
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              Export CSV
-            </button>
-
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-lg transition-colors"
             >
-              <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -336,7 +309,7 @@ export const TicketAnalytics: React.FC<TicketAnalyticsProps> = ({ tickets, admin
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-6 pt-4 border-b border-slate-200">
+        <div className="flex gap-1 px-6 pt-4 border-b border-white/10 dark:border-gray-700/20 bg-white/20 dark:bg-gray-900/20">
           {[
             { id: 'overview', label: 'Overview', icon: BarChart3 },
             { id: 'performance', label: 'Team Performance', icon: Users },
@@ -347,29 +320,33 @@ export const TicketAnalytics: React.FC<TicketAnalyticsProps> = ({ tickets, admin
               onClick={() => setSelectedTab(tab.id as typeof selectedTab)}
               className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors relative ${
                 selectedTab === tab.id
-                  ? 'text-blue-600'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
+              style={selectedTab === tab.id ? { color: primary.base } : undefined}
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
               {selectedTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+                <div 
+                  className="absolute bottom-0 left-0 right-0 h-0.5" 
+                  style={{ backgroundColor: primary.base }}
+                />
               )}
             </button>
           ))}
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 bg-white/20 dark:bg-gray-900/20">
           {selectedTab === 'overview' && (
             <div className="space-y-6">
               {/* Key Metrics Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Total Tickets */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-700/20">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-blue-900">Total Tickets</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Total Tickets</span>
                     <MessageSquare className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="text-3xl font-bold text-blue-900">{metrics.totalTickets}</div>
@@ -379,44 +356,44 @@ export const TicketAnalytics: React.FC<TicketAnalyticsProps> = ({ tickets, admin
                 </div>
 
                 {/* Response Time */}
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-700/20">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-green-900">Avg Response Time</span>
-                    <Clock className="h-5 w-5 text-green-600" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Avg Response Time</span>
+                    <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
-                  <div className="text-3xl font-bold text-green-900">{formatDuration(metrics.avgResponseTime)}</div>
-                  <div className="text-xs text-green-700 mt-1">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{formatDuration(metrics.avgResponseTime)}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     Median: {formatDuration(metrics.medianResponseTime)}
                   </div>
                 </div>
 
                 {/* Resolution Time */}
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-700/20">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-purple-900">Avg Resolution Time</span>
-                    <CheckCircle className="h-5 w-5 text-purple-600" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Avg Resolution Time</span>
+                    <CheckCircle className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div className="text-3xl font-bold text-purple-900">{formatDuration(metrics.avgResolutionTime)}</div>
-                  <div className="text-xs text-purple-700 mt-1">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{formatDuration(metrics.avgResolutionTime)}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     {metrics.closedTickets} closed tickets
                   </div>
                 </div>
 
                 {/* Response Rate */}
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-gray-700/20">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-amber-900">Response Rate</span>
-                    <TrendingUp className="h-5 w-5 text-amber-600" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Response Rate</span>
+                    <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <div className="text-3xl font-bold text-amber-900">{metrics.responseRate.toFixed(1)}%</div>
-                  <div className="text-xs text-amber-700 mt-1">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{metrics.responseRate.toFixed(1)}%</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     {Math.round(metrics.totalTickets * metrics.responseRate / 100)} responded
                   </div>
                 </div>
               </div>
 
               {/* Status Distribution */}
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl border border-white/20 dark:border-gray-700/20 p-6">
                 <h3 className="text-lg font-semibold text-slate-900 mb-4">Status Distribution</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
@@ -551,6 +528,46 @@ export const TicketAnalytics: React.FC<TicketAnalyticsProps> = ({ tickets, admin
               </div>
             </div>
           )}
+        </div>
+        
+        {/* Bottom Panel with Controls */}
+        <div className="flex items-center justify-between p-4 border-t border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            {/* Date Range Selector */}
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
+              className="px-3 py-2 text-sm border border-white/20 dark:border-gray-700/20 rounded-lg focus:outline-none focus:ring-2 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm text-gray-900 dark:text-white"
+              style={{ '--focus-ring-color': primary.base } as React.CSSProperties}
+            >
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="90d">Last 90 Days</option>
+              <option value="all">All Time</option>
+            </select>
+
+            {/* Refresh Button */}
+            <button
+              onClick={handleRefresh}
+              className={`p-2 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-lg transition-colors ${isRefreshing ? 'animate-spin' : ''}`}
+              title="Refresh"
+            >
+              <RefreshCw className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+            </button>
+
+            {/* Export Button */}
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors"
+              style={{ 
+                background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+              }}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">Export</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

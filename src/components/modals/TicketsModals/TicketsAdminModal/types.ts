@@ -18,11 +18,11 @@
  * 
  * const filters: TicketFilters = {
  *   searchQuery: '',
- *   activeTab: 'open',
- *   priorityFilter: 'high',
- *   assignmentFilter: 'my',
+ *   activeTab: ['open', 'in_progress'],
+ *   selectedPriorityFilters: ['high'],
+ *   selectedAssignmentFilters: ['my', 'unassigned'],
  *   selectedTagFilters: ['tag-id-1', 'tag-id-2'],
- *   sortBy: 'date-newest'
+ *   sortBy: 'updated'
  * };
  * ```
  */
@@ -112,23 +112,23 @@ export type FilterLogic = 'AND' | 'OR';
  * ```typescript
  * const defaultFilters: TicketFilters = {
  *   searchQuery: '',
- *   activeTab: 'all',
- *   priorityFilter: 'all',
- *   assignmentFilter: 'all',
+ *   activeTab: ['open', 'in_progress'],
+ *   selectedPriorityFilters: [],
+ *   selectedAssignmentFilters: ['my', 'unassigned'],
  *   selectedTagFilters: [],
- *   sortBy: 'date-newest'
+ *   sortBy: 'updated'
  * };
  * ```
  */
 export interface TicketFilters {
   /** Text search query for filtering tickets */
   searchQuery: string;
-  /** Active status tab filter */
-  activeTab: TicketStatus;
-  /** Priority level filter */
-  priorityFilter: TicketPriority;
-  /** Assignment status filter */
-  assignmentFilter: AssignmentFilter;
+  /** Array of selected status filters (empty = show all) */
+  activeTab: string[];
+  /** Array of selected priority filters (empty = show all) */
+  selectedPriorityFilters: string[];
+  /** Array of selected assignment filters (empty = show all) */
+  selectedAssignmentFilters: string[];
   /** Array of selected tag IDs (empty array = show all) */
   selectedTagFilters: string[];
   /** Sort order for ticket list */

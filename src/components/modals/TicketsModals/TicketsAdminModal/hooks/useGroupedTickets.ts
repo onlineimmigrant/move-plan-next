@@ -48,8 +48,8 @@ import { sortTickets } from '../utils/ticketSorting';
  * @property {Ticket[]} tickets - Array of all tickets to process
  * @property {string[]} statuses - Status categories to group by
  * @property {string} debouncedSearchQuery - Debounced search text (300ms delay)
- * @property {'all' | 'high' | 'medium' | 'low'} priorityFilter - Priority filter
- * @property {'all' | 'my' | 'unassigned'} assignmentFilter - Assignment filter
+ * @property {string[]} selectedPriorityFilters - Array of selected priorities (empty = show all)
+ * @property {string[]} selectedAssignmentFilters - Array of selected assignment filters (empty = show all)
  * @property {string[]} selectedTagFilters - Array of selected tag IDs (empty = show all)
  * @property {string} sortBy - Sort order for tickets
  * @property {boolean} showAdvancedFilters - Whether advanced filters are active
@@ -66,8 +66,8 @@ interface UseGroupedTicketsParams {
   tickets: Ticket[];
   statuses: string[];
   debouncedSearchQuery: string;
-  priorityFilter: 'all' | 'high' | 'medium' | 'low';
-  assignmentFilter: 'all' | 'my' | 'unassigned';
+  selectedPriorityFilters: string[];
+  selectedAssignmentFilters: string[];
   selectedTagFilters: string[];
   sortBy: 'date-newest' | 'date-oldest' | 'priority' | 'responses' | 'updated';
   showAdvancedFilters: boolean;
@@ -100,8 +100,8 @@ export function useGroupedTickets({
   tickets,
   statuses,
   debouncedSearchQuery,
-  priorityFilter,
-  assignmentFilter,
+  selectedPriorityFilters,
+  selectedAssignmentFilters,
   selectedTagFilters,
   sortBy,
   showAdvancedFilters,
@@ -123,9 +123,9 @@ export function useGroupedTickets({
         // Apply all filters using Phase 1 utilities
         const filters = {
           searchQuery: debouncedSearchQuery,
-          activeTab: status as any, // status comes from statuses array which matches TicketStatus
-          priorityFilter,
-          assignmentFilter,
+          activeTab: [status],
+          selectedPriorityFilters,
+          selectedAssignmentFilters,
           selectedTagFilters,
           sortBy,
         };
@@ -157,8 +157,8 @@ export function useGroupedTickets({
     tickets,
     statuses,
     debouncedSearchQuery,
-    priorityFilter,
-    assignmentFilter,
+    selectedPriorityFilters,
+    selectedAssignmentFilters,
     selectedTagFilters,
     sortBy,
     showAdvancedFilters,

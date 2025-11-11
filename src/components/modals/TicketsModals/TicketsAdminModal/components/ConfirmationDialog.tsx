@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ConfirmationDialogProps {
   /** Whether the dialog is visible */
@@ -49,6 +50,9 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   variant = 'danger',
   isLoading = false
 }) => {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+  
   if (!isOpen) return null;
 
   // Variant-specific colors
@@ -92,42 +96,48 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-[10003] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+      <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20 max-w-md w-full mx-4 overflow-hidden">
         {/* Header */}
-        <div className={`bg-gradient-to-r ${colors.header} px-6 py-4`}>
+        <div className="border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 ${colors.iconBg} rounded-full flex items-center justify-center`}>
-              <AlertTriangle className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 bg-white/20 dark:bg-gray-700/20 rounded-full flex items-center justify-center">
+              <AlertTriangle 
+                className="h-5 w-5" 
+                style={{ color: variant === 'danger' ? '#ef4444' : variant === 'warning' ? '#f59e0b' : primary.base }} 
+              />
             </div>
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 bg-white/20 dark:bg-gray-900/20">
           {/* Main Message */}
           <div className="space-y-2">
-            <p className="text-gray-700 font-medium">{message}</p>
+            <p className="text-gray-700 dark:text-gray-200 font-medium">{message}</p>
             
             {/* Details Box */}
             {details && (
-              <div className={`${colors.detailsBg} rounded-lg p-3 border border-gray-200`}>
-                <p className="text-sm text-gray-600 font-medium">{details.label}:</p>
-                <p className="text-sm text-gray-900 mt-1">{details.value}</p>
+              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg p-3 border border-white/20 dark:border-gray-700/20">
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{details.label}:</p>
+                <p className="text-sm text-gray-900 dark:text-white mt-1">{details.value}</p>
               </div>
             )}
           </div>
 
           {/* Consequences */}
           {consequences.length > 0 && (
-            <div className={`${colors.consequencesBg} border ${colors.consequencesBorder} rounded-lg p-3`}>
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-lg p-3">
               <div className="flex gap-2">
-                <AlertTriangle className={`h-4 w-4 ${colors.consequencesIcon} flex-shrink-0 mt-0.5`} />
+                <AlertTriangle 
+                  className="h-4 w-4 flex-shrink-0 mt-0.5" 
+                  style={{ color: variant === 'danger' ? '#ef4444' : variant === 'warning' ? '#f59e0b' : primary.base }}
+                />
                 <div className="space-y-1">
-                  <p className={`text-sm font-medium ${colors.consequencesTitle}`}>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     This action will:
                   </p>
-                  <ul className={`text-sm ${colors.consequencesText} space-y-1 ml-4 list-disc`}>
+                  <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 ml-4 list-disc">
                     {consequences.map((consequence, index) => (
                       <li key={index}>{consequence}</li>
                     ))}
@@ -139,18 +149,21 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200">
+        <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-md px-6 py-4 flex items-center justify-end gap-3 border-t border-white/10 dark:border-gray-700/20">
           <button
             onClick={onCancel}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-lg hover:bg-white/80 dark:hover:bg-gray-800/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 text-sm font-medium text-white ${colors.confirmButton} rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+            className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ 
+              backgroundColor: variant === 'danger' ? '#dc2626' : variant === 'warning' ? '#d97706' : primary.base,
+            }}
           >
             {isLoading ? 'Processing...' : confirmText}
           </button>
