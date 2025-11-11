@@ -42,14 +42,14 @@ export default function MessageInput({
     <div className={`${size === 'fullscreen' || size === 'half' ? 'max-w-2xl mx-auto' : ''}`}>
       {/* File Previews */}
       {selectedFiles.length > 0 && (
-        <div className="mb-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="mb-3 p-3 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md rounded-xl border border-white/30 dark:border-gray-700/30">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-slate-600">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
               {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected
             </span>
             <button
               onClick={onClearFiles}
-              className="text-xs text-red-600 hover:text-red-700 font-medium"
+              className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium transition-colors"
             >
               Clear all
             </button>
@@ -58,7 +58,7 @@ export default function MessageInput({
             {selectedFiles.map((file, index) => {
               const previewUrl = createLocalPreviewUrl(file);
               return (
-                <div key={index} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200">
+                <div key={index} className="flex items-center gap-2 p-2 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-lg border border-white/40 dark:border-gray-700/40">
                   {previewUrl ? (
                     <img 
                       src={previewUrl} 
@@ -66,17 +66,17 @@ export default function MessageInput({
                       className="w-10 h-10 rounded object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-lg flex-shrink-0">
+                    <div className="w-10 h-10 rounded bg-slate-100 dark:bg-gray-700 flex items-center justify-center text-lg flex-shrink-0">
                       {getFileIcon(file.type)}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-700 truncate">{file.name}</p>
-                    <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-200 truncate">{file.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{formatFileSize(file.size)}</p>
                   </div>
                   <button
                     onClick={() => onRemoveFile(index)}
-                    className="text-red-600 hover:text-red-700 p-1"
+                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1 transition-colors"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -88,9 +88,23 @@ export default function MessageInput({
       )}
       
       <div 
-        className={`bg-white border border-slate-200 rounded-2xl shadow-sm p-4 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100 transition-all duration-200 ${
-          isDragging ? 'border-blue-400 bg-blue-50' : ''
+        className={`backdrop-blur-md bg-white/60 dark:bg-gray-900/60 border border-white/30 dark:border-gray-700/30 rounded-2xl shadow-sm p-4 transition-all duration-200 ${
+          isDragging ? 'bg-white/80 dark:bg-gray-800/80' : ''
         }`}
+        style={{
+          '--focus-border': 'color-mix(in srgb, var(--color-primary-base) 50%, transparent)',
+          '--focus-ring': 'color-mix(in srgb, var(--color-primary-base) 10%, transparent)',
+        } as React.CSSProperties}
+        onFocus={(e) => {
+          const target = e.currentTarget;
+          target.style.borderColor = 'var(--focus-border)';
+          target.style.boxShadow = '0 0 0 4px var(--focus-ring)';
+        }}
+        onBlur={(e) => {
+          const target = e.currentTarget;
+          target.style.borderColor = '';
+          target.style.boxShadow = '';
+        }}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
@@ -131,7 +145,23 @@ export default function MessageInput({
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isSending}
-            className="flex items-center justify-center w-10 h-10 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center w-10 h-10 text-slate-600 dark:text-slate-400 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              '--hover-bg': 'color-mix(in srgb, var(--color-primary-base) 8%, rgb(255 255 255 / 0.6))',
+              '--hover-text': 'var(--color-primary-base)',
+            } as React.CSSProperties}
+            onMouseEnter={(e) => {
+              if (!isSending) {
+                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                e.currentTarget.style.color = 'var(--hover-text)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSending) {
+                e.currentTarget.style.backgroundColor = '';
+                e.currentTarget.style.color = '';
+              }
+            }}
             title="Attach file"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +172,21 @@ export default function MessageInput({
           <button
             onClick={onRespond}
             disabled={(!responseMessage.trim() && selectedFiles.length === 0) || isSending}
-            className="flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 disabled:cursor-not-allowed"
+            className="flex items-center justify-center w-10 h-10 text-white rounded-xl shadow-sm hover:shadow-md disabled:shadow-none disabled:bg-slate-200 dark:disabled:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100"
+            style={{
+              backgroundColor: (!responseMessage.trim() && selectedFiles.length === 0) || isSending ? undefined : 'var(--color-primary-base)',
+              '--hover-bg': 'color-mix(in srgb, var(--color-primary-base) 90%, black)',
+            } as React.CSSProperties}
+            onMouseEnter={(e) => {
+              if (!isSending && (responseMessage.trim() || selectedFiles.length > 0)) {
+                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSending && (responseMessage.trim() || selectedFiles.length > 0)) {
+                e.currentTarget.style.backgroundColor = 'var(--color-primary-base)';
+              }
+            }}
           >
             {isSending ? (
               <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

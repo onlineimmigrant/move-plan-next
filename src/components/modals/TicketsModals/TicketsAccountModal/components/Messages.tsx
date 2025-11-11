@@ -24,9 +24,51 @@ export default function Messages({
   messagesContainerRef,
   messagesEndRef,
 }: MessagesProps) {
+  /**
+   * Message grouping threshold in milliseconds (2 minutes)
+   */
+  const GROUP_TIME_THRESHOLD = 2 * 60 * 1000;
+
+  /**
+   * Determine if message should be grouped with previous one
+   */
+  const shouldGroupWithPrevious = (currentIndex: number, response: any): boolean => {
+    if (currentIndex === 0) return false;
+
+    const prevResponse = selectedTicket.ticket_responses[currentIndex - 1];
+    
+    // Must be same type (both admin or both customer)
+    if (response.is_admin !== prevResponse.is_admin) return false;
+
+    // For admin messages, must be same avatar
+    if (response.is_admin) {
+      const currentAvatar = getAvatarForResponse(response, avatars);
+      const prevAvatar = getAvatarForResponse(prevResponse, avatars);
+      if (!currentAvatar || !prevAvatar || currentAvatar.id !== prevAvatar.id) return false;
+    }
+
+    // Check time delta
+    const currentTime = new Date(response.created_at).getTime();
+    const prevTime = new Date(prevResponse.created_at).getTime();
+    const timeDelta = currentTime - prevTime;
+
+    return timeDelta <= GROUP_TIME_THRESHOLD;
+  };
+
+  /**
+   * Calculate adaptive width based on message length
+   */
+  const getAdaptiveWidth = (message: string): string => {
+    const charCount = message.length;
+    if (charCount < 20) return 'max-w-[30%]';
+    if (charCount < 50) return 'max-w-[50%]';
+    if (charCount < 100) return 'max-w-[65%]';
+    return 'max-w-[80%]';
+  };
+
   return (
-    <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-slate-50">
-      <div className={`space-y-4 ${size === 'fullscreen' || size === 'half' ? 'max-w-2xl mx-auto' : ''}`}>
+    <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-slate-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/50">
+      <div className={`${size === 'fullscreen' || size === 'half' ? 'max-w-2xl mx-auto' : ''}`}>
         {/* Ticket Status Tracker */}
         <TicketStatusTracker
           status={selectedTicket.status as 'open' | 'in-progress' | 'closed'}
@@ -43,23 +85,34 @@ export default function Messages({
         
         {/* Initial message - show "You" indicator */}
         <div className="flex items-center gap-3 my-3">
-          <div className="flex-1 border-t border-slate-300"></div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex-1 border-t border-slate-300 dark:border-gray-600"></div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             {renderAvatar(null, 'You', false)}
             <span>You started the conversation</span>
           </div>
-          <div className="flex-1 border-t border-slate-300"></div>
+          <div className="flex-1 border-t border-slate-300 dark:border-gray-600"></div>
         </div>
         
-        <div className="flex justify-end items-start">
-          <div className="max-w-[80%] bg-gradient-to-br from-teal-500 to-cyan-600 text-white rounded-2xl rounded-tr-sm shadow-sm px-3 py-2">
-            <div>
-              <p className="text-sm leading-snug inline">{selectedTicket.message}</p>
-              <span className="text-[11px] opacity-75 whitespace-nowrap ml-2">
-                {new Date(selectedTicket.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-              {/* Read receipts - always show double check for initial message (assumed read) */}
-              <ReadReceipts isRead={true} />
+        <div className="flex justify-end items-start mt-4 animate-slide-in motion-reduce:animate-none">
+          <div className={getAdaptiveWidth(selectedTicket.message)}>
+            <div 
+              className="backdrop-blur-md border text-slate-900 dark:text-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow px-3.5 py-2.5"
+              style={{
+                background: 'color-mix(in srgb, var(--color-primary-base) 8%, rgb(255 255 255 / 0.6))',
+                borderColor: 'color-mix(in srgb, var(--color-primary-base) 15%, rgb(255 255 255 / 0.2))',
+              }}
+            >
+              <div>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{selectedTicket.message}</p>
+                
+                {/* Footer: Timestamp and Read Receipts */}
+                <div className="flex items-center gap-1.5 mt-1.5 justify-between">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                    {new Date(selectedTicket.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <ReadReceipts isRead={true} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -70,6 +123,9 @@ export default function Messages({
           const displayName = response.is_admin 
             ? (avatar?.full_name || avatar?.title || 'Support')
             : 'You';
+          
+          const isGrouped = shouldGroupWithPrevious(index, response);
+          const widthClass = getAdaptiveWidth(response.message || '');
           
           // Check if avatar changed (for admin messages only)
           // Find the LAST admin message before this one (not just previous message)
@@ -100,17 +156,33 @@ export default function Messages({
                 />
               )}
               
-              <div className={`flex items-start ${response.is_admin ? 'justify-start' : 'justify-end'} animate-slide-in`}>
-                <div className={`max-w-[80%] ${response.is_admin ? 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm' : 'bg-gradient-to-br from-teal-500 to-cyan-600 text-white rounded-2xl rounded-tr-sm'} shadow-sm px-3 py-2`}>
-                  <div>
-                    {response.message && (
-                      <>
-                        <p className="text-sm leading-snug whitespace-pre-wrap inline">{response.message}</p>
-                        <span className={`text-[11px] ${response.is_admin ? 'text-slate-500' : 'opacity-75'} whitespace-nowrap ml-2`}>
-                          {new Date(response.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </>
-                    )}
+              <div className={`flex items-start ${response.is_admin ? 'justify-start' : 'justify-end'} ${isGrouped ? 'mt-1' : 'mt-4'} animate-slide-in motion-reduce:animate-none`}>
+                <div className={widthClass}>
+                  <div 
+                    className={`${
+                      response.is_admin 
+                        ? 'bg-white/50 dark:bg-gray-900/40 backdrop-blur-md border border-white/20 dark:border-gray-700/20 text-slate-800 dark:text-slate-200' 
+                        : 'backdrop-blur-md border text-slate-900 dark:text-slate-100'
+                    } rounded-2xl shadow-sm hover:shadow-md transition-shadow px-3.5 py-2.5`}
+                    style={!response.is_admin ? {
+                      background: 'color-mix(in srgb, var(--color-primary-base) 8%, rgb(255 255 255 / 0.6))',
+                      borderColor: 'color-mix(in srgb, var(--color-primary-base) 15%, rgb(255 255 255 / 0.2))',
+                    } : undefined}
+                  >
+                    <div>
+                      {response.message && (
+                        <>
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{response.message}</p>
+                          
+                          {/* Footer: Timestamp and Read Receipts */}
+                          <div className="flex items-center gap-1.5 mt-1.5 justify-between">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                              {new Date(response.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {!response.is_admin && <ReadReceipts isRead={response.is_read || false} />}
+                          </div>
+                        </>
+                      )}
                     
                     {/* Attachments */}
                     {response.attachments && response.attachments.length > 0 && (
@@ -144,34 +216,20 @@ export default function Messages({
                               </div>
                             </div>
                           ) : (
-                            // File download button
+                            // File download button - glass card style
                             <button
                               key={attachment.id}
                               onClick={() => downloadAttachment(attachment.file_path, attachment.file_name)}
-                              className={`flex items-center gap-2 p-2 rounded-lg ${
-                                response.is_admin 
-                                  ? 'bg-slate-50 hover:bg-slate-100 border border-slate-200' 
-                                  : 'bg-white/20 hover:bg-white/30 border border-white/30'
-                              } transition-all duration-200 w-full text-left`}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border border-white/30 dark:border-gray-700/30 hover:bg-white/60 dark:hover:bg-gray-800/60 hover:shadow-md transition-all text-slate-700 dark:text-slate-200"
                             >
-                              <div className="flex-shrink-0 text-lg">
-                                {getFileIcon(attachment.file_type)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className={`text-xs font-medium truncate ${
-                                  response.is_admin ? 'text-slate-700' : 'text-white'
-                                }`}>
-                                  {attachment.file_name}
-                                </p>
-                                <p className={`text-xs ${
-                                  response.is_admin ? 'text-slate-500' : 'text-white/75'
-                                }`}>
+                              <span className="text-xl flex-shrink-0">{getFileIcon(attachment.file_type)}</span>
+                              <div className="flex-1 text-left min-w-0">
+                                <p className="text-xs font-medium truncate">{attachment.file_name}</p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400">
                                   {formatFileSize(attachment.file_size)}
                                 </p>
                               </div>
-                              <svg className={`h-4 w-4 flex-shrink-0 ${
-                                response.is_admin ? 'text-slate-400' : 'text-white/75'
-                              }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <svg className="w-4 h-4 flex-shrink-0 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                               </svg>
                             </button>
@@ -182,17 +240,14 @@ export default function Messages({
                     
                     {/* Show timestamp and read receipts if no message (attachment only) */}
                     {!response.message && (
-                      <div>
-                        <span className={`text-[11px] ${response.is_admin ? 'text-slate-500' : 'opacity-75'} whitespace-nowrap`}>
+                      <div className="flex items-center gap-1.5 mt-1.5 justify-between">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
                           {new Date(response.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        {/* Show read receipts only for customer's messages */}
                         {!response.is_admin && <ReadReceipts isRead={response.is_read || false} />}
                       </div>
                     )}
-                    
-                    {/* Show read receipts for customer's messages with text */}
-                    {response.message && !response.is_admin && <ReadReceipts isRead={response.is_read || false} />}
+                    </div>
                   </div>
                 </div>
               </div>

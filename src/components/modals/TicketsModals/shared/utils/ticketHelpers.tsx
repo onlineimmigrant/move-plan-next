@@ -288,13 +288,13 @@ export function renderAvatar(avatar: Avatar | null, displayName: string, isAdmin
       <img
         src={avatar.image}
         alt={name}
-        className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+        className="w-7 h-7 rounded-full object-cover flex-shrink-0"
       />
     );
   }
 
   return (
-    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${getAvatarClasses(isAdmin)}`}>
+    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 ${getAvatarClasses(isAdmin)}`}>
       {initials}
     </div>
   );

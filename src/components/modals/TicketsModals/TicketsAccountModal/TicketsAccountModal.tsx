@@ -59,6 +59,8 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevResponseCountRef = useRef<number>(0);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Helper for toast notifications
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -182,6 +184,24 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
   // Effects
   // ============================================================================
 
+  // Focus management - Store and restore focus
+  useEffect(() => {
+    if (isOpen) {
+      // Store the currently focused element
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      
+      // Focus the modal after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        modalRef.current?.focus();
+      }, 100);
+    } else {
+      // Restore focus when modal closes
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
+    }
+  }, [isOpen]);
+
   // Keep ref in sync with state
   useEffect(() => {
     selectedTicketRef.current = selectedTicket;
@@ -272,101 +292,203 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
 
   if (!isOpen) return null;
 
+  // Check if mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
   const modalContent = (
     <>
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000]"
         onClick={onClose}
+        aria-hidden="true"
       />
       
-      {/* Draggable & Resizable Modal Container */}
-      <Rnd
-        default={getRndConfig()}
-        minWidth={400}
-        minHeight={600}
-        bounds="window"
-        dragHandleClassName="modal-drag-handle"
-        enableResizing={size !== 'fullscreen'}
-        className="pointer-events-auto z-[10001]"
-      >
-        <div className="relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20">
-          {/* Header */}
-          <ModalHeader
-          selectedTicket={selectedTicket}
-          size={size}
-          avatars={avatars}
-          totalUnreadCount={totalUnreadCount}
-          onBack={() => setSelectedTicket(null)}
-          onToggleSize={toggleSize}
-          onClose={onClose}
-        />
+      {isMobile ? (
+        /* Mobile: Fixed fullscreen */
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-[10001]">
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ticket-modal-title"
+            tabIndex={-1}
+            className="relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <ModalHeader
+              selectedTicket={selectedTicket}
+              size={size}
+              avatars={avatars}
+              totalUnreadCount={totalUnreadCount}
+              onBack={() => setSelectedTicket(null)}
+              onToggleSize={toggleSize}
+              onClose={onClose}
+            />
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {selectedTicket ? (
-            <>
-              {/* Messages */}
-              <Messages
-                selectedTicket={selectedTicket}
-                size={size}
-                avatars={avatars}
-                attachmentUrls={attachmentUrls}
-                isAdminTyping={isAdminTyping}
-                messagesContainerRef={messagesContainerRef}
-                messagesEndRef={messagesEndRef}
-              />
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {selectedTicket ? (
+                <>
+                  {/* Messages */}
+                  <Messages
+                    selectedTicket={selectedTicket}
+                    size={size}
+                    avatars={avatars}
+                    attachmentUrls={attachmentUrls}
+                    isAdminTyping={isAdminTyping}
+                    messagesContainerRef={messagesContainerRef}
+                    messagesEndRef={messagesEndRef}
+                  />
 
-              {/* Input Area */}
-              <div className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
-                <MessageInput
-                  size={size}
-                  responseMessage={responseMessage}
-                  selectedFiles={selectedFiles}
-                  isDragging={isDragging}
-                  isSending={isSending}
-                  inputRef={inputRef}
-                  fileInputRef={fileInputRef}
-                  onMessageChange={handleMessageChange}
-                  onRespond={handleRespond}
-                  onFileSelect={handleFileSelect}
-                  onRemoveFile={removeFile}
-                  onClearFiles={clearFiles}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Ticket List */}
-              <TicketList
-                tickets={groupedTickets[activeTab]}
-                activeTab={activeTab}
-                isLoadingTickets={isLoadingTickets}
-                loadingMore={loadingMore}
-                hasMoreTickets={hasMoreTickets}
-                onTicketSelect={handleTicketSelect}
-                onLoadMore={loadMoreTickets}
-              />
-            </>
-          )}
+                  {/* Input Area */}
+                  <div className="p-4">
+                    <MessageInput
+                      size={size}
+                      responseMessage={responseMessage}
+                      selectedFiles={selectedFiles}
+                      isDragging={isDragging}
+                      isSending={isSending}
+                      inputRef={inputRef}
+                      fileInputRef={fileInputRef}
+                      onMessageChange={handleMessageChange}
+                      onRespond={handleRespond}
+                      onFileSelect={handleFileSelect}
+                      onRemoveFile={removeFile}
+                      onClearFiles={clearFiles}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Ticket List */}
+                  <TicketList
+                    tickets={groupedTickets[activeTab]}
+                    activeTab={activeTab}
+                    isLoadingTickets={isLoadingTickets}
+                    loadingMore={loadingMore}
+                    hasMoreTickets={hasMoreTickets}
+                    onTicketSelect={handleTicketSelect}
+                    onLoadMore={loadMoreTickets}
+                  />
+                </>
+              )}
 
-          {/* Bottom Tabs - Only show when no ticket selected */}
-          {!selectedTicket && (
-            <div className="flex justify-center px-2 py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
-              <BottomTabs
-                statuses={statuses}
-                activeTab={activeTab}
-                groupedTickets={groupedTickets}
-                onTabChange={setActiveTab}
-              />
+              {/* Bottom Tabs - Only show when no ticket selected */}
+              {!selectedTicket && (
+                <div className="flex justify-center px-2 py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
+                  <BottomTabs
+                    statuses={statuses}
+                    activeTab={activeTab}
+                    groupedTickets={groupedTickets}
+                    onTabChange={setActiveTab}
+                  />
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-        </div>
-      </Rnd>
+      ) : (
+        /* Desktop: Draggable & Resizable */
+        <Rnd
+          default={getRndConfig()}
+          minWidth={400}
+          minHeight={600}
+          bounds="window"
+          dragHandleClassName="modal-drag-handle"
+          enableResizing={size !== 'fullscreen'}
+          className="pointer-events-auto z-[10001]"
+        >
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ticket-modal-title"
+            tabIndex={-1}
+            className="relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <ModalHeader
+              selectedTicket={selectedTicket}
+              size={size}
+              avatars={avatars}
+              totalUnreadCount={totalUnreadCount}
+              onBack={() => setSelectedTicket(null)}
+              onToggleSize={toggleSize}
+              onClose={onClose}
+            />
+
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {selectedTicket ? (
+                <>
+                  {/* Messages */}
+                  <Messages
+                    selectedTicket={selectedTicket}
+                    size={size}
+                    avatars={avatars}
+                    attachmentUrls={attachmentUrls}
+                    isAdminTyping={isAdminTyping}
+                    messagesContainerRef={messagesContainerRef}
+                    messagesEndRef={messagesEndRef}
+                  />
+
+                  {/* Input Area */}
+                  <div className="p-4">
+                    <MessageInput
+                      size={size}
+                      responseMessage={responseMessage}
+                      selectedFiles={selectedFiles}
+                      isDragging={isDragging}
+                      isSending={isSending}
+                      inputRef={inputRef}
+                      fileInputRef={fileInputRef}
+                      onMessageChange={handleMessageChange}
+                      onRespond={handleRespond}
+                      onFileSelect={handleFileSelect}
+                      onRemoveFile={removeFile}
+                      onClearFiles={clearFiles}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Ticket List */}
+                  <TicketList
+                    tickets={groupedTickets[activeTab]}
+                    activeTab={activeTab}
+                    isLoadingTickets={isLoadingTickets}
+                    loadingMore={loadingMore}
+                    hasMoreTickets={hasMoreTickets}
+                    onTicketSelect={handleTicketSelect}
+                    onLoadMore={loadMoreTickets}
+                  />
+                </>
+              )}
+
+              {/* Bottom Tabs - Only show when no ticket selected */}
+              {!selectedTicket && (
+                <div className="flex justify-center px-2 py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
+                  <BottomTabs
+                    statuses={statuses}
+                    activeTab={activeTab}
+                    groupedTickets={groupedTickets}
+                    onTabChange={setActiveTab}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </Rnd>
+      )}
 
       {toast && (
         <Toast
