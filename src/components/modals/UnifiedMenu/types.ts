@@ -112,6 +112,9 @@ export interface UnifiedMenuProps {
   
   /** Custom class for trigger button */
   className?: string;
+  
+  /** Hide the menu button (useful when another modal is open) */
+  hideButton?: boolean;
 }
 
 /**

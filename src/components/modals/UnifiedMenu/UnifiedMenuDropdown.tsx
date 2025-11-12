@@ -83,7 +83,7 @@ export function UnifiedMenuDropdown({
           backdrop-blur-2xl
           border border-white/20 dark:border-gray-700/20
           shadow-2xl
-          rounded-xl
+          rounded-3xl
           outline-none focus:outline-none
           ${animationClasses}
         `}

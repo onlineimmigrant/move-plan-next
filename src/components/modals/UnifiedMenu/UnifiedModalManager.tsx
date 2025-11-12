@@ -69,12 +69,16 @@ const RegisterModal = dynamic(
  * - Authenticated: Help Center, Account, Appointments (account modal), AI Agent (chat widget), Support (account modal)
  * - Unauthenticated: Help Center, Sign In, Chat widget, Contact
  * 
+ * @param forceShow - Override default hiding logic for admin/account pages (used in navbar)
+ * @param position - Position of the menu button
+ * 
  * @example
  * ```tsx
  * <UnifiedModalManager />
+ * <UnifiedModalManager forceShow position="top-left" />
  * ```
  */
-export function UnifiedModalManager() {
+export function UnifiedModalManager({ forceShow = false, position = 'bottom-right' }: { forceShow?: boolean; position?: 'bottom-right' | 'top-left' | 'top-right' }) {
   const [openModal, setOpenModal] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
@@ -88,7 +92,7 @@ export function UnifiedModalManager() {
   const unreadMeetingsCount = useUnreadMeetingsCount();
 
   // Don't show on admin or account pages (they have their own navigation)
-  const shouldHide = pathname?.startsWith('/admin') || pathname?.startsWith('/account');
+  const shouldHide = !forceShow && (pathname?.startsWith('/admin') || pathname?.startsWith('/account'));
   
   if (shouldHide) {
     return null;
@@ -193,10 +197,11 @@ export function UnifiedModalManager() {
       {/* Unified Menu */}
       <UnifiedMenu
         items={menuItems}
-        position="bottom-right"
+        position={position}
         onItemClick={(item) => {
           console.log('Menu item clicked:', item.id);
         }}
+        hideButton={openModal === 'site-actions'}
       />
 
       {/* Admin Modals */}
@@ -260,6 +265,7 @@ export function UnifiedModalManager() {
         <SiteActionsModal
           isOpen={true}
           onClose={() => setOpenModal(null)}
+          position={position}
         />
       )}
 

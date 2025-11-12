@@ -8,7 +8,6 @@ import { ModalProvider } from '@/context/ModalContext';
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
 import AccountTopBar from '@/components/AccountTopBar';
 import ParentMenu from './components/ParentMenu';
-import TicketsAdminToggleButton from '@/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminToggleButton';
 import Loading from '@/ui/Loading';
 import { useSidebarState } from '@/hooks/useSidebarState';
 import { useMenuVisibility } from '@/hooks/useMenuVisibility';
@@ -16,6 +15,7 @@ import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { getFilteredSidebarLinks, DisclosureKey as TablesDisclosureKey } from '@/lib/sidebarLinks';
 import { reportSidebarLinks, DisclosureKey as ReportsDisclosureKey } from '@/lib/reportSidebarLinks';
 import { sidebarLinks } from '@/lib/sidebarLinks';
+import { UnifiedModalManager } from '@/components/modals/UnifiedMenu';
 
 // Lazy load sidebar menus for better initial load performance
 const TablesChildMenu = lazy(() => import('./components/TablesChildMenu'));
@@ -270,6 +270,9 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
                 <div className="max-w-7xl mx-auto px-0 sm:px-6 md:px-8">{children}</div>
               </main>
             
+            {/* Unified Menu - Bottom Right */}
+            <UnifiedModalManager forceShow position="bottom-right" />
+            
             {/* Superadmin Portal Button */}
             {isSuperadmin && (
               <a
@@ -281,8 +284,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
                 <span className="font-medium hidden sm:inline">Superadmin Portal</span>
               </a>
             )}
-            
-            <TicketsAdminToggleButton />
             </div>
           </div>
   );

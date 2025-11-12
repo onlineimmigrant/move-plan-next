@@ -8,11 +8,6 @@ import { useSidebar } from '@/context/SidebarContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
-import dynamic from 'next/dynamic';
-
-// Dynamically import widgets to avoid SSR issues
-const ChatHelpWidget = dynamic(() => import('@/components/ChatHelpWidget'), { ssr: false });
-const UniversalNewButton = dynamic(() => import('@/components/AdminQuickActions/UniversalNewButton'), { ssr: false });
 
 export default function AccountTopBar() {
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useSidebar();
@@ -43,30 +38,20 @@ export default function AccountTopBar() {
     <>
       <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-white/20 dark:border-gray-700/30">
         <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
-          {/* Left: Menu Toggle & Action Widgets */}
-          <div className="flex items-center gap-2">
-            {/* Hamburger Menu - Only show if shouldShowHamburger is true */}
-            {shouldShowHamburger && (
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className={`${isAdminPage ? '' : 'lg:hidden'} p-2 rounded-lg text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
-                aria-label="Toggle menu"
-              >
-                {isMobileMenuOpen ? (
-                  <XMarkIcon className="h-6 w-6" />
-                ) : (
-                  <Bars3Icon className="h-6 w-6" />
-                )}
-              </button>
-            )}
-            
-            {/* Action Widgets - Show on admin pages or main account page */}
-            {shouldShowWidgets && (
-              <div className="flex items-center gap-2">
-                <UniversalNewButton inNavbar />
-              </div>
-            )}
-          </div>
+          {/* Left: Hamburger Menu - Only show if shouldShowHamburger is true */}
+          {shouldShowHamburger && (
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className={`${isAdminPage ? '' : 'lg:hidden'} p-2 rounded-lg text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <XMarkIcon className="h-6 w-6" />
+              ) : (
+                <Bars3Icon className="h-6 w-6" />
+              )}
+            </button>
+          )}
 
           {/* Center: Empty for now */}
           <div className="flex-1" />
@@ -87,9 +72,6 @@ export default function AccountTopBar() {
           </Link>
         </div>
       </header>
-      
-      {/* Chat Widget - Render outside navbar with fixed positioning at top-left */}
-      {shouldShowWidgets && <ChatHelpWidget inNavbar />}
     </>
   );
 }

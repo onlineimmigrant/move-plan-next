@@ -41,7 +41,7 @@ export function UnifiedMenuItem({
         onMouseEnter={onHover}
         onMouseLeave={onLeave}
         className={`
-          flex-1 flex flex-col items-center justify-center gap-2.5 px-3 py-3.5
+          flex-1 flex flex-col items-center justify-center gap-2.5 px-3 py-4
           hover:bg-white/10 dark:hover:bg-gray-800/10
           active:bg-white/20 dark:active:bg-gray-800/20
           transition-all duration-200
@@ -49,8 +49,8 @@ export function UnifiedMenuItem({
           relative
           focus-visible:outline-2 focus-visible:outline-offset-1
           focus-visible:outline-white/60 dark:focus-visible:outline-gray-400/60
-          ${positionInBottomRow === 'left' ? 'rounded-bl-lg' : ''}
-          ${positionInBottomRow === 'right' ? 'rounded-br-lg' : ''}
+          ${positionInBottomRow === 'left' ? 'rounded-bl-3xl' : ''}
+          ${positionInBottomRow === 'right' ? 'rounded-br-3xl' : ''}
         `}
         aria-label={item.description || item.label}
       >
@@ -61,14 +61,15 @@ export function UnifiedMenuItem({
             color: isSelected || isHovered ? primary.base : undefined,
           }}
         >
-          <IconComponent className="w-5 h-5" />
+          <IconComponent className="w-6 h-6" />
         </div>
 
         {/* Label */}
         <div
-          className="text-xs font-semibold text-gray-900 dark:text-white text-center leading-tight"
+          className="text-[13px] font-semibold text-gray-900 dark:text-white text-center leading-tight tracking-wide"
           style={{
             color: isSelected || isHovered ? primary.base : undefined,
+            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
           }}
         >
           {item.label}
@@ -77,7 +78,7 @@ export function UnifiedMenuItem({
         {/* Badge */}
         {showBadge && (
           <div
-            className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white"
+            className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1.5 flex items-center justify-center rounded-full text-[11px] font-light text-white leading-none"
             style={{
               backgroundColor: primary.base,
             }}
@@ -96,11 +97,11 @@ export function UnifiedMenuItem({
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
       className="
-        w-full flex items-center gap-4 px-4 py-2.5
+        w-full flex items-center gap-4 px-4 py-3
         hover:bg-white/10 dark:hover:bg-gray-800/10
         active:bg-white/20 dark:active:bg-gray-800/20
         transition-all duration-200
-        rounded-lg
+        rounded-xl
         group
         relative
         focus-visible:outline-2 focus-visible:outline-offset-1
@@ -115,23 +116,24 @@ export function UnifiedMenuItem({
           color: isSelected || isHovered ? primary.base : undefined,
         }}
       >
-        <IconComponent className="w-5 h-5" />
+        <IconComponent className="w-6 h-6" />
       </div>
 
       {/* Label */}
       <div
-        className="text-sm font-medium tracking-tight text-gray-900 dark:text-white flex-1 text-left"
+        className="text-[15px] font-medium tracking-normal text-gray-900 dark:text-white flex-1 text-left"
         style={{
           color: isSelected || isHovered ? primary.base : undefined,
+          fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
         }}
       >
         {item.label}
       </div>
 
-      {/* Badge */}
+      {/* Badge - positioned at top-right edge of hover area */}
       {showBadge && (
         <div
-          className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full text-xs font-bold text-white"
+          className="absolute top-1 right-2 min-w-[18px] h-[18px] px-1.5 flex items-center justify-center rounded-full text-[11px] font-light text-white leading-none"
           style={{
             backgroundColor: primary.base,
           }}

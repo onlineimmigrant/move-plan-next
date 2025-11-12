@@ -40,6 +40,7 @@ export function UnifiedMenu({
   onItemClick,
   showBadge = true,
   className,
+  hideButton = false,
 }: UnifiedMenuProps) {
   console.log(`[Debug] UnifiedMenu: render. showBadge=${showBadge}`);
   const [isOpen, setIsOpen] = useState(false);
@@ -122,15 +123,17 @@ export function UnifiedMenu({
 
   return (
     <>
-      <UnifiedMenuButton
-        ref={buttonRef}
-        isOpen={isOpen}
-        onClick={handleToggle}
-        position={position}
-        ticketsBadgeCount={showBadge && unreadTicketCount > 0 ? unreadTicketCount : null}
-        meetingsBadgeCount={showBadge && unreadMeetingsCount > 0 ? unreadMeetingsCount : null}
-        className={className}
-      />
+      {!hideButton && (
+        <UnifiedMenuButton
+          ref={buttonRef}
+          isOpen={isOpen}
+          onClick={handleToggle}
+          position={position}
+          ticketsBadgeCount={showBadge && unreadTicketCount > 0 ? unreadTicketCount : null}
+          meetingsBadgeCount={showBadge && unreadMeetingsCount > 0 ? unreadMeetingsCount : null}
+          className={className}
+        />
+      )}
 
       {isOpen && (
         <UnifiedMenuDropdown

@@ -47,7 +47,7 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
         onClick={handleClick}
         onMouseDown={(e) => e.preventDefault()}
         className={`
-          w-14 h-14
+          w-10 h-10
           rounded-full
           bg-white/30 dark:bg-gray-900/30
           backdrop-blur-3xl
@@ -76,7 +76,7 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
         {/* Settings Icon */}
         <Cog6ToothIcon
           className={`
-            h-6 w-6 transition-all duration-300
+            h-5 w-5 transition-all duration-300
             ${isOpen ? 'rotate-90' : ''}
           `}
           style={{
@@ -92,7 +92,7 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
               min-w-[20px] h-5
               px-1.5
               flex items-center justify-center
-              text-xs font-bold
+              text-xs font-light
               text-white
               rounded-full
               shadow-lg
@@ -115,7 +115,7 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
               min-w-[20px] h-5
               px-1.5
               flex items-center justify-center
-              text-xs font-bold
+              text-xs font-light
               text-white
               rounded-full
               shadow-lg
@@ -138,7 +138,7 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
               min-w-[20px] h-5
               px-1.5
               flex items-center justify-center
-              text-xs font-bold
+              text-xs font-light
               text-white
               rounded-full
               shadow-lg

@@ -23,6 +23,7 @@ import { UserCircleIcon as UserCircleIconSolid } from '@heroicons/react/24/solid
 import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 import TicketsAccountModal from '@/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal';
 import MeetingsBookingModal from '@/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal';
+import { UnifiedModalManager } from '@/components/modals/UnifiedMenu';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { logger } from '@/lib/logger';
@@ -227,6 +228,9 @@ export default function AccountPage() {
           isOpen={isTicketsModalOpen} 
           onClose={handleCloseTicketsModal}
         />
+        
+        {/* Unified Menu - Bottom Right */}
+        <UnifiedModalManager forceShow position="bottom-right" />
     </main>
     </SidebarProvider>
   );

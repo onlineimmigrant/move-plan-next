@@ -3,6 +3,7 @@
 import AccountSidebar from '@/components/AccountSidebar';
 import AccountTopBar from '@/components/AccountTopBar';
 import { SidebarProvider } from '@/context/SidebarContext';
+import { UnifiedModalManager } from '@/components/modals/UnifiedMenu';
 
 export default function ProfileSectionLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +23,9 @@ export default function ProfileSectionLayout({ children }: { children: React.Rea
             </div>
           </main>
         </div>
+        
+        {/* Unified Menu - Bottom Right */}
+        <UnifiedModalManager forceShow position="bottom-right" />
       </div>
     </SidebarProvider>
   );
