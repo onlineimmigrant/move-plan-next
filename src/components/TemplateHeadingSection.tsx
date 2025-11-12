@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import { usePathname } from 'next/navigation';
@@ -163,22 +163,20 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
             : '';
           
           // Calculate heading section background style (gradient or solid color)
-          const headingBackgroundStyle = useMemo(() => {
-            // Determine fallback color based on style variant
-            const fallbackColor = isApple 
-              ? 'rgb(255 255 255 / 0.95)' 
-              : isCodedHarmony 
-              ? 'rgb(255 255 255)' 
-              : isClean 
-              ? 'transparent' 
-              : 'white';
-            
-            return getBackgroundStyle(
-              section.is_gradient,
-              section.gradient,
-              section.background_color || fallbackColor
-            );
-          }, [section.is_gradient, section.gradient, section.background_color, isApple, isCodedHarmony, isClean]);
+          // Note: Not using useMemo here as it's inside .map() - violates Rules of Hooks
+          const fallbackColor = isApple 
+            ? 'rgb(255 255 255 / 0.95)' 
+            : isCodedHarmony 
+            ? 'rgb(255 255 255)' 
+            : isClean 
+            ? 'transparent' 
+            : 'white';
+          
+          const headingBackgroundStyle = getBackgroundStyle(
+            section.is_gradient,
+            section.gradient,
+            section.background_color || fallbackColor
+          );
           
           return (
           <section

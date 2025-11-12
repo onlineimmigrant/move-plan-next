@@ -1,796 +1,576 @@
+/**
+ * TemplateHeadingSectionEditModal (Refactored)
+ * 
+ * Clean, modular version using extracted components, hooks, and sections
+ */
+
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  PhotoIcon,
-  Square2StackIcon,
-  LinkIcon,
-  SparklesIcon,
-  PlusIcon,
-  CursorArrowRaysIcon,
-  XMarkIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/24/outline';
-import { useTemplateHeadingSectionEdit } from './context';
-import ColorPaletteDropdown, { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
-import EditableGradientPicker from '@/components/Shared/EditableFields/EditableGradientPicker';
-import { getBackgroundStyle } from '@/utils/gradientHelper';
+import React, { useState } from 'react';
+import { PaintBrushIcon } from '@heroicons/react/24/outline';
+import { StandardModalContainer } from '../_shared/containers/StandardModalContainer';
+import { StandardModalHeader } from '../_shared/layout/StandardModalHeader';
+import { StandardModalBody } from '../_shared/layout/StandardModalBody';
+import { StandardModalFooter } from '../_shared/layout/StandardModalFooter';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import Button from '@/ui/Button';
-import { cn } from '@/lib/utils';
-import { BaseModal } from '../_shared/BaseModal';
+import { HeadingFormData } from './types';
+import { useTemplateHeadingSectionEdit } from './context';
 
-// Tooltip Component
-const Tooltip = ({ content }: { content: string }) => {
-  return (
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-      <div className="relative">
-        {/* Arrow */}
-        <div className="absolute -top-1 left-1/2 -translate-x-1/2">
-          <div className="w-2 h-2 bg-white border-l border-t border-gray-200 transform rotate-45" />
-        </div>
-        {/* Content */}
-        <div className="bg-white text-gray-700 text-xs rounded-lg shadow-lg border border-gray-200 px-3 py-2 whitespace-normal w-64">
-          {content}
-        </div>
-      </div>
-    </div>
-  );
-};
+// Import all hooks
+import {
+  useHeadingForm,
+  useColorPickers,
+  useImageGallery,
+  useHeadingSave,
+  useHeadingDelete,
+  usePartToggles,
+} from './hooks';
 
-// Text style variants matching TemplateHeadingSection.tsx
-const TEXT_VARIANTS = {
-  default: {
-    h1: 'text-3xl sm:text-5xl lg:text-7xl font-normal text-gray-800',
-    description: 'text-lg font-light text-gray-700',
-    button: 'bg-gradient-to-r from-emerald-400 to-teal-500',
-    linkColor: 'text-emerald-600 hover:text-emerald-500'
-  },
-  apple: {
-    h1: 'text-4xl sm:text-6xl lg:text-7xl font-light text-gray-900',
-    description: 'text-lg font-light text-gray-600',
-    button: 'bg-gradient-to-r from-sky-500 to-blue-500',
-    linkColor: 'text-sky-600 hover:text-sky-500'
-  },
-  codedharmony: {
-    h1: 'text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 tracking-tight leading-none',
-    description: 'text-lg sm:text-xl text-gray-500 font-light leading-relaxed',
-    button: 'bg-gradient-to-r from-indigo-500 to-purple-500',
-    linkColor: 'text-indigo-600 hover:text-indigo-500'
-  }
-};
+// Import all section components
+import {
+  TitleSection,
+  DescriptionSection,
+  ButtonSection,
+  ImageSection,
+  BackgroundSection,
+} from './sections';
 
-interface TemplateHeadingFormData {
-  name: string;
-  name_part_2: string;
-  name_part_3: string;
-  description_text: string;
-  button_text: string;
-  url_page: string;
-  url: string;
-  image: string;
-  image_first: boolean;
-  is_included_templatesection: boolean;
-  background_color: string;
-  is_gradient: boolean;
-  gradient: { from: string; via?: string; to: string } | null;
-  text_style_variant: 'default' | 'apple' | 'codedharmony';
-  is_text_link: boolean;
-  title_alignment: 'left' | 'center' | 'right';
-}
+// Import preview component
+import { HeadingPreview } from './preview';
 
 export default function TemplateHeadingSectionEditModal() {
+  // Get modal state from context
   const { isOpen, editingSection, mode, closeModal, updateSection, deleteSection } = useTemplateHeadingSectionEdit();
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showStylePicker, setShowStylePicker] = useState(false);
-  const [showImageGallery, setShowImageGallery] = useState(false);
-  const [showUrlFields, setShowUrlFields] = useState(false);
-  const [showPart2, setShowPart2] = useState(false);
-  const [showPart3, setShowPart3] = useState(false);
   
-  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const colorButtonRef = useRef<HTMLButtonElement>(null);
-  const styleButtonRef = useRef<HTMLButtonElement>(null);
-  const urlButtonRef = useRef<HTMLButtonElement>(null);
+  // Form state
+  const { formData, setFormData } = useHeadingForm(editingSection);
+
+  // Part toggles for title parts 2 and 3
+  const { showPart2, showPart3, setShowPart2, setShowPart3 } = usePartToggles(formData.name_part_2, formData.name_part_3);
+
+  // Theme colors
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+
+  // UI helpers
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [previewRefreshing, setPreviewRefreshing] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   
-  const [formData, setFormData] = useState<TemplateHeadingFormData>({
-    name: '',
-    name_part_2: '',
-    name_part_3: '',
-    description_text: '',
-    button_text: '',
-    url_page: '',
-    url: '',
-    image: '',
-    image_first: false,
-    is_included_templatesection: false,
-    background_color: 'white',
-    is_gradient: false,
-    gradient: null,
-    text_style_variant: 'default',
-    is_text_link: false,
-    title_alignment: 'left',
-  });
+  // Inline editing state
+  const [inlineEdit, setInlineEdit] = useState<{
+    field: 'title' | 'description' | null;
+    value: string;
+    position: { x: number; y: number };
+  }>({ field: null, value: '', position: { x: 0, y: 0 } });
 
-  // Initialize form data when editing section changes
-  useEffect(() => {
-    if (editingSection) {
-      setFormData({
-        name: editingSection.name || '',
-        name_part_2: editingSection.name_part_2 || '',
-        name_part_3: editingSection.name_part_3 || '',
-        description_text: editingSection.description_text || '',
-        button_text: editingSection.button_text || '',
-        url_page: editingSection.url_page || '',
-        url: editingSection.url || '',
-        image: editingSection.image || '',
-        image_first: editingSection.image_first || false,
-        is_included_templatesection: editingSection.is_included_templatesection || false,
-        background_color: (editingSection as any).background_color || 'white',
-        is_gradient: editingSection.is_gradient || false,
-        gradient: editingSection.gradient || null,
-        text_style_variant: (editingSection.text_style_variant as any) || 'default',
-        is_text_link: editingSection.is_text_link || false,
-        title_alignment: 'left',
-      });
-      
-      // Show part 2 and 3 if they have content
-      setShowPart2(!!editingSection.name_part_2);
-      setShowPart3(!!editingSection.name_part_3);
-    }
-  }, [editingSection]);
+  // Color picker states
+  const {
+    openColorPickers,
+    toggleColorPicker,
+  } = useColorPickers();
 
-  // Auto-expand textarea
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setFormData({ ...formData, description_text: e.target.value });
-    
-    if (descriptionTextareaRef.current) {
-      descriptionTextareaRef.current.style.height = 'auto';
-      descriptionTextareaRef.current.style.height = descriptionTextareaRef.current.scrollHeight + 'px';
-    }
-  };
+  // Image gallery state
+  const {
+    isImageGalleryOpen,
+    openImageGallery,
+    closeImageGallery,
+    handleImageSelect,
+  } = useImageGallery();
 
-  // Reset textarea height when content changes
-  useEffect(() => {
-    if (descriptionTextareaRef.current) {
-      descriptionTextareaRef.current.style.height = 'auto';
-      descriptionTextareaRef.current.style.height = descriptionTextareaRef.current.scrollHeight + 'px';
-    }
-  }, [formData.description_text]);
+  // Save functionality
+  const {
+    isSaving,
+    saveError,
+    handleSave,
+  } = useHeadingSave(updateSection, closeModal);
 
-  const handleSave = async () => {
-    // Validate required fields
-    if (!formData.name || !formData.name.trim()) {
-      alert('Please enter a heading name');
-      return;
-    }
-    
-    if (!formData.description_text || !formData.description_text.trim()) {
-      alert('Please enter a description text');
-      return;
-    }
-    
-    if (!formData.url_page || !formData.url_page.trim()) {
-      alert('Please enter a page URL (e.g., "/about" or "/")');
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      await updateSection(formData);
-      closeModal();
-    } catch (error) {
-      console.error('Failed to save:', error);
-      // Error toast is shown by context
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // Delete functionality
+  const {
+    showDeleteConfirm,
+    openDeleteConfirm,
+    cancelDelete,
+    handleDelete,
+  } = useHeadingDelete(
+    async () => {
+      if (editingSection?.id) {
+        await deleteSection(editingSection.id);
+      }
+    }, 
+    closeModal, 
+    (saving: boolean) => {}
+  );
 
-  const handleDelete = async () => {
-    if (!editingSection?.id) return;
-    
-    try {
-      await deleteSection(editingSection.id);
-      setShowDeleteConfirm(false);
-      // Success toast and modal close handled by context
-    } catch (error) {
-      console.error('Failed to delete:', error);
-      // Error toast is shown by context
-    }
-  };
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    if (!isOpen) return;
 
-  const handleImageSelect = (imageUrl: string) => {
-    setFormData({ ...formData, image: imageUrl });
-    setShowImageGallery(false);
-  };
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.dropdown-container') && 
-          !target.closest('.color-palette-dropdown') &&
-          !target.closest('.fixed.bg-white.rounded-lg.shadow-lg')) {
-        setShowColorPicker(false);
-        setShowStylePicker(false);
-        setShowUrlFields(false);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (formData.name.trim() && formData.description_text.trim()) {
+          handleSave(formData);
+        }
+      }
+      if (e.key === 'Escape') {
+        if (inlineEdit.field) {
+          e.stopPropagation();
+          setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+        } else if (openMenu) {
+          e.stopPropagation();
+          setOpenMenu(null);
+        }
+      }
+      if (e.key === 'Enter' && inlineEdit.field && !e.shiftKey) {
+        e.preventDefault();
+        handleInlineEditSave();
       }
     };
 
-    if (showColorPicker || showStylePicker || showUrlFields) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, openMenu, formData, handleSave, inlineEdit]);
+
+  // Reset delete confirmation text
+  React.useEffect(() => {
+    if (!showDeleteConfirm) {
+      setDeleteConfirmText('');
     }
-  }, [showColorPicker, showStylePicker, showUrlFields]);
+  }, [showDeleteConfirm]);
+
+  // Trigger preview refresh animation
+  React.useEffect(() => {
+    if (isOpen) {
+      setPreviewRefreshing(true);
+      const timer = setTimeout(() => setPreviewRefreshing(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [formData.name, formData.description_text, formData.button_text, formData.image, formData.background_color, isOpen]);
+
+  // Inline editing handlers
+  const handleInlineEditOpen = (field: 'title' | 'description', event: React.MouseEvent) => {
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    const value = field === 'title' ? formData.name : formData.description_text;
+    setInlineEdit({
+      field,
+      value: value || '',
+      position: { x: rect.left, y: rect.bottom + 10 }
+    });
+  };
+
+  const handleInlineEditSave = () => {
+    if (inlineEdit.field && inlineEdit.value.trim()) {
+      if (inlineEdit.field === 'title') {
+        setFormData({ ...formData, name: inlineEdit.value });
+      } else {
+        setFormData({ ...formData, description_text: inlineEdit.value });
+      }
+    }
+    setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+  };
+
+  const handleInlineEditCancel = () => {
+    setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+  };
 
   if (!isOpen) return null;
 
-  const modalTitle = (
-    <div className="flex items-center gap-2.5">
-      <span>{mode === 'create' ? 'Create Heading Section' : 'Edit Heading Section'}</span>
-      <span className={cn(
-        'px-2 py-0.5 text-xs font-medium rounded-md border',
-        mode === 'create'
-          ? 'bg-sky-100 text-sky-700 border-sky-200'
-          : 'bg-amber-100 text-amber-700 border-amber-200'
-      )}>
-        {mode === 'create' ? 'New' : 'Edit'}
-      </span>
-    </div>
-  );
+  // Prepare props for sections
+  const titleSectionProps = {
+    formData,
+    setFormData,
+    openColorPickers: {
+      titleColor: openColorPickers.titleColor,
+      titleGradientFrom: openColorPickers.titleGradientFrom,
+      titleGradientVia: openColorPickers.titleGradientVia,
+      titleGradientTo: openColorPickers.titleGradientTo,
+    },
+    toggleColorPicker,
+    showPart2,
+    showPart3,
+    setShowPart2,
+    setShowPart3,
+    primaryColor: primary.base,
+  };
+
+  const descriptionSectionProps = {
+    formData,
+    setFormData,
+    openColorPickers: {
+      descriptionColor: openColorPickers.descriptionColor,
+    },
+    toggleColorPicker,
+    primaryColor: primary.base,
+  };
+
+  const buttonSectionProps = {
+    formData,
+    setFormData,
+    primaryColor: primary.base,
+  };
+
+  const imageSectionProps = {
+    formData,
+    setFormData,
+    openImageGallery,
+    primaryColor: primary.base,
+  };
+
+  const backgroundSectionProps = {
+    formData,
+    setFormData,
+    openColorPickers: {
+      backgroundColor: openColorPickers.backgroundColor,
+      backgroundGradientFrom: openColorPickers.backgroundGradientFrom,
+      backgroundGradientVia: openColorPickers.backgroundGradientVia,
+      backgroundGradientTo: openColorPickers.backgroundGradientTo,
+    },
+    toggleColorPicker,
+    primaryColor: primary.base,
+  };
 
   return (
     <>
-      <BaseModal
+      <StandardModalContainer
         isOpen={isOpen}
         onClose={closeModal}
-        title={modalTitle}
-        size="xl"
-        fullscreen={isFullscreen}
-        onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-        showFullscreenButton={true}
-        draggable={true}
-        resizable={true}
-        noPadding={true}
+        size="large"
+        className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl"
       >
-        {/* Fixed Toolbar - Horizontally Scrollable */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6">
-          <div className="overflow-x-auto">
-            <div className="flex items-center gap-1 py-3 min-w-max">
-              {/* Image Position */}
-              <div className="relative group">
+        <StandardModalHeader
+          title={mode === 'create' ? 'Create Heading Section' : 'Edit Heading Section'}
+          icon={PaintBrushIcon}
+          onClose={closeModal}
+          className="bg-white/30 dark:bg-gray-800/30 rounded-t-2xl"
+        />
+
+        {/* Quick action panel */}
+        <div className="px-6 py-3 flex items-center border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 relative z-30" id="heading-menu-panel">
+          <div className="flex gap-2">
+            {[
+              { 
+                id: 'content', 
+                label: 'Content', 
+                sections: [
+                  { id: 'title', label: 'Title', component: 'title' },
+                  { id: 'description', label: 'Description', component: 'description' },
+                  { id: 'button', label: 'Button', component: 'button' }
+                ]
+              },
+              { 
+                id: 'background', 
+                label: 'Background', 
+                sections: [
+                  { id: 'image', label: 'Image', component: 'image' },
+                  { id: 'background', label: 'Background', component: 'background' }
+                ]
+              },
+            ].map((menu) => (
+              <div key={menu.id} className="relative">
                 <button
-                  onClick={() => setFormData({ ...formData, image_first: !formData.image_first })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.image_first
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
+                  onClick={() => setOpenMenu(openMenu === menu.id ? null : menu.id)}
+                  onMouseEnter={() => setHoveredButton(menu.id)}
+                  onMouseLeave={() => setHoveredButton(null)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
+                  style={
+                    openMenu === menu.id
+                      ? {
+                          background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                          color: 'white',
+                          boxShadow: `0 4px 12px ${primary.base}40`,
+                        }
+                      : {
+                          backgroundColor: 'transparent',
+                          color: hoveredButton === menu.id ? primary.hover : primary.base,
+                          borderWidth: '1px',
+                          borderStyle: 'solid',
+                          borderColor: hoveredButton === menu.id ? `${primary.base}80` : `${primary.base}40`,
+                        }
+                  }
                 >
-                  <PhotoIcon className="w-5 h-5" />
+                  <span>{menu.label}</span>
+                  <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
                 </button>
-                <Tooltip content="Toggle image position: first (left/top) or second (right/bottom)" />
               </div>
+            ))}
+          </div>
+        </div>
 
-              {/* Button/Link Style Toggle */}
-              <div className="relative group">
-                <button
-                  onClick={() => {
-                    const newValue = !formData.is_text_link;
-                    setFormData({ ...formData, is_text_link: newValue });
-                  }}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_text_link
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  {formData.is_text_link ? (
-                    <CursorArrowRaysIcon className="w-5 h-5" />
-                  ) : (
-                    <Square2StackIcon className="w-5 h-5" />
-                  )}
-                </button>
-                <Tooltip content={formData.is_text_link ? "Text Link Mode - Click to switch to Button" : "Button Mode - Click to switch to Text Link"} />
-              </div>
-
-              {/* Include Template Section */}
-              <div className="relative group">
-                <button
-                  onClick={() => setFormData({ ...formData, is_included_templatesection: !formData.is_included_templatesection })}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    formData.is_included_templatesection
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <Square2StackIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Include template section below this heading" />
-              </div>
-
-              <div className="w-px h-6 bg-gray-300 mx-1" />
-
-              {/* Background Color */}
-              <div className="relative group">
-                <ColorPaletteDropdown
-                  value={formData.background_color}
-                  onChange={async (colorClass) => {
-                    const updatedData = { ...formData, background_color: colorClass };
-                    setFormData(updatedData);
-                    setShowColorPicker(false);
-                  }}
-                  isOpen={showColorPicker}
-                  onToggle={() => {
-                    setShowColorPicker(!showColorPicker);
-                    setShowStylePicker(false);
-                    setShowUrlFields(false);
-                  }}
-                  onClose={() => setShowColorPicker(false)}
-                  buttonRef={colorButtonRef}
-                  useFixedPosition={true}
-                />
-              </div>
-
-              {/* Text Style */}
-              <div className="dropdown-container relative group">
-                <button
-                  ref={styleButtonRef}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowStylePicker(!showStylePicker);
-                    setShowColorPicker(false);
-                    setShowUrlFields(false);
-                  }}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    showStylePicker
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <SparklesIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Choose text style variant: Default, Apple, or Coded Harmony" />
-                {showStylePicker && styleButtonRef.current && (() => {
-                  const rect = styleButtonRef.current.getBoundingClientRect();
-                  return (
-                    <div 
-                      className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[100] min-w-[200px]"
-                      style={{
-                        top: `${rect.bottom + 8}px`,
-                        left: `${rect.left}px`,
-                      }}
-                    >
-                      {[
-                        { value: 'default' as const, label: 'Default' },
-                        { value: 'apple' as const, label: 'Apple' },
-                        { value: 'codedharmony' as const, label: 'Coded Harmony' },
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => {
-                            setFormData({ ...formData, text_style_variant: option.value });
-                            setShowStylePicker(false);
-                          }}
-                          className={cn(
-                            'w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors',
-                            formData.text_style_variant === option.value && 'bg-sky-50 text-sky-700'
-                          )}
-                        >
-                          {option.label}
-                        </button>
+        {/* Mega Menu Dropdown */}
+        {openMenu && (
+          <>
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setOpenMenu(null)}
+            />
+            
+            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
+              <div className="max-w-7xl mx-auto px-6 py-6 h-full">
+                {[
+                  { 
+                    id: 'content', 
+                    label: 'Content', 
+                    sections: [
+                      { id: 'title', label: 'Title', component: 'title' },
+                      { id: 'description', label: 'Description', component: 'description' },
+                      { id: 'button', label: 'Button', component: 'button' }
+                    ]
+                  },
+                  { 
+                    id: 'background', 
+                    label: 'Background', 
+                    sections: [
+                      { id: 'image', label: 'Image', component: 'image' },
+                      { id: 'background', label: 'Background', component: 'background' }
+                    ]
+                  },
+                ].filter(menu => menu.id === openMenu).map((menu) => (
+                  <div key={menu.id}>
+                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{menu.label} Settings</h2>
+                      <button
+                        onClick={() => setOpenMenu(null)}
+                        className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                        style={{ color: hoveredButton === 'close-menu' ? primary.hover : undefined }}
+                        onMouseEnter={() => setHoveredButton('close-menu')}
+                        onMouseLeave={() => setHoveredButton(null)}
+                      >
+                        <kbd className="px-2 py-0.5 text-xs border rounded" style={{
+                          backgroundColor: hoveredButton === 'close-menu' ? `${primary.base}10` : undefined,
+                          borderColor: hoveredButton === 'close-menu' ? `${primary.base}40` : undefined,
+                          color: hoveredButton === 'close-menu' ? primary.base : undefined
+                        }}>Esc</kbd>
+                        <span>to close</span>
+                      </button>
+                    </div>
+                    
+                    <div className={`grid gap-6 ${menu.sections.length === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+                      {menu.sections.map((section) => (
+                        <div key={section.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                            {section.label}
+                          </h3>
+                          <div className="space-y-3">
+                            {section.component === 'title' && <TitleSection {...titleSectionProps} />}
+                            {section.component === 'description' && <DescriptionSection {...descriptionSectionProps} />}
+                            {section.component === 'button' && <ButtonSection {...buttonSectionProps} />}
+                            {section.component === 'image' && <ImageSection {...imageSectionProps} />}
+                            {section.component === 'background' && <BackgroundSection {...backgroundSectionProps} />}
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  );
-                })()}
-              </div>
-
-              {/* URL Fields Dropdown */}
-              <div className="dropdown-container relative group">
-                <button
-                  ref={urlButtonRef}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowUrlFields(!showUrlFields);
-                    setShowColorPicker(false);
-                    setShowStylePicker(false);
-                  }}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    showUrlFields
-                      ? 'bg-sky-100 text-sky-500 border border-sky-200'
-                      : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50 border border-transparent'
-                  )}
-                >
-                  <LinkIcon className="w-5 h-5" />
-                </button>
-                <Tooltip content="Configure page URL and button/link URL" />
-                {showUrlFields && urlButtonRef.current && (() => {
-                  const rect = urlButtonRef.current.getBoundingClientRect();
-                  return (
-                    <div 
-                      className="fixed bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-[100] min-w-[300px]"
-                      style={{
-                        top: `${rect.bottom + 8}px`,
-                        left: `${rect.left}px`,
-                      }}
-                    >
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-xs text-gray-500 mb-1 block">
-                            Page URL <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.url_page}
-                            onChange={(e) => setFormData({ ...formData, url_page: e.target.value })}
-                            placeholder="/about or / (required)"
-                            className={cn(
-                              "w-full px-3 py-1.5 text-sm border rounded transition-colors",
-                              "focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 focus:outline-none",
-                              !formData.url_page ? 'border-red-300' : 'border-gray-300'
-                            )}
-                          />
-                          <p className="text-xs text-gray-400 mt-1">The page where this heading will appear</p>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-500 mb-1 block">Button URL</label>
-                          <input
-                            type="text"
-                            value={formData.url}
-                            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                            placeholder="/contact (optional)"
-                            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 focus:outline-none transition-colors"
-                          />
-                          <p className="text-xs text-gray-400 mt-1">Where the button/link should navigate</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-6">
-          {/* Background Style */}
-          <div className="py-6 border-b border-gray-200">
-            <EditableGradientPicker
-              label="Heading Section Background"
-              isGradient={formData.is_gradient}
-              gradient={formData.gradient}
-              solidColor={formData.background_color}
-              onGradientChange={(isGradient, gradient) => 
-                setFormData({ ...formData, is_gradient: isGradient, gradient })
-              }
-              onSolidColorChange={(color) => 
-                setFormData({ ...formData, background_color: color })
-              }
+        <StandardModalBody className="p-0 bg-white/20 dark:bg-gray-900/20" noPadding>
+          {previewRefreshing && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg border"
+              style={{ borderColor: `${primary.base}40` }}
+            >
+              <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: `${primary.base} transparent transparent transparent` }}
+              ></div>
+              <span className="text-xs font-medium text-gray-700">Updating preview...</span>
+            </div>
+          )}
+          
+          <div className={`transition-opacity duration-300 ${previewRefreshing ? 'opacity-50' : 'opacity-100'}`}>
+            <HeadingPreview 
+              formData={formData} 
+              onDoubleClickTitle={(e: React.MouseEvent) => handleInlineEditOpen('title', e)} 
+              onDoubleClickDescription={(e: React.MouseEvent) => handleInlineEditOpen('description', e)} 
             />
           </div>
+        </StandardModalBody>
 
-          {/* Content - Preview Area */}
-          <div 
-            className="rounded-lg overflow-hidden p-3 sm:p-6 my-6 transition-colors"
-            style={getBackgroundStyle(
-              formData.is_gradient,
-              formData.gradient,
-              formData.background_color || 'white'
-            )}
-          >
-          <div className="max-w-7xl mx-auto">
-            {/* Desktop Layout - Two Columns if image exists */}
-            <div className={cn(
-              "grid gap-4 sm:gap-8",
-              formData.image ? "lg:grid-cols-2 lg:gap-16" : "lg:grid-cols-1"
-            )}>
-              {/* Text Content */}
-              <div className={cn(
-                "space-y-4 sm:space-y-6",
-                formData.image && formData.image_first ? "lg:order-2" : "lg:order-1",
-                !formData.image && "max-w-4xl mx-auto"
-              )}>
-                {/* Heading Name (Part 1) - Required */}
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className="text-xs text-gray-500">Heading</span>
-                    <span className="text-red-500 text-xs">*</span>
-                  </div>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter main heading... (required)"
-                    className={cn(
-                      'w-full px-0 py-2 border-0 focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent',
-                      TEXT_VARIANTS[formData.text_style_variant].h1,
-                      !formData.name && 'border-b-2 border-red-200'
-                    )}
-                  />
-                </div>
-
-                {/* Heading Name (Part 2) - Show/Hide with + button */}
-                {showPart2 ? (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={formData.name_part_2}
-                      onChange={(e) => setFormData({ ...formData, name_part_2: e.target.value })}
-                      placeholder="Enter second part..."
-                      className={cn(
-                        'w-full px-0 py-2 pr-8 border-0 focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent',
-                        TEXT_VARIANTS[formData.text_style_variant].h1,
-                        'opacity-80'
-                      )}
-                    />
-                    <button
-                      onClick={() => {
-                        setShowPart2(false);
-                        setFormData({ ...formData, name_part_2: '' });
-                      }}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-600"
-                    >
-                      <XMarkIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowPart2(true)}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <PlusIcon className="w-4 h-4" />
-                    Add second heading part
-                  </button>
-                )}
-
-                {/* Heading Name (Part 3) - Show only if Part 2 is shown */}
-                {showPart2 && (
-                  showPart3 ? (
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.name_part_3}
-                        onChange={(e) => setFormData({ ...formData, name_part_3: e.target.value })}
-                        placeholder="Enter third part..."
-                        className={cn(
-                          'w-full px-0 py-2 pr-8 border-0 focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent',
-                          TEXT_VARIANTS[formData.text_style_variant].h1,
-                          'opacity-70'
-                        )}
-                      />
-                      <button
-                        onClick={() => {
-                          setShowPart3(false);
-                          setFormData({ ...formData, name_part_3: '' });
-                        }}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-600"
-                      >
-                        <XMarkIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowPart3(true)}
-                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                      <PlusIcon className="w-4 h-4" />
-                      Add third heading part
-                    </button>
-                  )
-                )}
-
-                {/* Description Text - Required */}
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className="text-xs text-gray-500">Description</span>
-                    <span className="text-red-500 text-xs">*</span>
-                  </div>
-                  <textarea
-                    ref={descriptionTextareaRef}
-                    value={formData.description_text}
-                    onChange={handleDescriptionChange}
-                    placeholder="Enter description text... (required)"
-                    rows={1}
-                    className={cn(
-                      'w-full px-0 py-1 border-0 focus:outline-none focus:ring-0 placeholder:text-gray-300 resize-none bg-transparent overflow-hidden',
-                      TEXT_VARIANTS[formData.text_style_variant].description,
-                      !formData.description_text && 'border-b-2 border-red-200'
-                    )}
-                  />
-                </div>
-
-                {/* Button/Link Preview */}
-                {formData.button_text ? (
-                  <div className="flex">
-                    {formData.is_text_link ? (
-                      // Text Link Style - Inline Editable
-                      <div className="relative group flex items-center gap-x-2">
-                        <input
-                          type="text"
-                          value={formData.button_text}
-                          onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
-                          placeholder="Enter link text..."
-                          className={cn(
-                            'px-0 py-1 border-0 focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent text-lg font-light',
-                            TEXT_VARIANTS[formData.text_style_variant].linkColor,
-                            'inline-flex items-center'
-                          )}
-                          style={{ width: `${Math.max(formData.button_text.length * 10, 100)}px` }}
-                        />
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                      </div>
-                    ) : (
-                      // Button Style - Inline Editable with proper sizing
-                      <div className="relative">
-                        <div className={cn(
-                          'inline-flex items-center justify-center px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-sm rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5',
-                          TEXT_VARIANTS[formData.text_style_variant].button
-                        )}>
-                          <input
-                            type="text"
-                            value={formData.button_text}
-                            onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
-                            placeholder="Enter button text..."
-                            className="text-white font-medium bg-transparent border-0 focus:outline-none focus:ring-0 placeholder:text-white/70 text-center text-sm sm:text-sm"
-                            style={{ width: `${Math.max(formData.button_text.length * 8, 80)}px` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex">
-                    <input
-                      type="text"
-                      value={formData.button_text}
-                      onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
-                      placeholder={formData.is_text_link ? "Add link text (optional)..." : "Add button text (optional)..."}
-                      className="px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 focus:outline-none transition-colors"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Image Section */}
-              {formData.image ? (
-                <div className={cn(
-                  "relative",
-                  formData.image_first ? "lg:order-1" : "lg:order-2"
-                )}>
-                  <div className="relative group">
-                    <img
-                      src={formData.image}
-                      alt="Hero"
-                      className="w-full h-auto rounded-lg shadow-md"
-                    />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-3">
-                      <button
-                        onClick={() => setShowImageGallery(true)}
-                        className="px-4 py-2 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        Change Image
-                      </button>
-                      <button
-                        onClick={() => setFormData({ ...formData, image: '' })}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className={cn(
-                  formData.image_first ? "lg:order-1" : "lg:order-2"
-                )}>
-                  <button
-                    onClick={() => setShowImageGallery(true)}
-                    className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-12 hover:border-sky-500 hover:bg-sky-50/50 transition-colors flex flex-col items-center justify-center gap-2"
-                  >
-                    <PhotoIcon className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
-                    <span className="text-sm sm:text-base text-gray-500">Click to add hero image</span>
-                  </button>
-                </div>
-              )}
+        <StandardModalFooter className="bg-white/30 dark:bg-gray-800/30 rounded-b-2xl">
+          {saveError && (
+            <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {saveError}
             </div>
-          </div>
-        </div>
-
-          {/* Information Section */}
-          <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-4 mb-6">
-            <p className="text-sm text-sky-900 font-medium mb-1">
-              Design your hero heading section with live preview
-            </p>
-            <p className="text-xs text-sky-800">
-              Customize heading text, description, button/link, background color, text style, and hero image. 
-              All changes are reflected in real-time preview below.
-            </p>
-          </div>
-        </div>
-
-        {/* Fixed Footer with Action Buttons */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={closeModal}
-              disabled={isSaving}
-            >
-              Cancel
-            </Button>
-
-            {mode === 'edit' && (
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={isSaving}
-                className="text-red-600 hover:text-red-700 hover:border-red-600"
-              >
+          )}
+          
+          <div className="flex items-center justify-between w-full gap-3">
+            {mode === 'edit' ? (
+              <Button variant="danger" onClick={openDeleteConfirm} className="px-4 py-2 text-sm">
                 Delete
               </Button>
+            ) : (
+              <div></div>
             )}
-
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              disabled={isSaving}
-              loading={isSaving}
-              loadingText="Saving..."
-              className="bg-sky-600 hover:bg-sky-700"
-            >
-              {mode === 'create' ? 'Create' : 'Update'}
-            </Button>
-          </div>
-        </div>
-      </BaseModal>
-
-      {/* Image Gallery Modal */}
-      {showImageGallery && (
-        <ImageGalleryModal
-          isOpen={showImageGallery}
-          onClose={() => setShowImageGallery(false)}
-          onSelectImage={handleImageSelect}
-        />
-      )}
-
-      {/* Delete Confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowDeleteConfirm(false)} />
-          <div className="relative bg-white rounded-xl shadow-2xl p-6 max-w-md mx-4">
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Delete Heading Section</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this heading section? This action cannot be undone.
-            </p>
-            <div className="flex items-center justify-end gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
+            
+            <div className="flex items-center gap-3 ml-auto">
+              <Button variant="secondary" onClick={closeModal} className="px-6 py-2">
                 Cancel
               </Button>
               <Button
                 variant="primary"
-                onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700"
+                onClick={() => handleSave(formData)}
+                loading={isSaving}
+                disabled={!formData.name.trim() || !formData.description_text.trim()}
+                className="px-6 py-2"
+                title="Ctrl/Cmd + S to save"
               >
-                Delete
+                {mode === 'create' ? 'Create' : 'Save'}
               </Button>
             </div>
           </div>
+        </StandardModalFooter>
+      </StandardModalContainer>
+
+      {/* Image Gallery Modal */}
+      {isImageGalleryOpen && (
+        <ImageGalleryModal
+          isOpen={isImageGalleryOpen}
+          onClose={closeImageGallery}
+          onSelectImage={(url) => handleImageSelect(url, (imageUrl) => {
+            setFormData({ ...formData, image: imageUrl });
+          })}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={cancelDelete} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Heading Section</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Are you sure you want to delete this heading section? This action cannot be undone.
+                </p>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Type <span className="font-mono font-semibold text-red-600 dark:text-red-400">delete</span> to confirm:
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="delete"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 dark:bg-gray-700 dark:text-white"
+                    autoFocus
+                  />
+                </div>
+                
+                <div className="flex items-center justify-end gap-3">
+                  <Button variant="secondary" onClick={cancelDelete} className="px-4 py-2">
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={handleDelete}
+                    disabled={deleteConfirmText.toLowerCase() !== 'delete'}
+                    className="px-4 py-2"
+                  >
+                    Delete Permanently
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Inline Edit Popover */}
+      {inlineEdit.field && (
+        <>
+          <div className="fixed inset-0 z-[10003]" onClick={handleInlineEditCancel} />
+          
+          <div 
+            className="fixed z-[10004] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4 w-[500px] max-w-[90vw]"
+            style={{ 
+              left: `${Math.min(inlineEdit.position.x, window.innerWidth - 520)}px`, 
+              top: `${Math.min(inlineEdit.position.y, window.innerHeight - 200)}px` 
+            }}
+          >
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
+                  Edit {inlineEdit.field === 'title' ? 'Heading' : 'Description'}
+                </label>
+                <button onClick={handleInlineEditCancel} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {inlineEdit.field === 'title' ? (
+                <input
+                  type="text"
+                  value={inlineEdit.value}
+                  onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white text-lg font-semibold focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${primary.base}40`,
+                    '--tw-ring-color': primary.base
+                  } as React.CSSProperties}
+                  placeholder="Enter heading..."
+                  autoFocus
+                />
+              ) : (
+                <textarea
+                  value={inlineEdit.value}
+                  onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white resize-none focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${primary.base}40`,
+                    '--tw-ring-color': primary.base
+                  } as React.CSSProperties}
+                  placeholder="Enter description..."
+                  rows={3}
+                  autoFocus
+                />
+              )}
+              
+              <div className="flex items-center justify-between mt-3">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <kbd className="px-1.5 py-0.5 border rounded text-xs" style={{ 
+                    backgroundColor: `${primary.base}10`,
+                    borderColor: `${primary.base}30`,
+                    color: primary.base
+                  }}>Enter</kbd> to save, 
+                  <kbd className="ml-1 px-1.5 py-0.5 border rounded text-xs" style={{ 
+                    backgroundColor: `${primary.base}10`,
+                    borderColor: `${primary.base}30`,
+                    color: primary.base
+                  }}>Esc</kbd> to cancel
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={handleInlineEditCancel} className="px-3 py-1 text-sm">
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleInlineEditSave}
+                    disabled={!inlineEdit.value.trim()}
+                    className="px-3 py-1 text-sm"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </>
   );
