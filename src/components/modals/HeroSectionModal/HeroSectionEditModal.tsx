@@ -13,6 +13,8 @@ import { StandardModalHeader } from '../_shared/layout/StandardModalHeader';
 import { StandardModalBody } from '../_shared/layout/StandardModalBody';
 import { StandardModalFooter } from '../_shared/layout/StandardModalFooter';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import Button from '@/ui/Button';
 import { HeroFormData } from './types';
 import { useHeroSectionEdit } from './context';
 
@@ -45,13 +47,22 @@ export default function HeroSectionEditModal() {
   // Form state and computed styles
   const { formData, updateField, setFormData, computedStyles } = useHeroForm(editingSection);
 
-  // UI helpers: refs to sections so header-panel buttons can open/scroll to them
-  const titleSectionRef = useRef<HTMLDivElement | null>(null);
-  const descriptionSectionRef = useRef<HTMLDivElement | null>(null);
-  const imageSectionRef = useRef<HTMLDivElement | null>(null);
-  const backgroundSectionRef = useRef<HTMLDivElement | null>(null);
-  const animationSectionRef = useRef<HTMLDivElement | null>(null);
-  const [activePanel, setActivePanel] = useState<string | null>(null);
+  // Theme colors
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+
+  // UI helpers: dropdown menus (only one open at a time) and hover state
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [previewRefreshing, setPreviewRefreshing] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  
+  // Inline editing state
+  const [inlineEdit, setInlineEdit] = useState<{
+    field: 'title' | 'description' | null;
+    value: string;
+    position: { x: number; y: number };
+  }>({ field: null, value: '', position: { x: 0, y: 0 } });
 
   // Color picker states
   const {
@@ -94,6 +105,76 @@ export default function HeroSectionEditModal() {
     // Note: useHeroSave manages isSaving, but delete needs to set it too
     // This is a limitation of the current hook design - in production, we'd unify this
   });
+
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (formData.title.trim()) {
+          handleSave(formData);
+        }
+      }
+      // Escape to close mega menu or inline edit
+      if (e.key === 'Escape') {
+        if (inlineEdit.field) {
+          e.stopPropagation();
+          setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+        } else if (openMenu) {
+          e.stopPropagation();
+          setOpenMenu(null);
+        }
+      }
+      // Enter to save inline edit
+      if (e.key === 'Enter' && inlineEdit.field && !e.shiftKey) {
+        e.preventDefault();
+        handleInlineEditSave();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, openMenu, formData, handleSave, inlineEdit]);
+
+  // Reset delete confirmation text when modal closes
+  React.useEffect(() => {
+    if (!showDeleteConfirm) {
+      setDeleteConfirmText('');
+    }
+  }, [showDeleteConfirm]);
+
+  // Trigger preview refresh animation when formData changes
+  React.useEffect(() => {
+    if (isOpen) {
+      setPreviewRefreshing(true);
+      const timer = setTimeout(() => setPreviewRefreshing(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [formData.title, formData.description, formData.button, formData.image, formData.background_style, formData.title_style, formData.button_style, isOpen]);
+
+  // Inline editing handlers
+  const handleInlineEditOpen = (field: 'title' | 'description', event: React.MouseEvent) => {
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    setInlineEdit({
+      field,
+      value: formData[field],
+      position: { x: rect.left, y: rect.bottom + 10 }
+    });
+  };
+
+  const handleInlineEditSave = () => {
+    if (inlineEdit.field && inlineEdit.value.trim()) {
+      setFormData({ ...formData, [inlineEdit.field]: inlineEdit.value });
+    }
+    setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+  };
+
+  const handleInlineEditCancel = () => {
+    setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+  };
 
   if (!isOpen) return null;
 
@@ -161,160 +242,181 @@ export default function HeroSectionEditModal() {
       <StandardModalContainer
         isOpen={isOpen}
         onClose={closeModal}
-        size="xlarge"
-        className="max-w-7xl"
+        size="large"
+        className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl"
       >
         <StandardModalHeader
           title={mode === 'create' ? 'Create Hero Section' : 'Edit Hero Section'}
           icon={PaintBrushIcon}
           onClose={closeModal}
+          className="bg-white/30 dark:bg-gray-800/30 rounded-t-2xl"
         />
 
-        {/* Quick action panel under header - styled like meetings filter buttons */}
-        <div className="px-6 pb-4">
-          <div className="flex items-center justify-between">
-            <nav className="flex gap-2 overflow-x-auto scrollbar-hide w-full" aria-label="Hero quick actions" style={{ WebkitOverflowScrolling: 'touch' }}>
-              {[
-                { id: 'layout', label: 'Layout' },
-                { id: 'title', label: 'Title' },
-                { id: 'description', label: 'Description' },
-                { id: 'background', label: 'Background' },
-              ].map((b) => (
+        {/* Quick action panel - transparent, no borders, left-aligned, mega menu dropdowns */}
+        <div className="px-6 py-3 flex items-center border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30">
+          <div className="flex gap-2">
+            {[
+              { 
+                id: 'content', 
+                label: 'Content', 
+                sections: [
+                  { id: 'title', label: 'Title', component: 'title' },
+                  { id: 'description', label: 'Description', component: 'description' }
+                ]
+              },
+              { 
+                id: 'background', 
+                label: 'Background', 
+                sections: [
+                  { id: 'button', label: 'Button', component: 'button' },
+                  { id: 'background', label: 'Background', component: 'background' },
+                  { id: 'image', label: 'Image', component: 'image' },
+                  { id: 'animation', label: 'Animation', component: 'animation' }
+                ]
+              },
+            ].map((menu) => (
+              <div key={menu.id} className="relative">
                 <button
-                  key={b.id}
-                  onClick={() => {
-                    setActivePanel(activePanel === b.id ? null : b.id);
-                    // scroll to corresponding section
-                    const map: Record<string, HTMLDivElement | null> = {
-                      layout: backgroundSectionRef.current, // layout settings live in background/layout area
-                      title: titleSectionRef.current,
-                      description: descriptionSectionRef.current,
-                      background: backgroundSectionRef.current,
-                    };
-                    const target = map[b.id];
-                    if (target) {
-                      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0"
+                  onClick={() => setOpenMenu(openMenu === menu.id ? null : menu.id)}
+                  onMouseEnter={() => setHoveredButton(menu.id)}
+                  onMouseLeave={() => setHoveredButton(null)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
                   style={
-                    activePanel === b.id
+                    openMenu === menu.id
                       ? {
-                          background: `linear-gradient(135deg, #0ea5e9, #06b6d4)`,
+                          background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
                           color: 'white',
-                          boxShadow: `0 6px 18px rgba(6, 182, 212, 0.18)`,
+                          boxShadow: `0 4px 12px ${primary.base}40`,
                         }
                       : {
                           backgroundColor: 'transparent',
-                          color: '#0f172a',
+                          color: hoveredButton === menu.id ? primary.hover : primary.base,
                           borderWidth: '1px',
                           borderStyle: 'solid',
-                          borderColor: 'rgba(15,23,42,0.06)',
+                          borderColor: hoveredButton === menu.id ? `${primary.base}80` : `${primary.base}40`,
                         }
                   }
                 >
-                  <span>{b.label}</span>
+                  <span>{menu.label}</span>
+                  <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
                 </button>
-              ))}
 
-              {/* Image button */}
-              <button
-                onClick={() => {
-                  openImageGallery();
-                  setActivePanel('image');
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0"
-                style={{ backgroundColor: 'transparent', color: '#0f172a', borderWidth: '1px', borderStyle: 'solid', borderColor: 'rgba(15,23,42,0.06)' }}
-                aria-label="Open image gallery"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                  <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M15 11l-2-2-4 4-3-3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span>Image</span>
-              </button>
-            </nav>
+                {/* Mega Menu Dropdown - Full Width */}
+                {openMenu === menu.id && (
+                  <>
+                    {/* Backdrop for closing menu */}
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setOpenMenu(null)}
+                      aria-label="Close menu"
+                    />
+                    
+                    {/* Mega Menu Panel */}
+                    <div className="fixed left-0 right-0 mt-2 bg-white border-t border-gray-200 shadow-2xl z-50 max-h-[70vh] overflow-y-auto">
+                      <div className="max-w-7xl mx-auto px-6 py-6">
+                        {/* Close hint */}
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                          <h2 className="text-lg font-semibold text-gray-900">{menu.label} Settings</h2>
+                          <button
+                            onClick={() => setOpenMenu(null)}
+                            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                          >
+                            <kbd className="px-2 py-0.5 text-xs bg-gray-100 border border-gray-200 rounded">Esc</kbd>
+                            <span>to close</span>
+                          </button>
+                        </div>
+                        
+                        <div className={`grid gap-6 ${menu.sections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
+                          {menu.sections.map((section) => (
+                            <div key={section.id} className="bg-gray-50 rounded-lg p-4">
+                              <h3 className="text-sm font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                                {section.label}
+                              </h3>
+                              <div className="space-y-3">
+                                {section.component === 'title' && <TitleStyleSection {...titleSectionProps} />}
+                                {section.component === 'description' && <DescriptionStyleSection {...descriptionSectionProps} />}
+                                {section.component === 'button' && <ButtonStyleSection {...buttonSectionProps} />}
+                                {section.component === 'image' && <ImageStyleSection {...imageSectionProps} />}
+                                {section.component === 'background' && <BackgroundStyleSection {...backgroundSectionProps} />}
+                                {section.component === 'animation' && <AnimationSection {...animationSectionProps} />}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        <StandardModalBody className="p-0">
-          <div className="p-6 space-y-6">
-            {/* Full-width Live Preview */}
-            <div className="w-full">
-              <HeroPreview formData={formData} />
+        <StandardModalBody className="p-0 bg-white/20 dark:bg-gray-900/20" noPadding>
+          {/* Preview refresh indicator */}
+          {previewRefreshing && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg border border-gray-200">
+              <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-xs font-medium text-gray-700">Updating preview...</span>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column: Form Sections */}
-              <div className="space-y-6 overflow-y-auto max-h-[calc(70vh-12rem)] pr-2">
-              {/* Information Banner */}
-              <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-4">
-                <p className="text-sm text-sky-900 font-medium mb-1">
-                  Design your hero section with live preview
-                </p>
-                <p className="text-xs text-sky-800">
-                  Customize title, description, buttons, colors, and layout. All changes are reflected in real-time.
-                </p>
-              </div>
-
-              {/* Title Section */}
-              <div ref={titleSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
-                <TitleStyleSection {...titleSectionProps} />
-              </div>
-
-              {/* Description Section */}
-              <div ref={descriptionSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
-                <DescriptionStyleSection {...descriptionSectionProps} />
-              </div>
-
-              {/* Button Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <ButtonStyleSection {...buttonSectionProps} />
-              </div>
-
-              {/* Image Section */}
-              <div ref={imageSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
-                <ImageStyleSection {...imageSectionProps} />
-              </div>
-
-              {/* Background Section */}
-              <div ref={backgroundSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
-                <BackgroundStyleSection {...backgroundSectionProps} />
-              </div>
-
-              {/* Animation Section */}
-              <div ref={animationSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
-                <AnimationSection {...animationSectionProps} />
-              </div>
-            </div>
-            </div>
+          )}
+          
+          {/* Full-width Live Preview - exact Hero mirror, no space */}
+          <div className={`transition-opacity duration-300 ${previewRefreshing ? 'opacity-50' : 'opacity-100'}`}>
+            <HeroPreview 
+              formData={formData} 
+              onDoubleClickTitle={(e: React.MouseEvent) => handleInlineEditOpen('title', e)} 
+              onDoubleClickDescription={(e: React.MouseEvent) => handleInlineEditOpen('description', e)} 
+            />
           </div>
         </StandardModalBody>
 
         <StandardModalFooter
-          primaryAction={{
-            label: mode === 'create' ? 'Create Hero Section' : 'Save Changes',
-            onClick: () => handleSave(formData),
-            variant: 'primary',
-            loading: isSaving,
-            disabled: !formData.title.trim(),
-          }}
-          secondaryAction={{
-            label: 'Cancel',
-            onClick: closeModal,
-            variant: 'secondary',
-          }}
-          tertiaryActions={mode === 'edit' ? [{
-            label: 'Delete',
-            onClick: openDeleteConfirm,
-            variant: 'danger',
-          }] : []}
+          className="bg-white/30 dark:bg-gray-800/30 rounded-b-2xl"
         >
           {saveError && (
             <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {saveError}
             </div>
           )}
+          
+          <div className="flex items-center justify-between w-full gap-3">
+            {/* Left side - Delete button for edit mode only */}
+            {mode === 'edit' ? (
+              <Button
+                variant="danger"
+                onClick={openDeleteConfirm}
+                className="px-4 py-2 text-sm"
+              >
+                Delete
+              </Button>
+            ) : (
+              <div></div>
+            )}
+            
+            {/* Right side - Cancel and Save */}
+            <div className="flex items-center gap-3 ml-auto">
+              <Button
+                variant="secondary"
+                onClick={closeModal}
+                className="px-6 py-2"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => handleSave(formData)}
+                loading={isSaving}
+                disabled={!formData.title.trim()}
+                className="px-6 py-2"
+                title="Ctrl/Cmd + S to save"
+              >
+                {mode === 'create' ? 'Create' : 'Save'}
+              </Button>
+            </div>
+          </div>
         </StandardModalFooter>
       </StandardModalContainer>
 
@@ -331,29 +433,137 @@ export default function HeroSectionEditModal() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={cancelDelete} />
-          <div className="relative bg-white rounded-xl shadow-2xl p-6 max-w-md mx-4">
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Delete Hero Section</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this hero section? This action cannot be undone.
-            </p>
-            <div className="flex items-center justify-end gap-3">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
-              >
-                Delete
-              </button>
+        <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={cancelDelete} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Hero Section</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Are you sure you want to delete this hero section? This action cannot be undone and will permanently remove all content and styling.
+                </p>
+                
+                {/* Safety input - require typing "delete" */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Type <span className="font-mono font-semibold text-red-600 dark:text-red-400">delete</span> to confirm:
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="delete"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                    autoFocus
+                  />
+                </div>
+                
+                <div className="flex items-center justify-end gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={cancelDelete}
+                    className="px-4 py-2"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={handleDelete}
+                    disabled={deleteConfirmText.toLowerCase() !== 'delete'}
+                    className="px-4 py-2"
+                  >
+                    Delete Permanently
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Inline Edit Popover */}
+      {inlineEdit.field && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-[10003]" 
+            onClick={handleInlineEditCancel}
+          />
+          
+          {/* Popover */}
+          <div 
+            className="fixed z-[10004] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4 w-[500px] max-w-[90vw]"
+            style={{ 
+              left: `${Math.min(inlineEdit.position.x, window.innerWidth - 520)}px`, 
+              top: `${Math.min(inlineEdit.position.y, window.innerHeight - 200)}px` 
+            }}
+          >
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
+                  Edit {inlineEdit.field}
+                </label>
+                <button
+                  onClick={handleInlineEditCancel}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {inlineEdit.field === 'title' ? (
+                <input
+                  type="text"
+                  value={inlineEdit.value}
+                  onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-lg font-semibold"
+                  placeholder="Enter title..."
+                  autoFocus
+                />
+              ) : (
+                <textarea
+                  value={inlineEdit.value}
+                  onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+                  placeholder="Enter description..."
+                  rows={3}
+                  autoFocus
+                />
+              )}
+              
+              <div className="flex items-center justify-between mt-3">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs">Enter</kbd> to save, 
+                  <kbd className="ml-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs">Esc</kbd> to cancel
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={handleInlineEditCancel}
+                    className="px-3 py-1 text-sm"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleInlineEditSave}
+                    disabled={!inlineEdit.value.trim()}
+                    className="px-3 py-1 text-sm"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </>
   );

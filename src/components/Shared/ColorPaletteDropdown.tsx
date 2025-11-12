@@ -320,7 +320,7 @@ export default function ColorPaletteDropdown({
           const rect = buttonRef.current!.getBoundingClientRect();
           return (
             <div 
-              className="dropdown-container fixed bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[9999] w-80 max-h-96 overflow-y-auto"
+              className="dropdown-container fixed bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[10002] w-80 max-h-96 overflow-y-auto"
               style={{
                 top: `${rect.bottom + 8}px`,
                 left: `${rect.left}px`,
