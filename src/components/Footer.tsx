@@ -344,7 +344,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       <span
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        style={getLinkStyles(isHovered)}
+        style={{ ...getLinkStyles(isHovered), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
       >
         <LocalizedLink
           href={href}
@@ -413,7 +413,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
               return (
                 <div key={item.id} className="col-span-1 min-h-[200px]">
-                  <h3 className="text-base font-semibold mb-4">
+                  <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                     <FooterLink
                       href={item.url_name || '#'}
                       className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
@@ -447,7 +447,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
             {groupedItemsWithoutSubitems.map((group, index) => (
               <div key={`group-${index}`} className="col-span-1 min-h-[200px]">
-                <h3 className="text-base font-semibold mb-4">
+                <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                   <FooterLink
                     href={group[0]?.url_name || '#'}
                     className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
@@ -478,7 +478,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             ))}
 
             <div className="col-span-1 min-h-[200px]">
-              <h3 className="text-base font-semibold mb-4">{isAdmin ? translations.admin : translations.profile}</h3>
+              <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{isAdmin ? translations.admin : translations.profile}</h3>
               <ul className="space-y-2">
                 {isAuthenticated ? (
                   <>
@@ -590,7 +590,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
       <div className="mt-12 border-t pt-6" style={{ borderColor: `${getColorValue(footerStyles.color)}66` }}>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <small className="text-xs" style={{ color: getColorValue(footerStyles.color), opacity: 0.7 }}>
+          <small className="text-xs" style={{ color: getColorValue(footerStyles.color), opacity: 0.7, fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
           </small>
           {settings?.with_language_switch && (
@@ -625,7 +625,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         <button
           onClick={() => setShowSettings(true)}
           className="text-sm hover:underline transition-colors duration-200"
-          style={{ color: getColorValue(footerStyles.color) }}
+          style={{ color: getColorValue(footerStyles.color), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
           }}
@@ -636,7 +636,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         >
           {translations.privacySettings}
         </button>
-        <p className="text-xs opacity-60" style={{ color: getColorValue(footerStyles.color) }}>
+        <p className="text-xs opacity-60" style={{ color: getColorValue(footerStyles.color), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
           © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
         </p>
         {settings?.with_language_switch && (
@@ -664,7 +664,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           <button
             onClick={() => setShowSettings(true)}
             className="text-sm transition-colors duration-200"
-            style={{ color: getColorValue(footerStyles.color) }}
+            style={{ color: getColorValue(footerStyles.color), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
             }}
@@ -681,7 +681,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           {settings?.with_language_switch && (
             <ModernLanguageSwitcher openUpward={true} variant="footer" />
           )}
-          <p className="text-xs whitespace-nowrap" style={{ color: getColorValue(footerStyles.color) }}>
+          <p className="text-xs whitespace-nowrap" style={{ color: getColorValue(footerStyles.color), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}
           </p>
         </div>

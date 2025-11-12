@@ -449,9 +449,14 @@ const Header: React.FC<HeaderProps> = ({
                       }}
                     >
                       {showAsText ? (
-                        <span className={`text-[15px] font-medium transition-colors duration-200 ${
-                          isActive ? 'font-semibold' : ''
-                        }`}>{translatedDisplayName}</span>
+                        <span 
+                          className={`text-[15px] font-medium transition-colors duration-200 ${
+                            isActive ? 'font-semibold' : ''
+                          }`}
+                          style={{
+                            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                          }}
+                        >{translatedDisplayName}</span>
                       ) : item.image ? (
                         <Image
                           src={item.image}
@@ -500,7 +505,7 @@ const Header: React.FC<HeaderProps> = ({
                         onMouseLeave={handleMenuLeave}
                       >
                         <div className="px-6 py-6 max-w-7xl mx-auto">
-                          <h3 className="text-base font-semibold text-gray-900 mb-4">{translatedDisplayName}</h3>
+                          <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{translatedDisplayName}</h3>
                           
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                             {displayedSubItems.map((subItem) => {
@@ -563,11 +568,11 @@ const Header: React.FC<HeaderProps> = ({
                                   
                                   {/* Content below image */}
                                   <div className="p-3">
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                                       {translatedSubItemName}
                                     </h4>
                                     {translatedDescription && (
-                                      <p className="text-xs text-gray-500 line-clamp-2">
+                                      <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                                         {translatedDescription}
                                       </p>
                                     )}
@@ -633,7 +638,7 @@ const Header: React.FC<HeaderProps> = ({
                                   ) : null}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-sm font-medium text-gray-900 block">
+                                  <span className="text-sm font-medium text-gray-900 block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                                     {translatedSubItemName}
                                   </span>
                                 </div>
@@ -732,8 +737,8 @@ const Header: React.FC<HeaderProps> = ({
                         >
                           <div className="flex items-center space-x-3">
                             <div className="text-left">
-                              <span className="text-sm font-semibold text-gray-900">{translatedDisplayName}</span>
-                              <p className="text-xs text-gray-500">
+                              <span className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{translatedDisplayName}</span>
+                              <p className="text-xs text-gray-500" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                                 {displayedSubItems.length} {displayedSubItems.length === 1 ? 'option' : 'options'}
                               </p>
                             </div>
@@ -824,8 +829,8 @@ const Header: React.FC<HeaderProps> = ({
                                 {/* Content section - 2/3 width */}
                                 <div className="flex-1 flex items-center justify-between p-3">
                                   <div className="flex-1 min-w-0">
-                                    <span className="text-sm font-medium block mb-1">{translatedSubItemName}</span>
-                                    <p className="text-xs text-gray-500 line-clamp-2">{displayDescription}</p>
+                                    <span className="text-sm font-medium block mb-1" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{translatedSubItemName}</span>
+                                    <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{displayDescription}</p>
                                   </div>
                                 </div>
                               </LocalizedLink>
@@ -844,7 +849,7 @@ const Header: React.FC<HeaderProps> = ({
                   >
                     <div className="flex items-center space-x-3">
                       <div className="flex-1 text-left">
-                        <span className="text-sm font-semibold text-gray-900">{translatedDisplayName}</span>
+                        <span className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{translatedDisplayName}</span>
                       </div>
                     </div>
                   </LocalizedLink>
@@ -1031,7 +1036,7 @@ const Header: React.FC<HeaderProps> = ({
                   {/* Header */}
                   <div className="flex items-center space-x-3 mb-6">
                     <div>
-                      <h3 className="text-base font-semibold text-gray-900">{isAdmin ? 'Admin' : t.profile}</h3>
+                      <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{isAdmin ? 'Admin' : t.profile}</h3>
                     </div>
                   </div>
                   
@@ -1052,10 +1057,10 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                           {/* Content below */}
                           <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Dashboard
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2">
+                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Manage your account settings
                             </p>
                           </div>
@@ -1077,10 +1082,10 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                           {/* Content below */}
                           <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Tickets
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2">
+                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Get help and support
                             </p>
                           </div>
@@ -1099,10 +1104,10 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                           {/* Content below */}
                           <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Meetings
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2">
+                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Schedule and manage meetings
                             </p>
                           </div>
@@ -1121,10 +1126,10 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                           {/* Content below */}
                           <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               AI Agents
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2">
+                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Manage AI models and agents
                             </p>
                           </div>
@@ -1145,10 +1150,10 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                           {/* Content below */}
                           <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               {t.account}
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2">
+                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               {t.accountSettings}
                             </p>
                           </div>
@@ -1170,10 +1175,10 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                           {/* Content below */}
                           <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               {t.contact}
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2">
+                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               {t.getHelpSupport}
                             </p>
                           </div>
@@ -1192,7 +1197,7 @@ const Header: React.FC<HeaderProps> = ({
                       <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
                         <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
                       </div>
-                      <span className="text-sm font-medium">{t.logout}</span>
+                      <span className="text-sm font-medium" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.logout}</span>
                     </button>
                   </div>
                 </div>
@@ -1269,7 +1274,7 @@ const Header: React.FC<HeaderProps> = ({
                     >
                       <div className="flex items-center space-x-3">
                         <div className="text-left">
-                          <span className="text-sm font-semibold text-gray-900">{isAdmin ? 'Admin' : t.profile}</span>
+                          <span className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{isAdmin ? 'Admin' : t.profile}</span>
                         </div>
                       </div>
                       <div className="transition-colors duration-200">
@@ -1292,8 +1297,8 @@ const Header: React.FC<HeaderProps> = ({
                               <HeroIcons.Cog6ToothIcon className="h-5 w-5 text-gray-600" />
                             </div>
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">Dashboard</span>
-                              <p className="text-xs text-gray-500">Manage your account settings</p>
+                              <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Dashboard</span>
+                              <p className="text-xs text-gray-500" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Manage your account settings</p>
                             </div>
                           </LocalizedLink>
                           
@@ -1308,8 +1313,8 @@ const Header: React.FC<HeaderProps> = ({
                               </svg>
                             </div>
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">Tickets</span>
-                              <p className="text-xs text-gray-500">Get help and support</p>
+                              <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Tickets</span>
+                              <p className="text-xs text-gray-500" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Get help and support</p>
                             </div>
                           </button>
                           
@@ -1322,8 +1327,8 @@ const Header: React.FC<HeaderProps> = ({
                               <HeroIcons.VideoCameraIcon className="h-5 w-5 text-gray-600" />
                             </div>
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">Meetings</span>
-                              <p className="text-xs text-gray-500">Schedule and manage meetings</p>
+                              <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Meetings</span>
+                              <p className="text-xs text-gray-500" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Schedule and manage meetings</p>
                             </div>
                           </LocalizedLink>
                           
@@ -1336,8 +1341,8 @@ const Header: React.FC<HeaderProps> = ({
                               <HeroIcons.CpuChipIcon className="h-5 w-5 text-gray-600" />
                             </div>
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">AI Agents</span>
-                              <p className="text-xs text-gray-500">Manage AI models and agents</p>
+                              <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>AI Agents</span>
+                              <p className="text-xs text-gray-500" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Manage AI models and agents</p>
                             </div>
                           </LocalizedLink>
                           
@@ -1350,7 +1355,7 @@ const Header: React.FC<HeaderProps> = ({
                               <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
                             </div>
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">{t.logout}</span>
+                              <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.logout}</span>
                             </div>
                           </button>
                         </>
@@ -1365,8 +1370,8 @@ const Header: React.FC<HeaderProps> = ({
                               <HeroIcons.UserIcon className="h-5 w-5 text-gray-600" />
                             </div>
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">{t.account}</span>
-                              <p className="text-xs text-gray-500">{t.accountSettings}</p>
+                              <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.account}</span>
+                              <p className="text-xs text-gray-500" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.accountSettings}</p>
                             </div>
                           </LocalizedLink>
                           <button
@@ -1380,8 +1385,8 @@ const Header: React.FC<HeaderProps> = ({
                               </svg>
                             </div>
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">{t.contact}</span>
-                              <p className="text-xs text-gray-500">{t.getHelpSupport}</p>
+                              <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.contact}</span>
+                              <p className="text-xs text-gray-500" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.getHelpSupport}</p>
                             </div>
                           </button>
                           <button
@@ -1393,7 +1398,7 @@ const Header: React.FC<HeaderProps> = ({
                               <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
                             </div>
                             <div className="flex-1 text-left">
-                              <span className="text-sm font-medium block">{t.logout}</span>
+                              <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.logout}</span>
                             </div>
                           </button>
                         </>
@@ -1412,8 +1417,8 @@ const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center space-x-3">
                     <div className="text-left">
-                      <span className="text-sm font-semibold text-gray-900">{t.login}</span>
-                      <p className="text-xs text-gray-500">{t.signIn}</p>
+                      <span className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.login}</span>
+                      <p className="text-xs text-gray-500" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.signIn}</p>
                     </div>
                   </div>
                   <svg className="w-4 h-4 text-gray-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">

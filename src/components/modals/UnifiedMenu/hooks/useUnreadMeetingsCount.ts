@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -17,6 +18,7 @@ export function useUnreadMeetingsCount() {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const { session, isAdmin, isSuperadmin } = useAuth();
   const { settings } = useSettings();
+  const pathname = usePathname();
 
   const fetchUnreadCount = useCallback(async () => {
     if (!session?.user) {
@@ -24,9 +26,15 @@ export function useUnreadMeetingsCount() {
       return;
     }
 
+    // Skip fetching if admin is on /account page (admins don't have customer meetings)
+    const isAdminUser = isAdmin || isSuperadmin;
+    if (isAdminUser && pathname?.startsWith('/account')) {
+      setUnreadCount(0);
+      return;
+    }
+
     try {
       const userId = session.user.id;
-      const isAdminUser = isAdmin || isSuperadmin;
 
       console.log('🎬 [useUnreadMeetingsCount] Fetching count for:', {
         userId,
@@ -99,7 +107,7 @@ export function useUnreadMeetingsCount() {
     } catch (err) {
       console.error('❌ Error in fetchUnreadCount:', err);
     }
-  }, [session, isAdmin, isSuperadmin, settings.organization_id]);
+  }, [session, isAdmin, isSuperadmin, settings.organization_id, pathname]);
 
   useEffect(() => {
     if (!session?.user) {

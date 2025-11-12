@@ -172,11 +172,18 @@ export default function AccountPage() {
           )}
         
           {/* Modal-style Header */}
-          <div className="flex items-center gap-3 p-4 sm:p-6 border-b border-white/10 bg-white/30 dark:bg-gray-800/30 rounded-t-2xl">
-            <UserCircleIconSolid className="w-6 h-6 flex-shrink-0" style={{ color: primary.base }} />
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
-              {t.account}
-            </h1>
+          <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-white/10 bg-white/30 dark:bg-gray-800/30 rounded-t-2xl">
+            <div className="flex items-center gap-3">
+              <UserCircleIconSolid className="w-6 h-6 flex-shrink-0" style={{ color: primary.base }} />
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+                {t.account}
+              </h1>
+            </div>
+            {fullName && (
+              <span className="text-base sm:text-lg text-gray-600 dark:text-gray-300 font-normal">
+                {fullName}
+              </span>
+            )}
           </div>
 
           {/* Content Area */}
@@ -200,22 +207,6 @@ export default function AccountPage() {
                 )
               ))}
             </nav>
-
-            {/* Helper Text and Welcome Message */}
-            {pathname === '/account' && (
-              <div className="mt-12 text-center space-y-4" role="complementary">
-                <div className="inline-block bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg border border-white/20 dark:border-gray-700/30 px-6 py-3">
-                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                    {t.selectCard}
-                  </p>
-                </div>
-                {fullName && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {t.hello}, {fullName}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
         </div>
         
