@@ -43,3 +43,6 @@ export * from './containers';
 
 // Layout Components
 export * from './layout';
+
+// UI Components (Phase 2)
+export * from './components';
