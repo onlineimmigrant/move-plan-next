@@ -29,6 +29,10 @@ export function UnifiedMenuItem({
   // Evaluate badge if it's a function
   const badgeValue = typeof item.badge === 'function' ? item.badge() : item.badge;
   const showBadge = badgeValue !== null && badgeValue !== undefined && badgeValue !== '';
+  
+  // Adaptive badge sizing based on count
+  const badgeCount = typeof badgeValue === 'number' ? badgeValue : parseInt(String(badgeValue), 10) || 0;
+  const isLargeCount = badgeCount >= 10;
 
   // Use rocket icon for AI Agent
   const IconComponent = item.id === 'ai-agent' ? RocketLaunchIcon : item.icon;
@@ -41,7 +45,7 @@ export function UnifiedMenuItem({
         onMouseEnter={onHover}
         onMouseLeave={onLeave}
         className={`
-          flex-1 flex flex-col items-center justify-center gap-2.5 px-3 py-4
+          flex-1 flex flex-col items-center justify-center gap-1.5 px-3 py-4
           hover:bg-white/10 dark:hover:bg-gray-800/10
           active:bg-white/20 dark:active:bg-gray-800/20
           transition-all duration-200
@@ -66,7 +70,7 @@ export function UnifiedMenuItem({
 
         {/* Label */}
         <div
-          className="text-[13px] font-semibold text-gray-900 dark:text-white text-center leading-tight tracking-wide"
+          className="text-[14px] font-semibold text-gray-900 dark:text-white text-center leading-tight tracking-wide"
           style={{
             color: isSelected || isHovered ? primary.base : undefined,
             fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -121,7 +125,7 @@ export function UnifiedMenuItem({
 
       {/* Label */}
       <div
-        className="text-[15px] font-medium tracking-normal text-gray-900 dark:text-white flex-1 text-left"
+        className="text-[17px] font-medium tracking-normal text-gray-900 dark:text-white flex-1 text-left"
         style={{
           color: isSelected || isHovered ? primary.base : undefined,
           fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -130,10 +134,12 @@ export function UnifiedMenuItem({
         {item.label}
       </div>
 
-      {/* Badge - positioned at top-right edge of hover area */}
+      {/* Badge - positioned at top-right corner of menu item */}
       {showBadge && (
         <div
-          className="absolute top-1 right-2 min-w-[18px] h-[18px] px-1.5 flex items-center justify-center rounded-full text-[11px] font-light text-white leading-none"
+          className={`absolute top-1 right-2 flex items-center justify-center rounded-full text-[11px] font-light text-white transition-all duration-300 animate-in zoom-in ${
+            isLargeCount ? 'min-w-[24px] h-5 px-1.5' : 'w-5 h-5'
+          }`}
           style={{
             backgroundColor: primary.base,
           }}

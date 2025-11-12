@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   DocumentPlusIcon,
   DocumentTextIcon,
@@ -48,6 +48,7 @@ interface QuickAction {
   label: string;
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   action: () => void;
+  shortcut?: string;
 }
 
 export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }: SiteActionsModalProps) {
@@ -55,6 +56,12 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
   const primary = themeColors.cssVars.primary;
   const pathname = usePathname();
   const [clickedItemId, setClickedItemId] = React.useState<string | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  // Detect platform for keyboard shortcuts
+  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modifierKey = isMac ? '⌘' : 'Ctrl+';
 
   const { openModal: openSectionModal } = useTemplateSectionEdit();
   const { openModal: openHeadingSectionModal } = useTemplateHeadingSectionEdit();
@@ -72,6 +79,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       id: 'header',
       label: 'Header',
       icon: Bars3Icon,
+      shortcut: `${modifierKey}1`,
       action: async () => {
         onClose();
         try {
@@ -92,6 +100,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       id: 'footer',
       label: 'Footer',
       icon: RectangleStackIcon,
+      shortcut: `${modifierKey}2`,
       action: async () => {
         onClose();
         try {
@@ -113,6 +122,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       id: 'heading',
       label: 'Heading',
       icon: DocumentTextIcon,
+      shortcut: `${modifierKey}3`,
       action: () => {
         onClose();
         openHeadingSectionModal(undefined, pathname);
@@ -122,6 +132,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       id: 'section',
       label: 'Section',
       icon: DocumentPlusIcon,
+      shortcut: `${modifierKey}4`,
       action: () => {
         onClose();
         openSectionModal(null, pathname);
@@ -132,6 +143,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       id: 'page',
       label: 'Page',
       icon: GlobeAltIcon,
+      shortcut: `${modifierKey}5`,
       action: () => {
         onClose();
         openPageModal();
@@ -141,6 +153,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       id: 'post',
       label: 'Post',
       icon: NewspaperIcon,
+      shortcut: `${modifierKey}6`,
       action: () => {
         onClose();
         openCreateModal(pathname);
@@ -151,6 +164,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       id: 'product_page',
       label: 'Product',
       icon: CubeIcon,
+      shortcut: `${modifierKey}7`,
       action: () => {
         onClose();
         // TODO: Implement product page creation
@@ -162,6 +176,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       id: 'page_layout',
       label: 'Layout',
       icon: RectangleGroupIcon,
+      shortcut: `${modifierKey}8`,
       action: async () => {
         onClose();
         try {
@@ -178,7 +193,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
         }
       },
     },
-    // Fixed Bottom - Global Settings and Map
+    // Fixed Bottom - Global Settings and Map (no shortcuts)
     {
       id: 'site_map',
       label: 'Map',
@@ -198,6 +213,52 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       },
     },
   ];
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close on Escape
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      // Command/Ctrl + Number keys 1-8 for shortcuts
+      if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '8') {
+        const action = quickActions.find(a => a.shortcut?.includes(e.key));
+        if (action) {
+          e.preventDefault();
+          handleActionClick(action);
+        }
+        return;
+      }
+
+      // Arrow navigation
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev + 1) % quickActions.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev - 1 + quickActions.length) % quickActions.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleActionClick(quickActions[selectedIndex]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, selectedIndex, quickActions, modifierKey]);
+
+  // Focus modal when opened
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      modalRef.current.focus();
+      setSelectedIndex(0);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -241,6 +302,8 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
 
       {/* Modal */}
       <div
+        ref={modalRef}
+        tabIndex={-1}
         className={`fixed z-[10000] bg-white/30 dark:bg-gray-900/30 backdrop-blur-3xl border border-white/10 dark:border-gray-700/10 shadow-2xl rounded-3xl overflow-hidden ${animationClass}
                    max-md:w-[90vw] max-md:max-h-[80vh] max-md:left-1/2 max-md:-translate-x-1/2 max-md:bottom-4`}
         style={{
@@ -250,9 +313,9 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
         role="dialog"
         aria-label="Site quick actions"
       >
-        {/* All Actions List */}
+        {/* Regular Actions List (excluding last 2) */}
         <div className="flex flex-col gap-2 p-3 max-md:gap-1 max-md:p-2">
-          {quickActions.map((action) => (
+          {quickActions.slice(0, -2).map((action, index) => (
             <button
               key={action.id}
               onClick={() => handleActionClick(action)}
@@ -264,6 +327,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
                 group
                 relative
                 rounded-xl
+                ${selectedIndex === index ? 'bg-white/10 dark:bg-gray-800/10' : ''}
                 ${clickedItemId === action.id ? 'scale-[0.98] bg-white/15 dark:bg-gray-800/15' : ''}
               `}
             >
@@ -279,13 +343,25 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
 
               {/* Label */}
               <div
-                className="flex-1 text-left text-[15px] font-medium text-gray-900 dark:text-white transition-colors duration-200"
+                className="flex-1 text-left text-[17px] font-medium text-gray-900 dark:text-white transition-colors duration-200"
                 style={{
                   fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
                 }}
               >
                 {action.label}
               </div>
+
+              {/* Keyboard Shortcut */}
+              {action.shortcut && (
+                <div
+                  className="flex-shrink-0 text-[12px] font-light opacity-50"
+                  style={{
+                    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                  }}
+                >
+                  {action.shortcut}
+                </div>
+              )}
 
               {/* Hover effect */}
               <style jsx>{`
@@ -298,6 +374,63 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
               `}</style>
             </button>
           ))}
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-white/10 dark:border-gray-700/10 mx-3" />
+
+        {/* Bottom Row - Map and Global side by side */}
+        <div className="flex gap-2 p-3 pt-2 max-md:p-2 max-md:pt-1">
+          {quickActions.slice(-2).map((action, index) => {
+            const actualIndex = quickActions.length - 2 + index;
+            return (
+              <button
+                key={action.id}
+                onClick={() => handleActionClick(action)}
+                className={`
+                  flex-1 flex flex-col items-center justify-center gap-1.5 px-3 py-4
+                  hover:bg-white/10 dark:hover:bg-gray-800/10
+                  active:bg-white/20 dark:active:bg-gray-800/20
+                  transition-all duration-200
+                  group
+                  relative
+                  ${index === 0 ? 'rounded-bl-3xl rounded-br-md' : 'rounded-br-3xl rounded-bl-md'}
+                  ${selectedIndex === actualIndex ? 'bg-white/10 dark:bg-gray-800/10' : ''}
+                  ${clickedItemId === action.id ? 'scale-[0.98] bg-white/15 dark:bg-gray-800/15' : ''}
+                `}
+              >
+                {/* Icon */}
+                <div className="flex-shrink-0 transition-all duration-200 group-hover:scale-110">
+                  <action.icon 
+                    className="w-6 h-6 text-gray-900 dark:text-white transition-colors duration-200"
+                    style={{
+                      color: 'inherit',
+                    }}
+                  />
+                </div>
+
+                {/* Label */}
+                <div
+                  className="text-[14px] font-semibold text-gray-900 dark:text-white text-center leading-tight tracking-wide transition-colors duration-200"
+                  style={{
+                    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                  }}
+                >
+                  {action.label}
+                </div>
+
+                {/* Hover effect */}
+                <style jsx>{`
+                  button:hover {
+                    color: ${primary.base} !important;
+                  }
+                  button:hover * {
+                    color: ${primary.base} !important;
+                  }
+                `}</style>
+              </button>
+            );
+          })}
         </div>
       </div>
     </>

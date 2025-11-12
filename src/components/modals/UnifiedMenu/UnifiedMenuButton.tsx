@@ -47,14 +47,14 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
         onClick={handleClick}
         onMouseDown={(e) => e.preventDefault()}
         className={`
-          w-10 h-10
+          w-12 h-12
           rounded-full
-          bg-white/30 dark:bg-gray-900/30
+          bg-white/50 dark:bg-gray-900/50
           backdrop-blur-3xl
           border border-white/20 dark:border-gray-700/20
           shadow-xl hover:shadow-2xl
           hover:scale-105 active:scale-95
-          hover:bg-white/40 dark:hover:bg-gray-900/40
+          hover:bg-white/60 dark:hover:bg-gray-900/60
           transition-all duration-300
           flex items-center justify-center
           group
@@ -76,7 +76,7 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
         {/* Settings Icon */}
         <Cog6ToothIcon
           className={`
-            h-5 w-5 transition-all duration-300
+            h-6 w-6 transition-all duration-300
             ${isOpen ? 'rotate-90' : ''}
           `}
           style={{
@@ -87,17 +87,17 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
         {/* Tickets Badge (Left side - primary-600) */}
         {showTicketsBadge && !isOpen && (
           <span
-            className="
+            className={`
               absolute -top-1 -left-1
-              min-w-[20px] h-5
-              px-1.5
               flex items-center justify-center
               text-xs font-light
               text-white
               rounded-full
               shadow-lg
               animate-in zoom-in duration-200
-            "
+              transition-all
+              ${typeof ticketsBadgeCount === 'number' && ticketsBadgeCount >= 10 ? 'min-w-[22px] h-5 px-1' : 'w-5 h-5'}
+            `}
             style={{
               backgroundColor: primary.base, // primary-600
             }}
@@ -110,17 +110,17 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
         {/* Meetings Badge (Right side - primary-800) */}
         {showMeetingsBadge && !isOpen && (
           <span
-            className="
+            className={`
               absolute -top-1 -right-1
-              min-w-[20px] h-5
-              px-1.5
               flex items-center justify-center
               text-xs font-light
               text-white
               rounded-full
               shadow-lg
               animate-in zoom-in duration-200
-            "
+              transition-all
+              ${typeof meetingsBadgeCount === 'number' && meetingsBadgeCount >= 10 ? 'min-w-[22px] h-5 px-1' : 'w-5 h-5'}
+            `}
             style={{
               backgroundColor: primary.active, // Darker shade for meetings
             }}
@@ -133,17 +133,17 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
         {/* Legacy Badge (for backwards compatibility) */}
         {showLegacyBadge && !isOpen && (
           <span
-            className="
+            className={`
               absolute -top-1 -right-1
-              min-w-[20px] h-5
-              px-1.5
               flex items-center justify-center
               text-xs font-light
               text-white
               rounded-full
               shadow-lg
               animate-in zoom-in duration-200
-            "
+              transition-all
+              ${typeof badgeCount === 'number' && badgeCount >= 10 ? 'min-w-[22px] h-5 px-1' : 'w-5 h-5'}
+            `}
             style={{
               backgroundColor: primary.base,
             }}
