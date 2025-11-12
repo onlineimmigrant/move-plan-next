@@ -6,7 +6,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { PaintBrushIcon } from '@heroicons/react/24/outline';
 import { StandardModalContainer } from '../_shared/containers/StandardModalContainer';
 import { StandardModalHeader } from '../_shared/layout/StandardModalHeader';
@@ -14,6 +14,7 @@ import { StandardModalBody } from '../_shared/layout/StandardModalBody';
 import { StandardModalFooter } from '../_shared/layout/StandardModalFooter';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import { HeroFormData } from './types';
+import { useHeroSectionEdit } from './context';
 
 // Import all hooks
 import {
@@ -38,25 +39,19 @@ import {
 // Import preview component
 import { HeroPreview } from './preview';
 
-interface HeroSectionEditModalProps {
-  isOpen: boolean;
-  closeModal: () => void;
-  mode: 'create' | 'edit';
-  editingSection?: any;
-  updateSection: (data: HeroFormData) => Promise<void>;
-  deleteSection: () => Promise<void>;
-}
-
-export default function HeroSectionEditModal({
-  isOpen,
-  closeModal,
-  mode,
-  editingSection,
-  updateSection,
-  deleteSection,
-}: HeroSectionEditModalProps) {
+export default function HeroSectionEditModal() {
+  // Get modal state from context
+  const { isOpen, editingSection, mode, closeModal, updateSection, deleteSection } = useHeroSectionEdit();
   // Form state and computed styles
   const { formData, updateField, setFormData, computedStyles } = useHeroForm(editingSection);
+
+  // UI helpers: refs to sections so header-panel buttons can open/scroll to them
+  const titleSectionRef = useRef<HTMLDivElement | null>(null);
+  const descriptionSectionRef = useRef<HTMLDivElement | null>(null);
+  const imageSectionRef = useRef<HTMLDivElement | null>(null);
+  const backgroundSectionRef = useRef<HTMLDivElement | null>(null);
+  const animationSectionRef = useRef<HTMLDivElement | null>(null);
+  const [activePanel, setActivePanel] = useState<string | null>(null);
 
   // Color picker states
   const {
@@ -159,6 +154,8 @@ export default function HeroSectionEditModal({
     setFormData,
   };
 
+  if (!isOpen) return null;
+
   return (
     <>
       <StandardModalContainer
@@ -173,10 +170,83 @@ export default function HeroSectionEditModal({
           onClose={closeModal}
         />
 
+        {/* Quick action panel under header - styled like meetings filter buttons */}
+        <div className="px-6 pb-4">
+          <div className="flex items-center justify-between">
+            <nav className="flex gap-2 overflow-x-auto scrollbar-hide w-full" aria-label="Hero quick actions" style={{ WebkitOverflowScrolling: 'touch' }}>
+              {[
+                { id: 'layout', label: 'Layout' },
+                { id: 'title', label: 'Title' },
+                { id: 'description', label: 'Description' },
+                { id: 'background', label: 'Background' },
+              ].map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => {
+                    setActivePanel(activePanel === b.id ? null : b.id);
+                    // scroll to corresponding section
+                    const map: Record<string, HTMLDivElement | null> = {
+                      layout: backgroundSectionRef.current, // layout settings live in background/layout area
+                      title: titleSectionRef.current,
+                      description: descriptionSectionRef.current,
+                      background: backgroundSectionRef.current,
+                    };
+                    const target = map[b.id];
+                    if (target) {
+                      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0"
+                  style={
+                    activePanel === b.id
+                      ? {
+                          background: `linear-gradient(135deg, #0ea5e9, #06b6d4)`,
+                          color: 'white',
+                          boxShadow: `0 6px 18px rgba(6, 182, 212, 0.18)`,
+                        }
+                      : {
+                          backgroundColor: 'transparent',
+                          color: '#0f172a',
+                          borderWidth: '1px',
+                          borderStyle: 'solid',
+                          borderColor: 'rgba(15,23,42,0.06)',
+                        }
+                  }
+                >
+                  <span>{b.label}</span>
+                </button>
+              ))}
+
+              {/* Image button */}
+              <button
+                onClick={() => {
+                  openImageGallery();
+                  setActivePanel('image');
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0"
+                style={{ backgroundColor: 'transparent', color: '#0f172a', borderWidth: '1px', borderStyle: 'solid', borderColor: 'rgba(15,23,42,0.06)' }}
+                aria-label="Open image gallery"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M15 11l-2-2-4 4-3-3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Image</span>
+              </button>
+            </nav>
+          </div>
+        </div>
+
         <StandardModalBody className="p-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-            {/* Left Column: Form Sections */}
-            <div className="space-y-6 overflow-y-auto max-h-[calc(90vh-12rem)] pr-2">
+          <div className="p-6 space-y-6">
+            {/* Full-width Live Preview */}
+            <div className="w-full">
+              <HeroPreview formData={formData} />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column: Form Sections */}
+              <div className="space-y-6 overflow-y-auto max-h-[calc(70vh-12rem)] pr-2">
               {/* Information Banner */}
               <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-4">
                 <p className="text-sm text-sky-900 font-medium mb-1">
@@ -188,12 +258,12 @@ export default function HeroSectionEditModal({
               </div>
 
               {/* Title Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div ref={titleSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
                 <TitleStyleSection {...titleSectionProps} />
               </div>
 
               {/* Description Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div ref={descriptionSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
                 <DescriptionStyleSection {...descriptionSectionProps} />
               </div>
 
@@ -203,24 +273,20 @@ export default function HeroSectionEditModal({
               </div>
 
               {/* Image Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div ref={imageSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
                 <ImageStyleSection {...imageSectionProps} />
               </div>
 
               {/* Background Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div ref={backgroundSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
                 <BackgroundStyleSection {...backgroundSectionProps} />
               </div>
 
               {/* Animation Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div ref={animationSectionRef} className="bg-white rounded-lg border border-gray-200 p-4">
                 <AnimationSection {...animationSectionProps} />
               </div>
             </div>
-
-            {/* Right Column: Live Preview */}
-            <div className="sticky top-6 h-fit">
-              <HeroPreview formData={formData} />
             </div>
           </div>
         </StandardModalBody>
