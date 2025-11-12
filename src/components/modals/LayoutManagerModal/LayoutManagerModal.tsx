@@ -1,8 +1,19 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { Square3Stack3DIcon } from '@heroicons/react/24/outline';
 import { useLayoutManager } from './context';
-import { BaseModal } from '../_shared/BaseModal';
+import { 
+  StandardModalContainer,
+  StandardModalHeader,
+  StandardModalBody,
+  StandardModalFooter,
+  LoadingState,
+  EmptyState,
+  StatusBadge,
+  CountBadge,
+  type ModalAction
+} from '../_shared';
 import {
   DndContext,
   closestCenter,
@@ -243,136 +254,128 @@ export default function LayoutManagerModal() {
     closeModal();
   };
 
-  // Modal title with badge
-  const modalTitle = (
-    <div className="flex items-center gap-2.5">
-      <span>Manage Page Layout</span>
-      <span className="px-2 py-0.5 text-xs font-medium rounded-md border bg-amber-100 text-amber-700 border-amber-200">
-        Edit
-      </span>
-    </div>
-  );
+  // Calculate section counts for badge display
+  const sectionCounts = {
+    hero: localSections.filter((s) => s.type === 'hero').length,
+    template: localSections.filter((s) => s.type === 'template_section').length,
+    heading: localSections.filter((s) => s.type === 'heading_section').length,
+  };
+
+  const primaryAction: ModalAction = {
+    label: isSaving ? 'Saving...' : 'Save Layout',
+    onClick: handleSave,
+    variant: 'primary',
+    loading: isSaving,
+    disabled: isSaving || isLoading || localSections.length === 0,
+  };
+
+  const secondaryAction: ModalAction = {
+    label: 'Cancel',
+    onClick: handleCancel,
+    variant: 'secondary',
+    disabled: isSaving,
+  };
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={handleCancel} 
-      title={modalTitle}
-      size="xl"
-      fullscreen={isFullscreen}
-      onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-      showFullscreenButton={true}
-      draggable={true}
-      resizable={false}
-      noPadding={true}
+    <StandardModalContainer
+      isOpen={isOpen}
+      onClose={handleCancel}
+      size="large"
+      enableDrag={true}
+      enableResize={true}
+      ariaLabel="Layout Manager Modal"
     >
-      {/* Info Banner */}
-      <div className="px-6 pt-6 pb-4 rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white mx-6 mt-6">
-        <p className="text-sm text-sky-900 font-medium mb-1">
-          Organize your page sections
-        </p>
-        <p className="text-xs text-sky-800">
-          Drag and drop sections to reorder them. Changes are reflected immediately after saving.
-        </p>
-      </div>
+      <StandardModalHeader
+        title="Manage Page Layout"
+        subtitle="Organize your page sections"
+        icon={Square3Stack3DIcon}
+        iconColor="text-blue-500"
+        onClose={handleCancel}
+      />
 
-      {/* Content Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <StandardModalBody>
+        {/* Info Banner */}
+        <div className="mb-4 px-4 py-3 rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white">
+          <p className="text-sm text-sky-900 font-medium mb-1">
+            Organize your page sections
+          </p>
+          <p className="text-xs text-sky-800">
+            Drag and drop sections to reorder them. Changes are reflected immediately after saving.
+          </p>
+        </div>
+
+        {/* Content Area */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mb-4"></div>
-            <p className="text-sm text-gray-500">Loading page sections...</p>
-          </div>
+          <LoadingState 
+            message="Loading page sections..." 
+            size="lg"
+          />
         ) : localSections.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <svg
-              className="w-16 h-16 mx-auto mb-4 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <p className="text-lg font-medium mb-2 text-gray-700">No page sections found</p>
-            <p className="text-sm">Add sections to your page to manage their layout</p>
-          </div>
+          <EmptyState
+            title="No page sections found"
+            message="Add sections to your page to manage their layout"
+          />
         ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={localSections.map((section) => section.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2">
-                {localSections.map((section) => (
-                  <SortableItem key={section.id} section={section} />
-                ))}
+          <>
+            {/* Section Type Summary */}
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <span className="text-sm font-medium text-gray-700">Sections:</span>
+              <StatusBadge 
+                text={`${sectionCounts.hero} Hero`} 
+                variant="info"
+                dot
+              />
+              <StatusBadge 
+                text={`${sectionCounts.template} Template`} 
+                variant="default"
+                dot
+              />
+              <StatusBadge 
+                text={`${sectionCounts.heading} Heading`} 
+                variant="success"
+                dot
+              />
+              <div className="ml-auto">
+                <CountBadge 
+                  count={localSections.length} 
+                  variant="secondary"
+                />
               </div>
-            </SortableContext>
-          </DndContext>
-        )}
-      </div>
+            </div>
 
-      {/* Fixed Footer with Action Buttons */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4">
+            {/* Drag and Drop List */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={localSections.map((section) => section.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {localSections.map((section) => (
+                    <SortableItem key={section.id} section={section} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </>
+        )}
+
+        {/* Error Display */}
         {saveError && (
-          <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {saveError}
           </div>
         )}
-        
-        {/* Section Count */}
-        {localSections.length > 0 && (
-          <div className="flex items-center gap-4 mb-4 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-700">Total Sections:</span>
-              <span className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded-full font-semibold">
-                {localSections.length}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold border border-purple-200">
-                {localSections.filter((s) => s.type === 'hero').length} Hero
-              </span>
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
-                {localSections.filter((s) => s.type === 'template_section').length} Template
-              </span>
-              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
-                {localSections.filter((s) => s.type === 'heading_section').length} Heading
-              </span>
-            </div>
-          </div>
-        )}
+      </StandardModalBody>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
-          <button
-            onClick={handleCancel}
-            disabled={isSaving}
-            className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isSaving || isLoading || localSections.length === 0}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-          >
-            {isSaving && (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-            )}
-            {isSaving ? 'Saving...' : 'Save Layout'}
-          </button>
-        </div>
-      </div>
-    </BaseModal>
+      <StandardModalFooter
+        primaryAction={primaryAction}
+        secondaryAction={secondaryAction}
+        align="right"
+      />
+    </StandardModalContainer>
   );
 }

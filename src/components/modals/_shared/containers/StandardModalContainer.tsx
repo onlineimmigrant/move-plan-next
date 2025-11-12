@@ -122,25 +122,30 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
             {isOpen && (
               <>
                 {isMobile ? (
-                  // Mobile: Fullscreen fixed modal
-                  <motion.div
-                    ref={modalRef}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={ariaLabel}
-                    aria-labelledby={ariaLabelledBy}
-                    className={`fixed inset-0 top-[10vh] ${glassClasses} ${className}`}
+                  // Mobile: Fullscreen fixed modal with padding
+                  <div
+                    className="fixed inset-0 flex items-center justify-center p-4 z-[10001]"
                     style={{ zIndex }}
-                    variants={mobileSlideVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    tabIndex={-1}
                   >
-                    <div className="h-full overflow-hidden flex flex-col">
-                      {children}
-                    </div>
-                  </motion.div>
+                    <motion.div
+                      ref={modalRef}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-label={ariaLabel}
+                      aria-labelledby={ariaLabelledBy}
+                      className={`w-full h-[90vh] ${glassClasses} ${className}`}
+                      variants={mobileSlideVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      tabIndex={-1}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="h-full overflow-hidden flex flex-col">
+                        {children}
+                      </div>
+                    </motion.div>
+                  </div>
                 ) : (
                   // Desktop: Draggable/Resizable modal
                   <DraggableWrapper

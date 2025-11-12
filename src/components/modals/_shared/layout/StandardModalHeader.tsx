@@ -7,6 +7,7 @@
 'use client';
 
 import React from 'react';
+import { isMobileViewport } from '../utils/modalSizing';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { StandardModalHeaderProps } from '../types';
 import { MODAL_SPACING } from '../utils/modalConstants';
@@ -34,11 +35,14 @@ export const StandardModalHeader: React.FC<StandardModalHeaderProps> = ({
   showCloseButton = true,
   headerActions,
   enableDragHandle = true,
-  isMobile = false,
+  isMobile,
   className = '',
   borderBottom = true,
 }) => {
-  const padding = isMobile
+  // If isMobile prop is not provided, detect viewport size
+  const effectiveIsMobile = typeof isMobile === 'boolean' ? isMobile : isMobileViewport();
+
+  const padding = effectiveIsMobile
     ? MODAL_SPACING.mobileHeaderPadding
     : MODAL_SPACING.headerPadding;
 
@@ -79,8 +83,8 @@ export const StandardModalHeader: React.FC<StandardModalHeaderProps> = ({
           <div className="flex-1">
             <h2
               className={`text-xl font-semibold text-gray-900 dark:text-white ${
-                enableDragHandle && !isMobile ? 'modal-drag-handle cursor-move' : ''
-              }`}
+                  enableDragHandle && !effectiveIsMobile ? 'modal-drag-handle cursor-move' : ''
+                }`}
               style={{
                 fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
               }}

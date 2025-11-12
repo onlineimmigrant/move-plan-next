@@ -2,8 +2,18 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { MapIcon } from '@heroicons/react/24/outline';
 import { useSiteMapModal } from './context';
-import { BaseModal } from '@/components/modals/_shared';
+import { 
+  StandardModalContainer,
+  StandardModalHeader,
+  StandardModalBody,
+  StandardModalFooter,
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  type ModalAction
+} from '@/components/modals/_shared';
 import SiteMapTree from '@/components/SiteManagement/SiteMapTree';
 import { createClient } from '@supabase/supabase-js';
 import { getOrganizationId } from '@/lib/supabase';
@@ -71,48 +81,59 @@ export default function SiteMapModal() {
 
   if (!isOpen) return null;
 
+  const secondaryAction: ModalAction = {
+    label: "Close",
+    onClick: closeModal,
+    variant: 'secondary',
+  };
+
   return (
-    <BaseModal
+    <StandardModalContainer
       isOpen={isOpen}
       onClose={closeModal}
-      title="Site Map"
-      subtitle="Browse your site's page structure"
-      size="xl"
-      secondaryAction={{
-        label: "Close",
-        onClick: closeModal
-      }}
+      size="large"
+      enableDrag={true}
+      enableResize={true}
+      ariaLabel="Site Map Modal"
     >
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading site structure...</p>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="text-center py-12">
-          <div className="text-red-600 text-4xl mb-4">⚠️</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={loadOrganization}
-            className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      ) : organization ? (
-        <SiteMapTree 
-          organization={organization}
-          session={session}
-          compact={true}
-        />
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-gray-600">Organization not found</p>
-        </div>
-      )}
-    </BaseModal>
+      <StandardModalHeader
+        title="Site Map"
+        subtitle="Browse your site's page structure"
+        icon={MapIcon}
+        iconColor="text-blue-500"
+        onClose={closeModal}
+      />
+
+      <StandardModalBody>
+        {isLoading ? (
+          <LoadingState 
+            message="Loading site structure..." 
+            size="lg"
+          />
+        ) : error ? (
+          <ErrorState
+            title="Failed to Load"
+            message={error}
+            onRetry={loadOrganization}
+          />
+        ) : organization ? (
+          <SiteMapTree 
+            organization={organization}
+            session={session}
+            compact={true}
+          />
+        ) : (
+          <EmptyState
+            title="Organization Not Found"
+            message="No organization data available"
+          />
+        )}
+      </StandardModalBody>
+
+      <StandardModalFooter
+        secondaryAction={secondaryAction}
+        align="right"
+      />
+    </StandardModalContainer>
   );
 }

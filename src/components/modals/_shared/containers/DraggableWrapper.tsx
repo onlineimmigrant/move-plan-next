@@ -50,7 +50,7 @@ export const DraggableWrapper: React.FC<DraggableWrapperProps> = ({
   defaultSize,
   minSize,
   zIndex = 10001,
-  dragHandleClassName = '.modal-drag-handle',
+  dragHandleClassName = 'modal-drag-handle',
 }) => {
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);

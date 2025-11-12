@@ -17,7 +17,7 @@ export const MODAL_Z_INDEX = {
 } as const;
 
 /**
- * Size presets for modals
+ * Size presets for modals (matching MeetingsAdminModal standards)
  */
 export const MODAL_SIZE_PRESETS: Record<string, ModalSizeConfig> = {
   small: {
@@ -35,8 +35,8 @@ export const MODAL_SIZE_PRESETS: Record<string, ModalSizeConfig> = {
   large: {
     width: 1120,
     height: 900,
-    minWidth: 640,
-    minHeight: 600,
+    minWidth: 800,
+    minHeight: 700,
   },
   xlarge: {
     width: 1400,
