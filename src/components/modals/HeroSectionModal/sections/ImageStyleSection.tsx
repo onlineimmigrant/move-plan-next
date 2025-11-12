@@ -13,12 +13,14 @@ interface ImageStyleSectionProps {
   formData: HeroFormData;
   setFormData: (data: HeroFormData) => void;
   openImageGallery: () => void;
+  primaryColor: string;
 }
 
 export function ImageStyleSection({
   formData,
   setFormData,
   openImageGallery,
+  primaryColor,
 }: ImageStyleSectionProps) {
   return (
     <div className="space-y-4">
@@ -34,9 +36,14 @@ export function ImageStyleSection({
           className={cn(
             'w-full px-4 py-3 rounded-md border-2 border-dashed transition-colors flex items-center justify-center gap-2',
             formData.image
-              ? 'border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100'
+              ? 'border-2'
               : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
           )}
+          style={formData.image ? {
+            backgroundColor: `${primaryColor}10`,
+            color: primaryColor,
+            borderColor: primaryColor
+          } : {}}
         >
           <PhotoIcon className="w-5 h-5" />
           <span className="text-sm font-medium">
@@ -71,9 +78,14 @@ export function ImageStyleSection({
                 className={cn(
                   'px-3 py-2 text-sm font-medium rounded-md border transition-colors capitalize',
                   formData.image_style?.position === position
-                    ? 'bg-sky-100 text-sky-700 border-sky-300'
+                    ? 'border-2'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 )}
+                style={formData.image_style?.position === position ? {
+                  backgroundColor: `${primaryColor}15`,
+                  color: primaryColor,
+                  borderColor: primaryColor
+                } : {}}
               >
                 {position}
               </button>
@@ -93,7 +105,8 @@ export function ImageStyleSection({
                 ...formData,
                 image_style: { ...formData.image_style, fullPage: e.target.checked }
               })}
-              className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+              className="rounded border-gray-300 focus:ring-2"
+          style={{ color: primaryColor, "--tw-ring-color": primaryColor } as React.CSSProperties}
             />
             <span className="text-xs font-medium text-gray-700">Full Page Image</span>
           </label>
@@ -116,7 +129,8 @@ export function ImageStyleSection({
               })}
               min={50}
               max={2000}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
             />
           </div>
           <div>
@@ -132,7 +146,8 @@ export function ImageStyleSection({
               })}
               min={50}
               max={2000}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
             />
           </div>
         </div>

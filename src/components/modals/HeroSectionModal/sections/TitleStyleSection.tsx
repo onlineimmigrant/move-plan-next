@@ -19,6 +19,7 @@ interface TitleStyleSectionProps {
     titleGradientTo: boolean;
   };
   toggleColorPicker: (key: 'titleColor' | 'titleGradientFrom' | 'titleGradientVia' | 'titleGradientTo') => void;
+  primaryColor: string;
 }
 
 export function TitleStyleSection({
@@ -26,6 +27,7 @@ export function TitleStyleSection({
   setFormData,
   openColorPickers,
   toggleColorPicker,
+  primaryColor,
 }: TitleStyleSectionProps) {
   return (
     <div className="space-y-4">
@@ -41,7 +43,10 @@ export function TitleStyleSection({
           value={formData.title || ''}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Enter hero title..."
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{
+            '--tw-ring-color': primaryColor
+          } as React.CSSProperties}
         />
       </div>
 
@@ -86,7 +91,11 @@ export function TitleStyleSection({
                 }) : undefined
               }
             })}
-            className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+            className="rounded border-gray-300 focus:ring-2"
+            style={{
+              color: primaryColor,
+              '--tw-ring-color': primaryColor
+            } as React.CSSProperties}
           />
           <span className="text-xs font-medium text-gray-700">Enable Gradient</span>
         </label>
@@ -194,7 +203,10 @@ export function TitleStyleSection({
                 }
               }
             })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+            style={{
+              '--tw-ring-color': primaryColor
+            } as React.CSSProperties}
           >
             <option value="text-4xl">4xl</option>
             <option value="text-5xl">5xl</option>
@@ -220,7 +232,10 @@ export function TitleStyleSection({
                 }
               }
             })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+            style={{
+              '--tw-ring-color': primaryColor
+            } as React.CSSProperties}
           >
             <option value="text-2xl">2xl</option>
             <option value="text-3xl">3xl</option>
@@ -247,9 +262,14 @@ export function TitleStyleSection({
               className={cn(
                 'flex-1 px-3 py-2 text-sm font-medium rounded-md border transition-colors capitalize',
                 formData.title_style?.alignment === align
-                  ? 'bg-sky-100 text-sky-700 border-sky-300'
+                  ? 'border-2'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               )}
+              style={formData.title_style?.alignment === align ? {
+                backgroundColor: `${primaryColor}15`,
+                color: primaryColor,
+                borderColor: primaryColor
+              } : {}}
             >
               {align}
             </button>
@@ -268,7 +288,10 @@ export function TitleStyleSection({
             ...formData,
             title_style: { ...formData.title_style, blockWidth: e.target.value }
           })}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{
+            '--tw-ring-color': primaryColor
+          } as React.CSSProperties}
         >
           <option value="2xl">2xl</option>
           <option value="3xl">3xl</option>
@@ -296,9 +319,14 @@ export function TitleStyleSection({
               className={cn(
                 'flex-1 px-3 py-2 text-sm font-medium rounded-md border transition-colors',
                 formData.title_style?.blockColumns === cols
-                  ? 'bg-sky-100 text-sky-700 border-sky-300'
+                  ? 'border-2'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               )}
+              style={formData.title_style?.blockColumns === cols ? {
+                backgroundColor: `${primaryColor}15`,
+                color: primaryColor,
+                borderColor: primaryColor
+              } : {}}
             >
               {cols} Column{cols > 1 ? 's' : ''}
             </button>

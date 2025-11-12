@@ -19,6 +19,7 @@ interface ButtonStyleSectionProps {
     buttonGradientTo: boolean;
   };
   toggleColorPicker: (key: 'buttonColor' | 'buttonGradientFrom' | 'buttonGradientVia' | 'buttonGradientTo') => void;
+  primaryColor: string;
 }
 
 export function ButtonStyleSection({
@@ -26,6 +27,7 @@ export function ButtonStyleSection({
   setFormData,
   openColorPickers,
   toggleColorPicker,
+  primaryColor,
 }: ButtonStyleSectionProps) {
   return (
     <div className="space-y-4">
@@ -41,7 +43,8 @@ export function ButtonStyleSection({
           value={formData.button || ''}
           onChange={(e) => setFormData({ ...formData, button: e.target.value })}
           placeholder="Get Started"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
         />
       </div>
 
@@ -58,7 +61,8 @@ export function ButtonStyleSection({
             button_style: { ...formData.button_style, url: e.target.value }
           })}
           placeholder="/products"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
         />
       </div>
 
@@ -72,7 +76,8 @@ export function ButtonStyleSection({
               ...formData,
               button_style: { ...formData.button_style, aboveDescription: e.target.checked }
             })}
-            className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+            className="rounded border-gray-300 focus:ring-2"
+            style={{ color: primaryColor, "--tw-ring-color": primaryColor } as React.CSSProperties}
           />
           <span className="text-xs font-medium text-gray-700">Show Button Above Description</span>
         </label>
@@ -88,7 +93,8 @@ export function ButtonStyleSection({
               ...formData,
               button_style: { ...formData.button_style, isVideo: e.target.checked }
             })}
-            className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+            className="rounded border-gray-300 focus:ring-2"
+            style={{ color: primaryColor, "--tw-ring-color": primaryColor } as React.CSSProperties}
           />
           <span className="text-xs font-medium text-gray-700">Video Button (Play Icon)</span>
         </label>
@@ -134,7 +140,8 @@ export function ButtonStyleSection({
                 } : undefined
               }
             })}
-            className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+            className="rounded border-gray-300 focus:ring-2"
+            style={{ color: primaryColor, "--tw-ring-color": primaryColor } as React.CSSProperties}
           />
           <span className="text-xs font-medium text-gray-700">Enable Gradient</span>
         </label>

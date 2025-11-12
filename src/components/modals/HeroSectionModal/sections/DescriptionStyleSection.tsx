@@ -16,6 +16,7 @@ interface DescriptionStyleSectionProps {
     descriptionColor: boolean;
   };
   toggleColorPicker: (key: 'descriptionColor') => void;
+  primaryColor: string;
 }
 
 export function DescriptionStyleSection({
@@ -23,6 +24,7 @@ export function DescriptionStyleSection({
   setFormData,
   openColorPickers,
   toggleColorPicker,
+  primaryColor,
 }: DescriptionStyleSectionProps) {
   return (
     <div className="space-y-4">
@@ -38,7 +40,8 @@ export function DescriptionStyleSection({
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Enter hero description..."
           rows={3}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 resize-none"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
         />
       </div>
 
@@ -83,7 +86,8 @@ export function DescriptionStyleSection({
                 }
               }
             })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
           >
             <option value="text-sm">Small</option>
             <option value="text-base">Base</option>
@@ -109,7 +113,8 @@ export function DescriptionStyleSection({
                 }
               }
             })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
           >
             <option value="text-xs">XS</option>
             <option value="text-sm">Small</option>
@@ -136,9 +141,14 @@ export function DescriptionStyleSection({
               className={cn(
                 'px-3 py-2 text-sm font-medium rounded-md border transition-colors capitalize',
                 formData.description_style?.weight === weight
-                  ? 'bg-sky-100 text-sky-700 border-sky-300'
+                  ? 'border-2'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               )}
+              style={formData.description_style?.weight === weight ? {
+                backgroundColor: `${primaryColor}15`,
+                color: primaryColor,
+                borderColor: primaryColor
+              } : {}}
             >
               {weight === 'normal' ? 'Normal' : weight}
             </button>

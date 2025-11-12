@@ -18,6 +18,7 @@ interface BackgroundStyleSectionProps {
     backgroundGradientTo: boolean;
   };
   toggleColorPicker: (key: 'backgroundColor' | 'backgroundGradientFrom' | 'backgroundGradientVia' | 'backgroundGradientTo') => void;
+  primaryColor: string;
 }
 
 export function BackgroundStyleSection({
@@ -25,6 +26,7 @@ export function BackgroundStyleSection({
   setFormData,
   openColorPickers,
   toggleColorPicker,
+  primaryColor,
 }: BackgroundStyleSectionProps) {
   return (
     <div className="space-y-4">
@@ -71,7 +73,8 @@ export function BackgroundStyleSection({
                 }) : undefined
               }
             })}
-            className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+            className="rounded border-gray-300 focus:ring-2"
+            style={{ color: primaryColor, "--tw-ring-color": primaryColor } as React.CSSProperties}
           />
           <span className="text-xs font-medium text-gray-700">Enable Gradient</span>
         </label>
@@ -174,7 +177,8 @@ export function BackgroundStyleSection({
             background_style: { ...formData.background_style, seo_title: e.target.value }
           })}
           placeholder="Enter SEO-friendly title..."
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
         />
       </div>
 
@@ -189,7 +193,8 @@ export function BackgroundStyleSection({
             ...formData,
             background_style: { ...formData.background_style, column: parseInt(e.target.value) }
           })}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
         >
           <option value={1}>1 Column</option>
           <option value={2}>2 Columns</option>

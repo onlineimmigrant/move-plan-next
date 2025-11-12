@@ -189,6 +189,7 @@ export default function HeroSectionEditModal() {
       titleGradientTo: openColorPickers.titleGradientTo,
     },
     toggleColorPicker,
+    primaryColor: primary.base,
   };
 
   const descriptionSectionProps = {
@@ -198,6 +199,7 @@ export default function HeroSectionEditModal() {
       descriptionColor: openColorPickers.descriptionColor,
     },
     toggleColorPicker,
+    primaryColor: primary.base,
   };
 
   const buttonSectionProps = {
@@ -210,12 +212,14 @@ export default function HeroSectionEditModal() {
       buttonGradientTo: openColorPickers.buttonGradientTo,
     },
     toggleColorPicker,
+    primaryColor: primary.base,
   };
 
   const imageSectionProps = {
     formData,
     setFormData,
     openImageGallery,
+    primaryColor: primary.base,
   };
 
   const backgroundSectionProps = {
@@ -228,11 +232,13 @@ export default function HeroSectionEditModal() {
       backgroundGradientTo: openColorPickers.backgroundGradientTo,
     },
     toggleColorPicker,
+    primaryColor: primary.base,
   };
 
   const animationSectionProps = {
     formData,
     setFormData,
+    primaryColor: primary.base,
   };
 
   if (!isOpen) return null;
@@ -253,7 +259,7 @@ export default function HeroSectionEditModal() {
         />
 
         {/* Quick action panel - transparent, no borders, left-aligned, mega menu dropdowns */}
-        <div className="px-6 py-3 flex items-center border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30">
+        <div className="px-6 py-3 flex items-center border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 relative z-30" id="hero-menu-panel">
           <div className="flex gap-2">
             {[
               { 
@@ -302,63 +308,99 @@ export default function HeroSectionEditModal() {
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                 </button>
-
-                {/* Mega Menu Dropdown - Full Width */}
-                {openMenu === menu.id && (
-                  <>
-                    {/* Backdrop for closing menu */}
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setOpenMenu(null)}
-                      aria-label="Close menu"
-                    />
-                    
-                    {/* Mega Menu Panel */}
-                    <div className="fixed left-0 right-0 mt-2 bg-white border-t border-gray-200 shadow-2xl z-50 max-h-[70vh] overflow-y-auto">
-                      <div className="max-w-7xl mx-auto px-6 py-6">
-                        {/* Close hint */}
-                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
-                          <h2 className="text-lg font-semibold text-gray-900">{menu.label} Settings</h2>
-                          <button
-                            onClick={() => setOpenMenu(null)}
-                            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                          >
-                            <kbd className="px-2 py-0.5 text-xs bg-gray-100 border border-gray-200 rounded">Esc</kbd>
-                            <span>to close</span>
-                          </button>
-                        </div>
-                        
-                        <div className={`grid gap-6 ${menu.sections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
-                          {menu.sections.map((section) => (
-                            <div key={section.id} className="bg-gray-50 rounded-lg p-4">
-                              <h3 className="text-sm font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
-                                {section.label}
-                              </h3>
-                              <div className="space-y-3">
-                                {section.component === 'title' && <TitleStyleSection {...titleSectionProps} />}
-                                {section.component === 'description' && <DescriptionStyleSection {...descriptionSectionProps} />}
-                                {section.component === 'button' && <ButtonStyleSection {...buttonSectionProps} />}
-                                {section.component === 'image' && <ImageStyleSection {...imageSectionProps} />}
-                                {section.component === 'background' && <BackgroundStyleSection {...backgroundSectionProps} />}
-                                {section.component === 'animation' && <AnimationSection {...animationSectionProps} />}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
               </div>
             ))}
           </div>
         </div>
 
+        {/* Mega Menu Dropdown - Below panel, full height */}
+        {openMenu && (
+          <>
+            {/* Backdrop for closing menu */}
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setOpenMenu(null)}
+              aria-label="Close menu"
+            />
+            
+            {/* Mega Menu Panel - Starts exactly at panel bottom border */}
+            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
+              <div className="max-w-7xl mx-auto px-6 py-6 h-full">
+                {[
+                  { 
+                    id: 'content', 
+                    label: 'Content', 
+                    sections: [
+                      { id: 'title', label: 'Title', component: 'title' },
+                      { id: 'description', label: 'Description', component: 'description' }
+                    ]
+                  },
+                  { 
+                    id: 'background', 
+                    label: 'Background', 
+                    sections: [
+                      { id: 'button', label: 'Button', component: 'button' },
+                      { id: 'background', label: 'Background', component: 'background' },
+                      { id: 'image', label: 'Image', component: 'image' },
+                      { id: 'animation', label: 'Animation', component: 'animation' }
+                    ]
+                  },
+                ].filter(menu => menu.id === openMenu).map((menu) => (
+                  <div key={menu.id}>
+                    {/* Close hint */}
+                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{menu.label} Settings</h2>
+                      <button
+                        onClick={() => setOpenMenu(null)}
+                        className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex items-center gap-1 transition-colors"
+                        style={{
+                          color: hoveredButton === 'close-menu' ? primary.hover : undefined
+                        }}
+                        onMouseEnter={() => setHoveredButton('close-menu')}
+                        onMouseLeave={() => setHoveredButton(null)}
+                      >
+                        <kbd className="px-2 py-0.5 text-xs border rounded" style={{
+                          backgroundColor: hoveredButton === 'close-menu' ? `${primary.base}10` : undefined,
+                          borderColor: hoveredButton === 'close-menu' ? `${primary.base}40` : undefined,
+                          color: hoveredButton === 'close-menu' ? primary.base : undefined
+                        }}>Esc</kbd>
+                        <span>to close</span>
+                      </button>
+                    </div>
+                    
+                    <div className={`grid gap-6 ${menu.sections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
+                      {menu.sections.map((section) => (
+                        <div key={section.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                            {section.label}
+                          </h3>
+                          <div className="space-y-3">
+                            {section.component === 'title' && <TitleStyleSection {...titleSectionProps} />}
+                            {section.component === 'description' && <DescriptionStyleSection {...descriptionSectionProps} />}
+                            {section.component === 'button' && <ButtonStyleSection {...buttonSectionProps} />}
+                            {section.component === 'image' && <ImageStyleSection {...imageSectionProps} />}
+                            {section.component === 'background' && <BackgroundStyleSection {...backgroundSectionProps} />}
+                            {section.component === 'animation' && <AnimationSection {...animationSectionProps} />}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
         <StandardModalBody className="p-0 bg-white/20 dark:bg-gray-900/20" noPadding>
           {/* Preview refresh indicator */}
           {previewRefreshing && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg border border-gray-200">
-              <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg border"
+              style={{ borderColor: `${primary.base}40` }}
+            >
+              <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: `${primary.base} transparent transparent transparent` }}
+              ></div>
               <span className="text-xs font-medium text-gray-700">Updating preview...</span>
             </div>
           )}
@@ -523,7 +565,11 @@ export default function HeroSectionEditModal() {
                   type="text"
                   value={inlineEdit.value}
                   onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-lg font-semibold"
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white text-lg font-semibold focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${primary.base}40`,
+                    '--tw-ring-color': primary.base
+                  } as React.CSSProperties}
                   placeholder="Enter title..."
                   autoFocus
                 />
@@ -531,7 +577,11 @@ export default function HeroSectionEditModal() {
                 <textarea
                   value={inlineEdit.value}
                   onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white resize-none focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${primary.base}40`,
+                    '--tw-ring-color': primary.base
+                  } as React.CSSProperties}
                   placeholder="Enter description..."
                   rows={3}
                   autoFocus
@@ -540,8 +590,16 @@ export default function HeroSectionEditModal() {
               
               <div className="flex items-center justify-between mt-3">
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs">Enter</kbd> to save, 
-                  <kbd className="ml-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs">Esc</kbd> to cancel
+                  <kbd className="px-1.5 py-0.5 border rounded text-xs" style={{ 
+                    backgroundColor: `${primary.base}10`,
+                    borderColor: `${primary.base}30`,
+                    color: primary.base
+                  }}>Enter</kbd> to save, 
+                  <kbd className="ml-1 px-1.5 py-0.5 border rounded text-xs" style={{ 
+                    backgroundColor: `${primary.base}10`,
+                    borderColor: `${primary.base}30`,
+                    color: primary.base
+                  }}>Esc</kbd> to cancel
                 </div>
                 <div className="flex gap-2">
                   <Button
