@@ -32,6 +32,8 @@ export interface Booking {
   rejected_by?: string;
   rejected_at?: string;
   rejection_reason?: string;
+  // Tracking
+  viewed_by?: string[]; // Array of user IDs who have viewed this meeting
   created_at: string;
   updated_at: string;
   meeting_type?: {

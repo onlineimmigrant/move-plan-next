@@ -95,6 +95,10 @@ export const uploadFileToStorage = async (
     const filePath = `${user.id}/${ticketId}/${fileName}`;
 
     console.log('📤 Uploading file:', filePath);
+    console.log('   User ID:', user.id);
+    console.log('   Ticket ID:', ticketId);
+    console.log('   File name:', fileName);
+    console.log('   File size:', file.size);
 
     const { data, error } = await supabase.storage
       .from('ticket-attachments')
@@ -105,6 +109,7 @@ export const uploadFileToStorage = async (
 
     if (error) {
       console.error('❌ Upload error:', error);
+      console.error('   Message:', error.message);
       return { path: '', error: error.message };
     }
 
@@ -168,14 +173,22 @@ export const uploadFileOnly = async (
   ticketId: string,
   responseId: string
 ): Promise<{ path: string | null; error?: string }> => {
+  console.log('🔼 uploadFileOnly START:', file.name);
+  
   // Validate file first
   const validation = validateFile(file);
+  console.log('   validateFile result:', validation.valid, validation.error);
+  
   if (!validation.valid) {
+    console.log('   ❌ Validation failed');
     return { path: null, error: validation.error };
   }
 
   // Upload to storage
+  console.log('   📤 Calling uploadFileToStorage...');
   const uploadResult = await uploadFileToStorage(file, ticketId, responseId);
+  console.log('   uploadFileToStorage result:', uploadResult.path ? '✅' : '❌', uploadResult.error);
+  
   if (uploadResult.error || !uploadResult.path) {
     return { path: null, error: uploadResult.error || 'Upload failed' };
   }
@@ -192,18 +205,26 @@ export const uploadAttachment = async (
   responseId: string
 ): Promise<{ attachment: TicketAttachment | null; error?: string }> => {
   try {
+    console.log('🔼 uploadAttachment START:', file.name);
+    
     // First upload file to storage
     const uploadResult = await uploadFileOnly(file, ticketId, responseId);
+    console.log('   uploadFileOnly result:', uploadResult.path ? '✅ uploaded' : '❌ failed', uploadResult.error);
+    
     if (uploadResult.error || !uploadResult.path) {
+      console.log('   Returning error:', uploadResult.error);
       return { attachment: null, error: uploadResult.error || 'Upload failed' };
     }
 
     // Then save metadata to database
     const metadataResult = await saveAttachmentMetadata(ticketId, responseId, file, uploadResult.path);
+    console.log('   saveAttachmentMetadata result:', metadataResult.data ? '✅ saved' : '❌ failed', metadataResult.error);
+    
     if (metadataResult.error || !metadataResult.data) {
       return { attachment: null, error: metadataResult.error || 'Failed to save metadata' };
     }
 
+    console.log('🔼 uploadAttachment SUCCESS:', metadataResult.data.id);
     return { attachment: metadataResult.data };
   } catch (err: any) {
     console.error('❌ Unexpected error in uploadAttachment:', err);

@@ -7,6 +7,8 @@ import { UnifiedMenuButton } from './UnifiedMenuButton';
 import { UnifiedMenuDropdown } from './UnifiedMenuDropdown';
 import { useMenuPosition } from './hooks/useMenuPosition';
 import { useMenuKeyboard } from './hooks/useMenuKeyboard';
+import { useUnreadTicketCount } from './hooks/useUnreadTicketCount';
+import { useUnreadMeetingsCount } from './hooks/useUnreadMeetingsCount';
 import { getMenuItemsForUser } from './config/menuItems';
 
 /**
@@ -39,6 +41,7 @@ export function UnifiedMenu({
   showBadge = true,
   className,
 }: UnifiedMenuProps) {
+  console.log(`[Debug] UnifiedMenu: render. showBadge=${showBadge}`);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -48,14 +51,29 @@ export function UnifiedMenu({
   const { session, isAdmin, isSuperadmin } = useAuth();
   const isAuthenticated = !!session;
 
+  // Get unread counts for badges
+  const unreadTicketCount = useUnreadTicketCount();
+  const unreadMeetingsCount = useUnreadMeetingsCount();
+
   // Get appropriate menu items based on user role
-  const baseMenuItems = customItems || getMenuItemsForUser(isAuthenticated, isAdmin, isSuperadmin);
+  const baseMenuItems = useMemo(() => {
+    const ticketsBadgeGetter = () => (unreadTicketCount > 0 ? unreadTicketCount : null);
+    const meetingsBadgeGetter = () => (unreadMeetingsCount > 0 ? unreadMeetingsCount : null);
+    const items = customItems || getMenuItemsForUser(
+      isAuthenticated, 
+      isAdmin, 
+      isSuperadmin,
+      ticketsBadgeGetter,
+      meetingsBadgeGetter
+    );
+    return items;
+  }, [customItems, isAuthenticated, isAdmin, isSuperadmin, unreadTicketCount, unreadMeetingsCount]);
 
   // Use the menu items directly (already filtered by role)
   const filteredItems = baseMenuItems;
 
-  // Calculate menu position with stable width (200px desktop, 50% mobile)
-  const menuPosition = useMenuPosition(buttonRef, isOpen, 200, 400);
+  // Calculate menu position with stable width (280px desktop, 50% mobile)
+  const menuPosition = useMenuPosition(buttonRef, isOpen, 280, 400);
 
   // Handle item selection
   const handleItemClick = (item: MenuItemConfig) => {
@@ -97,21 +115,6 @@ export function UnifiedMenu({
     onClose: handleClose,
   });
 
-  // Calculate total badge count from all items
-  const totalBadgeCount = useMemo(() => {
-    if (!showBadge) return null;
-
-    let total = 0;
-    filteredItems.forEach((item) => {
-      const badgeValue = typeof item.badge === 'function' ? item.badge() : item.badge;
-      if (typeof badgeValue === 'number') {
-        total += badgeValue;
-      }
-    });
-
-    return total > 0 ? total : null;
-  }, [filteredItems, showBadge]);
-
   // Don't render if no items are available after filtering
   if (filteredItems.length === 0) {
     return null;
@@ -124,7 +127,8 @@ export function UnifiedMenu({
         isOpen={isOpen}
         onClick={handleToggle}
         position={position}
-        badgeCount={totalBadgeCount}
+        ticketsBadgeCount={showBadge && unreadTicketCount > 0 ? unreadTicketCount : null}
+        meetingsBadgeCount={showBadge && unreadMeetingsCount > 0 ? unreadMeetingsCount : null}
         className={className}
       />
 

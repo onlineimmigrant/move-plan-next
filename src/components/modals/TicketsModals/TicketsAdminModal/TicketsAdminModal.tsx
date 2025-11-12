@@ -496,7 +496,14 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
                 urlsMap[attachment.id] = result.url;
               }
             } catch (error) {
-              console.error('Error loading attachment URL:', error);
+              // Silently skip attachments that can't be loaded (e.g., deleted files)
+              if (error && typeof error === 'object' && 'message' in error) {
+                const errorMessage = String(error.message).toLowerCase();
+                if (!errorMessage.includes('not found') && !errorMessage.includes('does not exist')) {
+                  // Only log non-404 errors
+                  console.error('Error loading attachment URL:', error);
+                }
+              }
             }
           }
         }

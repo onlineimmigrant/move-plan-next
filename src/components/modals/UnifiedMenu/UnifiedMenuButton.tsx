@@ -18,7 +18,9 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
       isOpen,
       onClick,
       position,
-      badgeCount,
+      ticketsBadgeCount,
+      meetingsBadgeCount,
+      badgeCount, // Legacy support
       className = '',
     },
     ref
@@ -27,7 +29,11 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
     const primary = themeColors.cssVars.primary;
 
     const positionStyles = getButtonPositionStyles(position);
-    const showBadge = badgeCount !== null && badgeCount !== undefined && badgeCount !== '';
+    
+    // Show individual badges if provided, otherwise fall back to legacy badgeCount
+    const showTicketsBadge = ticketsBadgeCount !== null && ticketsBadgeCount !== undefined && ticketsBadgeCount !== '';
+    const showMeetingsBadge = meetingsBadgeCount !== null && meetingsBadgeCount !== undefined && meetingsBadgeCount !== '';
+    const showLegacyBadge = !showTicketsBadge && !showMeetingsBadge && badgeCount !== null && badgeCount !== undefined && badgeCount !== '';
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -45,15 +51,17 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
           rounded-full
           bg-white/30 dark:bg-gray-900/30
           backdrop-blur-3xl
-          border border-white/10 dark:border-gray-700/10
+          border border-white/20 dark:border-gray-700/20
           shadow-xl hover:shadow-2xl
           hover:scale-105 active:scale-95
           hover:bg-white/40 dark:hover:bg-gray-900/40
           transition-all duration-300
           flex items-center justify-center
           group
-          outline-none focus:outline-none focus-visible:outline-none
-          focus:ring-0 focus-visible:ring-0
+          outline-none focus:outline-none
+          focus-visible:ring-2 focus-visible:ring-offset-2
+          focus-visible:ring-white/50 dark:focus-visible:ring-gray-500/50
+          ${isOpen ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'}
           ${className}
         `}
         style={{
@@ -76,8 +84,54 @@ export const UnifiedMenuButton = forwardRef<HTMLButtonElement, UnifiedMenuButton
           }}
         />
 
-        {/* Badge */}
-        {showBadge && !isOpen && (
+        {/* Tickets Badge (Left side - primary-600) */}
+        {showTicketsBadge && !isOpen && (
+          <span
+            className="
+              absolute -top-1 -left-1
+              min-w-[20px] h-5
+              px-1.5
+              flex items-center justify-center
+              text-xs font-bold
+              text-white
+              rounded-full
+              shadow-lg
+              animate-in zoom-in duration-200
+            "
+            style={{
+              backgroundColor: primary.base, // primary-600
+            }}
+            aria-label={`${ticketsBadgeCount} unread tickets`}
+          >
+            {ticketsBadgeCount}
+          </span>
+        )}
+
+        {/* Meetings Badge (Right side - primary-800) */}
+        {showMeetingsBadge && !isOpen && (
+          <span
+            className="
+              absolute -top-1 -right-1
+              min-w-[20px] h-5
+              px-1.5
+              flex items-center justify-center
+              text-xs font-bold
+              text-white
+              rounded-full
+              shadow-lg
+              animate-in zoom-in duration-200
+            "
+            style={{
+              backgroundColor: primary.active, // Darker shade for meetings
+            }}
+            aria-label={`${meetingsBadgeCount} unread meetings`}
+          >
+            {meetingsBadgeCount}
+          </span>
+        )}
+
+        {/* Legacy Badge (for backwards compatibility) */}
+        {showLegacyBadge && !isOpen && (
           <span
             className="
               absolute -top-1 -right-1

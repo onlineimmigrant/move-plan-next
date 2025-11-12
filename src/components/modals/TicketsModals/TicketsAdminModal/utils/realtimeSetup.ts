@@ -154,8 +154,16 @@ export function setupRealtimeSubscription({
             new: payload.new,
             old: payload.old
           });
-          fetchTickets();
-          refreshTicketFn();
+          
+          // Only refresh if this response belongs to the selected ticket
+          const currentTicket = selectedTicketRef.current;
+          if (currentTicket && payload.new && typeof payload.new === 'object' && 'ticket_id' in payload.new && payload.new.ticket_id === currentTicket.id) {
+            console.log('🎯 Admin realtime: Response belongs to selected ticket, refreshing');
+            fetchTickets();
+            refreshTicketFn();
+          } else {
+            console.log('🚫 Admin realtime: Response not for selected ticket, skipping refresh');
+          }
         }
       )
       .on(

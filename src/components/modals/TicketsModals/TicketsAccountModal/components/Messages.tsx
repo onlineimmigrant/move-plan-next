@@ -24,6 +24,13 @@ export default function Messages({
   messagesContainerRef,
   messagesEndRef,
 }: MessagesProps) {
+  console.log('🔄 Messages component RENDERING with attachmentUrls keys:', Object.keys(attachmentUrls).length);
+  
+  React.useEffect(() => {
+    console.log('📨 Messages component received attachmentUrls:', Object.keys(attachmentUrls).length, 'keys:', Object.keys(attachmentUrls).slice(0, 3));
+    console.log('📨 Messages component received selectedTicket with', selectedTicket?.ticket_responses?.length || 0, 'responses');
+  }, [attachmentUrls, selectedTicket?.ticket_responses?.length]);
+
   /**
    * Message grouping threshold in milliseconds (2 minutes)
    */
@@ -190,6 +197,8 @@ export default function Messages({
                         {response.attachments.map((attachment) => {
                           const isImage = isImageFile(attachment.file_type);
                           const imageUrl = attachmentUrls[attachment.id];
+                          
+                          console.log('🎨 Rendering attachment:', attachment.id, 'isImage:', isImage, 'hasUrl:', !!imageUrl, 'url:', imageUrl?.substring(0, 50));
                           
                           return isImage && imageUrl ? (
                             // Image preview

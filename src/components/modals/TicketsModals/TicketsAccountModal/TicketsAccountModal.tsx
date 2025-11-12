@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 import { useSettings } from '@/context/SettingsContext';
 import Toast from '@/components/Toast';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
+import { isImageFile, getAttachmentUrl } from '@/lib/fileUpload';
 
 // Types
 import type { Ticket, TicketResponse, Avatar, WidgetSize } from '../shared/types';
@@ -26,7 +27,6 @@ import {
 // Utils
 import { 
   getContainerClasses,
-  loadAttachmentUrls,
   groupTicketsByStatus,
 } from './utils';
 
@@ -38,7 +38,7 @@ interface TicketsAccountModalProps {
   onClose: () => void;
 }
 
-const statuses = ['in progress', 'open', 'closed'];
+const statuses = ['open', 'in progress', 'closed'];
 
 export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountModalProps) {
   const { t } = useAccountTranslations();
@@ -46,7 +46,7 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
   
   // UI State
   const [size, setSize] = useState<WidgetSize>('initial');
-  const [activeTab, setActiveTab] = useState(statuses[0]);
+  const [activeTab, setActiveTab] = useState('open'); // Default to 'open'
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isAdminTyping, setIsAdminTyping] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -94,6 +94,61 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     onToast: showToast,
   });
 
+  // ============================================================================
+  // Attachment URL Loading (copied from admin modal pattern)
+  // ============================================================================
+  
+  const loadAttachmentUrlsLocal = useCallback(async (responses: any[]) => {
+    console.log('🔴 loadAttachmentUrlsLocal START - responses:', responses.length);
+    const urlsMap: Record<string, string> = {};
+    
+    for (const response of responses) {
+      console.log('  🔸 Response:', response.id, 'attachments:', response.attachments?.length || 0);
+      
+      if (response.attachments && Array.isArray(response.attachments)) {
+        for (const attachment of response.attachments) {
+          console.log('    🟡 Attachment:', attachment.id, 'type:', attachment.file_type, 'path:', attachment.file_path);
+          
+          if (isImageFile(attachment.file_type)) {
+            try {
+              console.log('      📥 Fetching URL...');
+              const result = await getAttachmentUrl(attachment.file_path);
+              console.log('      📤 Got result:', !!result?.url);
+              
+              if (result.url) {
+                urlsMap[attachment.id] = result.url;
+                console.log('      ✅ Stored URL for', attachment.id);
+              }
+            } catch (error) {
+              console.log('      ❌ Error:', error);
+              if (error && typeof error === 'object' && 'message' in error) {
+                const errorMessage = String(error.message).toLowerCase();
+                if (!errorMessage.includes('not found') && !errorMessage.includes('does not exist')) {
+                  console.error('Error loading attachment URL:', error);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    console.log('🔴 loadAttachmentUrlsLocal END - setting', Object.keys(urlsMap).length, 'URLs');
+    console.log('   URLs:', urlsMap);
+    
+    // Force React to detect the state change by creating a completely new object
+    setAttachmentUrls(prev => {
+      const result = { ...prev, ...urlsMap };
+      // If nothing changed, force a new object reference anyway
+      if (Object.keys(result).length === Object.keys(prev).length) {
+        // Create a new object with all same values to force re-render
+        return { ...result };
+      }
+      console.log('   🟢 setAttachmentUrls executed! Old keys:', Object.keys(prev).length, 'New total:', Object.keys(result).length);
+      return result;
+    });
+  }, []);
+
   // Realtime Subscription Hook - Handles realtime updates
   useRealtimeSubscription({
     isOpen,
@@ -103,6 +158,7 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     setSelectedTicket,
     setAttachmentUrls,
     fetchTickets,
+    loadAttachmentUrls: loadAttachmentUrlsLocal,
   });
 
   // Message Handling Hook - Handles sending messages and file uploads
@@ -120,6 +176,7 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     selectedFiles,
     setSelectedFiles,
     onToast: showToast,
+    loadAttachmentUrls: loadAttachmentUrlsLocal,
   });
 
   // Auto-resize textarea based on content
@@ -215,19 +272,26 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
     }
   }, [isOpen]);
 
+  // CRITICAL: Load ALL attachment URLs whenever responses change
+  // This ensures new messages with attachments get URLs immediately
+  useEffect(() => {
+    if (selectedTicket?.ticket_responses?.length) {
+      console.log('💎 useEffect triggered: responses changed to', selectedTicket.ticket_responses.length);
+      loadAttachmentUrlsLocal(selectedTicket.ticket_responses);
+    }
+  }, [selectedTicket?.ticket_responses?.length, loadAttachmentUrlsLocal]);
+
   // ============================================================================
   // Handlers
   // ============================================================================
 
   const handleTicketSelect = (ticket: Ticket) => {
+    console.log('🎯 handleTicketSelect:', ticket.id, 'responses:', ticket.ticket_responses?.length);
     setSelectedTicket(ticket);
-    // Mark admin messages as read when customer opens the ticket
     markMessagesAsRead(ticket.id);
-    // Load attachment URLs for image previews
     if (ticket.ticket_responses) {
-      loadAttachmentUrls(ticket.ticket_responses).then(urlsMap => {
-        setAttachmentUrls(prev => ({ ...prev, ...urlsMap }));
-      });
+      console.log('📦 Calling loadAttachmentUrlsLocal from handleTicketSelect');
+      loadAttachmentUrlsLocal(ticket.ticket_responses);
     }
   };
 
@@ -327,6 +391,16 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
               onClose={onClose}
             />
 
+            {/* Status Filter Tabs - Only show when no ticket selected */}
+            {!selectedTicket && (
+              <BottomTabs
+                statuses={statuses}
+                activeTab={activeTab}
+                groupedTickets={groupedTickets}
+                onTabChange={setActiveTab}
+              />
+            )}
+
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
               {selectedTicket ? (
@@ -376,18 +450,6 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
                     onLoadMore={loadMoreTickets}
                   />
                 </>
-              )}
-
-              {/* Bottom Tabs - Only show when no ticket selected */}
-              {!selectedTicket && (
-                <div className="flex justify-center px-2 py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
-                  <BottomTabs
-                    statuses={statuses}
-                    activeTab={activeTab}
-                    groupedTickets={groupedTickets}
-                    onTabChange={setActiveTab}
-                  />
-                </div>
               )}
             </div>
           </div>
@@ -423,6 +485,16 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
               onClose={onClose}
             />
 
+            {/* Status Filter Tabs - Only show when no ticket selected */}
+            {!selectedTicket && (
+              <BottomTabs
+                statuses={statuses}
+                activeTab={activeTab}
+                groupedTickets={groupedTickets}
+                onTabChange={setActiveTab}
+              />
+            )}
+
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
               {selectedTicket ? (
@@ -472,18 +544,6 @@ export default function TicketsAccountModal({ isOpen, onClose }: TicketsAccountM
                     onLoadMore={loadMoreTickets}
                   />
                 </>
-              )}
-
-              {/* Bottom Tabs - Only show when no ticket selected */}
-              {!selectedTicket && (
-                <div className="flex justify-center px-2 py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-slate-200 dark:border-gray-700">
-                  <BottomTabs
-                    statuses={statuses}
-                    activeTab={activeTab}
-                    groupedTickets={groupedTickets}
-                    onTabChange={setActiveTab}
-                  />
-                </div>
               )}
             </div>
           </div>

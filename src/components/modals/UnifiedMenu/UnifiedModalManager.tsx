@@ -8,6 +8,9 @@ import { UnifiedMenu } from './UnifiedMenu';
 import { getMenuItemsForUser } from './config/menuItems';
 import { MenuItemConfig } from './types';
 import { SiteActionsModal } from './SiteActionsModal';
+import { useUnreadTicketCount } from './hooks/useUnreadTicketCount';
+import { useUnreadMeetingsCount } from './hooks/useUnreadMeetingsCount';
+import { triggerBadgeRefresh } from './hooks/useBadgeRefresh';
 
 // Lazy load modals for better performance
 const MeetingsBookingModal = dynamic(
@@ -80,6 +83,10 @@ export function UnifiedModalManager() {
   const isAuthenticated = !!session;
   const isAdminUser = isAdmin || isSuperadmin;
 
+  // Get unread counts for badges
+  const unreadTicketCount = useUnreadTicketCount();
+  const unreadMeetingsCount = useUnreadMeetingsCount();
+
   // Don't show on admin or account pages (they have their own navigation)
   const shouldHide = pathname?.startsWith('/admin') || pathname?.startsWith('/account');
   
@@ -87,8 +94,14 @@ export function UnifiedModalManager() {
     return null;
   }
 
-  // Get menu items for current user role
-  const baseMenuItems = getMenuItemsForUser(isAuthenticated, isAdmin, isSuperadmin);
+  // Get menu items for current user role with badge support
+  const baseMenuItems = getMenuItemsForUser(
+    isAuthenticated, 
+    isAdmin, 
+    isSuperadmin,
+    () => (unreadTicketCount > 0 ? unreadTicketCount : null),
+    () => (unreadMeetingsCount > 0 ? unreadMeetingsCount : null)
+  );
 
   // Create menu items with actual actions
   const menuItems: MenuItemConfig[] = baseMenuItems.map((item) => ({
@@ -190,33 +203,47 @@ export function UnifiedModalManager() {
       {openModal === 'meetings-admin' && (
         <MeetingsAdminModal
           isOpen={true}
-          onClose={() => setOpenModal(null)}
+          onClose={() => {
+            setOpenModal(null);
+            // Trigger badge refresh when meetings modal closes
+            triggerBadgeRefresh();
+          }}
         />
       )}
 
-      {openModal === 'tickets-admin' && (
-        <TicketsAdminModal
-          isOpen={true}
-          onClose={() => setOpenModal(null)}
-        />
-      )}
-
-      {/* Account Modals */}
+      {/* Customer Modals */}
       {openModal === 'meetings-account' && (
         <MeetingsBookingModal
           isOpen={true}
-          onClose={() => setOpenModal(null)}
+          onClose={() => {
+            setOpenModal(null);
+            // Trigger badge refresh when meetings modal closes
+            triggerBadgeRefresh();
+          }}
         />
       )}
 
       {openModal === 'tickets-account' && (
         <TicketsAccountModal
           isOpen={true}
-          onClose={() => setOpenModal(null)}
+          onClose={() => {
+            setOpenModal(null);
+            // Trigger badge refresh when tickets modal closes
+            triggerBadgeRefresh();
+          }}
         />
       )}
 
-      {/* Shared Modals */}
+      {openModal === 'tickets-admin' && (
+        <TicketsAdminModal
+          isOpen={true}
+          onClose={() => {
+            setOpenModal(null);
+            // Trigger badge refresh when tickets modal closes
+            triggerBadgeRefresh();
+          }}
+        />
+      )}
       {openModal === 'chat' && (
         <ChatWidget
           initialOpen={true}

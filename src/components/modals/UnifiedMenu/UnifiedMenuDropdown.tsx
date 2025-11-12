@@ -63,7 +63,7 @@ export function UnifiedMenuDropdown({
       {/* Backdrop for mobile */}
       {isMobile && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9999] animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/50 z-[9999] animate-in fade-in duration-200"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -80,10 +80,9 @@ export function UnifiedMenuDropdown({
         className={`
           z-[10000]
           bg-white/30 dark:bg-gray-900/30
-          backdrop-blur-3xl
-          border border-white/10 dark:border-gray-700/10
+          backdrop-blur-2xl
+          border border-white/20 dark:border-gray-700/20
           shadow-2xl
-          overflow-hidden
           rounded-xl
           outline-none focus:outline-none
           ${animationClasses}
@@ -95,7 +94,7 @@ export function UnifiedMenuDropdown({
         onMouseDown={(e) => e.preventDefault()}
       >
         {/* Menu Items Container */}
-        <div className={isMobile ? 'max-h-[70vh] overflow-y-auto p-4' : 'p-3'}>
+        <div className={isMobile ? 'max-h-[70vh] overflow-y-auto p-3' : 'p-2'}>
           {/* Regular items (not in bottom row) */}
           {items.slice(0, -2).map((item, index) => (
             <UnifiedMenuItem
@@ -109,6 +108,11 @@ export function UnifiedMenuDropdown({
               isInBottomRow={false}
             />
           ))}
+          
+          {/* Divider before bottom row */}
+          {items.length >= 2 && (
+            <div className="border-t border-white/10 dark:border-gray-700/10 my-1" />
+          )}
           
           {/* Bottom row - 2 items side by side */}
           {items.length >= 2 && (

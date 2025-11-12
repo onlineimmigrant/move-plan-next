@@ -121,6 +121,11 @@ export interface UnifiedMenuButtonProps {
   isOpen: boolean;
   onClick: () => void;
   position: MenuPosition;
+  /** Badge count for tickets (left side, primary-600) */
+  ticketsBadgeCount?: number | string | null;
+  /** Badge count for meetings (right side, primary-800) */
+  meetingsBadgeCount?: number | string | null;
+  /** Legacy: single badge count (deprecated, use ticketsBadgeCount/meetingsBadgeCount) */
   badgeCount?: number | string | null;
   className?: string;
 }

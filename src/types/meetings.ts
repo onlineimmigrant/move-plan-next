@@ -54,6 +54,8 @@ export interface Booking {
   cancellation_reason?: string;
   cancelled_at?: string;
   cancelled_by?: string;
+  // Badge tracking
+  viewed_by?: string[];
   // Waiting room fields
   waiting_since?: string;
   approved_by?: string;

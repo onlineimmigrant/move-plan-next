@@ -6,7 +6,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { uploadAttachment } from '@/lib/fileUpload';
-import { broadcastTyping, scrollToBottom, loadAttachmentUrls } from '../../shared/utils';
+import { broadcastTyping, scrollToBottom } from '../../shared/utils';
 import type { Ticket, TicketResponse, TicketAttachment } from '../../shared/types';
 
 interface UseMessageHandlingProps {
@@ -17,6 +17,7 @@ interface UseMessageHandlingProps {
   selectedFiles: File[];
   setSelectedFiles: React.Dispatch<React.SetStateAction<File[]>>;
   onToast: (message: string, type: 'success' | 'error') => void;
+  loadAttachmentUrls: (responses: any[]) => Promise<void>;
 }
 
 interface UseMessageHandlingReturn {
@@ -35,6 +36,7 @@ export const useMessageHandling = ({
   selectedFiles,
   setSelectedFiles,
   onToast,
+  loadAttachmentUrls,
 }: UseMessageHandlingProps): UseMessageHandlingReturn => {
   const [responseMessage, setResponseMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -70,14 +72,15 @@ export const useMessageHandling = ({
       attachments: [], // Will be populated after upload
     };
 
-    setSelectedTicket((t) =>
-      t && t.id === selectedTicket.id
-        ? {
-            ...t,
-            ticket_responses: [...t.ticket_responses, optimisticResponse],
-          }
-        : t
-    );
+    // Create a completely new ticket object for React to detect the change
+    setSelectedTicket((t) => {
+      if (!t || t.id !== selectedTicket.id) return t;
+      return {
+        ...t,
+        ticket_responses: [...t.ticket_responses, optimisticResponse], // New array
+        updated_at: new Date().toISOString(), // Force change
+      };
+    });
     setResponseMessage('');
     setSelectedFiles([]);
     scrollToBottom(messagesContainerRef);
@@ -103,7 +106,11 @@ export const useMessageHandling = ({
 
       // Upload files if any
       if (filesToUpload.length > 0) {
+        console.log('📤 Uploading', filesToUpload.length, 'files for response', responseId);
+        
         for (const file of filesToUpload) {
+          console.log('  🔼 Uploading:', file.name, file.type, file.size);
+          
           const { attachment, error: uploadError } = await uploadAttachment(
             file,
             selectedTicket.id,
@@ -111,45 +118,57 @@ export const useMessageHandling = ({
           );
 
           if (uploadError) {
+            console.log('  ❌ Upload failed:', uploadError);
             onToast(`Failed to upload ${file.name}: ${uploadError}`, 'error');
           } else if (attachment) {
+            console.log('  ✅ Uploaded attachment:', attachment.id, 'path:', attachment.file_path);
             uploadedAttachments.push(attachment);
           }
         }
       }
 
+      console.log('📦 After upload - uploadedAttachments:', uploadedAttachments.length);
+
       // Replace optimistic message with real one including attachments
       const responseWithAttachments = { ...data, attachments: uploadedAttachments };
       
-      setSelectedTicket((t) =>
-        t && t.id === selectedTicket.id
-          ? {
-              ...t,
-              ticket_responses: t.ticket_responses.map(r => 
-                r.id === tempId ? responseWithAttachments : r
-              ),
-            }
-          : t
-      );
+      console.log('📝 Response with attachments:', responseWithAttachments.id, 'attachments:', responseWithAttachments.attachments?.length);
       
-      // Load attachment URLs for the newly uploaded attachments - immediately, not in timeout
+      // IMMEDIATELY load attachment URLs - this is critical for immediate display
       if (uploadedAttachments.length > 0) {
-        const urlsMap = await loadAttachmentUrls([responseWithAttachments]);
-        setAttachmentUrls(prev => ({ ...prev, ...urlsMap }));
+        console.log('🎯 Loading attachment URLs IMMEDIATELY');
+        await loadAttachmentUrls([responseWithAttachments]);
       }
       
-      // Force a small delay to ensure URLs are in state before realtime refresh
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Create a completely new ticket object to trigger React re-render
+      console.log('📤 Updating selectedTicket state with new response');
+      setSelectedTicket((t) => {
+        if (!t || t.id !== selectedTicket.id) return t;
+        
+        const updatedResponses = t.ticket_responses.map(r => 
+          r.id === tempId ? responseWithAttachments : r
+        );
+        
+        console.log('📋 New ticket_responses count:', updatedResponses.length);
+        console.log('📋 Response with attachments:', responseWithAttachments.id, 'has', responseWithAttachments.attachments?.length || 0, 'attachments');
+        
+        // Return a NEW object with NEW array reference
+        return {
+          ...t,
+          ticket_responses: [...updatedResponses], // New array reference
+          updated_at: new Date().toISOString(), // Force change detection
+        };
+      });
     } catch (error: any) {
-      // Revert optimistic update on error
-      setSelectedTicket((t) =>
-        t && t.id === selectedTicket.id
-          ? {
-              ...t,
-              ticket_responses: t.ticket_responses.filter(r => r.id !== tempId),
-            }
-          : t
-      );
+      // Revert optimistic update on error - create new object
+      setSelectedTicket((t) => {
+        if (!t || t.id !== selectedTicket.id) return t;
+        return {
+          ...t,
+          ticket_responses: t.ticket_responses.filter(r => r.id !== tempId),
+          updated_at: new Date().toISOString(),
+        };
+      });
       setResponseMessage(tempMessage);
       setSelectedFiles(filesToUpload);
       onToast(error.message || 'Failed to submit response', 'error');

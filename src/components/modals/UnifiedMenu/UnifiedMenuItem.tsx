@@ -41,13 +41,14 @@ export function UnifiedMenuItem({
         onMouseEnter={onHover}
         onMouseLeave={onLeave}
         className={`
-          flex-1 flex flex-col items-center justify-center gap-2 px-3 py-3
-          bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl
-          hover:bg-white/30 dark:hover:bg-gray-800/30
-          active:bg-white/40 dark:active:bg-gray-800/40
+          flex-1 flex flex-col items-center justify-center gap-2.5 px-3 py-3.5
+          hover:bg-white/10 dark:hover:bg-gray-800/10
+          active:bg-white/20 dark:active:bg-gray-800/20
           transition-all duration-200
           group
           relative
+          focus-visible:outline-2 focus-visible:outline-offset-1
+          focus-visible:outline-white/60 dark:focus-visible:outline-gray-400/60
           ${positionInBottomRow === 'left' ? 'rounded-bl-lg' : ''}
           ${positionInBottomRow === 'right' ? 'rounded-br-lg' : ''}
         `}
@@ -55,17 +56,17 @@ export function UnifiedMenuItem({
       >
         {/* Icon */}
         <div
-          className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+          className="flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
           style={{
             color: isSelected || isHovered ? primary.base : undefined,
           }}
         >
-          <IconComponent className="w-6 h-6" />
+          <IconComponent className="w-5 h-5" />
         </div>
 
         {/* Label */}
         <div
-          className="text-xs font-medium text-gray-900 dark:text-white text-center leading-tight"
+          className="text-xs font-semibold text-gray-900 dark:text-white text-center leading-tight"
           style={{
             color: isSelected || isHovered ? primary.base : undefined,
           }}
@@ -76,7 +77,7 @@ export function UnifiedMenuItem({
         {/* Badge */}
         {showBadge && (
           <div
-            className="absolute top-1 right-1 min-w-[14px] h-3.5 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white"
+            className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white"
             style={{
               backgroundColor: primary.base,
             }}
@@ -95,30 +96,31 @@ export function UnifiedMenuItem({
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
       className="
-        w-full flex items-center gap-4 px-4 py-3.5 mb-2
-        bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl
-        hover:bg-white/30 dark:hover:bg-gray-800/30
-        active:bg-white/40 dark:active:bg-gray-800/40
+        w-full flex items-center gap-4 px-4 py-2.5
+        hover:bg-white/10 dark:hover:bg-gray-800/10
+        active:bg-white/20 dark:active:bg-gray-800/20
         transition-all duration-200
         rounded-lg
         group
         relative
+        focus-visible:outline-2 focus-visible:outline-offset-1
+        focus-visible:outline-white/60 dark:focus-visible:outline-gray-400/60
       "
       aria-label={item.description || item.label}
     >
       {/* Icon */}
       <div
-        className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+        className="flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
         style={{
           color: isSelected || isHovered ? primary.base : undefined,
         }}
       >
-        <IconComponent className="w-6 h-6" />
+        <IconComponent className="w-5 h-5" />
       </div>
 
       {/* Label */}
       <div
-        className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-left"
+        className="text-sm font-medium tracking-tight text-gray-900 dark:text-white flex-1 text-left"
         style={{
           color: isSelected || isHovered ? primary.base : undefined,
         }}
@@ -129,7 +131,7 @@ export function UnifiedMenuItem({
       {/* Badge */}
       {showBadge && (
         <div
-          className="min-w-[18px] h-5 px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold text-white"
+          className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full text-xs font-bold text-white"
           style={{
             backgroundColor: primary.base,
           }}

@@ -18,11 +18,20 @@ import {
 import { MenuItemConfig } from '../types';
 
 /**
+ * Badge getter function type
+ * Used for dynamic badges that need to fetch their value
+ */
+export type BadgeGetter = () => number | string | null;
+
+/**
  * Menu items for ADMIN and SUPERADMIN users
  * Visual order (top to bottom): Admin → Site → Appointments → (AI Agent + Support in one row)
  * Array order: Admin, Site, Appointments, AI Agent, Support (last 2 = bottom row)
  */
-export const ADMIN_MENU_ITEMS: MenuItemConfig[] = [
+export const getAdminMenuItems = (
+  unreadTicketsBadge?: BadgeGetter,
+  unreadMeetingsBadge?: BadgeGetter
+): MenuItemConfig[] => [
   {
     id: 'admin',
     label: 'Admin',
@@ -43,6 +52,7 @@ export const ADMIN_MENU_ITEMS: MenuItemConfig[] = [
     id: 'appointments',
     label: 'Appointments',
     icon: VideoCameraIcon,
+    badge: unreadMeetingsBadge,
     action: () => {},
     requireAuth: true,
     requireAdmin: true,
@@ -59,6 +69,7 @@ export const ADMIN_MENU_ITEMS: MenuItemConfig[] = [
     id: 'support',
     label: 'Support',
     icon: TicketIcon,
+    badge: unreadTicketsBadge,
     action: () => {},
     requireAuth: true,
     requireAdmin: true,
@@ -70,12 +81,11 @@ export const ADMIN_MENU_ITEMS: MenuItemConfig[] = [
  * Visual order (top to bottom): Help Center → Account → Appointments → (AI Agent + Support in one row)
  * Array order: Help Center, Account, Appointments, AI Agent, Support (last 2 = bottom row)
  */
-/**
- * Menu items for AUTHENTICATED (non-admin) users
- * Visual order (top to bottom): Help Center → Account → Appointments → (AI Agent + Support in one row)
- * Array order: Help Center, Account, Appointments, AI Agent, Support (last 2 = bottom row)
- */
-export const AUTHENTICATED_MENU_ITEMS: MenuItemConfig[] = [
+export const getAuthenticatedMenuItems = (
+  unreadTicketsBadge?: BadgeGetter,
+  unreadMeetingsBadge?: BadgeGetter
+): MenuItemConfig[] => {
+  return [
   {
     id: 'help-center',
     label: 'Help Center',
@@ -96,6 +106,7 @@ export const AUTHENTICATED_MENU_ITEMS: MenuItemConfig[] = [
     id: 'appointments',
     label: 'Appointments',
     icon: VideoCameraIcon,
+    badge: unreadMeetingsBadge,
     action: () => {},
     requireAuth: true,
     requireAdmin: false,
@@ -112,11 +123,13 @@ export const AUTHENTICATED_MENU_ITEMS: MenuItemConfig[] = [
     id: 'support',
     label: 'Support',
     icon: TicketIcon,
+    badge: unreadTicketsBadge,
     action: () => {},
     requireAuth: true,
     requireAdmin: false,
   },
 ];
+};
 
 /**
  * Menu items for UNAUTHENTICATED users
@@ -164,16 +177,18 @@ export const UNAUTHENTICATED_MENU_ITEMS: MenuItemConfig[] = [
 export function getMenuItemsForUser(
   isAuthenticated: boolean,
   isAdmin: boolean,
-  isSuperadmin: boolean
+  isSuperadmin: boolean,
+  unreadTicketsBadge?: BadgeGetter,
+  unreadMeetingsBadge?: BadgeGetter
 ): MenuItemConfig[] {
   // Admin or Superadmin
   if (isAdmin || isSuperadmin) {
-    return ADMIN_MENU_ITEMS;
+    return getAdminMenuItems(unreadTicketsBadge, unreadMeetingsBadge);
   }
   
   // Authenticated regular user
   if (isAuthenticated) {
-    return AUTHENTICATED_MENU_ITEMS;
+    return getAuthenticatedMenuItems(unreadTicketsBadge, unreadMeetingsBadge);
   }
   
   // Unauthenticated
@@ -183,7 +198,7 @@ export function getMenuItemsForUser(
 /**
  * Legacy default items (deprecated - use getMenuItemsForUser instead)
  */
-export const DEFAULT_MENU_ITEMS = AUTHENTICATED_MENU_ITEMS;
+export const DEFAULT_MENU_ITEMS = getAuthenticatedMenuItems();
 
 /**
  * Get menu items grouped by section (deprecated - no longer used)

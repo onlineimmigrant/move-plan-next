@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useEffect } from 'react';
 import { format } from 'date-fns';
 import { type BookingCardProps } from './types';
 import { getCardStyles, getTimeUntilMeeting, getRelativeTime, shouldShowCountdown } from './utils';
+import { supabase } from '@/lib/supabase';
+import { triggerBadgeRefresh } from '@/components/modals/UnifiedMenu/hooks/useBadgeRefresh';
 
 // Lazy load EventDetailsModal
 const EventDetailsModal = lazy(() => import('../../../EventDetailsModal/EventDetailsModal'));
@@ -19,6 +21,40 @@ export function BookingCard({
   organizationId,
 }: BookingCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [isViewed, setIsViewed] = useState(false);
+
+  // Check if current user has viewed this meeting
+  useEffect(() => {
+    if (currentUserId && booking.viewed_by) {
+      const viewedBy = Array.isArray(booking.viewed_by) ? booking.viewed_by : [];
+      setIsViewed(viewedBy.includes(currentUserId));
+    }
+  }, [booking.viewed_by, currentUserId]);
+
+  // Mark meeting as viewed when details modal opens
+  const markAsViewed = async () => {
+    if (!currentUserId || isViewed) return;
+
+    try {
+      const viewedBy = Array.isArray(booking.viewed_by) ? booking.viewed_by : [];
+      
+      if (!viewedBy.includes(currentUserId)) {
+        const { error } = await supabase
+          .from('bookings')
+          .update({ viewed_by: [...viewedBy, currentUserId] })
+          .eq('id', booking.id);
+
+        if (error) {
+          console.error('Error marking meeting as viewed:', error);
+        } else {
+          setIsViewed(true);
+          triggerBadgeRefresh(); // Update badge counts
+        }
+      }
+    } catch (err) {
+      console.error('Error in markAsViewed:', err);
+    }
+  };
 
   // Theme color - extract from meeting type or use default
   const meetingTypeColor = (booking.meeting_type as any)?.color || '#3b82f6';
@@ -33,6 +69,7 @@ export function BookingCard({
   const isInactive = isCancelled || isCompleted;
 
   const handleViewDetails = () => {
+    markAsViewed(); // Mark as viewed when opening details
     setShowDetailsModal(true);
   };
 
@@ -76,6 +113,13 @@ export function BookingCard({
               >
                 {(booking.meeting_type as any)?.name || booking.title}
               </h3>
+              
+              {/* "New" Badge for unviewed meetings */}
+              {!isViewed && !isInactive && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                  NEW
+                </span>
+              )}
               
               {/* Live Indicator */}
               {isLive && !isInactive && (
