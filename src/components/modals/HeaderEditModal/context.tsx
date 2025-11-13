@@ -45,6 +45,7 @@ interface HeaderEditContextType {
   organizationId: string | null;
   headerStyle: string;
   headerStyleFull: any; // Full JSONB object
+  logoImageUrl: string | null; // Logo image URL from settings.image
   menuItems: MenuItem[];
   openModal: (organizationId: string) => void;
   closeModal: () => void;
@@ -73,6 +74,7 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [headerStyle, setHeaderStyle] = useState('default');
   const [headerStyleFull, setHeaderStyleFull] = useState<any>(null); // Store full JSONB object
+  const [logoImageUrl, setLogoImageUrl] = useState<string | null>(null); // Store logo image URL
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [session, setSession] = useState<any>(null);
 
@@ -129,8 +131,12 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       console.log('[HeaderEditContext] Fetched data:', {
         hasSettings: !!orgData.settings,
         headerStyle: orgData.settings?.header_style,
-        headerStyleType: typeof orgData.settings?.header_style
+        headerStyleType: typeof orgData.settings?.header_style,
+        logoImage: orgData.settings?.image
       });
+      
+      // Store logo image URL from settings
+      setLogoImageUrl(orgData.settings?.image || null);
       
       // Extract header_style from settings (not organization)
       const headerStyleData = orgData.settings?.header_style;
@@ -462,6 +468,7 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     organizationId,
     headerStyle,
     headerStyleFull,
+    logoImageUrl,
     menuItems,
     openModal,
     closeModal,

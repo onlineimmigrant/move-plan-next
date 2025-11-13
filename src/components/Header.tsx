@@ -78,7 +78,8 @@ const Header: React.FC<HeaderProps> = ({
       return {
         ...settings.header_style,
         is_gradient: settings.header_style.is_gradient || false,
-        gradient: settings.header_style.gradient || undefined
+        gradient: settings.header_style.gradient || undefined,
+        logo: settings.header_style.logo || { url: '/', position: 'left', size: 'md' }
       };
     }
     // Fallback to default structure if legacy string or null
@@ -89,9 +90,9 @@ const Header: React.FC<HeaderProps> = ({
       color_hover: 'gray-900',
       menu_width: '7xl' as const,
       menu_items_are_text: true,
-      logo_height: 'h-12' as const,
       is_gradient: false,
-      gradient: undefined
+      gradient: undefined,
+      logo: { url: '/', position: 'left', size: 'md' }
     };
   }, [settings.header_style]);
 
@@ -102,7 +103,15 @@ const Header: React.FC<HeaderProps> = ({
   const headerColorHover = headerStyle.color_hover || 'gray-900';
   const menuWidth = headerStyle.menu_width || '7xl';
   const globalMenuItemsAreText = headerStyle.menu_items_are_text ?? true;
-  const logoHeight = headerStyle.logo_height || 'h-12'; // Default to h-12
+  
+  // Logo configuration
+  const logoConfig = headerStyle.logo || { url: '/', position: 'left', size: 'md' };
+  const logoUrl = logoConfig.url || '/';
+  const logoPosition = logoConfig.position || 'left';
+  const logoSize = logoConfig.size || 'md';
+  
+  // Map logo size to Tailwind height classes
+  const logoHeightClass = logoSize === 'sm' ? 'h-8' : logoSize === 'lg' ? 'h-12' : 'h-10'; // sm=h-8, md=h-10, lg=h-12
 
   // Calculate header background style (gradient or solid color)
   const headerBackgroundStyle = useMemo(() => {
@@ -487,14 +496,14 @@ const Header: React.FC<HeaderProps> = ({
                     {displayedSubItems.length >= 2 ? (
                       // Full-width mega menu for 2+ items
                       <div 
-                        className={`fixed left-0 right-0 border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
+                        className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
                           openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
                         }`}
                         style={{
                           // Calculate top position: banners height + nav height (64px) + gap (16px for visual separation)
                           top: `${fixedBannersHeight + 64 + 16}px`,
-                          // Use header background style for consistency
-                          ...headerBackgroundStyle,
+                          // Always use white background on desktop for mega menu (regardless of header type)
+                          backgroundColor: 'white',
                           boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
                           backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
                           WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -586,12 +595,12 @@ const Header: React.FC<HeaderProps> = ({
                     ) : (
                       // Simple dropdown for < 2 items
                       <div 
-                        className={`absolute right-0 mt-2 w-64 rounded-lg shadow-lg border border-gray-200 z-[60] transition-all duration-200 ${
+                        className={`absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[60] transition-all duration-200 ${
                           openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
                         }`}
                         style={{
-                          // Use header background style for consistency
-                          ...headerBackgroundStyle,
+                          // Always use white background on desktop for dropdowns (regardless of header type)
+                          backgroundColor: 'white',
                           boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
                           backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
                           WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
@@ -928,86 +937,103 @@ const Header: React.FC<HeaderProps> = ({
             : undefined
         }
       >
-        <button
-          type="button"
-          onClick={handleHomeNavigation}
-          className="cursor-pointer flex items-center text-gray-900 transition-all duration-200 flex-shrink-0"
-          style={{
-            ['--hover-color' as any]: themeColors.cssVars.primary.base,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = themeColors.cssVars.primary.base;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = '';
-          }}
-          aria-label={t.goToHomepage}
-          disabled={!router}
+        {/* Logo Section */}
+        <div 
+          className={`flex items-center ${
+            logoPosition === 'center' ? 'flex-1' : ''
+          } ${
+            logoPosition === 'right' ? 'order-2' : ''
+          }`}
         >
-          {settings?.image ? (
-            <Image
-              src={settings.image}
-              alt="Logo"
-              width={48}
-              height={48}
-              className={`${logoHeight} w-auto md:${logoHeight} max-[767px]:h-8`}
-              priority={true}
-              placeholder="blur"
-              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
-              sizes="40px"
-              quality={90}
-              onLoad={() => {
-                // Image loaded successfully
-              }}
-              onError={(e) => {
-                console.error('Failed to load logo:', settings.image);
-                e.currentTarget.src = companyLogo;
-              }}
-            />
-          ) : (
-            <span className="text-gray-500">{t.noLogoAvailable}</span>
-          )}
-          <span 
-            className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r bg-clip-text text-transparent"
+          <button
+            type="button"
+            onClick={() => router?.push(logoUrl)}
+            className="cursor-pointer flex items-center text-gray-900 transition-all duration-200 flex-shrink-0"
             style={{
-              backgroundImage: `linear-gradient(to right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.light}, ${themeColors.cssVars.primary.base})`,
+              ['--hover-color' as any]: themeColors.cssVars.primary.base,
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = themeColors.cssVars.primary.base;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '';
+            }}
+            aria-label={t.goToHomepage}
+            disabled={!router}
           >
-            {settings?.site || 'Default Site Name'}
-          </span>
-        </button>
+            {settings?.image ? (
+              <Image
+                src={settings.image}
+                alt="Logo"
+                width={48}
+                height={48}
+                className={`${logoHeightClass} w-auto md:${logoHeightClass} max-[767px]:h-8`}
+                priority={true}
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
+                sizes="40px"
+                quality={90}
+                onLoad={() => {
+                  // Image loaded successfully
+                }}
+                onError={(e) => {
+                  console.error('Failed to load logo:', settings.image);
+                  e.currentTarget.src = companyLogo;
+                }}
+              />
+            ) : (
+              <span className="text-gray-500">{t.noLogoAvailable}</span>
+            )}
+            <span 
+              className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r bg-clip-text text-transparent"
+              style={{
+                backgroundImage: `linear-gradient(to right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.light}, ${themeColors.cssVars.primary.base})`,
+              }}
+            >
+              {settings?.site || 'Default Site Name'}
+            </span>
+          </button>
+        </div>
 
-        <div className="hidden md:flex items-center justify-center flex-1 ml-8 mr-8 relative">
-          {/* Menu Items - Centered */}
+        {/* Navigation Section */}
+        <div 
+          className={`hidden md:flex items-center ${
+            logoPosition === 'center' ? 'flex-1 justify-center' : 'justify-center flex-1 ml-8 mr-8'
+          } ${
+            logoPosition === 'right' ? 'order-1 flex-1' : ''
+          } relative`}
+        >
+          {/* Menu Items */}
           <div className="flex items-center justify-center space-x-8 text-sm">
             {renderMenuItems}
           </div>
           
           {/* Action Items - Right Side Group */}
-          <div className="absolute right-0 flex items-center space-x-3">
-            {/* Language Switcher - Hidden for ring_card_mini and mini */}
-            {settings?.with_language_switch && headerType !== 'ring_card_mini' && headerType !== 'mini' && (
-              <div className="hidden lg:block">
-                <ModernLanguageSwitcher />
-              </div>
-            )}
-            
-            {/* Basket */}
-            {totalItems > 0 && (
-              <LocalizedLink
-                href="/basket"
-                className="cursor-pointer relative"
-                aria-label={t.viewBasket(totalItems)}
-              >
-                <HeroIcons.ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              </LocalizedLink>
-            )}
-            
-            {/* Profile/Login */}
-            {isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
+          {logoPosition !== 'right' && (
+            <div className="absolute right-0 flex items-center space-x-3">
+              {/* Language Switcher - Hidden for ring_card_mini and mini */}
+              {settings?.with_language_switch && headerType !== 'ring_card_mini' && headerType !== 'mini' && (
+                <div className="hidden lg:block">
+                  <ModernLanguageSwitcher />
+                </div>
+              )}
+              
+              {/* Basket */}
+              {totalItems > 0 && (
+                <LocalizedLink
+                  href="/basket"
+                  className="cursor-pointer relative"
+                  aria-label={t.viewBasket(totalItems)}
+                >
+                  <HeroIcons.ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                </LocalizedLink>
+              )}
+              
+              {/* Profile/Login */}
+              {isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
             <div 
               className="relative group"
               onMouseEnter={cancelCloseTimeout}
@@ -1214,8 +1240,57 @@ const Header: React.FC<HeaderProps> = ({
               <HeroIcons.ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
             </button>
           ) : null}
-          </div>
+            </div>
+          )}
         </div>
+
+        {/* Right Section (when logo is on right) */}
+        {logoPosition === 'right' && (
+          <div className="flex items-center space-x-3">
+            {/* Language Switcher */}
+            {settings?.with_language_switch && headerType !== 'ring_card_mini' && headerType !== 'mini' && (
+              <div className="hidden lg:block">
+                <ModernLanguageSwitcher />
+              </div>
+            )}
+            
+            {/* Basket */}
+            {totalItems > 0 && (
+              <LocalizedLink
+                href="/basket"
+                className="cursor-pointer relative"
+                aria-label={t.viewBasket(totalItems)}
+              >
+                <HeroIcons.ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
+                  {totalItems}
+                </span>
+              </LocalizedLink>
+            )}
+            
+            {/* Profile/Login - same logic as above */}
+            {isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
+              <button
+                type="button"
+                className="p-3"
+                title={isAdmin ? 'Admin' : t.profile}
+                aria-label={t.openProfileMenu}
+              >
+                <HeroIcons.UserIcon className="h-6 w-6 text-gray-600 hover:text-gray-800 transition-colors duration-200" />
+              </button>
+            ) : headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
+              <button
+                type="button"
+                onClick={handleLoginModal}
+                className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 focus:outline-none transition-colors duration-200"
+                title={t.login}
+                aria-label={t.openLoginModal}
+              >
+                <HeroIcons.ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
+              </button>
+            ) : null}
+          </div>
+        )}
 
         <div className="flex items-center md:hidden flex-shrink-0">
           {totalItems > 0 && (

@@ -24,7 +24,7 @@ export interface Size {
 
 export type FooterType = 'default' | 'compact' | 'grid';
 export type HeaderType = 'default' | 'transparent' | 'fixed' | 'mini' | 'ring_card_mini';
-export type MenuWidth = 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
+export type MenuWidth = 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
 export type LogoHeight = 'h-8' | 'h-10' | 'h-12' | 'h-16';
 export type FontFamily = 'Inter' | 'Roboto' | 'Poppins' | 'Open Sans' | 'Lato' | 'Montserrat' | 'Nunito' | 'Raleway' | 'Ubuntu' | 'Merriweather';
 
@@ -52,9 +52,14 @@ export interface HeaderStyle {
   background?: string;
   menu_width?: MenuWidth;
   menu_items_are_text?: boolean;
-  logo_height?: LogoHeight;      // 🆕 Logo height support
+  logo_height?: LogoHeight;      // 🆕 Logo height support (deprecated - use logo.size)
   is_gradient?: boolean;        // 🆕 Gradient support
   gradient?: GradientStyle;      // 🆕 Gradient colors
+  logo?: {                       // 🆕 Logo configuration
+    url?: string;                // Logo click URL (default: '/')
+    position?: 'left' | 'center' | 'right';  // Logo position
+    size?: 'sm' | 'md' | 'lg';   // Logo size (sm=h-8, md=h-10, lg=h-12)
+  };
 }
 
 export interface Settings {

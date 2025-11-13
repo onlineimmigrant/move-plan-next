@@ -38,7 +38,8 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
           description,
           description_translation,
           image,
-          menu_item_id
+          menu_item_id,
+          is_displayed
         )
       `)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)
@@ -132,7 +133,7 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
           url_name: submenu.url_name,
           description: submenu.description,
           description_translation: submenu.description_translation,
-          is_displayed: true, // Default since field doesn't exist
+          is_displayed: submenu.is_displayed,
           is_new_window: false, // Default since field doesn't exist
           order: submenu.order,
           menu_item_id: submenu.menu_item_id,
@@ -151,7 +152,7 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
           url: submenu.url_name,
           description: submenu.description,
           description_translation: submenu.description_translation,
-          is_visible: true,
+          is_visible: submenu.is_displayed,
           is_new_window: false,
           order_position: submenu.order,
           website_menuitem_id: submenu.menu_item_id,
