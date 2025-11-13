@@ -7,6 +7,7 @@ interface PageSection {
   type: 'hero' | 'template_section' | 'heading_section';
   title: string;
   order: number;
+  page: string; // url_page field
   data: any;
 }
 

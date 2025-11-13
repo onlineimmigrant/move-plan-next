@@ -75,10 +75,12 @@ export const StandardModalHeader: React.FC<StandardModalHeaderProps> = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3 flex-1">
           {Icon && (
-            <Icon
-              className={`w-6 h-6 ${iconColor || 'text-blue-500'}`}
-              aria-hidden="true"
-            />
+            <div className="w-6 h-6 flex-shrink-0" style={{ color: iconColor || undefined }}>
+              <Icon
+                className="w-full h-full"
+                aria-hidden="true"
+              />
+            </div>
           )}
           <div className="flex-1">
             <h2
@@ -121,7 +123,7 @@ export const StandardModalHeader: React.FC<StandardModalHeaderProps> = ({
 
       {/* Tabs Navigation */}
       {tabs.length > 0 && (
-        <div className="flex gap-1 -mb-[1px]">
+        <div className="flex gap-2">
           {tabs
             .filter((tab) => !tab.hidden)
             .map((tab) => {
@@ -134,17 +136,18 @@ export const StandardModalHeader: React.FC<StandardModalHeaderProps> = ({
                   onClick={() => !tab.disabled && onTabChange?.(tab.id)}
                   disabled={tab.disabled}
                   className={`
-                    flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium text-sm
-                    transition-all duration-200
+                    flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+                    transition-all duration-300 shadow-md
                     ${
                       isActive
-                        ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                        ? 'btn-primary text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0'
+                        : 'bg-white/50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-gray-800/70 hover:shadow-lg'
                     }
                     ${tab.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   `}
                   style={{
                     fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                    ...(isActive && iconColor ? { backgroundColor: iconColor } : {}),
                   }}
                 >
                   {TabIcon && <TabIcon className="w-4 h-4" />}

@@ -8,6 +8,7 @@ import { getOrganizationId } from '@/lib/supabase';
 import { useProductTranslations } from '@/components/product/useProductTranslations';
 import { useSettings } from '@/context/SettingsContext';
 import Loading from '@/ui/Loading';
+import Button from '@/ui/Button';
 
 interface BlogPost {
   id: number;
@@ -28,13 +29,18 @@ interface ClientBlogPageProps {
   organizationType: string;
 }
 
+const POSTS_PER_PAGE = 8;
+
 const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => {
   const { t } = useProductTranslations();
   const { settings } = useSettings();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
   // Read search parameter from URL on mount
@@ -85,16 +91,20 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
           throw new Error('Organization not found');
         }
 
-        const response = await fetch(`/api/posts?organization_id=${organizationId}`);
+        const response = await fetch(
+          `/api/posts?organization_id=${organizationId}&limit=${POSTS_PER_PAGE}&offset=0`
+        );
         if (response.ok) {
           const data = await response.json();
-          // Validate that data is an array and contains section_id
-          if (!Array.isArray(data)) {
-            console.error('Expected an array, got:', data);
+          // Validate that data contains posts array
+          if (!data.posts || !Array.isArray(data.posts)) {
+            console.error('Expected posts array, got:', data);
             setError('Invalid data format');
             return;
           }
-          setPosts(data);
+          setPosts(data.posts);
+          setHasMore(data.hasMore || false);
+          setTotal(data.total || 0);
         } else {
           // Handle empty response body
           let errorMessage = 'Failed to fetch posts';
@@ -122,6 +132,37 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
     fetchPosts();
   }, []);
 
+  const loadMorePosts = async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        throw new Error('Organization not found');
+      }
+
+      const response = await fetch(
+        `/api/posts?organization_id=${organizationId}&limit=${POSTS_PER_PAGE}&offset=${posts.length}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.posts && Array.isArray(data.posts)) {
+          setPosts((prevPosts) => [...prevPosts, ...data.posts]);
+          setHasMore(data.hasMore || false);
+          setTotal(data.total || 0);
+        }
+      } else {
+        console.error('Failed to load more posts');
+      }
+    } catch (error) {
+      console.error('Error loading more posts:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const filteredPosts = posts
     .filter(post => {
       const title = post.title ?? '';
@@ -136,11 +177,6 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
         isBlogPost &&
         (title.toLowerCase().includes(query) || description.toLowerCase().includes(query) || subsection.toLowerCase().includes(query))
       );
-    })
-    .sort((a, b) => {
-      const hasPhotoA = a.main_photo && a.main_photo.trim() !== '';
-      const hasPhotoB = b.main_photo && b.main_photo.trim() !== '';
-      return hasPhotoB ? 1 : hasPhotoA ? -1 : 0;
     });
 
   if (loading) {
@@ -255,6 +291,28 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
               </Link>
               );
             })}
+          </div>
+        )}
+
+        {/* Load More Button */}
+        {!searchQuery && hasMore && filteredPosts.length > 0 && (
+          <div className="flex justify-center mt-12">
+            <Button
+              onClick={loadMorePosts}
+              disabled={loadingMore}
+              variant="primary"
+              size="lg"
+              className="min-w-[200px]"
+            >
+              {loadingMore ? (
+                <div className="flex items-center gap-2">
+                  <Loading />
+                  <span>Loading...</span>
+                </div>
+              ) : (
+                `Load More (${posts.length} of ${total})`
+              )}
+            </Button>
           </div>
         )}
       </div>

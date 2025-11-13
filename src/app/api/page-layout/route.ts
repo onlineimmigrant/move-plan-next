@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
         type: 'hero',
         title: 'Hero Section',
         order: hero.display_order || 0,
+        page: hero.url_page || 'home',
         data: hero
       });
     }
@@ -103,6 +104,7 @@ export async function GET(request: NextRequest) {
           type: 'template_section',
           title: title,
           order: section.order || 0,
+          page: section.url_page || 'home',
           data: section
         });
       });
@@ -116,6 +118,7 @@ export async function GET(request: NextRequest) {
           type: 'heading_section',
           title: section.heading || 'Heading Section',
           order: section.order || 0,
+          page: section.url_page || 'home',
           data: section
         });
       });

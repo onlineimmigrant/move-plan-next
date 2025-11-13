@@ -108,8 +108,10 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organization_id');
+  const limit = searchParams.get('limit');
+  const offset = searchParams.get('offset');
   
-  console.log('Received GET request for /api/posts, organization_id:', organizationId);
+  console.log('Received GET request for /api/posts, organization_id:', organizationId, 'limit:', limit, 'offset:', offset);
 
   if (!organizationId) {
     console.error('Missing organization_id in query parameters');
@@ -117,7 +119,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { data: posts, error: fetchError } = await supabase
+    let query = supabase
       .from('blog_post')
       .select(`
         id, slug, title, description,
@@ -126,9 +128,19 @@ export async function GET(request: NextRequest) {
         media_config,
         faq_section_is_title,
         organization_id, created_on
-      `)
+      `, { count: 'exact' })
       .eq('organization_id', organizationId)
-      .order('created_on', { ascending: false });
+      .order('organization_config->order', { ascending: true, nullsFirst: false });
+
+    // Add pagination if limit and offset are provided
+    if (limit) {
+      query = query.limit(parseInt(limit));
+    }
+    if (offset) {
+      query = query.range(parseInt(offset), parseInt(offset) + (parseInt(limit || '8') - 1));
+    }
+
+    const { data: posts, error: fetchError, count } = await query;
 
     if (fetchError) {
       console.error('Supabase fetch error:', fetchError);
@@ -138,7 +150,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json((posts || []).map(flattenBlogPost), { status: 200 });
+    return NextResponse.json({
+      posts: (posts || []).map(flattenBlogPost),
+      total: count || 0,
+      hasMore: count ? (parseInt(offset || '0') + (posts?.length || 0)) < count : false
+    }, { status: 200 });
   } catch (error) {
     console.error('Error in GET /api/posts:', error);
     return NextResponse.json(

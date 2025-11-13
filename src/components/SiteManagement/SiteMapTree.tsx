@@ -17,6 +17,12 @@ interface SiteMapTreeProps {
   session: any;
   onPageSelect?: (url: string) => void;
   compact?: boolean; // For modal view
+  searchQuery?: string; // Search filter
+  filters?: {
+    type: string[];
+    priority: string[];
+    changefreq: string[];
+  };
 }
 
 interface SitemapPage {
@@ -38,8 +44,16 @@ interface PageNode {
   category?: string;
 }
 
-export default function SiteMapTree({ organization, session, onPageSelect, compact = false }: SiteMapTreeProps) {
+export default function SiteMapTree({ 
+  organization, 
+  session, 
+  onPageSelect, 
+  compact = false,
+  searchQuery = '',
+  filters = { type: [], priority: [], changefreq: [] }
+}: SiteMapTreeProps) {
   const [sitemapData, setSitemapData] = useState<PageNode[]>([]);
+  const [filteredData, setFilteredData] = useState<PageNode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['/']));
@@ -53,6 +67,125 @@ export default function SiteMapTree({ organization, session, onPageSelect, compa
     fetchSitemapData();
     fetchOrganizationData();
   }, [organization]);
+
+  // Filter data based on search and filters
+  useEffect(() => {
+    if (!sitemapData || sitemapData.length === 0) {
+      setFilteredData([]);
+      return;
+    }
+
+    let filtered = [...sitemapData];
+
+    // Apply search query
+    if (searchQuery && searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filterNodesBySearch(filtered, query);
+      
+      // Auto-expand all nodes when searching
+      const allPaths = getAllNodePaths(filtered);
+      setExpandedNodes(new Set(allPaths));
+    }
+
+    // Apply type filter
+    if (filters.type && filters.type.length > 0) {
+      filtered = filterNodesByType(filtered, filters.type);
+    }
+
+    // Apply priority filter
+    if (filters.priority && filters.priority.length > 0) {
+      filtered = filterNodesByPriority(filtered, filters.priority);
+    }
+
+    // Apply changefreq filter
+    if (filters.changefreq && filters.changefreq.length > 0) {
+      filtered = filterNodesByChangefreq(filtered, filters.changefreq);
+    }
+
+    setFilteredData(filtered);
+  }, [sitemapData, searchQuery, filters]);
+
+  // Helper: Filter nodes by search query
+  const filterNodesBySearch = (nodes: PageNode[], query: string): PageNode[] => {
+    return nodes.reduce((acc: PageNode[], node) => {
+      const matches = node.name.toLowerCase().includes(query) || 
+                     node.path.toLowerCase().includes(query) ||
+                     node.url.toLowerCase().includes(query);
+      
+      const filteredChildren = node.children ? filterNodesBySearch(node.children, query) : [];
+      
+      if (matches || filteredChildren.length > 0) {
+        acc.push({
+          ...node,
+          children: filteredChildren.length > 0 ? filteredChildren : node.children
+        });
+      }
+      
+      return acc;
+    }, []);
+  };
+
+  // Helper: Filter nodes by type
+  const filterNodesByType = (nodes: PageNode[], types: string[]): PageNode[] => {
+    return nodes.reduce((acc: PageNode[], node) => {
+      const matches = types.includes(node.type);
+      const filteredChildren = node.children ? filterNodesByType(node.children, types) : [];
+      
+      if (matches || filteredChildren.length > 0) {
+        acc.push({
+          ...node,
+          children: filteredChildren.length > 0 ? filteredChildren : node.children
+        });
+      }
+      
+      return acc;
+    }, []);
+  };
+
+  // Helper: Filter nodes by priority
+  const filterNodesByPriority = (nodes: PageNode[], priorities: string[]): PageNode[] => {
+    return nodes.reduce((acc: PageNode[], node) => {
+      const matches = priorities.includes(node.priority.toString());
+      const filteredChildren = node.children ? filterNodesByPriority(node.children, priorities) : [];
+      
+      if (matches || filteredChildren.length > 0) {
+        acc.push({
+          ...node,
+          children: filteredChildren.length > 0 ? filteredChildren : node.children
+        });
+      }
+      
+      return acc;
+    }, []);
+  };
+
+  // Helper: Filter nodes by changefreq (would need to add changefreq to PageNode)
+  const filterNodesByChangefreq = (nodes: PageNode[], changefreqs: string[]): PageNode[] => {
+    return nodes.reduce((acc: PageNode[], node) => {
+      // For now, just pass through since changefreq isn't in PageNode interface
+      const filteredChildren = node.children ? filterNodesByChangefreq(node.children, changefreqs) : [];
+      acc.push({
+        ...node,
+        children: filteredChildren.length > 0 ? filteredChildren : node.children
+      });
+      return acc;
+    }, []);
+  };
+
+  // Helper: Get all node paths for auto-expansion
+  const getAllNodePaths = (nodes: PageNode[]): string[] => {
+    const paths: string[] = [];
+    
+    const traverse = (node: PageNode) => {
+      paths.push(node.path);
+      if (node.children) {
+        node.children.forEach(traverse);
+      }
+    };
+    
+    nodes.forEach(traverse);
+    return paths;
+  };
 
   const fetchSitemapData = async () => {
     try {
@@ -71,7 +204,23 @@ export default function SiteMapTree({ organization, session, onPageSelect, compa
       
       const response = await fetch(proxyUrl);
       if (!response.ok) {
-        throw new Error(`Failed to fetch sitemap: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || response.statusText;
+        
+        console.error('[SiteMapTree] Failed to fetch sitemap:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorMessage,
+          sitemapUrl: `${baseUrl}/sitemap.xml`
+        });
+        
+        if (response.status === 403) {
+          throw new Error(`Sitemap access forbidden. Please ensure ${baseUrl}/sitemap.xml is publicly accessible.`);
+        } else if (response.status === 404) {
+          throw new Error(`Sitemap not found at ${baseUrl}/sitemap.xml. Please generate a sitemap first.`);
+        } else {
+          throw new Error(`Failed to fetch sitemap: ${errorMessage}`);
+        }
       }
 
       const xmlText = await response.text();
@@ -99,9 +248,87 @@ export default function SiteMapTree({ organization, session, onPageSelect, compa
 
     } catch (err) {
       console.error('Error fetching sitemap:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load sitemap');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load sitemap';
+      setError(errorMessage);
+      
+      // Try to generate sitemap from organization pages as fallback
+      console.log('[SiteMapTree] Attempting to generate sitemap from organization pages...');
+      await generateSitemapFromPages();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const generateSitemapFromPages = async () => {
+    try {
+      const token = session?.access_token;
+      if (!token) {
+        console.warn('[SiteMapTree] No session token available for fallback');
+        return;
+      }
+
+      const response = await fetch(`/api/organizations/${organization.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch organization pages');
+      }
+
+      const data = await response.json();
+      const baseUrl = organization.base_url || organization.base_url_local || window.location.origin;
+      
+      // Generate pages from organization data
+      const pages: SitemapPage[] = [];
+      
+      // Add home page
+      pages.push({
+        url: baseUrl,
+        lastmod: new Date().toISOString(),
+        priority: 1.0,
+        changefreq: 'daily'
+      });
+
+      // Add pages from organization
+      if (data.pages && Array.isArray(data.pages)) {
+        data.pages.forEach((page: any) => {
+          if (page.slug && page.active !== false) {
+            pages.push({
+              url: `${baseUrl}/${page.slug}`,
+              lastmod: page.updated_at || page.created_at || new Date().toISOString(),
+              priority: page.priority || 0.8,
+              changefreq: page.changefreq || 'weekly'
+            });
+          }
+        });
+      }
+
+      // Add blog posts
+      if (data.blog_posts && Array.isArray(data.blog_posts)) {
+        data.blog_posts.forEach((post: any) => {
+          if (post.slug && post.published) {
+            pages.push({
+              url: `${baseUrl}/blog/${post.slug}`,
+              lastmod: post.updated_at || post.created_at || new Date().toISOString(),
+              priority: 0.7,
+              changefreq: 'monthly'
+            });
+          }
+        });
+      }
+
+      if (pages.length > 0) {
+        const tree = buildPageTree(pages, baseUrl);
+        setSitemapData(tree);
+        setStats({ total: pages.length });
+        setError(null); // Clear error if fallback succeeds
+        console.log('[SiteMapTree] Successfully generated sitemap from pages:', pages.length);
+      }
+    } catch (fallbackErr) {
+      console.error('[SiteMapTree] Fallback sitemap generation failed:', fallbackErr);
+      // Keep the original error message
     }
   };
 
@@ -530,23 +757,19 @@ export default function SiteMapTree({ organization, session, onPageSelect, compa
             Visual representation of your site's page hierarchy
           </p>
         </div>
-        <button
-          onClick={fetchSitemapData}
-          className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap self-start sm:self-auto"
-        >
-          Refresh
-        </button>
       </div>
 
       {/* Tree */}
       <div className={`${compact ? 'max-h-[400px]' : 'max-h-[500px] sm:max-h-[600px]'} overflow-y-auto`}>
-        {sitemapData.length === 0 ? (
+        {(filteredData.length > 0 ? filteredData : sitemapData).length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            No pages found in sitemap
+            {searchQuery || filters.type.length > 0 || filters.priority.length > 0 || filters.changefreq.length > 0
+              ? 'No pages match your search or filters'
+              : 'No pages found in sitemap'}
           </div>
         ) : (
           <div className="space-y-1">
-            {sitemapData.map(node => renderNode(node))}
+            {(filteredData.length > 0 ? filteredData : sitemapData).map(node => renderNode(node))}
           </div>
         )}
       </div>

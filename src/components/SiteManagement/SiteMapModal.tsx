@@ -1,152 +1,221 @@
-// components/SiteManagement/SiteMapModal.tsx
+/**
+ * SiteMapModal - Site structure browser
+ * Features: Tree view, statistics, search/filter, keyboard shortcuts
+ * Matching HeaderEditModal design patterns (120/100)
+ */
+
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useState, useCallback } from 'react';
+import { 
+  MapIcon, 
+  ChartBarIcon, 
+  Cog6ToothIcon,
+  ArrowPathIcon
+} from '@heroicons/react/24/outline';
+import { cn } from '@/lib/utils';
 import { useSiteMapModal } from '@/context/SiteMapModalContext';
+import { 
+  StandardModalContainer,
+  StandardModalHeader,
+  StandardModalBody,
+  StandardModalFooter,
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  type ModalAction
+} from '@/components/modals/_shared';
 import SiteMapTree from './SiteMapTree';
-import { createClient } from '@supabase/supabase-js';
-import { getOrganizationId } from '@/lib/supabase';
-import { Organization } from './types';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useSupabaseClient } from '@/hooks/useSupabaseClient';
+import { useSiteMapData } from '@/components/modals/SiteMapModal/hooks/useSiteMapData';
+import { StatisticsTab } from '@/components/modals/SiteMapModal/components/StatisticsTab';
+import { SearchFilterBar, FilterState } from '@/components/modals/SiteMapModal/components/SearchFilterBar';
+
+type TabId = 'tree' | 'statistics' | 'settings';
 
 export default function SiteMapModal() {
+  console.log('🗺️ SiteMapModal loaded! (120/100 design)');
+  
   const { isOpen, closeModal } = useSiteMapModal();
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [session, setSession] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { session } = useSupabaseClient();
+  const { organization, isLoading, error, stats, loadOrganization } = useSiteMapData(isOpen);
+  
+  // Theme colors (matching HeaderEditModal)
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // UI state
+  const [currentTab, setCurrentTab] = useState<TabId>('tree');
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<FilterState>({
+    type: [],
+    priority: [],
+    changefreq: [],
+  });
 
+  // Keyboard shortcuts (matching HeaderEditModal)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + R to refresh
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        handleRefresh();
+      }
+      // Esc to close modal
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+      // 1, 2, 3 for tab switching
+      if (e.key === '1') setCurrentTab('tree');
+      if (e.key === '2') setCurrentTab('statistics');
+      if (e.key === '3') setCurrentTab('settings');
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, closeModal]);
+
+  // Refresh animation (matching HeaderEditModal)
   useEffect(() => {
     if (isOpen) {
-      loadOrganization();
+      setRefreshing(true);
+      const timer = setTimeout(() => setRefreshing(false), 300);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [organization, currentTab, isOpen]);
 
-  const loadOrganization = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  // Handle refresh
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadOrganization().finally(() => {
+      setTimeout(() => setRefreshing(false), 300);
+    });
+  }, [loadOrganization]);
 
-      // Get session
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+  // Search and filter handlers
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
-      // Get current organization ID using helper
-      const baseUrl = window.location.origin;
-      const orgId = await getOrganizationId(baseUrl);
-
-      if (!orgId) {
-        throw new Error('Organization not found for current domain');
-      }
-
-      // Fetch organization details
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('id', orgId)
-        .single();
-
-      if (orgError) {
-        console.error('Supabase error:', orgError);
-        throw new Error(`Failed to fetch organization: ${orgError.message}`);
-      }
-
-      if (!orgData) {
-        throw new Error('Organization data not found');
-      }
-      
-      setOrganization(orgData);
-    } catch (err) {
-      console.error('Error loading organization:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load organization');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleFilterChange = useCallback((newFilters: FilterState) => {
+    setFilters(newFilters);
+  }, []);
 
   if (!isOpen) return null;
 
+  // Tab configuration
+  const tabs = [
+    { id: 'tree' as TabId, label: 'Tree View', icon: MapIcon },
+    { id: 'statistics' as TabId, label: 'Statistics', icon: ChartBarIcon },
+    { id: 'settings' as TabId, label: 'Settings', icon: Cog6ToothIcon },
+  ];
+
+  const primaryAction: ModalAction = {
+    label: "Refresh",
+    onClick: handleRefresh,
+    variant: 'primary',
+    loading: isLoading || refreshing,
+    disabled: isLoading || refreshing,
+    icon: ArrowPathIcon,
+  };
+
   return (
-    <div className="fixed inset-0 z-[60] overflow-y-auto">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/50 transition-opacity"
-        onClick={closeModal}
+    <StandardModalContainer
+      isOpen={isOpen}
+      onClose={closeModal}
+      size="large"
+      enableDrag={true}
+      enableResize={true}
+      ariaLabel="Site Map Modal"
+      className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl"
+    >
+      <StandardModalHeader
+        title="Site Map"
+        icon={MapIcon}
+        iconColor={primary.base}
+        tabs={tabs}
+        currentTab={currentTab}
+        onTabChange={(tabId) => setCurrentTab(tabId as TabId)}
+        badges={[{ id: 'tree', count: stats.total }]}
+        onClose={closeModal}
+        className="bg-white/30 dark:bg-gray-800/30 rounded-t-2xl"
       />
 
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div 
-          className="relative bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Site Map</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Browse your site's page structure
-              </p>
-            </div>
-            <button
-              onClick={closeModal}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Close"
-            >
-              <XMarkIcon className="w-6 h-6 text-gray-500" />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading...</p>
+      <StandardModalBody className="overflow-visible">
+        <div className={cn(
+          'transition-opacity duration-300',
+          refreshing && 'opacity-50'
+        )}>
+          {isLoading ? (
+            <LoadingState 
+              message="Loading site structure..." 
+              size="lg"
+            />
+          ) : error ? (
+            <ErrorState
+              title="Failed to Load"
+              message={error}
+              onRetry={loadOrganization}
+            />
+          ) : organization ? (
+            <>
+              {/* Tree View Tab */}
+              {currentTab === 'tree' && (
+                <div className="space-y-4">
+                  <SearchFilterBar
+                    onSearchChange={handleSearchChange}
+                    onFilterChange={handleFilterChange}
+                    primaryColor={primary.base}
+                  />
+                  <SiteMapTree 
+                    organization={organization}
+                    session={session}
+                    compact={true}
+                    searchQuery={searchQuery}
+                    filters={filters}
+                  />
                 </div>
-              </div>
-            ) : error ? (
-              <div className="text-center py-12">
-                <div className="text-red-600 text-4xl mb-4">⚠️</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load</h3>
-                <p className="text-gray-600 mb-4">{error}</p>
-                <button
-                  onClick={loadOrganization}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : organization ? (
-              <SiteMapTree 
-                organization={organization}
-                session={session}
-                compact={true}
-              />
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-600">Organization not found</p>
-              </div>
-            )}
-          </div>
+              )}
 
-          {/* Footer */}
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
-            <button
-              onClick={closeModal}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Close
-            </button>
-          </div>
+              {/* Statistics Tab */}
+              {currentTab === 'statistics' && (
+                <StatisticsTab 
+                  stats={stats}
+                  primaryColor={primary.base}
+                />
+              )}
+
+              {/* Settings Tab */}
+              {currentTab === 'settings' && (
+                <div className="text-center py-12">
+                  <Cog6ToothIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    Settings Coming Soon
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Sitemap configuration options will be available here
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <EmptyState
+              title="Organization Not Found"
+              message="No organization data available"
+            />
+          )}
         </div>
-      </div>
-    </div>
+      </StandardModalBody>
+
+      <StandardModalFooter
+        primaryAction={primaryAction}
+        align="right"
+        className="bg-white/30 dark:bg-gray-800/30"
+      />
+    </StandardModalContainer>
   );
 }
