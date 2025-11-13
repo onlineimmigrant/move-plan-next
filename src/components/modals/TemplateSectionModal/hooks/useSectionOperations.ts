@@ -46,6 +46,47 @@ export function useSectionOperations() {
     
     setIsSaving(true);
     try {
+      // First, update individual metrics if they exist and have IDs
+      if (formData.website_metric && formData.website_metric.length > 0) {
+        const metricUpdatePromises = formData.website_metric
+          .filter(metric => metric.id) // Only update existing metrics with IDs
+          .map(async (metric) => {
+            try {
+              const response = await fetch(`/api/metrics/${metric.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: metric.title,
+                  description: metric.description,
+                  image: metric.image || null,
+                  is_image_rounded_full: metric.is_image_rounded_full ?? false,
+                  is_title_displayed: metric.is_title_displayed ?? true,
+                  background_color: metric.background_color || null,
+                  is_card_type: metric.is_card_type ?? false,
+                  title_translation: metric.title_translation,
+                  description_translation: metric.description_translation,
+                }),
+              });
+
+              if (!response.ok) {
+                const error = await response.json();
+                console.error(`Failed to update metric ${metric.id}:`, error);
+                throw new Error(error.error || `Failed to update metric ${metric.id}`);
+              }
+
+              return await response.json();
+            } catch (error) {
+              console.error(`Error updating metric ${metric.id}:`, error);
+              throw error;
+            }
+          });
+
+        // Wait for all metric updates to complete
+        await Promise.all(metricUpdatePromises);
+        console.log('Successfully updated all metrics');
+      }
+
+      // Then update the section itself
       await updateSection(formData);
       closeModal();
     } catch (error) {

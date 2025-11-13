@@ -19,6 +19,8 @@ import { SettingsTab, LayoutTab, LayoutOptionsTab, StyleTab, ContentTab } from '
 import { useSectionOperations, TemplateSectionFormData } from './hooks';
 import DeleteSectionModal from './DeleteSectionModal';
 import Button from '@/ui/Button';
+import { TemplateSectionPreview } from './preview';
+import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 
 type MegaMenuId = 'style' | 'content' | null;
 
@@ -39,6 +41,23 @@ export default function TemplateSectionEditModal() {
 
   const [openMenu, setOpenMenu] = useState<MegaMenuId>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [previewRefreshing, setPreviewRefreshing] = useState(false);
+  
+  // Inline editing state
+  const [inlineEdit, setInlineEdit] = useState<{
+    field: 'section_title' | 'section_description' | 'metric_title' | 'metric_description' | null;
+    value: string;
+    position: { x: number; y: number };
+    metricIndex?: number;
+  }>({ field: null, value: '', position: { x: 0, y: 0 } });
+  
+  // Image gallery state
+  const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
+  const [imageSelectionTarget, setImageSelectionTarget] = useState<{
+    type: 'metric';
+    metricIndex: number;
+  } | null>(null);
+  
   const [formData, setFormData] = useState<TemplateSectionFormData>({
     section_title: '',
     section_description: '',
@@ -125,14 +144,24 @@ export default function TemplateSectionEditModal() {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape to close mega menu, inline edit, or modal
       if (e.key === 'Escape') {
-        if (openMenu) {
+        if (inlineEdit.field) {
+          e.stopPropagation();
+          setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+        } else if (openMenu) {
           e.stopPropagation();
           setOpenMenu(null);
         } else if (!showDeleteConfirm) {
           closeModal();
         }
       }
+      // Enter to save inline edit
+      if (e.key === 'Enter' && inlineEdit.field && !e.shiftKey) {
+        e.preventDefault();
+        handleInlineEditSave();
+      }
+      // Ctrl/Cmd + S to save
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave(formData);
@@ -141,7 +170,110 @@ export default function TemplateSectionEditModal() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, formData, handleSave, closeModal, showDeleteConfirm, openMenu]);
+  }, [isOpen, formData, handleSave, closeModal, showDeleteConfirm, openMenu, inlineEdit]);
+
+  // Trigger preview refresh animation when formData changes
+  useEffect(() => {
+    if (isOpen) {
+      setPreviewRefreshing(true);
+      const timer = setTimeout(() => setPreviewRefreshing(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [formData, isOpen]);
+
+  // Inline editing handlers
+  const handleInlineEditOpen = (
+    field: 'section_title' | 'section_description' | 'metric_title' | 'metric_description',
+    event: React.MouseEvent,
+    metricIndex?: number
+  ) => {
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    let value = '';
+    
+    if (field === 'section_title') {
+      value = formData.section_title || '';
+    } else if (field === 'section_description') {
+      value = formData.section_description || '';
+    } else if (field === 'metric_title' && metricIndex !== undefined && formData.website_metric?.[metricIndex]) {
+      value = formData.website_metric[metricIndex].title || '';
+    } else if (field === 'metric_description' && metricIndex !== undefined && formData.website_metric?.[metricIndex]) {
+      value = formData.website_metric[metricIndex].description || '';
+    }
+    
+    setInlineEdit({
+      field,
+      value,
+      position: { x: rect.left, y: rect.bottom + 10 },
+      metricIndex
+    });
+  };
+
+  const handleInlineEditSave = () => {
+    if (!inlineEdit.field || !inlineEdit.value.trim()) {
+      setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+      return;
+    }
+
+    if (inlineEdit.field === 'section_title') {
+      setFormData({ ...formData, section_title: inlineEdit.value });
+    } else if (inlineEdit.field === 'section_description') {
+      setFormData({ ...formData, section_description: inlineEdit.value });
+    } else if (
+      (inlineEdit.field === 'metric_title' || inlineEdit.field === 'metric_description') &&
+      inlineEdit.metricIndex !== undefined &&
+      formData.website_metric
+    ) {
+      const updatedMetrics = [...formData.website_metric];
+      if (inlineEdit.field === 'metric_title') {
+        updatedMetrics[inlineEdit.metricIndex] = {
+          ...updatedMetrics[inlineEdit.metricIndex],
+          title: inlineEdit.value
+        };
+      } else {
+        updatedMetrics[inlineEdit.metricIndex] = {
+          ...updatedMetrics[inlineEdit.metricIndex],
+          description: inlineEdit.value
+        };
+      }
+      setFormData({ ...formData, website_metric: updatedMetrics });
+    }
+    
+    setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+  };
+
+  const handleInlineEditCancel = () => {
+    setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+  };
+
+  // Image gallery handlers
+  const handleOpenImageGallery = (metricIndex: number) => {
+    setImageSelectionTarget({ type: 'metric', metricIndex });
+    setIsImageGalleryOpen(true);
+  };
+
+  const handleImageSelect = (imageUrl: string) => {
+    if (imageSelectionTarget?.type === 'metric' && formData.website_metric) {
+      const updatedMetrics = [...formData.website_metric];
+      updatedMetrics[imageSelectionTarget.metricIndex] = {
+        ...updatedMetrics[imageSelectionTarget.metricIndex],
+        image: imageUrl
+      };
+      setFormData({ ...formData, website_metric: updatedMetrics });
+    }
+    setIsImageGalleryOpen(false);
+    setImageSelectionTarget(null);
+  };
+
+  const handleRemoveImage = (metricIndex: number) => {
+    if (formData.website_metric) {
+      const updatedMetrics = [...formData.website_metric];
+      updatedMetrics[metricIndex] = {
+        ...updatedMetrics[metricIndex],
+        image: null
+      };
+      setFormData({ ...formData, website_metric: updatedMetrics });
+    }
+  };
 
   const onSave = useCallback(async () => {
     await handleSave(formData);
@@ -393,16 +525,33 @@ export default function TemplateSectionEditModal() {
           </>
         )}
 
-        {/* Main Content Area - Empty state or preview */}
-        <div className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20 flex items-center justify-center">
-          <div className="text-center p-8">
-            <RectangleStackIcon className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
-              Section Configuration
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              Use the <span style={{ color: primary.base }} className="font-semibold">Style</span> and <span style={{ color: primary.base }} className="font-semibold">Content</span> buttons above to configure this section
-            </p>
+        {/* Main Content Area - Live Preview */}
+        <div className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20 p-0">
+          {/* Preview refresh indicator */}
+          {previewRefreshing && (
+            <div 
+              className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg border"
+              style={{ borderColor: `${primary.base}40` }}
+            >
+              <div 
+                className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: `${primary.base} transparent transparent transparent` }}
+              ></div>
+              <span className="text-xs font-medium text-gray-700">Updating preview...</span>
+            </div>
+          )}
+          
+          {/* Full-width Live Preview - exact Section mirror */}
+          <div className={`transition-opacity duration-300 ${previewRefreshing ? 'opacity-50' : 'opacity-100'}`}>
+            <TemplateSectionPreview 
+              formData={formData}
+              onDoubleClickTitle={(e: React.MouseEvent) => handleInlineEditOpen('section_title', e)}
+              onDoubleClickDescription={(e: React.MouseEvent) => handleInlineEditOpen('section_description', e)}
+              onDoubleClickMetricTitle={(e: React.MouseEvent, metricIndex: number) => handleInlineEditOpen('metric_title', e, metricIndex)}
+              onDoubleClickMetricDescription={(e: React.MouseEvent, metricIndex: number) => handleInlineEditOpen('metric_description', e, metricIndex)}
+              onImageClick={(metricIndex: number) => handleOpenImageGallery(metricIndex)}
+              onImageRemove={(metricIndex: number) => handleRemoveImage(metricIndex)}
+            />
           </div>
         </div>
 
@@ -458,6 +607,116 @@ export default function TemplateSectionEditModal() {
         onConfirm={onDelete}
         onCancel={() => setShowDeleteConfirm(false)}
       />
+
+      {/* Inline Edit Popover */}
+      {inlineEdit.field && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-[10003]" 
+            onClick={handleInlineEditCancel}
+          />
+          
+          {/* Popover */}
+          <div 
+            className="fixed z-[10004] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4 w-[500px] max-w-[90vw]"
+            style={{ 
+              left: `${Math.min(inlineEdit.position.x, window.innerWidth - 520)}px`, 
+              top: `${Math.min(inlineEdit.position.y, window.innerHeight - 200)}px` 
+            }}
+          >
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
+                  Edit {inlineEdit.field === 'section_title' ? 'Section Title' : 
+                        inlineEdit.field === 'section_description' ? 'Section Description' : 
+                        inlineEdit.field === 'metric_title' ? 'Metric Title' : 'Metric Description'}
+                </label>
+                <button
+                  onClick={handleInlineEditCancel}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {inlineEdit.field === 'section_title' || inlineEdit.field === 'metric_title' ? (
+                <input
+                  type="text"
+                  value={inlineEdit.value}
+                  onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white text-lg font-semibold focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${primary.base}40`,
+                    '--tw-ring-color': primary.base
+                  } as React.CSSProperties}
+                  placeholder="Enter title..."
+                  autoFocus
+                />
+              ) : (
+                <textarea
+                  value={inlineEdit.value}
+                  onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white resize-none focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: `${primary.base}40`,
+                    '--tw-ring-color': primary.base
+                  } as React.CSSProperties}
+                  placeholder="Enter description..."
+                  rows={3}
+                  autoFocus
+                />
+              )}
+              
+              <div className="flex items-center justify-between mt-3">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <kbd className="px-1.5 py-0.5 border rounded text-xs" style={{ 
+                    backgroundColor: `${primary.base}10`,
+                    borderColor: `${primary.base}30`,
+                    color: primary.base
+                  }}>Enter</kbd> to save, 
+                  <kbd className="ml-1 px-1.5 py-0.5 border rounded text-xs" style={{ 
+                    backgroundColor: `${primary.base}10`,
+                    borderColor: `${primary.base}30`,
+                    color: primary.base
+                  }}>Esc</kbd> to cancel
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={handleInlineEditCancel}
+                    className="px-3 py-1 text-sm"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleInlineEditSave}
+                    disabled={!inlineEdit.value.trim()}
+                    className="px-3 py-1 text-sm"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Image Gallery Modal */}
+      {isImageGalleryOpen && (
+        <ImageGalleryModal
+          isOpen={isImageGalleryOpen}
+          onClose={() => {
+            setIsImageGalleryOpen(false);
+            setImageSelectionTarget(null);
+          }}
+          onSelectImage={handleImageSelect}
+        />
+      )}
     </>
   );
 }

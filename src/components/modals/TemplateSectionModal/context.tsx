@@ -166,6 +166,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_faq_section: data.is_faq_section,
         is_pricingplans_section: data.is_pricingplans_section,
         image_metrics_height: data.image_metrics_height,
+        website_metric: data.website_metric, // Include metrics data for inline editing
       };
 
       console.log('Saving template section:', { url, method, payload, hasUrlPage: 'url_page' in payload, urlPageValue: (payload as any).url_page });
