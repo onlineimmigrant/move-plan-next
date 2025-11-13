@@ -72,12 +72,22 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
     }
   };
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when modal is open (without moving scroll position)
   useEffect(() => {
     if (isOpen) {
+      // Simply prevent scrolling without changing position
+      const originalOverflow = document.body.style.overflow;
+      const originalPaddingRight = document.body.style.paddingRight;
+      
+      // Get scrollbar width to prevent layout shift
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
       document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      
       return () => {
-        document.body.style.overflow = '';
+        document.body.style.overflow = originalOverflow;
+        document.body.style.paddingRight = originalPaddingRight;
       };
     }
   }, [isOpen]);
@@ -122,9 +132,9 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
             {isOpen && (
               <>
                 {isMobile ? (
-                  // Mobile: Fullscreen fixed modal with padding
+                  // Mobile: Modal positioned at current viewport (not scrolled to top)
                   <div
-                    className="fixed inset-0 flex items-center justify-center p-4 z-[10001]"
+                    className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center p-4 z-[10001]"
                     style={{ zIndex }}
                   >
                     <motion.div

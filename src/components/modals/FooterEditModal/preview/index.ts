@@ -1,0 +1,1 @@
+export { FooterPreview } from './FooterPreview';
