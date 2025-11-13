@@ -1,0 +1,273 @@
+/**
+ * TemplateSectionEditModal - UPGRADED TO 120/100 STANDARD
+ * Modernized with StandardModal architecture, tabs, keyboard shortcuts, theme integration
+ * Matching LayoutManagerModal (125/125) design patterns
+ */
+
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Cog6ToothIcon,
+  PaintBrushIcon,
+  RectangleGroupIcon,
+  RectangleStackIcon,
+} from '@heroicons/react/24/outline';
+import { cn } from '@/lib/utils';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useTemplateSectionEdit } from './context';
+import {
+  StandardModalContainer,
+  StandardModalHeader,
+  StandardModalBody,
+  StandardModalFooter,
+} from '../_shared';
+import { SettingsTab, LayoutTab, StyleTab, ContentTab } from './components';
+import { useSectionOperations, TemplateSectionFormData } from './hooks';
+import DeleteSectionModal from './DeleteSectionModal';
+import Button from '@/ui/Button';
+
+type TabId = 'settings' | 'layout' | 'style' | 'content';
+
+export default function TemplateSectionEditModal() {
+  const { isOpen, editingSection, mode, closeModal } = useTemplateSectionEdit();
+  const themeColors = useThemeColors();
+  const {
+    isSaving,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    handleSave,
+    handleDelete,
+  } = useSectionOperations();
+
+  const [activeTab, setActiveTab] = useState<TabId>('settings');
+  const [formData, setFormData] = useState<TemplateSectionFormData>({
+    section_title: '',
+    section_description: '',
+    background_color: 'white',
+    is_gradient: false,
+    gradient: null,
+    text_style_variant: 'default',
+    grid_columns: 3,
+    image_metrics_height: 'h-48',
+    is_full_width: false,
+    is_section_title_aligned_center: false,
+    is_section_title_aligned_right: false,
+    is_image_bottom: false,
+    is_slider: false,
+    section_type: 'general',
+    is_reviews_section: false,
+    is_help_center_section: false,
+    is_real_estate_modal: false,
+    is_brand: false,
+    is_article_slider: false,
+    is_contact_section: false,
+    is_faq_section: false,
+    is_pricingplans_section: false,
+    url_page: undefined,
+    website_metric: undefined,
+  });
+
+  // Initialize form data when editing section changes
+  useEffect(() => {
+    if (editingSection) {
+      let sectionType: TemplateSectionFormData['section_type'] = (editingSection as any).section_type || 'general';
+      if (!(editingSection as any).section_type) {
+        if (editingSection.is_reviews_section) sectionType = 'reviews';
+        else if (editingSection.is_help_center_section) sectionType = 'help_center';
+        else if (editingSection.is_real_estate_modal) sectionType = 'real_estate';
+        else if (editingSection.is_brand) sectionType = 'brand';
+        else if (editingSection.is_article_slider) sectionType = 'article_slider';
+        else if (editingSection.is_contact_section) sectionType = 'contact';
+        else if (editingSection.is_faq_section) sectionType = 'faq';
+        else if (editingSection.is_pricingplans_section) sectionType = 'pricing_plans';
+      }
+      
+      setFormData({
+        section_title: editingSection.section_title || '',
+        section_description: editingSection.section_description || '',
+        background_color: editingSection.background_color || 'white',
+        is_gradient: editingSection.is_gradient || false,
+        gradient: editingSection.gradient || null,
+        text_style_variant: editingSection.text_style_variant || 'default',
+        grid_columns: editingSection.grid_columns || 3,
+        image_metrics_height: editingSection.image_metrics_height || 'h-48',
+        is_full_width: editingSection.is_full_width || false,
+        is_section_title_aligned_center: editingSection.is_section_title_aligned_center || false,
+        is_section_title_aligned_right: editingSection.is_section_title_aligned_right || false,
+        is_image_bottom: editingSection.is_image_bottom || false,
+        is_slider: editingSection.is_slider || false,
+        section_type: sectionType,
+        is_reviews_section: editingSection.is_reviews_section || false,
+        is_help_center_section: editingSection.is_help_center_section || false,
+        is_real_estate_modal: editingSection.is_real_estate_modal || false,
+        is_brand: editingSection.is_brand || false,
+        is_article_slider: editingSection.is_article_slider || false,
+        is_contact_section: editingSection.is_contact_section || false,
+        is_faq_section: editingSection.is_faq_section || false,
+        is_pricingplans_section: editingSection.is_pricingplans_section || false,
+        url_page: editingSection.url_page,
+        website_metric: editingSection.website_metric,
+      });
+    }
+  }, [editingSection]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + S to save
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave(formData);
+      }
+      // Esc to close
+      if (e.key === 'Escape' && !showDeleteConfirm) {
+        closeModal();
+      }
+      // Number keys 1-4 for tabs
+      if (e.key >= '1' && e.key <= '4' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          const tabs: TabId[] = ['settings', 'layout', 'style', 'content'];
+          setActiveTab(tabs[parseInt(e.key) - 1]);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, formData, handleSave, closeModal, showDeleteConfirm]);
+
+  // Reset tab when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab('settings');
+    }
+  }, [isOpen]);
+
+  const onSave = useCallback(async () => {
+    await handleSave(formData);
+  }, [formData, handleSave]);
+
+  const onDelete = useCallback(async () => {
+    await handleDelete(editingSection?.id);
+  }, [editingSection, handleDelete]);
+
+  if (!isOpen) return null;
+
+  const tabs = [
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Cog6ToothIcon,
+    },
+    {
+      id: 'layout',
+      label: 'Layout',
+      icon: RectangleGroupIcon,
+    },
+    {
+      id: 'style',
+      label: 'Style',
+      icon: PaintBrushIcon,
+    },
+    {
+      id: 'content',
+      label: 'Content',
+      icon: RectangleStackIcon,
+      badge: formData.section_type === 'general' && formData.website_metric ? formData.website_metric.length : undefined,
+    },
+  ];
+
+  return (
+    <>
+      <StandardModalContainer
+        isOpen={isOpen}
+        onClose={closeModal}
+        size="xlarge"
+      >
+        <StandardModalHeader
+          title={mode === 'create' ? 'Create Template Section' : 'Edit Template Section'}
+          tabs={tabs}
+          currentTab={activeTab}
+          onTabChange={(tabId: string) => setActiveTab(tabId as TabId)}
+          onClose={closeModal}
+        />
+
+        <StandardModalBody>
+          <div className="px-6 py-6">
+            {activeTab === 'settings' && (
+              <SettingsTab formData={formData} setFormData={setFormData} mode={mode} />
+            )}
+            {activeTab === 'layout' && (
+              <LayoutTab formData={formData} setFormData={setFormData} />
+            )}
+            {activeTab === 'style' && (
+              <StyleTab formData={formData} setFormData={setFormData} />
+            )}
+            {activeTab === 'content' && (
+              <ContentTab formData={formData} mode={mode} />
+            )}
+          </div>
+
+          {/* Keyboard Shortcuts Info */}
+          <div className="px-6 pb-4">
+            <div className="rounded-xl p-3 border" style={{ 
+              backgroundColor: `${themeColors.cssVars.primary.light}10`,
+              borderColor: themeColors.cssVars.primary.border,
+            }}>
+              <p className="text-xs text-gray-600">
+                <span className="font-medium">Keyboard shortcuts:</span> 
+                {' '}1-4 (Switch tabs) • Cmd+S (Save) • Esc (Close)
+              </p>
+            </div>
+          </div>
+        </StandardModalBody>
+
+        <StandardModalFooter>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 w-full">
+            <Button
+              variant="outline"
+              onClick={closeModal}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+
+            {mode === 'edit' && (
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isSaving}
+                className="text-red-600 hover:text-red-700 hover:border-red-600"
+              >
+                Delete
+              </Button>
+            )}
+
+            <Button
+              variant="primary"
+              onClick={onSave}
+              disabled={isSaving}
+              loading={isSaving}
+              loadingText="Saving..."
+              className={themeColors.primary.bg}
+            >
+              {mode === 'create' ? 'Create Section' : 'Update Section'}
+            </Button>
+          </div>
+        </StandardModalFooter>
+      </StandardModalContainer>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteSectionModal
+        isOpen={showDeleteConfirm}
+        sectionTitle={editingSection?.section_title || ''}
+        onConfirm={onDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+    </>
+  );
+}
