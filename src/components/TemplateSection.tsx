@@ -42,10 +42,10 @@ const TEXT_VARIANTS = {
     metricDescription: 'text-base font-light text-gray-600'
   },
   codedharmony: {
-    sectionTitle: 'text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 tracking-tight leading-none',
-    sectionDescription: 'text-lg sm:text-xl text-gray-500 font-light leading-relaxed',
-    metricTitle: 'text-3xl sm:text-4xl font-thin text-gray-900 tracking-tight',
-    metricDescription: 'text-base sm:text-lg text-gray-600 font-light leading-relaxed'
+    sectionTitle: 'text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-tight',
+    sectionDescription: 'text-xl sm:text-2xl text-gray-600 font-medium leading-relaxed',
+    metricTitle: 'text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 tracking-tight',
+    metricDescription: 'text-lg sm:text-xl text-gray-700 font-medium leading-relaxed'
   },
   magazine: {
     sectionTitle: 'text-4xl sm:text-5xl lg:text-7xl font-bold uppercase tracking-tight leading-none',
@@ -409,8 +409,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
         section.is_brand || section.is_article_slider || section.is_contact_section || section.is_faq_section || section.is_pricingplans_section
           ? 'px-0 py-0 min-h-0'
           : section.is_slider 
-          ? 'px-0 py-32 min-h-[600px]' 
-          : 'px-4 py-32 min-h-[600px]'
+          ? 'px-0 py-8 min-h-[600px]' 
+          : 'px-4 py-8 min-h-[600px]'
       } text-xl relative group`}
       style={sectionBackgroundStyle}
     >
@@ -536,7 +536,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                       const isCodedHarmony = section.text_style_variant === 'codedharmony';
                       const cardStyles = metric.is_card_type
                         ? isCodedHarmony
-                          ? `p-8 sm:p-16 rounded-3xl text-center gap-y-8 neomorphic`
+                          ? `p-6 sm:p-12 md:p-16 rounded-3xl text-center gap-y-6 relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20`
                           : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8`
                         : '';
 
@@ -669,11 +669,11 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                   : '';
 
                 // Keep animation and hover effect on card as before
-                // Apply neumorphic style for codedharmony variant
+                // Apply glassmorphism style for codedharmony variant
                 const isCodedHarmony = section.text_style_variant === 'codedharmony';
                 const cardStyles = metric.is_card_type
                   ? isCodedHarmony
-                    ? `p-8 sm:p-16 rounded-3xl text-center gap-y-8 card-hover neomorphic`
+                    ? `p-6 sm:p-12 md:p-16 rounded-3xl text-center gap-y-6 card-hover relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20`
                     : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 card-hover`
                   : '';
 

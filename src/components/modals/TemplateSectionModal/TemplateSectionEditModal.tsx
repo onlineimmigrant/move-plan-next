@@ -21,6 +21,9 @@ import DeleteSectionModal from './DeleteSectionModal';
 import Button from '@/ui/Button';
 import { TemplateSectionPreview } from './preview';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
+import EditableGradientPicker from '@/components/Shared/EditableFields/EditableGradientPicker';
+import SimpleGradientPicker from '@/components/Shared/EditableFields/SimpleGradientPicker';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 
 type MegaMenuId = 'style' | 'layout' | 'content' | null;
 
@@ -42,6 +45,7 @@ export default function TemplateSectionEditModal() {
   const [openMenu, setOpenMenu] = useState<MegaMenuId>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [previewRefreshing, setPreviewRefreshing] = useState(false);
+  const [imageLoading, setImageLoading] = useState<number | null>(null); // Track which metric image is loading
   
   // Inline editing state
   const [inlineEdit, setInlineEdit] = useState<{
@@ -50,6 +54,36 @@ export default function TemplateSectionEditModal() {
     position: { x: number; y: number };
     metricIndex?: number;
   }>({ field: null, value: '', position: { x: 0, y: 0 } });
+
+  // Calculate safe positioning for inline edit popover
+  const getSafePopoverPosition = (x: number, y: number) => {
+    const popoverWidth = 500;
+    const popoverHeight = 300; // Approximate height
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
+    const padding = 16;
+    
+    let safeX = x;
+    let safeY = y;
+    
+    // Adjust horizontal position
+    if (safeX + popoverWidth > viewportWidth - padding) {
+      safeX = Math.max(padding, viewportWidth - popoverWidth - padding);
+    }
+    if (safeX < padding) {
+      safeX = padding;
+    }
+    
+    // Adjust vertical position
+    if (safeY + popoverHeight > viewportHeight - padding) {
+      safeY = Math.max(padding, viewportHeight - popoverHeight - padding);
+    }
+    if (safeY < padding) {
+      safeY = padding;
+    }
+    
+    return { x: safeX, y: safeY };
+  };
   
   // Image gallery state
   const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
@@ -253,12 +287,18 @@ export default function TemplateSectionEditModal() {
 
   const handleImageSelect = (imageUrl: string) => {
     if (imageSelectionTarget?.type === 'metric' && formData.website_metric) {
-      const updatedMetrics = [...formData.website_metric];
-      updatedMetrics[imageSelectionTarget.metricIndex] = {
-        ...updatedMetrics[imageSelectionTarget.metricIndex],
-        image: imageUrl
-      };
-      setFormData({ ...formData, website_metric: updatedMetrics });
+      setImageLoading(imageSelectionTarget.metricIndex); // Show loading state
+      
+      // Simulate a brief delay for visual feedback (image processing)
+      setTimeout(() => {
+        const updatedMetrics = [...formData.website_metric!];
+        updatedMetrics[imageSelectionTarget.metricIndex] = {
+          ...updatedMetrics[imageSelectionTarget.metricIndex],
+          image: imageUrl
+        };
+        setFormData({ ...formData, website_metric: updatedMetrics });
+        setImageLoading(null); // Clear loading state
+      }, 300);
     }
     setIsImageGalleryOpen(false);
     setImageSelectionTarget(null);
@@ -266,12 +306,18 @@ export default function TemplateSectionEditModal() {
 
   const handleRemoveImage = (metricIndex: number) => {
     if (formData.website_metric) {
-      const updatedMetrics = [...formData.website_metric];
-      updatedMetrics[metricIndex] = {
-        ...updatedMetrics[metricIndex],
-        image: null
-      };
-      setFormData({ ...formData, website_metric: updatedMetrics });
+      setImageLoading(metricIndex); // Show loading state
+      
+      // Brief delay for visual feedback
+      setTimeout(() => {
+        const updatedMetrics = [...formData.website_metric!];
+        updatedMetrics[metricIndex] = {
+          ...updatedMetrics[metricIndex],
+          image: null
+        };
+        setFormData({ ...formData, website_metric: updatedMetrics });
+        setImageLoading(null); // Clear loading state
+      }, 200);
     }
   };
 
@@ -530,14 +576,14 @@ export default function TemplateSectionEditModal() {
         {/* Inline Layout Panel (narrow horizontal strip above preview) */}
         {openMenu === 'layout' && (
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3.5">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
               {/* Options */}
-              <div className="md:col-span-2 lg:col-span-5">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Options</h3>
-                <div className="flex gap-2">
+              <div className="md:col-span-2 lg:col-span-3">
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Options</h3>
+                <div className="flex gap-1.5">
                   <button
                     onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
-                    className="px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
                     style={
                       formData.is_full_width
                         ? {
@@ -556,7 +602,7 @@ export default function TemplateSectionEditModal() {
                   </button>
                   <button
                     onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
-                    className="px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
                     style={
                       formData.is_slider
                         ? {
@@ -575,7 +621,7 @@ export default function TemplateSectionEditModal() {
                   </button>
                   <button
                     onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
-                    className="px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
                     style={
                       formData.is_image_bottom
                         ? {
@@ -590,7 +636,7 @@ export default function TemplateSectionEditModal() {
                           }
                     }
                   >
-                    Image Bottom
+                    Img Bottom
                   </button>
                 </div>
               </div>
@@ -639,13 +685,71 @@ export default function TemplateSectionEditModal() {
                 </div>
               </div>
               
+              {/* Title Alignment & Background for mobile */}
+              <div className="md:hidden space-y-3">
+                {/* Title Alignment */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Alignment</h3>
+                  <div className="flex gap-1.5">
+                    {[
+                      { value: 'left', label: 'L' },
+                      { value: 'center', label: 'C' },
+                      { value: 'right', label: 'R' }
+                    ].map((align) => (
+                      <button
+                        key={align.value}
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            is_section_title_aligned_center: align.value === 'center',
+                            is_section_title_aligned_right: align.value === 'right'
+                          });
+                        }}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm"
+                        style={
+                          (align.value === 'center' && formData.is_section_title_aligned_center) ||
+                          (align.value === 'right' && formData.is_section_title_aligned_right) ||
+                          (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right)
+                            ? {
+                                background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                                color: 'white',
+                                borderColor: primary.base,
+                              }
+                            : {
+                                backgroundColor: 'white',
+                                borderColor: '#e5e7eb',
+                                color: '#6b7280',
+                              }
+                        }
+                      >
+                        {align.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Background Color Picker */}
+                <SimpleGradientPicker
+                  label="Background"
+                  isGradient={formData.is_gradient}
+                  gradient={formData.gradient || { from: 'blue-500', via: 'purple-500', to: 'pink-500' }}
+                  solidColor={formData.background_color}
+                  onGradientChange={(isGradient: boolean, gradient: any) => 
+                    setFormData({ ...formData, is_gradient: isGradient, gradient })
+                  }
+                  onSolidColorChange={(color: string) => 
+                    setFormData({ ...formData, background_color: color })
+                  }
+                />
+              </div>
+              
               {/* Grid Columns - desktop/tablet only */}
-              <div className="hidden md:block lg:col-span-2">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Columns</h3>
+              <div className="hidden md:block lg:col-span-1.5">
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Columns</h3>
                 <select
                   value={formData.grid_columns || 3}
                   onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                  className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
                   style={{
                     '--tw-ring-color': primary.base,
                     borderColor: '#e5e7eb'
@@ -661,33 +765,33 @@ export default function TemplateSectionEditModal() {
               </div>
               
               {/* Image Height - desktop/tablet only */}
-              <div className="hidden md:block lg:col-span-2">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Image Height</h3>
+              <div className="hidden md:block lg:col-span-1.5">
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Height</h3>
                 <select
                   value={formData.image_metrics_height || 'h-48'}
                   onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                  className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
                   style={{
                     '--tw-ring-color': primary.base,
                     borderColor: '#e5e7eb'
                   } as React.CSSProperties}
                 >
-                  <option value="h-32">Small</option>
-                  <option value="h-48">Medium</option>
-                  <option value="h-64">Large</option>
-                  <option value="h-80">X-Large</option>
-                  <option value="h-96">2X-Large</option>
+                  <option value="h-32">Sm</option>
+                  <option value="h-48">Md</option>
+                  <option value="h-64">Lg</option>
+                  <option value="h-80">XL</option>
+                  <option value="h-96">2XL</option>
                 </select>
               </div>
               
               {/* Title Alignment */}
-              <div className="md:col-span-2 lg:col-span-3">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Title Alignment</h3>
-                <div className="flex gap-2">
+              <div className="hidden md:block md:col-span-2 lg:col-span-2">
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Alignment</h3>
+                <div className="flex gap-1.5">
                   {[
-                    { value: 'left', label: 'Left' },
-                    { value: 'center', label: 'Center' },
-                    { value: 'right', label: 'Right' }
+                    { value: 'left', label: 'L' },
+                    { value: 'center', label: 'C' },
+                    { value: 'right', label: 'R' }
                   ].map((align) => (
                     <button
                       key={align.value}
@@ -698,7 +802,7 @@ export default function TemplateSectionEditModal() {
                           is_section_title_aligned_right: align.value === 'right'
                         });
                       }}
-                      className="flex-1 px-3 py-2 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm"
+                      className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm"
                       style={
                         (align.value === 'center' && formData.is_section_title_aligned_center) ||
                         (align.value === 'right' && formData.is_section_title_aligned_right) ||
@@ -719,6 +823,22 @@ export default function TemplateSectionEditModal() {
                     </button>
                   ))}
                 </div>
+              </div>
+              
+              {/* Background Color Picker */}
+              <div className="hidden md:block lg:col-span-4">
+                <SimpleGradientPicker
+                  label="Background"
+                  isGradient={formData.is_gradient}
+                  gradient={formData.gradient || { from: 'blue-500', via: 'purple-500', to: 'pink-500' }}
+                  solidColor={formData.background_color}
+                  onGradientChange={(isGradient: boolean, gradient: any) => 
+                    setFormData({ ...formData, is_gradient: isGradient, gradient })
+                  }
+                  onSolidColorChange={(color: string) => 
+                    setFormData({ ...formData, background_color: color })
+                  }
+                />
               </div>
             </div>
           </div>
@@ -750,6 +870,7 @@ export default function TemplateSectionEditModal() {
               onDoubleClickMetricDescription={(e: React.MouseEvent, metricIndex: number) => handleInlineEditOpen('metric_description', e, metricIndex)}
               onImageClick={(metricIndex: number) => handleOpenImageGallery(metricIndex)}
               onImageRemove={(metricIndex: number) => handleRemoveImage(metricIndex)}
+              imageLoading={imageLoading}
             />
           </div>
         </div>
@@ -808,35 +929,51 @@ export default function TemplateSectionEditModal() {
       />
 
       {/* Inline Edit Popover */}
-      {inlineEdit.field && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-[10003]" 
-            onClick={handleInlineEditCancel}
-          />
-          
-          {/* Popover */}
-          <div 
-            className="fixed z-[10004] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4 w-[500px] max-w-[90vw]"
-            style={{ 
-              left: `${Math.min(inlineEdit.position.x, window.innerWidth - 520)}px`, 
-              top: `${Math.min(inlineEdit.position.y, window.innerHeight - 200)}px` 
-            }}
-          >
+      {inlineEdit.field && (() => {
+        const safePosition = getSafePopoverPosition(inlineEdit.position.x, inlineEdit.position.y);
+        return (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-[10003] bg-black/20 backdrop-blur-[2px]" 
+              onClick={handleInlineEditCancel}
+            />
+            
+            {/* Popover with pulsing glow effect */}
+            <div 
+              className="fixed z-[10004] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border-2 p-5 w-[500px] max-w-[90vw] animate-in fade-in zoom-in-95 duration-200"
+              style={{ 
+                left: `${safePosition.x}px`, 
+                top: `${safePosition.y}px`,
+                borderColor: primary.base,
+                boxShadow: `0 0 0 4px ${primary.base}20, 0 20px 25px -5px rgba(0, 0, 0, 0.1)`
+              }}
+            >
+            {/* Active edit indicator */}
+            <div className="absolute -top-3 left-4 px-3 py-1 rounded-full text-xs font-semibold text-white shadow-lg flex items-center gap-1.5"
+              style={{ 
+                background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`
+              }}
+            >
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+              Editing
+            </div>
+            
             <div className="mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
-                  Edit {inlineEdit.field === 'section_title' ? 'Section Title' : 
-                        inlineEdit.field === 'section_description' ? 'Section Description' : 
-                        inlineEdit.field === 'metric_title' ? 'Metric Title' : 'Metric Description'}
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-bold text-gray-900 dark:text-white capitalize flex items-center gap-2">
+                  <span className="text-lg">✏️</span>
+                  {inlineEdit.field === 'section_title' ? 'Section Title' : 
+                    inlineEdit.field === 'section_description' ? 'Section Description' : 
+                    inlineEdit.field === 'metric_title' ? 'Metric Title' : 'Metric Description'}
                 </label>
                 <button
                   onClick={handleInlineEditCancel}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title="Cancel (Esc)"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
@@ -846,10 +983,11 @@ export default function TemplateSectionEditModal() {
                   type="text"
                   value={inlineEdit.value}
                   onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white text-lg font-semibold focus:outline-none focus:ring-2"
+                  className="w-full px-4 py-3 border-2 rounded-xl dark:bg-gray-700 dark:text-white text-lg font-semibold focus:outline-none focus:ring-2 transition-all"
                   style={{
                     borderColor: `${primary.base}40`,
-                    '--tw-ring-color': primary.base
+                    '--tw-ring-color': primary.base,
+                    boxShadow: `0 0 0 3px ${primary.base}10`
                   } as React.CSSProperties}
                   placeholder="Enter title..."
                   autoFocus
@@ -858,29 +996,37 @@ export default function TemplateSectionEditModal() {
                 <textarea
                   value={inlineEdit.value}
                   onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:text-white resize-none focus:outline-none focus:ring-2"
+                  className="w-full px-4 py-3 border-2 rounded-xl dark:bg-gray-700 dark:text-white resize-none focus:outline-none focus:ring-2 transition-all"
                   style={{
                     borderColor: `${primary.base}40`,
-                    '--tw-ring-color': primary.base
+                    '--tw-ring-color': primary.base,
+                    boxShadow: `0 0 0 3px ${primary.base}10`
                   } as React.CSSProperties}
                   placeholder="Enter description..."
-                  rows={3}
+                  rows={4}
                   autoFocus
                 />
               )}
               
-              <div className="flex items-center justify-between mt-3">
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  <kbd className="px-1.5 py-0.5 border rounded text-xs" style={{ 
-                    backgroundColor: `${primary.base}10`,
-                    borderColor: `${primary.base}30`,
-                    color: primary.base
-                  }}>Enter</kbd> to save, 
-                  <kbd className="ml-1 px-1.5 py-0.5 border rounded text-xs" style={{ 
-                    backgroundColor: `${primary.base}10`,
-                    borderColor: `${primary.base}30`,
-                    color: primary.base
-                  }}>Esc</kbd> to cancel
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <span className="flex items-center gap-1">
+                    <kbd className="px-2 py-1 border rounded-md text-xs font-semibold" style={{ 
+                      backgroundColor: `${primary.base}10`,
+                      borderColor: `${primary.base}30`,
+                      color: primary.base
+                    }}>↵ Enter</kbd> 
+                    <span>save</span>
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  <span className="flex items-center gap-1">
+                    <kbd className="px-2 py-1 border rounded-md text-xs font-semibold" style={{ 
+                      backgroundColor: `${primary.base}10`,
+                      borderColor: `${primary.base}30`,
+                      color: primary.base
+                    }}>Esc</kbd>
+                    <span>cancel</span>
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -903,7 +1049,8 @@ export default function TemplateSectionEditModal() {
             </div>
           </div>
         </>
-      )}
+        );
+      })()}
 
       {/* Image Gallery Modal */}
       {isImageGalleryOpen && (

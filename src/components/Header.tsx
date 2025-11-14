@@ -945,21 +945,10 @@ const Header: React.FC<HeaderProps> = ({
             logoPosition === 'right' ? 'order-2' : ''
           }`}
         >
-          <button
-            type="button"
-            onClick={() => router?.push(logoUrl)}
-            className="cursor-pointer flex items-center text-gray-900 transition-all duration-200 flex-shrink-0"
-            style={{
-              ['--hover-color' as any]: themeColors.cssVars.primary.base,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = themeColors.cssVars.primary.base;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '';
-            }}
+          <LocalizedLink
+            href="/"
+            className="cursor-pointer flex items-center text-gray-900 transition-all duration-200 flex-shrink-0 hover:opacity-80"
             aria-label={t.goToHomepage}
-            disabled={!router}
           >
             {settings?.image ? (
               <Image
@@ -984,15 +973,7 @@ const Header: React.FC<HeaderProps> = ({
             ) : (
               <span className="text-gray-500">{t.noLogoAvailable}</span>
             )}
-            <span 
-              className="sr-only ml-2 tracking-tight text-xl font-extrabold bg-gradient-to-r bg-clip-text text-transparent"
-              style={{
-                backgroundImage: `linear-gradient(to right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.light}, ${themeColors.cssVars.primary.base})`,
-              }}
-            >
-              {settings?.site || 'Default Site Name'}
-            </span>
-          </button>
+          </LocalizedLink>
         </div>
 
         {/* Navigation Section */}

@@ -23,6 +23,7 @@ interface TemplateSectionPreviewProps {
   onDoubleClickMetricDescription?: (e: React.MouseEvent, metricIndex: number) => void;
   onImageClick?: (metricIndex: number) => void;
   onImageRemove?: (metricIndex: number) => void;
+  imageLoading?: number | null; // Index of metric with loading image
 }
 
 // Text style variants - matching TemplateSection.tsx
@@ -40,10 +41,10 @@ const TEXT_VARIANTS = {
     metricDescription: 'text-base font-light text-gray-600'
   },
   codedharmony: {
-    sectionTitle: 'text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 tracking-tight leading-none',
-    sectionDescription: 'text-lg sm:text-xl text-gray-500 font-light leading-relaxed',
-    metricTitle: 'text-3xl sm:text-4xl font-thin text-gray-900 tracking-tight',
-    metricDescription: 'text-base sm:text-lg text-gray-600 font-light leading-relaxed'
+    sectionTitle: 'text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-tight',
+    sectionDescription: 'text-xl sm:text-2xl text-gray-600 font-medium leading-relaxed',
+    metricTitle: 'text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 tracking-tight',
+    metricDescription: 'text-lg sm:text-xl text-gray-700 font-medium leading-relaxed'
   },
   magazine: {
     sectionTitle: 'text-4xl sm:text-5xl lg:text-7xl font-bold uppercase tracking-tight leading-none',
@@ -91,6 +92,7 @@ export function TemplateSectionPreview({
   onDoubleClickMetricDescription,
   onImageClick,
   onImageRemove,
+  imageLoading,
 }: TemplateSectionPreviewProps) {
   // Carousel state for slider mode
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -258,7 +260,7 @@ export function TemplateSectionPreview({
     <section
       className={cn(
         'relative',
-        formData.is_slider ? 'px-0 py-32 min-h-[600px]' : 'px-4 py-32 min-h-[600px]'
+        formData.is_slider ? 'px-0 py-8 min-h-[600px]' : 'px-4 py-8 min-h-[600px]'
       )}
       style={backgroundStyle}
     >
@@ -275,26 +277,44 @@ export function TemplateSectionPreview({
             {(formData.section_title || formData.section_description) && (
               <div className={titleAlignClass}>
                 {formData.section_title && (
-                  <h2 
-                    className={cn(textVariant.sectionTitle, 'cursor-pointer hover:opacity-80 transition-opacity')}
-                    onDoubleClick={onDoubleClickTitle}
-                    title="Double-click to edit"
-                  >
-                    {typeof DOMPurify !== 'undefined'
-                      ? parse(DOMPurify.sanitize(formData.section_title))
-                      : formData.section_title}
-                  </h2>
+                  <div className="group relative">
+                    <h2 
+                      className={cn(
+                        textVariant.sectionTitle, 
+                        'cursor-pointer transition-all duration-200',
+                        'group-hover:opacity-70 group-hover:px-2 group-hover:py-1 group-hover:bg-blue-50/50 group-hover:rounded inline-block'
+                      )}
+                      onDoubleClick={onDoubleClickTitle}
+                      title="Double-click to edit"
+                    >
+                      {typeof DOMPurify !== 'undefined'
+                        ? parse(DOMPurify.sanitize(formData.section_title))
+                        : formData.section_title}
+                    </h2>
+                    <span className="absolute -right-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-blue-500">
+                      ✏️
+                    </span>
+                  </div>
                 )}
                 {formData.section_description && (
-                  <p 
-                    className={cn('pt-4 cursor-pointer hover:opacity-80 transition-opacity', textVariant.sectionDescription)}
-                    onDoubleClick={onDoubleClickDescription}
-                    title="Double-click to edit"
-                  >
-                    {typeof DOMPurify !== 'undefined'
-                      ? parse(DOMPurify.sanitize(formData.section_description))
-                      : formData.section_description}
-                  </p>
+                  <div className="group relative pt-4">
+                    <p 
+                      className={cn(
+                        'cursor-pointer transition-all duration-200',
+                        textVariant.sectionDescription,
+                        'group-hover:opacity-70 group-hover:px-2 group-hover:py-1 group-hover:bg-blue-50/50 group-hover:rounded inline-block'
+                      )}
+                      onDoubleClick={onDoubleClickDescription}
+                      title="Double-click to edit"
+                    >
+                      {typeof DOMPurify !== 'undefined'
+                        ? parse(DOMPurify.sanitize(formData.section_description))
+                        : formData.section_description}
+                    </p>
+                    <span className="absolute -right-6 top-4 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-blue-500">
+                      ✏️
+                    </span>
+                  </div>
                 )}
               </div>
             )}
@@ -322,7 +342,7 @@ export function TemplateSectionPreview({
                       const isCodedHarmony = formData.text_style_variant === 'codedharmony';
                       const cardStyles = metric.is_card_type
                         ? isCodedHarmony
-                          ? 'p-8 sm:p-16 rounded-3xl text-center gap-y-8 neomorphic'
+                          ? 'p-6 sm:p-12 md:p-16 rounded-3xl text-center gap-y-6 relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20'
                           : 'p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8'
                         : '';
 
@@ -364,6 +384,16 @@ export function TemplateSectionPreview({
                                   onClick={() => onImageClick?.(metricIndex)}
                                   title="Click to change image"
                                 >
+                                  {/* Loading overlay */}
+                                  {imageLoading === metricIndex && (
+                                    <div className="absolute inset-0 bg-white/95 dark:bg-gray-800/95 z-20 flex items-center justify-center">
+                                      <div className="flex flex-col items-center gap-2">
+                                        <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <span className="text-xs font-semibold text-blue-600">Processing...</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
                                   <Image
                                     src={metric.image}
                                     alt={metric.title || 'Metric image'}
@@ -398,6 +428,19 @@ export function TemplateSectionPreview({
                                   </svg>
                                 </button>
                               </>
+                            ) : imageLoading === metricIndex ? (
+                              /* Loading state for new image */
+                              <div
+                                className={cn(
+                                  'w-full flex items-center justify-center border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/50',
+                                  formData.image_metrics_height || 'h-48'
+                                )}
+                              >
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                  <p className="text-sm font-semibold text-blue-600">Loading image...</p>
+                                </div>
+                              </div>
                             ) : (
                               /* Upload placeholder */
                               <div
@@ -418,25 +461,43 @@ export function TemplateSectionPreview({
                             )}
                           </div>
                           {metric.is_title_displayed && metric.title && (
-                            <h3 
-                              className={cn('order-1 cursor-pointer hover:opacity-80 transition-opacity', textVariant.metricTitle)}
-                              onDoubleClick={(e) => onDoubleClickMetricTitle?.(e, metricIndex)}
-                              title="Double-click to edit"
-                            >
-                              {typeof DOMPurify !== 'undefined'
-                                ? parse(DOMPurify.sanitize(metric.title))
-                                : metric.title}
-                            </h3>
+                            <div className="group relative order-1">
+                              <h3 
+                                className={cn(
+                                  'cursor-pointer transition-all duration-200', 
+                                  textVariant.metricTitle,
+                                  'group-hover:opacity-70 group-hover:px-2 group-hover:py-1 group-hover:bg-blue-50/50 group-hover:rounded'
+                                )}
+                                onDoubleClick={(e) => onDoubleClickMetricTitle?.(e, metricIndex)}
+                                title="Double-click to edit"
+                              >
+                                {typeof DOMPurify !== 'undefined'
+                                  ? parse(DOMPurify.sanitize(metric.title))
+                                  : metric.title}
+                              </h3>
+                              <span className="absolute -right-5 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-blue-500">
+                                ✏️
+                              </span>
+                            </div>
                           )}
                           {metric.description && (
-                            <div 
-                              className={cn('flex-col order-2 tracking-wider cursor-pointer hover:opacity-80 transition-opacity', textVariant.metricDescription)}
-                              onDoubleClick={(e) => onDoubleClickMetricDescription?.(e, metricIndex)}
-                              title="Double-click to edit"
-                            >
-                              {typeof DOMPurify !== 'undefined'
-                                ? parse(DOMPurify.sanitize(metric.description))
-                                : metric.description}
+                            <div className="group relative order-2">
+                              <div 
+                                className={cn(
+                                  'flex-col tracking-wider cursor-pointer transition-all duration-200', 
+                                  textVariant.metricDescription,
+                                  'group-hover:opacity-70 group-hover:px-2 group-hover:py-1 group-hover:bg-blue-50/50 group-hover:rounded'
+                                )}
+                                onDoubleClick={(e) => onDoubleClickMetricDescription?.(e, metricIndex)}
+                                title="Double-click to edit"
+                              >
+                                {typeof DOMPurify !== 'undefined'
+                                  ? parse(DOMPurify.sanitize(metric.description))
+                                  : metric.description}
+                              </div>
+                              <span className="absolute -right-5 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-blue-500">
+                                ✏️
+                              </span>
                             </div>
                           )}
                         </div>
@@ -465,7 +526,7 @@ export function TemplateSectionPreview({
                   const isCodedHarmony = formData.text_style_variant === 'codedharmony';
                   const cardStyles = metric.is_card_type
                     ? isCodedHarmony
-                      ? 'p-8 sm:p-16 rounded-3xl text-center gap-y-8 card-hover neomorphic'
+                      ? 'p-6 sm:p-12 md:p-16 rounded-3xl text-center gap-y-6 card-hover relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20'
                       : 'p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 card-hover'
                     : '';
 
@@ -495,6 +556,16 @@ export function TemplateSectionPreview({
                               onClick={() => onImageClick?.(metricIndex)}
                               title="Click to change image"
                             >
+                              {/* Loading overlay */}
+                              {imageLoading === metricIndex && (
+                                <div className="absolute inset-0 bg-white/95 dark:bg-gray-800/95 z-20 flex items-center justify-center">
+                                  <div className="flex flex-col items-center gap-2">
+                                    <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                    <span className="text-xs font-semibold text-blue-600">Processing...</span>
+                                  </div>
+                                </div>
+                              )}
+                              
                               <Image
                                 src={metric.image}
                                 alt={metric.title || 'Metric image'}
@@ -529,6 +600,19 @@ export function TemplateSectionPreview({
                               </svg>
                             </button>
                           </>
+                        ) : imageLoading === metricIndex ? (
+                          /* Loading state for new image */
+                          <div
+                            className={cn(
+                              'w-full flex items-center justify-center border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/50',
+                              formData.image_metrics_height || 'h-48'
+                            )}
+                          >
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                              <p className="text-sm font-semibold text-blue-600">Loading image...</p>
+                            </div>
+                          </div>
                         ) : (
                           /* Upload placeholder */
                           <div
@@ -549,25 +633,43 @@ export function TemplateSectionPreview({
                         )}
                       </div>
                       {metric.is_title_displayed && metric.title && (
-                        <h3 
-                          className={cn('order-1 cursor-pointer hover:opacity-80 transition-opacity', textVariant.metricTitle)}
-                          onDoubleClick={(e) => onDoubleClickMetricTitle?.(e, metricIndex)}
-                          title="Double-click to edit"
-                        >
-                          {typeof DOMPurify !== 'undefined'
-                            ? parse(DOMPurify.sanitize(metric.title))
-                            : metric.title}
-                        </h3>
+                        <div className="group relative order-1">
+                          <h3 
+                            className={cn(
+                              'cursor-pointer transition-all duration-200', 
+                              textVariant.metricTitle,
+                              'group-hover:opacity-70 group-hover:px-2 group-hover:py-1 group-hover:bg-blue-50/50 group-hover:rounded'
+                            )}
+                            onDoubleClick={(e) => onDoubleClickMetricTitle?.(e, metricIndex)}
+                            title="Double-click to edit"
+                          >
+                            {typeof DOMPurify !== 'undefined'
+                              ? parse(DOMPurify.sanitize(metric.title))
+                              : metric.title}
+                          </h3>
+                          <span className="absolute -right-5 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-blue-500">
+                            ✏️
+                          </span>
+                        </div>
                       )}
                       {metric.description && (
-                        <div 
-                          className={cn('flex-col order-2 tracking-wider cursor-pointer hover:opacity-80 transition-opacity', textVariant.metricDescription)}
-                          onDoubleClick={(e) => onDoubleClickMetricDescription?.(e, metricIndex)}
-                          title="Double-click to edit"
-                        >
-                          {typeof DOMPurify !== 'undefined'
-                            ? parse(DOMPurify.sanitize(metric.description))
-                            : metric.description}
+                        <div className="group relative order-2">
+                          <div 
+                            className={cn(
+                              'flex-col tracking-wider cursor-pointer transition-all duration-200', 
+                              textVariant.metricDescription,
+                              'group-hover:opacity-70 group-hover:px-2 group-hover:py-1 group-hover:bg-blue-50/50 group-hover:rounded'
+                            )}
+                            onDoubleClick={(e) => onDoubleClickMetricDescription?.(e, metricIndex)}
+                            title="Double-click to edit"
+                          >
+                            {typeof DOMPurify !== 'undefined'
+                              ? parse(DOMPurify.sanitize(metric.description))
+                              : metric.description}
+                          </div>
+                          <span className="absolute -right-5 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-blue-500">
+                            ✏️
+                          </span>
                         </div>
                       )}
                     </div>

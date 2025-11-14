@@ -96,21 +96,24 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
   return (
     <section
       ref={sectionRef}
-      className={`sm:px-4 py-20 ${section.background_color ? `bg-${section.background_color}` : 'bg-gradient-to-b from-gray-50/50 to-white'}`}
+      className={`sm:px-4 py-8 relative ${section.background_color ? `bg-${section.background_color}` : 'bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-pink-50/30'}`}
     >
-            <div className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto`}>
+      {/* Glassmorphism overlay */}
+      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm"></div>
+      
+      <div className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto relative z-10`}>
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4 tracking-[-0.02em] antialiased">
+        <div className="text-center mb-3 sm:mb-6 md:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 tracking-[-0.02em] antialiased">
             {section.section_title || 'Help Center'}
           </h2>
-          <p className="text-[18px] text-gray-600 antialiased max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-[18px] text-gray-600 antialiased max-w-2xl mx-auto leading-relaxed px-4 sm:px-0">
             {section.section_description}
           </p>
         </div>
 
         {/* Modern Badge-Style Tab Navigation */}
-        <div ref={tabNavRef} className="mb-6">
+        <div ref={tabNavRef} className="mb-3 sm:mb-4 md:mb-6">
           <ChatHelpTabs
             activeTab={activeTab}
             onTabChange={handleTabChange}
@@ -136,7 +139,7 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
           <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none" />
           
           {/* Tab Content */}
-          <div className="relative min-h-[500px] p-2 lg:pb-12">
+          <div className="relative min-h-[300px] p-2 lg:pb-12">
             {activeTab === 'welcome' ? (
               <WelcomeTab
                 onTabChange={handleTabChange}

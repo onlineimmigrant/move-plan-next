@@ -273,7 +273,7 @@ ADD COLUMN IF NOT EXISTS customer JSONB DEFAULT NULL;`}
   const responsiveGridClasses = getResponsiveGridClasses(section.grid_columns || 3);
 
   return (
-    <section className="px-4 py-32 min-h-[600px]">
+    <section className="px-4 py-8 min-h-[600px]">
       <div className={cn(
         'mx-auto space-y-12',
         section.is_full_width ? 'w-full' : 'max-w-7xl'

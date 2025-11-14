@@ -64,6 +64,34 @@ export default function HeroSectionEditModal() {
     position: { x: number; y: number };
   }>({ field: null, value: '', position: { x: 0, y: 0 } });
 
+  // Calculate safe positioning for inline edit popover
+  const getSafePopoverPosition = (x: number, y: number) => {
+    const popoverWidth = 500;
+    const popoverHeight = 300;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
+    const padding = 16;
+    
+    let safeX = x;
+    let safeY = y;
+    
+    if (safeX + popoverWidth > viewportWidth - padding) {
+      safeX = Math.max(padding, viewportWidth - popoverWidth - padding);
+    }
+    if (safeX < padding) {
+      safeX = padding;
+    }
+    
+    if (safeY + popoverHeight > viewportHeight - padding) {
+      safeY = Math.max(padding, viewportHeight - popoverHeight - padding);
+    }
+    if (safeY < padding) {
+      safeY = padding;
+    }
+    
+    return { x: safeX, y: safeY };
+  };
+
   // Color picker states
   const {
     openColorPickers,
@@ -529,22 +557,24 @@ export default function HeroSectionEditModal() {
       )}
 
       {/* Inline Edit Popover */}
-      {inlineEdit.field && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-[10003]" 
-            onClick={handleInlineEditCancel}
-          />
-          
-          {/* Popover */}
-          <div 
-            className="fixed z-[10004] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4 w-[500px] max-w-[90vw]"
-            style={{ 
-              left: `${Math.min(inlineEdit.position.x, window.innerWidth - 520)}px`, 
-              top: `${Math.min(inlineEdit.position.y, window.innerHeight - 200)}px` 
-            }}
-          >
+      {inlineEdit.field && (() => {
+        const safePosition = getSafePopoverPosition(inlineEdit.position.x, inlineEdit.position.y);
+        return (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-[10003]" 
+              onClick={handleInlineEditCancel}
+            />
+            
+            {/* Popover */}
+            <div 
+              className="fixed z-[10004] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4 w-[500px] max-w-[90vw]"
+              style={{ 
+                left: `${safePosition.x}px`, 
+                top: `${safePosition.y}px` 
+              }}
+            >
             <div className="mb-3">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
@@ -622,7 +652,8 @@ export default function HeroSectionEditModal() {
             </div>
           </div>
         </>
-      )}
+        );
+      })()}
     </>
   );
 }

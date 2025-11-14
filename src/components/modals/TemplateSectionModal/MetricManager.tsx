@@ -761,10 +761,10 @@ export default function MetricManager({
 
             const isCodedHarmony = textStyleVariant === 'codedharmony';
             
-            // Match TemplateSection card styling exactly
+            // Match TemplateSection card styling exactly with glassmorphism
             const cardClasses = metric.is_card_type
               ? isCodedHarmony
-                ? 'p-8 sm:p-16 rounded-3xl text-center gap-y-8'
+                ? 'p-6 sm:p-12 md:p-16 rounded-3xl text-center gap-y-6 relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20'
                 : 'p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8'
               : '';
 

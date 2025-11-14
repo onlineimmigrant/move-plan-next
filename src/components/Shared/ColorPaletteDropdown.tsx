@@ -318,12 +318,44 @@ export default function ColorPaletteDropdown({
       {isOpen && buttonRef.current && useFixedPosition && typeof window !== 'undefined' && createPortal(
         (() => {
           const rect = buttonRef.current!.getBoundingClientRect();
+          const dropdownWidth = 320; // w-80 = 320px
+          const dropdownHeight = 384; // max-h-96 = 384px
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          const padding = 16; // 1rem padding from edges
+          
+          // Calculate position with boundary detection
+          let top = rect.bottom + 8;
+          let left = rect.left;
+          
+          // Adjust horizontal position if dropdown would overflow right edge
+          if (left + dropdownWidth > viewportWidth - padding) {
+            left = Math.max(padding, viewportWidth - dropdownWidth - padding);
+          }
+          
+          // Adjust horizontal position if dropdown would overflow left edge
+          if (left < padding) {
+            left = padding;
+          }
+          
+          // Adjust vertical position if dropdown would overflow bottom edge
+          if (top + dropdownHeight > viewportHeight - padding) {
+            // Try to position above the button instead
+            const topPosition = rect.top - dropdownHeight - 8;
+            if (topPosition > padding) {
+              top = topPosition;
+            } else {
+              // If it doesn't fit above either, position at top with scroll
+              top = padding;
+            }
+          }
+          
           return (
             <div 
               className="dropdown-container fixed bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[10002] w-80 max-h-96 overflow-y-auto"
               style={{
-                top: `${rect.bottom + 8}px`,
-                left: `${rect.left}px`,
+                top: `${top}px`,
+                left: `${left}px`,
               }}
             >
               <div className="grid grid-cols-6 gap-2">
