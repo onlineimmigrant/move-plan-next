@@ -23,7 +23,16 @@ interface HelpCenterSectionData {
   section_title_translation?: Record<string, string>;
   section_description?: string;
   section_description_translation?: Record<string, string>;
-  text_style_variant?: 'default' | 'apple' | 'codedharmony';
+  text_style_variant?:
+    | 'default'
+    | 'apple'
+    | 'codedharmony'
+    | 'magazine'
+    | 'startup'
+    | 'elegant'
+    | 'brutalist'
+    | 'modern'
+    | 'playful';
   background_color?: string;
   is_full_width: boolean;
   is_section_title_aligned_center: boolean;
@@ -184,7 +193,7 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
   if (isLoading) {
     return (
       <section className="sm:px-4 py-8 relative bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-pink-50/30">
-        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm"></div>
+  <div className="absolute inset-0 backdrop-blur-sm"></div>
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="flex flex-col items-center gap-3">
@@ -205,8 +214,8 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
       aria-label={section.section_title || 'Help Center'}
       role="region"
     >
-      {/* Glassmorphism overlay - 40% white semi-transparent layer */}
-      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm"></div>
+  {/* Glassmorphism overlay */}
+  <div className="absolute inset-0 backdrop-blur-sm"></div>
       
       <div className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto relative z-10`}>
         {/* Section Header */}

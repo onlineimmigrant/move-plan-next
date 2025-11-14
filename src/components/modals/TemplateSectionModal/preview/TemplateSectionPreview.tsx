@@ -7,6 +7,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
 import Image from 'next/image';
@@ -25,6 +26,19 @@ interface TemplateSectionPreviewProps {
   onImageRemove?: (metricIndex: number) => void;
   imageLoading?: number | null; // Index of metric with loading image
 }
+
+// Dynamic imports for heavier specialized sections (match main TemplateSection component approach)
+const HelpCenterSection = dynamic(() => import('@/components/TemplateSections/HelpCenterSection'));
+const FeedbackAccordion = dynamic(() => import('@/components/TemplateSections/FeedbackAccordion'));
+const ContactForm = dynamic(() => import('@/components/contact/ContactForm'));
+const RealEstateModal = dynamic(() => import('@/components/TemplateSections/RealEstateModal').then(mod => ({ default: mod.RealEstateModal })));
+const BlogPostSlider = dynamic(() => import('@/components/TemplateSections/BlogPostSlider'));
+const BrandsSection = dynamic(() => import('@/components/TemplateSections/BrandsSection'));
+const FAQSectionWrapper = dynamic(() => import('@/components/TemplateSections/FAQSectionWrapper'));
+const PricingPlansSectionWrapper = dynamic(() => import('@/components/TemplateSections/PricingPlansSectionWrapper'));
+const TeamMember = dynamic(() => import('@/components/TemplateSections/TeamMember'));
+const Testimonials = dynamic(() => import('@/components/TemplateSections/Testimonials'));
+const AppointmentSection = dynamic(() => import('@/components/TemplateSections/AppointmentSection'));
 
 // Helper function to check if URL is a video
 const isVideoUrl = (url: string | undefined): boolean => {
@@ -268,6 +282,142 @@ export function TemplateSectionPreview({
     }
   };
 
+  // Render specialized sections to keep JSX simpler and avoid nesting pitfalls
+  const renderSpecialized = () => {
+    switch (formData.section_type) {
+      case 'reviews':
+        return <FeedbackAccordion type="all_products" />;
+      case 'contact':
+        return <ContactForm />;
+      case 'real_estate':
+        return <RealEstateModal />;
+      case 'help_center':
+        return (
+          <HelpCenterSection
+            section={{
+              id: 0,
+              section_title: formData.section_title || 'Help Center',
+              section_description: formData.section_description || 'Organize articles, FAQs and AI support.',
+              text_style_variant: formData.text_style_variant || 'default',
+              background_color: formData.background_color || undefined,
+              is_full_width: formData.is_full_width || false,
+              is_section_title_aligned_center: formData.is_section_title_aligned_center || false,
+              is_section_title_aligned_right: formData.is_section_title_aligned_right || false,
+              is_help_center_section: true,
+              organization_id: null,
+            }}
+          />
+        );
+      case 'article_slider':
+        return <BlogPostSlider backgroundColor={formData.background_color} />;
+      case 'brand':
+        return (
+          <BrandsSection
+            section={{
+              id: 0,
+              section_title: formData.section_title || 'Our Partners',
+              section_description: formData.section_description || '',
+              text_style_variant: formData.text_style_variant || 'default',
+              background_color: formData.background_color || undefined,
+              is_full_width: formData.is_full_width || false,
+              is_section_title_aligned_center: formData.is_section_title_aligned_center || false,
+              is_section_title_aligned_right: formData.is_section_title_aligned_right || false,
+              section_type: 'brand',
+              website_metric: formData.website_metric || [],
+              organization_id: null,
+            }}
+          />
+        );
+      case 'pricing_plans':
+        return (
+          <PricingPlansSectionWrapper
+            section={{
+              id: 0,
+              section_title: formData.section_title || 'Pricing Plans',
+              section_description: formData.section_description || '',
+              organization_id: null,
+            }}
+          />
+        );
+      case 'faq':
+        return (
+          <FAQSectionWrapper
+            section={{
+              id: 0,
+              section_title: formData.section_title || 'Frequently Asked Questions',
+              section_description: formData.section_description || '',
+              // extra props are not required by FAQSectionWrapper
+            }}
+          />
+        );
+      case 'team':
+        return (
+          <TeamMember
+            section={{
+              id: 0,
+              section_title: formData.section_title || 'Our Team',
+              section_description: formData.section_description || '',
+              text_style_variant: formData.text_style_variant || 'default',
+              background_color: formData.background_color || undefined,
+              is_full_width: formData.is_full_width || false,
+              grid_columns: formData.grid_columns || 3,
+            }}
+          />
+        );
+      case 'testimonials':
+        return (
+          <Testimonials
+            section={{
+              id: 0,
+              section_title: formData.section_title || 'Testimonials',
+              section_description: formData.section_description || '',
+              text_style_variant: formData.text_style_variant || 'default',
+              background_color: formData.background_color || undefined,
+              is_full_width: formData.is_full_width || false,
+              grid_columns: formData.grid_columns || 3,
+            }}
+          />
+        );
+      case 'appointment':
+        return (
+          <AppointmentSection
+            section={{
+              id: 0,
+              section_title: formData.section_title || 'Book an Appointment',
+              section_description: formData.section_description || '',
+              text_style_variant: formData.text_style_variant || 'default',
+              background_color: formData.background_color || undefined,
+              is_full_width: formData.is_full_width || false,
+              section_type: 'appointment',
+              website_metric: formData.website_metric || [],
+              organization_id: null,
+            }}
+          />
+        );
+      default:
+        return (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 mb-4">
+              <svg className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+                />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              {specialSectionMessage?.title || 'Special Section'}
+            </h3>
+            <p className="text-base text-gray-600 max-w-md mx-auto">
+              {specialSectionMessage?.desc || 'This section type has its own specialized layout'}
+            </p>
+          </div>
+        );
+    }
+  };
+
   // Special section type messages
   const getSectionTypeMessage = () => {
     switch (formData.section_type) {
@@ -310,7 +460,11 @@ export function TemplateSectionPreview({
         className={cn(
           containerClass,
           'mx-auto',
-          formData.is_slider ? 'py-4 space-y-12' : 'py-4 sm:p-8 sm:rounded-xl space-y-12'
+          (() => {
+            const specialTypes = ['brand','article_slider','contact','faq','pricing_plans','reviews','help_center','real_estate','team','testimonials','appointment'];
+            if (formData.is_slider) return 'py-4 space-y-12';
+            return specialTypes.includes(formData.section_type || '') ? '' : 'py-4 sm:p-8 sm:rounded-xl space-y-12';
+          })()
         )}
       >
         {formData.section_type === 'general' || !formData.section_type ? (
@@ -788,25 +942,8 @@ export function TemplateSectionPreview({
             )}
           </>
         ) : (
-          /* Special Section Type Preview */
-          <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 mb-4">
-              <svg className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              {specialSectionMessage?.title || 'Special Section'}
-            </h3>
-            <p className="text-base text-gray-600 max-w-md mx-auto">
-              {specialSectionMessage?.desc || 'This section type has its own specialized layout'}
-            </p>
-          </div>
+          // Specialized Section Type Preview
+          <>{renderSpecialized()}</>
         )}
       </div>
     </section>

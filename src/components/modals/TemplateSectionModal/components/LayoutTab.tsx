@@ -12,6 +12,8 @@ import {
   Square2StackIcon,
   PlusCircleIcon,
   RectangleStackIcon,
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -20,6 +22,7 @@ import { getBackgroundStyle } from '@/utils/gradientHelper';
 import { TemplateSectionFormData } from '../hooks';
 import { useTemplateSectionEdit } from '../context';
 import MetricManager from '../MetricManager';
+import { useSectionTypeFilter, SECTION_TYPE_OPTIONS, SectionTypeOption } from '../hooks';
 
 interface LayoutTabProps {
   formData: TemplateSectionFormData;
@@ -63,6 +66,57 @@ export default function LayoutTab({ formData, setFormData, mode = 'edit' }: Layo
   const { editingSection, refetchEditingSection, refreshSections } = useTemplateSectionEdit();
   const [showCreateForm, setShowCreateForm] = React.useState(false);
   const [showAddModal, setShowAddModal] = React.useState(false);
+  const [showTypeDropdown, setShowTypeDropdown] = React.useState(false);
+  const [showVariantDropdown, setShowVariantDropdown] = React.useState(false);
+  const typeButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const typeDropdownRef = React.useRef<HTMLDivElement | null>(null);
+  const variantButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const variantDropdownRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Section type search/filter
+  const { searchQuery, setSearchQuery, filteredOptions } = useSectionTypeFilter();
+
+  // Text style variants with simple preview classes
+  const [variantSearch, setVariantSearch] = React.useState('');
+  const TEXT_VARIANT_OPTIONS: { value: TemplateSectionFormData['text_style_variant']; label: string; preview: { h: string; p: string } }[] = [
+    { value: 'default', label: 'Default', preview: { h: 'text-2xl font-bold text-gray-900', p: 'text-sm text-gray-600' } },
+    { value: 'apple', label: 'Apple', preview: { h: 'text-3xl font-light text-gray-900', p: 'text-sm text-gray-500' } },
+    { value: 'codedharmony', label: 'CodedHarmony', preview: { h: 'text-3xl font-bold tracking-tight', p: 'text-sm text-gray-600' } },
+    { value: 'magazine', label: 'Magazine', preview: { h: 'text-3xl font-black uppercase', p: 'text-xs uppercase tracking-wide' } },
+    { value: 'startup', label: 'Startup', preview: { h: 'text-3xl font-black', p: 'text-sm' } },
+    { value: 'elegant', label: 'Elegant', preview: { h: 'text-2xl font-serif italic', p: 'text-sm font-serif' } },
+    { value: 'brutalist', label: 'Brutalist', preview: { h: 'text-3xl font-black uppercase', p: 'text-xs uppercase font-bold' } },
+    { value: 'modern', label: 'Modern', preview: { h: 'text-3xl font-extrabold tracking-tight', p: 'text-sm' } },
+    { value: 'playful', label: 'Playful', preview: { h: 'text-3xl font-extrabold', p: 'text-sm font-medium' } },
+  ];
+  const filteredVariants = TEXT_VARIANT_OPTIONS.filter(v => v.label.toLowerCase().includes(variantSearch.toLowerCase()));
+
+  // Close dropdowns on outside click
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        showTypeDropdown &&
+        typeDropdownRef.current &&
+        !typeDropdownRef.current.contains(target) &&
+        typeButtonRef.current &&
+        !typeButtonRef.current.contains(target)
+      ) {
+        setShowTypeDropdown(false);
+      }
+      if (
+        showVariantDropdown &&
+        variantDropdownRef.current &&
+        !variantDropdownRef.current.contains(target) &&
+        variantButtonRef.current &&
+        !variantButtonRef.current.contains(target)
+      ) {
+        setShowVariantDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showTypeDropdown, showVariantDropdown]);
 
   return (
     <div className="space-y-6">
@@ -151,6 +205,141 @@ export default function LayoutTab({ formData, setFormData, mode = 'edit' }: Layo
             />
           </div>
         )}
+      </div>
+
+      {/* Quick pick: Section Type + Color & Text */}
+      <div>
+        <label className="block text-sm font-semibold mb-4 text-gray-900">
+          Layout Options
+        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Section Type button */}
+          <div className="relative">
+            <button
+              ref={typeButtonRef}
+              onClick={() => {
+                setShowTypeDropdown((o) => !o);
+                setShowVariantDropdown(false);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all bg-white/80 backdrop-blur-sm border hover:shadow-sm"
+            >
+              <RectangleStackIcon className="w-5 h-5 text-gray-700" />
+              <span className="text-sm font-medium text-gray-800">Section Type</span>
+              <ChevronDownIcon className="w-4 h-4 text-gray-500" />
+            </button>
+            {showTypeDropdown && (
+              <div
+                ref={typeDropdownRef}
+                className="dropdown-container absolute mt-2 left-0 w-[22rem] max-w-[90vw] bg-white rounded-xl shadow-lg border border-gray-200 z-[10020] p-3"
+                role="listbox"
+                aria-label="Section type list"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search section types..."
+                    className="w-full outline-none text-sm text-gray-800 placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
+                  {filteredOptions.map((opt: SectionTypeOption) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setFormData({ ...formData, section_type: opt.value });
+                        setShowTypeDropdown(false);
+                      }}
+                      role="option"
+                      aria-selected={formData.section_type === opt.value}
+                      className={cn(
+                        'w-full text-left p-3 hover:bg-gray-50 flex items-start gap-3',
+                        formData.section_type === opt.value && 'bg-blue-50/70'
+                      )}
+                    >
+                      <div className={cn('p-2 rounded-md', 'bg-gray-100')}>
+                        <opt.icon className="w-5 h-5 text-gray-700" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                          {opt.label}
+                          {formData.section_type === opt.value && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Selected</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-600">{opt.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Color & Text button */}
+          <div className="relative">
+            <button
+              ref={variantButtonRef}
+              onClick={() => {
+                setShowVariantDropdown((o) => !o);
+                setShowTypeDropdown(false);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all bg-white/80 backdrop-blur-sm border hover:shadow-sm"
+            >
+              <Square2StackIcon className="w-5 h-5 text-gray-700" />
+              <span className="text-sm font-medium text-gray-800">Color & Text</span>
+              <ChevronDownIcon className="w-4 h-4 text-gray-500" />
+            </button>
+            {showVariantDropdown && (
+              <div
+                ref={variantDropdownRef}
+                className="dropdown-container absolute mt-2 left-0 w-[22rem] max-w-[90vw] bg-white rounded-xl shadow-lg border border-gray-200 z-[10020] p-3"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                  <input
+                    value={variantSearch}
+                    onChange={(e) => setVariantSearch(e.target.value)}
+                    placeholder="Search styles..."
+                    className="w-full outline-none text-sm text-gray-800 placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
+                  {filteredVariants.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setFormData({ ...formData, text_style_variant: opt.value });
+                        setShowVariantDropdown(false);
+                      }}
+                      className={cn(
+                        'w-full text-left p-3 hover:bg-gray-50',
+                        formData.text_style_variant === opt.value && 'bg-blue-50/70'
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                            {opt.label}
+                            {formData.text_style_variant === opt.value && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Selected</span>
+                            )}
+                          </div>
+                          <div className="mt-1 p-3 rounded-lg border bg-white/60">
+                            <div className={cn(opt.preview.h)}>Sample Heading</div>
+                            <div className={cn(opt.preview.p)}>This is a preview of text.</div>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-2 text-xs text-gray-500">Selecting a style updates the live preview.</div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Alignment Controls */}

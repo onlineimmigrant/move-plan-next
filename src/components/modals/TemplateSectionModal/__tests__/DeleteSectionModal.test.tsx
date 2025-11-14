@@ -13,7 +13,7 @@ jest.mock('@/ui/Button', () => ({
 }));
 
 // Minimal BaseModal mock to avoid portal complexity
-jest.mock('../_shared/BaseModal', () => ({
+jest.mock('../../_shared/BaseModal', () => ({
   BaseModal: ({ children, title, isOpen }: any) => (isOpen ? <div role="dialog"><div>{title}</div>{children}</div> : null)
 }));
 

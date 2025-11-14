@@ -6,6 +6,7 @@ import Button from '@/ui/Button';
 import { cn } from '@/lib/utils';
 import { BaseModal } from '../_shared/BaseModal';
 import { Z_INDEX } from '@/ui/zIndex';
+import useFocusTrap from '@/hooks/useFocusTrap';
 
 interface DeleteSectionModalProps {
   isOpen: boolean;
@@ -23,7 +24,12 @@ export default function DeleteSectionModal({
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const isConfirmValid = confirmText === sectionTitle || (sectionTitle.trim() === '' && confirmText === 'DELETE');
+  // Validation: if section title is empty require explicit DELETE keyword; otherwise exact match
+  const isConfirmValid = sectionTitle.trim() === ''
+    ? confirmText === 'DELETE'
+    : confirmText === sectionTitle;
+  // Debug: observe confirmText updates during tests
+  // Test-only debug logging removed after validation
 
   const handleConfirm = async () => {
     if (!isConfirmValid) return;
@@ -41,6 +47,12 @@ export default function DeleteSectionModal({
     setConfirmText('');
     onCancel();
   };
+
+  // Initialize focus trap AFTER cancel handler exists so escape can call it
+  const focusTrapRef = useFocusTrap({
+    active: isOpen,
+    onEscape: handleCancel,
+  });
 
   if (!isOpen) return null;
 
@@ -68,7 +80,7 @@ export default function DeleteSectionModal({
       // and its inline edit popovers (up to z-[10004])
       zIndex={Z_INDEX.modalConfirm}
     >
-  <div className="space-y-4 sm:space-y-6">
+  <div ref={focusTrapRef as React.RefObject<HTMLDivElement>} className="space-y-4 sm:space-y-6" tabIndex={-1}>
         {/* Warning Box */}
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
           <p className="text-sm text-red-800">

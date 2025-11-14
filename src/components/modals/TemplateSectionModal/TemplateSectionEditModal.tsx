@@ -12,12 +12,16 @@ import {
   RectangleStackIcon,
   XMarkIcon,
   PlusCircleIcon,
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+  Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTemplateSectionEdit } from './context';
+import useFocusTrap from '@/hooks/useFocusTrap';
 import { SettingsTab, LayoutTab, LayoutOptionsTab, StyleTab, ContentTab } from './components';
-import { useSectionOperations, TemplateSectionFormData } from './hooks';
+import { useSectionOperations, TemplateSectionFormData, useSectionTypeFilter } from './hooks';
 import DeleteSectionModal from './DeleteSectionModal';
 import Button from '@/ui/Button';
 import { TemplateSectionPreview } from './preview';
@@ -33,9 +37,8 @@ export default function TemplateSectionEditModal() {
   const { isOpen, editingSection, mode, closeModal, refetchEditingSection, refreshSections } = useTemplateSectionEdit();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
-  const modalRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
+  // Section operations (needs to be before focus trap usage)
   const {
     isSaving,
     showDeleteConfirm,
@@ -51,6 +54,69 @@ export default function TemplateSectionEditModal() {
   // Metric manager state (for inline layout panel quick actions)
   const [showCreateMetricForm, setShowCreateMetricForm] = useState(false);
   const [showAddMetricModal, setShowAddMetricModal] = useState(false);
+  // Quick-pick dropdowns for Section Type and Color & Text (scoped per breakpoint to avoid duplicate dropdowns)
+  const [showTypeDropdownSm, setShowTypeDropdownSm] = useState(false);
+  const [showVariantDropdownSm, setShowVariantDropdownSm] = useState(false);
+  const [showTypeDropdownMd, setShowTypeDropdownMd] = useState(false);
+  const [showVariantDropdownMd, setShowVariantDropdownMd] = useState(false);
+  const [showTypeDropdownLg, setShowTypeDropdownLg] = useState(false);
+  const [showVariantDropdownLg, setShowVariantDropdownLg] = useState(false);
+  const typeBtnRefSm = useRef<HTMLButtonElement | null>(null);
+  const typeDropdownRefSm = useRef<HTMLDivElement | null>(null);
+  const variantBtnRefSm = useRef<HTMLButtonElement | null>(null);
+  const variantDropdownRefSm = useRef<HTMLDivElement | null>(null);
+  const typeBtnRefMd = useRef<HTMLButtonElement | null>(null);
+  const typeDropdownRefMd = useRef<HTMLDivElement | null>(null);
+  const variantBtnRefMd = useRef<HTMLButtonElement | null>(null);
+  const variantDropdownRefMd = useRef<HTMLDivElement | null>(null);
+  const typeBtnRefLg = useRef<HTMLButtonElement | null>(null);
+  const typeDropdownRefLg = useRef<HTMLDivElement | null>(null);
+  const variantBtnRefLg = useRef<HTMLButtonElement | null>(null);
+  const variantDropdownRefLg = useRef<HTMLDivElement | null>(null);
+  const { searchQuery, setSearchQuery, filteredOptions } = useSectionTypeFilter();
+  const [variantSearch, setVariantSearch] = useState('');
+  const TEXT_VARIANT_OPTIONS: { value: TemplateSectionFormData['text_style_variant']; label: string; preview: { h: string; p: string } }[] = [
+    { value: 'default', label: 'Default', preview: { h: 'text-sm font-bold text-gray-900', p: 'text-xs text-gray-600' } },
+    { value: 'apple', label: 'Apple', preview: { h: 'text-base font-light text-gray-900', p: 'text-xs text-gray-500' } },
+    { value: 'codedharmony', label: 'CodedHarmony', preview: { h: 'text-base font-bold tracking-tight', p: 'text-xs text-gray-600' } },
+    { value: 'magazine', label: 'Magazine', preview: { h: 'text-base font-black uppercase', p: 'text-[10px] uppercase tracking-wide' } },
+    { value: 'startup', label: 'Startup', preview: { h: 'text-base font-black', p: 'text-xs' } },
+    { value: 'elegant', label: 'Elegant', preview: { h: 'text-base font-serif italic', p: 'text-xs font-serif' } },
+    { value: 'brutalist', label: 'Brutalist', preview: { h: 'text-base font-black uppercase', p: 'text-[10px] uppercase font-bold' } },
+    { value: 'modern', label: 'Modern', preview: { h: 'text-base font-extrabold tracking-tight', p: 'text-xs' } },
+    { value: 'playful', label: 'Playful', preview: { h: 'text-base font-extrabold', p: 'text-xs font-medium' } },
+  ];
+  const filteredVariants = TEXT_VARIANT_OPTIONS.filter(v => v.label.toLowerCase().includes(variantSearch.toLowerCase()));
+
+  // Click outside to close dropdowns (handles all breakpoints)
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      // sm
+      if (showTypeDropdownSm && typeDropdownRefSm.current && !typeDropdownRefSm.current.contains(t) && typeBtnRefSm.current && !typeBtnRefSm.current.contains(t)) {
+        setShowTypeDropdownSm(false);
+      }
+      if (showVariantDropdownSm && variantDropdownRefSm.current && !variantDropdownRefSm.current.contains(t) && variantBtnRefSm.current && !variantBtnRefSm.current.contains(t)) {
+        setShowVariantDropdownSm(false);
+      }
+      // md
+      if (showTypeDropdownMd && typeDropdownRefMd.current && !typeDropdownRefMd.current.contains(t) && typeBtnRefMd.current && !typeBtnRefMd.current.contains(t)) {
+        setShowTypeDropdownMd(false);
+      }
+      if (showVariantDropdownMd && variantDropdownRefMd.current && !variantDropdownRefMd.current.contains(t) && variantBtnRefMd.current && !variantBtnRefMd.current.contains(t)) {
+        setShowVariantDropdownMd(false);
+      }
+      // lg
+      if (showTypeDropdownLg && typeDropdownRefLg.current && !typeDropdownRefLg.current.contains(t) && typeBtnRefLg.current && !typeBtnRefLg.current.contains(t)) {
+        setShowTypeDropdownLg(false);
+      }
+      if (showVariantDropdownLg && variantDropdownRefLg.current && !variantDropdownRefLg.current.contains(t) && variantBtnRefLg.current && !variantBtnRefLg.current.contains(t)) {
+        setShowVariantDropdownLg(false);
+      }
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, [showTypeDropdownSm, showVariantDropdownSm, showTypeDropdownMd, showVariantDropdownMd, showTypeDropdownLg, showVariantDropdownLg]);
   
   // Inline editing state
   const [inlineEdit, setInlineEdit] = useState<{
@@ -59,6 +125,25 @@ export default function TemplateSectionEditModal() {
     position: { x: number; y: number };
     metricIndex?: number;
   }>({ field: null, value: '', position: { x: 0, y: 0 } });
+
+  // Focus trap (disabled while delete confirm is showing to allow nested trap there)
+  const focusTrapRef = useFocusTrap({
+    active: isOpen && !showDeleteConfirm,
+    onEscape: () => {
+      // Esc should prioritize closing inline edit or mega menu before modal
+      if (inlineEdit.field) {
+        setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+        return;
+      }
+      if (openMenu) {
+        setOpenMenu(null);
+        return;
+      }
+      if (!showDeleteConfirm) {
+        closeModal();
+      }
+    }
+  });
 
   // Calculate safe positioning for inline edit popover
   const getSafePopoverPosition = (x: number, y: number) => {
@@ -168,15 +253,7 @@ export default function TemplateSectionEditModal() {
     }
   }, [editingSection]);
 
-  // Focus management
-  useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = document.activeElement as HTMLElement;
-      setTimeout(() => modalRef.current?.focus(), 100);
-    } else {
-      previousFocusRef.current?.focus();
-    }
-  }, [isOpen]);
+  // Remove legacy focus management (now handled by useFocusTrap which restores previous focus)
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -380,7 +457,12 @@ export default function TemplateSectionEditModal() {
       {/* Modal - Responsive */}
       {isMobile ? (
         <div 
-          ref={modalRef}
+          ref={(el) => {
+            // Provide element to focus trap
+            if (focusTrapRef) {
+              (focusTrapRef as React.MutableRefObject<HTMLElement | null>).current = el;
+            }
+          }}
           role="dialog"
           aria-modal="true"
           aria-label="Template Section Modal"
@@ -406,7 +488,11 @@ export default function TemplateSectionEditModal() {
           className="pointer-events-auto"
         >
           <div 
-            ref={modalRef}
+            ref={(el) => {
+              if (focusTrapRef) {
+                (focusTrapRef as React.MutableRefObject<HTMLElement | null>).current = el;
+              }
+            }}
             role="dialog"
             aria-modal="true"
             aria-label="Template Section Modal"
@@ -581,299 +667,562 @@ export default function TemplateSectionEditModal() {
         {/* Inline Layout Panel (narrow horizontal strip above preview) */}
         {openMenu === 'layout' && (
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3.5">
-            {/* Mobile (sm) - separated sections */}
-            <div className="md:hidden space-y-3">
-              {/* Metrics quick actions */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => setShowCreateMetricForm(true)}
-                    className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
-                    style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }}
-                    title="Create new metric"
-                    aria-label="Create new metric"
-                  >
-                    <PlusCircleIcon className="w-4 h-4" />
-                    New
-                  </button>
-                  <button
-                    onClick={() => setShowAddMetricModal(true)}
-                    className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
-                    style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}
-                    title="Add existing metric from library"
-                    aria-label="Add existing metric from library"
-                  >
-                    <RectangleStackIcon className="w-4 h-4" />
-                    Add
-                  </button>
-                </div>
-              </div>
-              {/* Options */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Options</h3>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
-                    className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
-                    aria-label="Toggle full width section"
-                    style={
-                      formData.is_full_width
-                        ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
-                        : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
-                    }
-                  >
-                    Full Width
-                  </button>
-                  <button
-                    onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
-                    className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
-                    aria-label="Toggle slider mode"
-                    style={
-                      formData.is_slider
-                        ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
-                        : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
-                    }
-                  >
-                    Slider
-                  </button>
-                  <button
-                    onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
-                    className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
-                    aria-label="Toggle image position bottom"
-                    style={
-                      formData.is_image_bottom
-                        ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
-                        : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
-                    }
-                  >
-                    Img Bottom
-                  </button>
-                </div>
-              </div>
-              {/* Columns & Height */}
-              <div className="grid grid-cols-2 gap-3">
+            {/* Mobile (sm) - reorganized into first and second rows */}
+            <div className="md:hidden space-y-4">
+              {/* First Row - Permanent */}
+              <div className="space-y-3">
+                {/* Quick Picks */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Columns</h3>
-                  <select
-                    value={formData.grid_columns || 3}
-                    onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
-                    style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}
-                    aria-label="Columns"
-                  >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                  </select>
-                </div>
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Image Height</h3>
-                  <select
-                    value={formData.image_metrics_height || 'h-48'}
-                    onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
-                    style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}
-                    aria-label="Image height"
-                  >
-                    <option value="h-32">Small</option>
-                    <option value="h-48">Medium</option>
-                    <option value="h-64">Large</option>
-                    <option value="h-80">X-Large</option>
-                    <option value="h-96">2X-Large</option>
-                  </select>
-                </div>
-              </div>
-              {/* Alignment */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Alignment</h3>
-                <div className="flex gap-1.5">
-                  {[
-                    { value: 'left', label: 'L' },
-                    { value: 'center', label: 'C' },
-                    { value: 'right', label: 'R' }
-                  ].map((align) => (
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Quick Picks</h3>
+                  <div className="flex gap-1.5 relative">
+                    {/* Section Type */}
                     <button
-                      key={align.value}
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          is_section_title_aligned_center: align.value === 'center',
-                          is_section_title_aligned_right: align.value === 'right'
-                        });
-                      }}
-                      className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm"
-                      aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'}
+                      ref={typeBtnRefSm}
+                      onClick={() => { setShowTypeDropdownSm(v => !v); setShowVariantDropdownSm(false); }}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#374151' }}
+                      aria-label="Choose section type"
+                    >
+                      <RectangleStackIcon className="w-4 h-4" />
+                      Type
+                      <ChevronDownIcon className="w-4 h-4" />
+                    </button>
+                    {showTypeDropdownSm && (
+                      <div ref={typeDropdownRefSm} className="dropdown-container absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 z-[10020] w-80 max-h-72 overflow-y-auto p-2">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search section types..." className="w-full outline-none text-xs text-gray-800 placeholder:text-gray-400" />
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {filteredOptions.map(opt => (
+                            <button key={opt.value} onClick={() => { setFormData({ ...formData, section_type: opt.value }); setShowTypeDropdownSm(false); }} className={cn('w-full text-left p-2 hover:bg-gray-50 flex items-start gap-2', formData.section_type === opt.value && 'bg-blue-50/70')}> 
+                              <div className="p-1.5 rounded bg-gray-100"><opt.icon className="w-4 h-4 text-gray-700" /></div>
+                              <div>
+                                <div className="text-xs font-medium text-gray-900 flex items-center gap-1.5">{opt.label}{formData.section_type === opt.value && <span className="text-[9px] px-1 rounded bg-blue-100 text-blue-700">Selected</span>}</div>
+                                <div className="text-[11px] text-gray-600">{opt.shortDescription || opt.description}</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Color & Text */}
+                    <button
+                      ref={variantBtnRefSm}
+                      onClick={() => { setShowVariantDropdownSm(v => !v); setShowTypeDropdownSm(false); }}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#374151' }}
+                      aria-label="Choose color & text style"
+                    >
+                      <Squares2X2Icon className="w-4 h-4" />
+                      Color & Text
+                      <ChevronDownIcon className="w-4 h-4" />
+                    </button>
+                    {showVariantDropdownSm && (
+                      <div ref={variantDropdownRefSm} className="dropdown-container absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 z-[10020] w-80 max-h-72 overflow-y-auto p-2">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                          <input value={variantSearch} onChange={(e) => setVariantSearch(e.target.value)} placeholder="Search styles..." className="w-full outline-none text-xs text-gray-800 placeholder:text-gray-400" />
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {filteredVariants.map(opt => (
+                            <button key={opt.value} onClick={() => { setFormData({ ...formData, text_style_variant: opt.value }); setShowVariantDropdownSm(false); }} className={cn('w-full text-left p-2 hover:bg-gray-50', formData.text_style_variant === opt.value && 'bg-blue-50/70')}>
+                              <div className="text-xs font-medium text-gray-900 flex items-center gap-1.5">{opt.label}{formData.text_style_variant === opt.value && <span className="text-[9px] px-1 rounded bg-blue-100 text-blue-700">Selected</span>}</div>
+                              <div className="mt-1 p-2 rounded border bg-white/60">
+                                <div className={cn(opt.preview.h)}>Sample Heading</div>
+                                <div className={cn(opt.preview.p)}>This is a preview of text.</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Background with Full Width */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Background</h3>
+                  <div className="flex gap-1.5 items-end">
+                    <button
+                      onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                      aria-label="Toggle full width section"
                       style={
-                        (align.value === 'center' && formData.is_section_title_aligned_center) ||
-                        (align.value === 'right' && formData.is_section_title_aligned_right) ||
-                        (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right)
+                        formData.is_full_width
                           ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
                           : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
                       }
                     >
-                      {align.label}
+                      Full Width
                     </button>
-                  ))}
+                    <SimpleGradientPicker
+                      label=""
+                      isGradient={formData.is_gradient}
+                      gradient={formData.gradient || { from: 'blue-500', via: 'purple-500', to: 'pink-500' }}
+                      solidColor={formData.background_color}
+                      onGradientChange={(isGradient: boolean, gradient: any) => setFormData({ ...formData, is_gradient: isGradient, gradient })}
+                      onSolidColorChange={(color: string) => setFormData({ ...formData, background_color: color })}
+                    />
+                  </div>
+                </div>
+
+                {/* Title Alignment */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Title Alignment</h3>
+                  <div className="flex gap-1.5">
+                    {[
+                      { value: 'left', label: 'L' },
+                      { value: 'center', label: 'C' },
+                      { value: 'right', label: 'R' }
+                    ].map((align) => (
+                      <button
+                        key={align.value}
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            is_section_title_aligned_center: align.value === 'center',
+                            is_section_title_aligned_right: align.value === 'right'
+                          });
+                        }}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm"
+                        aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'}
+                        style={
+                          (align.value === 'center' && formData.is_section_title_aligned_center) ||
+                          (align.value === 'right' && formData.is_section_title_aligned_right) ||
+                          (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right)
+                            ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
+                            : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
+                        }
+                      >
+                        {align.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              {/* Background */}
-              <SimpleGradientPicker
-                label="Background"
-                isGradient={formData.is_gradient}
-                gradient={formData.gradient || { from: 'blue-500', via: 'purple-500', to: 'pink-500' }}
-                solidColor={formData.background_color}
-                onGradientChange={(isGradient: boolean, gradient: any) => setFormData({ ...formData, is_gradient: isGradient, gradient })}
-                onSolidColorChange={(color: string) => setFormData({ ...formData, background_color: color })}
-              />
+
+              {/* Second Row - Inactive for non-general sections */}
+              <div className={cn("space-y-3", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
+                {/* Metrics with Options */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
+                  <div className="flex gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => setShowCreateMetricForm(true)}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }}
+                      title="Create new metric"
+                      aria-label="Create new metric"
+                    >
+                      <PlusCircleIcon className="w-4 h-4" />
+                      New
+                    </button>
+                    <button
+                      onClick={() => setShowAddMetricModal(true)}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}
+                      title="Add existing metric from library"
+                      aria-label="Add existing metric from library"
+                    >
+                      <RectangleStackIcon className="w-4 h-4" />
+                      Add
+                    </button>
+                    <button
+                      onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                      aria-label="Toggle slider mode"
+                      style={
+                        formData.is_slider
+                          ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
+                          : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
+                      }
+                    >
+                      Slider
+                    </button>
+                    <select
+                      value={formData.grid_columns || 3}
+                      onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                      style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}
+                      aria-label="Columns"
+                    >
+                      <option value="1">1 Col</option>
+                      <option value="2">2 Col</option>
+                      <option value="3">3 Col</option>
+                      <option value="4">4 Col</option>
+                      <option value="5">5 Col</option>
+                      <option value="6">6 Col</option>
+                    </select>
+                    <button
+                      onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                      aria-label="Toggle image position bottom"
+                      style={
+                        formData.is_image_bottom
+                          ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
+                          : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
+                      }
+                    >
+                      Img Bottom
+                    </button>
+                    <select
+                      value={formData.image_metrics_height || 'h-48'}
+                      onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                      style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}
+                      aria-label="Image height"
+                    >
+                      <option value="h-32">Sm</option>
+                      <option value="h-48">Md</option>
+                      <option value="h-64">Lg</option>
+                      <option value="h-80">XL</option>
+                      <option value="h-96">2XL</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Tablet (md) - separated sections */}
-            <div className="hidden md:block lg:hidden space-y-3">
-              {/* Metrics quick actions */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
-                <div className="flex gap-1.5">
-                  <button onClick={() => setShowCreateMetricForm(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }} title="Create new metric" aria-label="Create new metric">
-                    <PlusCircleIcon className="w-4 h-4" />
-                    New
-                  </button>
-                  <button onClick={() => setShowAddMetricModal(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }} title="Add existing metric from library" aria-label="Add existing metric from library">
-                    <RectangleStackIcon className="w-4 h-4" />
-                    Add
-                  </button>
+            {/* Tablet (md) - reorganized into first and second rows */}
+            <div className="hidden md:block lg:hidden space-y-4">
+              {/* First Row - Permanent */}
+              <div className="space-y-3">
+                {/* Quick Picks */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Quick Picks</h3>
+                  <div className="flex gap-1.5 relative">
+                    {/* Section Type */}
+                    <button
+                      ref={typeBtnRefMd}
+                      onClick={() => { setShowTypeDropdownMd(v => !v); setShowVariantDropdownMd(false); }}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#374151' }}
+                      aria-label="Choose section type"
+                    >
+                      <RectangleStackIcon className="w-4 h-4" />
+                      Type
+                      <ChevronDownIcon className="w-4 h-4" />
+                    </button>
+                    {showTypeDropdownMd && (
+                      <div ref={typeDropdownRefMd} className="dropdown-container absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 z-[10020] w-80 max-h-72 overflow-y-auto p-2">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search section types..." className="w-full outline-none text-xs text-gray-800 placeholder:text-gray-400" />
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {filteredOptions.map(opt => (
+                            <button key={opt.value} onClick={() => { setFormData({ ...formData, section_type: opt.value }); setShowTypeDropdownMd(false); }} className={cn('w-full text-left p-2 hover:bg-gray-50 flex items-start gap-2', formData.section_type === opt.value && 'bg-blue-50/70')}> 
+                              <div className="p-1.5 rounded bg-gray-100"><opt.icon className="w-4 h-4 text-gray-700" /></div>
+                              <div>
+                                <div className="text-xs font-medium text-gray-900 flex items-center gap-1.5">{opt.label}{formData.section_type === opt.value && <span className="text-[9px] px-1 rounded bg-blue-100 text-blue-700">Selected</span>}</div>
+                                <div className="text-[11px] text-gray-600">{opt.shortDescription || opt.description}</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Color & Text */}
+                    <button
+                      ref={variantBtnRefMd}
+                      onClick={() => { setShowVariantDropdownMd(v => !v); setShowTypeDropdownMd(false); }}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#374151' }}
+                      aria-label="Choose color & text style"
+                    >
+                      <Squares2X2Icon className="w-4 h-4" />
+                      Color & Text
+                      <ChevronDownIcon className="w-4 h-4" />
+                    </button>
+                    {showVariantDropdownMd && (
+                      <div ref={variantDropdownRefMd} className="dropdown-container absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 z-[10020] w-80 max-h-72 overflow-y-auto p-2">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                          <input value={variantSearch} onChange={(e) => setVariantSearch(e.target.value)} placeholder="Search styles..." className="w-full outline-none text-xs text-gray-800 placeholder:text-gray-400" />
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {filteredVariants.map(opt => (
+                            <button key={opt.value} onClick={() => { setFormData({ ...formData, text_style_variant: opt.value }); setShowVariantDropdownMd(false); }} className={cn('w-full text-left p-2 hover:bg-gray-50', formData.text_style_variant === opt.value && 'bg-blue-50/70')}>
+                              <div className="text-xs font-medium text-gray-900 flex items-center gap-1.5">{opt.label}{formData.text_style_variant === opt.value && <span className="text-[9px] px-1 rounded bg-blue-100 text-blue-700">Selected</span>}</div>
+                              <div className="mt-1 p-2 rounded border bg-white/60">
+                                <div className={cn(opt.preview.h)}>Sample Heading</div>
+                                <div className={cn(opt.preview.p)}>This is a preview of text.</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Background with Full Width */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Background</h3>
+                  <div className="flex gap-1.5 items-end">
+                    <button
+                      onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                      aria-label="Toggle full width section"
+                      style={
+                        formData.is_full_width
+                          ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
+                          : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
+                      }
+                    >
+                      Full Width
+                    </button>
+                    <SimpleGradientPicker
+                      label=""
+                      isGradient={formData.is_gradient}
+                      gradient={formData.gradient || { from: 'blue-500', via: 'purple-500', to: 'pink-500' }}
+                      solidColor={formData.background_color}
+                      onGradientChange={(isGradient: boolean, gradient: any) => setFormData({ ...formData, is_gradient: isGradient, gradient })}
+                      onSolidColorChange={(color: string) => setFormData({ ...formData, background_color: color })}
+                    />
+                  </div>
+                </div>
+
+                {/* Title Alignment */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Title Alignment</h3>
+                  <div className="flex gap-1.5">
+                    {[
+                      { value: 'left', label: 'L' },
+                      { value: 'center', label: 'C' },
+                      { value: 'right', label: 'R' }
+                    ].map((align) => (
+                      <button
+                        key={align.value}
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            is_section_title_aligned_center: align.value === 'center',
+                            is_section_title_aligned_right: align.value === 'right'
+                          });
+                        }}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm"
+                        aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'}
+                        style={
+                          (align.value === 'center' && formData.is_section_title_aligned_center) ||
+                          (align.value === 'right' && formData.is_section_title_aligned_right) ||
+                          (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right)
+                            ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
+                            : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
+                        }
+                      >
+                        {align.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              {/* Options */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Options</h3>
-                <div className="flex gap-1.5">
-                  <button onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle full width section" style={formData.is_full_width ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Full Width</button>
-                  <button onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle slider mode" style={formData.is_slider ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Slider</button>
-                  <button onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle image position bottom" style={formData.is_image_bottom ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Img Bottom</button>
+
+              {/* Second Row - Inactive for non-general sections */}
+              <div className={cn("space-y-3", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
+                {/* Metrics with Options */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
+                  <div className="flex gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => setShowCreateMetricForm(true)}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }}
+                      title="Create new metric"
+                      aria-label="Create new metric"
+                    >
+                      <PlusCircleIcon className="w-4 h-4" />
+                      New
+                    </button>
+                    <button
+                      onClick={() => setShowAddMetricModal(true)}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
+                      style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}
+                      title="Add existing metric from library"
+                      aria-label="Add existing metric from library"
+                    >
+                      <RectangleStackIcon className="w-4 h-4" />
+                      Add
+                    </button>
+                    <button
+                      onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                      aria-label="Toggle slider mode"
+                      style={
+                        formData.is_slider
+                          ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
+                          : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
+                      }
+                    >
+                      Slider
+                    </button>
+                    <select
+                      value={formData.grid_columns || 3}
+                      onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                      style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}
+                      aria-label="Columns"
+                    >
+                      <option value="1">1 Col</option>
+                      <option value="2">2 Col</option>
+                      <option value="3">3 Col</option>
+                      <option value="4">4 Col</option>
+                      <option value="5">5 Col</option>
+                      <option value="6">6 Col</option>
+                    </select>
+                    <button
+                      onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
+                      className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                      aria-label="Toggle image position bottom"
+                      style={
+                        formData.is_image_bottom
+                          ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
+                          : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }
+                      }
+                    >
+                      Img Bottom
+                    </button>
+                    <select
+                      value={formData.image_metrics_height || 'h-48'}
+                      onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                      style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}
+                      aria-label="Image height"
+                    >
+                      <option value="h-32">Sm</option>
+                      <option value="h-48">Md</option>
+                      <option value="h-64">Lg</option>
+                      <option value="h-80">XL</option>
+                      <option value="h-96">2XL</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-              {/* Columns */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Columns</h3>
-                <select value={formData.grid_columns || 3} onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Columns">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                </select>
-              </div>
-              {/* Height */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Height</h3>
-                <select value={formData.image_metrics_height || 'h-48'} onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Image height">
-                  <option value="h-32">Sm</option>
-                  <option value="h-48">Md</option>
-                  <option value="h-64">Lg</option>
-                  <option value="h-80">XL</option>
-                  <option value="h-96">2XL</option>
-                </select>
-              </div>
-              {/* Alignment */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Alignment</h3>
-                <div className="flex gap-1.5">
-                  {[
-                    { value: 'left', label: 'L' },
-                    { value: 'center', label: 'C' },
-                    { value: 'right', label: 'R' }
-                  ].map((align) => (
-                    <button key={align.value} onClick={() => setFormData({ ...formData, is_section_title_aligned_center: align.value === 'center', is_section_title_aligned_right: align.value === 'right' })} className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm" aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'} style={(align.value === 'center' && formData.is_section_title_aligned_center) || (align.value === 'right' && formData.is_section_title_aligned_right) || (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right) ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>{align.label}</button>
-                  ))}
-                </div>
-              </div>
-              {/* Background */}
-              <SimpleGradientPicker
-                label="Background"
-                isGradient={formData.is_gradient}
-                gradient={formData.gradient || { from: 'blue-500', via: 'purple-500', to: 'pink-500' }}
-                solidColor={formData.background_color}
-                onGradientChange={(isGradient: boolean, gradient: any) => setFormData({ ...formData, is_gradient: isGradient, gradient })}
-                onSolidColorChange={(color: string) => setFormData({ ...formData, background_color: color })}
-              />
             </div>
 
-            {/* Desktop (lg and above) - inline single row */}
-            <div className="hidden lg:grid grid-cols-12 gap-3 items-end">
-              {/* Metrics quick actions */}
-              <div className="lg:col-span-3">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
-                <div className="flex gap-1.5">
-                  <button onClick={() => setShowCreateMetricForm(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }} title="Create new metric" aria-label="Create new metric">
-                    <PlusCircleIcon className="w-4 h-4" />
-                    New
-                  </button>
-                  <button onClick={() => setShowAddMetricModal(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }} title="Add existing metric from library" aria-label="Add existing metric from library">
-                    <RectangleStackIcon className="w-4 h-4" />
-                    Add
-                  </button>
+            {/* Desktop (lg and above) - reorganized into first and second rows */}
+            <div className="hidden lg:block">
+              {/* First Row - Permanent */}
+              <div className="grid grid-cols-12 gap-3 items-end mb-4">
+                {/* Quick Picks */}
+                <div className="lg:col-span-4">
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Quick Picks</h3>
+                  <div className="flex gap-1.5 relative">
+                    <button ref={typeBtnRefLg} onClick={() => { setShowTypeDropdownLg(v => !v); setShowVariantDropdownLg(false); }} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#374151' }} aria-label="Choose section type">
+                      <RectangleStackIcon className="w-4 h-4" /> Type <ChevronDownIcon className="w-4 h-4" />
+                    </button>
+                    {showTypeDropdownLg && (
+                      <div ref={typeDropdownRefLg} className="dropdown-container absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 z-[10020] w-96 max-h-80 overflow-y-auto p-2">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search section types..." className="w-full outline-none text-xs text-gray-800 placeholder:text-gray-400" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                          {filteredOptions.map(opt => (
+                            <button key={opt.value} onClick={() => { setFormData({ ...formData, section_type: opt.value }); setShowTypeDropdownLg(false); }} className={cn('text-left p-2 hover:bg-gray-50 flex items-start gap-2 rounded', formData.section_type === opt.value && 'bg-blue-50/70')}>
+                              <div className="p-1.5 rounded bg-gray-100"><opt.icon className="w-4 h-4 text-gray-700" /></div>
+                              <div>
+                                <div className="text-xs font-medium text-gray-900 flex items-center gap-1.5">{opt.label}{formData.section_type === opt.value && <span className="text-[9px] px-1 rounded bg-blue-100 text-blue-700">Selected</span>}</div>
+                                <div className="text-[11px] text-gray-600">{opt.shortDescription || opt.description}</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <button ref={variantBtnRefLg} onClick={() => { setShowVariantDropdownLg(v => !v); setShowTypeDropdownLg(false); }} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#374151' }} aria-label="Choose color & text style">
+                      <Squares2X2Icon className="w-4 h-4" /> Color & Text <ChevronDownIcon className="w-4 h-4" />
+                    </button>
+                    {showVariantDropdownLg && (
+                      <div ref={variantDropdownRefLg} className="dropdown-container absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 z-[10020] w-96 max-h-80 overflow-y-auto p-2">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                          <input value={variantSearch} onChange={(e) => setVariantSearch(e.target.value)} placeholder="Search styles..." className="w-full outline-none text-xs text-gray-800 placeholder:text-gray-400" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                          {filteredVariants.map(opt => (
+                            <button key={opt.value} onClick={() => { setFormData({ ...formData, text_style_variant: opt.value }); setShowVariantDropdownLg(false); }} className={cn('text-left p-2 hover:bg-gray-50 rounded', formData.text_style_variant === opt.value && 'bg-blue-50/70')}>
+                              <div className="text-xs font-medium text-gray-900 flex items-center gap-1.5">{opt.label}{formData.text_style_variant === opt.value && <span className="text-[9px] px-1 rounded bg-blue-100 text-blue-700">Selected</span>}</div>
+                              <div className="mt-1 p-2 rounded border bg-white/60">
+                                <div className={cn(opt.preview.h)}>Sample Heading</div>
+                                <div className={cn(opt.preview.p)}>This is a preview of text.</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Background with Full Width */}
+                <div className="lg:col-span-4">
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Background</h3>
+                  <div className="flex gap-1.5 items-end">
+                    <button onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle full width section" style={formData.is_full_width ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Full Width</button>
+                    <SimpleGradientPicker
+                      label=""
+                      isGradient={formData.is_gradient}
+                      gradient={formData.gradient || { from: 'blue-500', via: 'purple-500', to: 'pink-500' }}
+                      solidColor={formData.background_color}
+                      onGradientChange={(isGradient: boolean, gradient: any) => setFormData({ ...formData, is_gradient: isGradient, gradient })}
+                      onSolidColorChange={(color: string) => setFormData({ ...formData, background_color: color })}
+                    />
+                  </div>
+                </div>
+
+                {/* Title Alignment */}
+                <div className="lg:col-span-4">
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Title Alignment</h3>
+                  <div className="flex gap-1.5">
+                    {[
+                      { value: 'left', label: 'L' },
+                      { value: 'center', label: 'C' },
+                      { value: 'right', label: 'R' }
+                    ].map((align) => (
+                      <button key={align.value} onClick={() => setFormData({ ...formData, is_section_title_aligned_center: align.value === 'center', is_section_title_aligned_right: align.value === 'right' })} className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm" aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'} style={(align.value === 'center' && formData.is_section_title_aligned_center) || (align.value === 'right' && formData.is_section_title_aligned_right) || (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right) ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>{align.label}</button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              {/* Options */}
-              <div className="lg:col-span-3">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Options</h3>
-                <div className="flex gap-1.5">
-                  <button onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle full width section" style={formData.is_full_width ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Full Width</button>
-                  <button onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle slider mode" style={formData.is_slider ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Slider</button>
-                  <button onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle image position bottom" style={formData.is_image_bottom ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Img Bottom</button>
+
+              {/* Second Row - Inactive for non-general sections */}
+              <div className={cn("grid grid-cols-12 gap-3 items-end", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
+                {/* Metrics with Options */}
+                <div className="lg:col-span-12">
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
+                  <div className="flex gap-1.5 flex-wrap">
+                    <button onClick={() => setShowCreateMetricForm(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }} title="Create new metric" aria-label="Create new metric">
+                      <PlusCircleIcon className="w-4 h-4" />
+                      New
+                    </button>
+                    <button onClick={() => setShowAddMetricModal(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }} title="Add existing metric from library" aria-label="Add existing metric from library">
+                      <RectangleStackIcon className="w-4 h-4" />
+                      Add
+                    </button>
+                    <button onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle slider mode" style={formData.is_slider ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Slider</button>
+                    <select value={formData.grid_columns || 3} onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })} className="px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Columns">
+                      <option value="1">1 Col</option>
+                      <option value="2">2 Col</option>
+                      <option value="3">3 Col</option>
+                      <option value="4">4 Col</option>
+                      <option value="5">5 Col</option>
+                      <option value="6">6 Col</option>
+                    </select>
+                    <button onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle image position bottom" style={formData.is_image_bottom ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Img Bottom</button>
+                    <select value={formData.image_metrics_height || 'h-48'} onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })} className="px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Image height">
+                      <option value="h-32">Sm</option>
+                      <option value="h-48">Md</option>
+                      <option value="h-64">Lg</option>
+                      <option value="h-80">XL</option>
+                      <option value="h-96">2XL</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              {/* Columns */}
-              <div className="lg:col-span-2">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Columns</h3>
-                <select value={formData.grid_columns || 3} onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Columns">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                </select>
-              </div>
-              {/* Height */}
-              <div className="lg:col-span-2">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Height</h3>
-                <select value={formData.image_metrics_height || 'h-48'} onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Image height">
-                  <option value="h-32">Sm</option>
-                  <option value="h-48">Md</option>
-                  <option value="h-64">Lg</option>
-                  <option value="h-80">XL</option>
-                  <option value="h-96">2XL</option>
-                </select>
-              </div>
-              {/* Alignment */}
-              <div className="lg:col-span-2">
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Alignment</h3>
-                <div className="flex gap-1.5">
-                  {[
-                    { value: 'left', label: 'L' },
-                    { value: 'center', label: 'C' },
-                    { value: 'right', label: 'R' }
-                  ].map((align) => (
-                    <button key={align.value} onClick={() => setFormData({ ...formData, is_section_title_aligned_center: align.value === 'center', is_section_title_aligned_right: align.value === 'right' })} className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm" aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'} style={(align.value === 'center' && formData.is_section_title_aligned_center) || (align.value === 'right' && formData.is_section_title_aligned_right) || (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right) ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>{align.label}</button>
-                  ))}
-                </div>
-              </div>
-              {/* Background */}
-              <div className="lg:col-span-3">
-                <SimpleGradientPicker
-                  label="Background"
-                  isGradient={formData.is_gradient}
-                  gradient={formData.gradient || { from: 'blue-500', via: 'purple-500', to: 'pink-500' }}
-                  solidColor={formData.background_color}
-                  onGradientChange={(isGradient: boolean, gradient: any) => setFormData({ ...formData, is_gradient: isGradient, gradient })}
-                  onSolidColorChange={(color: string) => setFormData({ ...formData, background_color: color })}
-                />
               </div>
             </div>
           </div>
