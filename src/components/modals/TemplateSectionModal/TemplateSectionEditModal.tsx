@@ -22,7 +22,7 @@ import Button from '@/ui/Button';
 import { TemplateSectionPreview } from './preview';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 
-type MegaMenuId = 'style' | 'content' | null;
+type MegaMenuId = 'style' | 'layout' | 'content' | null;
 
 export default function TemplateSectionEditModal() {
   const { isOpen, editingSection, mode, closeModal } = useTemplateSectionEdit();
@@ -293,16 +293,20 @@ export default function TemplateSectionEditModal() {
       label: 'Style',
       sections: [
         { id: 'section-type', label: 'Section Type', component: 'settings' },
-        { id: 'layout', label: 'Layout', component: 'layout' },
         { id: 'colors', label: 'Colors & Text', component: 'style' },
       ]
+    },
+    {
+      id: 'layout' as const,
+      label: 'Layout',
+      compact: true, // Flag for compact full-width layout
+      sections: [] // Will render custom compact layout
     },
     {
       id: 'content' as const,
       label: 'Content',
       sections: [
         { id: 'title-desc', label: 'Title & Description', component: 'title-description' },
-        { id: 'layout-options', label: 'Layout Options', component: 'layout-options' },
         { id: 'metrics', label: 'Metrics / Items', component: 'content' },
       ]
     },
@@ -426,8 +430,8 @@ export default function TemplateSectionEditModal() {
           </div>
         </div>
 
-        {/* Mega Menu Dropdown */}
-        {openMenu && (
+        {/* Mega Menu Dropdown (for Style & Content only) */}
+        {openMenu && openMenu !== 'layout' && (
           <>
             {/* Backdrop */}
             <div 
@@ -464,6 +468,7 @@ export default function TemplateSectionEditModal() {
                       </button>
                     </div>
                     
+                    {/* Regular Grid Layout */}
                     <div className={`grid gap-6 ${menu.sections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
                       {menu.sections.map((section) => (
                         <div key={section.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
@@ -508,9 +513,6 @@ export default function TemplateSectionEditModal() {
                                 </div>
                               </div>
                             )}
-                            {section.component === 'layout-options' && (
-                              <LayoutOptionsTab formData={formData} setFormData={setFormData} />
-                            )}
                             {section.component === 'content' && (
                               <ContentTab formData={formData} mode={mode} />
                             )}
@@ -523,6 +525,203 @@ export default function TemplateSectionEditModal() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Inline Layout Panel (narrow horizontal strip above preview) */}
+        {openMenu === 'layout' && (
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6">
+              {/* Options */}
+              <div className="md:col-span-2 lg:col-span-5">
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Options</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
+                    className="px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    style={
+                      formData.is_full_width
+                        ? {
+                            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                            color: 'white',
+                            borderColor: primary.base,
+                          }
+                        : {
+                            backgroundColor: 'white',
+                            borderColor: '#e5e7eb',
+                            color: '#6b7280',
+                          }
+                    }
+                  >
+                    Full Width
+                  </button>
+                  <button
+                    onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
+                    className="px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    style={
+                      formData.is_slider
+                        ? {
+                            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                            color: 'white',
+                            borderColor: primary.base,
+                          }
+                        : {
+                            backgroundColor: 'white',
+                            borderColor: '#e5e7eb',
+                            color: '#6b7280',
+                          }
+                    }
+                  >
+                    Slider
+                  </button>
+                  <button
+                    onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
+                    className="px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    style={
+                      formData.is_image_bottom
+                        ? {
+                            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                            color: 'white',
+                            borderColor: primary.base,
+                          }
+                        : {
+                            backgroundColor: 'white',
+                            borderColor: '#e5e7eb',
+                            color: '#6b7280',
+                          }
+                    }
+                  >
+                    Image Bottom
+                  </button>
+                </div>
+              </div>
+              
+              {/* Grid Columns & Image Height combined on mobile */}
+              <div className="grid grid-cols-2 gap-3 md:hidden">
+                {/* Grid Columns */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Columns</h3>
+                  <select
+                    value={formData.grid_columns || 3}
+                    onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                    style={{
+                      '--tw-ring-color': primary.base,
+                      borderColor: '#e5e7eb'
+                    } as React.CSSProperties}
+                  >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                  </select>
+                </div>
+                
+                {/* Image Height */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Image Height</h3>
+                  <select
+                    value={formData.image_metrics_height || 'h-48'}
+                    onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                    style={{
+                      '--tw-ring-color': primary.base,
+                      borderColor: '#e5e7eb'
+                    } as React.CSSProperties}
+                  >
+                    <option value="h-32">Small</option>
+                    <option value="h-48">Medium</option>
+                    <option value="h-64">Large</option>
+                    <option value="h-80">X-Large</option>
+                    <option value="h-96">2X-Large</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Grid Columns - desktop/tablet only */}
+              <div className="hidden md:block lg:col-span-2">
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Columns</h3>
+                <select
+                  value={formData.grid_columns || 3}
+                  onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })}
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                  style={{
+                    '--tw-ring-color': primary.base,
+                    borderColor: '#e5e7eb'
+                  } as React.CSSProperties}
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                </select>
+              </div>
+              
+              {/* Image Height - desktop/tablet only */}
+              <div className="hidden md:block lg:col-span-2">
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Image Height</h3>
+                <select
+                  value={formData.image_metrics_height || 'h-48'}
+                  onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })}
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
+                  style={{
+                    '--tw-ring-color': primary.base,
+                    borderColor: '#e5e7eb'
+                  } as React.CSSProperties}
+                >
+                  <option value="h-32">Small</option>
+                  <option value="h-48">Medium</option>
+                  <option value="h-64">Large</option>
+                  <option value="h-80">X-Large</option>
+                  <option value="h-96">2X-Large</option>
+                </select>
+              </div>
+              
+              {/* Title Alignment */}
+              <div className="md:col-span-2 lg:col-span-3">
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2.5">Title Alignment</h3>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'left', label: 'Left' },
+                    { value: 'center', label: 'Center' },
+                    { value: 'right', label: 'Right' }
+                  ].map((align) => (
+                    <button
+                      key={align.value}
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          is_section_title_aligned_center: align.value === 'center',
+                          is_section_title_aligned_right: align.value === 'right'
+                        });
+                      }}
+                      className="flex-1 px-3 py-2 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm"
+                      style={
+                        (align.value === 'center' && formData.is_section_title_aligned_center) ||
+                        (align.value === 'right' && formData.is_section_title_aligned_right) ||
+                        (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right)
+                          ? {
+                              background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                              color: 'white',
+                              borderColor: primary.base,
+                            }
+                          : {
+                              backgroundColor: 'white',
+                              borderColor: '#e5e7eb',
+                              color: '#6b7280',
+                            }
+                      }
+                    >
+                      {align.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Main Content Area - Live Preview */}
