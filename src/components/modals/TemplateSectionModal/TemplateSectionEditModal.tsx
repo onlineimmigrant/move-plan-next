@@ -592,6 +592,7 @@ export default function TemplateSectionEditModal() {
                     className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
                     style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }}
                     title="Create new metric"
+                    aria-label="Create new metric"
                   >
                     <PlusCircleIcon className="w-4 h-4" />
                     New
@@ -601,6 +602,7 @@ export default function TemplateSectionEditModal() {
                     className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5"
                     style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}
                     title="Add existing metric from library"
+                    aria-label="Add existing metric from library"
                   >
                     <RectangleStackIcon className="w-4 h-4" />
                     Add
@@ -614,6 +616,7 @@ export default function TemplateSectionEditModal() {
                   <button
                     onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })}
                     className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    aria-label="Toggle full width section"
                     style={
                       formData.is_full_width
                         ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
@@ -625,6 +628,7 @@ export default function TemplateSectionEditModal() {
                   <button
                     onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })}
                     className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    aria-label="Toggle slider mode"
                     style={
                       formData.is_slider
                         ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
@@ -636,6 +640,7 @@ export default function TemplateSectionEditModal() {
                   <button
                     onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })}
                     className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm"
+                    aria-label="Toggle image position bottom"
                     style={
                       formData.is_image_bottom
                         ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base }
@@ -655,6 +660,7 @@ export default function TemplateSectionEditModal() {
                     onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })}
                     className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
                     style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}
+                    aria-label="Columns"
                   >
                     <option value="1">1</option>
                     <option value="2">2</option>
@@ -671,6 +677,7 @@ export default function TemplateSectionEditModal() {
                     onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })}
                     className="w-full px-2.5 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium"
                     style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}
+                    aria-label="Image height"
                   >
                     <option value="h-32">Small</option>
                     <option value="h-48">Medium</option>
@@ -699,6 +706,7 @@ export default function TemplateSectionEditModal() {
                         });
                       }}
                       className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm"
+                      aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'}
                       style={
                         (align.value === 'center' && formData.is_section_title_aligned_center) ||
                         (align.value === 'right' && formData.is_section_title_aligned_right) ||
@@ -729,11 +737,11 @@ export default function TemplateSectionEditModal() {
               <div>
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
                 <div className="flex gap-1.5">
-                  <button onClick={() => setShowCreateMetricForm(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }} title="Create new metric">
+                  <button onClick={() => setShowCreateMetricForm(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }} title="Create new metric" aria-label="Create new metric">
                     <PlusCircleIcon className="w-4 h-4" />
                     New
                   </button>
-                  <button onClick={() => setShowAddMetricModal(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }} title="Add existing metric from library">
+                  <button onClick={() => setShowAddMetricModal(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }} title="Add existing metric from library" aria-label="Add existing metric from library">
                     <RectangleStackIcon className="w-4 h-4" />
                     Add
                   </button>
@@ -743,15 +751,15 @@ export default function TemplateSectionEditModal() {
               <div>
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Options</h3>
                 <div className="flex gap-1.5">
-                  <button onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" style={formData.is_full_width ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Full Width</button>
-                  <button onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" style={formData.is_slider ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Slider</button>
-                  <button onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" style={formData.is_image_bottom ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Img Bottom</button>
+                  <button onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle full width section" style={formData.is_full_width ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Full Width</button>
+                  <button onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle slider mode" style={formData.is_slider ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Slider</button>
+                  <button onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle image position bottom" style={formData.is_image_bottom ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Img Bottom</button>
                 </div>
               </div>
               {/* Columns */}
               <div>
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Columns</h3>
-                <select value={formData.grid_columns || 3} onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}>
+                <select value={formData.grid_columns || 3} onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Columns">
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
@@ -763,7 +771,7 @@ export default function TemplateSectionEditModal() {
               {/* Height */}
               <div>
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Height</h3>
-                <select value={formData.image_metrics_height || 'h-48'} onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}>
+                <select value={formData.image_metrics_height || 'h-48'} onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Image height">
                   <option value="h-32">Sm</option>
                   <option value="h-48">Md</option>
                   <option value="h-64">Lg</option>
@@ -780,7 +788,7 @@ export default function TemplateSectionEditModal() {
                     { value: 'center', label: 'C' },
                     { value: 'right', label: 'R' }
                   ].map((align) => (
-                    <button key={align.value} onClick={() => setFormData({ ...formData, is_section_title_aligned_center: align.value === 'center', is_section_title_aligned_right: align.value === 'right' })} className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm" style={(align.value === 'center' && formData.is_section_title_aligned_center) || (align.value === 'right' && formData.is_section_title_aligned_right) || (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right) ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>{align.label}</button>
+                    <button key={align.value} onClick={() => setFormData({ ...formData, is_section_title_aligned_center: align.value === 'center', is_section_title_aligned_right: align.value === 'right' })} className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm" aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'} style={(align.value === 'center' && formData.is_section_title_aligned_center) || (align.value === 'right' && formData.is_section_title_aligned_right) || (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right) ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>{align.label}</button>
                   ))}
                 </div>
               </div>
@@ -801,11 +809,11 @@ export default function TemplateSectionEditModal() {
               <div className="lg:col-span-3">
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
                 <div className="flex gap-1.5">
-                  <button onClick={() => setShowCreateMetricForm(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }} title="Create new metric">
+                  <button onClick={() => setShowCreateMetricForm(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }} title="Create new metric" aria-label="Create new metric">
                     <PlusCircleIcon className="w-4 h-4" />
                     New
                   </button>
-                  <button onClick={() => setShowAddMetricModal(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }} title="Add existing metric from library">
+                  <button onClick={() => setShowAddMetricModal(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }} title="Add existing metric from library" aria-label="Add existing metric from library">
                     <RectangleStackIcon className="w-4 h-4" />
                     Add
                   </button>
@@ -815,15 +823,15 @@ export default function TemplateSectionEditModal() {
               <div className="lg:col-span-3">
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Options</h3>
                 <div className="flex gap-1.5">
-                  <button onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" style={formData.is_full_width ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Full Width</button>
-                  <button onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" style={formData.is_slider ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Slider</button>
-                  <button onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" style={formData.is_image_bottom ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Img Bottom</button>
+                  <button onClick={() => setFormData({ ...formData, is_full_width: !formData.is_full_width })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle full width section" style={formData.is_full_width ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Full Width</button>
+                  <button onClick={() => setFormData({ ...formData, is_slider: !formData.is_slider })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle slider mode" style={formData.is_slider ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Slider</button>
+                  <button onClick={() => setFormData({ ...formData, is_image_bottom: !formData.is_image_bottom })} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm" aria-label="Toggle image position bottom" style={formData.is_image_bottom ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>Img Bottom</button>
                 </div>
               </div>
               {/* Columns */}
               <div className="lg:col-span-2">
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Columns</h3>
-                <select value={formData.grid_columns || 3} onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}>
+                <select value={formData.grid_columns || 3} onChange={(e) => setFormData({ ...formData, grid_columns: parseInt(e.target.value) })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Columns">
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
@@ -835,7 +843,7 @@ export default function TemplateSectionEditModal() {
               {/* Height */}
               <div className="lg:col-span-2">
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Height</h3>
-                <select value={formData.image_metrics_height || 'h-48'} onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties}>
+                <select value={formData.image_metrics_height || 'h-48'} onChange={(e) => setFormData({ ...formData, image_metrics_height: e.target.value })} className="w-full px-2 py-1.5 text-xs rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-all hover:shadow-sm font-medium" style={{ '--tw-ring-color': primary.base, borderColor: '#e5e7eb' } as React.CSSProperties} aria-label="Image height">
                   <option value="h-32">Sm</option>
                   <option value="h-48">Md</option>
                   <option value="h-64">Lg</option>
@@ -852,7 +860,7 @@ export default function TemplateSectionEditModal() {
                     { value: 'center', label: 'C' },
                     { value: 'right', label: 'R' }
                   ].map((align) => (
-                    <button key={align.value} onClick={() => setFormData({ ...formData, is_section_title_aligned_center: align.value === 'center', is_section_title_aligned_right: align.value === 'right' })} className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm" style={(align.value === 'center' && formData.is_section_title_aligned_center) || (align.value === 'right' && formData.is_section_title_aligned_right) || (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right) ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>{align.label}</button>
+                    <button key={align.value} onClick={() => setFormData({ ...formData, is_section_title_aligned_center: align.value === 'center', is_section_title_aligned_right: align.value === 'right' })} className="flex-1 px-2.5 py-1.5 rounded-lg border-2 font-medium text-xs transition-all hover:shadow-sm" aria-label={align.value === 'left' ? 'Align title left' : align.value === 'center' ? 'Align title center' : 'Align title right'} style={(align.value === 'center' && formData.is_section_title_aligned_center) || (align.value === 'right' && formData.is_section_title_aligned_right) || (align.value === 'left' && !formData.is_section_title_aligned_center && !formData.is_section_title_aligned_right) ? { background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`, color: 'white', borderColor: primary.base } : { backgroundColor: 'white', borderColor: '#e5e7eb', color: '#6b7280' }}>{align.label}</button>
                   ))}
                 </div>
               </div>

@@ -5,6 +5,7 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import { cn } from '@/lib/utils';
 import { BaseModal } from '../_shared/BaseModal';
+import { Z_INDEX } from '@/ui/zIndex';
 
 interface DeleteSectionModalProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ export default function DeleteSectionModal({
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const isConfirmValid = confirmText === sectionTitle;
+  const isConfirmValid = confirmText === sectionTitle || (sectionTitle.trim() === '' && confirmText === 'DELETE');
 
   const handleConfirm = async () => {
     if (!isConfirmValid) return;
@@ -65,10 +66,9 @@ export default function DeleteSectionModal({
       resizable={false}
       // Ensure this confirmation modal appears above the TemplateSectionEditModal (z-[10001])
       // and its inline edit popovers (up to z-[10004])
-      zIndex={10010}
-      className="z-[10010]"
+      zIndex={Z_INDEX.modalConfirm}
     >
-      <div className="space-y-4 sm:space-y-6">
+  <div className="space-y-4 sm:space-y-6">
         {/* Warning Box */}
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
           <p className="text-sm text-red-800">
@@ -96,7 +96,7 @@ export default function DeleteSectionModal({
         {/* Confirmation Input */}
         <div>
           <label htmlFor="confirm-text" className="block text-sm font-medium text-gray-700 mb-2">
-            Type the section title to confirm:
+            Type the section title to confirm{sectionTitle.trim() === '' ? ' (or type "DELETE")' : ''}:
           </label>
           <input
             id="confirm-text"
@@ -115,7 +115,9 @@ export default function DeleteSectionModal({
           />
           {confirmText && !isConfirmValid && (
             <p className="text-xs text-red-600 mt-1">
-              Text doesn't match. Please type exactly: "{sectionTitle}"
+              {sectionTitle.trim() === ''
+                ? 'Text does not match. Please type exactly: "DELETE"'
+                : <>Text doesn't match. Please type exactly: "{sectionTitle}"</>}
             </p>
           )}
           {isConfirmValid && (
