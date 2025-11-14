@@ -10,16 +10,21 @@ import {
   Bars3Icon,
   Bars3BottomRightIcon,
   Square2StackIcon,
+  PlusCircleIcon,
+  RectangleStackIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import EditableGradientPicker from '@/components/Shared/EditableFields/EditableGradientPicker';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import { TemplateSectionFormData } from '../hooks';
+import { useTemplateSectionEdit } from '../context';
+import MetricManager from '../MetricManager';
 
 interface LayoutTabProps {
   formData: TemplateSectionFormData;
   setFormData: (data: TemplateSectionFormData) => void;
+  mode?: 'create' | 'edit';
 }
 
 // Tooltip Component
@@ -53,11 +58,101 @@ const Tooltip = ({ content, position = 'top' }: { content: string; position?: 't
   );
 };
 
-export default function LayoutTab({ formData, setFormData }: LayoutTabProps) {
+export default function LayoutTab({ formData, setFormData, mode = 'edit' }: LayoutTabProps) {
   const themeColors = useThemeColors();
+  const { editingSection, refetchEditingSection, refreshSections } = useTemplateSectionEdit();
+  const [showCreateForm, setShowCreateForm] = React.useState(false);
+  const [showAddModal, setShowAddModal] = React.useState(false);
 
   return (
     <div className="space-y-6">
+      {/* Metrics Quick Actions - First Section */}
+      <div>
+        <label className="block text-sm font-semibold mb-4 text-gray-900">
+          Metrics
+        </label>
+        
+        {/* Debug info */}
+        <div className="mb-2 text-xs text-gray-500">
+          Mode: {mode} | Has editingSection: {editingSection ? 'Yes' : 'No'}
+        </div>
+
+        {mode === 'edit' && editingSection ? (
+          <div className="flex items-center gap-3">
+            {/* Create New Metric Button */}
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200"
+              title="Create new metric"
+            >
+              <PlusCircleIcon className="w-5 h-5" />
+              <span className="text-sm font-medium">Create New</span>
+            </button>
+
+            {/* Add Existing Metric Button */}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
+              title="Add existing metric from library"
+            >
+              <RectangleStackIcon className="w-5 h-5" />
+              <span className="text-sm font-medium">Add Existing</span>
+            </button>
+
+            {/* Metric count badge */}
+            {formData.website_metric && formData.website_metric.length > 0 && (
+              <div className="ml-auto flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 text-gray-600">
+                <RectangleStackIcon className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {formData.website_metric.length} metric{formData.website_metric.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+          </div>
+        ) : mode === 'create' ? (
+          <div 
+            className="rounded-xl border-2 border-dashed p-6 text-center"
+            style={{ 
+              borderColor: themeColors.cssVars.primary.border,
+              backgroundColor: `${themeColors.cssVars.primary.light}10`
+            }}
+          >
+            <RectangleStackIcon className="w-10 h-10 mx-auto mb-2 opacity-40" style={{ color: themeColors.cssVars.primary.base }} />
+            <h4 className="text-sm font-medium text-gray-900 mb-1">
+              Save Section First
+            </h4>
+            <p className="text-xs text-gray-600">
+              Create the section, then you'll be able to add and manage metrics
+            </p>
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500 italic">
+            {!editingSection ? 'No editing section available' : 'Waiting...'}
+          </div>
+        )}
+
+        {/* Full MetricManager with modals */}
+        {mode === 'edit' && editingSection && (showCreateForm || showAddModal) && (
+          <div className="mt-4">
+            <MetricManager
+              sectionId={editingSection.id}
+              metrics={formData.website_metric || []}
+              onMetricsChange={async () => {
+                await refetchEditingSection();
+                refreshSections();
+              }}
+              showCreateForm={showCreateForm}
+              setShowCreateForm={setShowCreateForm}
+              showAddModal={showAddModal}
+              setShowAddModal={setShowAddModal}
+              isImageBottom={formData.is_image_bottom}
+              imageMetricsHeight={formData.image_metrics_height}
+              textStyleVariant={formData.text_style_variant}
+            />
+          </div>
+        )}
+      </div>
+
       {/* Alignment Controls */}
       <div>
         <label className="block text-sm font-semibold mb-4 text-gray-900">

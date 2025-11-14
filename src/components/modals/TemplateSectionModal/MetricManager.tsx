@@ -352,10 +352,18 @@ export default function MetricManager({
   // Handle image selection from gallery
   const handleImageSelect = async (imageUrl: string) => {
     const metricId = imageGalleryState.metricId;
-    
+
     // For create form (no metricId)
     if (!metricId) {
       setEditingMetric({ ...editingMetric, image: imageUrl });
+      setImageGalleryState({ isOpen: false, metricId: null });
+      return;
+    }
+
+    // Validate metric ID before making API call
+    if (!metricId || metricId === undefined || typeof metricId !== 'number') {
+      console.error('Invalid metric ID:', metricId);
+      toast.error('Cannot update image: Invalid metric ID');
       setImageGalleryState({ isOpen: false, metricId: null });
       return;
     }
@@ -398,15 +406,21 @@ export default function MetricManager({
       return;
     }
 
-    // For existing metric - update immediately
-    try {
-      const response = await fetch(`/api/metrics/${metricId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: url }),
-      });
+    // Validate metric ID before making API call
+    if (!metricId || metricId === undefined || typeof metricId !== 'number') {
+      console.error('Invalid metric ID:', metricId);
+      toast.error('Cannot update URL: Invalid metric ID');
+      setUrlPromptState({ isOpen: false, metricId: null, currentUrl: '' });
+      return;
+    }
 
-      if (!response.ok) {
+    // For existing metric - update immediately
+      try {
+        const response = await fetch(`/api/metrics/${metricId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: url }),
+        });      if (!response.ok) {
         throw new Error('Failed to update metric');
       }
 
@@ -475,7 +489,7 @@ export default function MetricManager({
 
     try {
       const response = await fetch(`/api/template-sections/${sectionId}/metrics`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ metric_ids: metricIds }),
       });
@@ -531,23 +545,25 @@ export default function MetricManager({
     <div className="space-y-4">
       {/* Horizontal Toolbar with Metric Icons - Only show if not controlled externally */}
       {externalShowCreateForm === undefined && (
-        <div className="flex items-center gap-1 overflow-x-auto pb-2">
-          {/* Add New Metric Button */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {/* Create New Metric Button */}
           <button
             onClick={() => setShowCreateForm(true)}
-            className="p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-100 shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 shrink-0"
             title="Create new metric"
           >
-            <PlusIcon className="w-5 h-5" />
+            <PlusIcon className="w-4 h-4" />
+            <span className="text-xs font-medium">New</span>
           </button>
 
           {/* Add Existing Metric Button */}
           <button
             onClick={() => setShowAddModal(true)}
-            className="p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-100 shrink-0"
-            title="Add existing metric"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0"
+            title="Add existing metric from library"
           >
-            <PlusIcon className="w-5 h-5" />
+            <Square2StackIcon className="w-4 h-4" />
+            <span className="text-xs font-medium">Add</span>
           </button>
 
           <div className="w-px h-6 bg-gray-300 mx-1 shrink-0" />
@@ -754,6 +770,12 @@ export default function MetricManager({
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-4 pt-12">
           {metrics.map((metric, index) => {
+            // Skip metrics without valid IDs (not yet saved to database)
+            if (!metric.id || typeof metric.id !== 'number') {
+              console.warn('Skipping metric without valid ID:', metric);
+              return null;
+            }
+            
             console.log(`MetricManager rendering metric ${metric.id}:`, {
               background_color: metric.background_color,
               is_card_type: metric.is_card_type
@@ -811,6 +833,14 @@ export default function MetricManager({
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
+                      
+                      // Validate metric ID
+                      if (!metric.id || typeof metric.id !== 'number') {
+                        console.error('Invalid metric ID for title toggle:', metric.id);
+                        toast.error('Cannot update: Invalid metric ID');
+                        return;
+                      }
+                      
                       try {
                         const response = await fetch(`/api/metrics/${metric.id}`, {
                           method: 'PATCH',
@@ -838,6 +868,14 @@ export default function MetricManager({
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
+                      
+                      // Validate metric ID
+                      if (!metric.id || typeof metric.id !== 'number') {
+                        console.error('Invalid metric ID for image toggle:', metric.id);
+                        toast.error('Cannot update: Invalid metric ID');
+                        return;
+                      }
+                      
                       try {
                         const response = await fetch(`/api/metrics/${metric.id}`, {
                           method: 'PATCH',
@@ -865,6 +903,14 @@ export default function MetricManager({
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
+                      
+                      // Validate metric ID
+                      if (!metric.id || typeof metric.id !== 'number') {
+                        console.error('Invalid metric ID for card toggle:', metric.id);
+                        toast.error('Cannot update: Invalid metric ID');
+                        return;
+                      }
+                      
                       try {
                         const response = await fetch(`/api/metrics/${metric.id}`, {
                           method: 'PATCH',
@@ -892,6 +938,13 @@ export default function MetricManager({
                   <ColorPaletteDropdown
                     value={metric.background_color || 'white'}
                     onChange={async (colorClass) => {
+                      // Validate metric ID
+                      if (!metric.id || typeof metric.id !== 'number') {
+                        console.error('Invalid metric ID for color change:', metric.id);
+                        toast.error('Cannot update: Invalid metric ID');
+                        return;
+                      }
+                      
                       try {
                         const response = await fetch(`/api/metrics/${metric.id}`, {
                           method: 'PATCH',
@@ -1006,6 +1059,14 @@ export default function MetricManager({
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
+                      
+                      // Validate metric ID
+                      if (!metric.id || typeof metric.id !== 'number') {
+                        console.error('Invalid metric ID for remove media:', metric.id);
+                        toast.error('Cannot remove media: Invalid metric ID');
+                        return;
+                      }
+                      
                       try {
                         const response = await fetch(`/api/metrics/${metric.id}`, {
                           method: 'PATCH',
@@ -1086,6 +1147,14 @@ export default function MetricManager({
                     value={metric.title}
                     onChange={async (e) => {
                       const newTitle = e.target.value;
+                      
+                      // Validate metric ID
+                      if (!metric.id || typeof metric.id !== 'number') {
+                        console.error('Invalid metric ID for title update:', metric.id);
+                        toast.error('Cannot update title: Invalid metric ID');
+                        return;
+                      }
+                      
                       try {
                         const response = await fetch(`/api/metrics/${metric.id}`, {
                           method: 'PATCH',
@@ -1111,6 +1180,14 @@ export default function MetricManager({
                   value={metric.description}
                   onChange={async (e) => {
                     const newDescription = e.target.value;
+                    
+                    // Validate metric ID
+                    if (!metric.id || typeof metric.id !== 'number') {
+                      console.error('Invalid metric ID for description update:', metric.id);
+                      toast.error('Cannot update description: Invalid metric ID');
+                      return;
+                    }
+                    
                     try {
                       const response = await fetch(`/api/metrics/${metric.id}`, {
                         method: 'PATCH',

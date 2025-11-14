@@ -123,6 +123,8 @@ export async function PATCH(
     if (body.is_title_displayed !== undefined) updateData.is_title_displayed = body.is_title_displayed;
     if (body.background_color !== undefined) updateData.background_color = body.background_color || null;
     if (body.is_card_type !== undefined) updateData.is_card_type = body.is_card_type;
+    if (body.is_gradient !== undefined) updateData.is_gradient = body.is_gradient;
+    if (body.gradient !== undefined) updateData.gradient = body.gradient || null;
     if (body.title_translation !== undefined) updateData.title_translation = body.title_translation;
     if (body.description_translation !== undefined) updateData.description_translation = body.description_translation;
 

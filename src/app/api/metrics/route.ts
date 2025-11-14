@@ -99,6 +99,8 @@ export async function POST(request: NextRequest) {
       is_title_displayed: body.is_title_displayed ?? true,
       background_color: body.background_color || null,
       is_card_type: body.is_card_type ?? false,
+      is_gradient: body.is_gradient ?? false,
+      gradient: body.gradient || null,
       organization_id: organizationId,
     };
 

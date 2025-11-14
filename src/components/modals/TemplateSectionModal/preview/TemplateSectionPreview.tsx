@@ -26,6 +26,48 @@ interface TemplateSectionPreviewProps {
   imageLoading?: number | null; // Index of metric with loading image
 }
 
+// Helper function to check if URL is a video
+const isVideoUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  const urlLower = url.toLowerCase();
+  
+  // Check for video file extensions
+  const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.wmv', '.flv', '.mkv'];
+  const hasVideoExtension = videoExtensions.some(ext => urlLower.includes(ext));
+  
+  // Check for YouTube URLs
+  const isYouTube = urlLower.includes('youtube.com') || urlLower.includes('youtu.be');
+  
+  // Check for Vimeo URLs
+  const isVimeo = urlLower.includes('vimeo.com');
+  
+  return hasVideoExtension || isYouTube || isVimeo;
+};
+
+// Helper function to convert YouTube/Vimeo URLs to embed format
+const getEmbedUrl = (url: string): string => {
+  const urlLower = url.toLowerCase();
+  
+  // YouTube conversion
+  if (urlLower.includes('youtube.com/watch')) {
+    const urlObj = new URL(url);
+    const videoId = urlObj.searchParams.get('v');
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }
+  if (urlLower.includes('youtu.be/')) {
+    const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }
+  
+  // Vimeo conversion
+  if (urlLower.includes('vimeo.com/')) {
+    const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+    return videoId ? `https://player.vimeo.com/video/${videoId}` : url;
+  }
+  
+  return url;
+};
+
 // Text style variants - matching TemplateSection.tsx
 const TEXT_VARIANTS = {
   default: {
@@ -359,7 +401,7 @@ export function TemplateSectionPreview({
 
                       return (
                         <div
-                          key={`${currentSlide}-${slideIndex}-${metric.id}`}
+                          key={metric.id ? `${currentSlide}-${slideIndex}-${metric.id}` : `${currentSlide}-${slideIndex}-temp`}
                           className={cn(
                             'space-y-4 flex flex-col min-h-[350px]',
                             isMobile ? 'w-full max-w-[400px]' : 'flex-1 min-w-[250px] max-w-[400px]',
@@ -394,23 +436,50 @@ export function TemplateSectionPreview({
                                     </div>
                                   )}
                                   
-                                  <Image
-                                    src={metric.image}
-                                    alt={metric.title || 'Metric image'}
-                                    className={cn(
-                                      'object-contain max-w-full max-h-full transition-opacity group-hover:opacity-75',
-                                      metric.is_image_rounded_full && 'rounded-full'
-                                    )}
-                                    width={300}
-                                    height={300}
-                                  />
+                                  {isVideoUrl(metric.image) ? (
+                                    metric.image.toLowerCase().includes('youtube.com') || 
+                                    metric.image.toLowerCase().includes('youtu.be') || 
+                                    metric.image.toLowerCase().includes('vimeo.com') ? (
+                                      <iframe
+                                        src={getEmbedUrl(metric.image)}
+                                        className={cn(
+                                          'w-full rounded-none',
+                                          formData.image_metrics_height || 'h-48'
+                                        )}
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                      />
+                                    ) : (
+                                      <video
+                                        src={metric.image}
+                                        controls
+                                        className={cn(
+                                          'w-full object-cover rounded-none',
+                                          formData.image_metrics_height || 'h-48'
+                                        )}
+                                      >
+                                        Your browser does not support the video tag.
+                                      </video>
+                                    )
+                                  ) : (
+                                    <Image
+                                      src={metric.image}
+                                      alt={metric.title || 'Metric image'}
+                                      className={cn(
+                                        'object-contain max-w-full max-h-full transition-opacity group-hover:opacity-75',
+                                        metric.is_image_rounded_full && 'rounded-full'
+                                      )}
+                                      width={300}
+                                      height={300}
+                                    />
+                                  )}
                                   {/* Change image overlay */}
                                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                                     <div className="text-white text-sm font-medium flex items-center gap-2">
                                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                       </svg>
-                                      Change Image
+                                      Change {isVideoUrl(metric.image) ? 'Video' : 'Image'}
                                     </div>
                                   </div>
                                 </div>
@@ -540,7 +609,7 @@ export function TemplateSectionPreview({
 
                   return (
                     <div
-                      key={metric.id}
+                      key={metric.id || `metric-${metricIndex}`}
                       className={cn('space-y-4 flex flex-col', cardStyles)}
                       style={metric.is_card_type && metricBgStyle ? metricBgStyle : undefined}
                     >
@@ -566,23 +635,50 @@ export function TemplateSectionPreview({
                                 </div>
                               )}
                               
-                              <Image
-                                src={metric.image}
-                                alt={metric.title || 'Metric image'}
-                                className={cn(
-                                  'object-contain max-w-full max-h-full transition-opacity group-hover:opacity-75',
-                                  metric.is_image_rounded_full && 'rounded-full'
-                                )}
-                                width={300}
-                                height={300}
-                              />
+                              {isVideoUrl(metric.image) ? (
+                                metric.image.toLowerCase().includes('youtube.com') || 
+                                metric.image.toLowerCase().includes('youtu.be') || 
+                                metric.image.toLowerCase().includes('vimeo.com') ? (
+                                  <iframe
+                                    src={getEmbedUrl(metric.image)}
+                                    className={cn(
+                                      'w-full rounded-none',
+                                      formData.image_metrics_height || 'h-48'
+                                    )}
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                ) : (
+                                  <video
+                                    src={metric.image}
+                                    controls
+                                    className={cn(
+                                      'w-full object-cover rounded-none',
+                                      formData.image_metrics_height || 'h-48'
+                                    )}
+                                  >
+                                    Your browser does not support the video tag.
+                                  </video>
+                                )
+                              ) : (
+                                <Image
+                                  src={metric.image}
+                                  alt={metric.title || 'Metric image'}
+                                  className={cn(
+                                    'object-contain max-w-full max-h-full transition-opacity group-hover:opacity-75',
+                                    metric.is_image_rounded_full && 'rounded-full'
+                                  )}
+                                  width={300}
+                                  height={300}
+                                />
+                              )}
                               {/* Change image overlay */}
                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                                 <div className="text-white text-sm font-medium flex items-center gap-2">
                                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                   </svg>
-                                  Change Image
+                                  Change {isVideoUrl(metric.image) ? 'Video' : 'Image'}
                                 </div>
                               </div>
                             </div>

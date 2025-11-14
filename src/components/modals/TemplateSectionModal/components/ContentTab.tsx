@@ -20,9 +20,6 @@ interface ContentTabProps {
 export default function ContentTab({ formData, mode }: ContentTabProps) {
   const themeColors = useThemeColors();
   const { editingSection, refetchEditingSection, refreshSections } = useTemplateSectionEdit();
-  const [showCreateMetricForm, setShowCreateMetricForm] = React.useState(false);
-  const [showAddMetricModal, setShowAddMetricModal] = React.useState(false);
-  const [editingMetricId, setEditingMetricId] = React.useState<number | null>(null);
 
   // Testimonials Section
   if (formData.section_type === 'testimonials') {
@@ -102,12 +99,6 @@ export default function ContentTab({ formData, mode }: ContentTabProps) {
               await refetchEditingSection();
               refreshSections();
             }}
-            showCreateForm={showCreateMetricForm}
-            setShowCreateForm={setShowCreateMetricForm}
-            showAddModal={showAddMetricModal}
-            setShowAddModal={setShowAddMetricModal}
-            editingMetricId={editingMetricId}
-            setEditingMetricId={setEditingMetricId}
             isImageBottom={formData.is_image_bottom}
             imageMetricsHeight={formData.image_metrics_height}
             textStyleVariant={formData.text_style_variant}

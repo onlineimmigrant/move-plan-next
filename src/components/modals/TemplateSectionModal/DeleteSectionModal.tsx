@@ -63,7 +63,10 @@ export default function DeleteSectionModal({
       size="md"
       draggable={false}
       resizable={false}
-      className="z-[70]"
+      // Ensure this confirmation modal appears above the TemplateSectionEditModal (z-[10001])
+      // and its inline edit popovers (up to z-[10004])
+      zIndex={10010}
+      className="z-[10010]"
     >
       <div className="space-y-4 sm:space-y-6">
         {/* Warning Box */}

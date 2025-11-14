@@ -30,7 +30,7 @@ const AppointmentSection = dynamic(() => import('@/components/TemplateSections/A
 // Text style variants - similar to TemplateHeadingSection
 const TEXT_VARIANTS = {
   default: {
-    sectionTitle: 'text-3xl sm:text-4xl lg:text-5xl font-normal text-gray-800',
+    sectionTitle: 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 md:mb-4 group-hover:text-gray-700 transition-colors',
     sectionDescription: 'text-lg font-light text-gray-700',
     metricTitle: 'text-xl font-semibold text-gray-900',
     metricDescription: 'text-base text-gray-600'
