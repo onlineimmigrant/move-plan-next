@@ -909,6 +909,8 @@ export default function TemplateSectionEditModal() {
             <div 
               className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg border"
               style={{ borderColor: `${primary.base}40` }}
+              role="status"
+              aria-live="polite"
             >
               <div 
                 className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin"
