@@ -406,7 +406,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
     <section
       className={`${
         // Remove padding for new special sections that manage their own layout
-        section.is_brand || section.is_article_slider || section.is_contact_section || section.is_faq_section || section.is_pricingplans_section
+        section.is_brand || section.is_article_slider || section.is_contact_section || section.is_faq_section || section.is_pricingplans_section || section.section_type === 'reviews'
           ? 'px-0 py-0 min-h-0'
           : section.is_slider 
           ? 'px-0 py-8 min-h-[600px]' 

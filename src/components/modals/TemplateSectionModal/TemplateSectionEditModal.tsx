@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 import {
@@ -86,7 +86,10 @@ export default function TemplateSectionEditModal() {
     { value: 'modern', label: 'Modern', preview: { h: 'text-base font-extrabold tracking-tight', p: 'text-xs' } },
     { value: 'playful', label: 'Playful', preview: { h: 'text-base font-extrabold', p: 'text-xs font-medium' } },
   ];
-  const filteredVariants = TEXT_VARIANT_OPTIONS.filter(v => v.label.toLowerCase().includes(variantSearch.toLowerCase()));
+  const filteredVariants = useMemo(() => 
+    TEXT_VARIANT_OPTIONS.filter(v => v.label.toLowerCase().includes(variantSearch.toLowerCase())),
+    [variantSearch]
+  );
 
   // Click outside to close dropdowns (handles all breakpoints)
   useEffect(() => {
@@ -126,9 +129,61 @@ export default function TemplateSectionEditModal() {
     metricIndex?: number;
   }>({ field: null, value: '', position: { x: 0, y: 0 } });
 
-  // Focus trap (disabled while delete confirm is showing to allow nested trap there)
+  // Local state for title/description inputs to prevent typing interruptions
+  const [localTitle, setLocalTitle] = useState('');
+  const [localDescription, setLocalDescription] = useState('');
+  
+  // Track if user is actively typing
+  const isTypingTitleRef = useRef(false);
+  const isTypingDescriptionRef = useRef(false);
+  
+  // Debounced sync from local state to formData
+  const titleSyncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const descriptionSyncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync local title to formData with debounce - only when not actively typing
+  useEffect(() => {
+    if (titleSyncTimeoutRef.current) clearTimeout(titleSyncTimeoutRef.current);
+    
+    titleSyncTimeoutRef.current = setTimeout(() => {
+      isTypingTitleRef.current = false;
+      setFormData(prev => {
+        // Only update if value actually changed
+        if (prev.section_title !== localTitle) {
+          return { ...prev, section_title: localTitle };
+        }
+        return prev;
+      });
+    }, 500); // Increased to 500ms for better stability
+    
+    return () => {
+      if (titleSyncTimeoutRef.current) clearTimeout(titleSyncTimeoutRef.current);
+    };
+  }, [localTitle]);
+
+  // Sync local description to formData with debounce - only when not actively typing
+  useEffect(() => {
+    if (descriptionSyncTimeoutRef.current) clearTimeout(descriptionSyncTimeoutRef.current);
+    
+    descriptionSyncTimeoutRef.current = setTimeout(() => {
+      isTypingDescriptionRef.current = false;
+      setFormData(prev => {
+        // Only update if value actually changed
+        if (prev.section_description !== localDescription) {
+          return { ...prev, section_description: localDescription };
+        }
+        return prev;
+      });
+    }, 500); // Increased to 500ms for better stability
+    
+    return () => {
+      if (descriptionSyncTimeoutRef.current) clearTimeout(descriptionSyncTimeoutRef.current);
+    };
+  }, [localDescription]);
+
+  // Focus trap (disabled while delete confirm or inline edit is showing)
   const focusTrapRef = useFocusTrap({
-    active: isOpen && !showDeleteConfirm,
+    active: isOpen && !showDeleteConfirm && !inlineEdit.field,
     onEscape: () => {
       // Esc should prioritize closing inline edit or mega menu before modal
       if (inlineEdit.field) {
@@ -224,9 +279,15 @@ export default function TemplateSectionEditModal() {
         else if (editingSection.is_pricingplans_section) sectionType = 'pricing_plans';
       }
       
+      // Initialize local title/description state
+      const title = editingSection.section_title || '';
+      const description = editingSection.section_description || '';
+      setLocalTitle(title);
+      setLocalDescription(description);
+      
       setFormData({
-        section_title: editingSection.section_title || '',
-        section_description: editingSection.section_description || '',
+        section_title: title,
+        section_description: description,
         background_color: editingSection.background_color || 'white',
         is_gradient: editingSection.is_gradient || false,
         gradient: editingSection.gradient || null,
@@ -288,17 +349,75 @@ export default function TemplateSectionEditModal() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, formData, handleSave, closeModal, showDeleteConfirm, openMenu, inlineEdit]);
 
-  // Trigger preview refresh animation when formData changes
+  // Trigger preview refresh animation when significant formData changes (excluding title/description)
+  const prevSignificantDataRef = useRef({
+    background_color: formData.background_color,
+    is_gradient: formData.is_gradient,
+    gradient: formData.gradient,
+    text_style_variant: formData.text_style_variant,
+    grid_columns: formData.grid_columns,
+    image_metrics_height: formData.image_metrics_height,
+    is_full_width: formData.is_full_width,
+    is_section_title_aligned_center: formData.is_section_title_aligned_center,
+    is_section_title_aligned_right: formData.is_section_title_aligned_right,
+    is_image_bottom: formData.is_image_bottom,
+    is_slider: formData.is_slider,
+    section_type: formData.section_type,
+    website_metric: formData.website_metric,
+    url_page: formData.url_page,
+  });
+
   useEffect(() => {
     if (isOpen) {
-      setPreviewRefreshing(true);
-      const timer = setTimeout(() => setPreviewRefreshing(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [formData, isOpen]);
+      const prevData = prevSignificantDataRef.current;
+      const currentSignificantData = {
+        background_color: formData.background_color,
+        is_gradient: formData.is_gradient,
+        gradient: formData.gradient,
+        text_style_variant: formData.text_style_variant,
+        grid_columns: formData.grid_columns,
+        image_metrics_height: formData.image_metrics_height,
+        is_full_width: formData.is_full_width,
+        is_section_title_aligned_center: formData.is_section_title_aligned_center,
+        is_section_title_aligned_right: formData.is_section_title_aligned_right,
+        is_image_bottom: formData.is_image_bottom,
+        is_slider: formData.is_slider,
+        section_type: formData.section_type,
+        website_metric: formData.website_metric,
+        url_page: formData.url_page,
+      };
 
-  // Inline editing handlers
-  const handleInlineEditOpen = (
+      // Check if any significant field changed
+      const significantChange = Object.keys(currentSignificantData).some(key => {
+        return prevData[key as keyof typeof prevData] !== currentSignificantData[key as keyof typeof currentSignificantData];
+      });
+
+      if (significantChange) {
+        setPreviewRefreshing(true);
+        const timer = setTimeout(() => setPreviewRefreshing(false), 300);
+        return () => clearTimeout(timer);
+      }
+
+      prevSignificantDataRef.current = currentSignificantData;
+    }
+  }, [
+    formData.background_color,
+    formData.is_gradient,
+    formData.gradient,
+    formData.text_style_variant,
+    formData.grid_columns,
+    formData.image_metrics_height,
+    formData.is_full_width,
+    formData.is_section_title_aligned_center,
+    formData.is_section_title_aligned_right,
+    formData.is_image_bottom,
+    formData.is_slider,
+    formData.section_type,
+    formData.website_metric,
+    formData.url_page,
+    isOpen
+  ]);  // Inline editing handlers - wrapped in useCallback for performance
+  const handleInlineEditOpen = useCallback((
     field: 'section_title' | 'section_description' | 'metric_title' | 'metric_description',
     event: React.MouseEvent,
     metricIndex?: number
@@ -322,18 +441,20 @@ export default function TemplateSectionEditModal() {
       position: { x: rect.left, y: rect.bottom + 10 },
       metricIndex
     });
-  };
+  }, [formData.section_title, formData.section_description, formData.website_metric]);
 
-  const handleInlineEditSave = () => {
+  const handleInlineEditSave = useCallback(() => {
     if (!inlineEdit.field || !inlineEdit.value.trim()) {
       setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
       return;
     }
 
     if (inlineEdit.field === 'section_title') {
-      setFormData({ ...formData, section_title: inlineEdit.value });
+      setFormData(prev => ({ ...prev, section_title: inlineEdit.value }));
+      setLocalTitle(inlineEdit.value); // Also update local state to keep in sync
     } else if (inlineEdit.field === 'section_description') {
-      setFormData({ ...formData, section_description: inlineEdit.value });
+      setFormData(prev => ({ ...prev, section_description: inlineEdit.value }));
+      setLocalDescription(inlineEdit.value); // Also update local state to keep in sync
     } else if (
       (inlineEdit.field === 'metric_title' || inlineEdit.field === 'metric_description') &&
       inlineEdit.metricIndex !== undefined &&
@@ -351,23 +472,23 @@ export default function TemplateSectionEditModal() {
           description: inlineEdit.value
         };
       }
-      setFormData({ ...formData, website_metric: updatedMetrics });
+      setFormData(prev => ({ ...prev, website_metric: updatedMetrics }));
     }
     
     setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
-  };
+  }, [inlineEdit, formData.website_metric]);
 
-  const handleInlineEditCancel = () => {
+  const handleInlineEditCancel = useCallback(() => {
     setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
-  };
+  }, []);
 
-  // Image gallery handlers
-  const handleOpenImageGallery = (metricIndex: number) => {
+  // Image gallery handlers - wrapped in useCallback for performance
+  const handleOpenImageGallery = useCallback((metricIndex: number) => {
     setImageSelectionTarget({ type: 'metric', metricIndex });
     setIsImageGalleryOpen(true);
-  };
+  }, []);
 
-  const handleImageSelect = (imageUrl: string) => {
+  const handleImageSelect = useCallback((imageUrl: string) => {
     if (imageSelectionTarget?.type === 'metric' && formData.website_metric) {
       setImageLoading(imageSelectionTarget.metricIndex); // Show loading state
       
@@ -378,15 +499,15 @@ export default function TemplateSectionEditModal() {
           ...updatedMetrics[imageSelectionTarget.metricIndex],
           image: imageUrl
         };
-        setFormData({ ...formData, website_metric: updatedMetrics });
+        setFormData(prev => ({ ...prev, website_metric: updatedMetrics }));
         setImageLoading(null); // Clear loading state
       }, 300);
     }
     setIsImageGalleryOpen(false);
     setImageSelectionTarget(null);
-  };
+  }, [imageSelectionTarget, formData.website_metric]);
 
-  const handleRemoveImage = (metricIndex: number) => {
+  const handleRemoveImage = useCallback((metricIndex: number) => {
     if (formData.website_metric) {
       setImageLoading(metricIndex); // Show loading state
       
@@ -397,11 +518,11 @@ export default function TemplateSectionEditModal() {
           ...updatedMetrics[metricIndex],
           image: null
         };
-        setFormData({ ...formData, website_metric: updatedMetrics });
+        setFormData(prev => ({ ...prev, website_metric: updatedMetrics }));
         setImageLoading(null); // Clear loading state
       }, 200);
     }
-  };
+  }, [formData.website_metric]);
 
   const onSave = useCallback(async () => {
     await handleSave(formData);
@@ -434,7 +555,6 @@ export default function TemplateSectionEditModal() {
       id: 'content' as const,
       label: 'Content',
       sections: [
-        { id: 'title-desc', label: 'Title & Description', component: 'title-description' },
         { id: 'metrics', label: 'Metrics / Items', component: 'content' },
       ]
     },
@@ -622,34 +742,6 @@ export default function TemplateSectionEditModal() {
                             {section.component === 'style' && (
                               <StyleTab formData={formData} setFormData={setFormData} />
                             )}
-                            {section.component === 'title-description' && (
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Section Title
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={formData.section_title}
-                                    onChange={(e) => setFormData({ ...formData, section_title: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-colors"
-                                    placeholder="Enter section title..."
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Section Description
-                                  </label>
-                                  <textarea
-                                    value={formData.section_description}
-                                    onChange={(e) => setFormData({ ...formData, section_description: e.target.value })}
-                                    rows={4}
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-0 transition-colors resize-none"
-                                    placeholder="Enter section description..."
-                                  />
-                                </div>
-                              </div>
-                            )}
                             {section.component === 'content' && (
                               <ContentTab formData={formData} mode={mode} />
                             )}
@@ -803,10 +895,35 @@ export default function TemplateSectionEditModal() {
                 </div>
               </div>
 
-              {/* Second Row - Inactive for non-general sections */}
-              <div className={cn("space-y-3", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
-                {/* Metrics with Options */}
+              {/* Second Row - Title/Description always accessible, Metrics inactive for non-general sections */}
+              <div className="space-y-3">
+                {/* Title and Description - Always accessible */}
                 <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Title & Description</h3>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={localTitle}
+                        onChange={(e) => { isTypingTitleRef.current = true; setLocalTitle(e.target.value); }}
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Section title"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={localDescription}
+                        onChange={(e) => { isTypingDescriptionRef.current = true; setLocalDescription(e.target.value); }}
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Section description"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Metrics with Options - Inactive for non-general sections */}
+                <div className={cn("", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
                   <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
                   <div className="flex gap-1.5 flex-wrap">
                     <button
@@ -1021,10 +1138,35 @@ export default function TemplateSectionEditModal() {
                 </div>
               </div>
 
-              {/* Second Row - Inactive for non-general sections */}
-              <div className={cn("space-y-3", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
-                {/* Metrics with Options */}
+              {/* Second Row - Title/Description always accessible, Metrics inactive for non-general sections */}
+              <div className="space-y-3">
+                {/* Title and Description - Always accessible */}
                 <div>
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Title & Description</h3>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={localTitle}
+                        onChange={(e) => { isTypingTitleRef.current = true; setLocalTitle(e.target.value); }}
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Section title"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={localDescription}
+                        onChange={(e) => { isTypingDescriptionRef.current = true; setLocalDescription(e.target.value); }}
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Section description"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Metrics with Options - Inactive for non-general sections */}
+                <div className={cn("", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
                   <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
                   <div className="flex gap-1.5 flex-wrap">
                     <button
@@ -1191,9 +1333,34 @@ export default function TemplateSectionEditModal() {
               </div>
 
               {/* Second Row - Inactive for non-general sections */}
-              <div className={cn("grid grid-cols-12 gap-3 items-end", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
-                {/* Metrics with Options */}
-                <div className="lg:col-span-12">
+              <div className="grid grid-cols-12 gap-3 items-end">
+                {/* Title and Description - Always accessible */}
+                <div className="lg:col-span-6">
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Title & Description</h3>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={localTitle}
+                        onChange={(e) => { isTypingTitleRef.current = true; setLocalTitle(e.target.value); }}
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Section title"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={localDescription}
+                        onChange={(e) => { isTypingDescriptionRef.current = true; setLocalDescription(e.target.value); }}
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Section description"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Metrics with Options - Inactive for non-general sections */}
+                <div className={cn("lg:col-span-6", formData.section_type !== 'general' && formData.section_type && 'opacity-50 pointer-events-none')}>
                   <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics</h3>
                   <div className="flex gap-1.5 flex-wrap">
                     <button onClick={() => setShowCreateMetricForm(true)} className="px-2.5 py-1.5 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-sm inline-flex items-center gap-1.5" style={{ backgroundColor: 'white', borderColor: '#bfdbfe', color: '#2563eb' }} title="Create new metric" aria-label="Create new metric">

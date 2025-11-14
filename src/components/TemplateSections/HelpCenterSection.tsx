@@ -43,6 +43,8 @@ interface HelpCenterSectionData {
 
 interface HelpCenterSectionProps {
   section: HelpCenterSectionData;
+  onDoubleClickTitle?: (e: React.MouseEvent) => void;
+  onDoubleClickDescription?: (e: React.MouseEvent) => void;
 }
 
 type TabType = 'welcome' | 'conversation' | 'ai';
@@ -64,7 +66,11 @@ type TabType = 'welcome' | 'conversation' | 'ai';
  * 
  * @param section - Section configuration including title, description, styling
  */
-const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
+const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ 
+  section,
+  onDoubleClickTitle,
+  onDoubleClickDescription 
+}) => {
   // Early return to avoid null/undefined issues
   if (!section || !section.is_help_center_section) {
     return null;
@@ -220,11 +226,19 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({ section }) => {
       <div className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto relative z-10`}>
         {/* Section Header */}
         <div className={`${getAlignmentClass()} mb-3 sm:mb-6 md:mb-8`}>
-          <h2 className={`${getTitleClass()} mb-2 sm:mb-3 antialiased`}>
+          <h2 
+            className={`${getTitleClass()} mb-2 sm:mb-3 antialiased ${onDoubleClickTitle ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            onDoubleClick={onDoubleClickTitle}
+            title={onDoubleClickTitle ? 'Double-click to edit title' : undefined}
+          >
             {section.section_title || 'Help Center'}
           </h2>
           {section.section_description && (
-            <p className={`${getDescriptionClass()} antialiased max-w-2xl ${section.is_section_title_aligned_center ? 'mx-auto' : ''} ${section.is_section_title_aligned_right ? 'ml-auto' : ''} leading-relaxed px-4 sm:px-0`}>
+            <p 
+              className={`${getDescriptionClass()} antialiased max-w-2xl ${section.is_section_title_aligned_center ? 'mx-auto' : ''} ${section.is_section_title_aligned_right ? 'ml-auto' : ''} leading-relaxed px-4 sm:px-0 ${onDoubleClickDescription ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+              onDoubleClick={onDoubleClickDescription}
+              title={onDoubleClickDescription ? 'Double-click to edit description' : undefined}
+            >
               {section.section_description}
             </p>
           )}

@@ -306,6 +306,8 @@ export function TemplateSectionPreview({
               is_help_center_section: true,
               organization_id: null,
             }}
+            onDoubleClickTitle={onDoubleClickTitle}
+            onDoubleClickDescription={onDoubleClickDescription}
           />
         );
       case 'article_slider':
@@ -452,7 +454,11 @@ export function TemplateSectionPreview({
     <section
       className={cn(
         'relative',
-        formData.is_slider ? 'px-0 py-8 min-h-[600px]' : 'px-4 py-8 min-h-[600px]'
+        formData.section_type === 'reviews' 
+          ? 'px-0 py-0 min-h-0' 
+          : formData.is_slider 
+          ? 'px-0 py-8 min-h-[600px]' 
+          : 'px-4 py-8 min-h-[600px]'
       )}
       style={backgroundStyle}
     >

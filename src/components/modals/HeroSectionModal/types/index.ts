@@ -63,6 +63,10 @@ export interface ButtonStyle {
   };
 }
 
+export interface TranslationFields {
+  [languageCode: string]: string;
+}
+
 export interface HeroFormData {
   title: string;
   description: string;
@@ -74,9 +78,9 @@ export interface HeroFormData {
   image_style: ImageStyle;
   background_style: BackgroundStyle;
   button_style: ButtonStyle;
-  title_translation?: string;
-  description_translation?: string;
-  button_translation?: string;
+  title_translation?: TranslationFields;
+  description_translation?: TranslationFields;
+  button_translation?: TranslationFields;
 }
 
 export interface HeroFormProps {

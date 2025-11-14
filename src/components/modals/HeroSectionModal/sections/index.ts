@@ -8,3 +8,4 @@ export { ButtonStyleSection } from './ButtonStyleSection';
 export { ImageStyleSection } from './ImageStyleSection';
 export { BackgroundStyleSection } from './BackgroundStyleSection';
 export { AnimationSection } from './AnimationSection';
+export { TranslationsSection } from './TranslationsSection';

@@ -36,6 +36,7 @@ import {
   ImageStyleSection,
   BackgroundStyleSection,
   AnimationSection,
+  TranslationsSection,
 } from './sections';
 
 // Import preview component
@@ -269,6 +270,12 @@ export default function HeroSectionEditModal() {
     primaryColor: primary.base,
   };
 
+  const translationsSectionProps = {
+    formData,
+    setFormData,
+    primaryColor: primary.base,
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -306,6 +313,13 @@ export default function HeroSectionEditModal() {
                   { id: 'background', label: 'Background', component: 'background' },
                   { id: 'image', label: 'Image', component: 'image' },
                   { id: 'animation', label: 'Animation', component: 'animation' }
+                ]
+              },
+              { 
+                id: 'translations', 
+                label: 'Translations', 
+                sections: [
+                  { id: 'translations', label: 'Translations', component: 'translations' }
                 ]
               },
             ].map((menu) => (
@@ -352,8 +366,8 @@ export default function HeroSectionEditModal() {
             />
             
             {/* Mega Menu Panel - Starts exactly at panel bottom border */}
-            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
-              <div className="max-w-7xl mx-auto px-6 py-6 h-full">
+            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '138px' }}>
+              <div className={`max-w-7xl mx-auto py-6 h-full ${openMenu === 'translations' ? 'px-2' : 'px-6'}`}>
                 {[
                   { 
                     id: 'content', 
@@ -373,11 +387,18 @@ export default function HeroSectionEditModal() {
                       { id: 'animation', label: 'Animation', component: 'animation' }
                     ]
                   },
+                  { 
+                    id: 'translations', 
+                    label: 'Translations', 
+                    sections: [
+                      { id: 'translations', label: 'Manage Translations', component: 'translations' }
+                    ]
+                  },
                 ].filter(menu => menu.id === openMenu).map((menu) => (
                   <div key={menu.id}>
                     {/* Close hint */}
-                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{menu.label} Settings</h2>
+                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700 px-6">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Settings</h2>
                       <button
                         onClick={() => setOpenMenu(null)}
                         className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex items-center gap-1 transition-colors"
@@ -396,23 +417,30 @@ export default function HeroSectionEditModal() {
                       </button>
                     </div>
                     
-                    <div className={`grid gap-6 ${menu.sections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
-                      {menu.sections.map((section) => (
-                        <div key={section.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-                            {section.label}
-                          </h3>
-                          <div className="space-y-3">
-                            {section.component === 'title' && <TitleStyleSection {...titleSectionProps} />}
-                            {section.component === 'description' && <DescriptionStyleSection {...descriptionSectionProps} />}
-                            {section.component === 'button' && <ButtonStyleSection {...buttonSectionProps} />}
-                            {section.component === 'image' && <ImageStyleSection {...imageSectionProps} />}
-                            {section.component === 'background' && <BackgroundStyleSection {...backgroundSectionProps} />}
-                            {section.component === 'animation' && <AnimationSection {...animationSectionProps} />}
+                    {/* Special handling for Translations - full width, no grid */}
+                    {menu.id === 'translations' ? (
+                      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg px-2 py-6">
+                        <TranslationsSection {...translationsSectionProps} />
+                      </div>
+                    ) : (
+                      <div className={`grid gap-6 ${menu.sections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
+                        {menu.sections.map((section) => (
+                          <div key={section.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                              {section.label}
+                            </h3>
+                            <div className="space-y-3">
+                              {section.component === 'title' && <TitleStyleSection {...titleSectionProps} />}
+                              {section.component === 'description' && <DescriptionStyleSection {...descriptionSectionProps} />}
+                              {section.component === 'button' && <ButtonStyleSection {...buttonSectionProps} />}
+                              {section.component === 'image' && <ImageStyleSection {...imageSectionProps} />}
+                              {section.component === 'background' && <BackgroundStyleSection {...backgroundSectionProps} />}
+                              {section.component === 'animation' && <AnimationSection {...animationSectionProps} />}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
