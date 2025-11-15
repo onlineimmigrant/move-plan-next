@@ -9,3 +9,4 @@ export { useImageGallery } from './useImageGallery';
 export { useHeroSave } from './useHeroSave';
 export { useHeroDelete } from './useHeroDelete';
 export { useOrganizationSettings } from './useOrganizationSettings';
+export { useAITranslation } from './useAITranslation';

@@ -11,7 +11,7 @@ import React, { useState } from 'react';
 import { GlobeAltIcon } from '@heroicons/react/24/outline';
 import { HeroFormData } from '../types';
 import { useHeroSectionEdit } from '../context';
-import { useOrganizationSettings } from '../hooks';
+import { useOrganizationSettings, useAITranslation } from '../hooks';
 import { getLanguageName } from '../utils/languages';
 
 interface TranslationsSectionProps {
@@ -23,6 +23,7 @@ interface TranslationsSectionProps {
 export function TranslationsSection({ formData, setFormData, primaryColor }: TranslationsSectionProps) {
   const { organizationId } = useHeroSectionEdit();
   const { settings, loading } = useOrganizationSettings(organizationId);
+  const { translateAll, isTranslating, progress, error: translationError } = useAITranslation();
 
   const originalLanguage = settings.language || 'en';
   const supportedLocales = settings.supported_locales || [];
@@ -166,6 +167,55 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
       closeJsonbModal();
     } catch (error) {
       alert('Invalid JSON format. Please check your syntax.');
+    }
+  };
+
+  // AI Translate All
+  const handleAITranslateAll = async () => {
+    if (!formData.title && !formData.description && !formData.button) {
+      alert('Please fill in at least one field (title, description, or button) before translating.');
+      return;
+    }
+
+    if (supportedLocales.length === 0) {
+      alert('No supported languages configured in organization settings.');
+      return;
+    }
+
+    const fields = [
+      { name: 'title', content: formData.title || '' },
+      { name: 'description', content: formData.description || '' },
+      { name: 'button', content: formData.button || '' },
+    ].filter(f => f.content.trim());
+
+    console.log('[TranslationsSection] Starting AI translation for', fields.length, 'fields');
+
+    const result = await translateAll({
+      tableName: 'website_hero',
+      fields,
+      sourceLanguage: originalLanguage,
+      targetLanguages: supportedLocales,
+    });
+
+    if (result.success && result.translations) {
+      console.log('[TranslationsSection] Translation successful:', result.translations);
+
+      setFormData({
+        ...formData,
+        title_translation: result.translations.title || formData.title_translation || {},
+        description_translation: result.translations.description || formData.description_translation || {},
+        button_translation: result.translations.button || formData.button_translation || {},
+      });
+
+      if (result.errors && result.errors.length > 0) {
+        console.warn('[TranslationsSection] Partial errors:', result.errors);
+        alert(`Translation completed with some errors:\n${result.errors.join('\n')}`);
+      } else {
+        alert('All translations completed successfully!');
+      }
+    } else {
+      console.error('[TranslationsSection] Translation failed:', result.errors);
+      alert(`Translation failed:\n${result.errors?.join('\n') || 'Unknown error'}`);
     }
   };
 
@@ -405,15 +455,33 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
         </button>
         
         <button
-          disabled
-          className="text-xs text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 w-full sm:w-auto justify-center"
-          title="AI Translation (Coming Soon)"
+          onClick={handleAITranslateAll}
+          disabled={isTranslating}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:opacity-80 active:scale-95 w-full sm:w-auto justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            borderColor: isTranslating ? '#94a3b8' : `${primaryColor}40`,
+            color: isTranslating ? '#64748b' : primaryColor,
+            backgroundColor: isTranslating ? '#f1f5f9' : `${primaryColor}10`,
+          }}
+          title={isTranslating ? "Translating..." : "Translate all fields using AI"}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <span className="hidden sm:inline">AI Translate All (Coming Soon)</span>
-          <span className="sm:hidden">AI Translate (Soon)</span>
+          {isTranslating ? (
+            <>
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent"></div>
+              <span className="hidden sm:inline">
+                {progress ? `Translating ${progress.current}... (${progress.completed}/${progress.total})` : 'Translating...'}
+              </span>
+              <span className="sm:hidden">Translating...</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span className="hidden sm:inline">AI Translate All</span>
+              <span className="sm:hidden">AI Translate</span>
+            </>
+          )}
         </button>
       </div>
 
