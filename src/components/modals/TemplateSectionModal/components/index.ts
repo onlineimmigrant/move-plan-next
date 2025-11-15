@@ -7,3 +7,4 @@ export { default as LayoutTab } from './LayoutTab';
 export { default as LayoutOptionsTab } from './LayoutOptionsTab';
 export { default as StyleTab } from './StyleTab';
 export { default as ContentTab } from './ContentTab';
+export { TranslationsSection } from './TranslationsSection';

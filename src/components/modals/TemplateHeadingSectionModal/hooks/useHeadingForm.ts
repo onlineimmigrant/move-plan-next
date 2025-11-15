@@ -71,7 +71,11 @@ export function useHeadingForm(editingSection: any) {
         },
         image_style: editingSection.image_style || { position: 'default' },
         background_style: editingSection.background_style || {},
-        button_style: editingSection.button_style || {}
+        button_style: editingSection.button_style || {},
+        // Translation fields
+        name_translation: editingSection.name_translation || {},
+        description_text_translation: editingSection.description_text_translation || {},
+        button_text_translation: editingSection.button_text_translation || {},
       });
     }
   }, [editingSection]);

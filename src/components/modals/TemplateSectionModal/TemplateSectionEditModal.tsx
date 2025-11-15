@@ -15,12 +15,13 @@ import {
   ChevronDownIcon,
   MagnifyingGlassIcon,
   Squares2X2Icon,
+  GlobeAltIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTemplateSectionEdit } from './context';
 import useFocusTrap from '@/hooks/useFocusTrap';
-import { SettingsTab, LayoutTab, LayoutOptionsTab, StyleTab, ContentTab } from './components';
+import { SettingsTab, LayoutTab, LayoutOptionsTab, StyleTab, ContentTab, TranslationsSection } from './components';
 import { useSectionOperations, TemplateSectionFormData, useSectionTypeFilter } from './hooks';
 import DeleteSectionModal from './DeleteSectionModal';
 import Button from '@/ui/Button';
@@ -31,7 +32,7 @@ import EditableGradientPicker from '@/components/Shared/EditableFields/EditableG
 import SimpleGradientPicker from '@/components/Shared/EditableFields/SimpleGradientPicker';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 
-type MegaMenuId = 'style' | 'layout' | 'content' | null;
+type MegaMenuId = 'style' | 'layout' | 'content' | 'translations' | null;
 
 export default function TemplateSectionEditModal() {
   const { isOpen, editingSection, mode, closeModal, refetchEditingSection, refreshSections } = useTemplateSectionEdit();
@@ -51,6 +52,7 @@ export default function TemplateSectionEditModal() {
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [previewRefreshing, setPreviewRefreshing] = useState(false);
   const [imageLoading, setImageLoading] = useState<number | null>(null); // Track which metric image is loading
+  const [hasUnsavedTranslations, setHasUnsavedTranslations] = useState(false);
   // Metric manager state (for inline layout panel quick actions)
   const [showCreateMetricForm, setShowCreateMetricForm] = useState(false);
   const [showAddMetricModal, setShowAddMetricModal] = useState(false);
@@ -285,6 +287,8 @@ export default function TemplateSectionEditModal() {
       setFormData({
         section_title: title,
         section_description: description,
+        section_title_translation: editingSection.section_title_translation || {},
+        section_description_translation: editingSection.section_description_translation || {},
         background_color: editingSection.background_color || 'white',
         is_gradient: editingSection.is_gradient || false,
         gradient: editingSection.gradient || null,
@@ -522,6 +526,11 @@ export default function TemplateSectionEditModal() {
     await handleDelete(editingSection?.id);
   }, [editingSection, handleDelete]);
 
+  const onSaveTranslations = useCallback(async () => {
+    await handleSave(formData);
+    setHasUnsavedTranslations(false);
+  }, [formData, handleSave]);
+
   if (!isOpen) return null;
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -547,6 +556,11 @@ export default function TemplateSectionEditModal() {
       sections: [
         { id: 'metrics', label: 'Metrics / Items', component: 'content' },
       ]
+    },
+    {
+      id: 'translations' as const,
+      label: 'Translations',
+      sections: []
     },
   ];
 
@@ -677,8 +691,8 @@ export default function TemplateSectionEditModal() {
           </div>
         </div>
 
-        {/* Mega Menu Dropdown (for Style & Content only) */}
-        {openMenu && openMenu !== 'layout' && (
+        {/* Mega Menu Dropdown (for Style, Content, and Translations) */}
+        {openMenu && openMenu !== 'layout' && openMenu !== 'translations' && (
           <>
             {/* Backdrop */}
             <div 
@@ -1406,6 +1420,44 @@ export default function TemplateSectionEditModal() {
               />
             </div>
           </div>
+        )}
+
+        {/* Translations Mega Menu Dropdown */}
+        {openMenu === 'translations' && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setOpenMenu(null)}
+              aria-label="Close menu"
+            />
+            
+            {/* Translations Panel */}
+            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
+              <div className="max-w-7xl mx-auto px-6 py-6 h-full pb-24">
+                <TranslationsSection
+                  formData={formData}
+                  setFormData={setFormData}
+                  metrics={formData.website_metric || []}
+                  setMetrics={(updatedMetrics: any) => {
+                    if (typeof updatedMetrics === 'function') {
+                      setFormData(prevFormData => ({
+                        ...prevFormData,
+                        website_metric: updatedMetrics(prevFormData.website_metric || [])
+                      }));
+                    } else {
+                      setFormData(prevFormData => ({ ...prevFormData, website_metric: updatedMetrics }));
+                    }
+                  }}
+                  primaryColor={primary.base}
+                  onSave={onSaveTranslations}
+                  isSaving={isSaving}
+                  hasUnsavedChanges={hasUnsavedTranslations}
+                  setHasUnsavedChanges={setHasUnsavedTranslations}
+                />
+              </div>
+            </div>
+          </>
         )}
 
         {/* Main Content Area - Live Preview */}

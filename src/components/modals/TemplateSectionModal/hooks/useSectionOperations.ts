@@ -7,7 +7,9 @@ import { useTemplateSectionEdit } from '../context';
 
 export interface TemplateSectionFormData {
   section_title: string;
+  section_title_translation?: Record<string, string>;
   section_description: string;
+  section_description_translation?: Record<string, string>;
   background_color: string;
   is_gradient: boolean;
   gradient: { from: string; via?: string; to: string } | null;

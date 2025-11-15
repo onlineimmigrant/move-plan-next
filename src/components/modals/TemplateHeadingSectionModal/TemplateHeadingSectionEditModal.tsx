@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PaintBrushIcon } from '@heroicons/react/24/outline';
+import { PaintBrushIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { StandardModalContainer } from '../_shared/containers/StandardModalContainer';
 import { StandardModalHeader } from '../_shared/layout/StandardModalHeader';
 import { StandardModalBody } from '../_shared/layout/StandardModalBody';
@@ -35,6 +35,7 @@ import {
   ButtonSection,
   ImageSection,
   BackgroundSection,
+  TranslationsSection,
 } from './sections';
 
 // Import preview component
@@ -268,6 +269,11 @@ export default function TemplateHeadingSectionEditModal() {
                   { id: 'background', label: 'Background', component: 'background' }
                 ]
               },
+              { 
+                id: 'translations', 
+                label: 'Translations',
+                icon: GlobeAltIcon
+              },
             ].map((menu) => (
               <div key={menu.id} className="relative">
                 <button
@@ -310,63 +316,73 @@ export default function TemplateHeadingSectionEditModal() {
             />
             
             <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
-              <div className="max-w-7xl mx-auto px-6 py-6 h-full">
-                {[
-                  { 
-                    id: 'content', 
-                    label: 'Content', 
-                    sections: [
-                      { id: 'title', label: 'Title', component: 'title' },
-                      { id: 'description', label: 'Description', component: 'description' },
-                      { id: 'button', label: 'Button', component: 'button' }
-                    ]
-                  },
-                  { 
-                    id: 'background', 
-                    label: 'Background', 
-                    sections: [
-                      { id: 'image', label: 'Image', component: 'image' },
-                      { id: 'background', label: 'Background', component: 'background' }
-                    ]
-                  },
-                ].filter(menu => menu.id === openMenu).map((menu) => (
-                  <div key={menu.id}>
-                    <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{menu.label} Settings</h2>
-                      <button
-                        onClick={() => setOpenMenu(null)}
-                        className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                        style={{ color: hoveredButton === 'close-menu' ? primary.hover : undefined }}
-                        onMouseEnter={() => setHoveredButton('close-menu')}
-                        onMouseLeave={() => setHoveredButton(null)}
-                      >
-                        <kbd className="px-2 py-0.5 text-xs border rounded" style={{
-                          backgroundColor: hoveredButton === 'close-menu' ? `${primary.base}10` : undefined,
-                          borderColor: hoveredButton === 'close-menu' ? `${primary.base}40` : undefined,
-                          color: hoveredButton === 'close-menu' ? primary.base : undefined
-                        }}>Esc</kbd>
-                        <span>to close</span>
-                      </button>
-                    </div>
-                    
-                    <div className={`grid gap-6 ${menu.sections.length === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
-                      {menu.sections.map((section) => (
-                        <div key={section.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-                            {section.label}
-                          </h3>
-                          <div className="space-y-3">
-                            {section.component === 'title' && <TitleSection {...titleSectionProps} />}
-                            {section.component === 'description' && <DescriptionSection {...descriptionSectionProps} />}
-                            {section.component === 'button' && <ButtonSection {...buttonSectionProps} />}
-                            {section.component === 'image' && <ImageSection {...imageSectionProps} />}
-                            {section.component === 'background' && <BackgroundSection {...backgroundSectionProps} />}
-                          </div>
+              <div className={`max-w-7xl mx-auto py-6 h-full ${openMenu === 'translations' ? 'px-4 md:px-6' : 'px-6'}`}>
+                {openMenu === 'translations' ? (
+                  <TranslationsSection 
+                    formData={formData}
+                    setFormData={setFormData}
+                    primaryColor={primary.base}
+                  />
+                ) : (
+                  <>
+                    {[
+                      { 
+                        id: 'content', 
+                        label: 'Content', 
+                        sections: [
+                          { id: 'title', label: 'Title', component: 'title' },
+                          { id: 'description', label: 'Description', component: 'description' },
+                          { id: 'button', label: 'Button', component: 'button' }
+                        ]
+                      },
+                      { 
+                        id: 'background', 
+                        label: 'Background', 
+                        sections: [
+                          { id: 'image', label: 'Image', component: 'image' },
+                          { id: 'background', label: 'Background', component: 'background' }
+                        ]
+                      },
+                    ].filter(menu => menu.id === openMenu).map((menu) => (
+                      <div key={menu.id}>
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{menu.label} Settings</h2>
+                          <button
+                            onClick={() => setOpenMenu(null)}
+                            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                            style={{ color: hoveredButton === 'close-menu' ? primary.hover : undefined }}
+                            onMouseEnter={() => setHoveredButton('close-menu')}
+                            onMouseLeave={() => setHoveredButton(null)}
+                          >
+                            <kbd className="px-2 py-0.5 text-xs border rounded" style={{
+                              backgroundColor: hoveredButton === 'close-menu' ? `${primary.base}10` : undefined,
+                              borderColor: hoveredButton === 'close-menu' ? `${primary.base}40` : undefined,
+                              color: hoveredButton === 'close-menu' ? primary.base : undefined
+                            }}>Esc</kbd>
+                            <span>to close</span>
+                          </button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                        
+                        <div className={`grid gap-6 ${menu.sections.length === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+                          {menu.sections.map((section) => (
+                            <div key={section.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                                {section.label}
+                              </h3>
+                              <div className="space-y-3">
+                                {section.component === 'title' && <TitleSection {...titleSectionProps} />}
+                                {section.component === 'description' && <DescriptionSection {...descriptionSectionProps} />}
+                                {section.component === 'button' && <ButtonSection {...buttonSectionProps} />}
+                                {section.component === 'image' && <ImageSection {...imageSectionProps} />}
+                                {section.component === 'background' && <BackgroundSection {...backgroundSectionProps} />}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </>

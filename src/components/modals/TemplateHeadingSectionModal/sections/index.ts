@@ -9,3 +9,4 @@ export { DescriptionSection } from './DescriptionSection';
 export { ButtonSection } from './ButtonSection';
 export { ImageSection } from './ImageSection';
 export { BackgroundSection } from './BackgroundSection';
+export { TranslationsSection } from './TranslationsSection';

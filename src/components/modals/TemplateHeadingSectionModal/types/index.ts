@@ -85,6 +85,11 @@ export interface HeadingFormData {
   image_style?: ImageStyle;
   background_style?: BackgroundStyle;
   button_style?: ButtonStyle;
+  
+  // Translation fields
+  name_translation?: Record<string, string>;
+  description_text_translation?: Record<string, string>;
+  button_text_translation?: Record<string, string>;
 }
 
 export interface HeadingFormProps {
