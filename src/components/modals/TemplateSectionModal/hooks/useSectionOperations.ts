@@ -20,15 +20,8 @@ export interface TemplateSectionFormData {
   is_image_bottom: boolean;
   is_slider: boolean;
   section_type: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
-  // Deprecated - keep for backward compat
+  // Deprecated - keep for backward compat (only is_reviews_section remains as it may still be in DB)
   is_reviews_section: boolean;
-  is_help_center_section: boolean;
-  is_real_estate_modal: boolean;
-  is_brand: boolean;
-  is_article_slider: boolean;
-  is_contact_section: boolean;
-  is_faq_section: boolean;
-  is_pricingplans_section: boolean;
   url_page?: string;
   website_metric?: any[];
 }

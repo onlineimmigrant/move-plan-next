@@ -37,7 +37,7 @@ interface HelpCenterSectionData {
   is_full_width: boolean;
   is_section_title_aligned_center: boolean;
   is_section_title_aligned_right: boolean;
-  is_help_center_section?: boolean;
+  section_type?: string;
   organization_id: string | null;
 }
 
@@ -72,7 +72,7 @@ const HelpCenterSection: React.FC<HelpCenterSectionProps> = ({
   onDoubleClickDescription 
 }) => {
   // Early return to avoid null/undefined issues
-  if (!section || !section.is_help_center_section) {
+  if (!section || section.section_type !== 'help_center') {
     return null;
   }
 

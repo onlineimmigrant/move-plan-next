@@ -40,13 +40,6 @@ interface TemplateSectionData {
   is_slider?: boolean;
   section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
   is_reviews_section: boolean;
-  is_help_center_section?: boolean;
-  is_real_estate_modal?: boolean;
-  is_brand?: boolean;
-  is_article_slider?: boolean;
-  is_contact_section?: boolean;
-  is_faq_section?: boolean;
-  is_pricingplans_section?: boolean;
   website_metric?: Metric[];
   organization_id: string | null;
   url_page?: string;
@@ -107,13 +100,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_image_bottom: false,
         is_slider: false,
         is_reviews_section: false,
-        is_help_center_section: false,
-        is_real_estate_modal: false,
-        is_brand: false,
-        is_article_slider: false,
-        is_contact_section: false,
-        is_faq_section: false,
-        is_pricingplans_section: false,
+        section_type: 'general' as const,
         website_metric: [],
         organization_id: null,
         url_page: urlPage || '',
@@ -158,13 +145,6 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_slider: data.is_slider,
         section_type: data.section_type || 'general',
         is_reviews_section: data.is_reviews_section,
-        is_help_center_section: data.is_help_center_section,
-        is_real_estate_modal: data.is_real_estate_modal,
-        is_brand: data.is_brand,
-        is_article_slider: data.is_article_slider,
-        is_contact_section: data.is_contact_section,
-        is_faq_section: data.is_faq_section,
-        is_pricingplans_section: data.is_pricingplans_section,
         image_metrics_height: data.image_metrics_height,
         website_metric: data.website_metric, // Include metrics data for inline editing
       };

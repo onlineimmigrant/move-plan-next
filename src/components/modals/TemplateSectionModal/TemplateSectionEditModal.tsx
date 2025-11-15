@@ -253,13 +253,6 @@ export default function TemplateSectionEditModal() {
     is_slider: false,
     section_type: 'general',
     is_reviews_section: false,
-    is_help_center_section: false,
-    is_real_estate_modal: false,
-    is_brand: false,
-    is_article_slider: false,
-    is_contact_section: false,
-    is_faq_section: false,
-    is_pricingplans_section: false,
     url_page: undefined,
     website_metric: undefined,
   });
@@ -267,16 +260,20 @@ export default function TemplateSectionEditModal() {
   // Initialize form data when editing section changes
   useEffect(() => {
     if (editingSection) {
-      let sectionType: TemplateSectionFormData['section_type'] = (editingSection as any).section_type || 'general';
-      if (!(editingSection as any).section_type) {
+      // Cast to any for backward compatibility with old boolean fields
+      const section = editingSection as any;
+      
+      let sectionType: TemplateSectionFormData['section_type'] = section.section_type || 'general';
+      if (!section.section_type) {
+        // Migration logic: Convert old boolean flags to section_type
         if (editingSection.is_reviews_section) sectionType = 'reviews';
-        else if (editingSection.is_help_center_section) sectionType = 'help_center';
-        else if (editingSection.is_real_estate_modal) sectionType = 'real_estate';
-        else if (editingSection.is_brand) sectionType = 'brand';
-        else if (editingSection.is_article_slider) sectionType = 'article_slider';
-        else if (editingSection.is_contact_section) sectionType = 'contact';
-        else if (editingSection.is_faq_section) sectionType = 'faq';
-        else if (editingSection.is_pricingplans_section) sectionType = 'pricing_plans';
+        else if (section.is_help_center_section) sectionType = 'help_center';
+        else if (section.is_real_estate_modal) sectionType = 'real_estate';
+        else if (section.is_brand) sectionType = 'brand';
+        else if (section.is_article_slider) sectionType = 'article_slider';
+        else if (section.is_contact_section) sectionType = 'contact';
+        else if (section.is_faq_section) sectionType = 'faq';
+        else if (section.is_pricingplans_section) sectionType = 'pricing_plans';
       }
       
       // Initialize local title/description state
@@ -301,13 +298,6 @@ export default function TemplateSectionEditModal() {
         is_slider: editingSection.is_slider || false,
         section_type: sectionType,
         is_reviews_section: editingSection.is_reviews_section || false,
-        is_help_center_section: editingSection.is_help_center_section || false,
-        is_real_estate_modal: editingSection.is_real_estate_modal || false,
-        is_brand: editingSection.is_brand || false,
-        is_article_slider: editingSection.is_article_slider || false,
-        is_contact_section: editingSection.is_contact_section || false,
-        is_faq_section: editingSection.is_faq_section || false,
-        is_pricingplans_section: editingSection.is_pricingplans_section || false,
         url_page: editingSection.url_page,
         website_metric: editingSection.website_metric,
       });

@@ -39,18 +39,11 @@ interface TemplateSectionData {
   is_image_bottom: boolean;
   is_slider?: boolean;
   
-  // New consolidated field
+  // Consolidated section type field
   section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'appointment';
   
   // DEPRECATED - Keep for backward compatibility
   is_reviews_section: boolean;
-  is_help_center_section?: boolean;
-  is_real_estate_modal?: boolean;
-  is_brand?: boolean;
-  is_article_slider?: boolean;
-  is_contact_section?: boolean;
-  is_faq_section?: boolean;
-  is_pricingplans_section?: boolean;
   
   website_metric: Metric[];
   organization_id: string | null;

@@ -303,7 +303,7 @@ export function TemplateSectionPreview({
               is_full_width: formData.is_full_width || false,
               is_section_title_aligned_center: formData.is_section_title_aligned_center || false,
               is_section_title_aligned_right: formData.is_section_title_aligned_right || false,
-              is_help_center_section: true,
+              section_type: 'help_center',
               organization_id: null,
             }}
             onDoubleClickTitle={onDoubleClickTitle}

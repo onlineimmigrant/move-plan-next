@@ -207,18 +207,11 @@ interface TemplateSectionData {
   is_image_bottom: boolean;
   is_slider?: boolean;
   
-  // New consolidated field
+  // Consolidated section type field
   section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
   
-  // DEPRECATED - Keep for backward compatibility
+  // DEPRECATED - Keep for backward compatibility (only is_reviews_section may still be in some DB records)
   is_reviews_section: boolean;
-  is_help_center_section?: boolean;
-  is_real_estate_modal?: boolean;
-  is_brand?: boolean;
-  is_article_slider?: boolean;
-  is_contact_section?: boolean;
-  is_faq_section?: boolean;
-  is_pricingplans_section?: boolean;
   
   website_metric: Metric[];
   organization_id: string | null;
@@ -406,7 +399,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
     <section
       className={`${
         // Remove padding for new special sections that manage their own layout
-        section.is_brand || section.is_article_slider || section.is_contact_section || section.is_faq_section || section.is_pricingplans_section || section.section_type === 'reviews'
+        ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews'].includes(section.section_type || '')
           ? 'px-0 py-0 min-h-0'
           : section.is_slider 
           ? 'px-0 py-8 min-h-[600px]' 
