@@ -22,6 +22,10 @@ interface MenuItem {
   description?: string;
   website_submenuitem?: SubMenuItem[];
   submenu_items?: SubMenuItem[];
+  
+  // Translation fields
+  display_name_translation?: Record<string, string>;
+  description_translation?: Record<string, string>;
 }
 
 interface SubMenuItem {
@@ -298,19 +302,53 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         throw new Error('No active session found. Please log in again.');
       }
 
-      // Update order for all items
-      const updatePromises = items.map((item, index) =>
+      // Update all fields for menu items including translations
+      const menuItemPromises = items.map((item, index) =>
         fetch(`/api/menu-items/${item.id}`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`
           },
-          body: JSON.stringify({ order: index * 10 })
+          body: JSON.stringify({
+            order: index * 10,
+            display_name: item.display_name,
+            display_name_translation: item.display_name_translation || {},
+            description: item.description,
+            description_translation: item.description_translation || {},
+            url_name: item.url_name,
+            is_displayed: item.is_displayed,
+            is_displayed_on_footer: item.is_displayed_on_footer,
+            menu_items_are_text: item.menu_items_are_text,
+            react_icon_id: item.react_icon_id,
+          })
         })
       );
 
-      await Promise.all(updatePromises);
+      // Update submenu items with translations
+      const submenuItemPromises = items.flatMap((item) =>
+        (item.submenu_items || []).map((subItem) =>
+          fetch(`/api/menu-items/${subItem.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              name: subItem.name,
+              name_translation: subItem.name_translation || {},
+              description: subItem.description,
+              description_translation: subItem.description_translation || {},
+              url_name: subItem.url_name,
+              is_displayed: subItem.is_displayed,
+              order: subItem.order,
+              image: subItem.image,
+            })
+          })
+        )
+      );
+
+      await Promise.all([...menuItemPromises, ...submenuItemPromises]);
       setMenuItems(items);
 
       // Revalidate cache

@@ -41,6 +41,7 @@ export interface MenuItem {
   display_name_translation?: Record<string, any>;
   url_name: string;
   description?: string;
+  description_translation?: Record<string, any>;
   is_displayed: boolean;
   is_displayed_on_footer: boolean;
   menu_items_are_text: boolean;

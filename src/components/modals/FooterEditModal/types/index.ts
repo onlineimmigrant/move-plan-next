@@ -15,6 +15,10 @@ export interface SubMenuItem {
   order: number;
   is_displayed?: boolean;
   image?: string | null;
+  
+  // Translation fields
+  name_translation?: Record<string, string>;
+  description_translation?: Record<string, string>;
 }
 
 /**
@@ -33,6 +37,10 @@ export interface MenuItem {
   organization_id: string;
   submenu_items?: SubMenuItem[];
   website_submenuitem?: SubMenuItem[]; // Database field name
+  
+  // Translation fields
+  display_name_translation?: Record<string, string>;
+  description_translation?: Record<string, string>;
 }
 
 /**

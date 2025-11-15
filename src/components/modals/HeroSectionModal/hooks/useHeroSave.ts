@@ -9,13 +9,14 @@ import { HeroFormData } from '../types';
 
 export function useHeroSave(
   updateSection: (data: HeroFormData) => Promise<void>,
-  closeModal: () => void
+  closeModal: () => void,
+  keepModalOpen: boolean = false
 ) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [hasTriedSave, setHasTriedSave] = useState(false);
 
-  const handleSave = async (formData: HeroFormData) => {
+  const handleSave = async (formData: HeroFormData, skipClose: boolean = false) => {
     setHasTriedSave(true);
     setSaveError(null);
 
@@ -36,7 +37,9 @@ export function useHeroSave(
 
     try {
       await updateSection(formData);
-      closeModal();
+      if (!skipClose && !keepModalOpen) {
+        closeModal();
+      }
       return true;
     } catch (error: any) {
       console.error('Failed to save:', error);

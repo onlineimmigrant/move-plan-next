@@ -144,7 +144,7 @@ export default function HeroSectionEditModal() {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         if (formData.title.trim()) {
-          handleSave(formData);
+          handleSave(formData, true);
         }
       }
       // Escape to close mega menu or inline edit
@@ -274,6 +274,8 @@ export default function HeroSectionEditModal() {
     formData,
     setFormData,
     primaryColor: primary.base,
+    handleSave,
+    isSaving,
   };
 
   if (!isOpen) return null;
@@ -505,7 +507,7 @@ export default function HeroSectionEditModal() {
               </Button>
               <Button
                 variant="primary"
-                onClick={() => handleSave(formData)}
+                onClick={() => handleSave(formData, true)}
                 loading={isSaving}
                 disabled={!formData.title.trim()}
                 className="px-6 py-2"

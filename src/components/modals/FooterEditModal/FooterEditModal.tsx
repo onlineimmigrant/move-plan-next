@@ -11,6 +11,7 @@ import {
   PaintBrushIcon, 
   Bars3Icon,
   ChevronDownIcon,
+  GlobeAltIcon,
 } from '@heroicons/react/24/outline';
 import { useFooterEdit } from './context';
 import { StandardModalContainer } from '../_shared/containers/StandardModalContainer';
@@ -21,7 +22,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSettings } from '@/context/SettingsContext';
 import Button from '@/ui/Button';
 import { MenuItem } from './types';
-import { MenuSection, StyleSection } from './sections';
+import { MenuSection, StyleSection, TranslationsSection } from './sections';
 import { useMenuOperations, useDragDropHandlers } from './hooks';
 import { FooterPreview } from './preview';
 
@@ -200,6 +201,7 @@ function FooterEditModal() {
             {[
               { id: 'style', label: 'Style', icon: PaintBrushIcon },
               { id: 'menu', label: 'Menu Items', icon: Bars3Icon },
+              { id: 'translations', label: 'Translations', icon: GlobeAltIcon },
             ].map((menu) => (
               <div key={menu.id} className="relative">
                 <button
@@ -277,7 +279,7 @@ function FooterEditModal() {
                     className="absolute left-0 right-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl"
                     style={{ top: '140px', bottom: 0 }}
                   >
-                    <div className="max-w-7xl mx-auto px-6 py-6 h-full">
+                    <div className={`max-w-7xl mx-auto py-6 h-full ${openMenu === 'translations' ? 'px-4 md:px-6' : 'px-6'}`}>
                       <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                           Settings
@@ -329,6 +331,14 @@ function FooterEditModal() {
                             onAddSubmenu={handleAddSubmenuItem}
                             onSubmenuReorder={handleSubmenuReorder}
                             onAddMenuItem={handleAddMenuItem}
+                          />
+                        )}
+
+                        {openMenu === 'translations' && (
+                          <TranslationsSection
+                            menuItems={localMenuItems}
+                            setMenuItems={setLocalMenuItems}
+                            primaryColor={primary.base}
                           />
                         )}
                       </div>

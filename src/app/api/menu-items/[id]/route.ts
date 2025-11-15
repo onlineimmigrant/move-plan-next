@@ -72,6 +72,7 @@ export async function PUT(
       react_icon_id,
       order,
       description,
+      display_name_translation,
       description_translation,
       name,
       name_translation,
@@ -125,6 +126,7 @@ export async function PUT(
       
       const updateData: any = {};
       if (display_name !== undefined) updateData.display_name = display_name;
+      if (display_name_translation !== undefined) updateData.display_name_translation = display_name_translation;
       if (url_name !== undefined) updateData.url_name = url_name;
       if (is_displayed !== undefined) updateData.is_displayed = is_displayed;
       if (is_displayed_on_footer !== undefined) updateData.is_displayed_on_footer = is_displayed_on_footer;
@@ -132,6 +134,7 @@ export async function PUT(
       if (react_icon_id !== undefined) updateData.react_icon_id = react_icon_id;
       if (order !== undefined) updateData.order = order;
       if (description !== undefined) updateData.description = description;
+      if (description_translation !== undefined) updateData.description_translation = description_translation;
       updateData.updated_at = new Date().toISOString();
 
       const { data, error } = await supabase

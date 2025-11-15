@@ -13,20 +13,26 @@ import { HeroFormData } from '../types';
 import { useHeroSectionEdit } from '../context';
 import { useOrganizationSettings, useAITranslation } from '../hooks';
 import { getLanguageName } from '../utils/languages';
+import Button from '@/ui/Button';
 
 interface TranslationsSectionProps {
   formData: HeroFormData;
   setFormData: (data: HeroFormData) => void;
   primaryColor: string;
+  handleSave: (data: HeroFormData, skipClose?: boolean) => Promise<boolean>;
+  isSaving: boolean;
 }
 
-export function TranslationsSection({ formData, setFormData, primaryColor }: TranslationsSectionProps) {
+export function TranslationsSection({ formData, setFormData, primaryColor, handleSave, isSaving }: TranslationsSectionProps) {
   const { organizationId } = useHeroSectionEdit();
   const { settings, loading } = useOrganizationSettings(organizationId);
   const { translateAll, isTranslating, progress, error: translationError } = useAITranslation();
 
   const originalLanguage = settings.language || 'en';
   const supportedLocales = settings.supported_locales || [];
+
+  // Track if translations have been modified
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // JSONB Modal state
   const [jsonbModal, setJsonbModal] = useState<{
@@ -65,6 +71,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
         [languageCode]: value,
       },
     });
+    setHasUnsavedChanges(true);
   };
 
   // Update original content fields
@@ -73,6 +80,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
       ...formData,
       [field]: value,
     });
+    setHasUnsavedChanges(true);
   };
 
   // Add all missing languages from supported_locales
@@ -107,6 +115,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
       description_translation: newDescriptionTranslation,
       button_translation: newButtonTranslation,
     });
+    setHasUnsavedChanges(true);
   };
 
   // Remove a language
@@ -125,6 +134,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
       description_translation: newDescriptionTranslation,
       button_translation: newButtonTranslation,
     });
+    setHasUnsavedChanges(true);
   };
 
   // Open JSONB modal
@@ -164,6 +174,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
         [jsonbModal.field]: parsed,
       });
 
+      setHasUnsavedChanges(true);
       closeJsonbModal();
     } catch (error) {
       alert('Invalid JSON format. Please check your syntax.');
@@ -182,40 +193,144 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
       return;
     }
 
-    const fields = [
-      { name: 'title', content: formData.title || '' },
-      { name: 'description', content: formData.description || '' },
-      { name: 'button', content: formData.button || '' },
-    ].filter(f => f.content.trim());
+    // Helper function to check which languages need translation
+    const needsTranslation = (
+      existingTranslations: Record<string, any> | undefined,
+      targetLanguages: string[]
+    ): string[] => {
+      if (!existingTranslations) return targetLanguages;
+      
+      // Return only languages that don't have translations yet
+      return targetLanguages.filter(lang => {
+        const translation = existingTranslations[lang];
+        return !translation || (typeof translation === 'string' && !translation.trim());
+      });
+    };
 
-    console.log('[TranslationsSection] Starting AI translation for', fields.length, 'fields');
+    let translatedCount = 0;
+    let skippedCount = 0;
+    let totalErrors: string[] = [];
+    
+    const updatedFormData = { ...formData };
 
-    const result = await translateAll({
-      tableName: 'website_hero',
-      fields,
-      sourceLanguage: originalLanguage,
-      targetLanguages: supportedLocales,
+    // Check which languages need translation for each field
+    const titleMissingLangs = formData.title?.trim() 
+      ? needsTranslation(formData.title_translation, supportedLocales)
+      : [];
+    
+    const descriptionMissingLangs = formData.description?.trim()
+      ? needsTranslation(formData.description_translation, supportedLocales)
+      : [];
+    
+    const buttonMissingLangs = formData.button?.trim()
+      ? needsTranslation(formData.button_translation, supportedLocales)
+      : [];
+
+    console.log('[TranslationsSection] Missing translations:', {
+      title: titleMissingLangs,
+      description: descriptionMissingLangs,
+      button: buttonMissingLangs,
     });
 
-    if (result.success && result.translations) {
-      console.log('[TranslationsSection] Translation successful:', result.translations);
-
-      setFormData({
-        ...formData,
-        title_translation: result.translations.title || formData.title_translation || {},
-        description_translation: result.translations.description || formData.description_translation || {},
-        button_translation: result.translations.button || formData.button_translation || {},
+    // Translate title if needed
+    if (titleMissingLangs.length > 0 && formData.title?.trim()) {
+      const result = await translateAll({
+        tableName: 'website_hero',
+        fields: [{ name: 'title', content: formData.title }],
+        sourceLanguage: originalLanguage,
+        targetLanguages: titleMissingLangs,
       });
 
-      if (result.errors && result.errors.length > 0) {
-        console.warn('[TranslationsSection] Partial errors:', result.errors);
-        alert(`Translation completed with some errors:\n${result.errors.join('\n')}`);
-      } else {
-        alert('All translations completed successfully!');
+      if (result.success && result.translations?.title) {
+        updatedFormData.title_translation = {
+          ...(formData.title_translation || {}),
+          ...result.translations.title,
+        };
+        translatedCount++;
+        console.log('[TranslationsSection] Title translated to:', titleMissingLangs);
       }
+
+      if (result.errors && result.errors.length > 0) {
+        totalErrors.push(...result.errors);
+      }
+    } else if (titleMissingLangs.length === 0 && formData.title?.trim()) {
+      skippedCount++;
+      console.log('[TranslationsSection] Title translation skipped (already exists)');
+    }
+
+    // Translate description if needed
+    if (descriptionMissingLangs.length > 0 && formData.description?.trim()) {
+      const result = await translateAll({
+        tableName: 'website_hero',
+        fields: [{ name: 'description', content: formData.description }],
+        sourceLanguage: originalLanguage,
+        targetLanguages: descriptionMissingLangs,
+      });
+
+      if (result.success && result.translations?.description) {
+        updatedFormData.description_translation = {
+          ...(formData.description_translation || {}),
+          ...result.translations.description,
+        };
+        translatedCount++;
+        console.log('[TranslationsSection] Description translated to:', descriptionMissingLangs);
+      }
+
+      if (result.errors && result.errors.length > 0) {
+        totalErrors.push(...result.errors);
+      }
+    } else if (descriptionMissingLangs.length === 0 && formData.description?.trim()) {
+      skippedCount++;
+      console.log('[TranslationsSection] Description translation skipped (already exists)');
+    }
+
+    // Translate button if needed
+    if (buttonMissingLangs.length > 0 && formData.button?.trim()) {
+      const result = await translateAll({
+        tableName: 'website_hero',
+        fields: [{ name: 'button', content: formData.button }],
+        sourceLanguage: originalLanguage,
+        targetLanguages: buttonMissingLangs,
+      });
+
+      if (result.success && result.translations?.button) {
+        updatedFormData.button_translation = {
+          ...(formData.button_translation || {}),
+          ...result.translations.button,
+        };
+        translatedCount++;
+        console.log('[TranslationsSection] Button translated to:', buttonMissingLangs);
+      }
+
+      if (result.errors && result.errors.length > 0) {
+        totalErrors.push(...result.errors);
+      }
+    } else if (buttonMissingLangs.length === 0 && formData.button?.trim()) {
+      skippedCount++;
+      console.log('[TranslationsSection] Button translation skipped (already exists)');
+    }
+
+    // Update form data with all translations
+    setFormData(updatedFormData);
+    
+    // Mark as having unsaved changes if any translations were made
+    if (translatedCount > 0) {
+      setHasUnsavedChanges(true);
+    }
+
+    // Show summary
+    const summary = [
+      translatedCount > 0 ? `✓ Translated ${translatedCount} fields` : null,
+      skippedCount > 0 ? `⊘ Skipped ${skippedCount} fields (already translated)` : null,
+      totalErrors.length > 0 ? `⚠ ${totalErrors.length} errors occurred` : null,
+    ].filter(Boolean).join('\n');
+
+    if (totalErrors.length > 0) {
+      alert(`${summary}\n\nErrors:\n${totalErrors.join('\n')}`);
+    } else if (translatedCount === 0 && skippedCount > 0) {
+      alert('All translations are up to date!');
     } else {
-      console.error('[TranslationsSection] Translation failed:', result.errors);
-      alert(`Translation failed:\n${result.errors?.join('\n') || 'Unknown error'}`);
+      alert(summary || 'Translation completed!');
     }
   };
 
@@ -229,17 +344,35 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
 
   return (
     <>
-      {/* Header with language information */}
-      <div className="flex items-center gap-2 mb-4 px-2 sm:px-6">
-        <GlobeAltIcon className="w-5 h-5" style={{ color: primaryColor }} />
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Original: <span className="font-medium">{getLanguageName(originalLanguage)}</span>
-          {supportedLocales.length > 0 && (
-            <span className="ml-2">
-              • Supported: {supportedLocales.length} {supportedLocales.length === 1 ? 'language' : 'languages'}
-            </span>
-          )}
-        </p>
+      {/* Header with language information and Save button */}
+      <div className="flex items-center justify-between gap-2 mb-4 px-2 sm:px-6">
+        <div className="flex items-center gap-2">
+          <GlobeAltIcon className="w-5 h-5" style={{ color: primaryColor }} />
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Original: <span className="font-medium">{getLanguageName(originalLanguage)}</span>
+            {supportedLocales.length > 0 && (
+              <span className="ml-2">
+                • Supported: {supportedLocales.length} {supportedLocales.length === 1 ? 'language' : 'languages'}
+              </span>
+            )}
+          </p>
+        </div>
+        {hasUnsavedChanges && (
+          <Button
+            variant="primary"
+            onClick={async () => {
+              const success = await handleSave(formData, true);
+              if (success) {
+                setHasUnsavedChanges(false);
+              }
+            }}
+            loading={isSaving}
+            disabled={isSaving}
+            className="px-6 py-2"
+          >
+            Save
+          </Button>
+        )}
       </div>
 
       {/* Table - Scrollable */}

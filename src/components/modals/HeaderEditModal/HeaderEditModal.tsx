@@ -12,6 +12,7 @@ import {
   Bars3Icon,
   PhotoIcon,
   ChevronDownIcon,
+  GlobeAltIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { useHeaderEdit } from './context';
@@ -24,7 +25,7 @@ import { useSettings } from '@/context/SettingsContext';
 import Button from '@/ui/Button';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import { MenuItem } from './types';
-import { MenuSection, StyleSection, LogoSection } from './sections';
+import { MenuSection, StyleSection, LogoSection, TranslationsSection } from './sections';
 import { useMenuOperations } from './hooks/useMenuOperations';
 import { useDragDropHandlers } from './hooks/useDragDropHandlers';
 import { HeaderPreview } from './preview';
@@ -180,7 +181,8 @@ function HeaderEditModal() {
       // Save menu items order
       await updateMenuItems(localMenuItems);
 
-      closeModal();
+      // Don't close modal - keep it open for further edits
+      // closeModal();
     } catch (error) {
       console.error('Failed to save header settings:', error);
       setSaveError('Failed to save header settings. Please try again.');
@@ -217,6 +219,7 @@ function HeaderEditModal() {
             {[
               { id: 'style', label: 'Style', icon: PaintBrushIcon },
               { id: 'menu', label: 'Menu Items', icon: Bars3Icon },
+              { id: 'translations', label: 'Translations', icon: GlobeAltIcon },
             ].map((menu) => (
               <div key={menu.id} className="relative">
                 <button
@@ -336,7 +339,7 @@ function HeaderEditModal() {
                       overflowX: 'visible'
                     }}
                   >
-                    <div className="w-full px-4 md:px-6 py-4 md:py-6 relative">
+                    <div className={`w-full py-4 md:py-6 relative ${openMenu === 'translations' ? 'px-4 md:px-6' : 'px-4 md:px-6'}`}>
                       <div className="flex justify-between items-center mb-3 md:mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
                         <h2 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
                           Settings
@@ -401,6 +404,14 @@ function HeaderEditModal() {
                             onSubmenuReorder={handleSubmenuReorder}
                             onAddMenuItem={handleAddMenuItem}
                             onImageGalleryOpen={handleImageGalleryOpen}
+                          />
+                        )}
+
+                        {openMenu === 'translations' && (
+                          <TranslationsSection
+                            menuItems={localMenuItems}
+                            setMenuItems={setLocalMenuItems}
+                            primaryColor={primary.base}
                           />
                         )}
                       </div>

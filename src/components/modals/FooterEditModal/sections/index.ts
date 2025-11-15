@@ -4,3 +4,4 @@
 
 export { MenuSection } from './MenuSection';
 export { StyleSection } from './StyleSection';
+export { TranslationsSection } from './TranslationsSection';
