@@ -16,7 +16,7 @@ import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
 import ClientStructuredDataInjector from '@/components/ClientStructuredDataInjector';
 import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
 import { supabaseServer } from '@/lib/supabaseServerClient';
-import { Inter, Roboto, Poppins, Lato, Open_Sans, Montserrat, Nunito, Raleway, Ubuntu, Merriweather, JetBrains_Mono } from 'next/font/google';
+import { Inter, Roboto, Poppins, Lato, Open_Sans, Montserrat, Nunito, Raleway, Ubuntu, Merriweather, JetBrains_Mono, Mulish } from 'next/font/google';
 
 // Optimize font loading to prevent CLS - Load all supported fonts
 const inter = Inter({
@@ -26,6 +26,17 @@ const inter = Inter({
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
   adjustFontFallback: true,
   variable: '--font-inter'
+});
+
+// Mulish - newly added general purpose sans-serif option
+const mulish = Mulish({
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
+  variable: '--font-mulish'
 });
 
 // JetBrains Mono for code blocks in chat
@@ -337,6 +348,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   
   const selectedFontVar = (() => {
     switch (selectedFont) {
+      case 'Mulish': return '--font-mulish';
       case 'Roboto': return '--font-roboto';
       case 'Poppins': return '--font-poppins';
       case 'Lato': return '--font-lato';
@@ -356,6 +368,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Compose all font variable classes so all fonts are loaded
   const fontVarsClass = [
     inter.variable,
+    mulish.variable,
     jetbrainsMono.variable,
     roboto.variable,
     poppins.variable,

@@ -216,6 +216,7 @@ export const fontFamilyOptions = [
   { name: 'Open Sans', value: 'Open Sans' },
   { name: 'Lato', value: 'Lato' },
   { name: 'Montserrat', value: 'Montserrat' },
+  { name: 'Mulish', value: 'Mulish' },
   { name: 'Nunito', value: 'Nunito' },
   { name: 'Raleway', value: 'Raleway' },
   { name: 'Ubuntu', value: 'Ubuntu' },
