@@ -50,7 +50,7 @@ WHERE
 LIMIT 10;
 
 -- Step 3: Drop the deprecated columns
--- ONLY run this after verifying Steps 1 and 2 show the migration is complete
+-- ONLY  after verifying Steps 1 and 2 show the migration is complete
 
 -- Uncomment these lines to execute the column drops:
 /*
