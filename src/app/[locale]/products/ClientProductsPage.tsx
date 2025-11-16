@@ -8,6 +8,7 @@ import CategoriesBar from '@/components/product/CategoriesBar';
 import IconButton from '@/ui/IconButton';
 import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
 import { useProductTranslations } from '@/components/product/useProductTranslations';
+import UnsplashAttribution from '@/components/UnsplashAttribution';
 
 type Product = {
   id: number;
@@ -287,98 +288,71 @@ const ClientProductsPage = memo(function ClientProductsPage({
             ref={productsRef}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto"
           >
-            {filteredProducts.slice(0, visibleItemsCount).map((product) => (
-              <Link
-                key={product.id}
-                href={product.slug ? `/products/${product.slug}` : '#'}
-                className="group w-full"
-              >
-                <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full min-h-[320px] sm:min-h-[380px]">
-                  {product.links_to_image && product.links_to_image.trim() !== '' && (
-                    <div className="relative w-full h-48 sm:h-52 flex-shrink-0 overflow-hidden group/img">
-                      <img
-                        src={product.links_to_image}
-                        alt={product.product_name ?? t.productImage}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => handleImageError(e, product.links_to_image || undefined)}
-                        loading="lazy"
-                      />
-                      {/* Unsplash Attribution - Two-tier design */}
-                      {product.attrs?.unsplash_attribution && (
-                        <>
-                          {/* Always visible: Small Unsplash badge */}
-                          <a
-                            href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="absolute bottom-1.5 right-1.5 bg-white/70 hover:bg-white/90 backdrop-blur-sm rounded p-1 shadow-md hover:shadow-lg transition-all group-hover/img:opacity-0 z-10"
-                            onClick={(e) => e.stopPropagation()}
-                            title="Photo from Unsplash"
-                          >
-                            <svg className="w-3 h-3 text-black/80" fill="currentColor" viewBox="0 0 32 32">
-                              <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
-                            </svg>
-                          </a>
-                          
-                          {/* On hover: Full attribution */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-md text-white text-xs px-3 py-2.5 opacity-0 group-hover/img:opacity-100 transition-all duration-300">
-                            <div className="flex items-center gap-1">
-                              <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32">
-                                <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
-                              </svg>
-                              <span className="text-white/90">Photo by{' '}
-                                <a
-                                  href={`${product.attrs.unsplash_attribution.photographer_url}?utm_source=codedharmony&utm_medium=referral`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-white font-medium hover:text-blue-300 transition-colors"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {product.attrs.unsplash_attribution.photographer}
-                                </a>
-                                {' '}on{' '}
-                                <a
-                                  href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-white font-medium hover:text-blue-300 transition-colors"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  Unsplash
-                                </a>
-                              </span>
-                            </div>
+            {filteredProducts.slice(0, visibleItemsCount).map((product) => {
+              const productUrl = product.slug ? `/products/${product.slug}` : '#';
+              const unsplashAttr = product.attrs?.unsplash_attribution;
+              
+              return (
+                <div key={product.id} className="group w-full relative">
+                  <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full min-h-[320px] sm:min-h-[380px]">
+                    {product.links_to_image && product.links_to_image.trim() !== '' && (
+                      <div className="relative w-full h-48 sm:h-52 flex-shrink-0 overflow-hidden group/img">
+                        {/* Background Link for image - accessibility */}
+                        <Link
+                          href={productUrl}
+                          className="absolute inset-0 z-0"
+                          aria-label={`View ${product.product_name ?? t.unnamedProduct}`}
+                        >
+                          <span className="sr-only">View product</span>
+                        </Link>
+                        
+                        <img
+                          src={product.links_to_image}
+                          alt={product.product_name ?? t.productImage}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => handleImageError(e, product.links_to_image || undefined)}
+                          loading="lazy"
+                        />
+                        
+                        {/* Unsplash Attribution */}
+                        {unsplashAttr && (
+                          <UnsplashAttribution
+                            attribution={unsplashAttr}
+                            variant="overlay"
+                            position="bottom-right"
+                          />
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Content Link */}
+                    <Link href={productUrl} className="p-4 sm:p-6 flex flex-col flex-grow">
+                      <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-sky-400 transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]">
+                        {product.product_name ?? t.unnamedProduct}
+                      </h2>
+                      <div className="mt-auto">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-gray-500 text-sm sm:text-base">{t.from}</span>
+                          <div className="font-bold text-base sm:text-lg text-gray-700">
+                            <span>
+                              {(product.computed_currency_symbol ?? product.currency_manual_symbol) ?? ''}
+                            </span>
+                            <span>
+                              {product.computed_min_price ?? product.price_manual ?? ''}
+                            </span>
                           </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                  <div className="p-4 sm:p-6 flex flex-col flex-grow">
-                    <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-sky-400 transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]">
-                      {product.product_name ?? t.unnamedProduct}
-                    </h2>
-                    <div className="mt-auto">
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="text-gray-500 text-sm sm:text-base">{t.from}</span>
-                        <div className="font-bold text-base sm:text-lg text-gray-700">
-                          <span>
-                            {(product.computed_currency_symbol ?? product.currency_manual_symbol) ?? ''}
-                          </span>
-                          <span>
-                            {product.computed_min_price ?? product.price_manual ?? ''}
+                        </div>
+                        <div className="flex justify-end">
+                          <span className="text-sky-400 transition-all duration-300 group-hover:translate-x-1">
+                            <ArrowRightIcon className="h-5 w-5" />
                           </span>
                         </div>
                       </div>
-                      <div className="flex justify-end">
-                        <span className="text-sky-400 transition-all duration-300 group-hover:translate-x-1">
-                          <ArrowRightIcon className="h-5 w-5" />
-                        </span>
-                      </div>
-                    </div>
+                    </Link>
                   </div>
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
 

@@ -87,6 +87,11 @@ export default function PostEditModal() {
       photo_url: string;
       download_location: string;
     };
+    pexels_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+    };
   }>({});
   const [metaDescription, setMetaDescription] = useState('');
   const [order, setOrder] = useState('');
@@ -1457,12 +1462,21 @@ export default function PostEditModal() {
           console.log('🖼️ Main photo selected:', { imageUrl, hasAttribution: !!attribution, attribution });
           handleFieldChange('mainPhoto', imageUrl);
           
-          // Update mediaConfig with attribution if from Unsplash
+          // Update mediaConfig with attribution
           if (attribution) {
-            setMediaConfig({
-              main_photo: imageUrl,
-              unsplash_attribution: attribution,
-            });
+            // Check if it's Unsplash attribution (has download_location)
+            if ('download_location' in attribution) {
+              setMediaConfig({
+                main_photo: imageUrl,
+                unsplash_attribution: attribution,
+              });
+            } else {
+              // Pexels attribution
+              setMediaConfig({
+                main_photo: imageUrl,
+                pexels_attribution: attribution,
+              });
+            }
           } else {
             setMediaConfig({
               main_photo: imageUrl,

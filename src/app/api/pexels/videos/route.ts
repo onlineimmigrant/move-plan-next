@@ -1,0 +1,72 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const query = searchParams.get('query');
+  const page = searchParams.get('page') || '1';
+  const perPage = searchParams.get('per_page') || '30';
+
+  if (!query) {
+    return NextResponse.json(
+      { error: 'Query parameter is required' },
+      { status: 400 }
+    );
+  }
+
+  const apiKey = process.env.PEXELS_API_KEY;
+
+  if (!apiKey) {
+    console.error('PEXELS_API_KEY is not configured');
+    return NextResponse.json(
+      { error: 'Pexels API is not configured' },
+      { status: 500 }
+    );
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`,
+      {
+        headers: {
+          Authorization: apiKey,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Pexels API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Transform Pexels video response
+    const transformedVideos = data.videos.map((video: any) => ({
+      id: video.id,
+      width: video.width,
+      height: video.height,
+      duration: video.duration,
+      thumbnail: video.image,
+      video_files: video.video_files,
+      video_pictures: video.video_pictures,
+      user: {
+        name: video.user.name,
+        url: video.user.url,
+      },
+      url: video.url,
+    }));
+
+    return NextResponse.json({
+      videos: transformedVideos,
+      total_results: data.total_results,
+      page: data.page,
+      per_page: data.per_page,
+      next_page: data.next_page,
+    });
+  } catch (error) {
+    console.error('Error fetching videos from Pexels:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch videos from Pexels' },
+      { status: 500 }
+    );
+  }
+}

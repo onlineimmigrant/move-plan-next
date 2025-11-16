@@ -7,10 +7,11 @@
 
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useRef } from 'react';
 import Button from '@/ui/Button';
 import { ImagePreview } from './ImagePreview';
 import { TaxCodeSelector } from './TaxCodeSelector';
+import ProductMediaCarousel, { ProductMediaCarouselHandle } from '@/components/ProductMediaCarousel';
 import type { Product, ProductFormData } from '../types';
 
 interface ProductDetailViewProps {
@@ -30,6 +31,8 @@ interface ProductDetailViewProps {
   onImageUrlChange: (url: string) => void;
   onTaxCodeSelect: (taxCode: string | null) => void;
   onOpenImageGallery: () => void;
+  onOpenMediaGallery?: () => void;
+  carouselRef?: React.RefObject<any>;
 }
 
 const ProductDetailViewComponent = ({
@@ -44,6 +47,8 @@ const ProductDetailViewComponent = ({
   onImageUrlChange,
   onTaxCodeSelect,
   onOpenImageGallery,
+  onOpenMediaGallery,
+  carouselRef,
 }: ProductDetailViewProps) => {
   const isEditMode = selectedProduct !== null;
   const isSaving = isCreating || isUpdating;
@@ -74,21 +79,37 @@ const ProductDetailViewComponent = ({
       {/* Content - Scrollable Form with Grid Layout */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {/* Image Section */}
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 lg:col-span-1">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-              Product Image
-            </h3>
-            <div className="space-y-3">
-              <ImagePreview
-                imageUrl={formData.links_to_image}
-                productName={formData.product_name}
-                onUrlChange={onImageUrlChange}
-                onOpenGallery={onOpenImageGallery}
-                error={validationErrors.links_to_image}
-                attribution={unsplashAttribution}
-              />
+          {/* Left Column - Image & Media */}
+          <div className="space-y-6 lg:col-span-1">
+            {/* Product Image Section */}
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                Product Image
+              </h3>
+              <div className="space-y-3">
+                <ImagePreview
+                  imageUrl={formData.links_to_image}
+                  productName={formData.product_name}
+                  onUrlChange={onImageUrlChange}
+                  onOpenGallery={onOpenImageGallery}
+                  error={validationErrors.links_to_image}
+                  attribution={unsplashAttribution}
+                />
+              </div>
             </div>
+
+            {/* Additional Media Section - Only show when editing existing product */}
+            {isEditMode && selectedProduct && carouselRef && (
+              <ProductMediaCarousel
+                ref={carouselRef}
+                productId={parseInt(selectedProduct.id as string, 10)}
+                onAddMedia={onOpenMediaGallery || (() => console.warn('⚠️ onOpenMediaGallery not provided'))}
+              />
+            )}
+            {/* Debug: Show why carousel might not appear */}
+            {!isEditMode && <div className="text-xs text-gray-500 p-2">Carousel hidden: Not in edit mode</div>}
+            {isEditMode && !selectedProduct && <div className="text-xs text-gray-500 p-2">Carousel hidden: No product selected</div>}
+            {isEditMode && selectedProduct && !carouselRef && <div className="text-xs text-gray-500 p-2">Carousel hidden: No carouselRef</div>}
           </div>
 
           {/* Basic Information Section */}

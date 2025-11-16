@@ -99,7 +99,9 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
         const maxHeight = Math.min(availableHeight, viewportHeight - tocTop - 24);
         
         if (maxHeight > 200) { // Minimum height threshold
-          setTocMaxHeight(`${maxHeight}px`);
+          const newHeight = `${maxHeight}px`;
+          // Only update if the value has actually changed
+          setTocMaxHeight(prev => prev === newHeight ? prev : newHeight);
         }
       }
     };

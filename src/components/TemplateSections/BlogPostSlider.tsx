@@ -7,6 +7,7 @@ import { getPostUrl } from '@/lib/postUtils';
 import { useSettings } from '@/context/SettingsContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { SliderNavigation } from '@/ui/SliderNavigation';
+import UnsplashAttribution from '@/components/UnsplashAttribution';
 
 interface BlogPost {
   id: number;
@@ -198,19 +199,18 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                 
                 // Check for Unsplash attribution
                 const unsplashAttr = post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution;
-                if (unsplashAttr) {
-                  console.log('🖼️ Slider post has Unsplash attribution:', post.title, unsplashAttr);
-                }
 
                 return (
-                  <Link 
+                  <div 
                     key={post.id} 
-                    href={getPostUrl(post)}
                     className="min-w-full group"
                   >
                     <div className="relative overflow-hidden">
                       {/* Image Section - Reduced height */}
                       <div className="relative h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px] group/img">
+                        <Link href={getPostUrl(post)} className="absolute inset-0 z-0">
+                          <span className="sr-only">View post: {post.title}</span>
+                        </Link>
                         {imageUrl ? (
                           <div className="w-full h-full flex items-center justify-center">
                             <img
@@ -219,53 +219,13 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                               className="w-full h-full object-contain"
                             />
                             
-                            {/* Unsplash Attribution - Two-tier design */}
-                            {(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution) && (
-                              <>
-                                {/* Always visible: Small Unsplash badge */}
-                                <a
-                                  href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="absolute bottom-1.5 right-1.5 bg-white/70 hover:bg-white/90 backdrop-blur-sm rounded p-1 shadow-md hover:shadow-lg transition-all group-hover/img:opacity-0 z-10"
-                                  onClick={(e) => e.stopPropagation()}
-                                  title="Photo from Unsplash"
-                                >
-                                  <svg className="w-3 h-3 text-black/80" fill="currentColor" viewBox="0 0 32 32">
-                                    <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
-                                  </svg>
-                                </a>
-                                
-                                {/* On hover: Full attribution */}
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-md text-white text-xs px-3 py-2.5 opacity-0 group-hover/img:opacity-100 transition-all duration-300">
-                                  <div className="flex items-center gap-1">
-                                    <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32">
-                                      <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
-                                    </svg>
-                                    <span className="text-white/90">Photo by{' '}
-                                      <a
-                                        href={`${(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution)?.photographer_url}?utm_source=codedharmony&utm_medium=referral`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-white font-medium hover:text-blue-300 transition-colors"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        {(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution)?.photographer}
-                                      </a>
-                                      {' '}on{' '}
-                                      <a
-                                        href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-white font-medium hover:text-blue-300 transition-colors"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        Unsplash
-                                      </a>
-                                    </span>
-                                  </div>
-                                </div>
-                              </>
+                            {/* Unsplash Attribution */}
+                            {unsplashAttr && (
+                              <UnsplashAttribution
+                                attribution={unsplashAttr}
+                                variant="overlay"
+                                position="bottom-right"
+                              />
                             )}
                           </div>
                         ) : (
@@ -281,7 +241,7 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                       </div>
 
                       {/* Content Section - Reduced spacing on mobile */}
-                      <div className="p-4 md:p-8 lg:p-10">
+                      <Link href={getPostUrl(post)} className="block p-4 md:p-8 lg:p-10">
                         <div className="max-w-3xl mx-auto">
                           {post.organization_config?.subsection && (
                             <span 
@@ -310,9 +270,9 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                             </svg>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     </div>
-                  </Link>
+                  </div>
                 );
               })}
             </div>

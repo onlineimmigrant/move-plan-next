@@ -6,11 +6,14 @@ import Button from '@/ui/Button';
 import { supabase } from '@/lib/supabaseClient';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
 import UnsplashImageSearch, { UnsplashAttribution } from './UnsplashImageSearch';
+import PexelsImageSearch from './PexelsImageSearch';
+import type { PexelsAttributionData } from '@/components/MediaAttribution';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ImageGalleryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectImage: (url: string, attribution?: UnsplashAttribution) => void;
+  onSelectImage: (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => void;
 }
 
 interface StorageImage {
@@ -30,7 +33,7 @@ interface StorageFolder {
 type StorageItem = StorageImage | StorageFolder;
 
 export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: ImageGalleryModalProps) {
-  const [activeTab, setActiveTab] = useState<'gallery' | 'unsplash'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'unsplash' | 'pexels'>('gallery');
   const [images, setImages] = useState<StorageImage[]>([]);
   const [folders, setFolders] = useState<StorageFolder[]>([]);
   const [allImages, setAllImages] = useState<StorageImage[]>([]); // For global search
@@ -44,6 +47,9 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const themeColors = useThemeColors();
+  const { primary } = themeColors;
 
   // Fetch images from Supabase storage
   useEffect(() => {
@@ -367,6 +373,11 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
     onClose();
   };
 
+  const handlePexelsSelect = (url: string, attribution?: PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
+    onSelectImage(url, attribution, isVideo, videoData);
+    onClose();
+  };
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -379,18 +390,22 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
       zIndex={10005}
     >
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 bg-gray-50 px-6">
+      <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-6">
         <button
           onClick={() => setActiveTab('gallery')}
           className={`
             px-6 py-3 font-medium text-sm transition-all border-b-2
             ${activeTab === 'gallery'
-              ? 'border-blue-500 text-blue-600 bg-white'
-              : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              ? 'bg-white dark:bg-gray-900'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
             }
           `}
+          style={activeTab === 'gallery' ? {
+            borderColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : undefined}
         >
-          <PhotoIcon className="w-5 h-5 inline-block mr-2" />
+          <FolderIcon className="w-5 h-5 inline-block mr-2" />
           My Gallery
         </button>
         <button
@@ -398,15 +413,36 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
           className={`
             px-6 py-3 font-medium text-sm transition-all border-b-2
             ${activeTab === 'unsplash'
-              ? 'border-blue-500 text-blue-600 bg-white'
-              : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              ? 'bg-white dark:bg-gray-900'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
             }
           `}
+          style={activeTab === 'unsplash' ? {
+            borderColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : undefined}
         >
           <svg className="w-5 h-5 inline-block mr-2" viewBox="0 0 32 32" fill="currentColor">
             <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
           </svg>
           Unsplash
+        </button>
+        <button
+          onClick={() => setActiveTab('pexels')}
+          className={`
+            px-6 py-3 font-medium text-sm transition-all border-b-2
+            ${activeTab === 'pexels'
+              ? 'bg-white dark:bg-gray-900'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }
+          `}
+          style={activeTab === 'pexels' ? {
+            borderColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : undefined}
+        >
+          <PhotoIcon className="w-5 h-5 inline-block mr-2" />
+          Pexels
         </button>
       </div>
 
@@ -414,21 +450,22 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
       {activeTab === 'gallery' ? (
         <>
       {/* Search Bar & Upload - Directly below header */}
-      <div className="sticky top-0 z-10 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white">
+      <div className="sticky top-0 z-10 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative flex-1">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder={isSearching ? "Indexing..." : window.innerWidth < 768 ? "Search images" : "Search all images across folders..."}
-                disabled={isSearching}
-                className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-wait"
-              />
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder={isSearching ? "Indexing..." : window.innerWidth < 768 ? "Search images" : "Search all images across folders..."}
+              disabled={isSearching}
+              className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-wait transition-shadow"
+              style={{ '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
+            />
               {searchQuery && (
-                <div className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-xs text-sky-600 font-medium">
+                <div className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium" style={{ color: themeColors.cssVars.primary.base }}>
                   Searching all folders
                 </div>
               )}
@@ -481,11 +518,12 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
 
       {/* Breadcrumb Navigation */}
       {currentPath && (
-        <div className="px-3 sm:px-6 py-2 sm:py-3 border-b border-sky-200 bg-sky-50">
+        <div className="px-3 sm:px-6 py-2 sm:py-3 border-b bg-gray-50/50 dark:bg-gray-900/20" style={{ borderColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)`, backgroundColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 3%, transparent)` }}>
           <div className="flex items-center gap-1 sm:gap-2 text-sm overflow-x-auto">
             <button
               onClick={handleNavigateToRoot}
-              className="flex items-center gap-1 px-2 py-1 text-sky-600 hover:bg-sky-100 rounded transition-colors shrink-0"
+              className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors shrink-0"
+              style={{ color: themeColors.cssVars.primary.base }}
               title="Go to root"
             >
               <HomeIcon className="w-4 h-4" />
@@ -493,10 +531,12 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
             </button>
             {currentPath.split('/').map((segment, index) => (
               <React.Fragment key={index}>
-                <ChevronRightIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                <ChevronRightIcon className="w-4 h-4 text-gray-400 dark:text-gray-600 shrink-0" />
                 <button
                   onClick={() => handleNavigateToPath(index)}
-                  className="px-2 py-1 text-gray-700 hover:bg-sky-100 hover:text-sky-600 rounded transition-colors shrink-0 truncate max-w-[120px]"
+                  className="px-2 py-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors shrink-0 truncate max-w-[120px]"
+                  onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
+                  onMouseLeave={(e) => e.currentTarget.style.color = ''}
                   title={segment}
                 >
                   {segment}
@@ -512,8 +552,8 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-sky-500 mb-4"></div>
-              <p className="text-gray-600 text-sm sm:text-base">Loading images...</p>
+              <div className="inline-block animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 mb-4" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
+              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Loading images...</p>
             </div>
           </div>
         ) : error ? (
@@ -598,14 +638,14 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
                     <div
                       key={image.url}
                       onClick={() => handleImageSelect(image)}
-                      className={`
-                        group relative aspect-square rounded-lg overflow-hidden cursor-pointer
-                        border-2 transition-all duration-200
-                        ${selectedImage === image.url 
-                          ? 'border-sky-500 ring-4 ring-sky-100 scale-105' 
-                          : 'border-sky-200 hover:border-sky-400 hover:shadow-lg'
-                        }
-                      `}
+                      className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-200 hover:shadow-lg"
+                      style={selectedImage === image.url ? {
+                        borderColor: themeColors.cssVars.primary.base,
+                        boxShadow: `0 0 0 4px color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)`,
+                        transform: 'scale(1.05)'
+                      } : {
+                        borderColor: 'rgb(229 231 235)'
+                      }}
                     >
                       <img
                         src={image.url}
@@ -656,10 +696,10 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
       </div>
 
       {/* Footer */}
-      <div className="sticky bottom-0 flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-t border-sky-200 bg-sky-50">
-        <div className="text-xs sm:text-sm text-gray-600 hidden md:block">
+      <div className="sticky bottom-0 flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-t bg-gray-50/50 dark:bg-gray-900/20" style={{ borderColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)` }}>
+        <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hidden md:block">
           {selectedImage ? (
-            <span className="font-medium text-sky-600">1 image selected</span>
+            <span className="font-medium" style={{ color: themeColors.cssVars.primary.base }}>1 image selected</span>
           ) : (
             <span>Click an image to select it</span>
           )}
@@ -683,9 +723,12 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
         </div>
       </div>
         </>
-      ) : (
+      ) : activeTab === 'unsplash' ? (
         /* Unsplash Tab */
         <UnsplashImageSearch onSelectImage={handleUnsplashSelect} />
+      ) : (
+        /* Pexels Tab */
+        <PexelsImageSearch onSelectImage={handlePexelsSelect} />
       )}
     </BaseModal>
   );

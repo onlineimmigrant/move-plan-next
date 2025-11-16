@@ -86,3 +86,38 @@ export interface PricingComparisonProduct extends Pick<Product,
   'id' | 'product_name' | 'price_manual' | 'currency_manual' | 'currency_manual_symbol' | 
   'order_number' | 'background_color' | 'slug' | 'organization_id'
 > {}
+
+export interface ProductMedia {
+  id: number;
+  name?: string;
+  order: number;
+  image_url?: string;
+  video_player?: 'vimeo' | 'youtube' | 'pexels';
+  video_url?: string;
+  thumbnail_url?: string;
+  product_id: number;
+  partner_topic_id?: string;
+  partner_hub_content_id?: string;
+  is_video: boolean;
+  organization_id: string;
+  description?: string;
+  attrs?: {
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+    pexels_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+    };
+    pexels_video?: {
+      duration: number;
+      width: number;
+      height: number;
+    };
+    [key: string]: any; // Allow other metadata
+  };
+}

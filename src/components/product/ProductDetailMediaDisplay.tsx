@@ -1,9 +1,11 @@
 // src/components/ProductDetailMediaDisplay.tsx
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Slider from 'react-slick';
 import dynamic from 'next/dynamic';
+import NextImage from 'next/image';
+import MediaAttribution from '@/components/MediaAttribution';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
@@ -42,9 +44,28 @@ interface MediaItem {
   order: number;
   is_video: boolean;
   video_url?: string;
-  video_player?: 'youtube' | 'vimeo';
+  video_player?: 'youtube' | 'vimeo' | 'pexels';
   image_url?: string;
   thumbnail_url?: string | null;
+  attrs?: {
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+    pexels_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+    };
+    pexels_video?: {
+      duration: number;
+      width: number;
+      height: number;
+    };
+    [key: string]: any;
+  };
 }
 
 interface ProductDetailMediaDisplayProps {
@@ -62,6 +83,32 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   );
   const [loadingMedia, setLoadingMedia] = useState<number | null>(null);
   const [failedMedia, setFailedMedia] = useState<Set<number>>(new Set());
+  const [hoveredVideoId, setHoveredVideoId] = useState<number | null>(null);
+  const [showFullPlayer, setShowFullPlayer] = useState<number | null>(null);
+  const [snapshotVersion, setSnapshotVersion] = useState(0); // Track snapshot updates to trigger re-renders
+  const videoProgressRef = useRef<Map<number, number>>(new Map());
+  const videoSnapshotsRef = useRef<Map<number, string>>(new Map()); // Store video frame snapshots
+  const videoElementsRef = useRef<Map<number, HTMLVideoElement>>(new Map()); // Store video element references
+
+  // Capture current video frame as snapshot
+  const captureVideoSnapshot = useCallback((videoElement: HTMLVideoElement, mediaId: number) => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      videoSnapshotsRef.current.set(mediaId, dataUrl);
+      console.log('✅ Snapshot captured for media:', mediaId, 'Size:', canvas.width, 'x', canvas.height);
+      setSnapshotVersion(prev => prev + 1); // Trigger re-render to show new snapshot
+    } catch (error) {
+      console.error('Failed to capture video snapshot:', error);
+    }
+  }, []);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (sortedMediaItems.length <= 1 || !activeMedia) return;
@@ -100,12 +147,38 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
       const videoUrl =
         media.video_player === 'youtube'
           ? `https://www.youtube.com/watch?v=${media.video_url}`
-          : `https://vimeo.com/${media.video_url}`;
+          : media.video_player === 'vimeo'
+          ? `https://vimeo.com/${media.video_url}`
+          : media.video_url; // For Pexels, use direct URL
       
       if (isMain) {
+        const isHovered = hoveredVideoId === media.id;
+        const showHoverVideo = isHovered && media.video_player === 'pexels' && media.video_url && showFullPlayer !== media.id;
+        const showPlayer = showFullPlayer === media.id;
+        
         // Main video: centered within consistent aspect-[4/5] container
         return (
-          <div className={containerClass}>
+          <div 
+            className={containerClass}
+            onMouseEnter={() => !showPlayer && setHoveredVideoId(media.id)}
+            onMouseLeave={() => {
+              if (!showPlayer) {
+                // Capture current frame before leaving
+                const videoEl = videoElementsRef.current.get(media.id);
+                console.log('🎬 Mouse leave - videoEl from ref:', videoEl, 'paused:', videoEl?.paused, 'mediaId:', media.id);
+                if (videoEl) {
+                  captureVideoSnapshot(videoEl, media.id);
+                }
+                setHoveredVideoId(null);
+              }
+            }}
+            onDoubleClick={() => {
+              if (media.video_player === 'pexels') {
+                setShowFullPlayer(media.id);
+                setHoveredVideoId(null);
+              }
+            }}
+          >
             {isLoading && (
               <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10">
                 <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -113,38 +186,173 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
             )}
             {/* Center video within the 4:5 container */}
             <div className="w-full h-full bg-transparent flex items-center justify-center">
-              <div className="w-full aspect-video max-h-full">
-                <ReactPlayer
-                  url={videoUrl}
-                  width="100%"
-                  height="100%"
-                  controls
-                  playing={false}
-                  onReady={() => setLoadingMedia(null)}
-                  onError={() => {
-                    setLoadingMedia(null);
-                    setFailedMedia(prev => new Set(prev).add(media.id));
-                  }}
-                  config={{
-                    youtube: { 
-                      playerVars: { 
-                        modestbranding: 1,
-                        rel: 0,
-                        showinfo: 0
-                      } 
-                    },
-                    vimeo: { 
-                      playerOptions: { 
-                        background: false,
-                        title: false,
-                        byline: false,
-                        portrait: false
-                      } 
-                    },
-                  }}
-                />
-              </div>
+              {showPlayer ? (
+                /* Show full player with controls on double-click */
+                <div className="w-full aspect-video max-h-full relative">
+                  <video
+                    key={`player-${media.id}`}
+                    src={media.video_url}
+                    crossOrigin="anonymous"
+                    controls
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-contain"
+                    onLoadedMetadata={(e) => {
+                      const savedTime = videoProgressRef.current.get(media.id);
+                      if (savedTime !== undefined && savedTime > 0) {
+                        e.currentTarget.currentTime = savedTime;
+                      }
+                    }}
+                    onTimeUpdate={(e) => {
+                      const currentTime = e.currentTarget.currentTime;
+                      const duration = e.currentTarget.duration;
+                      // Reset position if video is near the end (looping soon)
+                      if (duration - currentTime < 0.1) {
+                        videoProgressRef.current.set(media.id, 0);
+                      } else {
+                        videoProgressRef.current.set(media.id, currentTime);
+                      }
+                    }}
+                    onPause={(e) => {
+                      videoProgressRef.current.set(media.id, e.currentTarget.currentTime);
+                    }}
+                  />
+                  {/* Close button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowFullPlayer(null);
+                    }}
+                    className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : showHoverVideo ? (
+                /* Show playing video on hover for Pexels */
+                <div className="w-full aspect-video max-h-full">
+                  <video
+                    key={`hover-${media.id}`}
+                    ref={(el) => {
+                      if (el) {
+                        videoElementsRef.current.set(media.id, el);
+                      }
+                    }}
+                    data-media-id={media.id}
+                    src={media.video_url}
+                    crossOrigin="anonymous"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-contain"
+                    onLoadedMetadata={(e) => {
+                      const savedTime = videoProgressRef.current.get(media.id);
+                      if (savedTime !== undefined && savedTime > 0) {
+                        e.currentTarget.currentTime = savedTime;
+                      }
+                    }}
+                    onTimeUpdate={(e) => {
+                      const currentTime = e.currentTarget.currentTime;
+                      const duration = e.currentTarget.duration;
+                      // Reset position if video is near the end (looping soon)
+                      if (duration - currentTime < 0.1) {
+                        videoProgressRef.current.set(media.id, 0);
+                      } else {
+                        videoProgressRef.current.set(media.id, currentTime);
+                      }
+                    }}
+                  />
+                </div>
+              ) : media.thumbnail_url || media.image_url ? (
+                /* Show thumbnail when not hovering - use snapshot if available */
+                <div className="w-full aspect-video max-h-full relative">
+                  {videoSnapshotsRef.current.get(media.id) ? (
+                    /* Use regular img for snapshot data URLs */
+                    <img
+                      key={`thumb-${media.id}-${snapshotVersion}`}
+                      src={videoSnapshotsRef.current.get(media.id)}
+                      alt="Product video"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    /* Use NextImage for regular URLs */
+                    <NextImage
+                      src={media.thumbnail_url || media.image_url || ''}
+                      alt="Product video"
+                      fill
+                      className="object-contain"
+                    />
+                  )}
+                  {/* Play icon overlay - more transparent */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-16 h-16 bg-black/20 hover:bg-black/30 rounded-full flex items-center justify-center transition-colors">
+                      <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Fallback to ReactPlayer if no thumbnail */
+                <div className="w-full aspect-video max-h-full">
+                  <ReactPlayer
+                    url={videoUrl}
+                    width="100%"
+                    height="100%"
+                    controls
+                    playing={false}
+                    onReady={() => setLoadingMedia(null)}
+                    onError={() => {
+                      setLoadingMedia(null);
+                      setFailedMedia(prev => new Set(prev).add(media.id));
+                    }}
+                    config={{
+                      youtube: { 
+                        playerVars: { 
+                          modestbranding: 1,
+                          rel: 0,
+                          showinfo: 0
+                        } 
+                      },
+                      vimeo: { 
+                        playerOptions: { 
+                          background: false,
+                          title: false,
+                          byline: false,
+                          portrait: false
+                        } 
+                      },
+                      file: {
+                        attributes: {
+                          controlsList: 'nodownload',
+                          playsInline: true
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </div>
+            {/* Attribution for videos - only show on main media */}
+            {isMain && media.attrs?.unsplash_attribution && (
+              <MediaAttribution
+                platform="unsplash"
+                attribution={media.attrs.unsplash_attribution as any}
+                variant="overlay"
+                position="bottom-right"
+              />
+            )}
+            {isMain && media.attrs?.pexels_attribution && (
+              <MediaAttribution
+                platform="pexels"
+                attribution={media.attrs.pexels_attribution as any}
+                variant="overlay"
+                position="bottom-right"
+              />
+            )}
           </div>
         );
       } else {
@@ -183,14 +391,37 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     portrait: false
                   } 
                 },
+                file: {
+                  attributes: {
+                    controlsList: 'nodownload',
+                    playsInline: true
+                  }
+                }
               }}
             />
+            {/* Attribution for thumbnail videos */}
+            {media.attrs?.unsplash_attribution && (
+              <MediaAttribution
+                platform="unsplash"
+                attribution={media.attrs.unsplash_attribution as any}
+                variant="overlay"
+                position="bottom-right"
+              />
+            )}
+            {media.attrs?.pexels_attribution && (
+              <MediaAttribution
+                platform="pexels"
+                attribution={media.attrs.pexels_attribution as any}
+                variant="overlay"
+                position="bottom-right"
+              />
+            )}
           </div>
         );
       }
     } else if (media.image_url && !hasFailed) {
       return (
-        <div className={`relative ${isMain ? containerClass : 'w-full h-full bg-gray-100 rounded-lg overflow-hidden'}`}>
+        <div className={`relative group/img ${isMain ? containerClass : 'w-full h-full bg-gray-100 rounded-lg overflow-hidden'}`}>
           {isLoading && (
             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
               <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -208,6 +439,23 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
               setFailedMedia(prev => new Set(prev).add(media.id));
             }}
           />
+          {/* Attribution - only show on main media */}
+          {isMain && media.attrs?.unsplash_attribution && (
+            <MediaAttribution
+              platform="unsplash"
+              attribution={media.attrs.unsplash_attribution as any}
+              variant="overlay"
+              position="bottom-right"
+            />
+          )}
+          {isMain && media.attrs?.pexels_attribution && (
+            <MediaAttribution
+              platform="pexels"
+              attribution={media.attrs.pexels_attribution as any}
+              variant="overlay"
+              position="bottom-right"
+            />
+          )}
         </div>
       );
     }

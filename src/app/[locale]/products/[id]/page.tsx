@@ -25,6 +25,15 @@ interface MediaItem {
   video_player?: 'youtube' | 'vimeo';
   image_url?: string;
   thumbnail_url?: string;
+  attrs?: {
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+    [key: string]: any;
+  };
 }
 
 interface Feature {
@@ -179,7 +188,7 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
         .eq('organization_id', organizationId),
       supabase
         .from('product_media')
-        .select('id, product_id, order, is_video, video_url, video_player, image_url, thumbnail_url')
+        .select('id, product_id, order, is_video, video_url, video_player, image_url, thumbnail_url, attrs')
         .eq('product_id', productData.id)
         .eq('organization_id', organizationId)
         .order('order', { ascending: true }),
@@ -327,7 +336,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   // Detect user currency from headers (set by middleware)
-  const headersList = headers();
+  const headersList = await headers();
   const userCurrency = detectUserCurrency(headersList);
   
   console.log('ProductDetailPage baseUrl:', baseUrl, 'userCurrency:', userCurrency);

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { MagnifyingGlassIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface UnsplashImage {
   id: string;
@@ -53,6 +54,9 @@ const UnsplashImageSearch = React.memo(function UnsplashImageSearch({ onSelectIm
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  
+  const themeColors = useThemeColors();
+  const { primary } = themeColors;
 
   // Memoized cache key generator
   const getCacheKey = useCallback((query: string, pageNum: number) => {
@@ -219,10 +223,10 @@ const UnsplashImageSearch = React.memo(function UnsplashImageSearch({ onSelectIm
   }, [loadFeaturedImages]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full p-6">
       {/* Search Header */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center gap-3">
+      <div className="flex-shrink-0 mb-4">
+        <div className="flex items-center gap-3 mb-3">
           <div className="flex-1 relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -230,17 +234,19 @@ const UnsplashImageSearch = React.memo(function UnsplashImageSearch({ onSelectIm
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search free high-resolution photos..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:border-transparent outline-none transition-shadow"
+              style={{ '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
             />
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Photos provided by{' '}
           <a
             href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
+            className="hover:underline font-medium"
+            style={{ color: themeColors.cssVars.primary.base }}
           >
             Unsplash
           </a>
@@ -248,12 +254,12 @@ const UnsplashImageSearch = React.memo(function UnsplashImageSearch({ onSelectIm
       </div>
 
       {/* Image Grid */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto -mx-6 px-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-              <p className="text-gray-600">Searching Unsplash...</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 mb-4" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
+              <p className="text-gray-600 dark:text-gray-400">Searching Unsplash...</p>
             </div>
           </div>
         ) : error ? (
@@ -285,11 +291,12 @@ const UnsplashImageSearch = React.memo(function UnsplashImageSearch({ onSelectIm
               {images.map((image) => (
                 <div
                   key={image.id}
-                  className={`
-                    relative aspect-square rounded-lg overflow-hidden cursor-pointer group
-                    ${selectedImageId === image.id ? 'ring-4 ring-blue-500' : 'hover:ring-2 hover:ring-blue-400'}
-                    transition-all
-                  `}
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group transition-all"
+                  style={selectedImageId === image.id ? {
+                    boxShadow: `0 0 0 4px ${themeColors.cssVars.primary.base}`
+                  } : undefined}
+                  onMouseEnter={(e) => !selectedImageId && (e.currentTarget.style.boxShadow = `0 0 0 2px color-mix(in srgb, ${themeColors.cssVars.primary.base} 60%, transparent)`)}
+                  onMouseLeave={(e) => !selectedImageId && (e.currentTarget.style.boxShadow = '')}
                   onClick={() => handleImageSelect(image)}
                 >
                   <img

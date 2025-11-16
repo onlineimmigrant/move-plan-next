@@ -15,12 +15,14 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Plus, Archive, CreditCard } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import type { UnsplashAttribution } from '@/components/modals/ImageGalleryModal/UnsplashImageSearch';
+import type { PexelsAttributionData } from '@/components/MediaAttribution';
+import { ProductMediaCarouselHandle } from '@/components/ProductMediaCarousel';
 import {
   ModalContainer,
   ModalHeader,
@@ -68,6 +70,10 @@ export default function ProductCreditEditModal() {
   
   // Image Gallery Modal state
   const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
+  const [isMediaGalleryOpen, setIsMediaGalleryOpen] = useState(false);
+  
+  // Ref for product media carousel
+  const carouselRef = useRef<ProductMediaCarouselHandle>(null);
   
   // State
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -233,7 +239,7 @@ export default function ProductCreditEditModal() {
     setIsImageGalleryOpen(false);
   };
 
-  const handleImageSelect = (url: string, attribution?: UnsplashAttribution) => {
+  const handleImageSelect = (url: string, attribution?: UnsplashAttribution | PexelsAttributionData) => {
     setFormData(prev => {
       const newFormData = { ...prev, links_to_image: url };
       
@@ -255,6 +261,27 @@ export default function ProductCreditEditModal() {
     });
     setIsImageGalleryOpen(false);
     setAnnouncement(attribution ? 'Unsplash image selected' : 'Product image updated');
+  };
+
+  const openMediaGallery = () => {
+    console.log('🚀 openMediaGallery called in ProductCreditEditModal');
+    setIsMediaGalleryOpen(true);
+  };
+
+  const closeMediaGallery = () => {
+    console.log('🔒 closeMediaGallery called');
+    setIsMediaGalleryOpen(false);
+  };
+
+  const handleMediaSelect = async (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
+    console.log('📸 handleMediaSelect called with:', { url, attribution, isVideo, videoData });
+    if (carouselRef.current) {
+      console.log('✅ carouselRef.current exists, calling addMediaItem');
+      await carouselRef.current.addMediaItem(url, attribution, isVideo, videoData);
+    } else {
+      console.error('❌ carouselRef.current is null!');
+    }
+    closeMediaGallery();
   };
 
   // Simplified UI for initial testing
@@ -340,6 +367,8 @@ export default function ProductCreditEditModal() {
                 onImageUrlChange={(url) => handleFormDataChange('links_to_image', url)}
                 onTaxCodeSelect={(code) => handleFormDataChange('product_tax_code', code || '')}
                 onOpenImageGallery={openImageGallery}
+                onOpenMediaGallery={openMediaGallery}
+                carouselRef={carouselRef}
               />
             )
           ) : mainTab === 'inventory' ? (
@@ -377,12 +406,21 @@ export default function ProductCreditEditModal() {
         onCancel={handleDeleteCancel}
       />
 
-      {/* Image Gallery Modal */}
+      {/* Image Gallery Modal - for main product image */}
       {isImageGalleryOpen && (
         <ImageGalleryModal
           isOpen={isImageGalleryOpen}
           onClose={closeImageGallery}
           onSelectImage={handleImageSelect}
+        />
+      )}
+
+      {/* Media Gallery Modal - for additional product photos */}
+      {isMediaGalleryOpen && (
+        <ImageGalleryModal
+          isOpen={isMediaGalleryOpen}
+          onClose={closeMediaGallery}
+          onSelectImage={handleMediaSelect}
         />
       )}
 

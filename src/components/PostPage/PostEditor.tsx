@@ -23,6 +23,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import Button from '@/ui/Button';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import type { UnsplashAttribution } from '@/components/modals/ImageGalleryModal/UnsplashImageSearch';
+import type { PexelsAttributionData } from '@/components/MediaAttribution';
 import LinkModal from '@/components/PostPage/LinkModal';
 import MarkdownEditor from '@/components/PostPage/MarkdownEditor';
 import { htmlToMarkdown, markdownToHtml, cleanHtml, unescapeMarkdown } from '@/components/PostPage/converters';
@@ -2223,8 +2224,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
     setShowImageGallery(true);
   };
 
-  const handleImageSelect = (url: string, attribution?: UnsplashAttribution) => {
-    console.log('🎯 handleImageSelect called with:', { url, attribution, hasAttribution: !!attribution });
+  const handleImageSelect = (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
+    console.log('🎯 handleImageSelect called with:', { url, attribution, hasAttribution: !!attribution, isVideo });
     
     if (url) {
       if (editorMode === 'markdown') {
@@ -2251,21 +2252,39 @@ const PostEditor: React.FC<PostEditorProps> = ({
         }).run();
       }
       
-      // Store Unsplash attribution in media_config if provided
+      // Store attribution in media_config if provided
       if (attribution && onMediaConfigChange) {
-        console.log('📸 Unsplash image selected - updating mediaConfig:', {
-          url,
-          photographer: attribution.photographer,
-          photographer_url: attribution.photographer_url
-        });
-        
-        const newMediaConfig = {
-          main_photo: url,
-          unsplash_attribution: attribution,
-        };
-        
-        console.log('📸 Calling onMediaConfigChange with:', newMediaConfig);
-        onMediaConfigChange(newMediaConfig);
+        if ('download_location' in attribution) {
+          // Unsplash attribution
+          console.log('📸 Unsplash image selected - updating mediaConfig:', {
+            url,
+            photographer: attribution.photographer,
+            photographer_url: attribution.photographer_url
+          });
+          
+          const newMediaConfig = {
+            main_photo: url,
+            unsplash_attribution: attribution,
+          };
+          
+          console.log('📸 Calling onMediaConfigChange with:', newMediaConfig);
+          onMediaConfigChange(newMediaConfig);
+        } else {
+          // Pexels attribution
+          console.log('📸 Pexels image selected - updating mediaConfig:', {
+            url,
+            photographer: attribution.photographer,
+            photographer_url: attribution.photographer_url
+          });
+          
+          const newMediaConfig = {
+            main_photo: url,
+            pexels_attribution: attribution,
+          };
+          
+          console.log('📸 Calling onMediaConfigChange with:', newMediaConfig);
+          onMediaConfigChange(newMediaConfig);
+        }
       } else {
         console.log('⚠️ NOT storing attribution:', { hasAttribution: !!attribution, hasCallback: !!onMediaConfigChange });
       }

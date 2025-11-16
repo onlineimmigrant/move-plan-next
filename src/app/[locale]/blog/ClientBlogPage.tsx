@@ -273,10 +273,13 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
               }
               
               return (
-              <Link key={post.id} href={getPostUrl(post)} className="group">
+              <div key={post.id} className="group">
                 <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                   {imageUrl ? (
                     <div className="relative w-full h-48 flex-shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center group/img">
+                      <Link href={getPostUrl(post)} className="absolute inset-0 z-0">
+                        <span className="sr-only">View post: {post.title}</span>
+                      </Link>
                       <img
                         src={imageUrl}
                         alt={post.title ?? 'Blog post image'}
@@ -296,7 +299,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                       />
                       
                       {/* Unsplash Attribution - Two-tier design */}
-                      {(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution) && (
+                      {unsplashAttr && (
                         <>
                           {/* Always visible: Small Unsplash badge */}
                           <a
@@ -313,20 +316,20 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                           </a>
                           
                           {/* On hover: Full attribution */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-md text-white text-xs px-3 py-2.5 opacity-0 group-hover/img:opacity-100 transition-all duration-300">
-                            <div className="flex items-center gap-1">
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-md text-white text-xs px-3 py-2.5 opacity-0 group-hover/img:opacity-100 transition-all duration-300 pointer-events-none">
+                            <div className="flex items-center gap-1 pointer-events-auto">
                               <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32">
                                 <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
                               </svg>
                               <span className="text-white/90">Photo by{' '}
                                 <a
-                                  href={`${(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution)?.photographer_url}?utm_source=codedharmony&utm_medium=referral`}
+                                  href={`${unsplashAttr.photographer_url}?utm_source=codedharmony&utm_medium=referral`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-white font-medium hover:text-blue-300 transition-colors"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  {(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution)?.photographer}
+                                  {unsplashAttr.photographer}
                                 </a>
                                 {' '}on{' '}
                                 <a
@@ -345,36 +348,26 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                       )}
                     </div>
                   ) : (
-                    <div className="w-full h-48 flex-shrink-0 bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center">
+                    <Link href={getPostUrl(post)} className="w-full h-48 flex-shrink-0 bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center">
                       <span className="text-6xl">📄</span>
-                    </div>
+                    </Link>
                   )}
-                  <div className="p-6 flex flex-col flex-grow">
+                  <Link href={getPostUrl(post)} className="flex flex-col p-6 flex-grow">
                     <h2 className="tracking-tight text-lg line-clamp-1 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
                       {post.title ?? 'Untitled'}
                     </h2>
                     <p className="tracking-widest text-base text-gray-600 font-light line-clamp-2 flex-grow">
                       {post.description ?? 'No description available'}
                     </p>
-                  </div>
-                  <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end relative">
-                    {post.subsection && post.subsection.trim() !== '' ? (
-                      <>
-                        <span className="text-gray-500 text-sm font-medium group-hover:opacity-0 transition-opacity duration-200">
-                          {post.subsection}
-                        </span>
-                        <span className="absolute right-6 text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <ArrowRightIcon className="h-5 w-5" />
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-sky-400">
-                        <ArrowRightIcon className="h-5 w-5" />
-                      </span>
-                    )}
-                  </div>
+                  </Link>
+                  <Link href={getPostUrl(post)} className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end">
+                    <span className="inline-flex items-center text-xs tracking-wider font-semibold text-sky-500 group-hover:text-sky-600 transition-colors uppercase">
+                      Read More
+                      <ArrowRightIcon className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </Link>
                 </div>
-              </Link>
+              </div>
               );
             })}
           </div>
