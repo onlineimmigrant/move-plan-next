@@ -6,6 +6,7 @@ import Slider from 'react-slick';
 import dynamic from 'next/dynamic';
 import NextImage from 'next/image';
 import MediaAttribution from '@/components/MediaAttribution';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
@@ -73,6 +74,7 @@ interface ProductDetailMediaDisplayProps {
 }
 
 const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ mediaItems }) => {
+  const themeColors = useThemeColors();
   const sortedMediaItems = useMemo(
     () => [...mediaItems].sort((a, b) => a.order - b.order),
     [mediaItems]
@@ -93,6 +95,12 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   // Capture current video frame as snapshot
   const captureVideoSnapshot = useCallback((videoElement: HTMLVideoElement, mediaId: number) => {
     try {
+      // Check if video has valid dimensions and is ready
+      if (!videoElement.videoWidth || !videoElement.videoHeight || videoElement.readyState < 2) {
+        console.warn('Video not ready for snapshot capture');
+        return;
+      }
+      
       const canvas = document.createElement('canvas');
       canvas.width = videoElement.videoWidth;
       canvas.height = videoElement.videoHeight;
@@ -103,7 +111,6 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
       ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
       videoSnapshotsRef.current.set(mediaId, dataUrl);
-      console.log('✅ Snapshot captured for media:', mediaId, 'Size:', canvas.width, 'x', canvas.height);
       setSnapshotVersion(prev => prev + 1); // Trigger re-render to show new snapshot
     } catch (error) {
       console.error('Failed to capture video snapshot:', error);
@@ -123,13 +130,25 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
       case 'ArrowRight':
         newIndex = currentIndex < sortedMediaItems.length - 1 ? currentIndex + 1 : 0;
         break;
+      case 'Escape':
+        if (showFullPlayer !== null) {
+          event.preventDefault();
+          // Capture current frame before closing
+          const videoEl = videoElementsRef.current.get(showFullPlayer);
+          if (videoEl) {
+            captureVideoSnapshot(videoEl, showFullPlayer);
+          }
+          setShowFullPlayer(null);
+          return;
+        }
+        return;
       default:
         return;
     }
     
     event.preventDefault();
     setActiveMedia(sortedMediaItems[newIndex]);
-  }, [sortedMediaItems, activeMedia]);
+  }, [sortedMediaItems, activeMedia, showFullPlayer, captureVideoSnapshot]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -141,7 +160,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
     const hasFailed = failedMedia.has(media.id);
     
     // Use consistent aspect ratio for all main media to prevent jumping
-    const containerClass = isMain ? "w-full aspect-[4/5] rounded-lg overflow-hidden" : "w-full h-full";
+    const containerClass = isMain ? "w-full aspect-[4/5] rounded-lg overflow-hidden relative" : "w-full h-full";
 
     if (media.is_video && media.video_url && media.video_player && !hasFailed) {
       const videoUrl =
@@ -165,7 +184,6 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
               if (!showPlayer) {
                 // Capture current frame before leaving
                 const videoEl = videoElementsRef.current.get(media.id);
-                console.log('🎬 Mouse leave - videoEl from ref:', videoEl, 'paused:', videoEl?.paused, 'mediaId:', media.id);
                 if (videoEl) {
                   captureVideoSnapshot(videoEl, media.id);
                 }
@@ -180,23 +198,34 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
             }}
           >
             {isLoading && (
-              <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10">
-                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10" role="status" aria-live="polite">
+                <div 
+                  className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+                  style={{ borderColor: `${themeColors.cssVars.primary.base} transparent transparent transparent` }}
+                  aria-label="Loading media"
+                ></div>
               </div>
             )}
             {/* Center video within the 4:5 container */}
             <div className="w-full h-full bg-transparent flex items-center justify-center">
               {showPlayer ? (
                 /* Show full player with controls on double-click */
-                <div className="w-full aspect-video max-h-full relative">
+                <div className="w-full aspect-video max-h-full relative" role="dialog" aria-label="Video player">
                   <video
                     key={`player-${media.id}`}
+                    ref={(el) => {
+                      if (el) {
+                        videoElementsRef.current.set(media.id, el);
+                      }
+                    }}
+                    data-media-id={media.id}
                     src={media.video_url}
                     crossOrigin="anonymous"
                     controls
                     autoPlay
                     playsInline
                     className="w-full h-full object-contain"
+                    aria-label="Product video player"
                     onLoadedMetadata={(e) => {
                       const savedTime = videoProgressRef.current.get(media.id);
                       if (savedTime !== undefined && savedTime > 0) {
@@ -221,9 +250,25 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      // Capture current frame before closing
+                      const videoEl = videoElementsRef.current.get(media.id);
+                      if (videoEl) {
+                        captureVideoSnapshot(videoEl, media.id);
+                      }
                       setShowFullPlayer(null);
                     }}
-                    className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        // Capture current frame before closing
+                        const videoEl = videoElementsRef.current.get(media.id);
+                        if (videoEl) {
+                          captureVideoSnapshot(videoEl, media.id);
+                        }
+                        setShowFullPlayer(null);
+                      }
+                    }}
+                    className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+                    aria-label="Close video player"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -232,7 +277,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                 </div>
               ) : showHoverVideo ? (
                 /* Show playing video on hover for Pexels */
-                <div className="w-full aspect-video max-h-full">
+                <div className="w-full aspect-video max-h-full animate-fade-in">
                   <video
                     key={`hover-${media.id}`}
                     ref={(el) => {
@@ -247,7 +292,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     loop
                     muted
                     playsInline
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain transition-opacity duration-300"
                     onLoadedMetadata={(e) => {
                       const savedTime = videoProgressRef.current.get(media.id);
                       if (savedTime !== undefined && savedTime > 0) {
@@ -268,14 +313,14 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                 </div>
               ) : media.thumbnail_url || media.image_url ? (
                 /* Show thumbnail when not hovering - use snapshot if available */
-                <div className="w-full aspect-video max-h-full relative">
+                <div className="w-full aspect-video max-h-full relative transition-opacity duration-300">
                   {videoSnapshotsRef.current.get(media.id) ? (
                     /* Use regular img for snapshot data URLs */
                     <img
                       key={`thumb-${media.id}-${snapshotVersion}`}
                       src={videoSnapshotsRef.current.get(media.id)}
                       alt="Product video"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain transition-opacity duration-300"
                     />
                   ) : (
                     /* Use NextImage for regular URLs */
@@ -462,10 +507,36 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
     
     return (
       <div className={isMain ? "w-full aspect-[4/5] bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center rounded-lg" : "w-full h-full bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center rounded-lg"}>  
-        <svg className="w-8 h-8 text-gray-300 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <span className="text-gray-400 text-xs">{hasFailed ? 'Failed' : 'No media'}</span>
+        <span className="text-gray-400 text-xs mb-2">{hasFailed ? 'Failed to load' : 'No media'}</span>
+        {hasFailed && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setFailedMedia(prev => {
+                const next = new Set(prev);
+                next.delete(media.id);
+                return next;
+              });
+              setLoadingMedia(media.id);
+            }}
+            className="px-3 py-1 text-xs rounded-md transition-colors"
+            style={{ 
+              backgroundColor: themeColors.cssVars.primary.base,
+              color: 'white'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1';
+            }}
+          >
+            Retry
+          </button>
+        )}
       </div>
     );
   };
@@ -493,29 +564,94 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   return (
     <div className="relative z-10 w-full">
       {/* Mobile: Main media slider with elegant arrows */}
-      <div className="md:hidden relative">
-        {sortedMediaItems.length > 1 && (
-          <div className="absolute top-3 right-3 z-10 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
-            {sortedMediaItems.findIndex(item => item.id === activeMedia?.id) + 1} / {sortedMediaItems.length}
-          </div>
-        )}
-        <Slider {...mainSliderSettings} className="w-full">
-          {sortedMediaItems.map((media) => (
-            <div key={media.id} className="px-1">
-              {renderMedia(media, true)}
+      <div className="block md:hidden">
+        <div className="relative w-full">
+          {sortedMediaItems.length > 1 && (
+            <div className="absolute top-3 right-3 z-10 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+              {sortedMediaItems.findIndex(item => item.id === activeMedia?.id) + 1} / {sortedMediaItems.length}
             </div>
-          ))}
-        </Slider>
+          )}
+          <div className="w-full mb-4">{renderMedia(activeMedia, true)}</div>
+          {sortedMediaItems.length > 1 && (
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <button
+                onClick={() => {
+                  const currentIndex = sortedMediaItems.findIndex(item => item.id === activeMedia?.id);
+                  const newIndex = currentIndex > 0 ? currentIndex - 1 : sortedMediaItems.length - 1;
+                  setActiveMedia(sortedMediaItems[newIndex]);
+                }}
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                aria-label="Previous media"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="flex gap-2 overflow-x-auto py-2 px-2">
+                {sortedMediaItems.map((media, index) => (
+                  <button
+                    key={media.id}
+                    onClick={() => setActiveMedia(media)}
+                    className={`flex-shrink-0 w-12 h-12 rounded-md overflow-hidden transition-all ${
+                      activeMedia?.id === media.id 
+                        ? 'ring-2 ring-offset-1 scale-110' 
+                        : 'opacity-60 hover:opacity-100'
+                    }`}
+                    style={activeMedia?.id === media.id ? { '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties : {}}
+                    aria-label={`View media ${index + 1}`}
+                  >
+                    {media.is_video ? (
+                      <div className="relative w-full h-full bg-gray-100">
+                        {media.thumbnail_url || media.image_url ? (
+                          <img
+                            src={media.thumbnail_url || media.image_url}
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200"></div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-4 h-4 bg-black/30 rounded-full flex items-center justify-center">
+                            <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <img
+                        src={media.thumbnail_url || media.image_url || ''}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  const currentIndex = sortedMediaItems.findIndex(item => item.id === activeMedia?.id);
+                  const newIndex = currentIndex < sortedMediaItems.length - 1 ? currentIndex + 1 : 0;
+                  setActiveMedia(sortedMediaItems[newIndex]);
+                }}
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                aria-label="Next media"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Desktop: Main media with thumbnail carousel and navigation arrows */}
       <div className="hidden md:block">
-        <div className="w-full mb-6">{renderMedia(activeMedia, true)}</div>
+        <div className="w-full mb-4">{renderMedia(activeMedia, true)}</div>
         {sortedMediaItems.length > 1 && (
           <div className="relative">
-            <div className="text-center text-sm text-gray-500 mb-3">
-              {sortedMediaItems.findIndex(item => item.id === activeMedia?.id) + 1} of {sortedMediaItems.length}
-            </div>
             <div className="relative">
               {sortedMediaItems.length > 5 && (
                 <>
@@ -555,7 +691,13 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                   </button>
                 </>
               )}
-              <div className="flex items-start justify-start space-x-6 overflow-x-auto pb-6 pt-2 thumbnail-container scroll-smooth">
+              <div 
+                className="flex items-start justify-start space-x-6 overflow-x-auto pb-6 pt-2 thumbnail-container scroll-smooth touch-pan-x"
+                style={{ 
+                  scrollbarWidth: 'thin',
+                  WebkitOverflowScrolling: 'touch' as any,
+                }}
+              >
                 {sortedMediaItems.map((media, index) => {
                   const isActive = activeMedia?.id === media.id;
                   const isVideo = media.is_video && media.video_url && media.video_player;
@@ -566,7 +708,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       onMouseEnter={() => setActiveMedia(media)}
                       onClick={() => setActiveMedia(media)}
                       className={`
-                        relative cursor-pointer flex-shrink-0 w-16 aspect-[4/5] rounded-lg px-2 py-1 mx-1
+                        relative cursor-pointer flex-shrink-0 w-16 h-16 rounded-lg mx-1
                         transition-all duration-200 ease-out
                         ${
                           isActive
@@ -585,13 +727,21 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       }}
                     >
                       {isVideo ? (
-                        <div className="relative w-full h-full rounded-md overflow-hidden">
-                          {/* Video thumbnail background - use actual thumbnail if available */}
-                          {media.thumbnail_url || media.image_url ? (
+                        <div className="relative w-full h-full rounded-md overflow-hidden bg-gray-100">
+                          {/* Video thumbnail background - use snapshot if available, otherwise use actual thumbnail */}
+                          {videoSnapshotsRef.current.get(media.id) ? (
+                            <img
+                              key={`carousel-thumb-${media.id}-${snapshotVersion}`}
+                              src={videoSnapshotsRef.current.get(media.id)}
+                              alt={`Video thumbnail ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (media.thumbnail_url || media.image_url) ? (
                             <img
                               src={media.thumbnail_url || media.image_url}
                               alt={`Video thumbnail ${index + 1}`}
-                              className="w-full h-full object-contain"
+                              className="w-full h-full object-cover"
                               loading="lazy"
                               onError={(e) => {
                                 // Fallback to gradient background if thumbnail fails
@@ -601,26 +751,23 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                           ) : null}
                           
                           {/* Fallback transparent background for videos without thumbnails */}
-                          <div className="absolute inset-0 bg-transparent flex items-center justify-center" 
+                          <div className="absolute inset-0 bg-gray-200 flex items-center justify-center" 
                                style={{ 
                                  display: media.thumbnail_url || media.image_url ? 'none' : 'flex'
                                }}>
                           </div>
                           
-                          {/* Play button overlay - always visible */}
-                          <div className="absolute inset-0 bg-transparent flex items-center justify-center">
-                            <div className="w-5 h-5 bg-red-500/90 text-white rounded-full flex items-center justify-center text-xs shadow-lg">
-                              ▶
+                          {/* Play button overlay - same style as main video */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-8 h-8 bg-black/20 rounded-full flex items-center justify-center transition-colors">
+                              <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
                             </div>
-                          </div>
-                          
-                          {/* Video platform indicator */}
-                          <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
-                            {media.video_player === 'youtube' ? 'YT' : 'VM'}
                           </div>
                         </div>
                       ) : (
-                        <div className="relative w-full h-full rounded-md overflow-hidden">
+                        <div className="relative w-full h-full rounded-md overflow-hidden bg-gray-100">
                           {media.image_url ? (
                             <img
                               src={
@@ -629,14 +776,14 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                                   : media.image_url
                               }
                               alt={`Thumbnail ${index + 1}`}
-                              className="w-full h-full object-contain"
+                              className="w-full h-full object-cover"
                               loading="lazy"
                               onError={(e) => {
                                 e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMCA2VjE0TTYgMTBIMTQiIHN0cm9rZT0iIzk3QTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+';
                               }}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center">
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
                               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
@@ -651,6 +798,9 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                   );
                 })}
               </div>
+            </div>
+            <div className="text-center text-sm text-gray-500 mt-2">
+              {sortedMediaItems.findIndex(item => item.id === activeMedia?.id) + 1} of {sortedMediaItems.length}
             </div>
           </div>
         )}
