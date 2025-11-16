@@ -79,6 +79,15 @@ export default function PostEditModal() {
   const [slug, setSlug] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [mainPhoto, setMainPhoto] = useState('');
+  const [mediaConfig, setMediaConfig] = useState<{
+    main_photo?: string;
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+  }>({});
   const [metaDescription, setMetaDescription] = useState('');
   const [order, setOrder] = useState('');
   const [helpCenterOrder, setHelpCenterOrder] = useState('');
@@ -214,6 +223,7 @@ export default function PostEditModal() {
         setSlug(post.slug || '');
         setAuthorName(post.author_name || '');
         setMainPhoto(post.main_photo || post.media_config?.main_photo || '');
+        setMediaConfig(post.media_config || {});
         setMetaDescription(post.metadescription_for_page || '');
         setOrder(post.order?.toString() || post.organization_config?.order?.toString() || '');
         setHelpCenterOrder(post.help_center_order?.toString() || post.display_config?.help_center_order?.toString() || '');
@@ -469,9 +479,13 @@ export default function PostEditModal() {
           author_id: null, // Add field if needed
         },
         media_config: {
-          main_photo: mainPhoto.trim() || null,
+          main_photo: mainPhoto.trim() || mediaConfig.main_photo || null,
+          ...(mediaConfig.unsplash_attribution && { unsplash_attribution: mediaConfig.unsplash_attribution }),
         },
       };
+
+      console.log('💾 PostEditModal saving with mediaConfig:', mediaConfig);
+      console.log('💾 Final media_config in postData:', postData.media_config);
       
       if (authorName.trim()) postData.author_name = authorName.trim();
       if (metaDescription.trim()) postData.metadescription_for_page = metaDescription.trim();
@@ -738,6 +752,8 @@ export default function PostEditModal() {
                   key={`${mode}-${editingPost?.id || 'new'}-${isOpen}-${contentType}`}
                   initialContent={content}
                   initialContentType={contentType}
+                  mediaConfig={mediaConfig}
+                  onMediaConfigChange={setMediaConfig}
                   onContentChange={(newContent, newContentType) => {
                     handleContentChange(newContent);
                     if (newContentType) {
@@ -1437,8 +1453,22 @@ export default function PostEditModal() {
       <ImageGalleryModal
         isOpen={isImageGalleryOpen}
         onClose={() => setIsImageGalleryOpen(false)}
-        onSelectImage={(imageUrl) => {
+        onSelectImage={(imageUrl, attribution) => {
+          console.log('🖼️ Main photo selected:', { imageUrl, hasAttribution: !!attribution, attribution });
           handleFieldChange('mainPhoto', imageUrl);
+          
+          // Update mediaConfig with attribution if from Unsplash
+          if (attribution) {
+            setMediaConfig({
+              main_photo: imageUrl,
+              unsplash_attribution: attribution,
+            });
+          } else {
+            setMediaConfig({
+              main_photo: imageUrl,
+            });
+          }
+          
           setIsImageGalleryOpen(false);
         }}
       />

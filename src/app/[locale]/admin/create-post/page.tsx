@@ -13,6 +13,15 @@ const CreatePostPage: React.FC = () => {
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
+  const [mediaConfig, setMediaConfig] = useState<{
+    main_photo?: string;
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+  }>({});
   const [saving, setSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -67,7 +76,7 @@ const CreatePostPage: React.FC = () => {
   // Track changes
   useEffect(() => {
     setHasUnsavedChanges(title.trim() !== '' || description.trim() !== '' || content.trim() !== '');
-  }, [title, description, content]);
+  }, [title, description, content, mediaConfig]);
 
   // Load draft on component mount
   useEffect(() => {
@@ -99,6 +108,7 @@ const CreatePostPage: React.FC = () => {
       description,
       content: newContent || content,
       section_id: 1,
+      media_config: mediaConfig,
     };
 
     console.log('Sending POST request to /api/posts with data:', postData);
@@ -293,6 +303,8 @@ const CreatePostPage: React.FC = () => {
             <PostEditor 
               onSave={handleSave} 
               initialContent={content}
+              mediaConfig={mediaConfig}
+              onMediaConfigChange={setMediaConfig}
               onContentChange={(newContent) => {
                 setContent(newContent);
                 setHasUnsavedChanges(true);

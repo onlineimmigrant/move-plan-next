@@ -48,6 +48,12 @@ type BlogPostBody = {
   
   media_config?: {
     main_photo?: string | null;
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
   };
   
   // Metadata
@@ -363,10 +369,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
     }
     
     if (media_config !== undefined) {
+      console.log('📸 API received media_config:', media_config);
+      console.log('📸 Existing media_config:', existingPost.media_config);
       updateData.media_config = {
         ...existingPost.media_config,
         ...media_config,
       };
+      console.log('📸 Merged media_config:', updateData.media_config);
     }
 
     if (Object.keys(updateData).length === 0) {

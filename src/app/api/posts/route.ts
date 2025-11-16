@@ -43,6 +43,12 @@ type BlogPostBody = {
   
   media_config?: {
     main_photo?: string | null;
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
   };
   
   // Metadata
@@ -205,8 +211,6 @@ export async function POST(request: NextRequest) {
     const is_with_author = author_config.is_with_author ?? false;
     const is_company_author = author_config.is_company_author ?? false;
     const author_id = author_config.author_id ?? null;
-    
-    const main_photo = media_config.main_photo ?? null;
 
     if (!title || !slug || !content) {
       console.error('Missing required fields:', { title: !!title, slug: !!slug, content: !!content });
@@ -281,9 +285,7 @@ export async function POST(request: NextRequest) {
         products,
       },
       
-      media_config: {
-        main_photo,
-      },
+      media_config,
     };
     
     const { data: newPost, error: insertError } = await supabase

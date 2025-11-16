@@ -22,6 +22,7 @@ import { Node as TiptapNode } from '@tiptap/core';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import Button from '@/ui/Button';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
+import type { UnsplashAttribution } from '@/components/modals/ImageGalleryModal/UnsplashImageSearch';
 import LinkModal from '@/components/PostPage/LinkModal';
 import MarkdownEditor from '@/components/PostPage/MarkdownEditor';
 import { htmlToMarkdown, markdownToHtml, cleanHtml, unescapeMarkdown } from '@/components/PostPage/converters';
@@ -490,6 +491,11 @@ interface PostEditorProps {
   onEditorChange?: () => void; // Callback when editor content changes (for marking unsaved changes)
   postType?: 'default' | 'minimal' | 'landing' | 'doc_set';
   initialCodeView?: boolean;
+  mediaConfig?: {
+    main_photo?: string;
+    unsplash_attribution?: UnsplashAttribution;
+  };
+  onMediaConfigChange?: (mediaConfig: { main_photo?: string; unsplash_attribution?: UnsplashAttribution }) => void;
 }
 
 // Custom Image extension
@@ -883,7 +889,9 @@ const PostEditor: React.FC<PostEditorProps> = ({
   onCodeViewChange,
   onEditorChange,
   postType = 'default',
-  initialCodeView 
+  initialCodeView,
+  mediaConfig,
+  onMediaConfigChange
 }) => {
   const themeColors = useThemeColors();
   
@@ -2215,7 +2223,9 @@ const PostEditor: React.FC<PostEditorProps> = ({
     setShowImageGallery(true);
   };
 
-  const handleImageSelect = (url: string) => {
+  const handleImageSelect = (url: string, attribution?: UnsplashAttribution) => {
+    console.log('🎯 handleImageSelect called with:', { url, attribution, hasAttribution: !!attribution });
+    
     if (url) {
       if (editorMode === 'markdown') {
         // Insert Markdown image syntax
@@ -2241,7 +2251,26 @@ const PostEditor: React.FC<PostEditorProps> = ({
         }).run();
       }
       
-      console.log('Image inserted:', url);
+      // Store Unsplash attribution in media_config if provided
+      if (attribution && onMediaConfigChange) {
+        console.log('📸 Unsplash image selected - updating mediaConfig:', {
+          url,
+          photographer: attribution.photographer,
+          photographer_url: attribution.photographer_url
+        });
+        
+        const newMediaConfig = {
+          main_photo: url,
+          unsplash_attribution: attribution,
+        };
+        
+        console.log('📸 Calling onMediaConfigChange with:', newMediaConfig);
+        onMediaConfigChange(newMediaConfig);
+      } else {
+        console.log('⚠️ NOT storing attribution:', { hasAttribution: !!attribution, hasCallback: !!onMediaConfigChange });
+      }
+      
+      console.log('Image inserted:', url, attribution ? 'with Unsplash attribution' : '');
     }
   };
 

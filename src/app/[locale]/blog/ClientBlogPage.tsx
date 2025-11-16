@@ -23,6 +23,24 @@ interface BlogPost {
   order?: number | null;
   section_id?: string | null;
   organization_id?: string;
+  media_config?: {
+    main_photo?: string | null;
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+  };
+  attrs?: {
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+    [key: string]: any;
+  };
 }
 
 interface ClientBlogPageProps {
@@ -102,6 +120,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
             setError('Invalid data format');
             return;
           }
+          console.log('📊 Blog posts loaded:', data.posts.length, 'Sample post:', data.posts[0]);
           setPosts(data.posts);
           setHasMore(data.hasMore || false);
           setTotal(data.total || 0);
@@ -235,11 +254,29 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
               // Check if the image is SVG format
               const isSvg = imageUrl?.toLowerCase().endsWith('.svg');
               
+              // Check for Unsplash attribution in either location
+              const unsplashAttr = post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution;
+              
+              console.log('🔍 Post debug:', {
+                title: post.title,
+                has_media_config: !!post.media_config,
+                media_config: post.media_config,
+                has_attrs: !!post.attrs,
+                attrs: post.attrs,
+                unsplashAttr: unsplashAttr
+              });
+              
+              if (unsplashAttr) {
+                console.log('✅ Post HAS Unsplash attribution:', post.title, unsplashAttr);
+              } else {
+                console.log('❌ Post MISSING Unsplash attribution:', post.title);
+              }
+              
               return (
               <Link key={post.id} href={getPostUrl(post)} className="group">
                 <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                   {imageUrl ? (
-                    <div className="w-full h-48 flex-shrink-0 bg-gray-100 relative overflow-hidden flex items-center justify-center">
+                    <div className="relative w-full h-48 flex-shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center group/img">
                       <img
                         src={imageUrl}
                         alt={post.title ?? 'Blog post image'}
@@ -257,6 +294,55 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                           }
                         }}
                       />
+                      
+                      {/* Unsplash Attribution - Two-tier design */}
+                      {(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution) && (
+                        <>
+                          {/* Always visible: Small Unsplash badge */}
+                          <a
+                            href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute bottom-1.5 right-1.5 bg-white/70 hover:bg-white/90 backdrop-blur-sm rounded p-1 shadow-md hover:shadow-lg transition-all group-hover/img:opacity-0 z-10"
+                            onClick={(e) => e.stopPropagation()}
+                            title="Photo from Unsplash"
+                          >
+                            <svg className="w-3 h-3 text-black/80" fill="currentColor" viewBox="0 0 32 32">
+                              <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+                            </svg>
+                          </a>
+                          
+                          {/* On hover: Full attribution */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-md text-white text-xs px-3 py-2.5 opacity-0 group-hover/img:opacity-100 transition-all duration-300">
+                            <div className="flex items-center gap-1">
+                              <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32">
+                                <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+                              </svg>
+                              <span className="text-white/90">Photo by{' '}
+                                <a
+                                  href={`${(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution)?.photographer_url}?utm_source=codedharmony&utm_medium=referral`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-white font-medium hover:text-blue-300 transition-colors"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {(post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution)?.photographer}
+                                </a>
+                                {' '}on{' '}
+                                <a
+                                  href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-white font-medium hover:text-blue-300 transition-colors"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Unsplash
+                                </a>
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <div className="w-full h-48 flex-shrink-0 bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center">

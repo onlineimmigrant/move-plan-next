@@ -16,6 +16,15 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
   const [contentType, setContentType] = useState<'html' | 'markdown'>('html');
+  const [mediaConfig, setMediaConfig] = useState<{
+    main_photo?: string;
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+  }>({});
   const [contentLoaded, setContentLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,7 +76,12 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
   useEffect(() => {
     if (loading) return;
     setHasUnsavedChanges(true);
-  }, [title, slugState, description, content, loading]);
+  }, [title, slugState, description, content, mediaConfig, loading]);
+
+  // Debug: Log when mediaConfig changes
+  useEffect(() => {
+    console.log('🔄 mediaConfig changed:', mediaConfig);
+  }, [mediaConfig]);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -80,6 +94,8 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
           setDescription(post.description || '');
           setContent(post.content || '');
           setContentType(post.content_type || 'html');
+          setMediaConfig(post.media_config || {});
+          console.log('📖 Loaded post media_config:', post.media_config);
           setContentLoaded(true);
           setHasUnsavedChanges(false);
         } else {
@@ -116,7 +132,15 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
       description,
       content: contentToSave,
       content_type: contentTypeToSave,
+      media_config: mediaConfig,
     };
+
+    console.log('💾 Saving blog post with data:', {
+      title,
+      slug: slugState,
+      media_config: mediaConfig,
+      has_unsplash_attribution: !!mediaConfig?.unsplash_attribution
+    });
 
     try {
       const url = `/api/posts/${slug}`;
@@ -334,6 +358,8 @@ const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params 
                 }}
                 initialContent={content}
                 initialContentType={contentType}
+                mediaConfig={mediaConfig}
+                onMediaConfigChange={setMediaConfig}
                 onContentChange={(newContent, newContentType) => {
                   setContent(newContent);
                   setContentType(newContentType);

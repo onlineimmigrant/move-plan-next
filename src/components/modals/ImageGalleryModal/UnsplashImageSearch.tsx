@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { MagnifyingGlassIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 
@@ -41,7 +41,11 @@ export interface UnsplashAttribution {
   download_location: string;
 }
 
-export default function UnsplashImageSearch({ onSelectImage }: UnsplashImageSearchProps) {
+// Cache for search results to avoid repeated API calls
+const searchCache = new Map<string, { results: UnsplashImage[]; total_pages: number; timestamp: number }>();
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+const UnsplashImageSearch = React.memo(function UnsplashImageSearch({ onSelectImage }: UnsplashImageSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [images, setImages] = useState<UnsplashImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,21 +54,32 @@ export default function UnsplashImageSearch({ onSelectImage }: UnsplashImageSear
   const [totalPages, setTotalPages] = useState(0);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.trim()) {
-        searchImages(searchQuery, 1);
-      } else {
-        // Load featured images on empty search
-        loadFeaturedImages();
-      }
-    }, 500);
+  // Memoized cache key generator
+  const getCacheKey = useCallback((query: string, pageNum: number) => {
+    return `${query || 'featured'}_${pageNum}`;
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // Check if cached data is still valid
+  const getCachedData = useCallback((cacheKey: string) => {
+    const cached = searchCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached;
+    }
+    return null;
+  }, []);
 
-  const loadFeaturedImages = async () => {
+  // Memoized load featured images function
+  const loadFeaturedImages = useCallback(async () => {
+    const cacheKey = getCacheKey('', 1);
+    const cached = getCachedData(cacheKey);
+    
+    if (cached) {
+      setImages(cached.results);
+      setTotalPages(cached.total_pages);
+      setPage(1);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -76,8 +91,18 @@ export default function UnsplashImageSearch({ onSelectImage }: UnsplashImageSear
         throw new Error(data.error || 'Failed to load featured images');
       }
 
-      setImages(data.results || []);
-      setTotalPages(data.total_pages || 1);
+      const results = data.results || [];
+      const total = data.total_pages || 1;
+      
+      // Cache the results
+      searchCache.set(cacheKey, {
+        results,
+        total_pages: total,
+        timestamp: Date.now()
+      });
+
+      setImages(results);
+      setTotalPages(total);
       setPage(1);
     } catch (err) {
       console.error('Error loading featured images:', err);
@@ -85,11 +110,22 @@ export default function UnsplashImageSearch({ onSelectImage }: UnsplashImageSear
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getCacheKey, getCachedData]);
 
-  const searchImages = async (query: string, pageNum: number) => {
+  // Memoized search images function
+  const searchImages = useCallback(async (query: string, pageNum: number) => {
     if (!query.trim()) {
       loadFeaturedImages();
+      return;
+    }
+
+    const cacheKey = getCacheKey(query, pageNum);
+    const cached = getCachedData(cacheKey);
+    
+    if (cached) {
+      setImages(cached.results);
+      setTotalPages(cached.total_pages);
+      setPage(pageNum);
       return;
     }
 
@@ -104,8 +140,18 @@ export default function UnsplashImageSearch({ onSelectImage }: UnsplashImageSear
         throw new Error(data.error || 'Failed to search images');
       }
 
-      setImages(data.results || []);
-      setTotalPages(data.total_pages || 1);
+      const results = data.results || [];
+      const total = data.total_pages || 1;
+      
+      // Cache the results
+      searchCache.set(cacheKey, {
+        results,
+        total_pages: total,
+        timestamp: Date.now()
+      });
+
+      setImages(results);
+      setTotalPages(total);
       setPage(pageNum);
     } catch (err) {
       console.error('Error searching images:', err);
@@ -113,9 +159,23 @@ export default function UnsplashImageSearch({ onSelectImage }: UnsplashImageSear
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getCacheKey, getCachedData, loadFeaturedImages]);
 
-  const handleImageSelect = async (image: UnsplashImage) => {
+  // Debounced search with dependency on searchImages
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchImages(searchQuery, 1);
+      } else {
+        // Load featured images on empty search
+        loadFeaturedImages();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchImages, loadFeaturedImages]);
+
+  const handleImageSelect = useCallback(async (image: UnsplashImage) => {
     setSelectedImageId(image.id);
 
     // Trigger download tracking (required by Unsplash)
@@ -139,24 +199,24 @@ export default function UnsplashImageSearch({ onSelectImage }: UnsplashImageSear
 
     // Use regular size for best quality/performance balance
     onSelectImage(image.urls.regular, attribution);
-  };
+  }, [onSelectImage]);
 
-  const handleNextPage = () => {
+  const handleNextPage = useCallback(() => {
     if (page < totalPages) {
       searchImages(searchQuery, page + 1);
     }
-  };
+  }, [page, totalPages, searchQuery, searchImages]);
 
-  const handlePrevPage = () => {
+  const handlePrevPage = useCallback(() => {
     if (page > 1) {
       searchImages(searchQuery, page - 1);
     }
-  };
+  }, [page, searchQuery, searchImages]);
 
   // Load featured images on mount
   useEffect(() => {
     loadFeaturedImages();
-  }, []);
+  }, [loadFeaturedImages]);
 
   return (
     <div className="flex flex-col h-full">
@@ -297,4 +357,6 @@ export default function UnsplashImageSearch({ onSelectImage }: UnsplashImageSear
       </div>
     </div>
   );
-}
+});
+
+export default UnsplashImageSearch;
