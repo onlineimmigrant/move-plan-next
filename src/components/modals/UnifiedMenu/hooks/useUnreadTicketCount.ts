@@ -46,7 +46,13 @@ export function useUnreadTicketCount() {
           .eq('organization_id', settings.organization_id);
 
         if (ticketsError) {
-          console.error('Error fetching org tickets:', ticketsError);
+          console.error('Error fetching org tickets:', {
+            message: ticketsError.message,
+            details: ticketsError.details,
+            hint: ticketsError.hint,
+            code: ticketsError.code
+          });
+          setUnreadCount(0);
           return;
         }
 
@@ -66,7 +72,13 @@ export function useUnreadTicketCount() {
           .in('ticket_id', ticketIds);
 
         if (error) {
-          console.error('Error fetching admin unread count:', error);
+          console.error('Error fetching admin unread count:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          setUnreadCount(0);
           return;
         }
 

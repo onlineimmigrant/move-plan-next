@@ -18,6 +18,8 @@ import { HeroSectionEditProvider } from '@/components/modals/HeroSectionModal/co
 import { HeaderEditProvider } from '@/components/modals/HeaderEditModal/context';
 import { FooterEditProvider } from '@/components/modals/FooterEditModal/context';
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
+import { ProductModalProvider } from '@/components/modals/ProductModals/ProductCreditEditModal';
+import ProductCreditEditModal from '@/components/modals/ProductModals/ProductCreditEditModal/ProductCreditEditModal';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider } from '@/context/MeetingContext';
 import ManagedVideoCall from '@/components/modals/MeetingsModals/ManagedVideoCall';
@@ -264,6 +266,7 @@ export default function ClientProviders({
                                 <PageCreationProvider>
                                   <SiteMapModalProvider>
                                     <GlobalSettingsModalProvider>
+                                      <ProductModalProvider>
                                     <DynamicLanguageUpdater />
                                     <DefaultLocaleCookieManager />
                                     <CookieSettingsProvider>
@@ -307,9 +310,11 @@ export default function ClientProviders({
                             <PageCreationModal />
                             <SiteMapModal />
                             <GlobalSettingsModal />
+                            <ProductCreditEditModal />
                             <HeaderEditModal />
                             <FooterEditModal />
                             <LayoutManagerModal />
+                          </ProductModalProvider>
                           </GlobalSettingsModalProvider>
                         </SiteMapModalProvider>
                       </PageCreationProvider>

@@ -15,6 +15,35 @@ function validateImageUrl(url: string): string | undefined {
   }
 }
 
+/**
+ * Flatten metadata for Stripe
+ * Stripe requires all metadata values to be strings
+ * Nested objects (like unsplash_attribution) must be stringified
+ */
+function flattenMetadata(attrs: any): Record<string, string> | undefined {
+  if (!attrs || typeof attrs !== 'object') {
+    return undefined;
+  }
+
+  const flattened: Record<string, string> = {};
+  
+  for (const [key, value] of Object.entries(attrs)) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+    
+    // If value is an object or array, stringify it
+    if (typeof value === 'object') {
+      flattened[key] = JSON.stringify(value);
+    } else {
+      // Convert to string
+      flattened[key] = String(value);
+    }
+  }
+
+  return Object.keys(flattened).length > 0 ? flattened : undefined;
+}
+
 export async function POST(request: Request) {
   try {
     // Use environment variable with a single fallback for local dev
@@ -66,7 +95,7 @@ export async function POST(request: Request) {
       active: is_displayed,
       tax_code: product_tax_code,
       description: product_description || undefined,
-      metadata: attrs || undefined,
+      metadata: flattenMetadata(attrs),
     };
 
     if (validatedImageUrl) {
@@ -196,7 +225,7 @@ export async function PUT(request: Request) {
         active: updatedProduct[0].is_displayed,
         description: updatedProduct[0].product_description || undefined,
         tax_code: updatedProduct[0].product_tax_code,
-        metadata: updatedProduct[0].attrs || undefined,
+        metadata: flattenMetadata(updatedProduct[0].attrs),
       };
 
       if (finalImageUrl) {
@@ -225,7 +254,7 @@ export async function PUT(request: Request) {
       active: updatedProduct[0].is_displayed,
       description: updatedProduct[0].product_description || undefined,
       tax_code: updatedProduct[0].product_tax_code,
-      metadata: updatedProduct[0].attrs || undefined,
+      metadata: flattenMetadata(updatedProduct[0].attrs),
     };
 
     if (finalImageUrl) {

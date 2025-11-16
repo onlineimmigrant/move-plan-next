@@ -3,10 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-console.log('supabaseClient - NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
-console.log('supabaseClient - NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey);
-console.log('supabaseClient - NEXT_PUBLIC_SUPABASE_PROJECT_ID:', process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID);
-
 if (!supabaseUrl || !supabaseAnonKey || !process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID) {
   throw new Error(
     'Missing Supabase environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_SUPABASE_PROJECT_ID are set.'
@@ -20,14 +16,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     storage: typeof window !== 'undefined' ? {
       getItem: (key) => localStorage.getItem(key),
-      setItem: (key, value) => {
-        localStorage.setItem(key, value);
-        console.log('Storage set:', key, value.slice(0, 20));
-      },
-      removeItem: (key) => {
-        localStorage.removeItem(key);
-        console.log('Storage removed:', key);
-      },
+      setItem: (key, value) => localStorage.setItem(key, value),
+      removeItem: (key) => localStorage.removeItem(key),
     } : undefined,
     flowType: 'pkce',
     cookieOptions: {
@@ -41,13 +31,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-supabase.auth.onAuthStateChange((event, session) => {
-  console.log('supabaseClient - Auth state changed:', event, 'Session:', session ? {
-    access_token: session.access_token?.substring(0, 10) + '...',
-    user_id: session.user?.id,
-  } : null);
-  if (typeof window !== 'undefined') {
-    console.log('Cookies after auth change:', document.cookie);
-    console.log('LocalStorage:', localStorage.getItem(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}-auth-token`));
-  }
-});
+// Optional: Track auth state changes (reduced logging)

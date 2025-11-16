@@ -5,11 +5,12 @@ import { XMarkIcon, MagnifyingGlassIcon, PhotoIcon, ArrowUpTrayIcon, ArrowPathIc
 import Button from '@/ui/Button';
 import { supabase } from '@/lib/supabaseClient';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
+import UnsplashImageSearch, { UnsplashAttribution } from './UnsplashImageSearch';
 
 interface ImageGalleryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectImage: (url: string) => void;
+  onSelectImage: (url: string, attribution?: UnsplashAttribution) => void;
 }
 
 interface StorageImage {
@@ -29,6 +30,7 @@ interface StorageFolder {
 type StorageItem = StorageImage | StorageFolder;
 
 export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: ImageGalleryModalProps) {
+  const [activeTab, setActiveTab] = useState<'gallery' | 'unsplash'>('gallery');
   const [images, setImages] = useState<StorageImage[]>([]);
   const [folders, setFolders] = useState<StorageFolder[]>([]);
   const [allImages, setAllImages] = useState<StorageImage[]>([]); // For global search
@@ -360,6 +362,11 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
 
   if (!isOpen) return null;
 
+  const handleUnsplashSelect = (url: string, attribution: UnsplashAttribution) => {
+    onSelectImage(url, attribution);
+    onClose();
+  };
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -371,6 +378,41 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
       resizable={true}
       zIndex={10005}
     >
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-200 bg-gray-50 px-6">
+        <button
+          onClick={() => setActiveTab('gallery')}
+          className={`
+            px-6 py-3 font-medium text-sm transition-all border-b-2
+            ${activeTab === 'gallery'
+              ? 'border-blue-500 text-blue-600 bg-white'
+              : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }
+          `}
+        >
+          <PhotoIcon className="w-5 h-5 inline-block mr-2" />
+          My Gallery
+        </button>
+        <button
+          onClick={() => setActiveTab('unsplash')}
+          className={`
+            px-6 py-3 font-medium text-sm transition-all border-b-2
+            ${activeTab === 'unsplash'
+              ? 'border-blue-500 text-blue-600 bg-white'
+              : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }
+          `}
+        >
+          <svg className="w-5 h-5 inline-block mr-2" viewBox="0 0 32 32" fill="currentColor">
+            <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+          </svg>
+          Unsplash
+        </button>
+      </div>
+
+      {/* Content based on active tab */}
+      {activeTab === 'gallery' ? (
+        <>
       {/* Search Bar & Upload - Directly below header */}
       <div className="sticky top-0 z-10 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white">
         <div className="flex flex-col gap-3">
@@ -640,6 +682,11 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
           </Button>
         </div>
       </div>
+        </>
+      ) : (
+        /* Unsplash Tab */
+        <UnsplashImageSearch onSelectImage={handleUnsplashSelect} />
+      )}
     </BaseModal>
   );
 }

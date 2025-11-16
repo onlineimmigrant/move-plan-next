@@ -32,6 +32,7 @@ import { useGlobalSettingsModal } from '@/components/modals/GlobalSettingsModal/
 import { useLayoutManager } from '@/components/modals/LayoutManagerModal/context';
 import { useHeaderEdit } from '@/components/modals/HeaderEditModal/context';
 import { useFooterEdit } from '@/components/modals/FooterEditModal/context';
+import { useProductModal } from '@/components/modals/ProductModals/ProductCreditEditModal';
 import { getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -72,6 +73,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
   const { openModal: openLayoutManagerModal } = useLayoutManager();
   const { openModal: openHeaderEditModal } = useHeaderEdit();
   const { openModal: openFooterEditModal } = useFooterEdit();
+  const { openModal: openProductModal } = useProductModal();
 
   const quickActions: QuickAction[] = [
     // Navigation Section - MOVED TO TOP (most common actions)
@@ -167,8 +169,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       shortcut: `${modifierKey}7`,
       action: () => {
         onClose();
-        // TODO: Implement product page creation
-        alert('Product page creation coming soon');
+        openProductModal();
       },
     },
     // General Section

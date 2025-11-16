@@ -53,6 +53,15 @@ interface Product {
   pricing_plans?: PricingPlan[];
   amazon_books_url?: string;
   product_media?: MediaItem[];
+  attrs?: {
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+      photo_url: string;
+      download_location: string;
+    };
+    [key: string]: any;
+  };
   [key: string]: any;
 }
 
@@ -122,6 +131,15 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
       currency_manual?: string;
       product_sub_type_id: number;
       product_sub_type: ProductSubType | null;
+      attrs?: {
+        unsplash_attribution?: {
+          photographer: string;
+          photographer_url: string;
+          photo_url: string;
+          download_location: string;
+        };
+        [key: string]: any;
+      };
     }
 
     const { data: productData, error: productError } = await supabase
@@ -136,6 +154,7 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
         price_manual,
         currency_manual,
         product_sub_type_id,
+        attrs,
         product_sub_type:product_sub_type (id, name)
       `)
       .eq('slug', slug)
@@ -417,7 +436,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     {links_to_image ? (
                       <div className="group relative bg-white/60 backdrop-blur-sm border border-white/30 rounded-3xl p-6 shadow-2xl shadow-blue-100/20 hover:shadow-3xl hover:shadow-blue-100/30 transition-all duration-500">
                         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/30 rounded-3xl group-hover:to-blue-50/40 transition-all duration-500"></div>
-                        <div className="relative rounded-2xl overflow-hidden">
+                        <div className="relative rounded-2xl overflow-hidden group/img">
                           <Image
                             src={links_to_image}
                             alt={product_name || 'Product image'}
@@ -426,6 +445,51 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                             className="max-h-64 md:max-h-80 lg:max-h-96 object-contain w-full transform group-hover:scale-105 transition-transform duration-700"
                             priority
                           />
+                          {/* Unsplash Attribution - Two-tier design */}
+                          {product.attrs?.unsplash_attribution && (
+                            <>
+                              {/* Always visible: Small Unsplash badge */}
+                              <a
+                                href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="absolute bottom-2 right-2 bg-white/70 hover:bg-white/90 backdrop-blur-sm rounded p-1 shadow-md hover:shadow-lg transition-all group-hover/img:opacity-0 z-10"
+                                title="Photo from Unsplash"
+                              >
+                                <svg className="w-3.5 h-3.5 text-black/80" fill="currentColor" viewBox="0 0 32 32">
+                                  <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+                                </svg>
+                              </a>
+                              
+                              {/* On hover: Full attribution */}
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-md text-white text-sm px-4 py-3 opacity-0 group-hover/img:opacity-100 transition-all duration-300">
+                                <div className="flex items-center gap-1.5">
+                                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32">
+                                    <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+                                  </svg>
+                                  <span className="text-white/90">Photo by{' '}
+                                    <a
+                                      href={`${product.attrs.unsplash_attribution.photographer_url}?utm_source=codedharmony&utm_medium=referral`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-white font-medium hover:text-blue-300 transition-colors"
+                                    >
+                                      {product.attrs.unsplash_attribution.photographer}
+                                    </a>
+                                    {' '}on{' '}
+                                    <a
+                                      href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-white font-medium hover:text-blue-300 transition-colors"
+                                    >
+                                      Unsplash
+                                    </a>
+                                  </span>
+                                </div>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     ) : (

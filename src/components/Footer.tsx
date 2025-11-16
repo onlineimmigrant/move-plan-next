@@ -7,17 +7,12 @@ import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useCookieSettings } from '@/context/CookieSettingsContext';
 import { MenuItem, SubMenuItem } from '@/types/menu';
+import ModernLanguageSwitcher from './ModernLanguageSwitcher';
 import LocalizedLink from './LocalizedLink';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import { FooterType } from '@/types/settings';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
-
-// Dynamically import ModernLanguageSwitcher to prevent hydration issues
-const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'), {
-  ssr: false,
-  loading: () => null
-});
 import { isAdminClient } from '@/lib/auth';
 
 const ContactModal = dynamic(() => import('./contact/ContactModal'), { 
@@ -344,7 +339,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       <span
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        style={{ ...getLinkStyles(isHovered), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
+        style={getLinkStyles(isHovered)}
       >
         <LocalizedLink
           href={href}
@@ -413,7 +408,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
               return (
                 <div key={item.id} className="col-span-1 min-h-[200px]">
-                  <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                  <h3 className="text-base font-semibold mb-4">
                     <FooterLink
                       href={item.url_name || '#'}
                       className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
@@ -424,7 +419,6 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                   </h3>
                   <ul className="space-y-2">
                     {item.website_submenuitem
-                      ?.sort((a, b) => (a.order || 0) - (b.order || 0))
                       ?.map((subItem) => {
                         const translatedSubItemName = currentLocale 
                           ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
@@ -448,7 +442,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
             {groupedItemsWithoutSubitems.map((group, index) => (
               <div key={`group-${index}`} className="col-span-1 min-h-[200px]">
-                <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                <h3 className="text-base font-semibold mb-4">
                   <FooterLink
                     href={group[0]?.url_name || '#'}
                     className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
@@ -479,7 +473,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             ))}
 
             <div className="col-span-1 min-h-[200px]">
-              <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{isAdmin ? translations.admin : translations.profile}</h3>
+              <h3 className="text-base font-semibold mb-4">{isAdmin ? translations.admin : translations.profile}</h3>
               <ul className="space-y-2">
                 {isAuthenticated ? (
                   <>
@@ -591,7 +585,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
       <div className="mt-12 border-t pt-6" style={{ borderColor: `${getColorValue(footerStyles.color)}66` }}>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <small className="text-xs" style={{ color: getColorValue(footerStyles.color), opacity: 0.7, fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+          <small className="text-xs" style={{ color: getColorValue(footerStyles.color), opacity: 0.7 }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
           </small>
           {settings?.with_language_switch && (
@@ -626,7 +620,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         <button
           onClick={() => setShowSettings(true)}
           className="text-sm hover:underline transition-colors duration-200"
-          style={{ color: getColorValue(footerStyles.color), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
+          style={{ color: getColorValue(footerStyles.color) }}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
           }}
@@ -637,7 +631,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         >
           {translations.privacySettings}
         </button>
-        <p className="text-xs opacity-60" style={{ color: getColorValue(footerStyles.color), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+        <p className="text-xs opacity-60" style={{ color: getColorValue(footerStyles.color) }}>
           © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
         </p>
         {settings?.with_language_switch && (
@@ -665,7 +659,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           <button
             onClick={() => setShowSettings(true)}
             className="text-sm transition-colors duration-200"
-            style={{ color: getColorValue(footerStyles.color), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
+            style={{ color: getColorValue(footerStyles.color) }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
             }}
@@ -682,7 +676,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           {settings?.with_language_switch && (
             <ModernLanguageSwitcher openUpward={true} variant="footer" />
           )}
-          <p className="text-xs whitespace-nowrap" style={{ color: getColorValue(footerStyles.color), fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+          <p className="text-xs whitespace-nowrap" style={{ color: getColorValue(footerStyles.color) }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}
           </p>
         </div>
@@ -709,9 +703,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
               </FooterLink>
             </h3>
             <ul className="flex flex-wrap justify-center gap-4">
-              {item.website_submenuitem
-                ?.sort((a, b) => (a.order || 0) - (b.order || 0))
-                ?.map((subItem) => {
+              {item.website_submenuitem?.map((subItem) => {
                 const translatedSubItemName = currentLocale 
                   ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
                   : subItem.name;
@@ -797,73 +789,62 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
   // GRID FOOTER - Balanced 4-column grid
   const renderGridFooter = () => {
+    const allItems = [...itemsWithSubitems, ...groupedItemsWithoutSubitems.flat()];
+    const columns = 4;
+    const itemsPerColumn = Math.ceil(allItems.length / columns);
+    const gridColumns = Array.from({ length: columns }, (_, i) => 
+      allItems.slice(i * itemsPerColumn, (i + 1) * itemsPerColumn)
+    );
+
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {/* Company Info */}
-          <div>
-            <h3 
-              className="text-base font-semibold mb-4"
-              style={{ color: getColorValue(footerStyles.colorHover) }}
-            >
-              {settings?.site || 'Company'}
-            </h3>
-            <p 
-              className="text-sm opacity-75" 
-              style={{ color: getColorValue(footerStyles.color) }}
-            >
-              Your trusted partner for all your needs
-            </p>
-          </div>
-
-          {/* Menu Columns - First 3 items with submenus */}
-          {itemsWithSubitems.slice(0, 3).map((item) => {
-            const translatedDisplayName = currentLocale 
-              ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
-              : item.display_name;
-            const submenuItems = item.website_submenuitem || [];
-            
-            return (
-              <div key={item.id}>
-                <h3 
-                  className="text-base font-semibold mb-4"
-                  style={{ color: getColorValue(footerStyles.colorHover) }}
-                >
-                  <FooterLink href={item.url_name || '#'} isHeading={true}>
-                    {translatedDisplayName}
-                  </FooterLink>
-                </h3>
-                <ul className="space-y-2">
-                  {submenuItems
-                    .filter((sub: any) => sub.is_displayed !== false)
-                    .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-                    .slice(0, 4)
-                    .map((subItem: any) => {
-                      const translatedSubItemName = currentLocale 
-                        ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
-                        : subItem.name;
-                      return (
-                        <li key={subItem.id}>
-                          <FooterLink href={subItem.url_name || '#'} className="text-sm">
-                            {translatedSubItemName}
-                          </FooterLink>
-                        </li>
-                      );
-                    })}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
+        <nav className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12" aria-label="Footer navigation">
+          {gridColumns.map((column, colIndex) => (
+            <div key={`col-${colIndex}`}>
+              <ul className="space-y-3">
+                {column.map((item) => {
+                  const translatedDisplayName = currentLocale 
+                    ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+                    : item.display_name;
+                  return (
+                    <li key={item.id}>
+                      <FooterLink href={item.url_name || '#'} className="text-sm">
+                        {translatedDisplayName}
+                      </FooterLink>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
         
-        <div className="pt-6 border-t" style={{ borderColor: `${getColorValue(footerStyles.color)}33` }}>
+        <div className="border-t pt-6" style={{ borderColor: `${getColorValue(footerStyles.color)}33` }}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-xs" style={{ color: getColorValue(footerStyles.color) }}>
-              © {new Date().getFullYear()} {settings?.site || 'Company'}. All rights reserved.
-            </p>
-            {settings?.with_language_switch && (
-              <ModernLanguageSwitcher openUpward={true} variant="footer" />
-            )}
+            <div className="flex items-center gap-6">
+              <button
+                onClick={() => setShowSettings(true)}
+                className="text-sm transition-colors duration-200"
+                style={{ color: getColorValue(footerStyles.color) }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = getColorValue(footerStyles.color);
+                }}
+                aria-label={translations.privacySettings}
+              >
+                {translations.privacySettings}
+              </button>
+              <p className="text-xs" style={{ color: getColorValue(footerStyles.color) }}>
+                © {new Date().getFullYear()} {settings?.site || 'Company'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {settings?.with_language_switch && (
+                <ModernLanguageSwitcher openUpward={true} variant="footer" />
+              )}
+            </div>
           </div>
         </div>
       </>

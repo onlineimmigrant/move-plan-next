@@ -51,7 +51,12 @@ export function useUnreadMeetingsCount() {
           .not('viewed_by', 'cs', `["${userId}"]`); // cs = contains (PostgreSQL JSONB operator)
 
         if (error) {
-          console.error('❌ Error fetching admin unviewed meetings:', error);
+          console.error('❌ Error fetching admin unviewed meetings:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
           setUnreadCount(0);
           return;
         }
