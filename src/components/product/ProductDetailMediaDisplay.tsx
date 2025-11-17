@@ -243,51 +243,67 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                 ></div>
               </div>
             )}
-            {/* Center media within the 4:3 container */}
             <div className="w-full h-full flex items-center justify-center">
               {showPlayer ? (
-                /* Show full player with controls on double-click */
                 <div className="w-full aspect-video max-h-full relative" role="dialog" aria-label="Video player">
-                  <video
-                    key={`player-${media.id}`}
-                    ref={(el) => {
-                      if (el) {
-                        videoElementsRef.current.set(media.id, el);
-                      }
-                    }}
-                    data-media-id={media.id}
-                    src={media.video_url}
-                    crossOrigin="anonymous"
-                    controls
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-contain"
-                    aria-label="Product video player"
-                    onLoadedMetadata={(e) => {
-                      const savedTime = videoProgressRef.current.get(media.id);
-                      if (savedTime !== undefined && savedTime > 0) {
-                        e.currentTarget.currentTime = savedTime;
-                      }
-                    }}
-                    onTimeUpdate={(e) => {
-                      const currentTime = e.currentTarget.currentTime;
-                      const duration = e.currentTarget.duration;
-                      // Reset position if video is near the end (looping soon)
-                      if (duration - currentTime < 0.1) {
-                        videoProgressRef.current.set(media.id, 0);
-                      } else {
-                        videoProgressRef.current.set(media.id, currentTime);
-                      }
-                    }}
-                    onPause={(e) => {
-                      videoProgressRef.current.set(media.id, e.currentTarget.currentTime);
-                    }}
-                  />
+                  {media.video_player === 'pexels' ? (
+                    <video
+                      key={`player-${media.id}`}
+                      ref={(el) => {
+                        if (el) {
+                          videoElementsRef.current.set(media.id, el);
+                        }
+                      }}
+                      data-media-id={media.id}
+                      src={media.video_url}
+                      crossOrigin="anonymous"
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain"
+                      aria-label="Product video player"
+                      onLoadedMetadata={(e) => {
+                        const savedTime = videoProgressRef.current.get(media.id);
+                        if (savedTime !== undefined && savedTime > 0) {
+                          e.currentTarget.currentTime = savedTime;
+                        }
+                      }}
+                      onTimeUpdate={(e) => {
+                        const currentTime = e.currentTarget.currentTime;
+                        const duration = e.currentTarget.duration;
+                        if (duration - currentTime < 0.1) {
+                          videoProgressRef.current.set(media.id, 0);
+                        } else {
+                          videoProgressRef.current.set(media.id, currentTime);
+                        }
+                      }}
+                      onPause={(e) => {
+                        videoProgressRef.current.set(media.id, e.currentTarget.currentTime);
+                      }}
+                    />
+                  ) : (
+                    <ReactPlayer
+                      url={videoUrl}
+                      width="100%"
+                      height="100%"
+                      controls
+                      playing
+                      onReady={() => setLoadingMedia(null)}
+                      onError={() => {
+                        setLoadingMedia(null);
+                        setFailedMedia(prev => new Set(prev).add(media.id));
+                      }}
+                      config={{
+                        youtube: { playerVars: { modestbranding: 1, rel: 0, showinfo: 0 } },
+                        vimeo: { playerOptions: { background: false, title: false, byline: false, portrait: false } },
+                        file: { attributes: { controlsList: 'nodownload', playsInline: true } }
+                      }}
+                    />
+                  )}
                   {/* Close button */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Capture current frame before closing
                       const videoEl = videoElementsRef.current.get(media.id);
                       if (videoEl) {
                         captureVideoSnapshot(videoEl, media.id);
@@ -296,7 +312,6 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Escape') {
-                        // Capture current frame before closing
                         const videoEl = videoElementsRef.current.get(media.id);
                         if (videoEl) {
                           captureVideoSnapshot(videoEl, media.id);
@@ -313,7 +328,6 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                   </button>
                 </div>
               ) : showHoverVideo ? (
-                /* Show playing video on hover for Pexels */
                 <div className="w-full aspect-video max-h-full animate-fade-in">
                   <video
                     key={`hover-${media.id}`}
@@ -349,10 +363,19 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                   />
                 </div>
               ) : (media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) ? (
-                /* Show thumbnail when not hovering - use snapshot if available */
-                <div className="w-full aspect-video max-h-full relative transition-opacity duration-300">
+                <div
+                  className="w-full aspect-video max-h-full relative transition-opacity duration-300 cursor-pointer"
+                  onClick={() => {
+                    // For YouTube/Vimeo, click to open the player
+                    if (media.video_player === 'youtube' || media.video_player === 'vimeo') {
+                      setShowFullPlayer(media.id);
+                      setHoveredVideoId(null);
+                    }
+                  }}
+                  role="button"
+                  aria-label="Play video"
+                >
                   {videoSnapshotsRef.current.get(media.id) ? (
-                    /* Use regular img for snapshot data URLs */
                     <img
                       key={`thumb-${media.id}-${snapshotVersion}`}
                       src={videoSnapshotsRef.current.get(media.id)}
@@ -360,7 +383,6 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       className="w-full h-full object-contain transition-opacity duration-300"
                     />
                   ) : (
-                    /* Use img for regular URLs to avoid NextImage validation issues */
                     <img
                       src={(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) || ''}
                       alt="Product video"
@@ -378,7 +400,6 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                   </div>
                 </div>
               ) : videoUrl && videoUrl.trim() ? (
-                /* Fallback to ReactPlayer if no thumbnail */
                 <div className="w-full aspect-video max-h-full">
                   <ReactPlayer
                       url={videoUrl}
@@ -417,7 +438,6 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                   />
                 </div>
               ) : (
-                /* Invalid video URL fallback */
                 <div className="w-full aspect-video max-h-full bg-gray-100 flex items-center justify-center">
                   <p className="text-gray-500 text-sm">Video unavailable</p>
                 </div>
