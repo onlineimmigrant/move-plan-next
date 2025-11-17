@@ -2,9 +2,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Slider from 'react-slick';
-import ReactPlayer from 'react-player';
 import { useSettings } from '@/context/SettingsContext';
+
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';

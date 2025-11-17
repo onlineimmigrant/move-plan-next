@@ -91,6 +91,43 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   const videoProgressRef = useRef<Map<number, number>>(new Map());
   const videoSnapshotsRef = useRef<Map<number, string>>(new Map()); // Store video frame snapshots
   const videoElementsRef = useRef<Map<number, HTMLVideoElement>>(new Map()); // Store video element references
+  
+  // Touch swipe handling for mobile
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+  
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+  
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50; // Minimum distance for a swipe
+    
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      const currentIndex = sortedMediaItems.findIndex(item => item.id === activeMedia?.id);
+      
+      if (swipeDistance > 0) {
+        // Swiped left - next item
+        const newIndex = currentIndex < sortedMediaItems.length - 1 ? currentIndex + 1 : 0;
+        setActiveMedia(sortedMediaItems[newIndex]);
+      } else {
+        // Swiped right - previous item
+        const newIndex = currentIndex > 0 ? currentIndex - 1 : sortedMediaItems.length - 1;
+        setActiveMedia(sortedMediaItems[newIndex]);
+      }
+    }
+    
+    // Reset
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
 
   // Capture current video frame as snapshot
   const captureVideoSnapshot = useCallback((videoElement: HTMLVideoElement, mediaId: number) => {
@@ -159,10 +196,10 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
     const isLoading = loadingMedia === media.id;
     const hasFailed = failedMedia.has(media.id);
     
-    // Use consistent aspect ratio for all main media to prevent jumping
-    const containerClass = isMain ? "w-full aspect-[4/5] rounded-lg overflow-hidden relative" : "w-full h-full";
+    // Use 4:3 aspect ratio container - works well for both portrait and landscape
+    const containerClass = isMain ? "w-full aspect-[4/3] rounded-none md:rounded-lg overflow-hidden relative bg-gray-50" : "w-full h-full";
 
-    if (media.is_video && media.video_url && media.video_player && !hasFailed) {
+    if (media.is_video && media.video_url && media.video_url.trim() && media.video_player && !hasFailed) {
       const videoUrl =
         media.video_player === 'youtube'
           ? `https://www.youtube.com/watch?v=${media.video_url}`
@@ -206,8 +243,8 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                 ></div>
               </div>
             )}
-            {/* Center video within the 4:5 container */}
-            <div className="w-full h-full bg-transparent flex items-center justify-center">
+            {/* Center media within the 4:3 container */}
+            <div className="w-full h-full flex items-center justify-center">
               {showPlayer ? (
                 /* Show full player with controls on double-click */
                 <div className="w-full aspect-video max-h-full relative" role="dialog" aria-label="Video player">
@@ -311,7 +348,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     }}
                   />
                 </div>
-              ) : media.thumbnail_url || media.image_url ? (
+              ) : (media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) ? (
                 /* Show thumbnail when not hovering - use snapshot if available */
                 <div className="w-full aspect-video max-h-full relative transition-opacity duration-300">
                   {videoSnapshotsRef.current.get(media.id) ? (
@@ -323,12 +360,12 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       className="w-full h-full object-contain transition-opacity duration-300"
                     />
                   ) : (
-                    /* Use NextImage for regular URLs */
-                    <NextImage
-                      src={media.thumbnail_url || media.image_url || ''}
+                    /* Use img for regular URLs to avoid NextImage validation issues */
+                    <img
+                      src={(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) || ''}
                       alt="Product video"
-                      fill
-                      className="object-contain"
+                      className="w-full h-full object-contain"
+                      loading="lazy"
                     />
                   )}
                   {/* Play icon overlay - more transparent */}
@@ -340,21 +377,21 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     </div>
                   </div>
                 </div>
-              ) : (
+              ) : videoUrl && videoUrl.trim() ? (
                 /* Fallback to ReactPlayer if no thumbnail */
                 <div className="w-full aspect-video max-h-full">
                   <ReactPlayer
-                    url={videoUrl}
-                    width="100%"
-                    height="100%"
-                    controls
-                    playing={false}
-                    onReady={() => setLoadingMedia(null)}
-                    onError={() => {
-                      setLoadingMedia(null);
-                      setFailedMedia(prev => new Set(prev).add(media.id));
-                    }}
-                    config={{
+                      url={videoUrl}
+                      width="100%"
+                      height="100%"
+                      controls
+                      playing={false}
+                      onReady={() => setLoadingMedia(null)}
+                      onError={() => {
+                        setLoadingMedia(null);
+                        setFailedMedia(prev => new Set(prev).add(media.id));
+                      }}
+                      config={{
                       youtube: { 
                         playerVars: { 
                           modestbranding: 1,
@@ -379,6 +416,11 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     }}
                   />
                 </div>
+              ) : (
+                /* Invalid video URL fallback */
+                <div className="w-full aspect-video max-h-full bg-gray-100 flex items-center justify-center">
+                  <p className="text-gray-500 text-sm">Video unavailable</p>
+                </div>
               )}
             </div>
             {/* Attribution for videos - only show on main media */}
@@ -402,6 +444,16 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
         );
       } else {
         // Thumbnail video: full container
+        if (!videoUrl || !videoUrl.trim()) {
+          return (
+            <div className={containerClass}>
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <p className="text-gray-500 text-xs">Video unavailable</p>
+              </div>
+            </div>
+          );
+        }
+        
         return (
           <div className={containerClass}>
             {isLoading && (
@@ -464,7 +516,8 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
           </div>
         );
       }
-    } else if (media.image_url && !hasFailed) {
+    } else if (media.image_url && media.image_url.trim() && !hasFailed) {
+      // Regular image
       return (
         <div className={`relative group/img ${isMain ? containerClass : 'w-full h-full bg-gray-100 rounded-lg overflow-hidden'}`}>
           {isLoading && (
@@ -477,7 +530,16 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
             alt={`Product media ${sortedMediaItems.findIndex(item => item.id === media.id) + 1}`}
             className={isMain ? "w-full h-full object-contain transition-opacity duration-200" : "w-full h-full object-cover"}
             loading={isMain ? 'eager' : 'lazy'}
-            onLoad={() => setLoadingMedia(null)}
+            onLoad={(e) => {
+              setLoadingMedia(null);
+              if (!isMain) {
+                const img = e.currentTarget;
+                if (img.naturalHeight > img.naturalWidth) {
+                  img.classList.remove('object-cover');
+                  img.classList.add('object-contain');
+                }
+              }
+            }}
             onLoadStart={() => setLoadingMedia(media.id)}
             onError={() => {
               setLoadingMedia(null);
@@ -563,50 +625,49 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
 
   return (
     <div className="relative z-10 w-full">
-      {/* Mobile: Main media slider with elegant arrows */}
+      {/* Mobile: Main media slider with touch swipe */}
       <div className="block md:hidden">
-        <div className="relative w-full">
+        <div 
+          className="relative w-full"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="w-full mb-3">{renderMedia(activeMedia, true)}</div>
           {sortedMediaItems.length > 1 && (
-            <div className="absolute top-3 right-3 z-10 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
-              {sortedMediaItems.findIndex(item => item.id === activeMedia?.id) + 1} / {sortedMediaItems.length}
-            </div>
-          )}
-          <div className="w-full mb-4">{renderMedia(activeMedia, true)}</div>
-          {sortedMediaItems.length > 1 && (
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <button
-                onClick={() => {
-                  const currentIndex = sortedMediaItems.findIndex(item => item.id === activeMedia?.id);
-                  const newIndex = currentIndex > 0 ? currentIndex - 1 : sortedMediaItems.length - 1;
-                  setActiveMedia(sortedMediaItems[newIndex]);
-                }}
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-                aria-label="Previous media"
+            <div className="px-4">
+              <div 
+                className="flex gap-3 overflow-x-auto py-2 mb-2 snap-x snap-mandatory pl-1"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="flex gap-2 overflow-x-auto py-2 px-2">
                 {sortedMediaItems.map((media, index) => (
                   <button
                     key={media.id}
                     onClick={() => setActiveMedia(media)}
-                    className={`flex-shrink-0 w-12 h-12 rounded-md overflow-hidden transition-all ${
+                    className={`flex-shrink-0 aspect-[4/3] rounded-md overflow-hidden transition-all snap-start bg-gray-100 ${
                       activeMedia?.id === media.id 
-                        ? 'ring-2 ring-offset-1 scale-110' 
+                        ? 'scale-105' 
                         : 'opacity-60 hover:opacity-100'
                     }`}
-                    style={activeMedia?.id === media.id ? { '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties : {}}
+                    style={{
+                      width: 'calc((100vw - 2rem - 3rem) / 2)', // 2rem padding, 3rem gap space
+                    }}
                     aria-label={`View media ${index + 1}`}
                   >
                     {media.is_video ? (
                       <div className="relative w-full h-full bg-gray-100">
-                        {media.thumbnail_url || media.image_url ? (
+                        {(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) ? (
                           <img
-                            src={media.thumbnail_url || media.image_url}
+                            src={(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) || ''}
                             alt={`Thumbnail ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full"
+                            style={{ objectFit: 'cover' }}
+                            onLoad={(e) => {
+                              const img = e.currentTarget;
+                              if (img.naturalHeight > img.naturalWidth) {
+                                img.style.objectFit = 'contain';
+                              }
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-200"></div>
@@ -620,28 +681,31 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                         </div>
                       </div>
                     ) : (
-                      <img
-                        src={media.thumbnail_url || media.image_url || ''}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="relative w-full h-full bg-gray-100">
+                        {(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) ? (
+                          <img
+                            src={(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) || ''}
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-full h-full"
+                            style={{ objectFit: 'cover' }}
+                            onLoad={(e) => {
+                              const img = e.currentTarget;
+                              if (img.naturalHeight > img.naturalWidth) {
+                                img.style.objectFit = 'contain';
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200"></div>
+                        )}
+                      </div>
                     )}
                   </button>
                 ))}
               </div>
-              <button
-                onClick={() => {
-                  const currentIndex = sortedMediaItems.findIndex(item => item.id === activeMedia?.id);
-                  const newIndex = currentIndex < sortedMediaItems.length - 1 ? currentIndex + 1 : 0;
-                  setActiveMedia(sortedMediaItems[newIndex]);
-                }}
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-                aria-label="Next media"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+              <div className="text-center text-sm text-gray-500 mt-2">
+                {sortedMediaItems.findIndex(item => item.id === activeMedia?.id) + 1} of {sortedMediaItems.length}
+              </div>
             </div>
           )}
         </div>
@@ -649,7 +713,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
 
       {/* Desktop: Main media with thumbnail carousel and navigation arrows */}
       <div className="hidden md:block">
-        <div className="w-full mb-4">{renderMedia(activeMedia, true)}</div>
+        <div className="w-full mb-3">{renderMedia(activeMedia, true)}</div>
         {sortedMediaItems.length > 1 && (
           <div className="relative">
             <div className="relative">
@@ -660,8 +724,8 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     onClick={() => {
                       const container = document.querySelector('.thumbnail-container');
                       if (container) {
-                        // Calculate scroll amount based on thumbnail width + gap (64px + 24px = 88px per thumbnail)
-                        const scrollAmount = 88 * 3; // Scroll 3 thumbnails at a time
+                        // Calculate scroll amount based on thumbnail width + gap (128px + 24px = 152px per thumbnail on desktop)
+                        const scrollAmount = 152 * 3; // Scroll 3 thumbnails at a time
                         container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
                       }
                     }}
@@ -677,8 +741,8 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     onClick={() => {
                       const container = document.querySelector('.thumbnail-container');
                       if (container) {
-                        // Calculate scroll amount based on thumbnail width + gap (64px + 24px = 88px per thumbnail)
-                        const scrollAmount = 88 * 3; // Scroll 3 thumbnails at a time
+                        // Calculate scroll amount based on thumbnail width + gap (128px + 24px = 152px per thumbnail on desktop)
+                        const scrollAmount = 152 * 3; // Scroll 3 thumbnails at a time
                         container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                       }
                     }}
@@ -708,12 +772,12 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       onMouseEnter={() => setActiveMedia(media)}
                       onClick={() => setActiveMedia(media)}
                       className={`
-                        relative cursor-pointer flex-shrink-0 w-16 h-16 rounded-lg mx-1
+                        relative cursor-pointer flex-shrink-0 w-24 md:w-32 aspect-[4/3] rounded-lg mx-1
                         transition-all duration-200 ease-out
                         ${
                           isActive
-                            ? 'ring-2 ring-gray-200 ring-offset-1 scale-105'
-                            : 'hover:ring-2 hover:ring-gray-200 hover:scale-102'
+                            ? 'scale-105'
+                            : 'opacity-80 hover:opacity-100 hover:scale-102'
                         }
                       `}
                       tabIndex={0}
@@ -734,15 +798,29 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                               key={`carousel-thumb-${media.id}-${snapshotVersion}`}
                               src={videoSnapshotsRef.current.get(media.id)}
                               alt={`Video thumbnail ${index + 1}`}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full"
+                              style={{ objectFit: 'cover' }}
                               loading="lazy"
+                              onLoad={(e) => {
+                                const img = e.currentTarget;
+                                if (img.naturalHeight > img.naturalWidth) {
+                                  img.style.objectFit = 'contain';
+                                }
+                              }}
                             />
-                          ) : (media.thumbnail_url || media.image_url) ? (
+                          ) : ((media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim())) ? (
                             <img
-                              src={media.thumbnail_url || media.image_url}
+                              src={(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) || ''}
                               alt={`Video thumbnail ${index + 1}`}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full"
+                              style={{ objectFit: 'cover' }}
                               loading="lazy"
+                              onLoad={(e) => {
+                                const img = e.currentTarget;
+                                if (img.naturalHeight > img.naturalWidth) {
+                                  img.style.objectFit = 'contain';
+                                }
+                              }}
                               onError={(e) => {
                                 // Fallback to gradient background if thumbnail fails
                                 e.currentTarget.style.display = 'none';
@@ -753,7 +831,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                           {/* Fallback transparent background for videos without thumbnails */}
                           <div className="absolute inset-0 bg-gray-200 flex items-center justify-center" 
                                style={{ 
-                                 display: media.thumbnail_url || media.image_url ? 'none' : 'flex'
+                                 display: ((media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim())) ? 'none' : 'flex'
                                }}>
                           </div>
                           
@@ -776,8 +854,15 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                                   : media.image_url
                               }
                               alt={`Thumbnail ${index + 1}`}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full"
+                              style={{ objectFit: 'cover' }}
                               loading="lazy"
+                              onLoad={(e) => {
+                                const img = e.currentTarget;
+                                if (img.naturalHeight > img.naturalWidth) {
+                                  img.style.objectFit = 'contain';
+                                }
+                              }}
                               onError={(e) => {
                                 e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMCA2VjE0TTYgMTBIMTQiIHN0cm9rZT0iIzk3QTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+';
                               }}
@@ -790,9 +875,6 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                             </div>
                           )}
                         </div>
-                      )}
-                      {isActive && (
-                        <div className="absolute inset-0 bg-gray-200/20 border border-gray-200 rounded-lg"></div>
                       )}
                     </div>
                   );

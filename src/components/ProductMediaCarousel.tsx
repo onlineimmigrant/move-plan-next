@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import dynamic from 'next/dynamic';
 import { ProductMedia } from '@/types/product';
 import Image from 'next/image';
 import MediaAttribution, { UnsplashAttributionData, PexelsAttributionData } from '@/components/MediaAttribution';
 import type { UnsplashAttribution as UnsplashAttr } from '@/components/modals/ImageGalleryModal/UnsplashImageSearch';
+
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
 interface ProductMediaCarouselProps {
   productId: number;
@@ -19,13 +22,11 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
   ({ productId, onAddMedia }, ref) => {
     const [mediaItems, setMediaItems] = useState<ProductMedia[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isVideoHovered, setIsVideoHovered] = useState(false);
-    const [showFullPlayer, setShowFullPlayer] = useState(false);
-    const videoProgressRef = React.useRef<Map<number, number>>(new Map());
-    const videoSnapshotsRef = React.useRef<Map<number, string>>(new Map());
-
-    // Capture current video frame as snapshot
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isVideoHovered, setIsVideoHovered] = useState(false);
+  const [showFullPlayer, setShowFullPlayer] = useState(false);
+  const videoProgressRef = React.useRef<Map<number, number>>(new Map());
+  const videoSnapshotsRef = React.useRef<Map<number, string>>(new Map());    // Capture current video frame as snapshot
     const captureVideoSnapshot = React.useCallback((videoElement: HTMLVideoElement, mediaId: number) => {
       try {
         const canvas = document.createElement('canvas');
@@ -105,6 +106,7 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
     };
 
     const addMediaItem = async (imageUrl: string, attribution?: UnsplashAttr | PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
+      console.log('🎬 addMediaItem called with:', { imageUrl, attribution, isVideo, videoData });
       try {
         // Determine which platform by checking for download_location (Unsplash-specific)
         let attrs: any = {};
@@ -124,16 +126,31 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
         };
 
         if (isVideo && videoData) {
-          // It's a Pexels video
-          requestBody.video_url = imageUrl; // The actual video URL
-          requestBody.video_player = 'pexels'; // Custom player type for Pexels
-          requestBody.thumbnail_url = videoData.thumbnail;
-          // Store video metadata in attrs
-          attrs.pexels_video = {
-            duration: videoData.duration,
-            width: videoData.width,
-            height: videoData.height,
-          };
+          // Check if it's a YouTube video (has video_player field)
+          if (videoData.video_player === 'youtube') {
+            requestBody.video_url = videoData.video_url; // Just the video ID
+            requestBody.video_player = 'youtube';
+            requestBody.thumbnail_url = videoData.thumbnail_url;
+            requestBody.image_url = videoData.image_url;
+            requestBody.name = videoData.title;
+          } else if (videoData.video_player === 'vimeo') {
+            requestBody.video_url = videoData.video_url; // Just the video ID
+            requestBody.video_player = 'vimeo';
+            requestBody.thumbnail_url = videoData.thumbnail_url;
+            requestBody.image_url = videoData.image_url;
+            requestBody.name = videoData.title;
+          } else {
+            // It's a Pexels video
+            requestBody.video_url = imageUrl; // The actual video URL
+            requestBody.video_player = 'pexels'; // Custom player type for Pexels
+            requestBody.thumbnail_url = videoData.thumbnail;
+            // Store video metadata in attrs
+            attrs.pexels_video = {
+              duration: videoData.duration,
+              width: videoData.width,
+              height: videoData.height,
+            };
+          }
         } else {
           // It's an image
           requestBody.image_url = imageUrl;
@@ -208,35 +225,122 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
           {/* Carousel */}
           <div className="relative aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden group/img">
             {currentMedia?.is_video && currentMedia?.video_url ? (
-              <div 
-                className="relative w-full h-full"
-                onMouseEnter={() => !showFullPlayer && setIsVideoHovered(true)}
-                onMouseLeave={() => {
-                  if (!showFullPlayer) {
-                    // Capture current frame before leaving
-                    const videoEl = document.querySelector(`video[data-media-id="${currentMedia.id}"]`) as HTMLVideoElement;
-                    if (videoEl && !videoEl.paused) {
-                      captureVideoSnapshot(videoEl, currentMedia.id);
+              currentMedia.video_player === 'youtube' || currentMedia.video_player === 'vimeo' ? (
+                /* YouTube and Vimeo videos using ReactPlayer */
+                <div className="relative w-full h-full">
+                  <ReactPlayer
+                    url={
+                      currentMedia.video_player === 'youtube'
+                        ? `https://www.youtube.com/watch?v=${currentMedia.video_url}`
+                        : currentMedia.video_player === 'vimeo'
+                        ? `https://vimeo.com/${currentMedia.video_url}`
+                        : currentMedia.video_url
                     }
-                    setIsVideoHovered(false);
-                  }
-                }}
-                onDoubleClick={() => {
-                  if (currentMedia.video_player === 'pexels') {
+                    width="100%"
+                    height="100%"
+                    controls
+                    playing={false}
+                    onReady={() => console.log('ReactPlayer ready for:', currentMedia)}
+                    onError={(error) => console.error('ReactPlayer error:', error, 'for media:', currentMedia)}
+                    config={{
+                      youtube: { 
+                        playerVars: { 
+                          modestbranding: 1,
+                          rel: 0,
+                          showinfo: 0
+                        } 
+                      },
+                      vimeo: { 
+                        playerOptions: { 
+                          background: false,
+                          title: false,
+                          byline: false,
+                          portrait: false
+                        } 
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                /* Pexels videos with hover preview */
+                <div 
+                  className="relative w-full h-full"
+                  onMouseEnter={() => !showFullPlayer && setIsVideoHovered(true)}
+                  onMouseLeave={() => {
+                    if (!showFullPlayer) {
+                      // Capture current frame before leaving
+                      const videoEl = document.querySelector(`video[data-media-id="${currentMedia.id}"]`) as HTMLVideoElement;
+                      if (videoEl && !videoEl.paused) {
+                        captureVideoSnapshot(videoEl, currentMedia.id);
+                      }
+                      setIsVideoHovered(false);
+                    }
+                  }}
+                  onDoubleClick={() => {
                     setShowFullPlayer(true);
                     setIsVideoHovered(false);
-                  }
-                }}
-              >
-                {showFullPlayer ? (
-                  /* Show full player with controls on double-click */
-                  <>
+                  }}
+                >
+                  {showFullPlayer ? (
+                    /* Show full player with controls on double-click */
+                    <>
+                      <video
+                        key={`player-${currentMedia.id}`}
+                        src={currentMedia.video_url}
+                        crossOrigin="anonymous"
+                        controls
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-contain"
+                        onLoadedMetadata={(e) => {
+                          if (currentMedia) {
+                            const savedTime = videoProgressRef.current.get(currentMedia.id);
+                            if (savedTime !== undefined && savedTime > 0) {
+                              e.currentTarget.currentTime = savedTime;
+                            }
+                          }
+                        }}
+                        onTimeUpdate={(e) => {
+                          if (currentMedia) {
+                            const currentTime = e.currentTarget.currentTime;
+                            const duration = e.currentTarget.duration;
+                            // Reset position if video is near the end (looping soon)
+                            if (duration - currentTime < 0.1) {
+                              videoProgressRef.current.set(currentMedia.id, 0);
+                            } else {
+                              videoProgressRef.current.set(currentMedia.id, currentTime);
+                            }
+                          }
+                        }}
+                        onPause={(e) => {
+                          if (currentMedia) {
+                            videoProgressRef.current.set(currentMedia.id, e.currentTarget.currentTime);
+                          }
+                        }}
+                      />
+                      {/* Close button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowFullPlayer(false);
+                        }}
+                        className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </>
+                  ) : isVideoHovered ? (
+                    /* Show video on hover for Pexels videos */
                     <video
-                      key={`player-${currentMedia.id}`}
+                      key={`hover-${currentMedia.id}`}
+                      data-media-id={currentMedia.id}
                       src={currentMedia.video_url}
                       crossOrigin="anonymous"
-                      controls
                       autoPlay
+                      loop
+                      muted
                       playsInline
                       className="w-full h-full object-contain"
                       onLoadedMetadata={(e) => {
@@ -259,91 +363,49 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
                           }
                         }
                       }}
-                      onPause={(e) => {
-                        if (currentMedia) {
-                          videoProgressRef.current.set(currentMedia.id, e.currentTarget.currentTime);
-                        }
-                      }}
                     />
-                    {/* Close button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowFullPlayer(false);
-                      }}
-                      className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </>
-                ) : isVideoHovered && currentMedia.video_player === 'pexels' ? (
-                  /* Show video on hover for Pexels videos */
-                  <video
-                    key={`hover-${currentMedia.id}`}
-                    data-media-id={currentMedia.id}
-                    src={currentMedia.video_url}
-                    crossOrigin="anonymous"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-contain"
-                    onLoadedMetadata={(e) => {
-                      if (currentMedia) {
-                        const savedTime = videoProgressRef.current.get(currentMedia.id);
-                        if (savedTime !== undefined && savedTime > 0) {
-                          e.currentTarget.currentTime = savedTime;
-                        }
-                      }
-                    }}
-                    onTimeUpdate={(e) => {
-                      if (currentMedia) {
-                        const currentTime = e.currentTarget.currentTime;
-                        const duration = e.currentTarget.duration;
-                        // Reset position if video is near the end (looping soon)
-                        if (duration - currentTime < 0.1) {
-                          videoProgressRef.current.set(currentMedia.id, 0);
-                        } else {
-                          videoProgressRef.current.set(currentMedia.id, currentTime);
-                        }
-                      }
-                    }}
-                  />
-                ) : (
-                  /* Show thumbnail when not hovering - use snapshot if available */
-                  <Image
-                    src={videoSnapshotsRef.current.get(currentMedia.id) || currentMedia.thumbnail_url || currentMedia.image_url || ''}
-                    alt={currentMedia.name || `Product video ${currentIndex + 1}`}
-                    fill
-                    className="object-contain"
-                  />
-                )}
-                {/* Play icon overlay for videos (hide when playing or in full player) */}
-                {!isVideoHovered && !showFullPlayer && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-16 h-16 bg-black/20 hover:bg-black/30 rounded-full flex items-center justify-center transition-colors">
-                      <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
+                  ) : (
+                    /* Show thumbnail when not hovering - use snapshot if available */
+                    (videoSnapshotsRef.current.get(currentMedia.id) || currentMedia.thumbnail_url || currentMedia.image_url) ? (
+                      <Image
+                        src={(videoSnapshotsRef.current.get(currentMedia.id) || currentMedia.thumbnail_url || currentMedia.image_url)!}
+                        alt={currentMedia.name || `Product video ${currentIndex + 1}`}
+                        fill
+                        className="object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                        <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )
+                  )}
+                  {/* Play icon overlay for videos (hide when playing or in full player) */}
+                  {!isVideoHovered && !showFullPlayer && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-16 h-16 bg-black/20 hover:bg-black/30 rounded-full flex items-center justify-center transition-colors">
+                        <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {/* Media Attribution Badge (Pexels videos) */}
-                {currentMedia?.attrs?.pexels_attribution && !showFullPlayer && (
-                  <MediaAttribution
-                    platform="pexels"
-                    attribution={currentMedia.attrs.pexels_attribution as any}
-                    variant="overlay"
-                    position="bottom-left"
-                  />
-                )}
-              </div>
-            ) : currentMedia?.image_url ? (
+                  )}
+                  {/* Media Attribution Badge (Pexels videos) */}
+                  {currentMedia?.attrs?.pexels_attribution && !showFullPlayer && (
+                    <MediaAttribution
+                      platform="pexels"
+                      attribution={currentMedia.attrs.pexels_attribution as any}
+                      variant="overlay"
+                      position="bottom-left"
+                    />
+                  )}
+                </div>
+              )
+            ) : currentMedia?.image_url && currentMedia.image_url.trim() ? (
               <div className="relative w-full h-full">
                 <Image
-                  src={currentMedia.image_url}
+                  src={currentMedia.image_url as string}
                   alt={currentMedia.name || `Product photo ${currentIndex + 1}`}
                   fill
                   className="object-contain"

@@ -51,17 +51,17 @@ const ProductHeader = memo(function ProductHeader({ productSubType, productName 
         }
       `}
     >
-      <div className="mt-4 flex flex-col bg-gradient-to-r from-sky-50 to-blue-50 sm:bg-transparent p-4 -mx-4 px-8">
+      <div className="mt-4 flex flex-col">
         <Link
           href={productSubType ? `/products?category=${productSubType.id}` : '/products'}
-          className="flex items-center transition-all duration-200 group font-medium text-xs text-sky-600 tracking-widest hover:text-sky-700 hover:underline mb-1"
+          className="flex items-center transition-all duration-200 group font-medium text-xs sm:text-sm text-sky-600 tracking-wide hover:text-sky-700 no-underline hover:no-underline mb-2"
         >
           <span className="transition-transform duration-200 group-hover:-translate-x-1">
             {productSubType?.name || t.allProducts}
           </span>
           <RightArrowDynamic />
         </Link>
-        <h1 className="text-base md:text-lg font-semibold tracking-tight leading-tight text-gray-900">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight text-gray-900">
           {productName}
         </h1>
       </div>

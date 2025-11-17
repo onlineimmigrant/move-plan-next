@@ -87,16 +87,16 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
 
   if (!selectedPlan.features || selectedPlan.features.length === 0) {
     return (
-      <div className="mt-6 px-4 sm:px-8">
-        <h2 className="text-base font-semibold text-gray-700 mb-4">{t.featuresIncluded}</h2>
+      <div className="mt-4 sm:mt-6 px-4 sm:px-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-3 sm:mb-4">{t.featuresIncluded}</h2>
         <p className="text-sm text-gray-600">{t.noFeaturesListed}</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-6 px-4 sm:px-8">
-      <h2 className="text-base font-semibold text-gray-700 mb-4">{t.featuresIncluded}</h2>
+    <div className="mt-4 sm:mt-6 px-4 sm:px-8">
+      <h2 className="text-lg font-bold text-gray-900 mb-3 sm:mb-4">{t.featuresIncluded}</h2>
       <div className="relative">
         <div
           ref={scrollContainerRef}
@@ -105,18 +105,20 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
           } scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-100 pr-2 pb-6 transition-all duration-300 ease-in-out`}
           style={{ scrollbarWidth: 'thin' }}
         >
-          <ul className="space-y-4">
+          <ul className="space-y-3 sm:space-y-4">
             {selectedPlan.features.map((feature) => (
               <li
                 key={feature.id}
-                className="flex items-start gap-3 border-b border-gray-100 pb-4 last:border-b-0"
+                className="flex items-start gap-3 pb-3 sm:pb-4 last:pb-0"
               >
-                <span className="text-sky-500">•</span>
+                <svg className="w-5 h-5 text-sky-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">
                     <Link
                       href={`/features/${feature.slug}`}
-                      className="flex items-center transition-all duration-300  group text-sky-600 hover:underline focus:outline-none focus:ring-2 focus:ring-sky-300"
+                      className="flex items-center transition-all duration-300 group text-sky-600 hover:text-sky-700 no-underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-sky-300"
                     >
                       {feature.name}
                       <RightArrowDynamic />
@@ -131,22 +133,22 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
           </ul>
         </div>
         {canBeScrollable && (
-          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex justify-center w-full">
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex justify-center w-full">
             {isExpanded ? (
               <button
                 onClick={collapseFeatures}
-                className="cursor-pointer p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
+                className="p-2 rounded-lg bg-white border border-sky-200 hover:bg-sky-50 hover:border-sky-300 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all duration-200"
                 aria-label={t.collapseFeaturesAriaLabel}
               >
-                <ChevronDoubleUpIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
+                <ChevronDoubleUpIcon className="h-6 w-6 text-sky-600" aria-hidden="true" />
               </button>
             ) : (
               <button
                 onClick={toggleExpand}
-                className="cursor-pointer  group p-1 rounded-full bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-colors duration-200"
+                className="p-2 rounded-lg bg-white border border-sky-200 hover:bg-sky-50 hover:border-sky-300 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all duration-200"
                 aria-label={t.expandFeaturesAriaLabel}
               >
-                <ChevronDownIcon className="h-5 w-5 text-sky-500" aria-hidden="true" />
+                <ChevronDownIcon className="h-6 w-6 text-sky-600" aria-hidden="true" />
               </button>
             )}
           </div>

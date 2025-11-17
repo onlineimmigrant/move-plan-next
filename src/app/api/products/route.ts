@@ -300,9 +300,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Missing productId' }, { status: 400 });
     }
 
+    // Fetch product with its pricing plans to get all Stripe price IDs
     const { data: product, error: fetchError } = await supabase
       .from('product')
-      .select('stripe_product_id')
+      .select('stripe_product_id, pricing_plan(stripe_price_id)')
       .eq('id', productId)
       .eq('organization_id', organizationId)
       .single();
@@ -312,19 +313,62 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
+    // Delete all Stripe prices first (Stripe requires this before deleting the product)
+    if (product.pricing_plan && Array.isArray(product.pricing_plan)) {
+      for (const plan of product.pricing_plan) {
+        if (plan.stripe_price_id) {
+          try {
+            // Archive the price instead of deleting (Stripe best practice)
+            await stripe.prices.update(plan.stripe_price_id, { active: false });
+            console.log('Archived Stripe price:', plan.stripe_price_id);
+          } catch (error: any) {
+            if (error.statusCode !== 404) {
+              console.error('Error archiving Stripe price:', plan.stripe_price_id, error.message);
+              // Continue with other prices even if one fails
+            }
+          }
+        }
+      }
+    }
+
+    // Now delete or archive the Stripe product
     if (product.stripe_product_id) {
       try {
-        await stripe.products.del(product.stripe_product_id);
-        console.log('Deleted Stripe product:', product.stripe_product_id);
+        // Archive the product instead of deleting to maintain Stripe history
+        await stripe.products.update(product.stripe_product_id, { active: false });
+        console.log('Archived Stripe product:', product.stripe_product_id);
       } catch (error: any) {
         if (error.statusCode !== 404) {
-          console.error('Error deleting Stripe product:', error.message);
-          throw error;
+          console.error('Error archiving Stripe product:', error.message);
+          // If archiving fails, try deleting
+          try {
+            await stripe.products.del(product.stripe_product_id);
+            console.log('Deleted Stripe product:', product.stripe_product_id);
+          } catch (delError: any) {
+            if (delError.statusCode !== 404) {
+              console.error('Error deleting Stripe product:', delError.message);
+              return NextResponse.json({ 
+                error: `Failed to remove product from Stripe: ${delError.message}. Please archive it manually in Stripe dashboard.` 
+              }, { status: 500 });
+            }
+          }
         }
         console.warn('Stripe product not found, proceeding with deletion:', product.stripe_product_id);
       }
     }
 
+    // Delete pricing plans first (they will be cascaded, but explicit deletion ensures clean RLS)
+    const { error: plansDeleteError } = await supabase
+      .from('pricing_plan')
+      .delete()
+      .eq('product_id', productId);
+
+    if (plansDeleteError) {
+      console.error('Error deleting pricing plans:', plansDeleteError.message, 'productId:', productId);
+      // Continue anyway as CASCADE should handle this
+    }
+
+    // Finally delete the product from database
     const { error: deleteError } = await supabase
       .from('product')
       .delete()

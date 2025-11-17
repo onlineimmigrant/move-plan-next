@@ -117,15 +117,17 @@ const CustomToast = memo(
 CustomToast.displayName = 'CustomToast';
 
 // Enhanced utility function for plan card styles with glassmorphism
-const planCardStyles = (isOutOfStock: boolean, isActive: boolean) =>
-  `group relative p-4 md:p-6 border rounded-2xl transition-all duration-500 ease-out focus:ring-4 focus:ring-sky-500/50 focus:ring-opacity-50 outline-none transform hover:scale-[1.02] active:scale-[0.98]
-  ${
-    isOutOfStock
-      ? 'border-gray-300/60 bg-white/30 backdrop-blur-sm cursor-not-allowed opacity-60'
-      : isActive
-      ? 'border-sky-400/60 shadow-xl shadow-sky-100/50 bg-white/80 backdrop-blur-md cursor-pointer ring-2 ring-sky-300/30'
-      : 'bg-white/70 backdrop-blur-sm border-white/40 hover:shadow-2xl hover:shadow-blue-100/30 hover:bg-white/90 hover:border-sky-300/50 cursor-pointer'
-  }`;
+  const planCardStyles = (isOutOfStock: boolean, isActive: boolean) => `
+    relative cursor-pointer
+    transition-all duration-300 ease-in-out
+    ${
+      isActive
+        ? 'rounded-2xl border-2 border-sky-400 shadow-2xl shadow-sky-200/50 scale-[1.03]'
+        : 'rounded-2xl border border-gray-200/60 shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:border-sky-200/80'
+    }
+    ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}
+    backdrop-blur-sm bg-white/80
+  `;
 
 const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   pricingPlans = [],
@@ -261,179 +263,168 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
         <div className="relative p-6 md:p-8">
           <div className={`grid grid-cols-1 gap-6 sm:gap-8 ${
             pricingPlans.length >= 3 
-              ? 'sm:grid-cols-2 lg:grid-cols-3' 
+              ? 'sm:grid-cols-2' 
               : 'sm:grid-cols-2'
           }`}>
-  {pricingPlans.map((plan, idx) => {
-    const isActive = plan.slug === selectedPlan?.slug;
-    const status = getStatus(plan);
-    const normalizedStatus = status.toLowerCase();
-    const isOutOfStock = normalizedStatus === 'out of stock';
+            {pricingPlans.map((plan, idx) => {
+              const isActive = plan.slug === selectedPlan?.slug;
+              const status = getStatus(plan);
+              const normalizedStatus = status.toLowerCase();
+              const isOutOfStock = normalizedStatus === 'out of stock';
 
-    return (
-      <div key={plan.id} className="pricing-wrapper animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
-        <div
-          className={`
-            ${planCardStyles(isOutOfStock, isActive)}
-          `}
-          role="button"
-          tabIndex={isOutOfStock ? -1 : 0}
-          onClick={() => !isOutOfStock && handlePlanSelect(plan)}
-          onKeyDown={(e) => !isOutOfStock && handleKeyDown(e, plan, idx)}
-          aria-label={`${t.selectPlan} ${plan.package || t.unknown} plan, priced at ${
-            plan.computed_currency_symbol || plan.currency_symbol
-          }${plan.is_promotion && (plan.promotion_price || plan.promotion_percent) 
-            ? (plan.computed_price 
-                ? (plan.promotion_percent 
-                    ? (plan.computed_price * (1 - plan.promotion_percent / 100)).toFixed(2)
-                    : plan.computed_price.toFixed(2))
-                : (plan.promotion_price ? plan.promotion_price.toFixed(2) : '0.00')) 
-            : (plan.computed_price || (plan.price / 100))}, ${
-            normalizedStatus === 'in stock'
-              ? t.inStock.toLowerCase()
-              : normalizedStatus === 'low stock'
-              ? t.lowStock.toLowerCase()
-              : t.outOfStock.toLowerCase()
-          }${plan.is_promotion && plan.promotion_price !== undefined ? `, ${t.onSale}` : ''}`}
-        >
-          <div className="relative pt-6 sm:pt-8 pb-6 sm:pb-8 min-h-[140px]">
-            {/* Glassmorphism overlay for active cards */}
-            {isActive && (
-              <div className="absolute inset-0 bg-gradient-to-br from-sky-50/80 via-blue-50/40 to-indigo-50/60 rounded-2xl"></div>
-            )}
-            
-            {/* Enhanced Promotion Badge */}
-            {plan.is_promotion && plan.promotion_price !== undefined && (
-              <div className="absolute -top-3 -right-3 z-20">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-sm animate-pulse"></div>
-                  <span className="relative block px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-red-500 via-red-600 to-pink-600 rounded-full shadow-xl border-2 border-white/30 backdrop-blur-sm">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      {plan.promotion_percent}{t.percentOff}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            )}
+              return (
+                <div key={plan.id} className="pricing-wrapper animate-fade-in-up p-3" style={{ animationDelay: `${idx * 100}ms` }}>
+                  <div
+                    className={`
+                      ${planCardStyles(isOutOfStock, isActive)}
+                    `}
+                    role="button"
+                    tabIndex={isOutOfStock ? -1 : 0}
+                    onClick={() => !isOutOfStock && handlePlanSelect(plan)}
+                    onKeyDown={(e) => !isOutOfStock && handleKeyDown(e, plan, idx)}
+                    aria-label={`${t.selectPlan} ${plan.package || t.unknown} plan, priced at ${
+                      plan.computed_currency_symbol || plan.currency_symbol
+                    }${plan.is_promotion && (plan.promotion_price || plan.promotion_percent) 
+                      ? (plan.computed_price 
+                          ? (plan.promotion_percent 
+                              ? (plan.computed_price * (1 - plan.promotion_percent / 100)).toFixed(2)
+                              : plan.computed_price.toFixed(2))
+                          : (plan.promotion_price ? plan.promotion_price.toFixed(2) : '0.00')) 
+                      : (plan.computed_price || (plan.price / 100))}, ${
+                      normalizedStatus === 'in stock'
+                        ? t.inStock.toLowerCase()
+                        : normalizedStatus === 'low stock'
+                        ? t.lowStock.toLowerCase()
+                        : t.outOfStock.toLowerCase()
+                    }${plan.is_promotion && plan.promotion_price !== undefined ? `, ${t.onSale}` : ''}`}
+                  >
+                    <div className="relative px-4 sm:px-6 pt-7 sm:pt-11 pb-3 sm:pb-5 min-h-[100px] sm:min-h-[140px]">
+                      {/* Glassmorphism overlay for active cards */}
+                      {isActive && (
+                        <div className="absolute inset-0 bg-gradient-to-br from-sky-100/90 via-blue-50/60 to-indigo-50/80 rounded-2xl"></div>
+                      )}
+                      
+                      {/* Refined Promotion Badge - Elegant and Attention-grabbing */}
+                      {plan.is_promotion && plan.promotion_price !== undefined && (
+                        <div className="absolute -top-3 -right-3 z-20">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-400 rounded-full blur-sm opacity-60"></div>
+                            <span className="relative block px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-red-500 via-red-600 to-pink-600 rounded-full shadow-lg border-2 border-white/40 backdrop-blur-sm">
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                <span>{plan.promotion_percent}{t.percentOff}</span>
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
-            {/* Enhanced Status Badge */}
-            <div className="absolute -bottom-2 -left-2 z-20">
-              {(() => {
-                if (normalizedStatus === 'in stock') {
-                  return (
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full blur-sm opacity-60"></div>
-                      <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-green-800 bg-white/90 backdrop-blur-sm border border-green-200/60 rounded-full shadow-lg">
-                        <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full animate-pulse"></div>
-                        {t.inStock}
-                      </span>
+                      {/* Subtle Status Badge - Informational and Minimal */}
+                      <div className="absolute top-2 sm:top-4 left-3 sm:left-4 z-10">
+                        {(() => {
+                          if (normalizedStatus === 'in stock') {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium text-green-600 bg-green-50/80 border border-green-200/50 rounded-md">
+                                <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                                {t.inStock}
+                              </span>
+                            );
+                          }
+                          if (normalizedStatus === 'low stock') {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium text-yellow-600 bg-yellow-50/80 border border-yellow-200/50 rounded-md">
+                                <div className="w-1 h-1 bg-yellow-500 rounded-full"></div>
+                                {t.lowStock}
+                              </span>
+                            );
+                          }
+                          if (normalizedStatus === 'out of stock') {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium text-gray-500 bg-gray-50/80 border border-gray-200/50 rounded-md">
+                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                {t.outOfStock}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+
+                      <div className="relative flex flex-col gap-2 sm:gap-4">
+                        {/* Price at top right */}
+                        <div className="flex justify-end">
+                          {plan.is_promotion && (plan.promotion_price !== undefined || plan.promotion_percent) ? (
+                            <div className="flex flex-col items-end space-y-0.5">
+                              <div className="flex items-baseline space-x-1.5">
+                                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
+                                  {plan.computed_currency_symbol || plan.currency_symbol}
+                                  {(() => {
+                                    // Use computed price if available (already in currency units)
+                                    // Otherwise use legacy price (stored in cents, need to divide by 100)
+                                    const basePrice = plan.computed_price || ((plan.price || 0) / 100);
+                                    if (plan.promotion_percent) {
+                                      return (basePrice * (1 - plan.promotion_percent / 100)).toFixed(2);
+                                    } else if (plan.promotion_price) {
+                                      // Use promotion_price directly (already in currency units)
+                                      return plan.promotion_price.toFixed(2);
+                                    }
+                                    return basePrice.toFixed(2);
+                                  })()}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-400 font-medium line-through">
+                                {plan.computed_currency_symbol || plan.currency_symbol}
+                                {(plan.computed_price || ((plan.price || 0) / 100)).toFixed(2)}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-end space-y-0.5">
+                              <div className="flex items-baseline space-x-1.5">
+                                <span
+                                  className={`text-2xl sm:text-3xl font-bold ${
+                                    isOutOfStock ? 'text-gray-400' : 'text-gray-800'
+                                  }`}
+                                >
+                                  {plan.computed_currency_symbol || plan.currency_symbol}
+                                  {(plan.computed_price || ((plan.price || 0) / 100)).toFixed(2)}
+                                </span>
+                              </div>
+                              <span className="text-sm text-transparent">
+                                {/* Placeholder for alignment */}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Package name and measure in separate row */}
+                        <div className="flex justify-between items-end gap-2 sm:gap-4">
+                          <h2
+                            className={`text-base sm:text-lg font-semibold ${
+                              isActive ? 'text-sky-600' : 'text-gray-800'
+                            } ${isOutOfStock ? 'text-gray-400' : ''}`}
+                          >
+                            {plan.package || t.product}
+                          </h2>
+                          <span className="text-xs sm:text-sm font-medium text-gray-500">
+                            {plan.measure}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  );
-                }
-                if (normalizedStatus === 'low stock') {
-                  return (
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur-sm opacity-60"></div>
-                      <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-yellow-800 bg-white/90 backdrop-blur-sm border border-yellow-200/60 rounded-full shadow-lg">
-                        <div className="w-2 h-2 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full animate-pulse"></div>
-                        {t.lowStock}
-                      </span>
-                    </div>
-                  );
-                }
-                if (normalizedStatus === 'out of stock') {
-                  return (
-                    <div className="relative">
-                      <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white/70 backdrop-blur-sm border border-gray-200/60 rounded-full shadow-lg">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                        {t.outOfStock}
-                      </span>
-                    </div>
-                  );
-                }
-                return (
-                  <span className="inline-block px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full shadow-sm">
-                    {t.unknown}
-                  </span>
-                );
-              })()}
-            </div>
-
-            <div className="flex justify-between items-start mb-2 sm:mb-3">
-              <div className="flex flex-col">
-                {/* Measure (Above Package) */}
-                <span className="text-xs font-medium text-gray-500 mb-0.5">
-                  {plan.measure}
-                </span>
-                <h2
-                  className={`text-sm sm:text-base font-semibold ${
-                    isActive ? 'text-sky-600' : 'text-gray-800'
-                  } ${isOutOfStock ? 'text-gray-400' : ''}`}
-                >
-                  {plan.package || t.product}
-                </h2>
-              </div>
-            </div>
-
-            <div className="min-h-[36px] sm:min-h-[48px] flex items-end justify-end">
-              {plan.is_promotion && (plan.promotion_price !== undefined || plan.promotion_percent) ? (
-                <div className="flex flex-col items-end space-y-0.5">
-                  <div className="flex items-baseline space-x-1.5">
-                    <span className="text-2xl sm:text-2xl font-bold text-gray-800">
-                      {plan.computed_currency_symbol || plan.currency_symbol}
-                      {(() => {
-                        // Use computed price if available (already in currency units)
-                        // Otherwise use legacy price (stored in cents, need to divide by 100)
-                        const basePrice = plan.computed_price || ((plan.price || 0) / 100);
-                        if (plan.promotion_percent) {
-                          return (basePrice * (1 - plan.promotion_percent / 100)).toFixed(2);
-                        } else if (plan.promotion_price) {
-                          // Use promotion_price directly (already in currency units)
-                          return plan.promotion_price.toFixed(2);
-                        }
-                        return basePrice.toFixed(2);
-                      })()}
-                    </span>
                   </div>
-                  <span className="text-sm text-gray-400 font-medium line-through">
-                    {plan.computed_currency_symbol || plan.currency_symbol}
-                    {(plan.computed_price || ((plan.price || 0) / 100)).toFixed(2)}
-                  </span>
                 </div>
-              ) : (
-                <div className="flex flex-col items-end space-y-0.5">
-                  <div className="flex items-baseline space-x-1.5">
-                    <span
-                      className={`text-2xl sm:text-2xl font-bold ${
-                        isOutOfStock ? 'text-gray-400' : 'text-gray-800'
-                      }`}
-                    >
-                      {plan.computed_currency_symbol || plan.currency_symbol}
-                      {(plan.computed_price || ((plan.price || 0) / 100)).toFixed(2)}
-                    </span>
-                  </div>
-                  <span className="text-sm text-transparent">
-                    {/* Placeholder for alignment */}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  })}
+              );
+            })}
           </div>
         </div>
       </div>
 
-      <div className="mt-4 grid sm:grid-cols-1 gap-3 md:gap-2 px-4 sm:px-8">
+      <div className="mt-6 md:mt-8 grid sm:grid-cols-1 gap-3 md:gap-4 px-4 sm:px-8">
         {activePlanCount === 0 || (selectedPlan && ((selectedPlan.computed_price || selectedPlan.price / 100) === 0 || (selectedPlan.is_promotion && (selectedPlan.computed_price ? selectedPlan.computed_price === 0 : (selectedPlan.promotion_price || 0) === 0)))) ? (
           <Link href="/register-free-trial">
-            <Button variant="start" aria-label={t.registerForFreeTrial}>
+            <Button variant="start" className="h-14 md:h-16 text-base md:text-lg font-semibold" aria-label={t.registerForFreeTrial}>
               {t.register}
               <RightArrowDynamic />
             </Button>
@@ -445,12 +436,13 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
               onClick={handleAddToBasket}
               disabled={selectedPlanStatus === 'out of stock' || isLoading}
               className={`
+                h-14 md:h-16 text-base md:text-lg font-semibold shadow-lg
                 ${
                   selectedPlanStatus !== 'out of stock' && !isLoading
                     ? isSelectedPlanActive
                       ? isAdded
-                        ? 'bg-sky-500 text-white scale-105'
-                        : 'bg-sky-500 text-white hover:bg-sky-600 hover:scale-105'
+                        ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-sky-200 scale-105'
+                        : 'bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-600 hover:to-blue-700 hover:shadow-xl hover:shadow-sky-300 hover:scale-105'
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200 hover:scale-105'
                     : 'bg-gray-200 text-gray-700 cursor-not-allowed'
                 }`}
@@ -462,7 +454,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
               ) : (
                 <>
                   <ShoppingCartIcon
-                    className="w-4 md:w-5 h-4 md:h-5 mr-1.5 md:mr-2 transition-transform duration-300 group-hover:scale-110"
+                    className="w-5 md:w-6 h-5 md:h-6 mr-2 md:mr-3 transition-transform duration-300 group-hover:scale-110"
                     aria-hidden="true"
                   />
                   <span>{isAdded ? t.added : t.addToCart}</span>
@@ -476,7 +468,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                 <Link href="/checkout">
                   <Button
                     variant="start"
-                    className="bg-sky-700"
+                    className="h-14 md:h-16 text-base md:text-lg font-semibold bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 shadow-lg hover:shadow-xl hover:shadow-sky-300"
                     aria-label={t.proceedToCheckout}
                   >
                     <span>{t.proceedToCheckout}</span>
@@ -485,7 +477,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                 </Link>
               ) : null
             ) : (
-              <div className="h-14 w-full" /> // Placeholder to match button height
+              <div className="h-14 md:h-16 w-full" /> // Placeholder to match button height
             )}
           </>
         )}
@@ -500,7 +492,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
             rel="noopener noreferrer"
             aria-label={t.buyOnAmazonAriaLabel}
           >
-            <Button variant="start" className="flex items-center bg-[#FF9900] text-gray-900 hover:text-white">
+            <Button variant="start" className="h-14 md:h-16 text-base md:text-lg font-semibold flex items-center bg-[#FF9900] text-gray-900 hover:text-white shadow-lg hover:shadow-xl">
               <svg
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"

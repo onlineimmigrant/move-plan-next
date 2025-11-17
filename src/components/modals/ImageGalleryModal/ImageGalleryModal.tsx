@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { XMarkIcon, MagnifyingGlassIcon, PhotoIcon, ArrowUpTrayIcon, ArrowPathIcon, FolderIcon, ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MagnifyingGlassIcon, PhotoIcon, ArrowUpTrayIcon, ArrowPathIcon, FolderIcon, ChevronRightIcon, HomeIcon, PlayIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import { supabase } from '@/lib/supabaseClient';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
 import UnsplashImageSearch, { UnsplashAttribution } from './UnsplashImageSearch';
 import PexelsImageSearch from './PexelsImageSearch';
+import YouTubeVideoSearch from './YouTubeVideoSearch';
 import type { PexelsAttributionData } from '@/components/MediaAttribution';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -33,7 +34,7 @@ interface StorageFolder {
 type StorageItem = StorageImage | StorageFolder;
 
 export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: ImageGalleryModalProps) {
-  const [activeTab, setActiveTab] = useState<'gallery' | 'unsplash' | 'pexels'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'unsplash' | 'pexels' | 'youtube'>('gallery');
   const [images, setImages] = useState<StorageImage[]>([]);
   const [folders, setFolders] = useState<StorageFolder[]>([]);
   const [allImages, setAllImages] = useState<StorageImage[]>([]); // For global search
@@ -378,6 +379,24 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
     onClose();
   };
 
+  const handleYouTubeSelect = (videoId: string, videoData: any) => {
+    console.log('🎥 handleYouTubeSelect called with:', { videoId, videoData });
+    // Pass YouTube video data to parent with both thumbnail_url and image_url set
+    onSelectImage(
+      `https://www.youtube.com/watch?v=${videoId}`,
+      undefined,
+      true,
+      {
+        video_player: 'youtube',
+        video_url: videoId,
+        thumbnail_url: videoData.thumbnail,
+        image_url: videoData.thumbnail, // Set image_url as well for compatibility
+        title: videoData.title,
+      }
+    );
+    onClose();
+  };
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -443,6 +462,23 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
         >
           <PhotoIcon className="w-5 h-5 inline-block mr-2" />
           Pexels
+        </button>
+        <button
+          onClick={() => setActiveTab('youtube')}
+          className={`
+            px-6 py-3 font-medium text-sm transition-all border-b-2
+            ${activeTab === 'youtube'
+              ? 'bg-white dark:bg-gray-900'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }
+          `}
+          style={activeTab === 'youtube' ? {
+            borderColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : undefined}
+        >
+          <PlayIcon className="w-5 h-5 inline-block mr-2" />
+          YouTube
         </button>
       </div>
 
@@ -726,9 +762,12 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
       ) : activeTab === 'unsplash' ? (
         /* Unsplash Tab */
         <UnsplashImageSearch onSelectImage={handleUnsplashSelect} />
-      ) : (
+      ) : activeTab === 'pexels' ? (
         /* Pexels Tab */
         <PexelsImageSearch onSelectImage={handlePexelsSelect} />
+      ) : (
+        /* YouTube Tab */
+        <YouTubeVideoSearch onSelectVideo={handleYouTubeSelect} />
       )}
     </BaseModal>
   );

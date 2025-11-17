@@ -51,10 +51,11 @@ export default function CategoryBarProductDetailPage({
 
         const { data, error } = await supabase
           .from('product')
-          .select('*')
+          .select('id, slug, product_name, product_sub_type_id, organization_id, links_to_image, product_media(image_url, thumbnail_url)')
           .eq('product_sub_type_id', currentProduct.product_sub_type_id)
           .eq('organization_id', currentProduct.organization_id)
-          .neq('id', currentProduct.id);
+          .neq('id', currentProduct.id)
+          .limit(3);
 
         if (error) {
           throw new Error(error.message);
@@ -85,35 +86,78 @@ export default function CategoryBarProductDetailPage({
   }
 
   if (!relatedProducts || relatedProducts.length === 0) {
-    return <div className="text-center py-2 text-gray-500"></div>;
+    return null;
   }
 
   return (
-    <div className="flex space-x-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent py-8">
-      {relatedProducts.map((product) => (
-        <div key={product.id} className="relative group inline-block">
-          {/* Link to the related product */}
-          <Link
-            href={`/products/${product.slug}`}
-            onClick={() => handleProductSelect(product)}
-            className="px-3 py-1 text-xs font-medium rounded transition-colors bg-gray-50 text-teal-700 hover:bg-teal-50 focus:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-300"
-            aria-describedby={`tooltip-${product.id}`}
-          >
-            {product.product_name}
-          </Link>
+    <div className="relative">
+      {/* Section Header */}
+      <div className="mb-4 px-4 md:px-0">
+        <h3 className="text-lg font-semibold text-gray-900">
+          Related
+        </h3>
+      </div>
 
-          {/* Tooltip */}
-          <span
-            id={`tooltip-${product.id}`}
-            role="tooltip"
-            className="absolute z-10 hidden group-hover:block group-focus-within:block top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-sm whitespace-nowrap transition-opacity duration-300 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
-          >
-            {t.viewSimilarProduct}
-            {/* Tooltip Arrow */}
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900" />
-          </span>
-        </div>
-      ))}
+      {/* Cards - Horizontal scroll for both mobile and desktop */}
+      <div className="flex gap-6 overflow-x-auto py-4 px-4 md:px-0 snap-x snap-mandatory"
+           style={{ scrollbarWidth: 'thin' }}>
+        {relatedProducts.slice(0, 3).map((product) => {
+          // Get first image from product_media or fallback to links_to_image
+          const firstMedia = product.product_media?.[0];
+          const imageUrl = firstMedia?.thumbnail_url || firstMedia?.image_url || product.links_to_image;
+
+          return (
+            <Link
+              key={product.id}
+              href={`/products/${product.slug}`}
+              onClick={() => handleProductSelect(product)}
+              className="group relative bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 flex-shrink-0 w-40 md:w-48 snap-start"
+            >
+              {/* Image Container */}
+              <div className="relative w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={product.product_name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    loading="lazy"
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      if (img.naturalHeight > img.naturalWidth) {
+                        img.classList.remove('object-cover');
+                        img.classList.add('object-contain');
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+
+              {/* Product Name */}
+              <div className="p-3">
+                <h3 className="text-sm font-medium text-gray-900 line-clamp-1 truncate group-hover:text-sky-600 transition-colors">
+                  {product.product_name}
+                </h3>
+              </div>
+
+              {/* Hover Indicator */}
+              <div className="absolute top-2 right-2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
+                <svg className="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

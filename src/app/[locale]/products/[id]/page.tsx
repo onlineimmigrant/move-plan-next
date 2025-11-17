@@ -393,9 +393,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <div className="md:hidden">
           {totalItems > 0 && <ProgressBar stage={1} />}
         </div>
-        <div className="px-4 mx-auto max-w-7xl py-16 md:py-10">
+        <div className="mx-auto max-w-7xl py-16 md:py-10 md:px-4">
           <div className="max-w-7xl md:-mx-4 md:px-4 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-12 lg:gap-x-12 lg:px-8 lg:items-start flex flex-col md:flex-row">
-            <div className="order-1 md:order-2 lg:col-span-7 text-gray-900 text-sm md:text-base md:mt-2 sm:mt-0 mb-1 md:mb-2">
+            <div className="order-2 md:order-2 lg:col-span-6 text-gray-900 text-sm md:text-base md:mt-2 sm:mt-0 mb-1 md:mb-2 px-4 md:px-0">
               <a
                 href="#pricing-plans"
                 className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:bg-sky-500 focus:text-white focus:p-2 focus:rounded focus:z-50"
@@ -404,9 +404,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </a>
               <ProductHeader productSubType={product.product_sub_type} productName={product_name} />
               {product_description && (
-                <div className="relative bg-white/40 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg shadow-blue-100/10">
+                <div className="relative bg-white/40 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg shadow-blue-100/10 mt-4 md:mt-6">
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/20 rounded-2xl"></div>
-                  <div className="relative text-gray-700 text-sm md:text-base font-normal leading-relaxed">
+                  <div className="relative text-gray-700 text-base md:text-lg font-normal leading-relaxed">
                     {parse(product_description)}
                   </div>
                 </div>
@@ -434,10 +434,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 </div>
               )}
             </div>
-            <div className="order-2 md:order-1 lg:col-span-5 py-4 sm:pt-6 md:pb-8 flex justify-center items-start">
-              <div className="w-full max-w-lg">
+            <div className="order-1 md:order-1 lg:col-span-6 py-4 sm:pt-6 md:pb-8 flex justify-center items-start">
+              <div className="w-full max-w-lg -mx-4 md:mx-0 space-y-8">
                 {product_media && product_media.length > 0 ? (
-                  <div className="bg-white/40 backdrop-blur-sm border border-white/20 rounded-2xl p-4">
+                  <div className="bg-white/40 backdrop-blur-sm border-0 md:border border-white/20 rounded-none md:rounded-2xl md:p-4">
                     <ProductDetailMediaDisplay mediaItems={product_media} />
                   </div>
                 ) : (
@@ -514,14 +514,21 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     )}
                   </>
                 )}
+                
+                {/* Related Products - Desktop only, in sidebar */}
+                <div className="hidden md:block">
+                  <CategoryBarProductDetailPage currentProduct={product} />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="mt-16">
-            <CategoryBarProductDetailPage currentProduct={product} />
+            
+            {/* Related Products - Mobile only, appears after both media and content */}
+            <div className="md:hidden order-3 w-full mt-10 px-4">
+              <CategoryBarProductDetailPage currentProduct={product} />
+            </div>
           </div>
           
-          <div className="mx-auto max-w-7xl space-y-12 mt-20">
+          <div className="mx-auto max-w-7xl space-y-12 mt-16">
             <div className="relative bg-white/40 backdrop-blur-sm border border-white/30 rounded-3xl shadow-xl shadow-blue-100/10">
               <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/20 rounded-3xl"></div>
               <div className="relative">
