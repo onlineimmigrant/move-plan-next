@@ -54,11 +54,24 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
   }
 
   console.log('Querying organization for URL:', currentUrl);
-  const { data, error } = await supabase
+  
+  // First try: Check if currentUrl matches any domain in the domains array
+  let { data, error } = await supabase
     .from('organizations')
-    .select('id, type')
-    .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
+    .select('id, type, domains')
+    .contains('domains', [currentUrl])
     .maybeSingle();
+  
+  // Second try: Fall back to base_url/base_url_local match if domains lookup fails
+  if (!data && !error) {
+    const result = await supabase
+      .from('organizations')
+      .select('id, type, domains')
+      .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     console.error('Error fetching organization for URL:', currentUrl, 'Error:', {
@@ -122,7 +135,7 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
       console.log('No URL provided, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, base_url, base_url_local, type, created_at, updated_at')
+        .select('id, base_url, base_url_local, domains, type, created_at, updated_at')
         .eq('id', tenantId)
         .maybeSingle();
       
@@ -137,11 +150,24 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
   }
 
   console.log('Querying organization for URL:', currentUrl);
-  const { data, error } = await supabase
+  
+  // First try: Check if currentUrl matches any domain in the domains array
+  let { data, error } = await supabase
     .from('organizations')
-    .select('id, base_url, base_url_local, type, created_at, updated_at')
-    .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
+    .select('id, base_url, base_url_local, domains, type, created_at, updated_at')
+    .contains('domains', [currentUrl])
     .maybeSingle();
+  
+  // Second try: Fall back to base_url/base_url_local match if domains lookup fails
+  if (!data && !error) {
+    const result = await supabase
+      .from('organizations')
+      .select('id, base_url, base_url_local, domains, type, created_at, updated_at')
+      .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     console.error('Error fetching organization for URL:', currentUrl, 'Error:', {
@@ -155,7 +181,7 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
       console.log('Query failed, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('organizations')
-        .select('id, base_url, base_url_local, type, created_at, updated_at')
+        .select('id, base_url, base_url_local, domains, type, created_at, updated_at')
         .eq('id', tenantId)
         .maybeSingle();
       
@@ -175,7 +201,7 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
       console.log('No organization found, falling back to NEXT_PUBLIC_TENANT_ID:', tenantId);
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('organizations')
-        .select('id, base_url, base_url_local, type, created_at, updated_at')
+        .select('id, base_url, base_url_local, domains, type, created_at, updated_at')
         .eq('id', tenantId)
         .maybeSingle();
       

@@ -3,6 +3,7 @@ export interface Organization {
   tenant_id?: string | null;
   base_url?: string | null;
   base_url_local?: string | null;
+  domains?: string[] | null;
   type: string;
   created_at?: string;
   updated_at?: string;

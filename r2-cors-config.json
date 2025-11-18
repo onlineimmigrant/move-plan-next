@@ -1,0 +1,67 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://codedharmony.app",
+      "https://www.codedharmony.app",
+      "https://*.codedharmony.app",
+      "https://move-plan-next.vercel.app",
+      "https://www.move-plan-next.vercel.app",
+      "https://*.move-plan-next.vercel.app",
+      "https://codedharmany-move-plan-next.vercel.app",
+      "http://localhost:3000",
+      "https://metexam.co.uk",
+      "https://www.metexam.co.uk",
+      "https://*.metexam.co.uk",
+      "https://clon20-metexam-5134a3d6.vercel.app",
+      "http://localhost:3794",
+      "https://montchain.tech",
+      "https://www.montchain.tech",
+      "https://*.montchain.tech",
+      "https://montchain-systems.vercel.app",
+      "http://localhost:3022",
+      "https://minsksalonspace.com",
+      "https://www.minsksalonspace.com",
+      "https://*.minsksalonspace.com",
+      "https://msticlavca.vercel.app",
+      "http://localhost:3011",
+      "https://getmespace.com",
+      "https://www.getmespace.com",
+      "https://*.getmespace.com",
+      "https://get-me-space.vercel.app",
+      "http://localhost:3006",
+      "https://onlineimmigrant.com",
+      "https://www.onlineimmigrant.com",
+      "https://*.onlineimmigrant.com",
+      "https://onlineimmigrant-move-plan-next.vercel.app",
+      "http://localhost:3021",
+      "https://lekcie.org",
+      "https://www.lekcie.org",
+      "https://*.lekcie.org",
+      "https://lekcje-move-plan-next.vercel.app",
+      "http://localhost:3020",
+      "https://clon2-lekcie-7db98801.vercel.app",
+      "http://localhost:3796",
+      "http://localhost:3999",
+      "http://localhost:3795",
+      "http://localhost:3001"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "HEAD",
+      "PUT",
+      "POST",
+      "DELETE"
+    ],
+    "AllowedHeaders": [
+      "*"
+    ],
+    "ExposeHeaders": [
+      "ETag",
+      "Content-Length",
+      "Content-Type",
+      "Content-Range",
+      "Accept-Ranges"
+    ],
+    "MaxAgeSeconds": 3600
+  }
+]
