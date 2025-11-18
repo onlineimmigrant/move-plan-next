@@ -92,7 +92,7 @@ export interface ProductMedia {
   name?: string;
   order: number;
   image_url?: string;
-  video_player?: 'vimeo' | 'youtube' | 'pexels';
+  video_player?: 'vimeo' | 'youtube' | 'pexels' | 'r2';
   video_url?: string;
   thumbnail_url?: string;
   product_id: number;

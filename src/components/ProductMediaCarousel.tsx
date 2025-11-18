@@ -6,6 +6,7 @@ import { ProductMedia } from '@/types/product';
 import Image from 'next/image';
 import MediaAttribution, { UnsplashAttributionData, PexelsAttributionData } from '@/components/MediaAttribution';
 import type { UnsplashAttribution as UnsplashAttr } from '@/components/modals/ImageGalleryModal/UnsplashImageSearch';
+import ChangeThumbnailModal from '@/components/modals/ChangeThumbnailModal';
 
 const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
@@ -25,6 +26,12 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVideoHovered, setIsVideoHovered] = useState(false);
   const [showFullPlayer, setShowFullPlayer] = useState(false);
+  const [changeThumbnailModal, setChangeThumbnailModal] = useState<{
+    isOpen: boolean;
+    videoUrl: string;
+    thumbnailUrl?: string;
+    mediaId: number;
+  } | null>(null);
   const videoProgressRef = React.useRef<Map<number, number>>(new Map());
   const videoSnapshotsRef = React.useRef<Map<number, string>>(new Map());    // Capture current video frame as snapshot
     const captureVideoSnapshot = React.useCallback((videoElement: HTMLVideoElement, mediaId: number) => {
@@ -97,6 +104,15 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
       }
     };
 
+    const handleThumbnailChanged = (newThumbnailUrl: string) => {
+      setMediaItems(prev => prev.map(item => 
+        item.id === changeThumbnailModal?.mediaId
+          ? { ...item, thumbnail_url: newThumbnailUrl }
+          : item
+      ));
+      setChangeThumbnailModal(null);
+    };
+
     const handlePrevious = () => {
       setCurrentIndex((prev) => (prev > 0 ? prev - 1 : mediaItems.length - 1));
     };
@@ -139,6 +155,12 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
             requestBody.thumbnail_url = videoData.thumbnail_url;
             requestBody.image_url = videoData.image_url;
             requestBody.name = videoData.title;
+          } else if (videoData.video_player === 'r2') {
+            // It's an R2 uploaded video
+            requestBody.video_url = videoData.video_url; // The R2 video URL
+            requestBody.video_player = 'r2';
+            requestBody.thumbnail_url = videoData.thumbnail_url || videoData.video_url;
+            // Don't set image_url for videos - only thumbnail_url
           } else {
             // It's a Pexels video
             requestBody.video_url = imageUrl; // The actual video URL
@@ -232,9 +254,7 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
                     url={
                       currentMedia.video_player === 'youtube'
                         ? `https://www.youtube.com/watch?v=${currentMedia.video_url}`
-                        : currentMedia.video_player === 'vimeo'
-                        ? `https://vimeo.com/${currentMedia.video_url}`
-                        : currentMedia.video_url
+                        : `https://vimeo.com/${currentMedia.video_url}`
                     }
                     width="100%"
                     height="100%"
@@ -463,6 +483,24 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
+
+            {/* Change Thumbnail button for R2 videos */}
+            {currentMedia?.is_video && currentMedia.video_player === 'r2' && currentMedia.video_url && (
+              <button
+                onClick={() => setChangeThumbnailModal({
+                  isOpen: true,
+                  videoUrl: currentMedia.video_url!,
+                  thumbnailUrl: currentMedia.thumbnail_url,
+                  mediaId: currentMedia.id,
+                })}
+                className="absolute top-2 right-14 bg-sky-500/80 hover:bg-sky-600 text-white rounded-full p-2 transition-colors"
+                title="Change thumbnail"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* Thumbnail navigation */}
@@ -517,6 +555,18 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
             </p>
           )}
         </div>
+      )}
+
+      {/* Change Thumbnail Modal */}
+      {changeThumbnailModal && (
+        <ChangeThumbnailModal
+          isOpen={changeThumbnailModal.isOpen}
+          onClose={() => setChangeThumbnailModal(null)}
+          videoUrl={changeThumbnailModal.videoUrl}
+          currentThumbnailUrl={changeThumbnailModal.thumbnailUrl}
+          mediaId={changeThumbnailModal.mediaId}
+          onThumbnailChanged={handleThumbnailChanged}
+        />
       )}
     </div>
   );

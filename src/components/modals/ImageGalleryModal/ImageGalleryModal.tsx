@@ -8,6 +8,8 @@ import { BaseModal } from '@/components/modals/_shared/BaseModal';
 import UnsplashImageSearch, { UnsplashAttribution } from './UnsplashImageSearch';
 import PexelsImageSearch from './PexelsImageSearch';
 import YouTubeVideoSearch from './YouTubeVideoSearch';
+import R2VideoUpload from './R2VideoUploadNew';
+import R2ImageUpload from './R2ImageUpload';
 import type { PexelsAttributionData } from '@/components/MediaAttribution';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -15,6 +17,7 @@ interface ImageGalleryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectImage: (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => void;
+  productId?: number; // Optional: for auto-attaching R2 videos on upload
 }
 
 interface StorageImage {
@@ -33,8 +36,8 @@ interface StorageFolder {
 
 type StorageItem = StorageImage | StorageFolder;
 
-export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: ImageGalleryModalProps) {
-  const [activeTab, setActiveTab] = useState<'gallery' | 'unsplash' | 'pexels' | 'youtube'>('gallery');
+export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, productId }: ImageGalleryModalProps) {
+  const [activeTab, setActiveTab] = useState<'gallery' | 'unsplash' | 'pexels' | 'youtube' | 'upload' | 'r2images'>('gallery');
   const [images, setImages] = useState<StorageImage[]>([]);
   const [folders, setFolders] = useState<StorageFolder[]>([]);
   const [allImages, setAllImages] = useState<StorageImage[]>([]); // For global search
@@ -480,6 +483,40 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
           <PlayIcon className="w-5 h-5 inline-block mr-2" />
           YouTube
         </button>
+        <button
+          onClick={() => setActiveTab('upload')}
+          className={`
+            px-6 py-3 font-medium text-sm transition-all border-b-2
+            ${activeTab === 'upload'
+              ? 'bg-white dark:bg-gray-900'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }
+          `}
+          style={activeTab === 'upload' ? {
+            borderColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : undefined}
+        >
+          <PlayIcon className="w-5 h-5 inline-block mr-2" />
+          Video
+        </button>
+        <button
+          onClick={() => setActiveTab('r2images')}
+          className={`
+            px-6 py-3 font-medium text-sm transition-all border-b-2
+            ${activeTab === 'r2images'
+              ? 'bg-white dark:bg-gray-900'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }
+          `}
+          style={activeTab === 'r2images' ? {
+            borderColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : undefined}
+        >
+          <PhotoIcon className="w-5 h-5 inline-block mr-2" />
+          Images
+        </button>
       </div>
 
       {/* Content based on active tab */}
@@ -765,10 +802,28 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage }: Im
       ) : activeTab === 'pexels' ? (
         /* Pexels Tab */
         <PexelsImageSearch onSelectImage={handlePexelsSelect} />
-      ) : (
+      ) : activeTab === 'youtube' ? (
         /* YouTube Tab */
         <YouTubeVideoSearch onSelectVideo={handleYouTubeSelect} />
-      )}
+      ) : activeTab === 'upload' ? (
+        /* R2 Video Upload Tab */
+        <R2VideoUpload 
+          onSelectVideo={(videoData) => {
+            onSelectImage('', undefined, true, videoData);
+            onClose();
+          }}
+          productId={productId}
+        />
+      ) : activeTab === 'r2images' ? (
+        /* R2 Image Upload Tab */
+        <R2ImageUpload 
+          onSelectImage={(imageData) => {
+            onSelectImage(imageData.image_url, undefined, false);
+            onClose();
+          }}
+          productId={productId}
+        />
+      ) : null}
     </BaseModal>
   );
 }

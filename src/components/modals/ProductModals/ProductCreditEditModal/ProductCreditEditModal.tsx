@@ -421,6 +421,7 @@ export default function ProductCreditEditModal() {
           isOpen={isMediaGalleryOpen}
           onClose={closeMediaGallery}
           onSelectImage={handleMediaSelect}
+          productId={selectedProduct?.id ? Number(selectedProduct.id) : undefined}
         />
       )}
 

@@ -45,7 +45,7 @@ interface MediaItem {
   order: number;
   is_video: boolean;
   video_url?: string;
-  video_player?: 'youtube' | 'vimeo' | 'pexels';
+  video_player?: 'youtube' | 'vimeo' | 'pexels' | 'r2';
   image_url?: string;
   thumbnail_url?: string | null;
   attrs?: {
@@ -75,6 +75,14 @@ interface ProductDetailMediaDisplayProps {
 
 const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ mediaItems }) => {
   const themeColors = useThemeColors();
+  
+  // Debug: Log all media items
+  useEffect(() => {
+    console.log('[ProductDetailMediaDisplay] All media items:', mediaItems);
+    const r2Videos = mediaItems.filter(m => m.is_video && m.video_player === 'r2');
+    console.log('[ProductDetailMediaDisplay] R2 videos:', r2Videos);
+  }, [mediaItems]);
+  
   const sortedMediaItems = useMemo(
     () => [...mediaItems].sort((a, b) => a.order - b.order),
     [mediaItems]
@@ -91,6 +99,36 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   const videoProgressRef = useRef<Map<number, number>>(new Map());
   const videoSnapshotsRef = useRef<Map<number, string>>(new Map()); // Store video frame snapshots
   const videoElementsRef = useRef<Map<number, HTMLVideoElement>>(new Map()); // Store video element references
+  const reactPlayerRef = useRef<any>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  
+  // Helper to compute a thumbnail when missing
+  const getDerivedThumbnail = (media: MediaItem): string | null => {
+    if (!media) return null;
+    // Priority: explicit thumbnail → snapshot → derived URL patterns
+    if (media.thumbnail_url && media.thumbnail_url.trim()) return media.thumbnail_url.trim();
+    const snapshot = videoSnapshotsRef.current.get(media.id);
+    if (snapshot) return snapshot;
+    if (media.video_player === 'youtube' && media.video_url) {
+      const youtubeThumb = `https://img.youtube.com/vi/${media.video_url}/hqdefault.jpg`;
+      console.log('[getDerivedThumbnail] YouTube thumbnail:', youtubeThumb);
+      return youtubeThumb;
+    }
+    if (media.video_player === 'vimeo' && media.video_url) {
+      const vimeoThumb = `https://vumbnail.com/${media.video_url}.jpg`;
+      console.log('[getDerivedThumbnail] Vimeo thumbnail:', vimeoThumb);
+      return vimeoThumb;
+    }
+    // For R2 and Pexels videos, don't use image_url as fallback (it's often the video URL itself)
+    // Return null to trigger placeholder display
+    if (media.video_player === 'r2' || media.video_player === 'pexels') {
+      console.log('[getDerivedThumbnail] R2/Pexels video without thumbnail:', media.id);
+      return null;
+    }
+    const fallback = media.image_url && media.image_url.trim() ? media.image_url.trim() : null;
+    console.log('[getDerivedThumbnail] Fallback for', media.video_player, ':', fallback);
+    return fallback;
+  };
   
   // Touch swipe handling for mobile
   const touchStartX = useRef<number>(0);
@@ -175,6 +213,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
           if (videoEl) {
             captureVideoSnapshot(videoEl, showFullPlayer);
           }
+          setIsPlaying(false);
           setShowFullPlayer(null);
           return;
         }
@@ -200,35 +239,53 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
     const containerClass = isMain ? "w-full aspect-[4/3] rounded-none md:rounded-lg overflow-hidden relative bg-gray-50" : "w-full h-full";
 
     if (media.is_video && media.video_url && media.video_url.trim() && media.video_player && !hasFailed) {
-      const videoUrl =
+      const safeVideoUrl = media.video_url || '';
+      const videoUrl: string =
         media.video_player === 'youtube'
-          ? `https://www.youtube.com/watch?v=${media.video_url}`
+          ? `https://www.youtube.com/watch?v=${safeVideoUrl}`
           : media.video_player === 'vimeo'
-          ? `https://vimeo.com/${media.video_url}`
-          : media.video_url; // For Pexels, use direct URL
+          ? `https://vimeo.com/${safeVideoUrl}`
+          : safeVideoUrl; // For Pexels/R2, use direct URL
       
       if (isMain) {
         const isHovered = hoveredVideoId === media.id;
-        const showHoverVideo = isHovered && media.video_player === 'pexels' && media.video_url && showFullPlayer !== media.id;
+        const showHoverVideo = isHovered && (media.video_player === 'pexels' || media.video_player === 'r2') && media.video_url && showFullPlayer !== media.id;
         const showPlayer = showFullPlayer === media.id;
+        const derivedThumb = getDerivedThumbnail(media);
+        
+        console.log('[renderMedia]', {
+          id: media.id,
+          video_player: media.video_player,
+          isHovered,
+          showHoverVideo,
+          showPlayer,
+          derivedThumb,
+          willRender: showPlayer ? 'FULLSCREEN' : showHoverVideo ? 'HOVER' : derivedThumb ? 'THUMBNAIL' : 'UNAVAILABLE'
+        });
         
         // Main video: centered within consistent aspect-[4/5] container
         return (
           <div 
             className={containerClass}
-            onMouseEnter={() => !showPlayer && setHoveredVideoId(media.id)}
+            onMouseEnter={() => {
+              if (!showPlayer && (media.video_player === 'pexels' || media.video_player === 'r2')) {
+                setHoveredVideoId(media.id);
+              }
+            }}
             onMouseLeave={() => {
               if (!showPlayer) {
-                // Capture current frame before leaving
-                const videoEl = videoElementsRef.current.get(media.id);
-                if (videoEl) {
-                  captureVideoSnapshot(videoEl, media.id);
+                // Capture current frame before leaving for Pexels/R2
+                if (media.video_player === 'pexels' || media.video_player === 'r2') {
+                  const videoEl = videoElementsRef.current.get(media.id);
+                  if (videoEl) {
+                    captureVideoSnapshot(videoEl, media.id);
+                  }
                 }
                 setHoveredVideoId(null);
               }
             }}
             onDoubleClick={() => {
-              if (media.video_player === 'pexels') {
+              if (media.video_player === 'pexels' || media.video_player === 'r2') {
                 setShowFullPlayer(media.id);
                 setHoveredVideoId(null);
               }
@@ -246,12 +303,13 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
             <div className="w-full h-full flex items-center justify-center">
               {showPlayer ? (
                 <div className="w-full aspect-video max-h-full relative" role="dialog" aria-label="Video player">
-                  {media.video_player === 'pexels' ? (
+                  {media.video_player === 'pexels' || media.video_player === 'r2' ? (
                     <video
                       key={`player-${media.id}`}
                       ref={(el) => {
                         if (el) {
                           videoElementsRef.current.set(media.id, el);
+                          console.log(`[Video Player] Mounted for ${media.video_player} video:`, media.video_url);
                         }
                       }}
                       data-media-id={media.id}
@@ -262,11 +320,25 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       playsInline
                       className="w-full h-full object-contain"
                       aria-label="Product video player"
+                      onLoadStart={() => {
+                        console.log('[Video Player] Load started:', media.video_url);
+                      }}
                       onLoadedMetadata={(e) => {
+                        console.log('[Video Player] Metadata loaded, duration:', e.currentTarget.duration);
                         const savedTime = videoProgressRef.current.get(media.id);
                         if (savedTime !== undefined && savedTime > 0) {
                           e.currentTarget.currentTime = savedTime;
                         }
+                      }}
+                      onCanPlay={() => {
+                        console.log('[Video Player] Can play:', media.video_url);
+                      }}
+                      onPlay={() => {
+                        console.log('[Video Player] Playing:', media.video_url);
+                      }}
+                      onError={(e) => {
+                        console.error('[Video Player] Error loading video:', media.video_url, e);
+                        console.error('[Video Player] Error details:', e.currentTarget.error);
                       }}
                       onTimeUpdate={(e) => {
                         const currentTime = e.currentTarget.currentTime;
@@ -283,12 +355,18 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     />
                   ) : (
                     <ReactPlayer
+                      ref={reactPlayerRef}
                       url={videoUrl}
                       width="100%"
                       height="100%"
                       controls
-                      playing
-                      onReady={() => setLoadingMedia(null)}
+                      playing={isPlaying}
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
+                      onReady={() => {
+                        setLoadingMedia(null);
+                        setIsPlaying(true);
+                      }}
                       onError={() => {
                         setLoadingMedia(null);
                         setFailedMedia(prev => new Set(prev).add(media.id));
@@ -308,6 +386,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       if (videoEl) {
                         captureVideoSnapshot(videoEl, media.id);
                       }
+                      setIsPlaying(false);
                       setShowFullPlayer(null);
                     }}
                     onKeyDown={(e) => {
@@ -316,6 +395,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                         if (videoEl) {
                           captureVideoSnapshot(videoEl, media.id);
                         }
+                        setIsPlaying(false);
                         setShowFullPlayer(null);
                       }
                     }}
@@ -362,15 +442,14 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     }}
                   />
                 </div>
-              ) : (media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) ? (
+              ) : (getDerivedThumbnail(media) || media.video_player === 'r2') ? (
                 <div
                   className="w-full aspect-video max-h-full relative transition-opacity duration-300 cursor-pointer"
-                  onClick={() => {
-                    // For YouTube/Vimeo, click to open the player
-                    if (media.video_player === 'youtube' || media.video_player === 'vimeo') {
-                      setShowFullPlayer(media.id);
-                      setHoveredVideoId(null);
-                    }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('[Video Thumbnail Click]', media.video_player, 'media ID:', media.id);
+                    setShowFullPlayer(media.id);
+                    setHoveredVideoId(null);
                   }}
                   role="button"
                   aria-label="Play video"
@@ -382,16 +461,33 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       alt="Product video"
                       className="w-full h-full object-contain transition-opacity duration-300"
                     />
-                  ) : (
+                  ) : media.video_player === 'r2' && !media.thumbnail_url ? (
+                    /* R2 placeholder when no thumbnail exists */
+                    <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="w-20 h-20 mx-auto mb-2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} 
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm text-white/60">Hover to preview</p>
+                      </div>
+                    </div>
+                  ) : getDerivedThumbnail(media) ? (
                     <img
-                      src={(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) || ''}
+                      src={getDerivedThumbnail(media) || ''}
                       alt="Product video"
                       className="w-full h-full object-contain"
                       loading="lazy"
+                      onError={(e) => {
+                        console.warn('[ProductDetailMediaDisplay] Derived thumbnail failed to load');
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
-                  )}
-                  {/* Play icon overlay - more transparent */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  ) : null}
+                  {/* Play icon overlay - hide during hover preview */}
+                  <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${
+                    showHoverVideo ? 'opacity-0' : 'opacity-100'
+                  }`}>
                     <div className="w-16 h-16 bg-black/20 hover:bg-black/30 rounded-full flex items-center justify-center transition-colors">
                       <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z"/>
@@ -785,6 +881,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                 {sortedMediaItems.map((media, index) => {
                   const isActive = activeMedia?.id === media.id;
                   const isVideo = media.is_video && media.video_url && media.video_player;
+                  const derivedThumbnail = getDerivedThumbnail(media);
                   
                   return (
                     <div
@@ -828,9 +925,9 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                                 }
                               }}
                             />
-                          ) : ((media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim())) ? (
+                          ) : derivedThumbnail ? (
                             <img
-                              src={(media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim()) || ''}
+                              src={derivedThumbnail}
                               alt={`Video thumbnail ${index + 1}`}
                               className="w-full h-full"
                               style={{ objectFit: 'cover' }}
@@ -842,18 +939,18 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                                 }
                               }}
                               onError={(e) => {
-                                // Fallback to gradient background if thumbnail fails
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
-                          ) : null}
-                          
-                          {/* Fallback transparent background for videos without thumbnails */}
-                          <div className="absolute inset-0 bg-gray-200 flex items-center justify-center" 
-                               style={{ 
-                                 display: ((media.thumbnail_url && media.thumbnail_url.trim()) || (media.image_url && media.image_url.trim())) ? 'none' : 'flex'
-                               }}>
-                          </div>
+                          ) : (
+                            /* R2 placeholder for carousel */
+                            <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                              <svg className="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} 
+                                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
                           
                           {/* Play button overlay - same style as main video */}
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

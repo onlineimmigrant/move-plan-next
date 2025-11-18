@@ -80,6 +80,11 @@ const nextConfig = {
         hostname: 'img.youtube.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'pub-6891bafd3bd54c36b02da71be2099135.r2.dev',
+        pathname: '/**',
+      },
     ],
   },
   webpack: (config) => {
