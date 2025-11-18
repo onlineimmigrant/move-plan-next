@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { createClient } from '@supabase/supabase-js';
-import { getOrganizationId } from '@/lib/getSettings';
 
 export const runtime = 'nodejs';
 
@@ -40,18 +39,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getOrganizationId(baseUrl);
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('organization_id, role')
+      .eq('id', user.id)
+      .single();
+
+    const organizationId = profile?.organization_id;
     
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 403 });
     }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
 
     if (!profile || (profile.role !== 'admin' && profile.role !== 'owner')) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });

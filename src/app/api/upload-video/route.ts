@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { uploadVideoToR2 } from '@/lib/r2';
 import { nanoid } from 'nanoid';
 import { createClient } from '@supabase/supabase-js';
-import { getOrganizationId } from '@/lib/getSettings';
 
 export const runtime = 'nodejs'; // Use Node.js runtime for file handling
 
@@ -52,26 +51,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get organization from base_url
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getOrganizationId(baseUrl);
+    // Get user's profile with organization_id
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id, role')
+      .eq('id', user.id)
+      .single();
+
+    const organizationId = profile?.organization_id;
+    
+    console.log('Profile lookup:', { userId: user.id, profile, profileError, organizationId });
     
     if (!organizationId) {
-      console.error('[upload-video] Failed to determine organization from base_url:', baseUrl);
+      console.error('[upload-video] Organization not found in user profile');
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 403 }
       );
     }
-
-    // Get user's role from profiles table
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    console.log('Profile lookup:', { userId: user.id, profile, profileError, organizationId });
 
     if (profileError) {
       console.error('Profile error:', profileError);
