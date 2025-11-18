@@ -7,9 +7,9 @@ const supabase = createClient(
 );
 
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!;
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
-const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 
 // Generic R2 listing.
 // Behavior:
@@ -18,6 +18,14 @@ const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
 // Use /api/products/[id]/r2-videos for product-scoped listings.
 export async function GET(request: NextRequest) {
   try {
+    // Check if R2 credentials are configured
+    if (!R2_ACCOUNT_ID || !R2_BUCKET_NAME || !CLOUDFLARE_API_TOKEN) {
+      console.error('[r2-videos] Missing R2 credentials');
+      return NextResponse.json({ 
+        error: 'R2 storage not configured. Add environment variables to Vercel.' 
+      }, { status: 500 });
+    }
+
     // Get auth token
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {

@@ -6,13 +6,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
+const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!;
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if R2 credentials are configured
+    if (!R2_ACCOUNT_ID || !R2_BUCKET_NAME || !CLOUDFLARE_API_TOKEN) {
+      console.error('[r2-images] Missing R2 credentials');
+      return NextResponse.json({ 
+        error: 'R2 storage not configured. Add environment variables to Vercel.' 
+      }, { status: 500 });
+    }
+
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

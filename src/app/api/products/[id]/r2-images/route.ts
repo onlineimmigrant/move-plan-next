@@ -7,12 +7,24 @@ const supabase = createClient(
 );
 
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!;
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
-const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Check if R2 credentials are configured
+    if (!R2_ACCOUNT_ID || !R2_BUCKET_NAME || !CLOUDFLARE_API_TOKEN) {
+      console.error('[r2-images-product] Missing R2 credentials:', {
+        hasAccountId: !!R2_ACCOUNT_ID,
+        hasBucketName: !!R2_BUCKET_NAME,
+        hasApiToken: !!CLOUDFLARE_API_TOKEN
+      });
+      return NextResponse.json({ 
+        error: 'R2 storage not configured. Please add CLOUDFLARE_API_TOKEN, R2_ACCOUNT_ID, and R2_BUCKET_NAME to environment variables.' 
+      }, { status: 500 });
+    }
+
     const { id } = await params;
     const productId = parseInt(id, 10);
     if (isNaN(productId)) {
@@ -65,9 +77,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!listResponse.ok) {
       const errorText = await listResponse.text();
-      console.error('[r2-images-product] List failed:', errorText);
+      console.error('[r2-images-product] List failed:', {
+        status: listResponse.status,
+        statusText: listResponse.statusText,
+        error: errorText,
+        url: listUrl
+      });
       return NextResponse.json({ 
-        error: 'Failed to list images' 
+        error: 'Failed to list images',
+        details: listResponse.status === 401 ? 'Invalid Cloudflare API token' : 
+                 listResponse.status === 404 ? 'R2 bucket not found' :
+                 `Cloudflare API error: ${listResponse.statusText}`
       }, { status: 500 });
     }
 

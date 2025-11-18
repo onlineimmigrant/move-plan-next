@@ -3,9 +3,21 @@
  * Automatically updates CORS configuration based on organization domains
  */
 
-const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
+const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+
+function validateR2Config(): boolean {
+  if (!CLOUDFLARE_API_TOKEN || !R2_ACCOUNT_ID || !R2_BUCKET_NAME) {
+    console.error('[R2 CORS] Missing credentials:', {
+      hasToken: !!CLOUDFLARE_API_TOKEN,
+      hasAccountId: !!R2_ACCOUNT_ID,
+      hasBucket: !!R2_BUCKET_NAME
+    });
+    return false;
+  }
+  return true;
+}
 
 export interface CORSRule {
   rules: {
@@ -73,6 +85,11 @@ export async function getAllOrganizationDomains(): Promise<string[]> {
  * Update R2 bucket CORS configuration
  */
 export async function updateR2CORS(allowedOrigins: string[]): Promise<boolean> {
+  if (!validateR2Config()) {
+    console.error('[R2 CORS] Cannot update CORS - missing credentials');
+    return false;
+  }
+
   // Use Cloudflare R2 API format: rules.allowed.origins
   const corsConfig = {
     rules: [
@@ -135,6 +152,11 @@ export async function syncR2CORSWithOrganizations(): Promise<boolean> {
  * Get current CORS configuration from R2 bucket
  */
 export async function getCurrentCORSConfig(): Promise<CORSRule | null> {
+  if (!validateR2Config()) {
+    console.error('[R2 CORS] Cannot get CORS config - missing credentials');
+    return null;
+  }
+
   try {
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET_NAME}/cors`,
