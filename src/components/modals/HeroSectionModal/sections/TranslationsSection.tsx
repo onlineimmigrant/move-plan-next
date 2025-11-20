@@ -209,7 +209,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor, handl
 
     let translatedCount = 0;
     let skippedCount = 0;
-    let totalErrors: string[] = [];
+    const totalErrors: string[] = [];
     
     const updatedFormData = { ...formData };
 

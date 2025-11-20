@@ -9,7 +9,7 @@ import {
   ClockIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
-import { isAdminClient } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
 import { usePageCreation } from '@/components/modals/PageCreationModal/context';
@@ -26,7 +26,7 @@ interface Command {
 }
 
 const CommandPalette: React.FC = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -38,15 +38,6 @@ const CommandPalette: React.FC = () => {
   const { openModal: openSectionModal } = useTemplateSectionEdit();
   const { openModal: openHeadingSectionModal } = useTemplateHeadingSectionEdit();
   const { openModal: openPageModal } = usePageCreation();
-
-  // Check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const adminStatus = await isAdminClient();
-      setIsAdmin(adminStatus);
-    };
-    checkAdmin();
-  }, []);
 
   // Load recent commands from localStorage
   useEffect(() => {

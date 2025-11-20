@@ -6,6 +6,8 @@ import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 import { useRegistration } from './hooks';
 import PasswordStrengthIndicator from './auth/PasswordStrengthIndicator';
+import GoogleSignInButton from './GoogleSignInButton';
+import LinkedInSignInButton from './LinkedInSignInButton';
 import { RegisterFormProps } from './types';
 
 export default function RegisterForm({ isFreeTrial = false, onSuccess, redirectUrl }: RegisterFormProps) {
@@ -82,6 +84,22 @@ export default function RegisterForm({ isFreeTrial = false, onSuccess, redirectU
         </div>
       )}
 
+      {/* OAuth Sign-In Buttons */}
+      <GoogleSignInButton onSuccess={onSuccess} />
+      <LinkedInSignInButton onSuccess={onSuccess} />
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-gray-300 dark:border-gray-600" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
+            Or register with email
+          </span>
+        </div>
+      </div>
+
       <form onSubmit={handleRegister} className="space-y-4">
         <div className="space-y-4">
           <div className="auth-field-1">
@@ -143,7 +161,6 @@ export default function RegisterForm({ isFreeTrial = false, onSuccess, redirectU
                 </svg>
               )}
             </div>
-            <p className="mt-1 text-xs text-gray-500">At least 3 characters</p>
           </div>
           <div className="relative auth-field-3">
             <label htmlFor="password" className="block text-sm font-semibold text-gray-800 mb-1.5">
@@ -186,7 +203,6 @@ export default function RegisterForm({ isFreeTrial = false, onSuccess, redirectU
             <div id="password-strength" className="mt-2">
               <PasswordStrengthIndicator password={password} showIndicator={password.length > 0} />
             </div>
-            <p className="mt-1 text-xs text-gray-500">At least 8 characters</p>
           </div>
         </div>
 

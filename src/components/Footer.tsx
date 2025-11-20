@@ -13,7 +13,6 @@ import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTra
 import { FooterType } from '@/types/settings';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
-import { isAdminClient } from '@/lib/auth';
 
 const ContactModal = dynamic(() => import('./contact/ContactModal'), { 
   ssr: false,
@@ -220,7 +219,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const { session, logout } = useAuth();
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAuth();
   const [isContactOpen, setIsContactOpen] = useState(false);
 
   // Use translations with fallback
@@ -231,15 +230,6 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   
   const isAuthenticated = !!session;
   const maxItemsPerColumn = 8;
-
-  // Check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const adminStatus = await isAdminClient();
-      setIsAdmin(adminStatus);
-    };
-    checkAdmin();
-  }, []);
 
   // Memoize menu grouping logic
   const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {

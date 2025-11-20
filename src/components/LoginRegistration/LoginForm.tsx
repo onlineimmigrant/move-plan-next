@@ -7,6 +7,9 @@ import Button from '@/ui/Button';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 import { useLogin } from './hooks';
+import GoogleSignInButton from './GoogleSignInButton';
+import LinkedInSignInButton from './LinkedInSignInButton';
+// import AppleSignInButton from './AppleSignInButton'; // Temporarily disabled
 import { LoginFormProps } from './types';
 
 export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redirectUrl: propRedirectUrl, onRegisterClick }: LoginFormProps) {
@@ -186,7 +189,26 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
         </form>
         </div>
       ) : (
-        <form onSubmit={handleLogin} className="space-y-4">
+        <div className="space-y-4">
+          {/* OAuth Sign-In Buttons */}
+          <GoogleSignInButton onSuccess={onSuccess} />
+          <LinkedInSignInButton onSuccess={onSuccess} />
+          {/* <AppleSignInButton onSuccess={onSuccess} /> */} {/* Temporarily disabled (requires $99/year Apple Developer Program) */}
+          {/* <AppleSignInButton onSuccess={onSuccess} /> */}
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-300 dark:border-gray-600" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
+                Or continue with email
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-4">
             <div className="auth-field-1">
               <label htmlFor="email" className="block text-sm font-semibold text-gray-800 mb-2">
@@ -314,6 +336,7 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
             Your information is encrypted and secure
           </div>
         </form>
+        </div>
       )}
     </div>
   );

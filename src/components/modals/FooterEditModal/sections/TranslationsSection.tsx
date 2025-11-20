@@ -350,7 +350,7 @@ export function TranslationsSection({ menuItems, setMenuItems, primaryColor }: T
     let translatedSubmenuCount = 0;
     let skippedMenuCount = 0;
     let skippedSubmenuCount = 0;
-    let updatedMenuItems = [...menuItems];
+    const updatedMenuItems = [...menuItems];
 
     // Helper function to check if a translation already exists for all target languages
     const needsTranslation = (

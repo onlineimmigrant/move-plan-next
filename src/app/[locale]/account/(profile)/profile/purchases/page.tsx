@@ -18,7 +18,7 @@ import { AccountPagination } from '@/components/account/AccountPagination';
 import { PAGINATION } from '@/constants/ui';
 
 export default function PurchasesPage() {
-  const { accessToken, userId, isLoading: authLoading, error: authError } = useAccountAuth();
+  const { accessToken, userId, canonicalProfileId, isLoading: authLoading, error: authError } = useAccountAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [showAllPurchases, setShowAllPurchases] = useState(false);
   const itemsPerPage = PAGINATION.ITEMS_PER_PAGE_SMALL;
@@ -31,7 +31,7 @@ export default function PurchasesPage() {
     fetchPurchases,
     syncAndFetchPurchases,
   } = usePurchases({
-    userId,
+    userId: canonicalProfileId,
     accessToken,
     itemsPerPage,
     currentPage,

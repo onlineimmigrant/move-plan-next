@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import  Button from '@/ui/Button';
 import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
 import { HoverEditButtons } from '@/ui/Button';
-import { isAdminClient } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 
@@ -107,19 +107,10 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
   if (!templateSectionHeadings?.length) return null;
 
   // Admin state and edit context
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAuth();
   const { openModal } = useTemplateHeadingSectionEdit();
 
   const pathname = usePathname();
-  
-  // Check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const adminStatus = await isAdminClient();
-      setIsAdmin(adminStatus);
-    };
-    checkAdmin();
-  }, []);
   
   // Extract locale from pathname (similar to Hero component logic)
   const pathSegments = pathname.split('/').filter(Boolean);

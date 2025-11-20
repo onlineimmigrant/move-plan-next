@@ -65,7 +65,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+        className="relative w-full max-w-md max-h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

@@ -39,7 +39,7 @@ export function StyleSection({
   const [menuWidth, setMenuWidth] = useState(headerStyleFull?.menu_width || '7xl');
 
   const handleColorUpdate = (field: string, value: string) => {
-    let updatedStyle = { ...headerStyleFull };
+    const updatedStyle = { ...headerStyleFull };
     
     if (field === 'color') {
       setTextColor(value);

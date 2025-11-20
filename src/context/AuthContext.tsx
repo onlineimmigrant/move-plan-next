@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo } from '
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Session, SupabaseClient } from '@supabase/supabase-js';
+import { getOrganizationId } from '@/lib/supabase';
 
 interface AuthContextType {
   session: Session | null;
@@ -12,6 +13,7 @@ interface AuthContextType {
   organizationId: string | null;
   organizationType: string | null;
   fullName: string | null;
+  canonicalProfileId: string | null;
   isLoading: boolean;
   error: string | null;
   setSession: React.Dispatch<React.SetStateAction<Session | null>>;
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [organizationType, setOrganizationType] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
+  const [canonicalProfileId, setCanonicalProfileId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [profileFetched, setProfileFetched] = useState<string | null>(null); // Track which user's profile was fetched
@@ -58,6 +61,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       console.log('Fetching profile for user:', userId);
+      
+      // First, get the current organization ID based on the domain
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+      const currentOrgId = await getOrganizationId(baseUrl);
+      console.log('Current organization ID:', currentOrgId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -73,31 +82,154 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
       if (error || !data) {
         // Don't log error for common cases (e.g., no profile exists yet, network issues during dev)
-        if (error && 
+        if (error &&
             !error.message.includes('JSON object requested') &&
             !error.message.includes('Failed to fetch') &&
             !error.message.includes('Network request failed')) {
           console.error('Profile fetch error:', error?.message || 'No profile found');
         }
+
+        // For OAuth users, try to find existing profile by email first, then create if it doesn't exist
+        if (session?.user && !data) {
+          console.log('Attempting to find/create profile for OAuth user:', session.user.email);
+          try {
+            // Get the organization ID
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+            const organizationId = await getOrganizationId(baseUrl);
+            
+            // First, check if a profile already exists with the same email in this organization
+            const { data: existingProfile, error: existingError } = await supabase
+              .from('profiles')
+              .select(`
+                id,
+                role,
+                organization_id,
+                full_name,
+                is_site_creator,
+                organizations (
+                  type
+                )
+              `)
+              .eq('email', session.user.email)
+              .eq('organization_id', organizationId)
+              .single();
+            
+            if (!existingError && existingProfile) {
+              console.log('Found existing profile for OAuth user by email:', existingProfile.id);
+              
+              // Update profile with OAuth metadata if missing
+              if ((!existingProfile.full_name || existingProfile.full_name.trim() === '') && 
+                  (session.user.user_metadata?.full_name || session.user.user_metadata?.name)) {
+                const oauthName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
+                await supabase
+                  .from('profiles')
+                  .update({ full_name: oauthName })
+                  .eq('id', existingProfile.id);
+                console.log('Updated existing profile with OAuth name:', oauthName);
+                existingProfile.full_name = oauthName;
+              }
+              
+              // Check admin rights scoped to current organization
+              const userOrgId = existingProfile.organization_id;
+              const isAdminRole = existingProfile.role === 'admin' && userOrgId === currentOrgId;
+              const isSuperadminRole = existingProfile.role === 'superadmin'; // Superadmins have global access
+              
+              setIsAdmin(isAdminRole || isSuperadminRole);
+              setIsSuperadmin(isSuperadminRole);
+              setOrganizationId(userOrgId || null);
+              setOrganizationType((existingProfile.organizations as any)?.type || null);
+              setFullName(existingProfile.full_name || null);
+              setCanonicalProfileId(existingProfile.id); // Set canonical profile ID to existing profile
+              setProfileFetched(userId);
+              return isAdminRole || isSuperadminRole;
+            }
+            
+            // No existing profile found, create a new one
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                email: session.user.email,
+                full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
+                role: 'user', // Default role for OAuth users
+                organization_id: organizationId, // Add organization_id
+              });
+
+            if (!insertError) {
+              console.log('Profile created for OAuth user');
+              // Fetch the newly created profile
+              const { data: newProfile, error: fetchError } = await supabase
+                .from('profiles')
+                .select(`
+                  id,
+                  role,
+                  organization_id,
+                  full_name,
+                  is_site_creator,
+                  organizations (
+                    type
+                  )
+                `)
+                .eq('email', session.user.email)
+                .eq('organization_id', organizationId)
+                .single();
+
+              if (!fetchError && newProfile) {
+                console.log('New profile fetched:', newProfile.id);
+                
+                // Check admin rights scoped to current organization
+                const userOrgId = newProfile.organization_id;
+                const isAdminRole = newProfile.role === 'admin' && userOrgId === currentOrgId;
+                const isSuperadminRole = newProfile.role === 'superadmin'; // Superadmins have global access
+                
+                setIsAdmin(isAdminRole || isSuperadminRole);
+                setIsSuperadmin(isSuperadminRole);
+                setOrganizationId(userOrgId || null);
+                setOrganizationType((newProfile.organizations as any)?.type || null);
+                setFullName(newProfile.full_name || null);
+                setCanonicalProfileId(newProfile.id); // Set canonical profile ID to new profile
+                setProfileFetched(userId);
+                return isAdminRole || isSuperadminRole;
+              }
+            } else {
+              console.error('Failed to create profile for OAuth user:', insertError);
+            }
+          } catch (createErr) {
+            console.error('Error creating profile for OAuth user:', createErr);
+          }
+        }
+
         setIsAdmin(false);
         setIsSuperadmin(false);
         setOrganizationId(null);
         setOrganizationType(null);
         setFullName(null);
+        setCanonicalProfileId(null);
         setProfileFetched(null);
         return false;
       }
-      console.log('Profile fetched:', { role: data.role, organization_id: data.organization_id, full_name: data.full_name, is_site_creator: data.is_site_creator, organization_type: (data.organizations as any)?.type });
-      const isAdminRole = data.role === 'admin' || data.role === 'superadmin';
-      const isSuperadminRole = data.role === 'superadmin';
       
-      setIsAdmin(isAdminRole);
+      console.log('Profile fetched:', { 
+        role: data.role, 
+        organization_id: data.organization_id, 
+        full_name: data.full_name, 
+        is_site_creator: data.is_site_creator, 
+        organization_type: (data.organizations as any)?.type,
+        current_org_id: currentOrgId
+      });
+      
+      // Check admin rights scoped to current organization
+      const userOrgId = data.organization_id;
+      const isAdminRole = data.role === 'admin' && userOrgId === currentOrgId;
+      const isSuperadminRole = data.role === 'superadmin'; // Superadmins have global access
+      
+      setIsAdmin(isAdminRole || isSuperadminRole);
       setIsSuperadmin(isSuperadminRole);
-      setOrganizationId(data.organization_id || null);
+      setOrganizationId(userOrgId || null);
       setOrganizationType((data.organizations as any)?.type || null);
       setFullName(data.full_name || null);
+      setCanonicalProfileId(userId); // Set canonical profile ID for regular users
       setProfileFetched(userId); // Mark as fetched
-      return isAdminRole;
+      return isAdminRole || isSuperadminRole;
     } catch (err: unknown) {
       const errorMessage = (err as Error).message;
       // Only log unexpected errors (ignore network timeouts during dev)
@@ -109,6 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOrganizationId(null);
       setOrganizationType(null);
       setFullName(null);
+      setCanonicalProfileId(null);
       setProfileFetched(null); // Clear fetched marker
       return false;
     }
@@ -228,8 +361,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isInGeneralOrganization = useMemo(() => organizationType === 'general', [organizationType]);
 
   const contextValue = useMemo(
-    () => ({ session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, isLoading, error, setSession, login, logout, supabase, isInGeneralOrganization }),
-    [session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, isLoading, error, isInGeneralOrganization]
+    () => ({ session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, canonicalProfileId, isLoading, error, setSession, login, logout, supabase, isInGeneralOrganization }),
+    [session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, canonicalProfileId, isLoading, error, isInGeneralOrganization]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

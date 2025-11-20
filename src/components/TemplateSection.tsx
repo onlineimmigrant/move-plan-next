@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { HoverEditButtons } from '@/ui/Button';
-import { isAdminClient } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import { cn } from '@/lib/utils';
@@ -232,7 +232,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
   });
 
   // Admin state and edit context
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAuth();
   const { openModal } = useTemplateSectionEdit();
 
   // Carousel state for slider mode
@@ -243,15 +243,6 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
   const autoPlayInterval = useRef<NodeJS.Timeout | null>(null);
 
   const pathname = usePathname();
-  
-  // Check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const adminStatus = await isAdminClient();
-      setIsAdmin(adminStatus);
-    };
-    checkAdmin();
-  }, []);
   
   // Extract locale from pathname (similar to TemplateHeadingSection logic)
   const pathSegments = pathname.split('/').filter(Boolean);

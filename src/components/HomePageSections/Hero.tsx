@@ -12,7 +12,7 @@ import LetterGlitch from '@/components/AnimateElements/LetterGlitch';
 import MagicBento from '@/components/AnimateElements/MagicBento';
 import { HoverEditButtons } from '@/ui/Button';
 import { useHeroSectionEdit } from '@/components/modals/HeroSectionModal/context';
-import { isAdminClient } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 import { getOrganizationId } from '@/lib/supabase';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { cn } from '@/lib/utils';
@@ -110,8 +110,7 @@ const getTranslatedContent = (
 
 const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const { isAdmin, organizationId } = useAuth();
   const [hero, setHero] = useState(initialHero); // Local state for hero data
   const heroRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -164,21 +163,6 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   const isImageFullPage = hero.image_style?.fullPage || false;
   const shouldShowInlineImage = hero.image && !isImageFullPage;
   // Note: Inline text editing removed - use modal editor instead
-
-  // Check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const adminStatus = await isAdminClient();
-      setIsAdmin(adminStatus);
-      
-      if (adminStatus) {
-        // Get organization ID for editing
-        const orgId = await getOrganizationId();
-        setOrganizationId(orgId);
-      }
-    };
-    checkAdmin();
-  }, []);
 
   // Extract locale from pathname (e.g., /en/page -> en)
   const pathSegments = pathname.split('/').filter(segment => segment !== '');

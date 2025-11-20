@@ -13,7 +13,6 @@ import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import LocalizedLink from './LocalizedLink';
 import { useHeaderTranslations } from './header/useHeaderTranslations';
-import { isAdminClient } from '@/lib/auth';
 import { saveReturnUrl } from './LoginRegistration/hooks';
 
 // Dynamic imports with ssr: false for client-only components (modals, language switcher)
@@ -62,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isDesktop, setIsDesktop] = useState(true); // Default to true for SSR
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAuth();
   const { basket } = useBasket();
   const { session, logout } = useAuth();
   const router = useRouter();
@@ -202,15 +201,6 @@ const Header: React.FC<HeaderProps> = ({
     checkDesktop(); // Check on mount
     window.addEventListener('resize', checkDesktop);
     return () => window.removeEventListener('resize', checkDesktop);
-  }, []);
-
-  // Check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const adminStatus = await isAdminClient();
-      setIsAdmin(adminStatus);
-    };
-    checkAdmin();
   }, []);
 
   // Individual display mode per menu item

@@ -185,30 +185,34 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     );
   }
 
-  // Don't render if not admin - AuthContext will handle redirect
+  // Don't render if not admin - show access denied message
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl border border-white/20">
-          
-          {/* Header Skeleton */}
-          <div className="flex items-center gap-3 p-4 sm:p-6 border-b border-white/10 bg-white/30 dark:bg-gray-800/30 rounded-t-2xl">
-            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
-            <div className="h-7 w-48 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
-          </div>
-
-          {/* Content Skeleton */}
-          <div className="p-4 sm:p-6 bg-white/20 dark:bg-gray-800/20">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-square bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-center justify-center gap-3 animate-pulse"
-                >
-                  <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-lg" />
-                  <div className="h-4 w-20 bg-gray-300 dark:bg-gray-700 rounded" />
-                </div>
-              ))}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl border border-white/20 p-8 text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              You don't have permission to access the admin area. This area is restricted to administrators of this organization.
+            </p>
+            <div className="space-y-3">
+              <a
+                href="/"
+                className="inline-block w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Go to Homepage
+              </a>
+              <a
+                href="/account"
+                className="inline-block w-full px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium rounded-lg transition-colors"
+              >
+                Go to Account
+              </a>
             </div>
           </div>
         </div>

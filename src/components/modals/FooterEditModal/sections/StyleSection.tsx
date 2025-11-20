@@ -37,7 +37,7 @@ export function StyleSection({
   const [gradientTo, setGradientTo] = useState(footerStyleFull?.gradient?.to || 'neutral-800');
 
   const handleColorUpdate = (field: string, value: string) => {
-    let updatedStyle = { ...footerStyleFull };
+    const updatedStyle = { ...footerStyleFull };
     
     if (field === 'color') {
       setTextColor(value);

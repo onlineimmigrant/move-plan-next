@@ -8,6 +8,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Create a separate client for user authentication validation
+const supabaseAuth = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 // Helper function to flatten blog post JSONB structure to flat fields for backward compatibility
 function flattenBlogPost(post: any) {
   return {
@@ -121,7 +127,7 @@ export async function GET(
     
     if (!isServiceRole) {
       // Verify the user's session for normal user tokens
-      const { data: user, error: userError } = await supabase.auth.getUser(token);
+      const { data: user, error: userError } = await supabaseAuth.auth.getUser(token);
       if (userError || !user.user) {
         return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
       }
@@ -674,7 +680,7 @@ export async function PUT(
     const token = authHeader.replace('Bearer ', '');
 
     // Verify the user's session
-    const { data: user, error: userError } = await supabase.auth.getUser(token);
+    const { data: user, error: userError } = await supabaseAuth.auth.getUser(token);
     if (userError || !user.user) {
       console.log('PUT - Invalid token:', userError);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
@@ -2565,7 +2571,7 @@ export async function DELETE(
     const token = authHeader.replace('Bearer ', '');
 
     // Verify the user's session
-    const { data: user, error: userError } = await supabase.auth.getUser(token);
+    const { data: user, error: userError } = await supabaseAuth.auth.getUser(token);
     if (userError || !user.user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }

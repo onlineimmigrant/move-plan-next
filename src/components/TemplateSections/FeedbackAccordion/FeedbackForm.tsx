@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '@/context/AuthContext';
 import { useFeedbackTranslations } from './useFeedbackTranslations';
 
 // Interfaces
@@ -78,6 +79,7 @@ const Star: React.FC<{
 
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen, onClose, isGlobalReview = false }) => {
   const { t } = useFeedbackTranslations();
+  const { isAdmin, session } = useAuth();
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState<string>('');
@@ -88,7 +90,6 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [reviewCount, setReviewCount] = useState<number>(0);
@@ -144,9 +145,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
         setUserName(firstName);
         setUserSurname(lastName);
 
-        setIsAdmin(userData.role === 'admin');
-
-        if (userData.role === 'admin') {
+        if (isAdmin) {
           const now = new Date();
           setSubmittedAt(now.toISOString().slice(0, 16));
         }
@@ -162,7 +161,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
         }
         setReviewCount(count || 0);
 
-        if (userData.role === 'admin' && userData.organization_id) {
+        if (isAdmin && userData.organization_id) {
           const { data: usersData, error: usersError } = await supabase
             .from('profiles')
             .select('id, full_name')

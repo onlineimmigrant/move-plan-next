@@ -4,16 +4,57 @@ import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useProductTranslations } from './useProductTranslations';
+import { supabase } from '@/lib/supabaseClient';
+import dynamic from 'next/dynamic';
+
+// Dynamically import ProductVideoGenerator to avoid loading it unless needed
+const ProductVideoGeneratorInline = dynamic(
+  () => import('@/components/ProductVideoGenerator'),
+  { 
+    loading: () => <div className="animate-pulse h-32 bg-gray-100 rounded-lg"></div>,
+    ssr: false 
+  }
+);
 
 interface ProductHeaderProps {
-  productSubType: { id: number; name: string } | null; // Updated to include id
+  productSubType: { id: number; name: string } | null;
   productName: string;
+  productId?: number;
+  productImage?: string;
+  productDescription?: string;
+  onGenerateVideo?: () => void;
 }
 
-const ProductHeader = memo(function ProductHeader({ productSubType, productName }: ProductHeaderProps) {
+const ProductHeader = memo(function ProductHeader({ 
+  productSubType, 
+  productName,
+  productId,
+  productImage,
+  productDescription,
+  onGenerateVideo 
+}: ProductHeaderProps) {
   const { t } = useProductTranslations();
   const [isFixed, setIsFixed] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showVideoGenerator, setShowVideoGenerator] = useState(false);
+
+  // Check if user is admin/owner
+  useEffect(() => {
+    async function checkAdminStatus() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        setIsAdmin(profile?.role === 'admin' || profile?.role === 'owner');
+      }
+    }
+    checkAdminStatus();
+  }, []);
 
   const handleScroll = useCallback(() => {
     const currentScrollY = window.scrollY;
@@ -61,10 +102,57 @@ const ProductHeader = memo(function ProductHeader({ productSubType, productName 
           </span>
           <RightArrowDynamic />
         </Link>
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight text-gray-900">
-          {productName}
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight text-gray-900">
+            {productName}
+          </h1>
+          
+          {/* AI Video Generator Button - Only for Admin/Owner */}
+          {isAdmin && productId && productImage && (
+            <button
+              onClick={() => setShowVideoGenerator(!showVideoGenerator)}
+              className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              title="Generate AI Talking Video"
+            >
+              <svg 
+                className="w-5 h-5 transition-transform group-hover:rotate-12" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" 
+                />
+              </svg>
+              <span className="hidden sm:inline text-sm font-medium">AI Video</span>
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+              </span>
+            </button>
+          )}
+        </div>
       </div>
+      
+      {/* AI Video Generator Panel - Collapsible */}
+      {isAdmin && showVideoGenerator && productId && productImage && (
+        <div className="mt-4 mb-2 animate-slideDown">
+          <div className="relative bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-700 rounded-2xl p-1 shadow-lg">
+            <div className="relative bg-white dark:bg-gray-800 rounded-xl p-4">
+              {/* Dynamically import the generator to avoid bundle bloat */}
+              <ProductVideoGeneratorInline 
+                productId={productId.toString()}
+                imageUrl={productImage}
+                productName={productName}
+                productDescription={productDescription}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

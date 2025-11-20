@@ -402,7 +402,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               >
                 Skip to pricing plans
               </a>
-              <ProductHeader productSubType={product.product_sub_type} productName={product_name} />
+              <ProductHeader 
+                productSubType={product.product_sub_type} 
+                productName={product_name}
+                productId={product.id}
+                productImage={links_to_image}
+                productDescription={product_description}
+              />
               {product_description && (
                 <div className="relative bg-white/40 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg shadow-blue-100/10 mt-4 md:mt-6">
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/20 rounded-2xl"></div>

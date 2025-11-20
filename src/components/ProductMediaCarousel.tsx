@@ -125,7 +125,7 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
       console.log('🎬 addMediaItem called with:', { imageUrl, attribution, isVideo, videoData });
       try {
         // Determine which platform by checking for download_location (Unsplash-specific)
-        let attrs: any = {};
+        const attrs: any = {};
         if (attribution) {
           if ('download_location' in attribution) {
             // It's Unsplash attribution

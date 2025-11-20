@@ -26,7 +26,7 @@ export function useLogin() {
    * 1. Explicit redirectTo parameter passed to login()
    * 2. redirectTo from URL search params
    * 3. returnUrl from localStorage (page user was on before going to login)
-   * 4. Current page if it's public
+   * 4. Current page if it's public (with special handling for /login → /)
    * 5. Default to /account
    */
   const getRedirectUrl = (explicitRedirectTo?: string): string => {
@@ -60,6 +60,11 @@ export function useLogin() {
 
     // 4. If currently on a public page (not auth page), stay there
     if (pathname && !isAuthPage(pathname)) {
+      // Special case: if user is on /login page, redirect to /
+      if (pathname === '/login' || pathname.match(/^\/[a-z]{2}\/login$/)) {
+        console.log('[useLogin] User was on login page, redirecting to home: /');
+        return '/';
+      }
       console.log('[useLogin] Staying on current public page:', pathname);
       return pathname;
     }

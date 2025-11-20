@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { isAdminClient } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
 import { usePageCreation } from '@/components/modals/PageCreationModal/context';
@@ -33,12 +33,12 @@ interface UniversalNewButtonProps {
 }
 
 const UniversalNewButton: React.FC<UniversalNewButtonProps> = ({ inNavbar = false }) => {
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const { isAdmin } = useAuth();
   
   const { openModal: openSectionModal } = useTemplateSectionEdit();
   const { openModal: openHeadingSectionModal } = useTemplateHeadingSectionEdit();
@@ -53,15 +53,6 @@ const UniversalNewButton: React.FC<UniversalNewButtonProps> = ({ inNavbar = fals
   // Check if mounted (for portal)
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  // Check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const adminStatus = await isAdminClient();
-      setIsAdmin(adminStatus);
-    };
-    checkAdmin();
   }, []);
 
   // Close dropdown when clicking outside
