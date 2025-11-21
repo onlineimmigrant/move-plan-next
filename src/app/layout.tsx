@@ -332,6 +332,49 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Font selection logic - map settings.font_family to CSS variable
   const selectedFont = settings?.font_family || 'Inter';
   
+  // Dynamically load only the selected font + JetBrains Mono for code blocks
+  const getFontVariables = () => {
+    const fonts = [jetbrainsMono.variable]; // Always include for code blocks
+    
+    switch (selectedFont) {
+      case 'Mulish':
+        fonts.push(mulish.variable);
+        break;
+      case 'Roboto':
+        fonts.push(roboto.variable);
+        break;
+      case 'Poppins':
+        fonts.push(poppins.variable);
+        break;
+      case 'Lato':
+        fonts.push(lato.variable);
+        break;
+      case 'Open Sans':
+        fonts.push(openSans.variable);
+        break;
+      case 'Montserrat':
+        fonts.push(montserrat.variable);
+        break;
+      case 'Nunito':
+        fonts.push(nunito.variable);
+        break;
+      case 'Raleway':
+        fonts.push(raleway.variable);
+        break;
+      case 'Ubuntu':
+        fonts.push(ubuntu.variable);
+        break;
+      case 'Merriweather':
+        fonts.push(merriweather.variable);
+        break;
+      case 'Inter':
+      default:
+        fonts.push(inter.variable);
+        break;
+    }
+    
+    return fonts.join(' ');
+  };
   
   const selectedFontVar = (() => {
     switch (selectedFont) {
@@ -350,22 +393,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   })();
   
-
-  // Compose all font variable classes so all fonts are loaded
-  const fontVarsClass = [
-    inter.variable,
-    mulish.variable,
-    jetbrainsMono.variable,
-    roboto.variable,
-    poppins.variable,
-    lato.variable,
-    openSans.variable,
-    montserrat.variable,
-    nunito.variable,
-    raleway.variable,
-    ubuntu.variable,
-    merriweather.variable
-  ].join(' ');
+  const fontVarsClass = getFontVariables();
 
   return (
     <html lang={language} data-scroll-behavior="smooth">

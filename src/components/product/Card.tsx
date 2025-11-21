@@ -12,7 +12,7 @@ type Product = {
   [key: string]: any;
 };
 
-export default function Card({ product }: { product: Product }) {
+export default function Card({ product, priority = false }: { product: Product; priority?: boolean }) {
   const { t } = useProductTranslations();
   // Use links_to_image directly, fall back to a local image if not available
   const imageSrc = product.links_to_image || '/images/logo.svg'; // Local fallback
@@ -26,6 +26,7 @@ export default function Card({ product }: { product: Product }) {
           src={imageSrc}
           alt={product.product_name || t.product}
           fill // Replaces absolute positioning to fill the container
+          priority={priority}
           className="object-contain object-center"
           sizes="(max-width: 640px) 100vw, 256px" // Adjust based on your layout
         />

@@ -359,7 +359,7 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
           alt={`Image of ${translatedH1Title}`}
           fill
           className="-z-10 object-cover"
-          priority={true}
+          priority
           sizes="100vw"
           quality={90}
         />

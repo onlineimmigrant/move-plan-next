@@ -137,11 +137,11 @@ export default function ClientProviders({
 
       if ('requestIdleCallback' in window) {
         // Wait until browser is idle (better than fixed delay)
-        const idleId = requestIdleCallback(showBanner, { timeout: 2000 });
+        const idleId = requestIdleCallback(showBanner, { timeout: 5000 });
         return () => cancelIdleCallback(idleId);
       } else {
         // Fallback for browsers without requestIdleCallback (Safari)
-        const timer = setTimeout(showBanner, 1500);
+        const timer = setTimeout(showBanner, 5000);
         return () => clearTimeout(timer);
       }
     }

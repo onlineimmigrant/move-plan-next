@@ -91,6 +91,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   const [activeMedia, setActiveMedia] = useState<MediaItem | null>(
     sortedMediaItems.length > 0 ? sortedMediaItems[0] : null
   );
+  const [isFirstImage, setIsFirstImage] = useState(true);
   const [loadingMedia, setLoadingMedia] = useState<number | null>(null);
   const [failedMedia, setFailedMedia] = useState<Set<number>>(new Set());
   const [hoveredVideoId, setHoveredVideoId] = useState<number | null>(null);

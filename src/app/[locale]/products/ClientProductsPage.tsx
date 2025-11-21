@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
@@ -288,9 +289,10 @@ const ClientProductsPage = memo(function ClientProductsPage({
             ref={productsRef}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto"
           >
-            {filteredProducts.slice(0, visibleItemsCount).map((product) => {
+            {filteredProducts.slice(0, visibleItemsCount).map((product, index) => {
               const productUrl = product.slug ? `/products/${product.slug}` : '#';
               const unsplashAttr = product.attrs?.unsplash_attribution;
+              const isAboveFold = index < 8; // First 8 products are above the fold
               
               return (
                 <div key={product.id} className="group w-full relative">
@@ -306,12 +308,14 @@ const ClientProductsPage = memo(function ClientProductsPage({
                           <span className="sr-only">View product</span>
                         </Link>
                         
-                        <img
+                        <Image
                           src={product.links_to_image}
                           alt={product.product_name ?? t.productImage}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          fill
+                          priority={isAboveFold}
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                           onError={(e) => handleImageError(e, product.links_to_image || undefined)}
-                          loading="lazy"
                         />
                         
                         {/* Unsplash Attribution */}

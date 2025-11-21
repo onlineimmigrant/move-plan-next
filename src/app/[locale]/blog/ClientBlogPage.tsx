@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
@@ -280,10 +281,13 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                       <Link href={getPostUrl(post)} className="absolute inset-0 z-0">
                         <span className="sr-only">View post: {post.title}</span>
                       </Link>
-                      <img
+                      <Image
                         src={imageUrl}
                         alt={post.title ?? 'Blog post image'}
-                        className={isSvg ? 'max-w-[60%] max-h-[60%] object-contain' : 'w-full h-full object-cover'}
+                        fill
+                        priority={posts.indexOf(post) < 4}
+                        className={isSvg ? 'max-w-[60%] max-h-[60%] object-contain' : 'object-cover'}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         onError={(e) => {
                           // Silently handle image load failure with fallback UI
                           e.currentTarget.style.display = 'none';
