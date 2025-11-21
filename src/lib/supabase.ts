@@ -22,16 +22,29 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
 
   console.log('Fetching organization ID for URL:', currentUrl, 'isLocal:', isLocal, 'tenantId:', tenantId);
 
-  // Try fetching by base_url or base_url_local
+  // Try fetching by base_url or base_url_local first
   const query = supabase
     .from('organizations')
-    .select('id, type')
+    .select('id, type, domains')
     .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl);
 
-  const { data, error } = await query.single();
+  let { data, error } = await query.single();
+
+  // If not found by base_url/base_url_local, check if current URL is in domains array
+  if (error || !data) {
+    console.log('Organization not found by base_url, checking domains array...');
+    const domainsQuery = supabase
+      .from('organizations')
+      .select('id, type, domains')
+      .contains('domains', [currentUrl]);
+
+    const domainsResult = await domainsQuery.single();
+    data = domainsResult.data;
+    error = domainsResult.error;
+  }
 
   if (error || !data) {
-    console.error('Error fetching organization by baseUrl:', {
+    console.error('Error fetching organization by baseUrl or domains:', {
       message: error?.message || 'No error message',
       code: error?.code || 'No code',
       details: error?.details || 'No details',
@@ -71,7 +84,7 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
     return null;
   }
 
-  console.log('Fetched organization ID by baseUrl:', data.id);
+  console.log('Fetched organization ID by baseUrl or domains:', data.id);
   return data.id;
 }
 
@@ -82,16 +95,29 @@ export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: s
 
   console.log('Fetching organization with type for URL:', currentUrl, 'isLocal:', isLocal, 'tenantId:', tenantId);
 
-  // Try fetching by base_url or base_url_local
+  // Try fetching by base_url or base_url_local first
   const query = supabase
     .from('organizations')
-    .select('id, type')
+    .select('id, type, domains')
     .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl);
 
-  const { data, error } = await query.single();
+  let { data, error } = await query.single();
+
+  // If not found by base_url/base_url_local, check if current URL is in domains array
+  if (error || !data) {
+    console.log('Organization not found by base_url, checking domains array...');
+    const domainsQuery = supabase
+      .from('organizations')
+      .select('id, type, domains')
+      .contains('domains', [currentUrl]);
+
+    const domainsResult = await domainsQuery.single();
+    data = domainsResult.data;
+    error = domainsResult.error;
+  }
 
   if (error || !data) {
-    console.error('Error fetching organization by baseUrl:', {
+    console.error('Error fetching organization by baseUrl or domains:', {
       message: error?.message || 'No error message',
       code: error?.code || 'No code',
       details: error?.details || 'No details',

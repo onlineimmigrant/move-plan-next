@@ -36,7 +36,7 @@ export default function LocaleAuthCallback() {
           }
 
           // Extract locale from the stored redirect URL or current URL
-          const url = new URL(redirectTo, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+          const url = new URL(redirectTo, window.location.origin);
           const pathParts = url.pathname.split('/');
           const locale = pathParts[1] && pathParts[1].length === 2 ? pathParts[1] : null;
 
