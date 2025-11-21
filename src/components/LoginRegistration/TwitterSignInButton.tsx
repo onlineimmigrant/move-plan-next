@@ -25,10 +25,17 @@ export default function TwitterSignInButton({ onSuccess, redirectTo }: TwitterSi
       const finalRedirectUrl = redirectTo || `${window.location.origin}${locale ? `/${locale}` : '/'}`;
       localStorage.setItem('oauth_redirect', finalRedirectUrl);
 
-      console.log('Twitter OAuth - final redirect URL stored:', finalRedirectUrl);
+      console.log('Twitter/X OAuth - final redirect URL stored:', finalRedirectUrl);
 
       // Use the locale-aware auth callback URL for Supabase OAuth redirect
-      const callbackUrl = `${window.location.origin}${locale ? `/${locale}` : ''}/auth/callback`;
+      // Matches both patterns: https://*.app/*/auth/callback and https://*.app/auth/callback
+      const callbackUrl = locale 
+        ? `${window.location.origin}/${locale}/auth/callback`
+        : `${window.location.origin}/auth/callback`;
+
+      console.log('Twitter/X OAuth - Current origin:', window.location.origin);
+      console.log('Twitter/X OAuth - Callback URL:', callbackUrl);
+      console.log('Twitter/X OAuth - Locale:', locale);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
@@ -37,8 +44,10 @@ export default function TwitterSignInButton({ onSuccess, redirectTo }: TwitterSi
         },
       });
 
+      console.log('Twitter/X OAuth - Response:', { data, error });
+
       if (error) {
-        console.error('Twitter sign-in error:', error);
+        console.error('Twitter/X sign-in error:', error);
         return;
       }
 

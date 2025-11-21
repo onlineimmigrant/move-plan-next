@@ -8,6 +8,7 @@ import { useRegistration } from './hooks';
 import PasswordStrengthIndicator from './auth/PasswordStrengthIndicator';
 import GoogleSignInButton from './GoogleSignInButton';
 import LinkedInSignInButton from './LinkedInSignInButton';
+import TwitterSignInButton from './TwitterSignInButton';
 import { RegisterFormProps } from './types';
 
 export default function RegisterForm({ isFreeTrial = false, onSuccess, redirectUrl }: RegisterFormProps) {
@@ -87,6 +88,7 @@ export default function RegisterForm({ isFreeTrial = false, onSuccess, redirectU
       {/* OAuth Sign-In Buttons */}
       <GoogleSignInButton onSuccess={onSuccess} />
       <LinkedInSignInButton onSuccess={onSuccess} />
+      <TwitterSignInButton onSuccess={onSuccess} />
 
       {/* Divider */}
       <div className="relative">

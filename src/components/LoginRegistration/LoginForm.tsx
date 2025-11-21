@@ -9,6 +9,7 @@ import { useAuthTranslations } from '@/components/authenticationTranslationLogic
 import { useLogin } from './hooks';
 import GoogleSignInButton from './GoogleSignInButton';
 import LinkedInSignInButton from './LinkedInSignInButton';
+import TwitterSignInButton from './TwitterSignInButton';
 // import AppleSignInButton from './AppleSignInButton'; // Temporarily disabled
 import { LoginFormProps } from './types';
 
@@ -193,8 +194,8 @@ export default function LoginForm({ onShowPrivacy, onShowTerms, onSuccess, redir
           {/* OAuth Sign-In Buttons */}
           <GoogleSignInButton onSuccess={onSuccess} />
           <LinkedInSignInButton onSuccess={onSuccess} />
+          <TwitterSignInButton onSuccess={onSuccess} />
           {/* <AppleSignInButton onSuccess={onSuccess} /> */} {/* Temporarily disabled (requires $99/year Apple Developer Program) */}
-          {/* <AppleSignInButton onSuccess={onSuccess} /> */}
 
           {/* Divider */}
           <div className="relative">

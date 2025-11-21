@@ -10,6 +10,9 @@ export default function LocaleAuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        console.log('Auth Callback - Current URL:', window.location.href);
+        console.log('Auth Callback - Origin:', window.location.origin);
+        
         const { data, error } = await supabase.auth.getSession();
 
         if (error) {

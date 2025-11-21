@@ -28,7 +28,14 @@ export default function LinkedInSignInButton({ onSuccess, redirectTo }: LinkedIn
       console.log('LinkedIn OAuth - final redirect URL stored:', finalRedirectUrl);
 
       // Use the locale-aware auth callback URL for Supabase OAuth redirect
-      const callbackUrl = `${window.location.origin}${locale ? `/${locale}` : ''}/auth/callback`;
+      // Matches both patterns: https://*.app/*/auth/callback and https://*.app/auth/callback
+      const callbackUrl = locale 
+        ? `${window.location.origin}/${locale}/auth/callback`
+        : `${window.location.origin}/auth/callback`;
+
+      console.log('LinkedIn OAuth - Current origin:', window.location.origin);
+      console.log('LinkedIn OAuth - Callback URL:', callbackUrl);
+      console.log('LinkedIn OAuth - Locale:', locale);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
@@ -36,6 +43,8 @@ export default function LinkedInSignInButton({ onSuccess, redirectTo }: LinkedIn
           redirectTo: callbackUrl,
         },
       });
+
+      console.log('LinkedIn OAuth - Response:', { data, error });
 
       if (error) {
         console.error('LinkedIn sign-in error:', error);
