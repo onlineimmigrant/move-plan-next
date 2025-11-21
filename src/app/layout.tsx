@@ -373,6 +373,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="icon" href={faviconUrl} />
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         <SimpleLayoutSEO />
+        
+        {/* Mobile Status Bar Styling - Match header background */}
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)" />
+        
+        {/* iOS Safari Status Bar */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        
+        {/* Android Chrome */}
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body 
         className={`${fontVarsClass} antialiased`} 
