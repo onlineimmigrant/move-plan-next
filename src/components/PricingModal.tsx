@@ -30,32 +30,30 @@
 
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { CheckIcon, XMarkIcon as XMarkIconSmall } from '@heroicons/react/20/solid';
 import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import { detectUserCurrency, getPriceForCurrency, SUPPORTED_CURRENCIES } from '@/lib/currency';
 import PricingModalProductBadges from '@/components/PricingModalProductBadges';
 import { PricingComparisonProduct } from '@/types/product';
 import { PricingPlan } from '@/types/pricingplan';
+import PricingCard from '@/components/pricing/PricingCard';
+import PricingComparisonTable from '@/components/pricing/PricingComparisonTable';
+import { 
+  generateProductPricingUrl, 
+  generateBasicPricingUrl,
+  parseProductFromHash,
+  updatePricingHash,
+  removePricingHash,
+  getCurrencySymbol,
+  productNameToIdentifier
+} from '@/utils/pricingUtils';
+import { PRICING_CONSTANTS } from '@/utils/pricingConstants';
 
-// Utility function to generate product-specific pricing URLs (can be used externally)
-export function generateProductPricingUrl(product: PricingComparisonProduct, baseUrl?: string): string {
-  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '');
-  const productIdentifier = product.product_name ? 
-    product.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
-    product.id.toString();
-  return `${base}#pricing#${productIdentifier}`;
-}
-
-// Utility function to generate basic pricing URL
-export function generateBasicPricingUrl(baseUrl?: string): string {
-  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '');
-  return `${base}#pricing`;
-}
+// Re-export utility functions for external use
+export { generateProductPricingUrl, generateBasicPricingUrl };
 
 // Feature interface for pricing modal
 interface Feature {
@@ -269,80 +267,6 @@ function usePricingTranslations() {
 
 // No more sample data - using real database content only
 
-// Helper function to get all unique features across all plans
-const getAllFeatures = (plans: SamplePricingPlan[]): string[] => {
-  const allFeatures = plans.flatMap(plan => plan.features);
-  return [...new Set(allFeatures)];
-};
-
-// Helper function to check if a plan has a feature (including inherited features)
-const planHasFeature = (planIndex: number, feature: string, plans: SamplePricingPlan[]): boolean => {
-  // Check if current plan has the feature
-  if (plans[planIndex].features.includes(feature)) {
-    return true;
-  }
-  
-  // Check if any lower-tier plan has this feature (inheritance)
-  for (let i = 0; i < planIndex; i++) {
-    if (plans[i].features.includes(feature)) {
-      return true;
-    }
-  }
-  
-  return false;
-};
-
-// Helper function to get all unique features from real feature data, grouped by type
-const getAllFeaturesGroupedByType = (plans: SamplePricingPlan[]): { [type: string]: Feature[] } => {
-  const featuresMap: { [type: string]: Feature[] } = {};
-  
-  plans.forEach(plan => {
-    if (plan.realFeatures && plan.realFeatures.length > 0) {
-      plan.realFeatures.forEach(feature => {
-        const featureType = feature.type || 'features'; // Default to 'features' if no type
-        if (!featuresMap[featureType]) {
-          featuresMap[featureType] = [];
-        }
-        
-        // Add feature if not already in the group (avoid duplicates)
-        if (!featuresMap[featureType].some(f => f.id === feature.id)) {
-          featuresMap[featureType].push(feature);
-        }
-      });
-    }
-  });
-  
-  // Sort features within each type group by their order field
-  Object.keys(featuresMap).forEach(type => {
-    featuresMap[type].sort((a, b) => (a.order || 999) - (b.order || 999));
-  });
-  
-  return featuresMap;
-};
-
-// Helper function to check if a plan has a specific real feature (with inheritance)
-const planHasRealFeature = (plan: SamplePricingPlan, feature: Feature, allPlans: SamplePricingPlan[]): boolean => {
-  // Check if current plan has the feature directly
-  if (plan.realFeatures?.some(f => f.id === feature.id)) {
-    return true;
-  }
-  
-  // Check inheritance: if any cheaper plan has this feature, this plan inherits it
-  // Sort plans by price (ascending) to establish hierarchy
-  const sortedPlans = [...allPlans].sort((a, b) => a.monthlyPrice - b.monthlyPrice);
-  const currentPlanIndex = sortedPlans.findIndex(p => p.name === plan.name);
-  
-  // Check if any plan with lower or equal price has this feature
-  for (let i = 0; i <= currentPlanIndex; i++) {
-    const lowerPlan = sortedPlans[i];
-    if (lowerPlan.realFeatures?.some(f => f.id === feature.id)) {
-      return true;
-    }
-  }
-  
-  return false;
-};
-
 export default function PricingModal({ isOpen, onClose, pricingComparison }: PricingModalProps) {
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PricingComparisonProduct | null>(null);
@@ -380,69 +304,11 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     }
   }, [pricingPlans]); // Depend on pricingPlans to re-run when they're loaded
 
-  // Parse URL fragment to extract product identifier
-  const parseProductFromHash = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    
-    const hash = window.location.hash;
-    // Support formats: #pricing#product_name, #pricing#product_id, or just #pricing
-    const hashParts = hash.split('#').filter(Boolean);
-    
-    if (hashParts.length >= 2 && hashParts[0] === 'pricing') {
-      return hashParts[1]; // Return the product identifier
-    }
-    
-    return null;
-  }, []);
-
   // Update URL hash when product changes
-  const updateUrlHash = useCallback((product?: PricingComparisonProduct | null) => {
-    if (typeof window === 'undefined') return;
-    
-    const baseHash = '#pricing';
-    let newHash = baseHash;
-    
-    if (product) {
-      // Use product name as identifier, fallback to ID
-      const productIdentifier = product.product_name ? 
-        product.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
-        product.id.toString();
-      newHash = `${baseHash}#${productIdentifier}`;
-    }
-    
-    if (window.location.hash !== newHash) {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search + newHash);
-    }
-  }, []);
-
-  // Generate pricing link for a specific product (utility function for external use)
-  const generateProductPricingLink = useCallback((product: PricingComparisonProduct, baseUrl?: string) => {
-    const base = baseUrl || window.location.origin + window.location.pathname;
-    const productIdentifier = product.product_name ? 
-      product.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
-      product.id.toString();
-    return `${base}#pricing#${productIdentifier}`;
-  }, []);
-
-  // Helper function to remove pricing hash from URL
-  const removePricingHash = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    
-    const hash = window.location.hash;
-    const hashParts = hash.split('#').filter(Boolean);
-    
-    // Remove hash if it starts with 'pricing'
-    if (hashParts.length > 0 && hashParts[0] === 'pricing') {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
-  }, []);
-
-  // Handle product selection with URL update
   const handleProductSelect = useCallback((product: PricingComparisonProduct) => {
     setSelectedProduct(product);
-    updateUrlHash(product);
-    // console.log('Selected product in pricing modal:', product);
-  }, [updateUrlHash]);
+    updatePricingHash(product);
+  }, []);
 
   // Fetch pricing plans when selected product changes
   useEffect(() => {
@@ -594,12 +460,9 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         if (monthly?.promotion_percent !== undefined) {
           // Calculate promotion price from percentage of the converted price
           monthlyPromotionPrice = parseFloat((monthlyPrice * (1 - monthly.promotion_percent / 100)).toFixed(2));
-          console.log('🔴 Monthly promotion from PERCENT:', monthlyPromotionPrice, 'base price:', monthlyPrice, 'percent:', monthly.promotion_percent);
         } else if (monthly?.promotion_price !== undefined) {
-          // TEMP FIX: Try using promotion_price directly without any division
-          // This assumes promotion_price is already in the correct currency units
+          // Use promotion_price directly (already in correct currency units)
           monthlyPromotionPrice = monthly.promotion_price;
-          console.log('🔴 Monthly promotion from PRICE (no division):', monthlyPromotionPrice, 'original promotion_price:', monthly.promotion_price);
         }
       }
       
@@ -607,12 +470,9 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         if (annual?.promotion_percent !== undefined) {
           // Calculate promotion price from percentage of the converted price
           annualPromotionPrice = parseFloat((annualPrice * (1 - annual.promotion_percent / 100)).toFixed(2));
-          console.log('🔴 Annual promotion from PERCENT:', annualPromotionPrice, 'base price:', annualPrice, 'percent:', annual.promotion_percent);
         } else if (annual?.promotion_price !== undefined) {
-          // TEMP FIX: Try using promotion_price directly without any division
-          // This assumes promotion_price is already in the correct currency units
+          // Use promotion_price directly (already in correct currency units)
           annualPromotionPrice = annual.promotion_price;
-          console.log('🔴 Annual promotion from PRICE (no division):', annualPromotionPrice, 'original promotion_price:', annual.promotion_price);
         }
       } else if (monthlyIsPromotion && monthlyPromotionPrice !== undefined && monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
         // Calculate annual promotion price from monthly promotion using discount
@@ -686,10 +546,10 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     return sortedPlans;
   };
 
-  const displayPlans = transformPricingPlans(pricingPlans);
+  const displayPlans = useMemo(() => transformPricingPlans(pricingPlans), [pricingPlans, planFeatures, userCurrency, currencySymbol]);
 
   // Check if any plans are one-time payments to hide annual/monthly toggle
-  const hasOneTimePlans = pricingPlans.some(plan => plan.type === 'one_time');
+  const hasOneTimePlans = useMemo(() => pricingPlans.some(plan => plan.type === 'one_time'), [pricingPlans]);
 
   // Get translated title and description
   const getTranslatedTitle = () => {
@@ -865,372 +725,53 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                   </div>
                 ))
               ) : (
-                displayPlans.map((plan, index) => (
-                <div
-                  key={plan.name}
-                  className={`relative bg-white rounded-3xl border transition-all hover:shadow-xl group ${
-                    plan.highlighted
-                      ? 'border-gray-400 shadow-lg ring-1 ring-gray-400/10'
-                      : 'border-gray-200 shadow-sm hover:border-gray-300'
-                  }`}
-                >
-                  {plan.highlighted && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-gray-600 text-white px-4 py-1.5 rounded-full text-sm font-medium shadow-lg">
-                        {translations.mostPopular}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="p-8">
-                    <div className="text-center mb-8">
-                      <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                        {plan.name}
-                      </h3>
-                      {plan.description && (
-                        <p className="text-gray-500 mb-2 font-light text-sm leading-relaxed">
-                          {plan.description}
-                        </p>
-                      )}
-                      
-                      {/* Discount Badge - Above Price (with consistent height) - Only for recurring plans */}
-                      <div className="flex justify-center mb-4 h-7">
-                        {!hasOneTimePlans && isAnnual && (
-                          <span className="bg-gradient-to-r from-sky-500 to-sky-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
-                            Save {plan.annualSizeDiscount && plan.annualSizeDiscount > 0 
-                              ? Math.round(plan.annualSizeDiscount)
-                              : Math.round(((plan.monthlyPrice - plan.annualPrice) / plan.monthlyPrice) * 100)
-                            }%
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-baseline justify-center mb-8">
-                        {plan.isPromotion ? (
-                          <div className="flex flex-col items-center">
-                            {/* Original price crossed out */}
-                            <span className="text-sm text-sky-500 line-through mr-2">
-                              {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
-                            </span>
-                            {/* Promotional price - same style as normal prices */}
-                            <span className="text-4xl font-extralight text-gray-700">
-                                {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans 
-                                  ? (plan.monthlyPromotionPrice || plan.monthlyPrice).toFixed(2) 
-                                  : (isAnnual ? (plan.annualPromotionPrice || plan.annualPrice).toFixed(2) : (plan.monthlyPromotionPrice || plan.monthlyPrice).toFixed(2))
-                                }
-                            </span>
-                            {/* Limited Time Offer text */}
-                            <span className="text-xs text-gray-400 font-medium mt-1">
-                              {translations.limitedTimeOffer}
-                            </span>
-                          </div>
-                        ) : (
-                          <>
-                            <span className="text-4xl font-extralight text-gray-700">
-                              {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans ? plan.monthlyPrice.toFixed(2) : (isAnnual ? plan.annualPrice.toFixed(2) : plan.monthlyPrice.toFixed(2))}
-                            </span>
-                            {!hasOneTimePlans && (
-                              <span className="text-sm text-gray-500 ml-1 font-light">
-                                {plan.period}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </div>
-
-                      {/* Total Recurring Amount - Only for recurring plans */}
-                      {!hasOneTimePlans && (
-                        <div className="text-center mb-4">
-                          <span className="text-xs text-gray-400 font-light">
-                            {isAnnual ? (
-                              // For annual: use promotion price if available, otherwise regular price
-                              plan.actualAnnualPrice ? 
-                                <>Total annual: {plan.annualCurrencySymbol || currencySymbol}{plan.actualAnnualPrice.toFixed(2)}</> :
-                                plan.isPromotion && plan.annualPromotionPrice ?
-                                  <>Total annual: {plan.annualCurrencySymbol || currencySymbol}{(plan.annualPromotionPrice * 12).toFixed(2)}</> :
-                                  <>Total annual: {plan.annualCurrencySymbol || currencySymbol}{(plan.annualPrice * 12).toFixed(2)}</>
-                            ) : (
-                              plan.isPromotion && plan.monthlyPromotionPrice ?
-                                <>Total monthly: {plan.currencySymbol || currencySymbol}{(plan.monthlyPromotionPrice * plan.monthlyRecurringCount).toFixed(2)}</> :
-                                <>Total monthly: {plan.currencySymbol || currencySymbol}{(plan.monthlyPrice * plan.monthlyRecurringCount).toFixed(2)}</>
-                            )}
-                          </span>
-                        </div>
-                      )}
-
-                      <Link
-                        href={plan.productSlug ? `/products/${plan.productSlug}` : '#'}
-                        className={`inline-block w-full py-3.5 px-6 rounded-full font-medium text-sm transition-all group-hover:scale-[1.02] text-center ${
-                          plan.buttonVariant === 'primary'
-                            ? 'bg-gray-800 text-white hover:bg-gray-900'
-                            : 'bg-gray-50 text-gray-800 hover:bg-gray-100 border border-gray-200'
-                        }`}
-                      >
-                        {plan.buttonText === 'Buy Now' ? translations.buyNow : translations.getStarted}
-                      </Link>
-                    </div>
-
-                    <div className="space-y-4">
-                      <ul className="space-y-3">
-                        {isLoadingFeatures ? (
-                          // Loading skeleton for features
-                          Array.from({ length: 4 }).map((_, featureIndex) => (
-                            <li key={featureIndex} className="flex items-start animate-pulse">
-                              <div className="h-4 w-4 bg-gray-200 rounded shrink-0 mt-0.5 mr-3"></div>
-                              <div className="h-4 bg-gray-200 rounded w-full"></div>
-                            </li>
-                          ))
-                        ) : (
-                          (() => {
-                            const maxFeatures = 7;
-                            const isExpanded = expandedFeatures[plan.name] || false;
-                            const featuresToShow = isExpanded ? plan.features : plan.features.slice(0, maxFeatures);
-                            const hasMoreFeatures = plan.features.length > maxFeatures;
-
-                            return (
-                              <>
-                                {featuresToShow.map((feature, featureIndex) => {
-                                  // Check if this is a real feature with additional data
-                                  const realFeature = plan.realFeatures?.find(rf => rf.name === feature);
-                                  
-                                  return (
-                                    <li key={featureIndex} className="flex items-start">
-                                      <CheckIcon className="h-4 w-4 text-gray-400 shrink-0 mt-0.5 mr-3" />
-                                      {realFeature ? (
-                                        <Link
-                                          href={`/features/${realFeature.slug}`}
-                                          className="text-gray-600 text-sm font-light leading-relaxed hover:text-sky-600 hover:underline transition-colors"
-                                        >
-                                          {feature}
-                                        </Link>
-                                      ) : (
-                                        <span className="text-gray-600 text-sm font-light leading-relaxed">
-                                          {feature}
-                                        </span>
-                                      )}
-                                    </li>
-                                  );
-                                })}
-                                
-                                {/* View more/less button */}
-                                {hasMoreFeatures && (
-                                  <li className="flex items-start">
-                                    <div className="h-4 w-4 shrink-0 mt-0.5 mr-3"></div>
-                                    <button
-                                      onClick={() => setExpandedFeatures(prev => ({
-                                        ...prev,
-                                        [plan.name]: !isExpanded
-                                      }))}
-                                      className="text-gray-500 text-sm font-medium hover:text-gray-700 hover:underline transition-colors flex items-center gap-1"
-                                    >
-                                      {isExpanded ? (
-                                        <>
-                                          {translations.viewLess}
-                                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                          </svg>
-                                        </>
-                                      ) : (
-                                        <>
-                                          {translations.viewMore} {plan.features.length - maxFeatures}
-                                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                          </svg>
-                                        </>
-                                      )}
-                                    </button>
-                                  </li>
-                                )}
-                              </>
-                            );
-                          })()
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              ))
+                displayPlans.map((plan) => (
+                  <PricingCard
+                    key={plan.name}
+                    name={plan.name}
+                    description={plan.description}
+                    monthlyPrice={plan.monthlyPrice}
+                    annualPrice={plan.annualPrice}
+                    currencySymbol={plan.currencySymbol || currencySymbol}
+                    annualCurrencySymbol={plan.annualCurrencySymbol}
+                    isAnnual={isAnnual}
+                    hasOneTimePlans={hasOneTimePlans}
+                    annualSizeDiscount={plan.annualSizeDiscount || 0}
+                    isPromotion={plan.isPromotion}
+                    monthlyPromotionPrice={plan.monthlyPromotionPrice}
+                    annualPromotionPrice={plan.annualPromotionPrice}
+                    monthlyRecurringCount={plan.monthlyRecurringCount}
+                    annualRecurringCount={plan.annualRecurringCount}
+                    actualAnnualPrice={plan.actualAnnualPrice}
+                    buttonText={plan.buttonText}
+                    buttonVariant={plan.buttonVariant}
+                    highlighted={plan.highlighted}
+                    features={plan.features}
+                    realFeatures={plan.realFeatures}
+                    productSlug={plan.productSlug}
+                    isExpanded={expandedFeatures[plan.name] || false}
+                    onToggleExpanded={() => setExpandedFeatures(prev => ({
+                      ...prev,
+                      [plan.name]: !prev[plan.name]
+                    }))}
+                    translations={translations}
+                    isLoadingFeatures={isLoadingFeatures}
+                  />
+                ))
               )}
             </div>
 
             {/* Feature Comparison Table */}
-            <div className="max-w-6xl mx-auto mb-20">
-              <div className="text-center mb-12">
-                <h3 className="text-2xl font-extralight text-gray-700 mb-4">
-                  {translations.compareAllFeatures}
-                </h3>
-                <p className="text-gray-500 font-light">
-                  {translations.seeEverythingIncluded}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
-                          {translations.features}
-                        </th>
-                        {displayPlans.map((plan) => (
-                          <th key={plan.name} className="text-center py-4 px-6 min-w-[120px]">
-                            <div className="text-sm font-semibold text-gray-700 mb-1">
-                              {plan.name}
-                            </div>
-                            <div className="flex flex-col items-center">
-                              {plan.isPromotion ? (
-                                <>
-                                  {/* Original price crossed out */}
-                                  <span className="text-sm text-sky-500 line-through">
-                                    {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
-                                  </span>
-                                  {/* Promotional price - same style as normal prices */}
-                                  <div className="text-lg font-extralight text-gray-600">
-                                    {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans 
-                                      ? (plan.monthlyPromotionPrice || plan.monthlyPrice) 
-                                      : (isAnnual 
-                                        ? (plan.annualPromotionPrice || plan.annualPrice) 
-                                        : (plan.monthlyPromotionPrice || plan.monthlyPrice)
-                                      )
-                                    }
-                                    {!hasOneTimePlans && (
-                                      <span className="text-xs text-gray-500">/mo</span>
-                                    )}
-                                  </div>
-                                  {/* Limited Time Offer text */}
-                                  <span className="text-xs text-gray-400 font-medium">
-                                    {translations.limitedTimeOffer}
-                                  </span>
-                                </>
-                              ) : (
-                                <div className="text-lg font-extralight text-gray-600">
-                                  {(isAnnual ? plan.annualCurrencySymbol : plan.currencySymbol) || currencySymbol}{hasOneTimePlans ? plan.monthlyPrice : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
-                                  {!hasOneTimePlans && (
-                                    <span className="text-xs text-gray-500">/mo</span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Create grouped rows for features by type */}
-                      {(() => {
-                        const featuresGroupedByType = getAllFeaturesGroupedByType(displayPlans);
-                        const hasRealFeatures = Object.keys(featuresGroupedByType).length > 0;
-                        
-                        if (!hasRealFeatures) {
-                          // Fallback to old string-based features if no real features
-                          return getAllFeatures(displayPlans).map((feature, index) => (
-                            <tr key={feature} className={`border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
-                              <td className="py-4 px-6 text-sm text-gray-700 font-light">
-                                {feature}
-                              </td>
-                              {displayPlans.map((plan, planIndex) => (
-                                <td key={`${plan.name}-${feature}`} className="text-center py-4 px-6">
-                                  {planHasFeature(planIndex, feature, displayPlans) ? (
-                                    <CheckIcon className="h-5 w-5 text-emerald-600 mx-auto" />
-                                  ) : (
-                                    <XMarkIconSmall className="h-5 w-5 text-gray-300 mx-auto" />
-                                  )}
-                                </td>
-                              ))}
-                            </tr>
-                          ));
-                        }
-                        
-                        // Define the order: features (no subtitle), modules, other types, support (last)
-                        const typeOrder = ['features', 'modules'];
-                        const orderedTypes: string[] = [];
-                        const otherTypes: string[] = [];
-                        
-                        // Separate types into ordered and others
-                        Object.keys(featuresGroupedByType).forEach(type => {
-                          if (type === 'features' || type === 'modules') {
-                            if (!orderedTypes.includes(type)) {
-                              orderedTypes.push(type);
-                            }
-                          } else if (type !== 'support') {
-                            otherTypes.push(type);
-                          }
-                        });
-                        
-                        // Sort ordered types according to our preference
-                        orderedTypes.sort((a, b) => typeOrder.indexOf(a) - typeOrder.indexOf(b));
-                        
-                        // Final order: features, modules, other types (alphabetically), support
-                        const finalOrder = [
-                          ...orderedTypes,
-                          ...otherTypes.sort(),
-                          ...(featuresGroupedByType.support ? ['support'] : [])
-                        ];
-                        
-                        // Render features grouped by type
-                        let rowIndex = 0;
-                        return finalOrder.map((featureType) => {
-                          const features = featuresGroupedByType[featureType];
-                          if (!features || features.length === 0) return null;
-                          
-                          const needsSubtitle = featureType !== 'features'; // No subtitle for 'features' type
-                          let typeDisplayName = '';
-                          
-                          if (needsSubtitle) {
-                            if (featureType === 'modules') {
-                              typeDisplayName = 'Modules';
-                            } else if (featureType === 'support') {
-                              typeDisplayName = 'Support';
-                            } else {
-                              typeDisplayName = featureType.charAt(0).toUpperCase() + featureType.slice(1);
-                            }
-                          }
-                          
-                          return (
-                            <React.Fragment key={featureType}>
-                              {/* Type header row (only if needed) */}
-                              {needsSubtitle && (
-                                <tr className="bg-gray-100 border-b border-gray-200">
-                                  <td className="py-3 px-6 text-sm font-semibold text-gray-800" colSpan={displayPlans.length + 1}>
-                                    {typeDisplayName}
-                                  </td>
-                                </tr>
-                              )}
-                              
-                              {/* Features under this type */}
-                              {features.map((feature) => {
-                                const currentRowIndex = rowIndex++;
-                                return (
-                                  <tr key={feature.id} className={`border-b border-gray-100 ${currentRowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
-                                    <td className="py-4 px-6 text-sm text-gray-700 font-light">
-                                      <Link
-                                        href={`/features/${feature.slug}`}
-                                        className="hover:text-blue-600 hover:underline transition-colors"
-                                      >
-                                        {feature.name}
-                                      </Link>
-                                    </td>
-                                    {displayPlans.map((plan) => (
-                                      <td key={`${plan.name}-${feature.id}`} className="text-center py-4 px-6">
-                                        {planHasRealFeature(plan, feature, displayPlans) ? (
-                                          <CheckIcon className="h-5 w-5 text-emerald-600 mx-auto" />
-                                        ) : (
-                                          <XMarkIconSmall className="h-5 w-5 text-gray-300 mx-auto" />
-                                        )}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                );
-                              })}
-                            </React.Fragment>
-                          );
-                        });
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <PricingComparisonTable
+              plans={displayPlans}
+              isAnnual={isAnnual}
+              hasOneTimePlans={hasOneTimePlans}
+              currencySymbol={currencySymbol}
+              translations={{
+                features: translations.compareAllFeatures,
+                limitedTimeOffer: translations.limitedTimeOffer,
+              }}
+            />
 
           </div>
         </div>

@@ -3,7 +3,7 @@
 import React, { Suspense, memo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { HomePageData } from '@/types/home_page_data';
-import PricingModal from '@/components/PricingModal';
+import PricingModal from '@/components/pricing/PricingModal';
 import { useSettings } from '@/context/SettingsContext';
 
 // Optimized lazy loading with loading components

@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { PricingComparisonProduct } from '@/types/product';
 import { useSettings } from '@/context/SettingsContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { PRODUCT_TAB_STYLES } from '@/components/pricing/pricingModalStyles';
 
 interface PricingModalProductBadgesProps {
   onProductSelect?: (product: PricingComparisonProduct) => void;
@@ -18,7 +20,9 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
   const [products, setProducts] = useState<PricingComparisonProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hoveredProductId, setHoveredProductId] = useState<number | null>(null);
   const { settings } = useSettings();
+  const themeColors = useThemeColors();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Function to scroll active product into center view on mobile
@@ -183,43 +187,55 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
   }
 
   return (
-    <div className="mb-6 h-8 sm:h-10 flex items-center">
-      {/* Mobile: Horizontally scrollable with centered active item */}
-      <div className="w-full sm:flex sm:justify-center">
-        <div 
-          ref={scrollContainerRef}
-          className="flex overflow-x-auto scrollbar-hide space-x-1.5 sm:space-x-2 px-4 sm:px-0 sm:overflow-visible sm:justify-center"
-          style={{
-            scrollSnapType: 'x mandatory',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          {products.map((product, index) => (
-            <button
-              key={product.id}
-              data-product-id={product.id}
-              onClick={() => handleProductClick(product)}
-              className={`
-                relative px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium 
-                transition-all duration-200 ease-out whitespace-nowrap transform hover:scale-105 active:scale-95
-                flex-shrink-0 scroll-snap-align-center touch-manipulation
-                ${selectedProductId === product.id
-                  ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-lg hover:shadow-xl border border-gray-700'
-                  : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 hover:from-gray-100 hover:to-gray-200 shadow-sm hover:shadow-md border border-gray-200 hover:border-gray-300'
-                }
-                before:absolute before:inset-0 before:rounded-lg before:opacity-0 before:transition-opacity
-                ${selectedProductId === product.id 
-                  ? 'before:bg-gradient-to-r before:from-white/10 before:to-transparent hover:before:opacity-100' 
-                  : 'before:bg-gradient-to-r before:from-white/50 before:to-transparent hover:before:opacity-100'
-                }
-                ${index === 0 ? 'ml-0' : ''}
-                ${index === products.length - 1 ? 'mr-0' : ''}
-              `}
-              style={{ scrollSnapAlign: 'center' }}
-            >
-              <span className="relative z-10">{product.product_name}</span>
-            </button>
-          ))}
+    <div className="mb-6 flex items-center">
+      <div className="w-full">
+        <div className="flex justify-center">
+          <nav 
+            ref={scrollContainerRef}
+            className={PRODUCT_TAB_STYLES.container}
+            aria-label="Product selection"
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              scrollSnapType: 'x mandatory',
+            }}
+          >
+            {products.map((product) => {
+              const isActive = selectedProductId === product.id;
+              const isHovered = hoveredProductId === product.id;
+              
+              return (
+                <button
+                  key={product.id}
+                  data-product-id={product.id}
+                  onClick={() => handleProductClick(product)}
+                  onMouseEnter={() => setHoveredProductId(product.id)}
+                  onMouseLeave={() => setHoveredProductId(null)}
+                  className={PRODUCT_TAB_STYLES.button.base}
+                  style={{
+                    ...(isActive
+                      ? {
+                          background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+                          color: 'white',
+                          boxShadow: isHovered
+                            ? `0 4px 12px ${themeColors.cssVars.primary.base}40`
+                            : `0 2px 4px ${themeColors.cssVars.primary.base}30`,
+                        }
+                      : {
+                          backgroundColor: 'transparent',
+                          color: isHovered ? themeColors.cssVars.primary.hover : themeColors.cssVars.primary.base,
+                          borderWidth: '1px',
+                          borderStyle: 'solid',
+                          borderColor: isHovered ? `${themeColors.cssVars.primary.base}80` : `${themeColors.cssVars.primary.base}40`,
+                        }),
+                    scrollSnapAlign: 'center',
+                  }}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <span>{product.product_name}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
       </div>
     </div>
