@@ -36,11 +36,11 @@ export function useUnreadMeetingsCount() {
     try {
       const userId = session.user.id;
 
-      console.log('🎬 [useUnreadMeetingsCount] Fetching count for:', {
-        userId,
-        isAdmin: isAdminUser,
-        orgId: settings.organization_id
-      });
+      // console.log('🎬 [useUnreadMeetingsCount] Fetching count for:', {
+      //   userId,
+      //   isAdmin: isAdminUser,
+      //   orgId: settings.organization_id
+      // });
 
       if (isAdminUser) {
         // Admin: Count all org meetings where admin's ID is not in viewed_by array
@@ -61,19 +61,19 @@ export function useUnreadMeetingsCount() {
           return;
         }
 
-        console.log('✅ Admin unviewed meetings:', { count, sample: data?.slice(0, 3) });
+        // console.log('✅ Admin unviewed meetings:', { count, sample: data?.slice(0, 3) });
         setUnreadCount(count || 0);
       } else {
         // Customer: Count meetings where customer_email matches user's email
         // and their ID is not in viewed_by array
         // NOTE: customer_id is always NULL in bookings table, only customer_email is used
         
-        console.log('🔍 Building customer query with:', {
-          email: session.user.email,
-          userId: userId,
-          userMetadata: session.user.user_metadata,
-          userEmail: session.user.email
-        });
+        // console.log('🔍 Building customer query with:', {
+        //   email: session.user.email,
+        //   userId: userId,
+        //   userMetadata: session.user.user_metadata,
+        //   userEmail: session.user.email
+        // });
 
         // First, let's check ALL meetings for this email (without viewed_by filter)
         const { data: allMeetings, count: totalCount } = await supabase
@@ -81,11 +81,11 @@ export function useUnreadMeetingsCount() {
           .select('id, viewed_by, customer_name, customer_email', { count: 'exact' })
           .eq('customer_email', session.user.email);
 
-        console.log('📊 ALL meetings for this email:', {
-          totalCount,
-          email: session.user.email,
-          allMeetings: allMeetings?.slice(0, 3)
-        });
+        // console.log('📊 ALL meetings for this email:', {
+        //   totalCount,
+        //   email: session.user.email,
+        //   allMeetings: allMeetings?.slice(0, 3)
+        // });
 
         // Now with the viewed_by filter
         const { data, count, error } = await supabase
@@ -100,13 +100,13 @@ export function useUnreadMeetingsCount() {
           return;
         }
 
-        console.log('✅ Customer unviewed meetings:', { 
-          count, 
-          email: session.user.email,
-          userId: userId,
-          sample: data?.slice(0, 3),
-          viewedByFilter: `NOT contains ["${userId}"]`
-        });
+        // console.log('✅ Customer unviewed meetings:', { 
+        //   count, 
+        //   email: session.user.email,
+        //   userId: userId,
+        //   sample: data?.slice(0, 3),
+        //   viewedByFilter: `NOT contains ["${userId}"]`
+        // });
         setUnreadCount(count || 0);
       }
     } catch (err) {
@@ -163,7 +163,7 @@ export function useUnreadMeetingsCount() {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('✅ [useUnreadMeetingsCount] Realtime connected, channel:', channelName);
+          // console.log('✅ [useUnreadMeetingsCount] Realtime connected, channel:', channelName);
         } else if (status !== 'CLOSED') {
           console.log('⚠️ [useUnreadMeetingsCount] Subscription status:', status);
         }

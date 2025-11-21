@@ -60,12 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log('Fetching profile for user:', userId);
+      // console.log('Fetching profile for user:', userId);
       
       // First, get the current organization ID based on the domain
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
       const currentOrgId = await getOrganizationId(baseUrl);
-      console.log('Current organization ID:', currentOrgId);
+      // console.log('Current organization ID:', currentOrgId);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -208,14 +208,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
       
-      console.log('Profile fetched:', { 
-        role: data.role, 
-        organization_id: data.organization_id, 
-        full_name: data.full_name, 
-        is_site_creator: data.is_site_creator, 
-        organization_type: (data.organizations as any)?.type,
-        current_org_id: currentOrgId
-      });
+      // console.log('Profile fetched:', { 
+      //   role: data.role, 
+      //   organization_id: data.organization_id, 
+      //   full_name: data.full_name, 
+      //   is_site_creator: data.is_site_creator, 
+      //   organization_type: (data.organizations as any)?.type,
+      //   current_org_id: currentOrgId
+      // });
       
       // Check admin rights scoped to current organization
       const userOrgId = data.organization_id;

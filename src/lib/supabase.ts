@@ -36,13 +36,15 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
   }
 
   if (error || !data) {
-    console.error('Error fetching organization by baseUrl or domains:', {
-      message: error?.message || 'No error message',
-      code: error?.code || 'No code',
-      details: error?.details || 'No details',
-      hint: error?.hint || 'No hint',
-      baseUrl: currentUrl,
-    });
+    // Only warn (not error) since we have a fallback mechanism with tenantId
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Organization not found by baseUrl or domains, attempting fallback:', {
+        message: error?.message || 'No error message',
+        code: error?.code || 'No code',
+        baseUrl: currentUrl,
+        hasTenantIdFallback: !!tenantId
+      });
+    }
 
     // Fallback to tenantId if provided - tenantId IS the organization ID
     if (tenantId) {
@@ -107,13 +109,15 @@ export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: s
   }
 
   if (error || !data) {
-    console.error('Error fetching organization by baseUrl or domains:', {
-      message: error?.message || 'No error message',
-      code: error?.code || 'No code',
-      details: error?.details || 'No details',
-      hint: error?.hint || 'No hint',
-      baseUrl: currentUrl,
-    });
+    // Only warn (not error) since we have a fallback mechanism with tenantId
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Organization not found by baseUrl or domains, attempting fallback:', {
+        message: error?.message || 'No error message',
+        code: error?.code || 'No code',
+        baseUrl: currentUrl,
+        hasTenantIdFallback: !!tenantId
+      });
+    }
 
     // Fallback to direct ID lookup with tenantId if provided
     if (tenantId && isValidUUID(tenantId)) {
@@ -203,13 +207,13 @@ export async function fetchUserProfile(userId?: string) {
       return null;
     }
 
-    console.log('Query inputs:', {
-      userId,
-      organizationId,
-      isUserIdValid: !!userId,
-      isOrgIdValid: !!organizationId,
-      timestamp: new Date().toISOString(),
-    });
+    // console.log('Query inputs:', {
+    //   userId,
+    //   organizationId,
+    //   isUserIdValid: !!userId,
+    //   isOrgIdValid: !!organizationId,
+    //   timestamp: new Date().toISOString(),
+    // });
 
     const { data, error } = await supabase
       .from('profiles')

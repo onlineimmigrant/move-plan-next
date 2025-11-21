@@ -63,7 +63,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
 
     if (orgData && !orgError) {
       organizationId = orgData.id;
-      console.log('Found organization by URL:', baseUrl, 'ID:', organizationId);
+      // console.log('Found organization by URL:', baseUrl, 'ID:', organizationId);
     } else {
       // Fallback to getOrganizationId for tenant lookup
       organizationId = await getOrganizationId(baseUrl);
@@ -87,7 +87,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
     if (heroError || !heroData) {
       console.error('Error fetching hero data:', heroError || 'No hero data found', 'organization_id:', organizationId);
     } else {
-      console.log('Fetched hero data:', heroData);
+      // console.log('Fetched hero data:', heroData);
     }
 
     // Fetch brands data
@@ -105,7 +105,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
     if (brandsError || !brandsData) {
       console.error('Error fetching brands data:', brandsError || 'No brands data found', 'organization_id:', organizationId);
     } else {
-      console.log('Fetched brands data:', brandsData);
+      // console.log('Fetched brands data:', brandsData);
     }
 
     // Fetch FAQs data
@@ -119,7 +119,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
     if (faqsError || !faqsData) {
       console.error('Error fetching FAQs data:', faqsError || 'No FAQs data found', 'organization_id:', organizationId);
     } else {
-      console.log('Fetched FAQs data:', faqsData);
+      // console.log('Fetched FAQs data:', faqsData);
     }
 
     return {

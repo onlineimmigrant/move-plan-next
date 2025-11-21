@@ -68,8 +68,8 @@ export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // Bypass middleware for .well-known paths (prevents redirect loop)
-  // Check both with and without locale prefix
-  if (pathname.startsWith('/.well-known/') || pathname.match(/^\/[a-z]{2}\/.well-known\//)) {
+  // This catches /.well-known/ or any path with .well-known in it (including /en/.well-known/, /en/en/.well-known/, etc.)
+  if (pathname.includes('.well-known')) {
     return NextResponse.next();
   }
   
