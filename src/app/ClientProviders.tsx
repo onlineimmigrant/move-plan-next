@@ -295,7 +295,8 @@ export default function ClientProviders({
                                   {children}
                                 </BannerAwareContent>
                               {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
-                              {showCookieBanner && (
+                              {/* TEMPORARILY DISABLED FOR PERFORMANCE TESTING */}
+                              {/* {showCookieBanner && (
                                 <Suspense fallback={null}>
                                   <CookieBannerComponent 
                                     headerData={headerData} 
@@ -303,7 +304,7 @@ export default function ClientProviders({
                                     categories={cookieCategories}
                                   />
                                 </Suspense>
-                              )}
+                              )} */}
                               {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
                               <Suspense fallback={null}>
                                 <StandaloneCookieSettings 
@@ -386,16 +387,18 @@ function BannerAwareContent({
 
   return (
     <>
-      <BannerContainer banners={fixedBanners} />
-      <div style={{ marginTop: `${fixedBannersHeight}px` }} className="w-full">
+      {/* TEMPORARILY DISABLED FOR PERFORMANCE TESTING */}
+      {/* <BannerContainer banners={fixedBanners} /> */}
+      <div style={{ marginTop: `${0}px` }} className="w-full">
         {showNavbarFooter ? (
-          <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
+          <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={0}>
             <main className="w-full">
               {children}
               <TemplateHeadingSections />
               <TemplateSections />
               <Breadcrumbs />
-              <BannerContainer banners={nonFixedBanners} />
+              {/* TEMPORARILY DISABLED FOR PERFORMANCE TESTING */}
+              {/* <BannerContainer banners={nonFixedBanners} /> */}
             </main>
           </NavbarFooterWrapper>
         ) : (
@@ -404,7 +407,8 @@ function BannerAwareContent({
             <TemplateHeadingSections />
             <TemplateSections />
             <Breadcrumbs />
-            <BannerContainer banners={nonFixedBanners} />
+            {/* TEMPORARILY DISABLED FOR PERFORMANCE TESTING */}
+            {/* <BannerContainer banners={nonFixedBanners} /> */}
           </main>
         )}
         {/* UnifiedMenu replaces: ChatHelpWidget, UniversalNewButton, MeetingsAccountToggleButton */}
