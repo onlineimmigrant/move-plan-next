@@ -56,7 +56,7 @@ export default function HumanReadableHead({
       <meta property="og:description" content={pageMetadata.description} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:site_name" content={siteName} />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content="en-US" />
       <meta property="og:image" content={`${currentDomain}${ogImage}`} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />

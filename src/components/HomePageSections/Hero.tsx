@@ -506,77 +506,93 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
 
       {/* CSS for animations */}
       <style jsx>{`
-        @keyframes hero-title {
-          0% {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-hero-title.animate {
-          animation: hero-title 1.5s ease-in-out forwards;
-        }
-
-        @keyframes hero-description {
-          0% {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-hero-description.animate {
-          animation: hero-description 1.5s ease-in-out 0.5s forwards;
-        }
-
-        @keyframes hero-button-get-started {
-          0% {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          50% {
-            transform: scale(1.05);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        .animate-hero-button-get-started.animate {
-          animation: hero-button-get-started 1.2s ease-in-out 0.8s forwards;
-        }
-
-        @keyframes hero-button-explore {
-          0% {
-            opacity: 0;
-            transform: translateX(-10px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        .animate-hero-button-explore.animate {
-          animation: hero-button-explore 1.2s ease-in-out 1.0s forwards;
-        }
-
+        /* Mobile-first: Elements visible by default for fast LCP */
         .animate-hero-title,
         .animate-hero-description,
         .animate-hero-button-get-started,
         .animate-hero-button-explore {
-          opacity: 0;
-          transform: translateY(20px);
+          opacity: 1;
+          transform: none;
         }
-        .animate-hero-button-get-started {
-          transform: scale(0.8);
+
+        /* Desktop only: Animate on larger screens */
+        @media (min-width: 768px) {
+          @keyframes hero-title {
+            0% {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-hero-title.animate {
+            animation: hero-title 1.5s ease-in-out forwards;
+          }
+
+          @keyframes hero-description {
+            0% {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-hero-description.animate {
+            animation: hero-description 1.5s ease-in-out 0.5s forwards;
+          }
+
+          @keyframes hero-button-get-started {
+            0% {
+              opacity: 0;
+              transform: scale(0.8);
+            }
+            50% {
+              transform: scale(1.05);
+            }
+            100% {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+          .animate-hero-button-get-started.animate {
+            animation: hero-button-get-started 1.2s ease-in-out 0.8s forwards;
+          }
+
+          @keyframes hero-button-explore {
+            0% {
+              opacity: 0;
+              transform: translateX(-10px);
+            }
+            100% {
+              opacity: 1;
+            transform: translateX(0);
+          }
         }
-        .animate-hero-button-explore {
-          transform: translateX(-10px);
+          .animate-hero-button-explore.animate {
+            animation: hero-button-explore 1.2s ease-in-out 1.0s forwards;
+          }
+
+          /* Initial hidden state for animations (desktop only) */
+          .animate-hero-title,
+          .animate-hero-description,
+          .animate-hero-button-get-started,
+          .animate-hero-button-explore {
+            opacity: 0;
+          }
+          .animate-hero-title,
+          .animate-hero-description {
+            transform: translateY(20px);
+          }
+          .animate-hero-button-get-started {
+            transform: scale(0.8);
+          }
+          .animate-hero-button-explore {
+            transform: translateX(-10px);
+          }
         }
 
         /* Wave animation for LetterGlitch */
