@@ -181,44 +181,48 @@ export default async function middleware(request: NextRequest) {
       defaultLocale
     );
     
-    // If detected language is different from default and supported, auto-redirect
+    // Smart redirect: Only auto-redirect returning users who have explicitly chosen a language preference
+    // First-time visitors get no redirect (better PageSpeed score) and will see a language banner instead
     if (detectedLanguage !== defaultLocale && supportedLocales.includes(detectedLanguage)) {
       const segments = pathname.split('/');
       const currentHasLocale = supportedLocales.includes(segments[1]);
       const currentLocale = currentHasLocale ? segments[1] : defaultLocale;
       
-      // Only redirect if we're not already on the detected language
-      if (currentLocale !== detectedLanguage && !hasSeenLanguageBanner) {
+      // Only redirect if:
+      // 1. User has explicitly chosen this language before (userLanguageChoice cookie exists)
+      // 2. Their choice matches the detected language
+      // 3. They're not already on that language
+      const shouldRedirect = userLanguageChoice && 
+                            userLanguageChoice === detectedLanguage && 
+                            currentLocale !== detectedLanguage;
+      
+      if (shouldRedirect) {
         const pathWithoutLocale = currentHasLocale ? segments.slice(2).join('/') : segments.slice(1).join('/');
         const newPath = pathWithoutLocale ? `/${detectedLanguage}/${pathWithoutLocale}` : `/${detectedLanguage}`;
         
-        // Set cookies for banner display (after redirect)
         const redirectResponse = NextResponse.redirect(new URL(newPath, request.url));
         
-        // Set banner cookies to show after redirect
-        redirectResponse.cookies.set('showLanguageBanner', 'true', {
+        console.log('🌍 Auto-redirecting returning user to preferred language:', detectedLanguage);
+        return redirectResponse;
+      } else if (!userLanguageChoice && currentLocale !== detectedLanguage) {
+        // First-time visitor: Set cookies to show language banner (no redirect for better performance)
+        response.cookies.set('showLanguageBanner', 'true', {
           maxAge: 60 * 5, // 5 minutes
           path: '/',
           sameSite: 'lax'
         });
-        redirectResponse.cookies.set('bannerSourceLanguage', defaultLocale, {
+        response.cookies.set('bannerSourceLanguage', defaultLocale, {
           maxAge: 60 * 5, // 5 minutes  
           path: '/',
           sameSite: 'lax'
         });
-        redirectResponse.cookies.set('bannerTargetLanguage', detectedLanguage, {
+        response.cookies.set('bannerTargetLanguage', detectedLanguage, {
           maxAge: 60 * 5, // 5 minutes
           path: '/',
           sameSite: 'lax'
         });
-        redirectResponse.cookies.set('detectedLanguage', detectedLanguage, {
-          maxAge: 60 * 60 * 24 * 30, // 30 days
-          path: '/',
-          sameSite: 'lax'
-        });
         
-        console.log('🌍 Auto-redirecting to detected language:', detectedLanguage, 'from country:', country);
-        return redirectResponse;
+        console.log('🌍 First-time visitor detected, showing language banner for:', detectedLanguage);
       }
     }
   }
