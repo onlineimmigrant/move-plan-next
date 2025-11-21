@@ -11,8 +11,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import SelectReportTable from "./SelectReportTable";
 import SelectReportFields from "./SelectReportFields";
 
@@ -141,7 +139,11 @@ const ReportNavbar: React.FC<ReportNavbarProps> = ({
     },
   ];
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
+    const [{ jsPDF }, html2canvas] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas').then(mod => mod.default)
+    ]);
     const doc = new jsPDF();
     const element = document.getElementById("report-content");
     if (element) {
@@ -154,7 +156,8 @@ const ReportNavbar: React.FC<ReportNavbarProps> = ({
     setIsExportMenuOpen(false);
   };
 
-  const exportToPNG = () => {
+  const exportToPNG = async () => {
+    const html2canvas = (await import('html2canvas')).default;
     const element = document.getElementById("report-content");
     if (element) {
       html2canvas(element).then((canvas) => {

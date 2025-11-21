@@ -7,7 +7,17 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+// Lazy load framer-motion
+const motion = dynamic(
+  () => import('framer-motion').then((mod) => ({ default: mod.motion.div })),
+  { ssr: false }
+) as any;
+const AnimatePresence = dynamic(
+  () => import('framer-motion').then((mod) => ({ default: mod.AnimatePresence })),
+  { ssr: false }
+) as any;
 import { BACKDROP_STYLES, MODAL_Z_INDEX } from '../utils/modalConstants';
 import { backdropVariants } from '../utils/modalAnimations';
 

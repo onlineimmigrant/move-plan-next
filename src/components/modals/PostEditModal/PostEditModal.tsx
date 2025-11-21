@@ -2,11 +2,21 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { usePostEditModal } from './context';
 import { InformationCircleIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import PostEditor from '@/components/PostPage/PostEditor';
 import { useRouter } from 'next/navigation';
+
+// Lazy load PostEditor to prevent loading @tiptap (~200KB) until editor is actually used
+const PostEditor = dynamic(() => import('@/components/PostPage/PostEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
+  )
+});
 import { BaseModal } from '@/components/modals/_shared';
 import { revalidatePage } from '@/lib/revalidation';
 import { getOrganizationId } from '@/lib/supabase';

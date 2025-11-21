@@ -7,7 +7,6 @@ import Tooltip from '@/components/Tooltip';
 import { useToast } from '@/components/Shared/ToastContainer';
 import { Message, ChatMessagesProps, ChatFile } from './types';
 import styles from './ChatWidget.module.css';
-import { jsPDF } from 'jspdf';
 import { supabase } from '@/lib/supabaseClient';
 import SaveFileModal from './SaveFileModal';
 
@@ -1048,6 +1047,7 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
         fileContent = taskTitle ? `# ${taskTitle}\n\n${textContent}` : textContent;
         filename = `${customFilename}.md`;
       } else if (format === 'pdf') {
+        const { jsPDF } = await import('jspdf');
         const doc = new jsPDF();
         let y = 10;
         const pageHeight = 277;
@@ -1382,6 +1382,7 @@ export default function ChatMessages({ messages, isTyping, isFullscreen, setErro
         filename = `${customFilename}.md`;
         mimeType = 'text/markdown';
       } else if (format === 'pdf') {
+        const { jsPDF } = await import('jspdf');
         const doc = new jsPDF();
         let y = 10;
         const pageHeight = 277;

@@ -1,6 +1,5 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import '@/components/PostPage/PostEditor.css';
 import '@/styles/print.css';
 import { getOrganizationId } from '@/lib/supabase';
 import PostPageClient from './PostPageClient';

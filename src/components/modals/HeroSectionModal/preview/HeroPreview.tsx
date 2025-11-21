@@ -6,11 +6,14 @@
 
 import React, { useMemo } from 'react';
 import parse from 'html-react-parser';
+import dynamic from 'next/dynamic';
 import { HeroFormData } from '../types';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
-import DotGrid from '@/components/AnimateElements/DotGrid';
-import LetterGlitch from '@/components/AnimateElements/LetterGlitch';
-import MagicBento from '@/components/AnimateElements/MagicBento';
+
+// Lazy load heavy animation components
+const DotGrid = dynamic(() => import('@/components/AnimateElements/DotGrid'), { ssr: false, loading: () => null });
+const LetterGlitch = dynamic(() => import('@/components/AnimateElements/LetterGlitch'), { ssr: false, loading: () => null });
+const MagicBento = dynamic(() => import('@/components/AnimateElements/MagicBento'), { ssr: false, loading: () => null });
 
 interface HeroPreviewProps {
   formData: HeroFormData;

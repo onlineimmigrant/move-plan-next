@@ -8,13 +8,24 @@
 
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { StandardModalContainerProps } from '../types';
 import { ModalBackdrop } from './ModalBackdrop';
 import { ResponsiveWrapper } from './ResponsiveWrapper';
 import { DraggableWrapper } from './DraggableWrapper';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { useModalKeyboard } from '../hooks/useModalKeyboard';
+
+// Lazy load framer-motion
+const motion = dynamic(
+  () => import('framer-motion').then((mod) => ({ default: mod.motion.div })),
+  { ssr: false }
+) as any;
+const AnimatePresence = dynamic(
+  () => import('framer-motion').then((mod) => ({ default: mod.AnimatePresence })),
+  { ssr: false }
+) as any;
+
 import {
   MODAL_Z_INDEX,
   GLASS_MORPHISM_STYLES,
@@ -149,7 +160,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
                       animate="visible"
                       exit="exit"
                       tabIndex={-1}
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
                     >
                       <div className="h-full overflow-hidden flex flex-col">
                         {children}

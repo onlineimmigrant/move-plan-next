@@ -1,10 +1,20 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import PostEditor from '@/components/PostPage/PostEditor';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Button from '@/ui/Button';
 import { ArrowLeftIcon, DocumentCheckIcon, ClockIcon } from '@heroicons/react/24/outline';
+
+// Lazy load PostEditor - loads @tiptap only when this admin page is accessed
+const PostEditor = dynamic(() => import('@/components/PostPage/PostEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
+  )
+});
 
 
 const EditPostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) => {

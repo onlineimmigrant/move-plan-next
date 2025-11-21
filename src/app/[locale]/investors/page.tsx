@@ -2,13 +2,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 
 import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
-import DotGrid from '@/components/AnimateElements/DotGrid';
-import ShapeBlur from '@/components/AnimateElements/ShapeBlur';
-import LetterGlitch from '@/components/AnimateElements/LetterGlitch';
-import Masonry from '@/components/AnimateElements/Masonry';
-import Stepper from '@/components/AnimateElements/Stepper';
+
+// Lazy load heavy animation components (GSAP ~120KB, THREE.js ~600KB)
+const DotGrid = dynamic(() => import('@/components/AnimateElements/DotGrid'), { ssr: false, loading: () => null });
+const ShapeBlur = dynamic(() => import('@/components/AnimateElements/ShapeBlur'), { ssr: false, loading: () => null });
+const LetterGlitch = dynamic(() => import('@/components/AnimateElements/LetterGlitch'), { ssr: false, loading: () => null });
+const Masonry = dynamic(() => import('@/components/AnimateElements/Masonry'), { ssr: false, loading: () => null });
+const Stepper = dynamic(() => import('@/components/AnimateElements/Stepper'), { ssr: false, loading: () => null });
 import Button from '@/ui/Button';
 import Privacy from '@/components/LoginRegistration/Privacy';
 import Terms from '@/components/LoginRegistration/Terms';

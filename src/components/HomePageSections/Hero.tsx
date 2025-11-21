@@ -4,13 +4,25 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import parse from 'html-react-parser';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { FaPlayCircle } from 'react-icons/fa';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
-import DotGrid from '@/components/AnimateElements/DotGrid';
-import LetterGlitch from '@/components/AnimateElements/LetterGlitch';
-import MagicBento from '@/components/AnimateElements/MagicBento';
 import { HoverEditButtons } from '@/ui/Button';
+
+// Lazy load heavy animation components - only when actually used
+const DotGrid = dynamic(() => import('@/components/AnimateElements/DotGrid'), { 
+  ssr: false,
+  loading: () => null 
+});
+const LetterGlitch = dynamic(() => import('@/components/AnimateElements/LetterGlitch'), { 
+  ssr: false,
+  loading: () => null 
+});
+const MagicBento = dynamic(() => import('@/components/AnimateElements/MagicBento'), { 
+  ssr: false,
+  loading: () => null 
+});
 import { useHeroSectionEdit } from '@/components/modals/HeroSectionModal/context';
 import { useAuth } from '@/context/AuthContext';
 import { getOrganizationId } from '@/lib/supabase';
