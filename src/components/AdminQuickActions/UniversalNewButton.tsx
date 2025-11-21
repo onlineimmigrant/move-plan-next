@@ -302,7 +302,7 @@ const UniversalNewButton: React.FC<UniversalNewButtonProps> = ({ inNavbar = fals
         alert(`Creating ${action} - Coming soon!`);
         break;
       default:
-        console.log('Unknown action:', action);
+        // Unknown action
     }
   };
 

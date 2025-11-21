@@ -38,7 +38,7 @@ const openStateOptions = [
 ];
 
 export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], onChange }) => {
-  console.log('BannerSelect rendered with value:', value);
+  // Component rendered
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
@@ -129,7 +129,7 @@ export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], on
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for banner add');
+    // Auto-save event dispatched for banner add
     
     setShowAddForm(false);
     
@@ -179,7 +179,7 @@ export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], on
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for banner edit');
+    // Auto-save event dispatched for banner edit
     
     setEditingBanner(null);
   };
@@ -208,7 +208,7 @@ export const BannerSelect: React.FC<BannerSelectProps> = ({ name, value = [], on
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for banner toggle');
+    // Auto-save event dispatched for banner toggle
   };
 
   const renderBannerForm = (

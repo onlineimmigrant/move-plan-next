@@ -5,6 +5,12 @@ const withNextIntl = require('next-intl/plugin')(
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  compiler: {
+    // Remove console.log in production
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
   experimental: {
     optimizeCss: false,
   },
@@ -32,6 +38,7 @@ const nextConfig = {
     ];
   },
   images: {
+    qualities: [75, 90, 100],
     remotePatterns: [
 
       {

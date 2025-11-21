@@ -82,8 +82,8 @@ export default function ModernLanguageSwitcher({
   };
 
   return (
-    <Menu as="div" className="relative inline-block text-left">
-      <div>
+    <Menu as="div" className="relative inline-block text-left" suppressHydrationWarning>
+      <div suppressHydrationWarning>
         <Menu.Button 
           className={`group relative inline-flex w-full justify-center items-center gap-x-2 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none transition-colors duration-150 ${
             variant === 'dark' 
@@ -92,6 +92,7 @@ export default function ModernLanguageSwitcher({
               ? 'bg-transparent text-neutral-500 hover:text-neutral-400'
               : 'text-gray-700 hover:text-gray-900'
           }`}
+          suppressHydrationWarning
         >
           <span className="text-sm font-medium">{currentLocale.toUpperCase()}</span>
           <ChevronDownIcon 

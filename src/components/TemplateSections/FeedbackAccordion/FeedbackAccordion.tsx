@@ -305,18 +305,11 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
   
   // Hide component if less than 2 reviews exist
   if (totalApprovedFeedbacks < 2) {
-    console.log('FeedbackAccordion: Hidden due to insufficient reviews', {
-      totalApprovedFeedbacks,
-      required: 2
-    });
+
     return null;
   }
 
-  console.log('FeedbackAccordion: Visible -', {
-    totalApprovedFeedbacks,
-    hasUser: !!user,
-    userEmail: user?.email || 'No email'
-  });
+
 
   return (
     <section className="py-8 bg-transparent">

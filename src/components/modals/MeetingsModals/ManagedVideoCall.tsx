@@ -27,12 +27,6 @@ export default function ManagedVideoCall() {
 
   // Compute showWaitingRoom directly from props (no state needed)
   const showWaitingRoom = videoCallOpen && activeMeeting?.status === 'waiting';
-  
-  console.log('[ManagedVideoCall] Computed showWaitingRoom:', {
-    videoCallOpen,
-    status: activeMeeting?.status,
-    showWaitingRoom
-  });
 
   // Check if user is host or admin
   useEffect(() => {

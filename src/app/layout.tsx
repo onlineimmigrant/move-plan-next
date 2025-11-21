@@ -194,20 +194,16 @@ export async function generateMetadata(): Promise<Metadata> {
     const remainingPath = localeMatch[1];
     if (!remainingPath || remainingPath === '') {
       pathname = '/';
-      console.log('🔍 [Layout generateMetadata] Treating locale path as homepage:', pathname);
     } else {
       pathname = '/' + remainingPath;
-      console.log('🔍 [Layout generateMetadata] Converted locale path:', pathname);
     }
   }
   
-  console.log('🔍 [Layout generateMetadata] Final pathname for SEO:', pathname);
   
   // Use comprehensive SEO system
   let seoData;
   try {
     seoData = await fetchPageSEOData(pathname, currentDomain);
-    console.log('✅ [Layout generateMetadata] SEO data fetched from system:', seoData.title);
   } catch (error) {
     console.error('❌ [Layout generateMetadata] Error fetching SEO data, using fallback:', error);
     seoData = await fetchDefaultSEOData(currentDomain, pathname);
@@ -222,7 +218,6 @@ export async function generateMetadata(): Promise<Metadata> {
   if (metadataLocaleMatch) {
     currentLocale = metadataLocaleMatch[1];
   }
-  console.log('🌐 [Layout generateMetadata] Detected locale from pathname:', currentLocale);
 
   // Enhanced metadata with SEO system data
   return {
@@ -272,7 +267,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const currentDomain = await getDomain();
-  console.log('RootLayout - currentDomain:', currentDomain);
   
   // Get current pathname to extract locale
   const headersList = await headers();
@@ -307,27 +301,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (layoutLocaleMatch) {
     currentLocale = layoutLocaleMatch[1];
   }
-  console.log('🌐 [RootLayout] Detected locale from pathname:', currentLocale);
   
   const organization = await getOrganization(currentDomain);
   const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
   
-  console.log('RootLayout - settings loaded:', !!settings);
-  console.log('🔍 [FONT DEBUG] RootLayout - settings.font_family:', settings?.font_family);
+  // Settings loaded
 
   const organizationId = organization?.id || null;
-  console.log('RootLayout - organizationId:', organizationId);
 
   const menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
-  console.log('RootLayout - menuItems:', menuItems.length, 'items fetched');
   
   // Fetch cookie categories at build time (cached)
   const cookieCategories = await getCookieCategories();
-  console.log('RootLayout - cookieCategories:', cookieCategories.length, 'categories fetched');
   
   // Check if user has already accepted cookies (server-side check)
   const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
-  console.log('RootLayout - cookieAccepted:', cookieAccepted);
   
   // Use dynamic locale instead of static language from settings
   const language = currentLocale;
@@ -344,7 +332,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Font selection logic - map settings.font_family to CSS variable
   const selectedFont = settings?.font_family || 'Inter';
   
-  console.log('🔍 [FONT DEBUG] RootLayout - selectedFont:', selectedFont);
   
   const selectedFontVar = (() => {
     switch (selectedFont) {
@@ -363,7 +350,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   })();
   
-  console.log('🔍 [FONT DEBUG] RootLayout - selectedFontVar:', selectedFontVar);
 
   // Compose all font variable classes so all fonts are loaded
   const fontVarsClass = [
@@ -382,7 +368,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   ].join(' ');
 
   return (
-    <html lang={language}>
+    <html lang={language} data-scroll-behavior="smooth">
       <head>
         <link rel="icon" href={faviconUrl} />
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}

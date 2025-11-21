@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { XMarkIcon, TrashIcon, DocumentArrowDownIcon, PencilIcon, ChevronDownIcon, DocumentTextIcon, FolderIcon, FolderPlusIcon, ArrowLeftIcon, ArrowUpTrayIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { 
   DocumentIcon, 
@@ -17,11 +17,6 @@ import ReactMarkdown from 'react-markdown';
 import Button from '@/ui/Button';
 import ShareFileModal from './ShareFileModal';
 import styles from './ChatWidget.module.css';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const MAX_FILE_SIZE = 100 * 1024; // 100KB in bytes
 

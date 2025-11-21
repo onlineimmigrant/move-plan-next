@@ -87,7 +87,7 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
         const response = await fetch(`/api/posts/featured?organization_id=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('📊 Featured posts loaded:', data.length, 'Sample post:', data[0]);
+
           setPosts(data);
         }
       } catch (error) {

@@ -38,12 +38,8 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   }, [isOpen, onClose]);
 
   const handleSwitchToLogin = () => {
-    console.log('handleSwitchToLogin called');
     if (onSwitchToLogin) {
-      console.log('Calling onSwitchToLogin callback');
       onSwitchToLogin();
-    } else {
-      console.log('No onSwitchToLogin callback provided');
     }
   };
 

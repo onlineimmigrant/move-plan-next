@@ -5,14 +5,8 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useStudentStatus } from '@/lib/StudentContext';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
-
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 
 interface AccountTabEduProCourseProps {

@@ -263,7 +263,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         setSession(data.session);
-        console.log('Initial session:', data.session?.user?.email);
         if (data.session?.user?.id) {
           await fetchProfile(data.session.user.id);
           // Let layouts handle their own redirects

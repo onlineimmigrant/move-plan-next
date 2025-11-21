@@ -120,7 +120,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
             setError('Invalid data format');
             return;
           }
-          console.log('📊 Blog posts loaded:', data.posts.length, 'Sample post:', data.posts[0]);
+          // console.log('📊 Blog posts loaded:', data.posts.length, 'Sample post:', data.posts[0]);
           setPosts(data.posts);
           setHasMore(data.hasMore || false);
           setTotal(data.total || 0);
@@ -190,7 +190,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
       const query = searchQuery.toLowerCase();
       const shouldDisplay = post.display_this_post !== false;
       const isBlogPost = post.display_as_blog_post !== false;
-      console.log('Post:', post, 'display_this_post:', post.display_this_post, 'Should display:', shouldDisplay);
+      // console.log('Post:', post, 'display_this_post:', post.display_this_post, 'Should display:', shouldDisplay);
       return (
         shouldDisplay &&
         isBlogPost &&
@@ -257,20 +257,20 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
               // Check for Unsplash attribution in either location
               const unsplashAttr = post.media_config?.unsplash_attribution || post.attrs?.unsplash_attribution;
               
-              console.log('🔍 Post debug:', {
-                title: post.title,
-                has_media_config: !!post.media_config,
-                media_config: post.media_config,
-                has_attrs: !!post.attrs,
-                attrs: post.attrs,
-                unsplashAttr: unsplashAttr
-              });
-              
-              if (unsplashAttr) {
-                console.log('✅ Post HAS Unsplash attribution:', post.title, unsplashAttr);
-              } else {
-                console.log('❌ Post MISSING Unsplash attribution:', post.title);
-              }
+              // console.log('🔍 Post debug:', {
+              //   title: post.title,
+              //   has_media_config: !!post.media_config,
+              //   media_config: post.media_config,
+              //   has_attrs: !!post.attrs,
+              //   attrs: post.attrs,
+              //   unsplashAttr: unsplashAttr
+              // });
+              // 
+              // if (unsplashAttr) {
+              //   console.log('✅ Post HAS Unsplash attribution:', post.title, unsplashAttr);
+              // } else {
+              //   console.log('❌ Post MISSING Unsplash attribution:', post.title);
+              // }
               
               return (
               <div key={post.id} className="group">

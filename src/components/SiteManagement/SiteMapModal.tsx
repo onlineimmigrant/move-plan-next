@@ -35,7 +35,7 @@ import { SearchFilterBar, FilterState } from '@/components/modals/SiteMapModal/c
 type TabId = 'tree' | 'statistics' | 'settings';
 
 export default function SiteMapModal() {
-  console.log('🗺️ SiteMapModal loaded! (120/100 design)');
+  // Component loaded
   
   const { isOpen, closeModal } = useSiteMapModal();
   const { session } = useSupabaseClient();

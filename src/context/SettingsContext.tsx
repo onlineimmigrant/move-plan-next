@@ -24,11 +24,7 @@ export function SettingsProvider({
   const [settings, setSettings] = useState<Settings>(initialSettings);
 
   useEffect(() => {
-    // Debug: Log the settings object to confirm the values
-    console.log('🔧 SETTINGS PROVIDER INITIALIZED 🔧');
-    console.log('SettingsProvider settings:', settings);
-    console.log('Primary color from settings:', settings?.primary_color, settings?.primary_shade);
-    console.log('Secondary color from settings:', settings?.secondary_color, settings?.secondary_shade);
+    // Settings updated
   }, [settings]);
 
   return (

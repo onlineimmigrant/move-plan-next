@@ -24,7 +24,7 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
   }
 
   const isLocal = process.env.NODE_ENV === 'development';
-  console.log('Fetching organization for URL:', currentUrl, 'isLocal:', isLocal);
+  // console.log('Fetching organization for URL:', currentUrl, 'isLocal:', isLocal);
 
   // Normalize URL: remove trailing slashes and convert to lowercase
   if (currentUrl) {
@@ -38,7 +38,6 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
 
   // Check cache first
   if (currentUrl && organizationIdCache.has(currentUrl)) {
-    console.log('Using cached organization ID for URL:', currentUrl, 'ID:', organizationIdCache.get(currentUrl));
     return organizationIdCache.get(currentUrl)!;
   }
 
@@ -53,7 +52,7 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
     return null;
   }
 
-  console.log('Querying organization for URL:', currentUrl);
+  // console.log('Querying organization for URL:', currentUrl);
   
   // First try: Check if currentUrl matches any domain in the domains array
   let { data, error } = await supabase
@@ -100,7 +99,6 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
     return null;
   }
 
-  console.log('Organization found for URL:', currentUrl, 'ID:', data.id);
   organizationIdCache.set(currentUrl, data.id);
   return data.id as UUID;
 }
@@ -117,7 +115,7 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
   }
 
   const isLocal = process.env.NODE_ENV === 'development';
-  console.log('Fetching organization for URL:', currentUrl, 'isLocal:', isLocal);
+  // console.log('Fetching organization for URL:', currentUrl, 'isLocal:', isLocal);
 
   // Normalize URL: remove trailing slashes and convert to lowercase
   if (currentUrl) {
@@ -125,7 +123,6 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
     // Normalize https:// to http:// for localhost:3000 in development
     if (isLocal && currentUrl === 'https://localhost:3000') {
       currentUrl = 'http://localhost:3000';
-      console.log('Normalized URL to:', currentUrl);
     }
   }
 
@@ -149,7 +146,7 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
     return null;
   }
 
-  console.log('Querying organization for URL:', currentUrl);
+  // console.log('Querying organization for URL:', currentUrl);
   
   // First try: Check if currentUrl matches any domain in the domains array
   let { data, error } = await supabase
@@ -214,7 +211,6 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
     return null;
   }
 
-  console.log('Organization found for URL:', currentUrl, 'ID:', data.id, 'Type:', data.type);
   return data as Organization;
 }
 
@@ -283,12 +279,14 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
     return defaultSettings;
   }
 
+  /*
   console.log('Environment variables:', {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
     NEXT_PUBLIC_TENANT_ID: process.env.NEXT_PUBLIC_TENANT_ID,
   });
+  */
 
   try {
     const organizationId = await getOrganizationId(baseUrl);
@@ -297,7 +295,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       return defaultSettings;
     }
 
-    console.log('Fetching settings for organization_id:', organizationId);
+    // console.log('Fetching settings for organization_id:', organizationId);
 
     const { data, error } = await supabase
       .from('settings')
@@ -364,7 +362,7 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
       secondary_shade: data.secondary_shade ?? 500,
     };
 
-    console.log('Settings fetched successfully:', settings);
+    // console.log('Settings fetched successfully:', settings);
     return settings;
   } catch (error) {
     console.error('getSettings error:', error);

@@ -5,16 +5,10 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useStudentStatus } from '@/lib/StudentContext';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 import Tooltip from '../Tooltip';
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface Tab {
   label: string;

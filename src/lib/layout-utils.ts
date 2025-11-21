@@ -10,8 +10,6 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
     return [];
   }
 
-  console.log('fetchMenuItems - called with organizationId:', organizationId);
-  console.log('fetchMenuItems - querying database for organizationId:', organizationId);
 
   try {
     // Query menu items with submenu items join using actual database field names
@@ -47,7 +45,6 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
 
     if (error) {
       console.error('fetchMenuItems - database error:', error);
-      console.log('fetchMenuItems - attempting fallback query without joins');
       
       // If the join query fails, try a fallback basic query
       const { data: basicData, error: basicError } = await supabase
@@ -72,7 +69,6 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         return [];
       }
 
-      console.log(`fetchMenuItems - fallback: fetched ${basicData?.length || 0} menu items`);
       
       // Transform basic data without submenu items
       const menuItems: MenuItem[] = basicData?.map((item: any) => ({
@@ -97,7 +93,6 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
       return menuItems;
     }
 
-    console.log(`fetchMenuItems - fetched ${data?.length || 0} menu items with submenu data`);
     
     // Transform data to match expected interface
     const menuItems: MenuItem[] = data?.map((item: any) => {

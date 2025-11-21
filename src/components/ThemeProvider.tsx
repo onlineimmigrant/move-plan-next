@@ -50,7 +50,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       try {
         const colorClass = `${color}-${shade}`;
         const hexValue = getColorValue(colorClass);
-        console.log(`Setting ${varName} = ${colorClass} → ${hexValue}`);
         if (hexValue) {
           root.style.setProperty(varName, hexValue);
         } else {
@@ -78,24 +77,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.setAttribute('data-primary-shade', String(primaryShade));
     root.setAttribute('data-secondary-color', secondaryColor);
     root.setAttribute('data-secondary-shade', String(secondaryShade));
-
-    console.log('Theme colors applied:', {
-      primary: {
-        color: primaryColor,
-        base: primaryShade,
-        variants: primaryVariants,
-      },
-      secondary: {
-        color: secondaryColor,
-        base: secondaryShade,
-        variants: secondaryVariants,
-      },
-    });
-
-    // Visual debug indicator
-    console.log('🎨 THEME PROVIDER EXECUTED - CHECK CONSOLE 🎨');
-    console.log('Primary Color:', primaryColor, primaryShade);
-    console.log('Secondary Color:', secondaryColor, secondaryShade);
   }, [settings]);
 
   return <>{children}</>;

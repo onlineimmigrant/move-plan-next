@@ -78,9 +78,9 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   
   // Debug: Log all media items
   useEffect(() => {
-    console.log('[ProductDetailMediaDisplay] All media items:', mediaItems);
+    // console.log('[ProductDetailMediaDisplay] All media items:', mediaItems);
     const r2Videos = mediaItems.filter(m => m.is_video && m.video_player === 'r2');
-    console.log('[ProductDetailMediaDisplay] R2 videos:', r2Videos);
+    // console.log('[ProductDetailMediaDisplay] R2 videos:', r2Videos);
   }, [mediaItems]);
   
   const sortedMediaItems = useMemo(
@@ -126,7 +126,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
       return null;
     }
     const fallback = media.image_url && media.image_url.trim() ? media.image_url.trim() : null;
-    console.log('[getDerivedThumbnail] Fallback for', media.video_player, ':', fallback);
+    // console.log('[getDerivedThumbnail] Fallback for', media.video_player, ':', fallback);
     return fallback;
   };
   

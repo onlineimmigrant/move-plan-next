@@ -67,6 +67,12 @@ function isKnownRoute(pathname: string): boolean {
 export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
+  // Bypass middleware for .well-known paths (prevents redirect loop)
+  // Check both with and without locale prefix
+  if (pathname.startsWith('/.well-known/') || pathname.match(/^\/[a-z]{2}\/.well-known\//)) {
+    return NextResponse.next();
+  }
+  
   // Get the base URL for settings lookup
   const protocol = request.headers.get('x-forwarded-proto') || 'http';
   const host = request.headers.get('host');
@@ -239,11 +245,12 @@ export const config = {
   // Match all pathnames except for:
   // - API routes (/api/*)
   // - Static files (_next/*, _vercel/*)
+  // - System files (.well-known/*)
   // - Image files and assets (with file extensions)
   // - Favicon and other root assets
   matcher: [
     // Include all routes that should be internationalized
-    '/((?!api|_next|_vercel|favicon.ico|sitemap.xml|robots.txt|.*\\.[a-zA-Z0-9]+$).*)',
+    '/((?!api|_next|_vercel|\\.well-known|favicon.ico|sitemap.xml|robots.txt|.*\\.[a-zA-Z0-9]+$).*)',
     // Also include the root path
     '/'
   ],

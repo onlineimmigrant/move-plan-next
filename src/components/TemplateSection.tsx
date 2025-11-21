@@ -222,14 +222,6 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
   if (!section) {
     return null;
   }
-  // Debug: Log section data to see if metrics are present
-  console.log('TemplateSection rendered:', {
-    id: section.id,
-    title: section.section_title,
-    metricsCount: section.website_metric?.length || 0,
-    hasMetrics: !!section.website_metric,
-    metrics: section.website_metric
-  });
 
   // Admin state and edit context
   const { isAdmin } = useAuth();
@@ -532,15 +524,6 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                             metric.background_color || (isCodedHarmony ? 'gray-50' : 'white')
                           )
                         : undefined;
-                      
-                      console.log(`Metric ${metric.id} rendering:`, {
-                        background_color: metric.background_color,
-                        is_gradient: metric.is_gradient,
-                        gradient: metric.gradient,
-                        is_card_type: metric.is_card_type,
-                        isCodedHarmony,
-                        metricBgStyle
-                      });
 
                       return (
                         <div
@@ -669,15 +652,6 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                       metric.background_color || (isCodedHarmony ? 'gray-50' : 'white')
                     )
                   : undefined;
-                
-                console.log(`Metric ${metric.id} rendering (grid):`, {
-                  background_color: metric.background_color,
-                  is_gradient: metric.is_gradient,
-                  gradient: metric.gradient,
-                  is_card_type: metric.is_card_type,
-                  isCodedHarmony,
-                  metricBgStyle
-                });
 
                 return (
                   <div
@@ -732,6 +706,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                               )}
                               width={300}
                               height={300}
+                              style={{ width: "auto", height: "auto" }}
                               priority={false}
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             />

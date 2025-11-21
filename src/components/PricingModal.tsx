@@ -455,7 +455,6 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         const productParam = selectedProduct?.id ? `&productId=${selectedProduct.id}` : '';
         const currencyParam = `&currency=${userCurrency}`;
         const url = `/api/pricing-comparison?organizationId=${encodeURIComponent(settings.organization_id)}&type=plans${productParam}${currencyParam}`;
-        console.log('Fetching pricing plans:', url);
         
         const response = await fetch(url, {
           method: 'GET',
@@ -468,7 +467,6 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         if (response.ok) {
           const data = await response.json();
           setPricingPlans(data);
-          console.log('Successfully fetched pricing plans:', data);
         } else {
           const errorData = await response.json().catch(() => ({}));
           console.error('Error fetching pricing plans:', errorData);
@@ -497,7 +495,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         // Fetch features for each pricing plan
         for (const plan of pricingPlans) {
           const url = `/api/pricingplan-features?planId=${plan.id}&organizationId=${encodeURIComponent(settings.organization_id)}`;
-          console.log('Fetching features for plan:', plan.id, url);
+
           
           const response = await fetch(url, {
             method: 'GET',
@@ -509,7 +507,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
           if (response.ok) {
             const features = await response.json();
             featuresMap[plan.id] = features;
-            console.log(`Successfully fetched ${features.length} features for plan ${plan.id}`);
+
           } else {
             console.error(`Error fetching features for plan ${plan.id}:`, await response.json().catch(() => ({})));
             featuresMap[plan.id] = [];

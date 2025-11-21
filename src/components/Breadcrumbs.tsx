@@ -146,9 +146,6 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
     }
   };
 
-  // Log renders to debug
-  console.log('Breadcrumbs rendered:', { pathname, overrides, extraCrumbs, settings, organizationType });
-
   // Memoize overrides and extraCrumbs to prevent unnecessary re-computation
   const memoizedOverrides = useMemo(() => overrides, [overrides]);
   const memoizedExtraCrumbs = useMemo(() => extraCrumbs, [extraCrumbs]);
@@ -156,8 +153,6 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
   // Compute breadcrumbs using useMemo
   const breadcrumbs = useMemo(() => {
     if (!pathname) return [];
-
-    console.log('Computing breadcrumbs for pathname:', pathname);
 
     // Split the path into segments and filter out empty values
     const pathSegments = pathname.split('/').filter(Boolean);

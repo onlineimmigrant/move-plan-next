@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Combobox } from '@headlessui/react';
 import { AIAgent } from './types';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 
 interface AIAgentsSelectProps {
   value: AIAgent[];
@@ -110,12 +110,6 @@ const AgentIcon = ({ icon }: { icon?: string | null }) => {
   // Treat as emoji
   return <div className="text-2xl">{icon}</div>;
 };
-
-// Create supabase client once
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export function AIAgentsSelect({ value = [], onChange, organizationId, session }: AIAgentsSelectProps) {
   // Ensure value is always an array

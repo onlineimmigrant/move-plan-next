@@ -217,77 +217,36 @@ const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('Header Component Debug:');
-      console.log('- Menu items:', JSON.stringify(menuItems, null, 2));
-      console.log('- Fixed banners height:', fixedBannersHeight);
-      console.log('- Header style JSONB:', headerStyle);
-      console.log('- Header type:', headerType);
-      console.log('- Menu width:', menuWidth);
-      console.log('- Global menu items are text:', globalMenuItemsAreText);
-      console.log('- Individual item display modes:', menuItems?.map(item => ({
-        display_name: item.display_name,
-        menu_items_are_text: item.menu_items_are_text,
-        display_mode: getItemDisplayMode(item) ? 'text' : 'icon',
-        has_react_icon_id: !!item.react_icon_id,
-        icon_name: item.icon_name
-      })));
-      
-      // Debug: Check submenu descriptions and images
-      menuItems?.forEach((item) => {
-        if (item.website_submenuitem?.length) {
-          console.log(`Menu "${item.display_name}" submenus:`, 
-            item.website_submenuitem.map(sub => ({
-              id: sub.id,
-              name: sub.name,
-              description: sub.description,
-              description_translation: sub.description_translation,
-              image: sub.image,
-              hasDescription: !!sub.description,
-              hasDescriptionTranslation: !!sub.description_translation,
-              hasImage: !!sub.image
-            }))
-          );
-        }
-      });
+      // Debug: Check submenu descriptions and images removed for production
     }
   }, [menuItems, fixedBannersHeight, headerStyle, headerType, menuWidth, globalMenuItemsAreText, getItemDisplayMode]);
 
   // Memoized functions for better performance
   const getIconName = useCallback((item: MenuItem): string | undefined => {
-    console.log(`[getIconName] Processing item: "${item.display_name}"`);
-    console.log(`[getIconName] - icon_name (top-level):`, item.icon_name);
-    console.log(`[getIconName] - react_icon_id:`, item.react_icon_id);
-    console.log(`[getIconName] - react_icons:`, item.react_icons);
+    // Processing icon name for item
     
     // First check if icon_name is already extracted at top level
     if (item.icon_name) {
-      console.log(`[getIconName] ✓ Using top-level icon_name: "${item.icon_name}"`);
       return item.icon_name;
     }
     
     // Otherwise extract from react_icons
     if (!item.react_icons) {
-      console.log(`[getIconName] ✗ No react_icons found for item: "${item.display_name}"`);
       return undefined;
     }
     
     if (Array.isArray(item.react_icons)) {
       const iconName = item.react_icons.length > 0 ? item.react_icons[0].icon_name : undefined;
-      console.log(`[getIconName] ✓ Extracted icon_name from array:`, iconName);
       return iconName;
     }
     
     const iconName = item.react_icons.icon_name;
-    console.log(`[getIconName] ✓ Extracted icon_name from object:`, iconName);
     return iconName;
   }, []);
 
   // Create a dynamic icon component map from all HeroIcons
   const getIconComponent = useCallback((iconName: string | undefined) => {
-    console.log(`[getIconComponent] Looking up icon: "${iconName}"`);
-    
     if (!iconName) {
-      console.log(`[getIconComponent] ✗ No iconName provided, using MapIcon`);
       return HeroIcons.MapIcon;
     }
     
@@ -295,12 +254,9 @@ const Header: React.FC<HeaderProps> = ({
     const IconComponent = (HeroIcons as any)[iconName];
     
     if (!IconComponent) {
-      console.warn(`[getIconComponent] ✗ Icon "${iconName}" not found in HeroIcons, using MapIcon as fallback`);
-      console.log(`[getIconComponent] Available icons sample:`, Object.keys(HeroIcons).slice(0, 10).join(', ') + '...');
       return HeroIcons.MapIcon;
     }
     
-    console.log(`[getIconComponent] ✓ Found icon component for "${iconName}"`);
     return IconComponent;
   }, []);
 
@@ -713,11 +669,6 @@ const Header: React.FC<HeaderProps> = ({
           const displayedSubItems = (item.website_submenuitem || [])
             .filter((subItem) => subItem.is_displayed !== false)
             .sort((a, b) => (a.order || 0) - (b.order || 0));
-            
-            console.log(
-              `Mobile rendering ${item.display_name}, displayedSubItems:`,
-              JSON.stringify(displayedSubItems, null, 2)
-            );
 
             // Get translated content for menu item
             const translatedDisplayName = currentLocale 
@@ -766,17 +717,7 @@ const Header: React.FC<HeaderProps> = ({
 
                             const displayDescription = translatedDescription || `Learn more about ${translatedSubItemName.toLowerCase()}`;
 
-                            // Debug: Track description logic (mobile)
-                            if (process.env.NODE_ENV === 'development') {
-                              console.log(`Mobile submenu "${subItem.name}" description logic:`, {
-                                originalDescription: subItem.description,
-                                hasTranslation: !!subItem.description_translation,
-                                currentLocale,
-                                translatedDescription,
-                                displayDescription,
-                                usingFallback: !translatedDescription
-                              });
-                            }
+                            // Get translated description
 
                             return (
                               <LocalizedLink

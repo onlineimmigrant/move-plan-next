@@ -99,10 +99,8 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
 
         const start = Date.now();
         const fetchedBanners = await fetchBanners(pathname, session?.user?.id);
-        console.log('Banners fetch duration:', Date.now() - start, 'ms');
-        console.log('Fetched banners in context:', JSON.stringify(fetchedBanners, null, 2));
         const dismissedBannerIds = getDismissedBannerIds();
-        console.log('Dismissed Banner IDs in context:', dismissedBannerIds);
+        // Dismissed banner IDs loaded
         
         // Filter out banners without IDs and map the rest
         const mappedBanners: Banner[] = fetchedBanners
@@ -139,7 +137,6 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
             );
             return mappedBanner;
           });
-        console.log('Final banners set in state:', JSON.stringify(mappedBanners, null, 2));
         cache.set(cacheKey, mappedBanners);
         setBanners((prev) => {
           if (JSON.stringify(prev) !== JSON.stringify(mappedBanners)) {
@@ -195,8 +192,6 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
       (b) => b.isFixedAboveNavbar && !b.isDismissed && b.position === 'top' && b.is_enabled
     );
     const height = fixedBanners.length * 56; // Matches Banner's top-[${index * 3}rem]
-    console.log('Fixed banners for height calc:', JSON.stringify(fixedBanners, null, 2));
-    console.log('Calculated fixed banners height:', height);
     return height;
   }, [banners]);
 

@@ -43,7 +43,7 @@ const PageCreationModal: React.FC<PageCreationModalProps> = ({
           return;
         }
 
-        console.log('Found organization ID:', orgId, 'for base URL:', baseUrl);
+        // Found organization ID for base URL
         setOrganizationId(orgId);
       } catch (error) {
         console.error('Error in fetchOrganizationId:', error);
@@ -161,7 +161,7 @@ const PageCreationModal: React.FC<PageCreationModalProps> = ({
       }
 
       // Success!
-      console.log('Page created successfully:', newPage);
+      // Page created successfully
       
       if (onSuccess) {
         onSuccess({

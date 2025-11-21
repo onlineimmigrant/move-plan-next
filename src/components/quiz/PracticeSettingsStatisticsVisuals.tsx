@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 
-interface RawStatistic {
-  questions_correct: number;
-  questions_attempted: number;
-  exam_mode: boolean;
+interface PracticeSettingsStatisticsVisualsProps {
+  quizId: string | number;
+  courseId: string | number;
+  courseSlug: string;
+  showFullStats: boolean;
+  setShowFullStats: (show: boolean) => void;
 }
 
 interface Statistics {
@@ -16,18 +18,11 @@ interface Statistics {
   total_questions_answered: number;
 }
 
-interface PracticeSettingsStatisticsVisualsProps {
-  quizId: number;
-  courseId: number;
-  courseSlug: string;
-  showFullStats: boolean;
-  setShowFullStats: (value: boolean) => void;
+interface RawStatistic {
+  exam_mode: boolean;
+  questions_correct: number;
+  questions_attempted: number;
 }
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function PracticeSettingsStatisticsVisuals({
   quizId,

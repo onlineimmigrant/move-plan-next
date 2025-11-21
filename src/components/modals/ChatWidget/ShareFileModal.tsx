@@ -1,15 +1,10 @@
 'use client';
 import { useState, useEffect, Fragment } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { XMarkIcon, UserPlusIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid';
 import Button from '@/ui/Button';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface ShareFileModalProps {
   isOpen: boolean;

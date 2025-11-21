@@ -2,14 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, UserIcon, PhotoIcon } from '@heroicons/react/24/outline';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface Profile {
   id: string;

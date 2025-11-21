@@ -918,7 +918,6 @@ export const renderField = ({
       );
 
     case 'cookie-categories':
-      console.log('🍪 Rendering cookie-categories, allSettings:', allSettings);
       return (
         <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
           <CookieCategoriesSelect
@@ -929,9 +928,6 @@ export const renderField = ({
       );
 
     case 'cookie-services':
-      console.log('🍪 Rendering cookie-services, allSettings:', allSettings);
-      const cookieServicesCount = Array.isArray(allSettings?.cookie_services) ? allSettings.cookie_services.length : 0;
-      console.log('🍪 Cookie services count for passing:', cookieServicesCount);
       return (
         <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
           <CookieServicesSelect
@@ -943,7 +939,6 @@ export const renderField = ({
       );
 
     case 'cookie-consent-records':
-      console.log('🍪 Rendering cookie-consent-records, allSettings:', allSettings);
       return (
         <div className={readOnly ? 'opacity-60 pointer-events-none' : ''}>
           <CookieConsentRecordsSelect

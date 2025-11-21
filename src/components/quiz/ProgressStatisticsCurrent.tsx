@@ -2,14 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 import Loading from '@/ui/Loading';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Topic {
   id: number;

@@ -431,7 +431,7 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for feature delete');
+    // Auto-save event dispatched
   };
 
   const handleDeleteClick = (index: number) => {
@@ -515,7 +515,7 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for feature save');
+    // Auto-save event dispatched
     
     setIsEditing(false);
     setEditingIndex(null);
@@ -544,7 +544,7 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for feature visibility toggle');
+    // Auto-save event dispatched
   };
 
   const handleToggleProductCard = (index: number) => {
@@ -563,7 +563,7 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for feature product card toggle');
+    // Auto-save event dispatched
   };
 
   // Handle drag and drop reordering
@@ -595,7 +595,7 @@ export const FeatureSelect: React.FC<FeatureSelectProps> = ({
           }
         });
         window.dispatchEvent(autoSaveEvent);
-        console.log('🚀 Auto-save event dispatched for feature reorder');
+        // Auto-save event dispatched
       }
     }
   };

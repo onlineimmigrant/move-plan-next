@@ -9,7 +9,7 @@ export default function CodeBlockCopy() {
       // Find all code blocks in the post content
       const codeBlocks = document.querySelectorAll('.prose pre, article pre, [class*="post"] pre, .post-content pre, .ProseMirror pre');
       
-      console.log('Found code blocks:', codeBlocks.length);
+      // console.log('Found code blocks:', codeBlocks.length);
       
       codeBlocks.forEach((block) => {
         // Skip if button already exists

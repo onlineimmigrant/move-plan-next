@@ -21,7 +21,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     
     // Debug: Log theme colors
     if (typeof window !== 'undefined' && variant === 'primary') {
-      console.log('Button theme colors:', themeColors.cssVars.primary);
+      // console.log('Button theme colors:', themeColors.cssVars.primary);
     }
     
     const baseStyles =

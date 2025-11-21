@@ -1,26 +1,18 @@
 // /lib/supabase.ts
-import { createClient } from '@supabase/supabase-js';
 import { getBaseUrl } from './utils';
 import { Banner, BannerOpenState, BannerPosition, BannerType } from '../components/banners/types';
 import { Organization } from './types';
+import { supabase } from './supabaseClient';
 
-// Validate environment variables
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  console.error('Missing Supabase environment variables');
-  throw new Error('Supabase configuration incomplete');
-}
-
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+// Re-export the single Supabase client instance to avoid multiple GoTrueClient instances
+export { supabase } from './supabaseClient';
 
 export async function getOrganizationId(baseUrl?: string): Promise<string | null> {
   const isLocal = process.env.NODE_ENV === 'development';
   const currentUrl = baseUrl || getBaseUrl(true); // Use getBaseUrl for Vercel compatibility
   const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
 
-  console.log('Fetching organization ID for URL:', currentUrl, 'isLocal:', isLocal, 'tenantId:', tenantId);
+  // Fetching organization ID
 
   // Try fetching by base_url or base_url_local first
   const query = supabase
@@ -84,7 +76,7 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
     return null;
   }
 
-  console.log('Fetched organization ID by baseUrl or domains:', data.id);
+  // Fetched organization ID
   return data.id;
 }
 
@@ -92,8 +84,6 @@ export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: s
   const isLocal = process.env.NODE_ENV === 'development';
   const currentUrl = baseUrl || getBaseUrl(true); // Use getBaseUrl for Vercel compatibility
   const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
-
-  console.log('Fetching organization with type for URL:', currentUrl, 'isLocal:', isLocal, 'tenantId:', tenantId);
 
   // Try fetching by base_url or base_url_local first
   const query = supabase
@@ -152,7 +142,6 @@ export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: s
     return null;
   }
 
-  console.log('Fetched organization with type by baseUrl:', data.id, data.type);
   return { id: data.id, type: data.type };
 }
 
@@ -203,7 +192,7 @@ const matchesPathPattern = (path: string, pattern: string): boolean => {
 // /lib/supabase.ts (updated fetchUserProfile)
 export async function fetchUserProfile(userId?: string) {
   if (!userId) {
-    console.log('No userId provided, skipping profile fetch');
+    // No userId provided
     return null;
   }
 
@@ -272,7 +261,7 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
       return [];
     }
 
-    console.log(`Fetching banners for pagePath: ${pagePath}, userId: ${userId}, organizationId: ${organizationId}`);
+    // Fetching banners
     const profile = await fetchUserProfile(userId);
     const userStatus = profile?.user_status || 'anonymous';
     const isReturning = profile?.last_login_at && new Date(profile.last_login_at) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? 'returning' : null;
@@ -302,7 +291,7 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
       return [];
     }
 
-    console.log('Raw banners from Supabase:', JSON.stringify(data, null, 2));
+    // Raw banners fetched
 
     const dismissedIds = await fetchDismissedBanners(userId);
 

@@ -105,12 +105,6 @@ const TemplateSections: React.FC = () => {
 
       const encodedPathname = encodeURIComponent(basePath);
       const url = `/api/template-sections?url_page=${encodedPathname}`;
-      
-      debug.log('Fetching template sections:', {
-        pathname,
-        basePath,
-        url: `/api/template-sections?url_page=${encodedPathname}`
-      });
 
       try {
         const response = await fetch(url, {
@@ -124,7 +118,6 @@ const TemplateSections: React.FC = () => {
         }
 
         const data: TemplateSectionData[] = await response.json();
-        debug.log('Fetched template sections:', data.length, 'sections');
         
         // Update client-side cache
         cachedSections.current.set(basePath, {
@@ -147,7 +140,7 @@ const TemplateSections: React.FC = () => {
   useEffect(() => {
     const handleSectionUpdate = async (event: Event) => {
       const customEvent = event as CustomEvent;
-      console.log('[TemplateSections] Received template-section-updated event:', customEvent.detail);
+      // Received template-section-updated event
       
       // Fetch fresh data from API to ensure we have the latest (EXACTLY like Hero does)
       if (!pathname) return;
@@ -156,7 +149,7 @@ const TemplateSections: React.FC = () => {
         const encodedPathname = encodeURIComponent(basePath);
         const url = `/api/template-sections?url_page=${encodedPathname}&t=${Date.now()}`; // Add timestamp to bypass cache
         
-        console.log('[TemplateSections] Fetching fresh sections after update from:', url);
+        // Fetching fresh sections after update
         
         const response = await fetch(url, {
           method: 'GET',
@@ -169,7 +162,7 @@ const TemplateSections: React.FC = () => {
 
         if (response.ok) {
           const data: TemplateSectionData[] = await response.json();
-          console.log('[TemplateSections] Fetched fresh sections after update:', data.length);
+          // Fetched fresh sections after update
           
           // Update client-side cache with fresh data
           cachedSections.current.set(basePath, {
@@ -208,7 +201,7 @@ const TemplateSections: React.FC = () => {
   }
 
   if (!sections || sections.length === 0) {
-    debug.log('No sections found for pathname:', pathname);
+    // debug.log('No sections found for pathname:', pathname);
     return null;
   }
 

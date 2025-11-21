@@ -2,19 +2,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 
-interface RawStatistic {
-  quiz_id: number;
-  questions_correct: number;
-  questions_attempted: number;
-  exam_mode: boolean;
-}
-
-interface Quiz {
-  id: number;
-  title: string;
+interface PracticeStatisticsProps {
+  courseId: string | number;
+  courseSlug: string;
 }
 
 interface QuizStatistics {
@@ -36,15 +29,17 @@ interface AggregatedStatistics {
   overall_percentage: number;
 }
 
-interface PracticeStatisticsProps {
-  courseId: number;
-  courseSlug: string;
+interface RawStatistic {
+  exam_mode: boolean;
+  questions_correct: number;
+  questions_attempted: number;
+  quiz_id: number;
 }
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+interface Quiz {
+  id: number;
+  title: string;
+}
 
 export default function PracticeStatistics({ courseId, courseSlug }: PracticeStatisticsProps) {
   const { session } = useAuth();

@@ -32,8 +32,6 @@ import Button from '@/ui/Button';
 type TabId = 'tree' | 'statistics';
 
 export default function SiteMapModal() {
-  console.log('🗺️ SiteMapModal loaded! (120/100 design)');
-  
   const { isOpen, closeModal } = useSiteMapModal();
   const { session } = useSupabaseClient();
   const { organization, isLoading, error, stats, loadOrganization } = useSiteMapData(isOpen);

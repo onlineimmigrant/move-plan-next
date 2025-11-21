@@ -27,7 +27,7 @@ import { useMenuOperations, useDragDropHandlers } from './hooks';
 import { FooterPreview } from './preview';
 
 function FooterEditModal() {
-  console.log('🎉 NEW FooterEditModal loaded! (Mega menu design)');
+  // FooterEditModal loaded
   
   const {
     isOpen,
@@ -76,11 +76,6 @@ function FooterEditModal() {
 
   useEffect(() => {
     setLocalMenuItems(menuItems);
-    console.log('=== FooterEditModal Debug ===');
-    console.log('menuItems prop received:', menuItems.length);
-    console.log('menuItems data:', menuItems);
-    console.log('Sample item:', menuItems[0]);
-    console.log('============================');
   }, [menuItems]);
 
   // Keyboard shortcuts

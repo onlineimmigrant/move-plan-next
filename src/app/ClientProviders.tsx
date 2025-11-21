@@ -177,7 +177,6 @@ export default function ClientProviders({
             setTimeout(() => reject(new Error('Fetch timeout')), timeout)
           );
 
-          console.log(`[ClientProviders] Fetching template data for: ${urlPage}`);
           const startTime = Date.now();
 
           const [sectionsResult, headingsResult] = await Promise.all([
@@ -196,7 +195,6 @@ export default function ClientProviders({
           ]);
 
           const fetchTime = Date.now() - startTime;
-          console.log(`[ClientProviders] Template data fetched in ${fetchTime}ms`);
 
           const sectionsResponse = sectionsResult as Response;
           const headingsResponse = headingsResult as Response;
@@ -219,7 +217,6 @@ export default function ClientProviders({
           setSections(sectionsData || []);
           setHeadings(headingsData || []);
           setLoading(false);
-          console.log(`[ClientProviders] ✅ Template data loaded successfully`);
           return; // Success, exit retry loop
         } catch (error: any) {
           attempt++;

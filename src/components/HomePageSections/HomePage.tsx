@@ -85,7 +85,6 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
       setIsLoadingPricing(true);
       try {
         const url = `/api/pricing-comparison?organizationId=${encodeURIComponent(settings.organization_id)}`;
-        console.log('Fetching pricing comparison for organization:', settings.organization_id);
         
         const response = await fetch(url, {
           method: 'GET',
@@ -97,7 +96,6 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
         if (response.ok) {
           const data = await response.json();
           setPricingComparison(data);
-          console.log('Pricing comparison data fetched successfully:', data);
         } else {
           const errorData = await response.json().catch(() => ({}));
           console.log('Error fetching pricing comparison:', errorData);
@@ -120,7 +118,6 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      console.log('Hash changed to:', hash); // Debug log
       
       // Check if hash starts with '#pricing' (supports both #pricing and #pricing#product_name)
       const hashParts = hash.split('#').filter(Boolean);

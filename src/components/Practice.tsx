@@ -2,16 +2,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import PracticeSettings from './quiz/PracticeSettings';
 import PracticePassRateVisual from './quiz/PracticePassRateVisual';
 import PracticeSettingsStatisticsVisuals from './quiz/PracticeSettingsStatisticsVisuals';
 import PracticeStatistics from './quiz/PracticeStatistics';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Quiz {
   id: number;

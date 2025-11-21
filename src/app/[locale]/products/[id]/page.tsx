@@ -204,7 +204,7 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
         
         const finalCurrency = isProduction ? userCurrency : planBaseCurrency;
         
-        console.log(`[ProductDetail] Plan ${plan.id}: userCurrency=${userCurrency}, planBaseCurrency=${planBaseCurrency}, isProduction=${isProduction}, finalCurrency=${finalCurrency}`);
+        // console.log(`[ProductDetail] Plan ${plan.id}: userCurrency=${userCurrency}, planBaseCurrency=${planBaseCurrency}, isProduction=${isProduction}, finalCurrency=${finalCurrency}`);
         
         const priceData = getPriceForCurrency(plan, finalCurrency);
         
@@ -339,7 +339,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const headersList = await headers();
   const userCurrency = detectUserCurrency(headersList);
   
-  console.log('ProductDetailPage baseUrl:', baseUrl, 'userCurrency:', userCurrency);
+  // console.log('ProductDetailPage baseUrl:', baseUrl, 'userCurrency:', userCurrency);
 
   let product: Product | null = null;
 

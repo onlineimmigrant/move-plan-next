@@ -503,15 +503,12 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
   error,
   availableCategories = []
 }) => {
-  console.log('🍪 CookieServicesSelect render - current value count:', value?.length || 0, 'value:', value);
-  
   // Dispatch count update event when value changes
   useEffect(() => {
     const countUpdateEvent = new CustomEvent('cookieServicesCountUpdate', {
       detail: { count: value?.length || 0 }
     });
     window.dispatchEvent(countUpdateEvent);
-    console.log('🔢 Dispatched cookieServicesCountUpdate event with count:', value?.length || 0);
   }, [value]);
   
   const [isEditing, setIsEditing] = useState(false);
@@ -552,7 +549,7 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for cookie service delete');
+    // Auto-save event dispatched
   };
 
   const handleDeleteClick = () => {
@@ -616,17 +613,13 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
   };
 
   const handleSave = () => {
-    console.log('🔍 HandleSave called with editForm:', editForm);
-    console.log('🔍 Validation check - name:', editForm.name, 'description:', editForm.description, 'category_id:', editForm.category_id);
-    
+    // Validation check
     if (!editForm.name || !editForm.description || !editForm.category_id) {
-      console.log('❌ Validation failed - missing required fields');
       return;
     }
 
-    // Get organization ID from environment variable
+    // Get organization ID from env
     const organizationId = process.env.NEXT_PUBLIC_TENANT_ID;
-    console.log('🏢 Organization ID from env:', organizationId);
     if (!organizationId) {
       console.error('Organization ID not found - cannot save cookie service');
       return;
@@ -669,8 +662,7 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
 
     onChange(newValue);
     
-    console.log('🔄 Updated cookie services count:', newValue.length);
-    console.log('🔄 Calling onChange with new value, should trigger parent re-render');
+    // Updated cookie services
     
     // Dispatch auto-save event
     const autoSaveEvent = new CustomEvent('autoSaveCookieServiceChanges', { 
@@ -680,7 +672,7 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for cookie service', operationType);
+    // Auto-save event dispatched
     
     setIsEditing(false);
     setEditForm({});
@@ -709,7 +701,7 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
       }
     });
     window.dispatchEvent(autoSaveEvent);
-    console.log('🚀 Auto-save event dispatched for cookie service active toggle');
+    // Auto-save event dispatched
   };
 
   // Handle drag and drop reordering
@@ -743,7 +735,7 @@ export const CookieServicesSelect: React.FC<CookieServicesSelectProps> = ({
           }
         });
         window.dispatchEvent(autoSaveEvent);
-        console.log('🚀 Auto-save event dispatched for cookie service reorder');
+        // Auto-save event dispatched
       }
     }
   };

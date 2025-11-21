@@ -115,13 +115,13 @@ async function fetchProducts(baseUrl: string, categoryId?: string, userCurrency:
         
         const finalCurrency = isProduction ? userCurrency : planBaseCurrency;
         
-        console.log('🏷️ PRODUCTS CURRENCY LOGIC:', {
-          userCurrency,
-          planBaseCurrency, 
-          isProduction,
-          finalCurrency,
-          productId: product.id
-        });
+        // console.log('🏷️ PRODUCTS CURRENCY LOGIC:', {
+        //   userCurrency,
+        //   planBaseCurrency, 
+        //   isProduction,
+        //   finalCurrency,
+        //   productId: product.id
+        // });
         
         let finalPriceData = getPriceForCurrency(minPlan, finalCurrency);
         
@@ -130,7 +130,7 @@ async function fetchProducts(baseUrl: string, categoryId?: string, userCurrency:
           finalPriceData = getPriceForCurrency(minPlan, userCurrency);
         }
         
-        console.log(`[${product.product_name}] Plan ${minPlan.id}: base_currency=${planBaseCurrency}, userCurrency=${userCurrency}, priceData:`, finalPriceData);
+        // console.log(`[${product.product_name}] Plan ${minPlan.id}: base_currency=${planBaseCurrency}, userCurrency=${userCurrency}, priceData:`, finalPriceData);
         
         if (finalPriceData) {
           let finalPrice = finalPriceData.price; // Already divided by 100 in getPriceForCurrency
@@ -161,7 +161,7 @@ async function fetchProducts(baseUrl: string, categoryId?: string, userCurrency:
       };
     });
 
-    console.log('Successfully fetched products:', processedProducts?.length || 0, 'items for organization:', organizationId, 'currency:', userCurrency);
+    // console.log('Successfully fetched products:', processedProducts?.length || 0, 'items for organization:', organizationId, 'currency:', userCurrency);
     return processedProducts || [];
   } catch (err) {
     console.error('Error in fetchProducts:', err);
@@ -190,7 +190,7 @@ async function fetchProductSubTypes(baseUrl: string): Promise<ProductSubType[]> 
       throw new Error(`Failed to load product categories: ${error.message}`);
     }
 
-    console.log('Successfully fetched product sub-types:', data?.length || 0, 'items for organization:', organizationId);
+    // console.log('Successfully fetched product sub-types:', data?.length || 0, 'items for organization:', organizationId);
     return data || [];
   } catch (err) {
     console.error('Error in fetchProductSubTypes:', err);
@@ -295,10 +295,10 @@ export default async function ProductsPage({
   
   // Detect user currency from headers (set by middleware)
   // Note: We'll use individual plan base_currency for better accuracy in fetchProducts
-  const headersList = headers();
+  const headersList = await headers();
   const userCurrency = detectUserCurrency(headersList);
   
-  console.log('ProductsPage baseUrl:', baseUrl, 'userCurrency:', userCurrency, 'VERCEL_URL:', process.env.VERCEL_URL);
+  // console.log('ProductsPage baseUrl:', baseUrl, 'userCurrency:', userCurrency, 'VERCEL_URL:', process.env.VERCEL_URL);
 
   let allProducts: Product[] = [];
   let productSubTypes: ProductSubType[] = [];

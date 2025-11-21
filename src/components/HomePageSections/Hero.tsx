@@ -190,33 +190,12 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
     ? getTranslatedContent(hero.button || '', hero.button_translation || {}, currentLocale)
     : hero.button || ''; // Direct default field
 
-  console.log('=== HERO TRANSLATION DETAILED DEBUG ===');
-  console.log('Raw pathname:', pathname);
-  console.log('Path segments:', pathSegments);
-  console.log('First segment (potential locale):', pathLocale);
-  console.log('Supported locales:', ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh']);
-  console.log('Is valid locale?', pathLocale && pathLocale.length === 2 && ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'].includes(pathLocale));
-  console.log('Final currentLocale:', currentLocale);
-  console.log('Using translation system:', !!currentLocale);
-  console.log('---');
-  console.log('Title - Default field:', hero.title);
-  console.log('Title - Translation object:', hero.title_translation);
-  console.log('Title - Final result:', translatedH1Title);
-  console.log('Title - Are they equal?', hero.title === translatedH1Title);
-  console.log('---');
-  console.log('Description - Default field:', hero.description);
-  console.log('Description - Translation object:', hero.description_translation);
-  console.log('Description - Final result:', translatedPDescription);
-  console.log('Description - Are they equal?', hero.description === translatedPDescription);
-  console.log('=== END DEBUG ===');
-
   useEffect(() => {
     const currentRef = heroRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
         const visible = entry.isIntersecting;
         setIsVisible(visible);
-        console.log('Hero visibility:', visible);
       },
       { threshold: 0.1 }
     );

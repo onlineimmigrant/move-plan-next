@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DocumentPlusIcon, LinkIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { usePageCreation } from './context';
 import { getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
@@ -27,12 +27,6 @@ const PageCreationModal: React.FC<PageCreationModalProps> = ({ onSuccess }) => {
   const { isOpen, closeModal } = usePageCreation();
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [isLoadingOrg, setIsLoadingOrg] = useState(false);
-
-  // Create Supabase client
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   // Form management with shared hook
   const form = useModalForm<PageFormData>({

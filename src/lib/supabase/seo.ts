@@ -145,7 +145,6 @@ function isValidArticle(article: Article): article is Article & { title: string;
 export async function fetchPageSEOData(pathname: string, baseUrl: string): Promise<SEOData> {
   try {
     const organizationId = await getOrganizationId(baseUrl);
-    console.log('[fetchPageSEOData] Base URL:', baseUrl, 'Organization ID:', organizationId);
     if (!organizationId) {
       console.log('[fetchPageSEOData] No organizationId found');
       return fetchDefaultSEOData(baseUrl, pathname);
@@ -154,7 +153,7 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
     // Normalize pathname for query
     const normalizedPath = pathname.toLowerCase().replace(/\/$/, '') || '';
     const queryPaths = normalizedPath === '' ? ['/', '/home'] : [normalizedPath, `/${normalizedPath}`];
-    console.log('[fetchPageSEOData] Querying page for paths:', queryPaths);
+    // console.log('[fetchPageSEOData] Querying page for paths:', queryPaths);
 
     let page: Page | null = null;
     for (const queryPath of queryPaths) {
@@ -170,7 +169,7 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
         console.log('[fetchPageSEOData] Found page for path:', queryPath, 'title:', data.title);
         break;
       } else {
-        console.log('[fetchPageSEOData] No page found for path:', queryPath, 'error:', error?.message || 'No data');
+        // console.log('[fetchPageSEOData] No page found for path:', queryPath, 'error:', error?.message || 'No data');
       }
     }
 
@@ -180,7 +179,7 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
       const isHomePage = normalizedPath === '' || normalizedPath === '/' || normalizedPath === '/home';
       
       if (isHomePage) {
-        console.log('[fetchPageSEOData] No page found but this is home page, generating home page SEO');
+        // console.log('[fetchPageSEOData] No page found but this is home page, generating home page SEO');
         
         // Generate home page SEO data with products structured data
         const settings = await getSettings(baseUrl);
@@ -232,11 +231,11 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
 
         // Add home page products structured data
         try {
-          console.log('[fetchPageSEOData] Detected home page (no DB entry), adding pricing modal products structured data');
+          // console.log('[fetchPageSEOData] Detected home page (no DB entry), adding pricing modal products structured data');
           const homePageProductsData = await fetchHomePageProductsStructuredData(baseUrl, organizationId);
           if (homePageProductsData.length > 0) {
             seoData.structuredData.push(...homePageProductsData);
-            console.log('[fetchPageSEOData] Added', homePageProductsData.length, 'pricing modal product structured data items');
+            // console.log('[fetchPageSEOData] Added', homePageProductsData.length, 'pricing modal product structured data items');
           }
         } catch (error) {
           console.error('[fetchPageSEOData] Error adding home page products structured data:', error);
@@ -246,11 +245,11 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
         const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
         seoData.faqs = pageFAQs;
 
-        console.log('[fetchPageSEOData] Generated home page SEO (no DB entry) with', seoData.structuredData.length, 'structured data items');
+        // console.log('[fetchPageSEOData] Generated home page SEO (no DB entry) with', seoData.structuredData.length, 'structured data items');
         return seoData;
       }
       
-      console.log('[fetchPageSEOData] No page found, generating dynamic metadata for:', normalizedPath);
+      // console.log('[fetchPageSEOData] No page found, generating dynamic metadata for:', normalizedPath);
       return generateDynamicPageSEO(normalizedPath, baseUrl, organizationId);
     }
 
@@ -395,7 +394,7 @@ async function addFAQStructuredData(
   existingFAQs: { question: string; answer: string }[] = []
 ): Promise<{ question: string; answer: string }[]> {
   try {
-    console.log('[addFAQStructuredData] Processing FAQ structured data for', pathname);
+    // console.log('[addFAQStructuredData] Processing FAQ structured data for', pathname);
     
     // Don't duplicate FAQ data if it already exists
     const existingStructuredData = structuredData.filter(item => 
@@ -447,7 +446,7 @@ async function addFAQStructuredData(
           },
         })),
       });
-      console.log('[addFAQStructuredData] Added FAQ structured data for', pathname, 'with', validFAQs.length, 'FAQs');
+      // console.log('[addFAQStructuredData] Added FAQ structured data for', pathname, 'with', validFAQs.length, 'FAQs');
     }
 
     return [...existingFAQs, ...validFAQs];
@@ -459,7 +458,7 @@ async function addFAQStructuredData(
 
 // Generate dynamic page metadata for pages not in database
 async function generateDynamicPageSEO(pathname: string, baseUrl: string, organizationId: string): Promise<SEOData> {
-  console.log('[generateDynamicPageSEO] Called with pathname:', JSON.stringify(pathname), 'length:', pathname.length);
+  // console.log('[generateDynamicPageSEO] Called with pathname:', JSON.stringify(pathname), 'length:', pathname.length);
   
   // Note: Home page handling is done in fetchPageSEOData to avoid duplication
 
@@ -467,13 +466,13 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
   const productMatch = pathname.match(/^\/products\/([^\/]+)$/);
   if (productMatch) {
     const productSlug = productMatch[1];
-    console.log('[generateDynamicPageSEO] Detected product page, using fetchProductSEOData for:', productSlug);
+    // console.log('[generateDynamicPageSEO] Detected product page, using fetchProductSEOData for:', productSlug);
     return fetchProductSEOData(productSlug, baseUrl);
   }
 
   // Check if this is the products listing page
   if (pathname === '/products') {
-    console.log('[generateDynamicPageSEO] Detected products listing page, using fetchProductsListingSEOData');
+    // console.log('[generateDynamicPageSEO] Detected products listing page, using fetchProductsListingSEOData');
     return fetchProductsListingSEOData(baseUrl);
   }
 
@@ -502,7 +501,7 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
   });
   
   if (isPostBasedRoute) {
-    console.log('[generateDynamicPageSEO] Potential blog post detected, checking for post:', pathname);
+    // console.log('[generateDynamicPageSEO] Potential blog post detected, checking for post:', pathname);
     
     try {
       // Extract slug from various route patterns
@@ -832,7 +831,7 @@ async function generateBlogPostSEO(post: any, baseUrl: string, organizationId: s
 export async function fetchProductSEOData(slug: string, baseUrl: string): Promise<SEOData> {
   try {
     const organizationId = await getOrganizationId(baseUrl);
-    console.log('[fetchProductSEOData] Base URL:', baseUrl, 'Organization ID:', organizationId, 'Product Slug:', slug);
+    // console.log('[fetchProductSEOData] Base URL:', baseUrl, 'Organization ID:', organizationId, 'Product Slug:', slug);
     if (!organizationId) {
       console.error('[fetchProductSEOData] Organization not found');
       return await fetchDefaultSEOData(baseUrl, `/products/${slug}`);
@@ -864,7 +863,7 @@ export async function fetchProductSEOData(slug: string, baseUrl: string): Promis
       return await fetchDefaultSEOData(baseUrl, `/products/${slug}`);
     }
 
-    console.log('[fetchProductSEOData] Product found:', product.product_name);
+    // console.log('[fetchProductSEOData] Product found:', product.product_name);
 
     const tenantKeywords = settings?.seo_keywords
       ? Array.isArray(settings.seo_keywords)
@@ -925,7 +924,7 @@ export async function fetchProductSEOData(slug: string, baseUrl: string): Promis
     if (!faqsResult.error && isFAQArray(faqsResult.data)) {
       // Set initial FAQ data for backward compatibility
       seoData.faqs = faqsResult.data.filter(isValidFAQ);
-      console.log('[fetchProductSEOData] FAQs fetched:', seoData.faqs.length);
+      // console.log('[fetchProductSEOData] FAQs fetched:', seoData.faqs.length);
     } else if (faqsResult.error) {
       console.error('[fetchProductSEOData] Error fetching FAQs:', faqsResult.error.message);
       seoData.faqs = [];
@@ -1117,7 +1116,7 @@ export async function fetchProductSEOData(slug: string, baseUrl: string): Promis
       url: canonicalUrl,
     });
 
-    console.log('[fetchProductSEOData] Structured data entries:', seoData.structuredData.length);
+    // console.log('[fetchProductSEOData] Structured data entries:', seoData.structuredData.length);
     return seoData;
   } catch (error: any) {
     console.error('[fetchProductSEOData] Failed to fetch product SEO data:', error.message);
@@ -1127,9 +1126,9 @@ export async function fetchProductSEOData(slug: string, baseUrl: string): Promis
 
 export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: string): Promise<SEOData> {
   try {
-    console.log('🚀 [fetchProductsListingSEOData] Starting function execution');
+    // console.log('🚀 [fetchProductsListingSEOData] Starting function execution');
     const organizationId = await getOrganizationId(baseUrl);
-    console.log('[fetchProductsListingSEOData] Base URL:', baseUrl, 'Organization ID:', organizationId, 'Category ID:', categoryId);
+    // console.log('[fetchProductsListingSEOData] Base URL:', baseUrl, 'Organization ID:', organizationId, 'Category ID:', categoryId);
 
     if (!organizationId) {
       console.error('[fetchProductsListingSEOData] Organization not found');
@@ -1200,7 +1199,7 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
     let validProducts: any[] = [];
     let allValidProducts: any[] = [];
     if (products && products.length > 0) {
-      console.log(`[fetchProductsListingSEOData] Processing ${products.length} total products`);
+      // console.log(`[fetchProductsListingSEOData] Processing ${products.length} total products`);
 
       // Filter products to only include those suitable for JSON-LD
       validProducts = products.filter((product: any) => {
@@ -1225,7 +1224,7 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
       // Include all valid products in JSON-LD
       allValidProducts = validProducts;
       
-      console.log(`[fetchProductsListingSEOData] Including ${allValidProducts.length} valid products out of ${products.length} total products in JSON-LD`);
+      // console.log(`[fetchProductsListingSEOData] Including ${allValidProducts.length} valid products out of ${products.length} total products in JSON-LD`);
 
       allValidProducts.forEach((product: any) => {
         const productReviews = reviewsByProduct[product.id] || [];
@@ -1245,7 +1244,7 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
           avgRating = parseFloat((validReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / validReviews.length).toFixed(1));
           reviewCount = validReviews.length;
           reviewsToDisplay = validReviews;
-          console.log(`[fetchProductsListingSEOData] Product "${product.product_name}" has ${reviewCount} valid reviews, avg rating: ${avgRating}`);
+          // console.log(`[fetchProductsListingSEOData] Product "${product.product_name}" has ${reviewCount} valid reviews, avg rating: ${avgRating}`);
         } else {
           // Use default rating for products without reviews
           avgRating = 4.9;
@@ -1379,8 +1378,8 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
       ]
     });
 
-    console.log(`🎯 [fetchProductsListingSEOData] Generated SEO data with ${allValidProducts?.length || 0} products in JSON-LD`);
-    console.log(`📊 [fetchProductsListingSEOData] Final structured data count: ${seoData.structuredData.length}`);
+    // console.log(`🎯 [fetchProductsListingSEOData] Generated SEO data with ${allValidProducts?.length || 0} products in JSON-LD`);
+    // console.log(`📊 [fetchProductsListingSEOData] Final structured data count: ${seoData.structuredData.length}`);
     return seoData;
   } catch (error: any) {
     console.error('[fetchProductsListingSEOData] Failed to fetch products listing SEO data:', error.message);
@@ -1458,7 +1457,7 @@ export async function fetchDefaultSEOData(baseUrl: string, pathname: string): Pr
 // Function to fetch pricing modal products structured data for home page
 async function fetchHomePageProductsStructuredData(baseUrl: string, organizationId: string): Promise<any[]> {
   try {
-    console.log(`[fetchHomePageProductsStructuredData] Fetching pricing modal products for organization: ${organizationId}`);
+    // console.log(`[fetchHomePageProductsStructuredData] Fetching pricing modal products for organization: ${organizationId}`);
     
     // Fetch pricing modal products (products that are displayed in pricing comparison)
     const { data: products, error } = await supabaseServer
@@ -1487,11 +1486,11 @@ async function fetchHomePageProductsStructuredData(baseUrl: string, organization
     }
 
     if (!products || products.length === 0) {
-      console.log('[fetchHomePageProductsStructuredData] No pricing modal products found');
+      // console.log('[fetchHomePageProductsStructuredData] No pricing modal products found');
       return [];
     }
 
-    console.log(`[fetchHomePageProductsStructuredData] Found ${products.length} pricing modal products`);
+    // console.log(`[fetchHomePageProductsStructuredData] Found ${products.length} pricing modal products`);
 
     const structuredData = [];
     const canonicalBaseUrl = baseUrl.replace(/\/$/, '');
@@ -1622,7 +1621,7 @@ async function fetchHomePageProductsStructuredData(baseUrl: string, organization
 
         structuredData.push(productSchema);
         
-        console.log(`[fetchHomePageProductsStructuredData] Added structured data for product: ${product.product_name}`);
+        // console.log(`[fetchHomePageProductsStructuredData] Added structured data for product: ${product.product_name}`);
       } catch (productError) {
         console.error(`[fetchHomePageProductsStructuredData] Error processing product ${product.id}:`, productError);
         // Continue processing other products
@@ -1652,10 +1651,10 @@ async function fetchHomePageProductsStructuredData(baseUrl: string, organization
       };
 
       structuredData.push(itemListSchema);
-      console.log(`[fetchHomePageProductsStructuredData] Added ItemList for ${structuredData.length - 1} pricing modal products`);
+      // console.log(`[fetchHomePageProductsStructuredData] Added ItemList for ${structuredData.length - 1} pricing modal products`);
     }
 
-    console.log(`🎯 [fetchHomePageProductsStructuredData] Generated ${structuredData.length} structured data items for home page pricing products`);
+    // console.log(`�� [fetchHomePageProductsStructuredData] Generated ${structuredData.length} structured data items for home page pricing products`);
     return structuredData;
   } catch (error: any) {
     console.error('[fetchHomePageProductsStructuredData] Failed to fetch home page products structured data:', error.message);

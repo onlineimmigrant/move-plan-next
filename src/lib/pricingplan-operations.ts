@@ -6,7 +6,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 // Function to create a pricing plan in Supabase and sync to Stripe
 export async function createPricingPlan(pricingPlanData: any) {
   try {
-    console.log('Attempting to create pricing plan with data:', pricingPlanData);
 
     // Validate required fields
     if (!pricingPlanData.product_id) {
@@ -33,7 +32,6 @@ export async function createPricingPlan(pricingPlanData: any) {
       throw new Error('Associated product does not have a stripe_product_id. Sync the product to Stripe first.');
     }
 
-    console.log(`Associated product found with ID: ${product.id}, stripe_product_id: ${product.stripe_product_id}`);
 
     // Insert the pricing plan into Supabase
     const { data, error } = await supabase
@@ -56,10 +54,8 @@ export async function createPricingPlan(pricingPlanData: any) {
       throw new Error('Failed to create pricing plan: No data returned');
     }
 
-    console.log(`Created pricing plan in Supabase with ID: ${data.id}`);
 
     // Sync to Stripe by calling the API endpoint with full URL
-    console.log('Calling /api/sync/pricingplan to sync to Stripe...');
     const syncResponse = await fetch(`${API_BASE_URL}/api/sync/pricingplan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -68,7 +64,6 @@ export async function createPricingPlan(pricingPlanData: any) {
 
     // Log the raw response text before parsing
     const responseText = await syncResponse.text();
-    console.log('Raw response from /api/sync/pricingplan:', responseText);
 
     // Attempt to parse the response as JSON, with a fallback
     let syncResult = { error: 'Unknown error from /api/sync/pricingplan' };
@@ -85,7 +80,6 @@ export async function createPricingPlan(pricingPlanData: any) {
       throw new Error(`Failed to sync pricing plan to Stripe: ${syncResult.error || 'Unknown error'}`);
     }
 
-    console.log(`Successfully synced pricing plan ${data.id} to Stripe`);
     return data;
   } catch (error: any) {
     console.error('Error in createPricingPlan:', error.message, 'Stack:', error.stack);
@@ -96,7 +90,6 @@ export async function createPricingPlan(pricingPlanData: any) {
 // Function to update a pricing plan in Supabase and sync to Stripe
 export async function updatePricingPlan(pricingPlanId: string, updates: any) {
   try {
-    console.log(`Attempting to update pricing plan with ID: ${pricingPlanId}`, updates);
 
     // If updates include product_id, validate it
     if (updates.product_id) {
@@ -116,7 +109,6 @@ export async function updatePricingPlan(pricingPlanId: string, updates: any) {
         throw new Error('Associated product does not have a stripe_product_id. Sync the product to Stripe first.');
       }
 
-      console.log(`Associated product found with ID: ${product.id}, stripe_product_id: ${product.stripe_product_id}`);
     }
 
     const { data, error } = await supabase
@@ -134,7 +126,6 @@ export async function updatePricingPlan(pricingPlanId: string, updates: any) {
       throw new Error(`Failed to update pricing plan in Supabase: ${error.message}`);
     }
 
-    console.log(`Updated pricing plan in Supabase with ID: ${data.id}`);
 
     const syncResponse = await fetch(`${API_BASE_URL}/api/sync/pricingplan`, {
       method: 'POST',
@@ -143,7 +134,6 @@ export async function updatePricingPlan(pricingPlanId: string, updates: any) {
     });
 
     const responseText = await syncResponse.text();
-    console.log('Raw response from /api/sync/pricingplan:', responseText);
 
     let syncResult = { error: 'Unknown error from /api/sync/pricingplan' };
     try {
@@ -158,7 +148,6 @@ export async function updatePricingPlan(pricingPlanId: string, updates: any) {
       throw new Error(`Failed to sync pricing plan to Stripe: ${syncResult.error || 'Unknown error'}`);
     }
 
-    console.log(`Successfully synced updated pricing plan ${data.id} to Stripe`);
     return data;
   } catch (error: any) {
     console.error('Error in updatePricingPlan:', error.message, 'Stack:', error.stack);
@@ -169,7 +158,6 @@ export async function updatePricingPlan(pricingPlanId: string, updates: any) {
 // Function to delete a pricing plan in Supabase and sync to Stripe
 export async function deletePricingPlan(pricingPlanId: string) {
   try {
-    console.log(`Attempting to delete pricing plan with ID: ${pricingPlanId}`);
 
     const { error } = await supabase
       .from('pricingplan')
@@ -181,9 +169,7 @@ export async function deletePricingPlan(pricingPlanId: string) {
       throw new Error(`Failed to delete pricing plan from Supabase: ${error.message}`);
     }
 
-    console.log(`Deleted pricing plan from Supabase with ID: ${pricingPlanId}`);
 
-    console.log('Calling /api/sync/pricingplan to sync deletion to Stripe...');
     const syncResponse = await fetch(`${API_BASE_URL}/api/sync/pricingplan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -191,7 +177,6 @@ export async function deletePricingPlan(pricingPlanId: string) {
     });
 
     const responseText = await syncResponse.text();
-    console.log('Raw response from /api/sync/pricingplan:', responseText);
 
     let syncResult = { error: 'Unknown error from /api/sync/pricingplan' };
     try {
@@ -206,7 +191,6 @@ export async function deletePricingPlan(pricingPlanId: string) {
       throw new Error(`Failed to sync pricing plan deletion to Stripe: ${syncResult.error || 'Unknown error'}`);
     }
 
-    console.log(`Successfully synced pricing plan deletion ${pricingPlanId} to Stripe`);
   } catch (error: any) {
     console.error('Error in deletePricingPlan:', error.message, 'Stack:', error.stack);
     throw error;

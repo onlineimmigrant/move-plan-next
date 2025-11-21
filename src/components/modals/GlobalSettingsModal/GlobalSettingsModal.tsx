@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useGlobalSettingsModal } from './context';
 import SettingsFormFields from '@/components/SiteManagement/SettingsFormFields';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { BaseModal } from '@/components/modals/_shared/BaseModal';
 import { getOrganizationId } from '@/lib/supabase';
 import { Organization, Settings } from '@/components/SiteManagement/types';
@@ -33,11 +33,6 @@ export default function GlobalSettingsModal() {
   const [loadedSections, setLoadedSections] = useState<Set<string>>(new Set());
   const [loadingSections, setLoadingSections] = useState<Set<string>>(new Set());
   const [sectionCache, setSectionCache] = useState<Record<string, any>>({});
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   // Define sections with their parent relationships and metadata
   const sections = [

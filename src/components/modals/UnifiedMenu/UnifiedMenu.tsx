@@ -42,7 +42,7 @@ export function UnifiedMenu({
   className,
   hideButton = false,
 }: UnifiedMenuProps) {
-  console.log(`[Debug] UnifiedMenu: render. showBadge=${showBadge}`);
+
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);

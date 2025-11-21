@@ -43,10 +43,6 @@ export const detectBaseCurrencyFromPlans = (pricingPlans?: any[]): string => {
     .sort(([,a], [,b]) => b - a)
     .map(([currency]) => currency);
 
-  console.log('🏦 BASE CURRENCY DETECTION:');
-  console.log('   - Available pricing plans:', pricingPlans.length);
-  console.log('   - Currency frequency:', currencyCount);
-  console.log('   - Most common base currency:', sortedCurrencies[0] || 'GBP');
 
   return sortedCurrencies[0] || 'GBP';
 };
@@ -185,18 +181,13 @@ export const getCurrencyByCountry = (country: string, baseCurrency: string = 'GB
 
 // Get user currency from multiple sources with priority
 export const detectUserCurrency = (headers?: Headers, baseCurrency?: string, pricingPlans?: any[]): string => {
-  console.log('🔍 CURRENCY DETECTION DEBUG:');
   
   // Determine smart base currency from pricing plans if not provided
   const smartBaseCurrency = baseCurrency || detectBaseCurrencyFromPlans(pricingPlans);
-  console.log('   - Input base currency:', baseCurrency);
-  console.log('   - Smart base currency:', smartBaseCurrency);
   
   // 1. Check user preference (cookie)
   const preferredCurrency = getUserCurrency(smartBaseCurrency);
-  console.log('   - Cookie currency:', preferredCurrency);
   if (preferredCurrency !== smartBaseCurrency) {
-    console.log('   - Using cookie currency:', preferredCurrency);
     return preferredCurrency;
   }
   
@@ -204,25 +195,18 @@ export const detectUserCurrency = (headers?: Headers, baseCurrency?: string, pri
   if (headers) {
     const userCurrency = headers.get('x-user-currency');
     const userCountry = headers.get('x-user-country');
-    console.log('   - Header currency:', userCurrency);
-    console.log('   - Header country:', userCountry);
-    console.log('   - All headers:', headers ? Object.fromEntries(headers.entries()) : 'No headers');
     
     if (userCurrency && SUPPORTED_CURRENCIES[userCurrency as SupportedCurrency]) {
-      console.log('   - Using header currency:', userCurrency);
       return userCurrency;
     }
   }
   
   // 3. Check browser locale (client-side fallback)
   const localeCurrency = getCurrencyFromLocale();
-  console.log('   - Locale currency:', localeCurrency);
   if (SUPPORTED_CURRENCIES[localeCurrency as SupportedCurrency]) {
-    console.log('   - Using locale currency:', localeCurrency);
     return localeCurrency;
   }
   
   // 4. Default fallback to smart base currency
-  console.log('   - Using smart base currency fallback:', smartBaseCurrency);
   return smartBaseCurrency;
 };

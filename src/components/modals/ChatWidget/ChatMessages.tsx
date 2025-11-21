@@ -8,7 +8,7 @@ import { useToast } from '@/components/Shared/ToastContainer';
 import { Message, ChatMessagesProps, ChatFile } from './types';
 import styles from './ChatWidget.module.css';
 import { jsPDF } from 'jspdf';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import SaveFileModal from './SaveFileModal';
 
 // Types for better type safety
@@ -27,17 +27,6 @@ interface ParsedJsonContent {
   firstH1: string | null;
   content: { [key: string]: any };
 }
-
-// Optimized Supabase client with better configuration
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      persistSession: false,
-    },
-  }
-);
 
 // Helper function to convert hex color to RGB for jsPDF
 const hexToRgb = (hex: string): { r: number; g: number; b: number } => {

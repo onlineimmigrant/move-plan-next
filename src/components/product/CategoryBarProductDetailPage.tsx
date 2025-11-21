@@ -43,11 +43,11 @@ export default function CategoryBarProductDetailPage({
       try {
         setError(null);
         
-        console.log('CategoryBarProductDetailPage: Fetching related products', {
-          currentProductId: currentProduct.id,
-          productSubTypeId: currentProduct.product_sub_type_id,
-          organizationId: currentProduct.organization_id
-        });
+        // console.log('CategoryBarProductDetailPage: Fetching related products', {
+        //   currentProductId: currentProduct.id,
+        //   productSubTypeId: currentProduct.product_sub_type_id,
+        //   organizationId: currentProduct.organization_id
+        // });
 
         const { data, error } = await supabase
           .from('product')
@@ -61,10 +61,10 @@ export default function CategoryBarProductDetailPage({
           throw new Error(error.message);
         }
 
-        console.log('CategoryBarProductDetailPage: Found related products', {
-          count: data?.length || 0,
-          products: data?.map(p => ({ id: p.id, name: p.product_name, orgId: p.organization_id }))
-        });
+        // console.log('CategoryBarProductDetailPage: Found related products', {
+        //   count: data?.length || 0,
+        //   products: data?.map(p => ({ id: p.id, name: p.product_name, orgId: p.organization_id }))
+        // });
 
         setRelatedProducts(data || []);
       } catch (err: any) {

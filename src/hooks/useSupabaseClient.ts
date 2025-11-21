@@ -7,19 +7,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase as supabaseInstance } from '@/lib/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 
-// Singleton client
-let supabaseInstance: ReturnType<typeof createClient> | null = null;
-
+// Use the singleton client from supabaseClient.js
 const getSupabaseClient = () => {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-  }
   return supabaseInstance;
 };
 

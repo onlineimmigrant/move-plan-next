@@ -2,16 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { FaLinkedin, FaGithub, FaGlobe, FaFileAlt } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { cn } from '@/lib/utils';
 import { TeamMemberResumeModal } from '@/components/modals/TeamMemberResumeModal';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface TeamMemberData {
   id: string;

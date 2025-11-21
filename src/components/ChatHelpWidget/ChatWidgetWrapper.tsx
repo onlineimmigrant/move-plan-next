@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { ArrowLeftIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import ChatMessages from '../modals/ChatWidget/ChatMessages';
 import ChatInput from '../modals/ChatWidget/ChatInput';
 import ModelSelector from '../modals/ChatWidget/ModelSelector';
@@ -10,11 +10,6 @@ import ChatFilesList from '../modals/ChatWidget/ChatFilesList';
 import { Message, ChatHistory, Model, WidgetSize, Task, Role, UserSettings } from '../modals/ChatWidget/types';
 import { useHelpCenterTranslations } from '../modals/ChatHelpWidget/useHelpCenterTranslations';
 import styles from '../modals/ChatWidget/ChatWidget.module.css';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface ChatWidgetWrapperProps {
   size: WidgetSize;

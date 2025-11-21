@@ -113,7 +113,6 @@ export default function EditModal({
       }
 
       const data = await response.json();
-      console.log('[EditModal] Fetched detailed organization data:', data);
       setDetailedOrganizationData(data);
       return data;
     } catch (error) {
@@ -148,21 +147,17 @@ export default function EditModal({
       sessionStorage.removeItem('siteManagement_sectionStates');
       // Increment resetKey to force SettingsFormFields to re-initialize
       setSectionsResetKey(prev => prev + 1);
-      console.log('[EditModal] Modal opened - reset all section states to closed, resetKey incremented');
     }
   }, [isOpen]);
 
   // Initialize settings when organization changes
   useEffect(() => {
-    console.log(`[EditModal] Organization changed:`, organization);
-    
     // Fetch detailed organization data if we have an organization ID
     if (organization?.id && session?.access_token) {
       fetchDetailedOrganizationData(organization.id, session.access_token);
     }
     
     if (organization?.settings) {
-      console.log('Loading organization settings:', organization.settings); // Debug log
       const loadedSettings = {
         ...organization.settings,
         // Include organization-level fields in settings (use organization values, not settings)
@@ -181,12 +176,9 @@ export default function EditModal({
         // Ensure language has a default
         language: organization.settings.language || 'en'
       };
-      console.log(`[EditModal] Loaded settings:`, loadedSettings);
-      console.log(`[EditModal] 🔍 Font family loaded:`, loadedSettings.font_family);
       setSettings(loadedSettings);
       setOriginalSettings(loadedSettings);
     } else {
-      console.log('No settings found, using defaults'); // Debug log
       // Initialize with default values if no settings exist
       const defaultSettings: Settings = {
         name: organization?.name || '',
@@ -224,51 +216,34 @@ export default function EditModal({
   }, [settings]);
 
   const handleSettingChange = (field: keyof Settings, value: any) => {
-    console.log(`[EditModal] Setting change: ${field} = ${value}`);
-    
-    // Special logging for footer_style
+    // Special handling for footer_style
     if (field === 'footer_style') {
-      console.log('[EditModal] 🎨 FOOTER_STYLE CHANGE:', {
-        field,
-        value,
-        valueType: typeof value,
-        isObject: typeof value === 'object',
-        stringified: JSON.stringify(value)
-      });
+      // Footer style change handling
     }
     
-    // Special logging for font_family
+    // Special handling for font_family
     if (field === 'font_family') {
-      console.log('[EditModal] 🔍 FONT_FAMILY CHANGE:', {
-        field,
-        value,
-        valueType: typeof value
-      });
+      // Font family change handling
     }
     
     if (field === 'cookie_services') {
-      console.log(`[EditModal] Cookie services change - new count: ${Array.isArray(value) ? value.length : 0}`);
+      // Cookie services change handling
     }
+    
     setSettings(prev => {
       const newSettings = {
         ...prev,
         [field]: value
       };
       
-      // Special logging for footer_style after state update
+      // Special handling for footer_style after state update
       if (field === 'footer_style') {
-        console.log('[EditModal] 🎨 Settings state after update:', {
-          footer_style: newSettings.footer_style,
-          footer_style_type: typeof newSettings.footer_style,
-          footer_style_json: JSON.stringify(newSettings.footer_style)
-        });
+        // Footer style updated
       }
       
       if (field === 'cookie_services') {
-        console.log(`[EditModal] Updated settings.cookie_services:`, newSettings.cookie_services);
-        console.log(`[EditModal] New cookie services count:`, Array.isArray(newSettings.cookie_services) ? newSettings.cookie_services.length : 0);
+        // Cookie services updated
       }
-      console.log(`[EditModal] New settings state:`, newSettings);
       return newSettings;
     });
   };
@@ -318,18 +293,13 @@ export default function EditModal({
   const handleSave = async () => {
     if (!autoSave.hasUnsavedChanges) return;
     
-    console.log(`[EditModal] Starting save process with settings:`, settings);
-    console.log(`[EditModal] Original settings:`, originalSettings);
-    
     try {
       await onSave(settings);
       // After successful save, update original settings to current settings
-      console.log(`[EditModal] Save successful, updating originalSettings`);
       setOriginalSettings({ ...settings });
       
       // Refresh only the LivePreview component, not the entire modal
       setPreviewRefreshKey(prev => prev + 1);
-      console.log('[EditModal] LivePreview refresh triggered');
     } catch (error) {
       console.error('[EditModal] Save failed:', error);
       // Handle error if needed

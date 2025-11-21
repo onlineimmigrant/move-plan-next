@@ -48,7 +48,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
   };
 
   try {
-    console.log('Fetching homepage data with baseUrl:', baseUrl);
+    // console.log('Fetching homepage data with baseUrl:', baseUrl);
 
     // Resolve organizationId - check for actual URL match first
     let organizationId = null;
@@ -75,7 +75,7 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
       return defaultData;
     }
 
-    console.log('Fetching homepage data for organization_id:', organizationId);
+    // console.log('Fetching homepage data for organization_id:', organizationId);
 
     // Fetch hero data
     const { data: heroData, error: heroError } = await supabase
@@ -158,7 +158,7 @@ export default async function Page() {
   const settings = await getSettings(baseUrl);
   const homePageData = await fetchHomePageData(baseUrl);
 
-  console.log('🏠 [HomePage] Rendering home page with SimpleLayoutSEO');
+  // console.log('🏠 [HomePage] Rendering home page with SimpleLayoutSEO');
 
   return (
     <>

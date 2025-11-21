@@ -67,13 +67,13 @@ export function getBreadcrumbStructuredData({
       }
     }
     
-    console.log('getBreadcrumbStructuredData Input:', { 
-      originalPathname: pathname, 
-      normalizedPathname, 
-      originalDomain: domain,
-      normalizedDomain,
-      isLocalePath
-    });
+    // console.log('getBreadcrumbStructuredData Input:', { 
+    //   originalPathname: pathname, 
+    //   normalizedPathname, 
+    //   originalDomain: domain,
+    //   normalizedDomain,
+    //   isLocalePath
+    // });
 
     const breadcrumbs: { label: string; url: string }[] = [
       { label: 'Home', url: normalizedDomain + '/' },
@@ -154,7 +154,7 @@ export function getBreadcrumbStructuredData({
       return item;
     });
 
-    console.log('Generated Breadcrumb Structured Data:', JSON.stringify(structuredBreadcrumbs, null, 2));
+    // console.log('Generated Breadcrumb Structured Data:', JSON.stringify(structuredBreadcrumbs, null, 2));
     return structuredBreadcrumbs;
   } catch (error) {
     console.error('Error in getBreadcrumbStructuredData:', error);

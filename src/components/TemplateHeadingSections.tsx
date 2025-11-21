@@ -60,18 +60,9 @@ const TemplateHeadingSections: React.FC = () => {
       const basePath = firstSegment && firstSegment.length === 2 && supportedLocales.includes(firstSegment)
         ? '/' + pathSegments.slice(1).join('/')
         : pathname;
-      
-      console.log('Pathname processing:', {
-        originalPathname: pathname,
-        pathSegments,
-        firstSegment,
-        isLocale: supportedLocales.includes(firstSegment),
-        basePath
-      });
 
       const encodedPathname = encodeURIComponent(basePath);
       const url = `/api/template-heading-sections?url_page=${encodedPathname}`;
-      console.log('Fetching template heading sections from URL:', url);
 
       try {
         const response = await fetch(url, { method: 'GET' });
@@ -82,7 +73,6 @@ const TemplateHeadingSections: React.FC = () => {
         }
 
         const data: TemplateHeadingSectionData[] = await response.json();
-        console.log('Fetched template heading sections:', data);
         setHeadings(data);
       } catch (err) {
         console.error('Error fetching template heading sections:', err);
@@ -105,7 +95,6 @@ const TemplateHeadingSections: React.FC = () => {
   }
 
   if (!headings || headings.length === 0) {
-    console.log('No heading sections found for pathname:', pathname);
     return null;
   }
 

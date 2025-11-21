@@ -141,8 +141,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isMounted, setIsMounted] = useState(false); // Add state to track hydration
 
-  console.log('Pricing plans with features:', JSON.stringify(pricingPlans, null, 2));
-  console.log('Selected plan:', JSON.stringify(selectedPlan, null, 2));
+  // console.log('Pricing plans with features:', JSON.stringify(pricingPlans, null, 2));
+  // console.log('Selected plan:', JSON.stringify(selectedPlan, null, 2));
 
   // Track hydration state
   useEffect(() => {
@@ -155,7 +155,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
       pricingPlans[0] ||
       null;
     setSelectedPlan(firstInStockPlan);
-    console.log('Selected initial plan:', firstInStockPlan);
+    // console.log('Selected initial plan:', firstInStockPlan);
   }, [pricingPlans]);
 
   // Memoized toast management
@@ -176,7 +176,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
     const status = getStatus(plan).toLowerCase();
     if (status === 'out of stock') return;
     setSelectedPlan(plan);
-    console.log('Selected plan:', plan);
+    // console.log('Selected plan:', plan);
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent, plan: PricingPlan, index: number) => {

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useHelpCenterTranslations } from './modals/ChatHelpWidget/useHelpCenterTranslations';
@@ -16,11 +16,6 @@ import FeaturesView from './modals/ChatHelpWidget/FeaturesView';
 import ChatWidget from './modals/ChatWidget/ChatWidget';
 import { WidgetSize } from './modals/ChatWidget/types';
 import styles from './modals/ChatWidget/ChatWidget.module.css';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const WIDGET_STATE_KEY = 'chatHelpWidget_state';
 const WIDGET_MODE_KEY = 'chatWidget_mode'; // 'help' or 'chat'

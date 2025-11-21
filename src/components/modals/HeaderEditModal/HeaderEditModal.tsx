@@ -31,7 +31,7 @@ import { useDragDropHandlers } from './hooks/useDragDropHandlers';
 import { HeaderPreview } from './preview';
 
 function HeaderEditModal() {
-  console.log('🎉 NEW HeaderEditModal loaded! (Mega menu design with logo)');
+  // HeaderEditModal loaded
   
   const {
     isOpen,

@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 
 export default async function BlogPage() {
   const baseUrl = getBaseUrl();
-  console.log('BlogPage baseUrl:', baseUrl, 'VERCEL_URL:', process.env.NEXT_PUBLIC_VERCEL_URL);
+  // console.log('BlogPage baseUrl:', baseUrl, 'VERCEL_URL:', process.env.NEXT_PUBLIC_VERCEL_URL);
   
   let organizationType = 'general'; // Default fallback
 
@@ -15,7 +15,7 @@ export default async function BlogPage() {
     const organizationData = await getOrganizationWithType(baseUrl);
     if (organizationData?.type) {
       organizationType = organizationData.type;
-      console.log('Fetched organization with type:', organizationData.id, organizationData.type);
+      // console.log('Fetched organization with type:', organizationData.id, organizationData.type);
     } else {
       console.warn('No organization data found, using default type:', organizationType);
     }

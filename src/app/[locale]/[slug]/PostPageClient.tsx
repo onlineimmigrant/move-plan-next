@@ -63,7 +63,7 @@ interface PostPageClientProps {
 }
 
 const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
-  console.log('🔥 [ClientSide] PostPageClient component loaded');
+  // console.log('🔥 [ClientSide] PostPageClient component loaded');
   
   const [isAdmin, setIsAdmin] = useState(false);
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);

@@ -15,7 +15,7 @@ export const debug = {
    */
   log: (namespace: string, ...args: any[]) => {
     if (DEBUG) {
-      console.log(`[${namespace}]`, ...args);
+      // console.log(`[${namespace}]`, ...args);
     }
   },
 
@@ -67,7 +67,7 @@ export const debug = {
    */
   emoji: (namespace: string, emoji: string, ...args: any[]) => {
     if (DEBUG) {
-      console.log(`${emoji} [${namespace}]`, ...args);
+      // console.log(`${emoji} [${namespace}]`, ...args);
     }
   },
 };

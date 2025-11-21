@@ -8,13 +8,6 @@ function getPathnameFromHeaders(headersList: Headers): string {
   const xUrl = headersList.get('x-url');
   const referer = headersList.get('referer');
   
-  console.log('🔍 [LayoutSEO] Headers debug:', {
-    xPathname,
-    xUrl,
-    referer,
-    allHeaders: Array.from(headersList.entries())
-  });
-  
   if (xPathname) return xPathname;
   if (xUrl) return xUrl;
   
@@ -38,26 +31,15 @@ export default async function LayoutSEO() {
   
   // Get current pathname from headers with fallbacks
   const pathname = getPathnameFromHeaders(headersList);
-  console.log('🔍 [LayoutSEO] Processing pathname:', pathname);
-  console.log('🔍 [LayoutSEO] Current domain:', currentDomain);
   
   // Use comprehensive SEO system
   let seoData;
   try {
     seoData = await fetchPageSEOData(pathname, currentDomain);
-    console.log('✅ [LayoutSEO] SEO data fetched successfully');
-    console.log('📊 [LayoutSEO] Structured data items:', seoData.structuredData.length);
-    console.log('📊 [LayoutSEO] FAQ items:', seoData.faqs.length);
-    
-    // Debug the structured data content
-    seoData.structuredData.forEach((item, index) => {
-      console.log(`📋 [LayoutSEO] Structured data ${index}:`, JSON.stringify(item, null, 2));
-    });
     
   } catch (error) {
     console.error('❌ [LayoutSEO] Error fetching SEO data:', error);
     seoData = await fetchDefaultSEOData(currentDomain, pathname);
-    console.log('🔄 [LayoutSEO] Using fallback SEO data');
   }
 
   if (!seoData || !seoData.structuredData || seoData.structuredData.length === 0) {
@@ -77,7 +59,6 @@ export default async function LayoutSEO() {
         
         try {
           const jsonString = JSON.stringify(structuredDataItem, null, 2);
-          console.log(`✅ [LayoutSEO] Rendering structured data ${index}:`, structuredDataItem['@type']);
           
           return (
             <script
