@@ -6,18 +6,8 @@
 
 'use client';
 
-import React from 'react';
-import dynamic from 'next/dynamic';
-
-// Lazy load framer-motion
-const motion = dynamic(
-  () => import('framer-motion').then((mod) => ({ default: mod.motion.div })),
-  { ssr: false }
-) as any;
-const AnimatePresence = dynamic(
-  () => import('framer-motion').then((mod) => ({ default: mod.AnimatePresence })),
-  { ssr: false }
-) as any;
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BACKDROP_STYLES, MODAL_Z_INDEX } from '../utils/modalConstants';
 import { backdropVariants } from '../utils/modalAnimations';
 
@@ -38,6 +28,7 @@ interface ModalBackdropProps {
 /**
  * Backdrop component for modals
  * Renders a semi-transparent overlay with blur effect
+ * Uses client-side only rendering to prevent hydration issues
  */
 export const ModalBackdrop: React.FC<ModalBackdropProps> = ({
   isOpen,
@@ -45,6 +36,17 @@ export const ModalBackdrop: React.FC<ModalBackdropProps> = ({
   zIndex = MODAL_Z_INDEX.backdrop,
   className = '',
 }) => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Don't render on server to avoid hydration mismatch
+  if (!isMounted) {
+    return null;
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (

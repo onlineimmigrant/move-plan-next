@@ -124,6 +124,7 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   const [isVisible, setIsVisible] = useState(false);
   const { isAdmin, organizationId } = useAuth();
   const [hero, setHero] = useState(initialHero); // Local state for hero data
+  const [isMounted, setIsMounted] = useState(false); // Track client-side mount
   const heroRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { openModal } = useHeroSectionEdit();
@@ -135,6 +136,11 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   useEffect(() => {
     setHero(initialHero);
   }, [initialHero]);
+
+  // Defer animation rendering until after mount (client-side only, prevents hydration mismatch)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Listen for hero section updates from modal
   useEffect(() => {
@@ -298,7 +304,8 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
         />
       )}
       
-      {(() => {
+      {/* Render animations only on client-side after mount (prevents hydration mismatch, improves LCP) */}
+      {isMounted && (() => {
         switch (hero.animation_element) {
           case 'DotGrid':
             return (
