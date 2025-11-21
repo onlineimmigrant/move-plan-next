@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useState, useMemo } 
 import { fetchBanners, dismissBanner as supabaseDismissBanner } from '@/lib/supabase';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthContext';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 
 const parseIntervalToMs = (interval: string | undefined): number => {
   if (!interval) return 60 * 1000;

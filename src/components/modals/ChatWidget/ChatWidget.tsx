@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { FolderIcon, Cog6ToothIcon, MagnifyingGlassIcon, BookmarkIcon } from '@heroicons/react/24/outline';
@@ -513,27 +512,36 @@ const sendMessage = async () => {
 
     console.log('[ChatWidget] Sending message with files:', filesToSend);
 
-    const response = await axios.post(
-      '/api/chat',
-      {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
         messages: messagesToSend,
         useSettings: !!selectedSettings,
-        attachedFileIds: filesToSend, // Send file IDs to API
-      },
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
+        attachedFileIds: filesToSend
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
     
     // Handle extraction result if present
-    if (response.data.extractionResult && response.data.extractionResult.updatedSettings) {
-      console.log('[ChatWidget] Extraction result received, updating settings:', response.data.extractionResult.updatedSettings);
-      setDefaultSettings(response.data.extractionResult.updatedSettings);
+    if (data.extractionResult && data.extractionResult.updatedSettings) {
+      console.log('[ChatWidget] Extraction result received, updating settings:', data.extractionResult.updatedSettings);
+      setDefaultSettings(data.extractionResult.updatedSettings);
       // Always keep settings active after extraction
-      setSelectedSettings(response.data.extractionResult.updatedSettings);
+      setSelectedSettings(data.extractionResult.updatedSettings);
     }
     
     setMessages((prev) => [
       ...prev,
-      { role: 'assistant', content: response.data.message, taskName: selectedTask?.name },
+      { role: 'assistant', content: data.message, taskName: selectedTask?.name },
     ]);
     setIsTyping(false);
     setSelectedTask(null);
@@ -543,10 +551,10 @@ const sendMessage = async () => {
     console.log('[ChatWidget] Message sent successfully, files cleared');
     
     // Auto-save chat after first message or update existing chat
-    await autoSaveChatHistory([...messages, newMessage, { role: 'assistant', content: response.data.message }]);
+    await autoSaveChatHistory([...messages, newMessage, { role: 'assistant', content: data.message }]);
   } catch (error: any) {
-    console.error('Chat widget error:', error.message, error.response?.data);
-    const errorMsg = error.response?.data?.error || 'Failed to send message';
+    console.error('Chat widget error:', error.message);
+    const errorMsg = error.message || 'Failed to send message';
     if (errorMsg.includes('Model not found')) {
       setError('Selected model is unavailable. Switching to default model.');
     } else if (errorMsg.includes('No default model available')) {

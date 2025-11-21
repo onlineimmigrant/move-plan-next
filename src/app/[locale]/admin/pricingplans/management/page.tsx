@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaPlus, FaSearch, FaTrash, FaTimes } from 'react-icons/fa';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import Toast from '@/components/Toast';
 import Tooltip from '@/components/Tooltip';
 import { supabase } from '@/lib/supabase';

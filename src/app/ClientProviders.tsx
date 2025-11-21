@@ -22,8 +22,13 @@ import { ProductModalProvider } from '@/components/modals/ProductModals/ProductC
 import ProductCreditEditModal from '@/components/modals/ProductModals/ProductCreditEditModal/ProductCreditEditModal';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider } from '@/context/MeetingContext';
-import ManagedVideoCall from '@/components/modals/MeetingsModals/ManagedVideoCall';
 import PostEditModal from '@/components/modals/PostEditModal/PostEditModal';
+
+// Lazy load ManagedVideoCall to prevent loading twilio-video (~150KB) on every page
+const ManagedVideoCall = dynamic(() => import('@/components/modals/MeetingsModals/ManagedVideoCall'), {
+  ssr: false,
+  loading: () => null
+});
 import TemplateSectionEditModal from '@/components/modals/TemplateSectionModal/TemplateSectionEditModal';
 import TemplateHeadingSectionEditModal from '@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal';
 import PageCreationModal from '@/components/modals/PageCreationModal/PageCreationModal';
