@@ -241,7 +241,7 @@ export async function fetchUserProfile(userId?: string) {
       return null;
     }
 
-    console.log('Profile fetched:', data);
+    // console.log('Profile fetched:', data);
     return data;
   } catch (err) {
     console.error('Unexpected error fetching profile:', {

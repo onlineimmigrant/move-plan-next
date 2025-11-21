@@ -165,7 +165,7 @@ export function useUnreadTicketCount() {
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           // console.log('✅ Badge realtime connected');
-        } else if (status !== 'CLOSED') {
+        } else if (status !== 'CLOSED' && status !== 'CHANNEL_ERROR') {
           console.log('⚠️ Badge subscription status:', status);
         }
       });

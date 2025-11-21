@@ -286,7 +286,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       setSession(newSession);
-      console.log('Auth state changed:', event, newSession?.user?.email);
+      // console.log('Auth state changed:', event, newSession?.user?.email);
       if (newSession?.user?.id) {
         fetchProfile(newSession.user.id);
         // Let layouts handle their own redirects

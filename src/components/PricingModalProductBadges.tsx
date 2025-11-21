@@ -52,7 +52,7 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
       
       try {
         const url = `/api/pricing-comparison?organizationId=${encodeURIComponent(settings.organization_id)}&type=products`;
-        console.log('Fetching pricing comparison products for organization:', settings.organization_id);
+        // console.log('Fetching pricing comparison products for organization:', settings.organization_id);
         
         const response = await fetch(url, {
           method: 'GET',
@@ -64,7 +64,7 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
         if (response.ok) {
           const data = await response.json();
           setProducts(data);
-          console.log('Pricing comparison products fetched successfully:', data);
+          // console.log('Pricing comparison products fetched successfully:', data);
           
           // Advanced product selection logic
           if (data.length > 0 && !selectedProductId && onProductSelect) {
@@ -72,15 +72,15 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
             
             // If we have an initial product identifier, try to find a matching product
             if (initialProductIdentifier) {
-              console.log('PricingModalProductBadges: Looking for product with identifier:', initialProductIdentifier);
-              console.log('PricingModalProductBadges: Available products:', data.map((p: PricingComparisonProduct) => ({
-                id: p.id,
-                name: p.product_name,
-                slug: p.slug,
-                computed_identifier: p.product_name ? 
-                  p.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
-                  'no_name'
-              })));
+              // console.log('PricingModalProductBadges: Looking for product with identifier:', initialProductIdentifier);
+              // console.log('PricingModalProductBadges: Available products:', data.map((p: PricingComparisonProduct) => ({
+              //   id: p.id,
+              //   name: p.product_name,
+              //   slug: p.slug,
+              //   computed_identifier: p.product_name ? 
+              //     p.product_name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') : 
+              //     'no_name'
+              // })));
               
               // Try to find product by converted name first
               const foundByName = data.find((product: PricingComparisonProduct) => {
@@ -108,9 +108,9 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
               if (foundProduct) {
                 productToSelect = foundProduct;
                 const matchType = foundByName ? 'name' : foundById ? 'id' : 'slug';
-                console.log(`PricingModalProductBadges: Found matching product by ${matchType}:`, foundProduct);
+                // console.log(`PricingModalProductBadges: Found matching product by ${matchType}:`, foundProduct);
               } else {
-                console.log('PricingModalProductBadges: No matching product found for identifier:', initialProductIdentifier, 'Using first product as fallback');
+                // console.log('PricingModalProductBadges: No matching product found for identifier:', initialProductIdentifier, 'Using first product as fallback');
               }
             }
             

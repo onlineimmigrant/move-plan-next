@@ -93,7 +93,7 @@ export const BannerProvider = ({ children }: { children: React.ReactNode }) => {
         const cacheKey = `${pathname}-${session?.user?.id || 'anonymous'}`;
         if (cache.has(cacheKey)) {
           setBanners(cache.get(cacheKey)!);
-          console.log('Using cached banners for:', cacheKey);
+          // console.log('Using cached banners for:', cacheKey);
           return;
         }
 

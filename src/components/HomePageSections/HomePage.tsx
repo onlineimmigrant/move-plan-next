@@ -177,7 +177,7 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
       const target = e.target as HTMLElement;
       const link = target.closest('a[href="#pricing"], a[href*="#pricing"]');
       if (link) {
-        console.log('Pricing link clicked, current hash:', window.location.hash); // Debug log
+        // console.log('Pricing link clicked, current hash:', window.location.hash);
         e.preventDefault(); // Prevent default navigation
         
         // Always open the modal, regardless of current hash

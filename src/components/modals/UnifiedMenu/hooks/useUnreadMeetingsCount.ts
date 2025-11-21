@@ -164,7 +164,7 @@ export function useUnreadMeetingsCount() {
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           // console.log('✅ [useUnreadMeetingsCount] Realtime connected, channel:', channelName);
-        } else if (status !== 'CLOSED') {
+        } else if (status !== 'CLOSED' && status !== 'CHANNEL_ERROR') {
           console.log('⚠️ [useUnreadMeetingsCount] Subscription status:', status);
         }
       });

@@ -441,7 +441,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   const handleProductSelect = useCallback((product: PricingComparisonProduct) => {
     setSelectedProduct(product);
     updateUrlHash(product);
-    console.log('Selected product in pricing modal:', product);
+    // console.log('Selected product in pricing modal:', product);
   }, [updateUrlHash]);
 
   // Fetch pricing plans when selected product changes
@@ -733,9 +733,9 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       setInitialProductIdentifier(productIdentifier);
       
       if (productIdentifier) {
-        console.log('PricingModal: Detected product identifier in URL:', productIdentifier);
+        // console.log('PricingModal: Detected product identifier in URL:', productIdentifier);
       } else {
-        console.log('PricingModal: No product identifier in URL, will use default');
+        // console.log('PricingModal: No product identifier in URL, will use default');
       }
       
       // Update URL hash when modal opens (if no specific product is targeted)
