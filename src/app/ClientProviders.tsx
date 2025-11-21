@@ -120,22 +120,30 @@ export default function ClientProviders({
   const [loading, setLoading] = useState(false); // Start with false to avoid blocking initial render
   const cache = useMemo(() => new Map<string, { sections: TemplateSection[]; headings: TemplateHeadingSection[] }>(), []);
   
-  // Phase 2: Lazy load cookie banner - delay by 1.5 seconds for better LCP
+  // Phase 2: Lazy load cookie banner - delay until page is idle for better LCP/FCP
   const [showCookieBanner, setShowCookieBanner] = useState(false);
 
   useEffect(() => {
     // Only show banner if user hasn't accepted cookies
     if (!cookieAccepted) {
-      // Delay banner appearance by 1.5 seconds to allow hero content to paint first
-      const timer = setTimeout(() => {
+      // Use requestIdleCallback for optimal timing, fallback to setTimeout
+      const showBanner = () => {
         // Double-check cookie on client side (in case it changed)
         const hasCookie = typeof document !== 'undefined' && document.cookie.includes('cookies_accepted=true');
         if (!hasCookie) {
           setShowCookieBanner(true);
         }
-      }, 1500); // 1.5 second delay for optimal LCP
+      };
 
-      return () => clearTimeout(timer);
+      if ('requestIdleCallback' in window) {
+        // Wait until browser is idle (better than fixed delay)
+        const idleId = requestIdleCallback(showBanner, { timeout: 2000 });
+        return () => cancelIdleCallback(idleId);
+      } else {
+        // Fallback for browsers without requestIdleCallback (Safari)
+        const timer = setTimeout(showBanner, 1500);
+        return () => clearTimeout(timer);
+      }
     }
   }, [cookieAccepted]);
 
