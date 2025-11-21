@@ -34,9 +34,9 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
   ];
 
   // Calculate slider position and width based on actual tab dimensions
+  // Use requestAnimationFrame to avoid forced reflow
   useEffect(() => {
-    // Small delay to ensure DOM is rendered
-    const timer = setTimeout(() => {
+    const updateSliderPosition = () => {
       const activeIndex = tabs.findIndex((tab) => pathname === tab.href);
       if (activeIndex !== -1 && tabRefs.current[activeIndex]) {
         const activeTab = tabRefs.current[activeIndex];
@@ -48,10 +48,12 @@ export default function AccountTab({ className = '' }: AccountTabProps) {
           });
         }
       }
-    }, 10);
+    };
 
-    return () => clearTimeout(timer);
-  }, [pathname, tabs.length, isStudent]); // Fixed: Added dependency array
+    // Use requestAnimationFrame to batch layout calculations
+    const rafId = requestAnimationFrame(updateSliderPosition);
+    return () => cancelAnimationFrame(rafId);
+  }, [pathname, tabs.length, isStudent]);
 
   if (isLoading) {
     return (
