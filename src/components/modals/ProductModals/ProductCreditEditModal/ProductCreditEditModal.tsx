@@ -35,6 +35,7 @@ import {
   ProductListToolbar,
   ProductDetailView,
   ConfirmationDialog,
+  FeaturesView,
 } from './components';
 import {
   useProductData,
@@ -43,6 +44,7 @@ import {
   useDebounce,
   useModalDataFetching,
   usePricingPlans,
+  useFeatures,
 } from './hooks';
 import { Product, ProductFormData, ProductFilters, Toast } from './types';
 import { DEFAULT_FORM_DATA } from './utils';
@@ -113,6 +115,11 @@ export default function ProductCreditEditModal() {
     organizationId: settings.organization_id,
   });
 
+  const featuresData = useFeatures({
+    organizationId: settings.organization_id,
+    onToast: showToast,
+  });
+
   const debouncedSearchQuery = useDebounce(filters.searchQuery, 300);
 
   const { filteredProducts } = useProductFilters({
@@ -120,12 +127,14 @@ export default function ProductCreditEditModal() {
     filters: { ...filters, searchQuery: debouncedSearchQuery },
   });
 
-  // Fetch products and pricing plans on modal open
+  // Fetch products, pricing plans, and features on modal open
   useModalDataFetching({
     isOpen,
     onFetchData: async () => {
       await productData.fetchProducts();
       await pricingPlansData.fetchPricingPlans();
+      await featuresData.fetchFeatures();
+      await featuresData.fetchPricingPlanFeatures();
     },
   });
 
@@ -371,6 +380,29 @@ export default function ProductCreditEditModal() {
                 carouselRef={carouselRef}
               />
             )
+          ) : mainTab === 'features' ? (
+            /* Features Tab */
+            <FeaturesView
+              features={featuresData.features}
+              pricingPlans={Object.values(pricingPlansData.pricingPlansByProduct).flat()}
+              pricingPlanFeatures={featuresData.pricingPlanFeatures}
+              isLoading={featuresData.isLoading}
+              onCreateFeature={async (data) => {
+                await featuresData.createFeature(data);
+              }}
+              onUpdateFeature={async (id, updates) => {
+                await featuresData.updateFeature(id, updates);
+              }}
+              onDeleteFeature={async (id) => {
+                await featuresData.deleteFeature(id);
+              }}
+              onAssignFeature={async (pricingplanId, featureId) => {
+                await featuresData.assignFeatureToPlan(pricingplanId, featureId);
+              }}
+              onRemoveFeature={async (pricingplanId, featureId) => {
+                await featuresData.removeFeatureFromPlan(pricingplanId, featureId);
+              }}
+            />
           ) : mainTab === 'inventory' ? (
             /* Inventory Tab - Coming Soon */
             <div className="flex-1 flex items-center justify-center p-6">

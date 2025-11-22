@@ -9,3 +9,4 @@ export { useProductOperations } from './useProductOperations';
 export { useTaxCodeSearch } from './useTaxCodeSearch';
 export { useProductFilters } from './useProductFilters';
 export { usePricingPlans } from './usePricingPlans';
+export { useFeatures } from './useFeatures';

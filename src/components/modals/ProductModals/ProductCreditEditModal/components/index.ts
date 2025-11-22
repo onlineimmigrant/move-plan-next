@@ -20,3 +20,4 @@ export { ImagePreview } from './ImagePreview';
 export { ProductSearchBar } from './ProductSearchBar';
 export { ProductFilterBar } from './ProductFilterBar';
 export { ConfirmationDialog } from './ConfirmationDialog';
+export { default as FeaturesView } from './FeaturesView';

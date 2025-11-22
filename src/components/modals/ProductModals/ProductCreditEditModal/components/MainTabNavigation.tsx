@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { Package, Archive, CreditCard } from 'lucide-react';
+import { Package, Archive, CreditCard, Sparkles } from 'lucide-react';
 
-export type MainTab = 'products' | 'inventory' | 'stripe';
+export type MainTab = 'products' | 'features' | 'inventory' | 'stripe';
 
 interface MainTabNavigationProps {
   activeTab: MainTab;
@@ -20,6 +20,7 @@ export default function MainTabNavigation({
 
   const tabs = [
     { id: 'products' as const, label: 'Products', icon: Package },
+    { id: 'features' as const, label: 'Features', icon: Sparkles },
     { id: 'inventory' as const, label: 'Inventory', icon: Archive },
     { id: 'stripe' as const, label: 'Stripe', icon: CreditCard },
   ];

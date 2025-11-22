@@ -112,3 +112,60 @@ export interface TabCounts {
   active: number;
   archived: number;
 }
+
+/**
+ * Feature interface matching the database schema
+ * Represents a feature from the 'feature' table
+ */
+export interface Feature {
+  id: string;
+  created_at: string;
+  name: string | null;
+  feature_image: string | null;
+  content: string | null;
+  slug: string | null;
+  display_content: boolean | null;
+  display_on_product_card: boolean | null;
+  type: string | null;
+  package: string | null;
+  organization_id: string | null;
+  order: number | null;
+  is_help_center: boolean | null;
+}
+
+/**
+ * Form data for creating/updating features
+ */
+export interface FeatureFormData {
+  name: string;
+  content: string;
+  feature_image: string;
+  slug: string;
+  display_content: boolean;
+  display_on_product_card: boolean;
+  type: string;
+  package: string;
+  order: number;
+  is_help_center: boolean;
+}
+
+/**
+ * PricingPlan Feature Association interface
+ * Represents the junction table between pricing plans and features
+ */
+export interface PricingPlanFeature {
+  id: string;
+  pricingplan_id: string;
+  feature_id: string;
+  created_at: string | null;
+  description: string | null;
+}
+
+/**
+ * Extended Feature with pricing plan assignment info
+ */
+export interface FeatureWithAssignment extends Feature {
+  assigned_pricing_plans?: string[]; // Array of pricingplan_id's
+  pricingplan_features?: PricingPlanFeature[];
+}
+
